@@ -65,8 +65,8 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
   const { pageItems: pagedInactive, pageCount: inactivePageCount } = pagedSlice(inactive, inactivePage, PAGE_SIZE)
 
   return (
-    <main style={{ minHeight: '100vh', padding: '18px 16px 92px' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main className="lb-dashboard-page">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Link href="/profile" style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
           ← Profil
         </Link>
@@ -74,7 +74,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <p style={{ fontSize: 11, fontWeight: 850, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Ma liste</p>
-            <h1 style={{ fontSize: 'clamp(40px,10vw,68px)', fontWeight: 800, margin: 0 }}>Événements intéressés</h1>
+            <h1 className="font-display lb-dashboard-title">Événements intéressés</h1>
           </div>
           <Link
             href="/events"

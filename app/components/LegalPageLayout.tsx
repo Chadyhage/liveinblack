@@ -54,7 +54,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           à la famille des pages légales ; les cartes sombres opaques restent
           lisibles par-dessus. */}
       <FiligraneRoseBg />
-      <div style={{ maxWidth: 720, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: 980, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
           {/* Encre (#0B0B12) et non blanc : l'en-tête est posé directement sur

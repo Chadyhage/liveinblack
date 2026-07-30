@@ -113,7 +113,7 @@ export default function AgentSalesClient({
       <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px' }}>Vente sur place</h1>
       <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '0 0 20px' }}>{eventName}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+      <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
         <div style={cardStyle}>
           <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
@@ -232,7 +232,7 @@ export default function AgentSalesClient({
         )}
 
         {method === 'momo' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <div>
               <Label>Opérateur</Label>
               <Select

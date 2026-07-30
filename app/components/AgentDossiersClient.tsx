@@ -462,10 +462,6 @@ export default function AgentDossiersClient() {
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(grouped, page, PAGE_SIZE), [grouped, page])
 
-  useEffect(() => {
-    setPage(1)
-  }, [section, search])
-
   const totalAllPending = applications.filter((a) => a.status === 'submitted' || a.status === 'under_review' || a.status === 'resubmitted').length
 
   async function runAction(action: ModerateAction, note?: string) {
@@ -513,10 +509,10 @@ export default function AgentDossiersClient() {
   }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Dossiers</h1>
+          <h1 className="font-display lb-dashboard-title">Dossiers</h1>
           {totalAllPending > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {totalAllPending} en attente
@@ -533,7 +529,7 @@ export default function AgentDossiersClient() {
           </Card>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {SECTIONS.map((s) => {
             const count = applications.filter((a) => s.statuses.includes(a.status)).length
             const active = s.key === section
@@ -544,6 +540,7 @@ export default function AgentDossiersClient() {
                 onClick={() => {
                   setSection(s.key)
                   setSearch('')
+                  setPage(1)
                 }}
                 style={{
                   padding: '12px 10px',
@@ -565,7 +562,7 @@ export default function AgentDossiersClient() {
           <Input
             placeholder={`Rechercher dans « ${activeSection.label} »…`}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
         )}
 
@@ -582,7 +579,7 @@ export default function AgentDossiersClient() {
               {search ? `Aucun dossier ne correspond à « ${search} » dans « ${activeSection.label} ».` : `Aucun dossier dans la section « ${activeSection.label} ».`}
             </p>
             {search && (
-              <Button variant="secondary" onClick={() => setSearch('')} style={{ marginTop: 12, fontSize: 12.5 }}>
+              <Button variant="secondary" onClick={() => { setSearch(''); setPage(1) }} style={{ marginTop: 12, fontSize: 12.5 }}>
                 Effacer la recherche
               </Button>
             )}

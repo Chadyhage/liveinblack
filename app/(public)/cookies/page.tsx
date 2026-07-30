@@ -90,7 +90,7 @@ Vous pouvez également configurer votre navigateur pour refuser les cookies :`,
         footerNotice="Politique conforme à la directive ePrivacy et aux recommandations de la CNIL."
       />
       {/* Bouton "rouvrir le consentement" — accessible depuis la page */}
-      <div style={{ maxWidth: 720, margin: '-24px auto 48px', padding: '0 16px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 980, margin: '-24px auto 48px', padding: '0 20px', textAlign: 'center' }}>
         <ResetCookieConsentButton />
       </div>
     </div>

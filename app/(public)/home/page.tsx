@@ -153,7 +153,7 @@ export default async function AccueilPage() {
 
       {/* ACTUALITÉ (carrousel éditorial curé par l'agent) */}
       {actualiteEvents.length > 0 && (
-        <section style={{ padding: '0 22px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
+        <section style={{ padding: '0 clamp(20px, 3vw, 48px)', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: actualiteAccent.soft, border: `1px solid ${actualiteAccent.border}` }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: actualiteAccent.dot }} />
@@ -458,7 +458,7 @@ function HomeEventCard({ event, badge, boosted = false, reason }: { event: Publi
 
 function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: string; sub?: string; children: React.ReactNode }) {
   return (
-    <section style={{ padding: '54px 22px', maxWidth: 1120, margin: '0 auto', width: '100%' }}>
+    <section style={{ padding: '64px clamp(20px, 3vw, 48px)', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
       <SectionHeader eyebrow={eyebrow} title={title} description={sub} align="center" level={2} />
       {children}
     </section>

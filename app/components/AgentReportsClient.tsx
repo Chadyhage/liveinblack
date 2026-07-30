@@ -141,10 +141,6 @@ export default function AgentReportsClient() {
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(sorted, page, PAGE_SIZE), [sorted, page])
 
-  useEffect(() => {
-    setPage(1)
-  }, [filter, search])
-
   async function handleMark(id: string) {
     setBusyId(id)
     try {
@@ -170,10 +166,10 @@ export default function AgentReportsClient() {
   const openCount = filter === 'open' ? reports.length : undefined
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Signalements d&apos;utilisateurs</h1>
+          <h1 className="font-display lb-dashboard-title">Signalements</h1>
           {openCount ? (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {openCount} à traiter
@@ -202,7 +198,7 @@ export default function AgentReportsClient() {
               <Button
                 key={f.key}
                 variant="ghost"
-                onClick={() => setFilter(f.key)}
+                onClick={() => { setFilter(f.key); setPage(1) }}
                 style={{
                   padding: '12px 10px',
                   borderRadius: 12,
@@ -224,13 +220,13 @@ export default function AgentReportsClient() {
             style={search ? { paddingRight: 34 } : undefined}
             placeholder="Rechercher (signalé, signalant, motif…)"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
           {search && (
             <Button
               variant="ghost"
               aria-label="Effacer la recherche"
-              onClick={() => setSearch('')}
+              onClick={() => { setSearch(''); setPage(1) }}
               style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
               ×

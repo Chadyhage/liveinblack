@@ -87,7 +87,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
   const maxPlaceCount = stats.byPlace[0]?.count ?? 0
 
   return (
-    <main style={{ maxWidth: 900, margin: '0 auto', padding: '28px 20px 80px' }}>
+    <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <Link href="/my-events" aria-label="Retour" style={{ color: '#fff', fontSize: 20, textDecoration: 'none', padding: 10, margin: -10, lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={20} />
@@ -236,7 +236,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                 <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
                   Vue d&apos;ensemble uniquement — l&apos;identité des vendeurs/acheteurs n&apos;est jamais communiquée à l&apos;organisateur.
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
                     <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>

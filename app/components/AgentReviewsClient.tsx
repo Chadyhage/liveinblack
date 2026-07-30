@@ -177,10 +177,6 @@ export default function AgentReviewsClient() {
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
 
-  useEffect(() => {
-    setPage(1)
-  }, [statusFilter, ratingFilter, search])
-
   async function act(review: AgentReviewView, op: ModerationOp, note?: string) {
     if (busyId) return
     setBusyId(review.id)
@@ -206,10 +202,10 @@ export default function AgentReviewsClient() {
   }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Modération des avis prestataires</h1>
+          <h1 className="font-display lb-dashboard-title">Modération des avis</h1>
           {reportedCount > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {reportedCount} signalé{reportedCount > 1 ? 's' : ''}
@@ -229,7 +225,7 @@ export default function AgentReviewsClient() {
         <Input
           placeholder="Rechercher (prestataire, auteur, texte...)"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
         />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -245,7 +241,7 @@ export default function AgentReviewsClient() {
             <Button
               key={f.key}
               variant="ghost"
-              onClick={() => setStatusFilter(f.key)}
+              onClick={() => { setStatusFilter(f.key); setPage(1) }}
               style={{
                 padding: '7px 12px',
                 borderRadius: 999,
@@ -267,7 +263,7 @@ export default function AgentReviewsClient() {
             <Button
               key={n}
               variant="ghost"
-              onClick={() => setRatingFilter(n)}
+              onClick={() => { setRatingFilter(n); setPage(1) }}
               style={{
                 padding: '7px 12px',
                 borderRadius: 999,

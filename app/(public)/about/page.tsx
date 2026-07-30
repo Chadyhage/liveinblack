@@ -94,7 +94,7 @@ export default function PublicAboutPage() {
 
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
-    <section style={{ padding: '46px 22px', maxWidth: 1120, margin: '0 auto' }}>
+    <section style={{ padding: '56px clamp(20px, 3vw, 48px)', maxWidth: 1280, margin: '0 auto' }}>
       <SectionHeader eyebrow={eyebrow} title={title} align="center" level={2} />
       {children}
     </section>

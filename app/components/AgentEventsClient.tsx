@@ -147,10 +147,6 @@ export default function AgentEventsClient() {
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
 
-  useEffect(() => {
-    setPage(1)
-  }, [filter, search])
-
   async function handleAdminCancelEvent() {
     if (!adminCancel) return
     setAdminCancelBusy(true)
@@ -177,10 +173,10 @@ export default function AgentEventsClient() {
   }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Événements</h1>
+          <h1 className="font-display lb-dashboard-title">Événements</h1>
         </div>
 
         {listError && (
@@ -192,7 +188,7 @@ export default function AgentEventsClient() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
           {[
             { label: 'Total', value: events.length, color: 'var(--gold)' },
             { label: 'À venir', value: totalUpcoming, color: 'var(--teal)' },
@@ -206,7 +202,7 @@ export default function AgentEventsClient() {
           ))}
         </div>
 
-        <Input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {FILTERS.map((f) => {
@@ -216,7 +212,7 @@ export default function AgentEventsClient() {
               <Button
                 key={f.key}
                 variant="ghost"
-                onClick={() => setFilter(f.key)}
+                onClick={() => { setFilter(f.key); setPage(1) }}
                 style={{
                   padding: '7px 12px',
                   borderRadius: 999,

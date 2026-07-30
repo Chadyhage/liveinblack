@@ -86,9 +86,9 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
   return (
     <main className="organizer-directory">
       <style>{`
-        .organizer-directory{width:100%;min-height:100vh;padding:56px 22px 88px;background:radial-gradient(circle 700px at 5% 0%,rgba(184, 243, 74,.10),transparent 64%),radial-gradient(circle 700px at 96% 18%,rgba(159, 224, 34,.07),transparent 60%)}
-        .organizer-directory__wrap{max-width:1240px;margin:0 auto}
-        .organizer-directory__filters{display:grid;grid-template-columns:minmax(280px,1.8fr) minmax(180px,.8fr) minmax(180px,.8fr) auto auto;gap:10px;align-items:center;max-width:1100px;margin:30px auto 42px}
+        .organizer-directory{width:100%;min-height:100vh;padding:56px clamp(20px,3vw,48px) 88px}
+        .organizer-directory__wrap{max-width:1480px;margin:0 auto}
+        .organizer-directory__filters{display:grid;grid-template-columns:minmax(300px,1.7fr) minmax(190px,.75fr) minmax(190px,.75fr) auto auto;gap:10px;align-items:center;margin:0 0 42px}
         .organizer-directory__field{min-width:0;padding:11px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13px}
         .organizer-directory__check{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-muted);white-space:nowrap}
         .organizer-directory__grid{display:flex;flex-direction:column;gap:16px}
@@ -102,17 +102,17 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
         @media(max-width:620px){.organizer-directory{padding:32px 14px 92px}.organizer-directory__filters{grid-template-columns:1fr}.organizer-directory__filters button{grid-column:auto}.organizer-directory__card{grid-template-columns:1fr}.organizer-directory__cover{min-height:170px}.organizer-directory__body{padding:30px 20px}.organizer-directory__actions{grid-column:auto}}
       `}</style>
       <div className="organizer-directory__wrap">
-        <header style={{ textAlign: 'center' }}>
+        <header className="lb-directory-hero">
           <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
           <h1 className="font-display" style={{ margin: '10px 0 0', fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em' }}>
             Les organisateurs qui font<br /><span style={{ color: 'var(--gold)' }}>vibrer la nuit.</span>
           </h1>
-          <p style={{ maxWidth: 570, margin: '16px auto 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>
+          <p style={{ maxWidth: 640, margin: '16px 0 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>
             Découvre leur univers, suis leur actualité et retrouve leurs prochains rendez-vous.
           </p>
         </header>
 
-        <form action="/organizers" method="get" className="organizer-directory__filters">
+        <form action="/organizers" method="get" className="organizer-directory__filters lb-directory-filters">
           <Input
             type="search"
             name="q"

@@ -135,7 +135,7 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
 
   return (
     <>
-      <main style={{ maxWidth: 760, margin: '0 auto', padding: '22px 16px 110px' }}>
+      <main className="lb-dashboard-page lb-dashboard-page--medium">
         <Button
           variant="ghost"
           onClick={() => router.push('/offer-services')}
@@ -143,8 +143,8 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
         >
           ← Mon espace
         </Button>
-        <h1 className="font-display" style={{ fontSize: 26, letterSpacing: '.02em', margin: '0 0 4px' }}>Mon abonnement</h1>
-        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.55)', margin: 0 }}>Ce qui rend ton profil visible sur LIVEINBLACK.</p>
+        <h1 className="font-display lb-dashboard-title">Mon abonnement</h1>
+        <p className="lb-dashboard-description" style={{ fontFamily: FONT }}>Gère la visibilité de ton profil et retrouve l’historique de tes paiements.</p>
 
         <section style={{ ...card, padding: 18, marginTop: 20, borderLeft: `3px solid ${color}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

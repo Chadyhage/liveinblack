@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
+import { IconButton } from '@/app/components/ui'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, FULL_BLEED_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import { getRoleLabel, type Role } from '@/lib/server/permissions'
 
-const SIDEBAR_WIDTH = 240
+const SIDEBAR_WIDTH = 272
 
 const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
 
@@ -151,7 +152,10 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
 
   const fullBleed = FULL_BLEED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
-  const items: DashboardNavItem[] = [...ROLE_NAV[activeRole], ...COMMON_NAV].filter(
+  const roleItems: DashboardNavItem[] = ROLE_NAV[activeRole].filter(
+    (item) => item.href !== '/my-shifts' || hasStaffedEvents || pathname.startsWith('/my-shifts')
+  )
+  const commonItems: DashboardNavItem[] = COMMON_NAV.filter(
     (item) => item.href !== '/my-shifts' || hasStaffedEvents || pathname.startsWith('/my-shifts')
   )
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
@@ -214,16 +218,17 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           )}
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px' }}>
-          {items.map((item) => (
-            <SidebarItem
-              key={item.href}
-              item={item}
-              isActive={isActive}
-              autoOpen={isActive(item.href) || hasActiveDescendant(item)}
-              badge={badges[item.href]}
-            />
-          ))}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px 24px' }}>
+          {roleItems.length > 0 && <SidebarSectionLabel>{activeRole === 'agent' ? 'Gestion' : 'Mon activité'}</SidebarSectionLabel>}
+          {roleItems.map((item) => {
+            const autoOpen = isActive(item.href) || hasActiveDescendant(item)
+            return <SidebarItem key={`${item.href}:${autoOpen}`} item={item} isActive={isActive} autoOpen={autoOpen} badge={badges[item.href]} />
+          })}
+          <SidebarSectionLabel separated={roleItems.length > 0}>Mon compte</SidebarSectionLabel>
+          {commonItems.map((item) => {
+            const autoOpen = isActive(item.href) || hasActiveDescendant(item)
+            return <SidebarItem key={`${item.href}:${autoOpen}`} item={item} isActive={isActive} autoOpen={autoOpen} badge={badges[item.href]} />
+          })}
           {upsell.length > 0 && (
             <>
               <div style={{ height: 1, background: 'var(--border)', margin: '10px 4px' }} />
@@ -235,7 +240,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         </nav>
       </aside>
 
-      <div style={{ flex: 1, minWidth: 0, ...(fullBleed ? {} : { padding: '28px 32px' }) }}>{children}</div>
+      <div className="lb-dashboard-main" style={{ flex: 1, minWidth: 0, ...(fullBleed ? {} : { padding: '36px clamp(20px, 3vw, 48px) 72px' }) }}>{children}</div>
 
       <style>{`
         @media (max-width: 1099px) {
@@ -243,6 +248,14 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         }
       `}</style>
     </div>
+  )
+}
+
+function SidebarSectionLabel({ children, separated = false }: { children: React.ReactNode; separated?: boolean }) {
+  return (
+    <p style={{ margin: separated ? '18px 10px 6px' : '2px 10px 6px', paddingTop: separated ? 16 : 0, borderTop: separated ? '1px solid var(--border)' : 0, color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 800, letterSpacing: '.11em', textTransform: 'uppercase' }}>
+      {children}
+    </p>
   )
 }
 
@@ -262,10 +275,7 @@ function SidebarItem({
   badge?: number
 }) {
   const [open, setOpen] = useState(autoOpen)
-
-  useEffect(() => {
-    if (autoOpen) setOpen(true)
-  }, [autoOpen])
+  const expanded = open
 
   if (!item.children || item.children.length === 0) {
     return <SidebarLink item={item} active={isActive(item.href)} badge={badge} />
@@ -276,47 +286,44 @@ function SidebarItem({
 
   return (
     <div>
-      <Link
-        href={item.href}
+      <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
-          padding: '10px 12px',
           borderRadius: 8,
-          color: active ? 'var(--text)' : 'var(--text-muted)',
           background: active ? 'rgba(184, 243, 74,.10)' : 'transparent',
           borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
-          fontSize: 13.5,
-          fontWeight: active ? 700 : 600,
-          textDecoration: 'none',
         }}
       >
-        <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
-        <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
-        <span
-          role="button"
-          tabIndex={0}
-          aria-label={open ? 'Replier' : 'Déplier'}
-          aria-expanded={open}
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setOpen((v) => !v)
+        <Link
+          href={item.href}
+          aria-current={active ? 'page' : undefined}
+          style={{
+            display: 'flex',
+            flex: 1,
+            minWidth: 0,
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 8px 10px 9px',
+            color: active ? 'var(--text)' : 'var(--text-muted)',
+            fontSize: 13.5,
+            fontWeight: active ? 700 : 600,
+            textDecoration: 'none',
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              e.stopPropagation()
-              setOpen((v) => !v)
-            }
-          }}
-          style={{ display: 'flex', padding: 3, borderRadius: 6, flexShrink: 0 }}
         >
-          <ChevronDown size={14} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }} />
-        </span>
-      </Link>
-      {open && (
+          <Icon size={17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
+          <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+        </Link>
+        <IconButton
+          label={expanded ? `Replier ${item.label}` : `Déplier ${item.label}`}
+          aria-expanded={expanded}
+          onClick={() => setOpen((value) => !value)}
+          size={28}
+          icon={<ChevronDown aria-hidden="true" size={14} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }} />}
+          style={{ marginRight: 4, border: 0, background: 'transparent', color: 'inherit' }}
+        />
+      </div>
+      {expanded && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, paddingLeft: 14 }}>
           {item.children.map((child) => (
             <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
@@ -332,6 +339,7 @@ function SidebarLink({ item, active, muted, badge, compact }: { item: DashboardN
   return (
     <Link
       href={item.href}
+      aria-current={active ? 'page' : undefined}
       aria-label={badge ? `${item.label}, ${badge} en attente` : undefined}
       style={{
         display: 'flex',

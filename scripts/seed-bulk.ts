@@ -10,11 +10,12 @@
 // une base de prod). --count=N pour changer le nombre d'événements (défaut 100).
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
+import type { HydratedDocument } from 'mongoose'
 import { getDb } from '../lib/db/mongoose'
 import User from '../lib/models/User'
 import Event from '../lib/models/Event'
 import ProviderProfile from '../lib/models/ProviderProfile'
-import OrganizerProfile from '../lib/models/OrganizerProfile'
+import OrganizerProfile, { type OrganizerProfileDoc } from '../lib/models/OrganizerProfile'
 import Ticket from '../lib/models/Ticket'
 import Review from '../lib/models/Review'
 import Boost from '../lib/models/Boost'
@@ -126,7 +127,7 @@ async function main() {
 
   // --- Organisateurs (15 comptes, un profil public chacun) ---
   const organizerCount = Math.min(15, ORGANIZER_NAMES.length)
-  const organizers: { userId: string; profile: any }[] = []
+  const organizers: { userId: string; profile: HydratedDocument<OrganizerProfileDoc> }[] = []
   for (let i = 0; i < organizerCount; i++) {
     const publicName = ORGANIZER_NAMES[i]
     const region = pick(REGIONS)

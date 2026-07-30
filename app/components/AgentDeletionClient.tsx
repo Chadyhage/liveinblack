@@ -156,10 +156,6 @@ export default function AgentDeletionClient() {
     ? requests.filter((r) => r.userName.toLowerCase().includes(term) || r.userEmail.toLowerCase().includes(term) || r.reason.toLowerCase().includes(term))
     : requests
 
-  useEffect(() => {
-    setPage(1)
-  }, [term])
-
   const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
 
   async function handleApprove() {
@@ -208,10 +204,10 @@ export default function AgentDeletionClient() {
   }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Suppressions</h1>
+          <h1 className="font-display lb-dashboard-title">Suppressions</h1>
           {requests.length > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>{requests.length} en attente</span>
           )}
@@ -226,7 +222,7 @@ export default function AgentDeletionClient() {
           </Card>
         )}
 
-        {requests.length > 0 && <Input placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => setSearch(e.target.value)} />}
+        {requests.length > 0 && <Input placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />}
 
         {listLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

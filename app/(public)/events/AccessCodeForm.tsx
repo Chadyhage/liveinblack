@@ -33,10 +33,10 @@ export default function AccessCodeForm() {
   }
 
   return (
-    <section id="access-code" style={{ marginTop: 18, maxWidth: 520, padding: 18, borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)' }}>
-      <p style={{ margin: 0, fontSize: 14, fontWeight: 800 }}>Tu as un code d&apos;accès ?</p>
-      <p style={{ margin: '5px 0 12px', color: 'var(--text-muted)', fontSize: 12.5 }}>Saisis le code reçu pour ouvrir ton événement privé.</p>
-      <form onSubmit={submit} style={{ display: 'flex', gap: 8 }}>
+    <section id="access-code" className="lb-access-code">
+      <p className="lb-tool-label">Accès privé</p>
+      <p className="lb-tool-help">Saisis le code reçu pour ouvrir ton événement.</p>
+      <form onSubmit={submit} className="lb-search-panel__controls">
         <Input
           value={code}
           onChange={(event) => setCode(event.target.value.toUpperCase())}
@@ -46,7 +46,7 @@ export default function AccessCodeForm() {
           invalid={Boolean(error)}
           disabled={loading}
           maxLength={64}
-          style={{ flex: 1, minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-md)', background: 'var(--obsidian)', fontSize: 13.5, textTransform: 'uppercase' }}
+          style={{ flex: 1, minWidth: 0, minHeight: 52, background: 'var(--obsidian)', fontSize: 14, textTransform: 'uppercase' }}
         />
         <Button
           type="submit"
@@ -54,7 +54,7 @@ export default function AccessCodeForm() {
           disabled={loading || !code.trim()}
           loading={loading}
           loadingText="Vérification…"
-          style={{ minHeight: 48, padding: '11px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', textTransform: 'uppercase', letterSpacing: '.03em', fontSize: 13 }}
+          style={{ minHeight: 52, padding: '12px 22px', background: 'var(--primary)', color: 'var(--primary-ink)', textTransform: 'none', letterSpacing: 'normal', fontSize: 14 }}
         >
           Ouvrir
         </Button>

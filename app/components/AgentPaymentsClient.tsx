@@ -303,9 +303,9 @@ export default function AgentPaymentsClient() {
   const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Paiements</h1>
+        <h1 className="font-display lb-dashboard-title">Paiements</h1>
 
         {loadError && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -318,7 +318,7 @@ export default function AgentPaymentsClient() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {SECTIONS.map((s) => {
             const active = s.key === section
             const count = counts[s.key]

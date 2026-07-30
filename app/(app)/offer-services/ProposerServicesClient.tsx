@@ -667,7 +667,7 @@ export default function ProposerServicesClient({
     <>
       <style>{`
         @keyframes lib-spin { to { transform: rotate(360deg) } }
-        .provider-workspace{max-width:920px;margin:0 auto;padding:22px 16px 110px}
+        .provider-workspace{max-width:1280px;margin:0 auto;padding:0 0 110px}
         .provider-workspace-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
         .provider-profile-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:16px}
         .provider-fields-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -691,14 +691,14 @@ export default function ProposerServicesClient({
           .provider-catalog-header button{width:100%}
         }
       `}</style>
-      <main className="provider-workspace">
-        <header className="provider-workspace-header">
+      <main className="provider-workspace lb-dashboard-page">
+        <header className="provider-workspace-header lb-dashboard-page-header">
           <div style={{ width: 52, height: 52, borderRadius: 15, display: 'grid', placeItems: 'center', background: `${category.color}16`, border: `1px solid ${category.color}44`, color: category.color }}>
             <CategoryIcon icon={category.icon} />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <h1 className="font-display" style={{ fontSize: 25, letterSpacing: '.01em', margin: 0 }}>Mon espace prestataire</h1>
-            <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.45)', margin: '4px 0 0' }}>{category.singular} · Ta page et ton catalogue</p>
+            <h1 className="font-display lb-dashboard-title">Mon espace prestataire</h1>
+            <p className="lb-dashboard-description" style={{ fontFamily: FONT }}>{category.singular} · Ta page publique, tes offres et ton catalogue.</p>
           </div>
           <Button variant="secondary" onClick={() => router.push(`/providers/${encodeURIComponent(profile.userId)}`)} style={secondaryButton}>
             Voir ma page publique

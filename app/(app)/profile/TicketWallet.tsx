@@ -140,7 +140,7 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
   const upcomingSeatCount = buckets.upcoming.reduce((sum, g) => sum + g.myTickets.length, 0)
 
   return (
-    <main style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <BackHeader onBack={onBack} title="Mes billets" />
 
@@ -294,7 +294,7 @@ function Section({ label, groups, currentUserId }: { label: string; groups: Tick
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 10, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 420px), 1fr))', gap: 10, alignItems: 'start' }}>
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
         ))}
@@ -315,7 +315,7 @@ function BackHeader({ onBack, title }: { onBack: () => void; title: string }) {
       >
         ‹
       </Button>
-      <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>{title}</h1>
+      <h1 className="font-display lb-dashboard-title">{title}</h1>
     </div>
   )
 }

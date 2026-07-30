@@ -24,6 +24,9 @@ export interface DashboardNavLink {
 }
 
 function isCurrentPath(pathname: string, href: string) {
+  // Un lien d'action avec ancre (ex. « J'ai un code ») ne représente pas une
+  // page. Le considérer actif sur /events activait deux entrées à la fois.
+  if (href.includes('#')) return false
   const path = href.split('#')[0].split('?')[0]
   if (path === '/home') return pathname === '/home' || pathname === '/'
   return pathname === path || pathname.startsWith(`${path}/`)
@@ -51,11 +54,16 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
 
   useEffect(() => {
     if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') setMobileOpen(false)
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [mobileOpen])
 
   // Au-delà de 1100px le bouton hamburger disparaît (cf. règle CSS
@@ -64,7 +72,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
   // affiché sans aucun moyen de le fermer.
   useEffect(() => {
     if (!mobileOpen) return
-    const mq = window.matchMedia('(min-width: 1100px)')
+    const mq = window.matchMedia('(min-width: 1400px)')
     function handleChange(event: MediaQueryListEvent) {
       if (event.matches) setMobileOpen(false)
     }
@@ -74,19 +82,17 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
 
   return (
     <header
+      className="lb-public-nav"
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '14px 22px',
         background: 'rgba(7,8,13,0.86)',
         backdropFilter: 'blur(14px)',
         borderBottom: '1px solid rgba(184, 243, 74,.16)',
       }}
     >
+      <div className="lb-public-nav__inner">
       <Link
         href="/home"
         style={{
@@ -95,19 +101,20 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           color: 'var(--text)',
           textDecoration: 'none',
           fontWeight: 800,
+          flexShrink: 0,
         }}
       >
         L<span style={{ color: 'var(--text)' }}>|</span>VE IN{' '}
         <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
       </Link>
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+      <nav aria-label="Navigation principale" style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
         {NAV_LINKS.map((link) => {
           const active = isCurrentPath(pathname, link.href)
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`lb-navlink${active ? ' lb-navlink-active' : ''}`}
+              className={`lb-navlink ${['/home', '/events', '/providers', '/organizers'].includes(link.href) ? 'lb-navlink-primary' : 'lb-navlink-secondary'}${active ? ' lb-navlink-active' : ''}`}
               aria-current={active ? 'page' : undefined}
               style={{ position: 'relative', color: active ? 'var(--primary)' : 'var(--text-muted)', textDecoration: 'none', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.055em', padding: '8px 0' }}
             >
@@ -120,7 +127,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           <>
             <Link
               href="/login"
-              className="lb-navlink"
+              className="lb-navlink lb-nav-auth"
               style={{
                 padding: '9px 18px',
                 borderRadius: 999,
@@ -135,7 +142,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             </Link>
             <Link
               href="/login?mode=register"
-              className="lb-navlink"
+              className="lb-navlink lb-nav-auth"
               style={{
                 padding: '9px 18px',
                 borderRadius: 999,
@@ -150,7 +157,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             </Link>
             <Link
               href="/login"
-              className="lb-navlink-mobile"
+              className="lb-navlink-mobile lb-mobile-login"
               style={{
                 padding: '8px 14px',
                 borderRadius: 999,
@@ -176,10 +183,12 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           />
         </span>
       </nav>
+      </div>
 
       {mobileOpen && (
         <nav
           id="lb-mobile-menu"
+          aria-label="Navigation mobile"
           style={{
             position: 'absolute',
             top: '100%',
@@ -187,6 +196,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             right: 0,
             display: 'flex',
             flexDirection: 'column',
+            maxHeight: 'calc(100dvh - 58px - var(--cookie-consent-height, 0px))',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
             background: 'var(--surface-2)',
             borderBottom: '1px solid var(--border)',
             boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
@@ -250,9 +262,24 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
       )}
 
       <style>{`
+        .lb-public-nav__inner {
+          width: 100%;
+          max-width: 1560px;
+          min-height: 64px;
+          margin: 0 auto;
+          padding: 0 28px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+        }
         .lb-navlink { display: none }
         .lb-navlink-mobile { display: inline-flex }
-        @media (min-width: 1100px) {
+        @media (min-width: 1100px) and (max-width: 1399px) {
+          .lb-navlink-primary, .lb-nav-auth { display: inline-block }
+          .lb-mobile-login { display: none !important }
+        }
+        @media (min-width: 1400px) {
           .lb-navlink { display: inline-block }
           .lb-navlink-mobile { display: none !important }
         }
@@ -267,6 +294,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             border-radius: 999px;
             background: var(--primary);
           }
+        }
+        @media (max-width: 640px) {
+          .lb-public-nav__inner { min-height: 58px; padding: 0 14px; gap: 10px; }
         }
       `}</style>
     </header>

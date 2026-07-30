@@ -189,7 +189,7 @@ export default async function MonDossierPage() {
   ])
 
   return (
-    <main style={{ minHeight: '100vh', padding: '8px 0 60px' }}>
+    <main className="lb-dashboard-page lb-dashboard-page--medium">
       <style>{`
         @media (max-width: 900px) {
           .my-application-grid { grid-template-columns: 1fr !important; }
@@ -200,7 +200,7 @@ export default async function MonDossierPage() {
           <Link href="/profile" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ← Mon profil
           </Link>
-          <h1 className="font-display" style={{ fontSize: 26, color: '#fff', margin: '8px 0 0' }}>Mon dossier</h1>
+          <h1 className="font-display lb-dashboard-title" style={{ marginTop: 8 }}>Mon inscription</h1>
         </div>
         <nav style={{ display: 'flex', gap: 16 }}>
           <a href="#organisateur" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>

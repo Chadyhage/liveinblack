@@ -106,9 +106,9 @@ export default function AgentDashboardClient() {
   }, [])
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Tableau de bord</h1>
+        <h1 className="font-display lb-dashboard-title">Tableau de bord</h1>
 
         {error && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -147,7 +147,7 @@ export default function AgentDashboardClient() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <div style={{ ...cardStyle, padding: 12 }}>
                   <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Volume encaissé</p>
                   <p style={{ fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.gmvTicketsEUR + stats.revenue.gmvBoosts, 'EUR')}</p>

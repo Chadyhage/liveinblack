@@ -92,14 +92,10 @@ export default function AgentBoostsClient() {
   const activeList = useMemo(() => (data ? data.active.filter((b) => !b.conflict) : []), [data])
   const { pageItems, pageCount } = useMemo(() => pagedSlice(activeList, page, PAGE_SIZE), [activeList, page])
 
-  useEffect(() => {
-    setPage(1)
-  }, [data])
-
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Boosts</h1>
+        <h1 className="font-display lb-dashboard-title">Boosts</h1>
 
         {error && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -118,7 +114,7 @@ export default function AgentBoostsClient() {
           </div>
         ) : !data ? null : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {[
                 { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--teal)' },
                 { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? '#dc3232' : 'var(--text-muted)' },

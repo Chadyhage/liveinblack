@@ -58,8 +58,8 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
   const websiteUrl = socialUrl('website', provider.website)
 
   return (
-    <main style={{ maxWidth: 1040, margin: '0 auto', padding: '0 0 80px', width: '100%' }}>
-      <div style={{ padding: '18px 22px 0' }}>
+    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 88px', width: '100%' }}>
+      <div style={{ padding: '18px 0 0' }}>
         <Link href="/providers" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           ← Prestataires
         </Link>

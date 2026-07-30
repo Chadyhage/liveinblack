@@ -113,7 +113,7 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
   }
 
   return (
-    <main className="profile-main" style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
+    <main className="profile-main lb-dashboard-page">
       <style>{`
         @media (max-width: 480px) {
           .profile-main { padding-bottom: 120px; }
@@ -122,6 +122,13 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
           .profile-main-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
+      <header className="lb-dashboard-page-header">
+        <div>
+          <p style={{ margin: 0, color: 'var(--primary)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>Mon compte</p>
+          <h1 className="font-display lb-dashboard-title" style={{ marginTop: 6 }}>Mon profil</h1>
+          <p className="lb-dashboard-description">Retrouve tes informations, tes billets et tes préférences au même endroit.</p>
+        </div>
+      </header>
       <div className="profile-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 340px) 1fr', gap: 20, alignItems: 'start' }}>
         <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <AvatarUpload user={user} setUser={setUser} />
@@ -161,7 +168,7 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             <QuickAccessCard href="/profile/parametres" icon={<Settings size={18} />} label="Paramètres du compte" />
             <QuickAccessCard href="/profile/billets" icon={<Ticket size={18} />} label="Mes billets" />
             <QuickAccessCard href="/profile/interested-events" icon={<Heart size={18} />} label="Mes favoris" />
-            <QuickAccessCard href="/profile/aide" icon={<LifeBuoy size={18} />} label="Support / Aide" />
+            <QuickAccessCard href="/help" icon={<LifeBuoy size={18} />} label="Aide & FAQ" />
           </div>
         </div>
       </div>
@@ -467,7 +474,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
   const filtered = tokens.length === 0 ? entries : entries.filter((e) => tokens.every((t) => e.keywords.some((k) => normalizeQuery(k).includes(t)) || normalizeQuery(e.id).includes(t)))
 
   return (
-    <main className="profile-settings" style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
+    <main className="profile-settings lb-dashboard-page lb-dashboard-page--medium">
       <style>{`
         @media (max-width: 480px) {
           .profile-settings { padding-bottom: 120px; }
@@ -479,7 +486,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
           <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
             ‹
           </Button>
-          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Paramètres du compte</h1>
+          <h1 className="font-display lb-dashboard-title">Paramètres du compte</h1>
         </div>
 
         <Input
@@ -498,7 +505,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
             </Button>
           </Card>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 14, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 380px), 1fr))', gap: 14, alignItems: 'start' }}>
             {filtered.map((entry) => (
               <div key={entry.id}>{entry.render({ user, setUser })}</div>
             ))}
@@ -1165,7 +1172,7 @@ const FAQ = [
   { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]
 
-export function SupportPanel({ onBack }: { onBack: () => void }) {
+export function SupportPanel({ onBack }: { onBack?: () => void }) {
   const [copied, setCopied] = useState(false)
 
   async function copyEmail() {
@@ -1189,7 +1196,7 @@ export function SupportPanel({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '8px 0 48px' }}>
+    <main className="lb-dashboard-page lb-dashboard-page--medium">
       <style>{`
         @media (max-width: 780px) {
           .support-grid { grid-template-columns: 1fr !important; }
@@ -1197,10 +1204,15 @@ export function SupportPanel({ onBack }: { onBack: () => void }) {
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
-            ‹
-          </Button>
-          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>Support / Aide</h1>
+          {onBack && (
+            <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
+              ‹
+            </Button>
+          )}
+          <div>
+            <p style={{ margin: 0, color: 'var(--primary)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>Centre d&apos;aide</p>
+            <h1 className="font-display lb-dashboard-title" style={{ marginTop: 4 }}>Aide & FAQ</h1>
+          </div>
         </div>
 
         <div className="support-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, alignItems: 'start' }}>

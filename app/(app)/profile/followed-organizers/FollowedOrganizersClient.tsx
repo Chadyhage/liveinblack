@@ -92,14 +92,14 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
   }
 
   return (
-    <main style={{ minHeight: '100vh', padding: '8px 0 110px' }}>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         <div>
           <Link href="/profile" style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
             ← Retour au profil
           </Link>
-          <h1 style={{ fontSize: 'clamp(36px,7vw,56px)', fontWeight: 800, margin: '10px 0 0', fontFamily: 'inherit' }}>Organisateurs suivis</h1>
-          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.48)', margin: '6px 0 0' }}>Gère tes abonnements et choisis précisément les alertes que tu veux recevoir.</p>
+          <h1 className="font-display lb-dashboard-title" style={{ marginTop: 10 }}>Organisateurs suivis</h1>
+          <p className="lb-dashboard-description">Gère tes abonnements et choisis précisément les alertes que tu veux recevoir.</p>
         </div>
 
         {follows.length === 0 ? (
@@ -118,7 +118,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 420px), 1fr))', gap: 12, alignItems: 'start' }}>
               {pagedFollows.map((f) => (
                 <FollowCard key={f.organizerId} follow={f} onUnfollowed={() => remove(f.organizerId)} onPatch={(next) => patch(f.organizerId, next)} />
               ))}

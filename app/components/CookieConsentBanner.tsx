@@ -86,7 +86,7 @@ export default function CookieConsentBanner() {
         }
 
         .cc-inner {
-          max-width: 1120px;
+          max-width: 1480px;
           margin: 0 auto;
           display: flex;
           align-items: center;
@@ -180,6 +180,16 @@ export default function CookieConsentBanner() {
         }
         .cc-btn-accept:active {
           transform: scale(0.97);
+        }
+
+        @media (max-width: 640px) {
+          .cc-body { padding: 11px 14px calc(11px + env(safe-area-inset-bottom)); }
+          .cc-inner { gap: 10px; }
+          .cc-text { flex-basis: 100%; min-width: 0; }
+          .cc-title { margin-bottom: 2px; font-size: 12px; }
+          .cc-desc { font-size: 11.5px; line-height: 1.4; }
+          .cc-actions { width: 100%; }
+          .cc-actions > button { flex: 1 1 0; min-width: 0; min-height: 38px !important; padding: 8px 10px !important; }
         }
       `}</style>
 

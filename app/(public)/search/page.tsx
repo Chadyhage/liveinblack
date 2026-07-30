@@ -60,25 +60,28 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
   const totalResults = matchedEvents.length + matchedOrganizers.length + matchedProviders.length
 
   return (
-    <div style={{ padding: '48px 22px 80px', maxWidth: 1280, margin: '0 auto', width: '100%' }}>
-      <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.01em', margin: '0 0 16px' }}>Recherche</h1>
-      <form action="/search" method="get" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxWidth: 480, marginBottom: 28 }}>
+    <main className="lb-page-shell" style={{ padding: '52px clamp(20px, 3vw, 48px) 88px', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+      <section className="lb-directory-intro" style={{ marginBottom: 36 }}>
+      <h1 className="font-display" style={{ fontSize: 'clamp(36px, 6vw, 64px)', letterSpacing: '.01em', margin: 0 }}>Tout LIVEINBLACK, en une recherche.</h1>
+      <p style={{ color: 'var(--text-muted)', maxWidth: 680, margin: '12px 0 24px', fontSize: 15 }}>Retrouve en même temps les événements, les organisateurs et les prestataires.</p>
+      <form action="/search" method="get" className="lb-search-panel__controls" style={{ width: '100%' }}>
         <Input
           type="text"
           name="q"
           defaultValue={query}
           placeholder="Événements, organisateurs, prestataires…"
-          style={{ flex: '1 1 300px', minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-md)', fontSize: 14 }}
+          style={{ flex: '1 1 600px', minWidth: 0, minHeight: 54, fontSize: 15 }}
           autoFocus
         />
         <Button
           type="submit"
           variant="primary"
-          style={{ flexShrink: 0, minHeight: 48, padding: '11px 22px', borderRadius: 'var(--radius-md)', fontSize: 13 }}
+          style={{ flexShrink: 0, minHeight: 54, padding: '12px 28px', fontSize: 14 }}
         >
           Chercher
         </Button>
       </form>
+      </section>
 
       {!query ? (
         <div>
@@ -153,7 +156,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           )}
         </>
       )}
-    </div>
+    </main>
   )
 }
 

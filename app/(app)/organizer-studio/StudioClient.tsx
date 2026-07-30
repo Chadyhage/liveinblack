@@ -250,11 +250,11 @@ export default function StudioClient({
           .studio-profile-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-      <main style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 100px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 18, marginBottom: 20, flexWrap: 'wrap' }}>
+      <main className="lb-dashboard-page">
+      <header className="lb-dashboard-page-header">
         <div>
-          <h1 className="font-display" style={{ fontSize: 40, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Ma page publique</h1>
-          <p style={{ color: 'var(--text-muted)', margin: '8px 0 0', fontSize: 14 }}>Présente ton univers, tes événements et construis ton audience.</p>
+          <h1 className="font-display lb-dashboard-title">Ma page & paiements</h1>
+          <p className="lb-dashboard-description">Présente ton univers, développe ton audience et configure tes encaissements.</p>
         </div>
         <span
           style={{

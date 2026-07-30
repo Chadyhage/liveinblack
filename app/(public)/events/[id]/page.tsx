@@ -116,8 +116,8 @@ export default async function EventDetailPage({
   }))
 
   return (
-    <main style={{ maxWidth: 880, margin: '0 auto', padding: '0 0 60px', width: '100%' }}>
-      <div style={{ padding: '18px 22px 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
+    <main style={{ maxWidth: 1180, margin: '0 auto', padding: '12px clamp(14px, 3vw, 42px) 80px', width: '100%' }}>
+      <div style={{ padding: '18px 0 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
         <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>
           Événements
         </Link>
@@ -126,7 +126,7 @@ export default async function EventDetailPage({
       </div>
 
       {/* HERO */}
-      <div style={{ position: 'relative', margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
           <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         )}

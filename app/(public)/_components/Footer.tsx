@@ -29,14 +29,10 @@ export default function Footer() {
     <footer
       style={{
         borderTop: '1px solid var(--border)',
-        padding: '20px 22px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
+        padding: '24px clamp(20px, 3vw, 48px)',
       }}
     >
+      <div style={{ maxWidth: 1480, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
       <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
         {LEGAL_LINKS.map((link) => (
           <Link key={link.href} href={link.href} style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
@@ -48,6 +44,7 @@ export default function Footer() {
         </a>
       </nav>
       <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>© {new Date().getFullYear()} {LEGAL.brand}</p>
+      </div>
     </footer>
   )
 }

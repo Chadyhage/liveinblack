@@ -56,13 +56,13 @@ export default async function MesSoireesPage() {
   const events = await listMyStaffedEvents({ id: session.user.id })
 
   return (
-    <main style={{ minHeight: '100vh', padding: '24px 16px 40px' }}>
-      <div style={{ maxWidth: 620, margin: '0 auto' }}>
+    <main className="lb-dashboard-page lb-dashboard-page--medium">
+      <div>
         <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>
           Équipe
         </p>
-        <h1 className="font-display" style={{ fontSize: 26, letterSpacing: '-0.5px', color: 'var(--text)', margin: '6px 0 4px' }}>Mes soirées</h1>
-        <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.5 }}>
+        <h1 className="font-display lb-dashboard-title" style={{ marginTop: 6 }}>Mes soirées</h1>
+        <p className="lb-dashboard-description" style={{ marginBottom: 24 }}>
           Les événements où tu fais partie de l&apos;équipe. Ouvre le POS le jour J pour servir ou scanner.
         </p>
 
@@ -92,7 +92,7 @@ export default async function MesSoireesPage() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="lb-dashboard-card-grid" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {events.map((ev) => {
               const meta = ROLE_META[ev.role] ?? { label: ev.role, color: 'var(--text-faint)', desc: '' }
               const dateLine = [ev.dateDisplay, ev.city].filter(Boolean).join(' · ')

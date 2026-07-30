@@ -4,6 +4,7 @@ import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
+      className="lb-public-layout"
       style={{
         color: 'var(--text)',
         minHeight: '100vh',

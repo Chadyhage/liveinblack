@@ -81,26 +81,34 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <PageShell maxWidth={1360}>
-      <div style={{ marginBottom: 36 }}>
+    <PageShell maxWidth={1480}>
+      <div className="lb-directory-intro" style={{ marginBottom: 44 }}>
         <SectionHeader eyebrow="La programmation" title="Événements" description="Découvre les prochaines expériences, soirées et rendez-vous près de chez toi." compact />
-        <form action="/events" method="get" style={{ display: 'flex', gap: 10, maxWidth: 720, marginTop: 24 }}>
-          <Input
-            type="text"
-            name="q"
-            defaultValue={search}
-            placeholder="Événement, ville, style…"
-            style={{ flex: 1, minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-md)', fontSize: 14 }}
-          />
-          <Button
-            type="submit"
-            variant="primary"
-            style={{ minHeight: 48, padding: '11px 22px', borderRadius: 'var(--radius-md)', textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
-          >
-            Chercher
-          </Button>
-        </form>
-        <AccessCodeForm />
+        <div className="lb-events-tools">
+          <form action="/events" method="get" className="lb-search-panel">
+            <div>
+              <p className="lb-tool-label">Trouver une sortie</p>
+              <p className="lb-tool-help">Recherche par nom, ville, artiste ou style musical.</p>
+            </div>
+            <div className="lb-search-panel__controls">
+              <Input
+                type="search"
+                name="q"
+                defaultValue={search}
+                placeholder="Événement, ville, artiste, style…"
+                style={{ flex: 1, minWidth: 0, minHeight: 52, fontSize: 15 }}
+              />
+              <Button
+                type="submit"
+                variant="primary"
+                style={{ minHeight: 52, padding: '12px 26px', textTransform: 'none', letterSpacing: 'normal', fontSize: 14 }}
+              >
+                Rechercher
+              </Button>
+            </div>
+          </form>
+          <AccessCodeForm />
+        </div>
       </div>
 
       {search ? (

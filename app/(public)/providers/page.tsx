@@ -65,20 +65,20 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
   }
 
   return (
-    <main className="provider-directory" style={{ padding: '56px 22px 88px', width: '100%', minHeight: '100vh', background: 'radial-gradient(circle 760px at 5% 0%, rgba(184, 243, 74,.10), transparent 65%), radial-gradient(circle 760px at 96% 24%, rgba(159, 224, 34,.07), transparent 62%)' }}>
+    <main className="provider-directory" style={{ padding: '56px clamp(20px, 3vw, 48px) 88px', width: '100%', minHeight: '100vh' }}>
       <style>{`
-        .provider-directory__filters{display:grid;grid-template-columns:minmax(220px,1fr) minmax(170px,.45fr) auto;gap:8px;max-width:760px;margin:0 auto 18px}
+        .provider-directory__filters{display:grid;grid-template-columns:minmax(320px,1.6fr) minmax(220px,.7fr) auto;gap:10px;margin:0 0 22px}
         .provider-directory__field{min-width:0;padding:11px 14px;border-radius:var(--radius-pill);border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13.5px}
         @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{grid-template-columns:1fr}.provider-directory__filters button{width:100%;min-height:42px}}
       `}</style>
-      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
-      <header style={{ textAlign: 'center', marginBottom: 26 }}>
+      <div style={{ maxWidth: 1480, margin: '0 auto' }}>
+      <header className="lb-directory-hero">
         <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
         <h1 className="font-display" style={{ fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em', margin: '10px 0 0' }}>Les prestataires qui font<br /><span style={{ color: 'var(--gold)' }}>vivre la nuit.</span></h1>
-        <p style={{ maxWidth: 560, margin: '16px auto 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>DJ, salles, sono, photo, boissons : trouve le bon partenaire et découvre directement ses offres.</p>
+        <p style={{ maxWidth: 620, margin: '16px 0 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>DJ, salles, sono, photo, boissons : trouve le bon partenaire et découvre directement ses offres.</p>
       </header>
 
-      <form action="/providers" method="get" className="provider-directory__filters">
+      <form action="/providers" method="get" className="provider-directory__filters lb-directory-filters">
         {category && <input type="hidden" name="categorie" value={category} />}
         <Input
           type="text"

@@ -203,13 +203,13 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
   }
 
   return (
-    <main style={{ maxWidth: 1180, margin: '0 auto', padding: '30px 20px 100px' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 18, marginBottom: 24, flexWrap: 'wrap' }}>
+    <main className="lb-dashboard-page">
+      <header className="lb-dashboard-page-header">
         <div>
-          <h1 className="font-display" style={{ fontSize: 42, letterSpacing: '.02em', color: '#fff', margin: 0 }}>
+          <h1 className="font-display lb-dashboard-title">
             Mes <span style={{ color: 'var(--teal)' }}>Événements</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', margin: '8px 0 0', fontSize: 14 }}>Crée et gère tes soirées</p>
+          <p className="lb-dashboard-description">Crée, publie et pilote toutes tes soirées depuis un seul espace.</p>
         </div>
       </header>
 

@@ -194,10 +194,6 @@ export default function AgentUsersClient() {
     }
   }, [queryString])
 
-  useEffect(() => {
-    setPage(1)
-  }, [queryString])
-
   function closeDetail() {
     setSelectedId(null)
     setDetail(null)
@@ -348,10 +344,10 @@ export default function AgentUsersClient() {
   }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, color: '#fff', margin: 0 }}>Comptes</h1>
+          <h1 className="font-display lb-dashboard-title">Comptes</h1>
         </div>
 
         {listError && (
@@ -364,12 +360,12 @@ export default function AgentUsersClient() {
         )}
 
         <div style={{ position: 'relative' }}>
-          <Input style={search ? { paddingRight: 34 } : undefined} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input style={search ? { paddingRight: 34 } : undefined} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
           {search && (
             <Button
               variant="ghost"
               aria-label="Effacer la recherche"
-              onClick={() => setSearch('')}
+              onClick={() => { setSearch(''); setPage(1) }}
               style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
               <X size={12} />
@@ -382,7 +378,7 @@ export default function AgentUsersClient() {
             <Button
               key={f.key}
               variant="ghost"
-              onClick={() => setRoleFilter(f.key)}
+              onClick={() => { setRoleFilter(f.key); setPage(1) }}
               style={{
                 flexShrink: 0,
                 padding: '4px 10px',
@@ -405,7 +401,7 @@ export default function AgentUsersClient() {
             <Button
               key={s.key}
               variant="ghost"
-              onClick={() => setStatusFilter(s.key)}
+              onClick={() => { setStatusFilter(s.key); setPage(1) }}
               style={{
                 flexShrink: 0,
                 padding: '3px 8px',
@@ -423,7 +419,7 @@ export default function AgentUsersClient() {
           ))}
           <Button
             variant="ghost"
-            onClick={() => setOnlineOnly((v) => !v)}
+            onClick={() => { setOnlineOnly((value) => !value); setPage(1) }}
             style={{
               flexShrink: 0,
               padding: '3px 8px',

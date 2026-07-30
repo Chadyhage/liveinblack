@@ -58,7 +58,6 @@ export const COMMON_NAV: DashboardNavItem[] = [
     children: [
       { label: 'Paramètres du compte', href: '/profile/parametres', icon: Settings },
       { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
-      { label: 'Support / Aide', href: '/profile/aide', icon: LifeBuoy },
     ],
   },
   {
@@ -71,6 +70,7 @@ export const COMMON_NAV: DashboardNavItem[] = [
     ],
   },
   { label: 'Mes soirées (équipe)', href: '/my-shifts', icon: Users2 },
+  { label: 'Aide & FAQ', href: '/help', icon: LifeBuoy },
 ]
 
 export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {

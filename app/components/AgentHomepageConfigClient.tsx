@@ -191,7 +191,7 @@ export default function AgentHomepageConfigClient() {
 
   if (!loaded) {
     return (
-      <main>
+      <main className="lb-dashboard-page">
         <div>
           <Card style={{ padding: '28px 18px', textAlign: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Chargement de la configuration…</span>
@@ -202,9 +202,9 @@ export default function AgentHomepageConfigClient() {
   }
 
   return (
-    <main>
+    <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <h1 className="font-display" style={{ fontSize: 24, letterSpacing: '.02em', color: '#fff', margin: 0 }}>Actualité</h1>
+        <h1 className="font-display lb-dashboard-title">Actualité</h1>
 
         {loadError && (
           <Card style={{ border: '1px solid rgba(224,90,170,0.35)' }}>

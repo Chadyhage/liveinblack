@@ -536,8 +536,6 @@ export default function MessagesClient({
 
   useEffect(() => {
     if (!activeId) return
-    setMessages([])
-    setHasMoreOlder(false)
     fetchMessages(activeId)
     apiFetch(`/api/conversations/${activeId}/read`, { method: 'POST' }).then(() => refreshConversations())
     const interval = setInterval(() => fetchMessages(activeId), 3000)
@@ -561,6 +559,8 @@ export default function MessagesClient({
   const [prevActiveId, setPrevActiveId] = useState(activeId)
   if (activeId !== prevActiveId) {
     setPrevActiveId(activeId)
+    setMessages([])
+    setHasMoreOlder(false)
     setReplyTo(null)
     setEditingMessageId(null)
     setComposerText('')
@@ -1379,10 +1379,6 @@ export default function MessagesClient({
 
   const { pageItems: pagedConversations, pageCount: convPageCount } = pagedSlice(filteredConversations, convPage, CONV_PAGE_SIZE)
 
-  useEffect(() => {
-    setConvPage(1)
-  }, [convSearch])
-
   const visibleMessages = inThreadSearchOpen && inThreadSearchQuery.trim()
     ? messages.filter((m) => (m.content || '').toLowerCase().includes(inThreadSearchQuery.trim().toLowerCase()))
     : messages
@@ -1441,7 +1437,10 @@ export default function MessagesClient({
             </div>
             <Input
               value={convSearch}
-              onChange={(e) => setConvSearch(e.target.value)}
+              onChange={(e) => {
+                setConvSearch(e.target.value)
+                setConvPage(1)
+              }}
               placeholder="Rechercher une conversation…"
               style={{ ...inputStyle, marginBottom: 0 }}
             />

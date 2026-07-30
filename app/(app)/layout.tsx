@@ -25,11 +25,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect('/login')
   }
   const activeRole = session.user.activeRole
-  const dashboardLinks = [
+  const dashboardItems = [
     ...ROLE_NAV[activeRole],
     ...COMMON_NAV,
     ...(activeRole === 'client' ? CLIENT_UPSELL : []),
-  ].map((item) => ({ label: item.label, href: item.href }))
+  ]
+  const dashboardLinks = dashboardItems.flatMap((item) => [
+    { label: item.label, href: item.href },
+    ...(item.children || []).map((child) => ({ label: child.label, href: child.href })),
+  ]).filter((item, index, all) => all.findIndex((candidate) => candidate.href === item.href) === index)
 
   return (
     <>

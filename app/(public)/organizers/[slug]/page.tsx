@@ -36,8 +36,8 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
   const showLongDescription = organizer.longDescription && organizer.longDescription !== organizer.shortDescription
 
   return (
-    <main style={{ maxWidth: 960, margin: '0 auto', padding: '0 0 60px', width: '100%' }}>
-      <div style={{ padding: '14px 22px 0' }}>
+    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 80px', width: '100%' }}>
+      <div style={{ padding: '18px 0 0' }}>
         <Link href="/organizers" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <ArrowLeft size={14} /> Organisateurs
         </Link>
