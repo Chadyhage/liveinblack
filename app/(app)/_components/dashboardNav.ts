@@ -84,7 +84,10 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
   ],
   prestataire: [
     { label: 'Mon espace', href: '/offer-services', icon: Store },
-    { label: 'Mon abonnement', href: '/my-subscription', icon: CreditCard },
+    // 'Mon abonnement' (/my-subscription) n'a plus sa propre entrée — déjà
+    // atteignable depuis le lien "Détails et historique" à l'intérieur de
+    // /offer-services, qui affiche déjà le statut condensé du même
+    // abonnement (deux entrées de sidebar pour un seul sujet).
     { label: 'Mon inscription', href: '/my-application', icon: FileText },
   ],
   // Reprend l'intégralité des onglets qui vivaient auparavant dans la barre
