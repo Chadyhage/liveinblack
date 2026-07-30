@@ -105,6 +105,12 @@ export default function StudioClient({
   const [events, setEvents] = useState<{ id: string; name: string }[]>([])
   const [linkCopied, setLinkCopied] = useState(false)
   const [crop, setCrop] = useState<{ kind: 'avatar' | 'banner'; src: string } | null>(null)
+  // Page publique (profil, galerie) et Encaissement (Stripe Connect + Mobile
+  // Money, PayoutSection ci-dessous) sont deux métiers distincts qui
+  // partageaient une seule page à défilement — d'où le libellé de sidebar
+  // "Ma page & paiements" qui devait déjà nommer les deux. Séparés en onglets ;
+  // #encaissement reste un lien de compatibilité direct vers l'onglet paiements.
+  const [tab, setTab] = useState<'page' | 'paiements'>(() => (typeof window !== 'undefined' && window.location.hash === '#encaissement' ? 'paiements' : 'page'))
 
   useEffect(() => {
     fetch('/api/organizer-events')
@@ -271,6 +277,29 @@ export default function StudioClient({
         </span>
       </header>
 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
+        {(['page', 'paiements'] as const).map((t) => (
+          <Button
+            key={t}
+            variant="ghost"
+            onClick={() => setTab(t)}
+            style={{
+              padding: '12px 14px',
+              borderRadius: 12,
+              border: `1px solid ${tab === t ? 'var(--gold)' : 'var(--border)'}`,
+              background: tab === t ? 'rgba(200,169,110,0.14)' : 'var(--surface)',
+              color: tab === t ? 'var(--gold)' : 'var(--text-muted)',
+              fontSize: 13,
+              fontWeight: 700,
+              textTransform: 'none',
+              letterSpacing: 'normal',
+            }}
+          >
+            {t === 'page' ? 'Ma page publique' : 'Encaissement'}
+          </Button>
+        ))}
+      </div>
+
       {message && (
         <div
           role="status"
@@ -289,6 +318,8 @@ export default function StudioClient({
         </div>
       )}
 
+      {tab === 'page' && (
+      <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', marginBottom: 16, overflow: 'hidden' }}>
         <div style={{ padding: 18, borderRight: '1px solid var(--border)' }}>
           <p style={{ font: '600 28px Inter, sans-serif', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
@@ -578,8 +609,10 @@ export default function StudioClient({
           </div>
         )}
       </section>
+      </>
+      )}
 
-      <PayoutSection initialStatus={initialPayoutStatus} initialMomos={initialMomos} />
+      {tab === 'paiements' && <PayoutSection initialStatus={initialPayoutStatus} initialMomos={initialMomos} />}
       </main>
       {crop && (
         <ImageCropperModal
