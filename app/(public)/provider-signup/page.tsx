@@ -1,16 +1,33 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { getMyApplication } from '@/lib/server/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 import PrestataireOnboardingWizard from '@/app/components/PrestataireOnboardingWizard'
 
-// Route PUBLIQUE (mode anonyme, pas de session) — port de
-// src/pages/OnboardingPrestataire.jsx en mode "inscription" (#8 phase
-// prestataire). Le compte et la candidature ne sont créés qu'à la
-// soumission finale, voir lib/server/applications.ts.
+// Route unique "Devenir prestataire" — publique (mode anonyme, pas de
+// session) ET connectée (reprise de dossier), même fusion que
+// /organizer-signup (voir commentaire là-bas).
 export const metadata: Metadata = {
   title: 'Devenir prestataire — LIVEINBLACK',
 }
 
-export default function InscriptionPrestatairePage() {
+const LOCKED_STATUSES = ['submitted', 'under_review', 'resubmitted', 'approved']
+
+export default async function InscriptionPrestatairePage() {
+  const session = await auth()
+
+  if (session?.user) {
+    const application = await getMyApplication({ id: session.user.id }, 'prestataire')
+    if (application && LOCKED_STATUSES.includes(application.status)) redirect('/my-application')
+
+    return (
+      <AuthSplitLayout>
+        <PrestataireOnboardingWizard mode="loggedIn" initialFormData={application?.formData} initialCandidateNote={application?.candidateNote} />
+      </AuthSplitLayout>
+    )
+  }
+
   return (
     <AuthSplitLayout
       tagline={

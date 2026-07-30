@@ -51,11 +51,13 @@ const TYPE_CONTEXT: Record<'organisateur' | 'prestataire', string> = {
 const SUCCESS_PATH: Record<'organisateur' | 'prestataire', string> = { organisateur: '/my-events', prestataire: '/offer-services' }
 const SUCCESS_LABEL: Record<'organisateur' | 'prestataire', string> = { organisateur: 'Aller à mes événements', prestataire: 'Aller à mon espace prestataire' }
 const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
-// Routes réelles en anglais (app/(app)/onboarding-organizer, .../onboarding-provider)
-// — `type` (organisateur/prestataire) ne peut pas être interpolé directement
+// `type` (organisateur/prestataire) ne peut pas être interpolé directement
 // dans l'URL comme le faisait `/onboarding-${type}` (générait des liens 404
 // vers /onboarding-organisateur et /onboarding-prestataire, qui n'existent pas).
-const EDIT_PATH: Record<'organisateur' | 'prestataire', string> = { organisateur: '/onboarding-organizer', prestataire: '/onboarding-provider' }
+// /organizer-signup et /provider-signup gèrent maintenant le mode connecté
+// (reprise de dossier) directement — /onboarding-organizer et
+// /onboarding-provider ne sont plus que des redirects de compatibilité.
+const EDIT_PATH: Record<'organisateur' | 'prestataire', string> = { organisateur: '/organizer-signup', prestataire: '/provider-signup' }
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })

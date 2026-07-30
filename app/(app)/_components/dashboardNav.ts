@@ -109,8 +109,8 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
 // CTA de bas de sidebar, client uniquement — upsell vers les deux wizards
 // d'inscription existants (déjà utilisés par le site public).
 export const CLIENT_UPSELL: DashboardNavItem[] = [
-  { label: 'Devenir organisateur', href: '/onboarding-organizer', icon: UserPlus },
-  { label: 'Devenir prestataire', href: '/onboarding-provider', icon: UserPlus },
+  { label: 'Devenir organisateur', href: '/organizer-signup', icon: UserPlus },
+  { label: 'Devenir prestataire', href: '/provider-signup', icon: UserPlus },
 ]
 
 // Routes immersives (plein écran, sans sidebar) — même esprit que HIDE_ON
@@ -118,7 +118,7 @@ export const CLIENT_UPSELL: DashboardNavItem[] = [
 // caméra/chat/wizard qui a besoin de tout l'écran. /messages n'en fait plus
 // partie (le client veut la sidebar visible aussi sur Messages, voir
 // FULL_BLEED_PREFIXES ci-dessous pour la mise en page 3 colonnes).
-export const HIDE_SIDEBAR_PREFIXES = ['/scanner', '/playlist', '/order', '/agent-sales', '/onboarding-organizer', '/onboarding-provider']
+export const HIDE_SIDEBAR_PREFIXES = ['/scanner', '/playlist', '/order', '/agent-sales']
 
 // Routes où la sidebar reste visible mais la colonne de contenu ne doit PAS
 // recevoir le padding standard de DashboardShell — MessagesClient.tsx gère
