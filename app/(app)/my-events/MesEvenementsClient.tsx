@@ -263,7 +263,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Active ta page pour apparaître chez les clients</p>
         </Link>
         <Link
-          href="/scanner"
+          href="/my-shifts"
           style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)', textDecoration: 'none', display: 'block' }}
         >
           <p style={{ font: '700 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 6px' }}>Entrée</p>

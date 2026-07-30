@@ -9,8 +9,13 @@ import { listMyStaffedEvents } from '@/lib/server/staffEvents'
 // organisateur, sans avoir lui-même le rôle organisateur. Pure lecture,
 // donc Server Component seul, sans sous-composant client (contrairement à
 // /scanner/[eventId] ou /commander/[eventId]/[ticketCode] qui ont besoin
-// d'interactivité) — même convention que app/(app)/scanner/page.tsx (index
-// des events scannables), qui est le plus proche voisin architectural.
+// d'interactivité).
+//
+// Fusionné avec l'ancien /scanner (index) : les deux pages répondaient à la
+// même question ("quel événement dois-je ouvrir ce soir ?"), l'une listant
+// les affectations roster (staff invité), l'autre les événements possédés
+// (organisateur) — voir lib/server/staffEvents.ts::listMyStaffedEvents, qui
+// fusionne maintenant les deux ensembles.
 export const metadata: Metadata = {
   title: 'Mes soirées — LIVEINBLACK',
   robots: { index: false, follow: false },
@@ -26,6 +31,10 @@ const ROLE_META: Record<string, { label: string; color: string; desc: string }> 
   // (couleur grise, description vide) ET, pire, redirigeait vers le scanner
   // au lieu de /on-site-sales/[eventId] (voir roleHref ci-dessous).
   vendeur: { label: 'Vente sur place', color: 'var(--gold)', desc: 'Vends des billets cash ou Mobile Money' },
+  // Rôle synthétique (pas une valeur EventStaff.roster[].role) — événement
+  // que l'utilisateur organise lui-même, fusionné ici depuis l'ancien
+  // /scanner (index), voir lib/server/staffEvents.ts.
+  owner: { label: 'Organisateur', color: 'var(--primary)', desc: "Ton événement — ouvre le scan pour contrôler l'entrée" },
 }
 
 // DJ → gestion de la playlist (#75/#47) ; vendeur → l'espace de vente sur
@@ -42,7 +51,7 @@ function roleHref(eventId: string, role: string): string {
 
 function roleCta(role: string): string {
   if (role === 'dj') return 'Gérer la playlist'
-  if (role === 'scan') return 'Ouvrir le scan des entrées'
+  if (role === 'scan' || role === 'owner') return 'Ouvrir le scan des entrées'
   if (role === 'vendeur') return 'Ouvrir la vente sur place'
   return 'Ouvrir le POS bar'
 }
@@ -63,7 +72,7 @@ export default async function MesSoireesPage() {
         </p>
         <h1 className="font-display lb-dashboard-title" style={{ marginTop: 6 }}>Mes soirées</h1>
         <p className="lb-dashboard-description" style={{ marginBottom: 24 }}>
-          Les événements où tu fais partie de l&apos;équipe. Ouvre le POS le jour J pour servir ou scanner.
+          Les événements où tu fais partie de l&apos;équipe, plus ceux que tu organises toi-même. Ouvre le POS le jour J pour servir, scanner ou vendre.
         </p>
 
         {events.length === 0 ? (
@@ -88,7 +97,7 @@ export default async function MesSoireesPage() {
             </div>
             <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
             <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.55 }}>
-              Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), elle apparaît ici.
+              Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), ou dès que tu crées toi-même un événement, elle apparaît ici.
             </p>
           </div>
         ) : (
