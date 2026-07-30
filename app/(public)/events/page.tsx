@@ -147,8 +147,13 @@ function SearchResults({
       <div style={{ maxWidth: 620 }}>
         <EmptyState
           title={`Aucun résultat pour « ${query} »`}
-          description="Essaie un autre nom, une autre ville ou un style musical différent."
-          action={<Link href="/events" style={{ display: 'inline-flex', padding: '12px 18px', borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>Voir tous les événements</Link>}
+          description="Essaie un autre nom, une autre ville ou un style musical différent — ou lance une recherche globale si tu cherches un organisateur ou un prestataire."
+          action={
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <Link href="/events" style={{ display: 'inline-flex', padding: '12px 18px', borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>Voir tous les événements</Link>
+              <Link href={`/search?q=${encodeURIComponent(query)}`} style={{ display: 'inline-flex', padding: '12px 18px', borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 800, color: 'var(--text)', background: 'var(--surface)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>Recherche globale</Link>
+            </div>
+          }
         />
       </div>
     )

@@ -15,7 +15,10 @@ const NAV_LINKS = [
   { href: '/organizers', label: 'Organisateurs' },
   { href: '/about', label: "C'est quoi" },
   { href: '/events#access-code', label: "J'ai un code" },
-  { href: '/search', label: 'Recherche' },
+  // "Recherche" seul prêtait à confusion à côté de "Événements", qui a sa
+  // propre recherche interne (events uniquement) — /search couvre en plus
+  // organisateurs et prestataires, d'où le libellé explicite.
+  { href: '/search', label: 'Recherche globale' },
 ]
 
 export interface DashboardNavLink {
