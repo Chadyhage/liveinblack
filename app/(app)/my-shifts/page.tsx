@@ -24,7 +24,7 @@ const ROLE_META: Record<string, { label: string; color: string; desc: string }> 
   // 'vendeur' (#C, lib/server/agentSales.ts) ajouté après le reste de cette
   // page — manquait ici, ce qui faisait tomber sur le fallback générique
   // (couleur grise, description vide) ET, pire, redirigeait vers le scanner
-  // au lieu de /agent-sales/[eventId] (voir roleHref ci-dessous).
+  // au lieu de /on-site-sales/[eventId] (voir roleHref ci-dessous).
   vendeur: { label: 'Vente sur place', color: 'var(--gold)', desc: 'Vends des billets cash ou Mobile Money' },
 }
 
@@ -36,7 +36,7 @@ const ROLE_META: Record<string, { label: string; color: string; desc: string }> 
 // `{ mode, eventId }` en state de route.
 function roleHref(eventId: string, role: string): string {
   if (role === 'dj') return `/playlist/${eventId}`
-  if (role === 'vendeur') return `/agent-sales/${eventId}`
+  if (role === 'vendeur') return `/on-site-sales/${eventId}`
   return `/scanner/${eventId}`
 }
 

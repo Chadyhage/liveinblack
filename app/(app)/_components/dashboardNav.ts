@@ -118,7 +118,7 @@ export const CLIENT_UPSELL: DashboardNavItem[] = [
 // caméra/chat/wizard qui a besoin de tout l'écran. /messages n'en fait plus
 // partie (le client veut la sidebar visible aussi sur Messages, voir
 // FULL_BLEED_PREFIXES ci-dessous pour la mise en page 3 colonnes).
-export const HIDE_SIDEBAR_PREFIXES = ['/scanner', '/playlist', '/order', '/agent-sales']
+export const HIDE_SIDEBAR_PREFIXES = ['/scanner', '/playlist', '/order', '/on-site-sales', '/agent-sales']
 
 // Routes où la sidebar reste visible mais la colonne de contenu ne doit PAS
 // recevoir le padding standard de DashboardShell — MessagesClient.tsx gère
