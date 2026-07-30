@@ -13,7 +13,6 @@ import {
   UserPlus,
   Briefcase,
   Users,
-  Zap,
   Trash2,
   Flag,
   Star,
@@ -97,7 +96,9 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
     { label: 'Comptes', href: '/agent/comptes', icon: Users },
     { label: 'Événements', href: '/agent/evenements', icon: CalendarDays },
     { label: 'Dossiers', href: '/agent/dossiers', icon: FileText },
-    { label: 'Boosts', href: '/agent/boosts', icon: Zap },
+    // 'Boosts' n'a plus sa propre entrée — fusionné comme onglet dans
+    // Paiements (vue lecture seule, sans file d'action propre, sa place
+    // naturelle à côté des autres files financières).
     { label: 'Paiements', href: '/agent/paiements', icon: CreditCard },
     { label: 'Suppressions', href: '/agent/suppressions', icon: Trash2 },
     { label: 'Signalements', href: '/agent/signalements', icon: Flag },

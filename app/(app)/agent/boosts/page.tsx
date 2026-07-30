@@ -1,19 +1,7 @@
-import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import AgentBoostsClient from '@/app/components/AgentBoostsClient'
 
-// Voir app/(app)/agent/page.tsx pour le contexte du découpage en routes réelles.
-export const metadata: Metadata = {
-  title: 'Boosts — Agent — LIVEINBLACK',
-  robots: { index: false, follow: false },
-}
-
-export default async function AgentBoostsPage() {
-  const session = await auth()
-  if (!session?.user) redirect('/login')
-  if (!requireAgent(session.user)) redirect('/')
-
-  return <AgentBoostsClient />
+// Fusionné comme onglet dans /agent/paiements (AgentPaymentsClient,
+// section 'boosts') — redirect de compatibilité pour tout lien existant.
+export default function AgentBoostsRedirect() {
+  redirect('/agent/paiements')
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import AgentBoostsClient from '@/app/components/AgentBoostsClient'
 
 const PAGE_SIZE = 15
 
@@ -125,10 +126,15 @@ type ConfirmAction =
   | { type: 'completeRefund'; refundId: string; label: string; who: string }
   | { type: 'resolveAlert'; alertId: string; label: string }
 
+// 'boosts' n'a pas de file d'action (lecture seule, voir AgentBoostsClient) —
+// fusionné ici depuis l'ancienne route /agent/boosts, qui était strictement
+// une vue sans filtre ni action, à sa place naturelle à côté des autres
+// files financières plutôt que dans sa propre entrée de sidebar.
 const SECTIONS = [
   { key: 'payouts', label: 'Reversements' },
   { key: 'refunds', label: 'Remboursements' },
   { key: 'alerts', label: 'Alertes paiement' },
+  { key: 'boosts', label: 'Boosts' },
 ] as const
 type SectionKey = (typeof SECTIONS)[number]['key']
 
@@ -300,7 +306,9 @@ export default function AgentPaymentsClient() {
     }
   }
 
-  const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length }
+  // 'boosts' n'a pas de compteur ici (AgentBoostsClient charge et affiche ses
+  // propres totaux dans son panneau) — 0 fixe, jamais mis en avant en rose.
+  const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length, boosts: 0 }
 
   return (
     <main className="lb-dashboard-page">
@@ -318,7 +326,7 @@ export default function AgentPaymentsClient() {
           </div>
         )}
 
-        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {SECTIONS.map((s) => {
             const active = s.key === section
             const count = counts[s.key]
@@ -343,7 +351,9 @@ export default function AgentPaymentsClient() {
           })}
         </div>
 
-        {loading ? (
+        {section === 'boosts' ? (
+          <AgentBoostsClient embedded />
+        ) : loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />

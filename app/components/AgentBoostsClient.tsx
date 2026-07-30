@@ -46,7 +46,7 @@ function fmtDate(iso: string): string {
   }
 }
 
-export default function AgentBoostsClient() {
+export default function AgentBoostsClient({ embedded = false }: { embedded?: boolean } = {}) {
   const [data, setData] = useState<BoostsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -92,10 +92,12 @@ export default function AgentBoostsClient() {
   const activeList = useMemo(() => (data ? data.active.filter((b) => !b.conflict) : []), [data])
   const { pageItems, pageCount } = useMemo(() => pagedSlice(activeList, page, PAGE_SIZE), [activeList, page])
 
+  const Wrapper = embedded ? 'div' : 'main'
+
   return (
-    <main className="lb-dashboard-page">
+    <Wrapper className={embedded ? undefined : 'lb-dashboard-page'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 className="font-display lb-dashboard-title">Boosts</h1>
+        {!embedded && <h1 className="font-display lb-dashboard-title">Boosts</h1>}
 
         {error && (
           <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -168,7 +170,7 @@ export default function AgentBoostsClient() {
           </>
         )}
       </div>
-    </main>
+    </Wrapper>
   )
 }
 
