@@ -14,8 +14,8 @@ export interface ModalProps {
 
 // Coquille de modal partagée — remplace le bloc dupliqué (overlay plein
 // écran + fond flouté cliquable + carte centrée + croix de fermeture) trouvé
-// à l'identique dans une douzaine de modales (AccessCodesModal, BoostModal,
-// CancelModal, GuestlistModal, PostponeModal, etc.). Le contenu (titre,
+// à l'identique dans une douzaine de modales (BoostModal, CancelModal,
+// GuestlistModal, PostponeModal, etc.). Le contenu (titre,
 // formulaire, actions) reste entièrement fourni par l'appelant via
 // `children` — cette coquille ne prescrit aucune mise en page interne.
 export default function Modal({ onClose, children, maxWidth = 520, hideClose, contentStyle }: ModalProps) {

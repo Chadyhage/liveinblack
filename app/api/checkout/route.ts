@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { createOrder, releaseOrder } from '@/lib/server/orders'
@@ -8,15 +7,13 @@ import Event from '@/lib/models/Event'
 import User from '@/lib/models/User'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 import stripe from '@/lib/server/stripeClient'
 
 // Remplace api/checkout.js (Stripe, rail EUR). Corrige :
 //  - C06 : les préco n'ont plus de prix côté client, résolues serveur dans
 //    createOrder() depuis le menu de l'événement.
 //  - H06 : URL de retour depuis PUBLIC_SITE_URL, jamais Origin/Host du client.
-//  - H07 : createOrder() bloque déjà event annulé/terminé/non publié/privé
-//    non déverrouillé.
+//  - H07 : createOrder() bloque déjà event annulé/terminé/non publié.
 //  - H08 : maxPerAccount appliqué serveur dans createOrder().
 //  - H09 : clé d'idempotence Stripe = id de l'Order.
 //  - H10 : email/nom pris de la session vérifiée, jamais du corps de requête.
@@ -52,12 +49,6 @@ export async function POST(req: Request) {
   const event = await Event.findById(eventId).lean()
   if (!event) return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
 
-  let privateAccessVerified = false
-  if (event.isPrivate) {
-    const cookieStore = await cookies()
-    privateAccessVerified = verifyEventUnlockToken(eventId, cookieStore.get(unlockCookieName(eventId))?.value)
-  }
-
   const orderResult = await createOrder({
     userId: session.user.id,
     eventId,
@@ -68,7 +59,6 @@ export async function POST(req: Request) {
     preorders,
     ticketPreorders,
     rail: 'stripe',
-    privateAccessVerified,
     cancellationProtection,
   })
   if (!orderResult.ok) return NextResponse.json({ error: orderResult.error }, { status: orderResult.status })

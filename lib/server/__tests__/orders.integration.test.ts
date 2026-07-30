@@ -215,14 +215,6 @@ describeIntegration('createOrder (intégration, transaction réelle)', () => {
     expect(excluded.ok).toBe(false)
   })
 
-  it('bloque un événement privé sans déverrouillage prouvé (ferme H07/C01)', async () => {
-    const event = await seedEvent({ isPrivate: true })
-    const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe' })
-    expect(result.ok).toBe(false)
-    if (result.ok) return
-    expect(result.status).toBe(403)
-  })
-
   it('bloque un événement annulé (ferme H07)', async () => {
     const event = await seedEvent({ cancelled: true })
     const result = await createOrder({ userId: 'user-1', eventId: event.id, placeId: 'p1', qty: 1, isTable: false, rail: 'stripe' })

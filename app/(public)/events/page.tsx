@@ -10,7 +10,6 @@ import { isEventTonight } from '@/lib/shared/eventUrgency'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
-import AccessCodeForm from './AccessCodeForm'
 import { Button, EmptyState, Input, SectionHeader, PageLinks, pageSlice } from '@/app/components/ui'
 import { PageShell } from '@/app/components/layout'
 
@@ -107,7 +106,6 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
               </Button>
             </div>
           </form>
-          <AccessCodeForm />
         </div>
       </div>
 

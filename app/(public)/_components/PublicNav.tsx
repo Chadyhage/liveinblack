@@ -14,7 +14,6 @@ const NAV_LINKS = [
   { href: '/providers', label: 'Prestataires' },
   { href: '/organizers', label: 'Organisateurs' },
   { href: '/about', label: "C'est quoi" },
-  { href: '/events#access-code', label: "J'ai un code" },
   // "Recherche" seul prêtait à confusion à côté de "Événements", qui a sa
   // propre recherche interne (events uniquement) — /search couvre en plus
   // organisateurs et prestataires, d'où le libellé explicite.

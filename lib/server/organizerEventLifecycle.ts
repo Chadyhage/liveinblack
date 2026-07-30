@@ -3,7 +3,6 @@ import Event from '../models/Event'
 import Order from '../models/Order'
 import EventStaff from '../models/EventStaff'
 import PromoCode from '../models/PromoCode'
-import EventAccessCode from '../models/EventAccessCode'
 import ResaleListing from '../models/ResaleListing'
 import Boost from '../models/Boost'
 import BoostSlot from '../models/BoostSlot'
@@ -195,7 +194,6 @@ export async function deleteOrganizerEvent(caller: LifecycleCaller, eventId: str
     Event.deleteOne({ _id: eventId }),
     EventStaff.deleteOne({ eventId }),
     PromoCode.deleteMany({ eventId }),
-    EventAccessCode.deleteMany({ eventId }),
     // BoostSlot n'est qu'un verrou de position (position+région), sans valeur
     // d'audit propre — supprimé entièrement pour libérer la position. Boost
     // est le VRAI enregistrement d'achat (paiement réel) : conservé mais

@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -6,14 +5,12 @@ import type { Metadata } from 'next'
 import { auth } from '@/auth'
 import { getEventById } from '@/lib/server/events'
 import { getPublicOrganizerByUserId } from '@/lib/server/organizers'
-import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 import { isEventInterested } from '@/lib/server/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { normalizeShowOptions } from '@/lib/shared/showOptions'
 import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/permissions'
-import UnlockForm from './UnlockForm'
 import { EventCheckoutPanel, EventInterestButtonClient, ResaleListingsSection } from '@/app/components/features'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
 import EventShareButton from './EventShareButton'
@@ -21,14 +18,10 @@ import EventShareButton from './EventShareButton'
 // Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). La sélection
 // de place + paiement (#119) est portée par
 // EventCheckoutPanel. Ce que ce fichier ajoute par rapport au
-// legacy : méta SEO (aucune n'existait), et l'application RÉELLE (pas
-// seulement UI) du blocage des événements privés — voir lib/server/events.ts.
+// legacy : méta SEO (aucune n'existait).
 
 async function resolveEvent(id: string) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(unlockCookieName(id))?.value
-  const unlocked = verifyEventUnlockToken(id, token)
-  return getEventById(id, { unlocked })
+  return getEventById(id)
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -59,16 +52,6 @@ export default async function EventDetailPage({
   const result = await resolveEvent(id)
 
   if (result.status === 'not_found') notFound()
-
-  if (result.status === 'locked') {
-    return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '80px 22px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Événement privé</h1>
-        <p style={{ color: 'var(--text-muted)', marginTop: 10 }}>Cet événement est sur invitation. Saisis le code d&apos;accès pour voir les détails.</p>
-        <UnlockForm eventId={id} />
-      </main>
-    )
-  }
 
   const { event } = result
   const session = await auth()

@@ -17,6 +17,7 @@ import { getProviderCategories, getProviderCategory } from '@/lib/shared/provide
 import { eventStartMs } from '@/lib/shared/event-time'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
 import HomeAmbienceButton from './HomeAmbienceButton'
+import HomeGreeting from './HomeGreeting'
 import { SectionHeader } from '@/app/components/ui'
 
 export const metadata: Metadata = {
@@ -106,6 +107,15 @@ export default async function AccueilPage() {
 
   return (
     <>
+      <style>{`
+        @keyframes lbHomeGreetingFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .lb-home-greeting {
+          animation: lbHomeGreetingFadeIn 0.6s ease-out both;
+        }
+      `}</style>
       {/* HERO */}
       <section style={{ position: 'relative', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', textAlign: 'center' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${HERO_IMG})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.32 }} />
@@ -121,13 +131,14 @@ export default async function AccueilPage() {
           <p style={{ fontSize: 34, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
             L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
           </p>
+          {session?.user && <HomeGreeting firstName={session.user.name ? session.user.name.trim().split(' ')[0] : ''} />}
           <h1 className="font-display" style={{ fontSize: 'clamp(38px, 9vw, 78px)', lineHeight: 0.98, letterSpacing: '0.01em', margin: '22px 0 0' }}>
             Les meilleures soirées,
             <br />
             <span style={{ color: 'var(--teal)' }}>au bout des doigts.</span>
           </h1>
           <p style={{ fontSize: 'clamp(15px,4vw,19px)', color: 'var(--text-muted)', margin: '18px auto 0', maxWidth: 520, lineHeight: 1.5 }}>
-            Réserve, découvre, profite. Ta prochaine sortie commence ici. Billets, événements privés et prestataires réunis au même endroit.
+            Réserve, découvre, profite. Ta prochaine sortie commence ici. Billets, soirées et prestataires réunis au même endroit.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
             <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
@@ -328,7 +339,7 @@ export default async function AccueilPage() {
             ['Messagerie', 'Parle aux organisateurs et prestataires.'],
             ['Tes commandes', 'Précommandes et consos suivies.'],
             ['Des points', "Chaque achat te rapproche d'avantages."],
-            ['Événements privés', 'Accède aux soirées sur invitation.'],
+            ['Organisateurs suivis', 'Sois alerté des nouvelles dates de tes organisateurs préférés.'],
           ].map(([t, d]) => (
             <div key={t} style={{ ...card, padding: '18px 16px' }}>
               <p style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>{t}</p>
@@ -390,16 +401,11 @@ export default async function AccueilPage() {
           {[
             { t: 'Des points à chaque sortie', d: "Cumule un point par billet scanné à l'entrée — bientôt échangeables contre réductions, accès prioritaire et offres exclusives." },
             { t: 'Recommandations perso', d: 'Des soirées selon ta ville, tes styles musicaux préférés et ce que tu as déjà réservé.' },
-            { t: 'Événements privés', d: 'Certaines soirées sont sur invitation. Un code te donne accès.', cta: true },
+            { t: 'Précommande au bar', d: 'Commande tes consos avant même d’arriver, récupère-les au comptoir sans faire la queue.' },
           ].map((c) => (
             <div key={c.t} style={{ ...card, padding: 20 }}>
               <p style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>{c.t}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '7px 0 0', lineHeight: 1.5 }}>{c.d}</p>
-              {c.cta && (
-                <Link href="/events" style={{ ...btnGhost, padding: '9px 16px', fontSize: 12.5, marginTop: 12 }}>
-                  J&apos;ai un code
-                </Link>
-              )}
             </div>
           ))}
         </div>

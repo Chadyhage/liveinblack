@@ -21,7 +21,6 @@ import Ticket from '../../models/Ticket'
 import ResaleListing from '../../models/ResaleListing'
 import EventStaff from '../../models/EventStaff'
 import PromoCode from '../../models/PromoCode'
-import EventAccessCode from '../../models/EventAccessCode'
 import EventRefund from '../../models/EventRefund'
 import Boost from '../../models/Boost'
 import BoostSlot from '../../models/BoostSlot'
@@ -50,7 +49,6 @@ beforeEach(async () => {
   await ResaleListing.deleteMany({})
   await EventStaff.deleteMany({})
   await PromoCode.deleteMany({})
-  await EventAccessCode.deleteMany({})
   await EventRefund.deleteMany({})
   await Boost.deleteMany({})
   await BoostSlot.deleteMany({})

@@ -14,7 +14,6 @@ import EventOrderLog from '../models/EventOrderLog'
 import EventPlaylist from '../models/EventPlaylist'
 import EventStaff from '../models/EventStaff'
 import PromoCode from '../models/PromoCode'
-import EventAccessCode from '../models/EventAccessCode'
 import { cancelProviderSubscriptionForDeletion } from './providerSubscriptions'
 import { scrubAccountPII } from './accountPurge'
 import { eventEffectiveEndMs } from '../shared/event-time'
@@ -282,7 +281,6 @@ export async function approveDeletion(agent: AgentCaller, requestId: string, not
             EventPlaylist.deleteOne({ eventId: id }, { session }),
             EventStaff.deleteOne({ eventId: id }, { session }),
             PromoCode.deleteMany({ eventId: id }, { session }),
-            EventAccessCode.deleteMany({ eventId: id }, { session }),
           ])
           await Event.deleteOne({ _id: id }, { session })
         } else {

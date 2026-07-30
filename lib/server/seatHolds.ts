@@ -43,7 +43,6 @@ export async function createSeatHold(
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }
   if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled' }
   if (isEventEnded(event)) return { ok: false, status: 409, error: 'event_ended' }
-  if (event.isPrivate) return { ok: false, status: 409, error: 'private_event_not_supported' }
 
   const place = event.places?.find((p) => p.id === input.placeId)
   if (!place) return { ok: false, status: 404, error: 'place_not_found' }

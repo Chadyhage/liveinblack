@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { createOrder, releaseOrder } from '@/lib/server/orders'
@@ -7,7 +6,6 @@ import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 import { createTransaction, createToken, getTransaction } from '@/lib/server/fedapayClient'
 
 // Remplace la branche `action:'checkout'` de api/fedapay.js (rail XOF, mobile
@@ -48,12 +46,6 @@ export async function POST(req: Request) {
   if (!event) return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
   if (event.currency !== 'XOF') return NextResponse.json({ error: 'wrong_rail_use_stripe' }, { status: 400 })
 
-  let privateAccessVerified = false
-  if (event.isPrivate) {
-    const cookieStore = await cookies()
-    privateAccessVerified = verifyEventUnlockToken(eventId, cookieStore.get(unlockCookieName(eventId))?.value)
-  }
-
   const orderResult = await createOrder({
     userId: session.user.id,
     eventId,
@@ -64,7 +56,6 @@ export async function POST(req: Request) {
     preorders,
     ticketPreorders,
     rail: 'fedapay',
-    privateAccessVerified,
     cancellationProtection,
   })
   if (!orderResult.ok) return NextResponse.json({ error: orderResult.error }, { status: orderResult.status })

@@ -12,7 +12,6 @@ import BookingsPanel from './BookingsPanel'
 import PostponeModal from './PostponeModal'
 import CancelModal from './CancelModal'
 import GuestlistModal from './GuestlistModal'
-import AccessCodesModal from './AccessCodesModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
@@ -37,7 +36,6 @@ type ModalState =
   | { type: 'guests'; event: OrganizerEventView }
   | { type: 'staff'; event: OrganizerEventView }
   | { type: 'promo'; event: OrganizerEventView }
-  | { type: 'codes'; event: OrganizerEventView }
   | { type: 'postpone'; event: OrganizerEventView }
   | { type: 'delete'; event: OrganizerEventView }
 
@@ -131,7 +129,6 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         dj: src.dj,
         performers: src.performers,
         minAge: src.minAge,
-        isPrivate: src.isPrivate,
       }
       const createRes = await fetch('/api/organizer-events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const created = await createRes.json()
@@ -164,9 +161,6 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         return
       case 'promo':
         setModal({ type: 'promo', event })
-        return
-      case 'codes':
-        setModal({ type: 'codes', event })
         return
       case 'duplicate':
         void duplicateEvent(event)
@@ -365,7 +359,6 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       )}
       {modal.type === 'staff' && <EventStaffModal event={{ id: modal.event.id, name: modal.event.name }} onClose={() => setModal({ type: 'none' })} />}
       {modal.type === 'promo' && <PromoCodesPanel event={{ id: modal.event.id, name: modal.event.name, currency: modal.event.currency }} onClose={() => setModal({ type: 'none' })} />}
-      {modal.type === 'codes' && <AccessCodesModal event={{ id: modal.event.id, name: modal.event.name }} onClose={() => setModal({ type: 'none' })} />}
       {modal.type === 'postpone' && (
         <PostponeModal
           event={{ id: modal.event.id, name: modal.event.name, date: modal.event.date, dateDisplay: modal.event.dateDisplay, time: modal.event.time }}

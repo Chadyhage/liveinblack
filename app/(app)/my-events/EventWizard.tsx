@@ -77,8 +77,6 @@ interface ServerEventDetail {
   dj: string
   performers: string[]
   minAge: number
-  isPrivate: boolean
-  hasPrivateCode: boolean
   publishAt: string | null
   closingDate: string | null
   cancelled: boolean
@@ -126,8 +124,6 @@ interface EventFormInput {
   dj?: string
   performers?: string[]
   minAge?: number
-  isPrivate?: boolean
-  privateCode?: string | null
   publishAt?: string | null
   closingDate?: string | null
 }
@@ -377,8 +373,6 @@ const FIELD_STEP: Record<string, number> = {
   dj: 0,
   performers: 0,
   minAge: 0,
-  isPrivate: 0,
-  privateCode: 0,
   imageUrl: 0,
   videoUrl: 0,
   places: 1,
@@ -411,7 +405,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   const [cancelled, setCancelled] = useState(false)
   const [locked, setLocked] = useState(false)
   const [totalSold, setTotalSold] = useState(0)
-  const [hasPrivateCodeServer, setHasPrivateCodeServer] = useState(false)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -426,8 +419,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   const [timeEnd, setTimeEnd] = useState('')
   const [showArtistSection, setShowArtistSection] = useState(false)
   const [artists, setArtists] = useState<ArtistRow[]>([])
-  const [visibility, setVisibility] = useState<'public' | 'private' | null>(null)
-  const [privateCodeInput, setPrivateCodeInput] = useState('')
   const [category, setCategory] = useState('')
   const [customGenre, setCustomGenre] = useState('')
   const [partyType, setPartyType] = useState('')
@@ -474,8 +465,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       timeStart,
       timeEnd,
       artists,
-      visibility,
-      privateCodeInput,
       category,
       customGenre,
       partyType,
@@ -508,9 +497,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     const filteredArtists = (ev.artists || []).filter((a) => a.name?.trim())
     setArtists(filteredArtists.map((a) => ({ name: a.name, role: a.role || 'DJ' })))
     setShowArtistSection(filteredArtists.length > 0)
-    setVisibility(ev.isPrivate ? 'private' : 'public')
-    setHasPrivateCodeServer(!!ev.hasPrivateCode)
-    setPrivateCodeInput('')
     if (ev.category && GENRES.includes(ev.category)) {
       setCategory(ev.category)
       setCustomGenre('')
@@ -725,7 +711,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     if (timeStart && timeEnd && timeStart === timeEnd) {
       errs.timeEnd = "L'heure de fin doit être différente de l'heure de début"
     }
-    if (!visibility) errs.visibility = "Choisis un type d'événement"
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -788,13 +773,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
     const locationValue = [venueName.trim(), address.trim()].filter(Boolean).join(', ')
 
-    const trimmedCode = privateCodeInput.trim().toUpperCase()
-    let privateCodeValue: string | null | undefined
-    if (trimmedCode) privateCodeValue = trimmedCode
-    else if (eventId === null) privateCodeValue = null
-    // sinon (édition, champ laissé vide) : on n'inclut pas la clé → le
-    // serveur conserve le code déjà configuré (jamais exposé au client).
-
     return {
       name: name.trim(),
       subtitle: subtitle.trim() || description.trim().slice(0, 60),
@@ -832,8 +810,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       dj,
       performers: [],
       minAge,
-      isPrivate: visibility === 'private',
-      ...(privateCodeValue !== undefined ? { privateCode: privateCodeValue } : {}),
       publishAt: fromDatetimeLocalValue(publishAt),
       closingDate: fromDatetimeLocalValue(closingDate),
     }
@@ -1180,72 +1156,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Type d'événement (public/privé) */}
-          <div>
-            <label style={{ ...S.label, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              Type d&apos;événement * {locked && <LockIcon />}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {(['public', 'private'] as const).map((t) => (
-                <Button
-                  key={t}
-                  variant="ghost"
-                  disabled={locked}
-                  onClick={() => {
-                    if (locked) return
-                    setVisibility(t)
-                    setErrors((e) => ({ ...e, visibility: '' }))
-                  }}
-                  title={locked ? 'Verrouillé — billets déjà vendus' : undefined}
-                  style={{
-                    ...S.card,
-                    padding: 12,
-                    display: 'block',
-                    textAlign: 'center',
-                    opacity: locked && visibility !== t ? 0.4 : 1,
-                    borderColor: visibility === t ? 'rgba(200,169,110,0.55)' : 'rgba(255,255,255,0.08)',
-                    background: visibility === t ? 'rgba(200,169,110,0.08)' : 'var(--surface)',
-                  }}
-                >
-                  <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
-                    {t === 'public' ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={visibility === t ? 'var(--gold)' : 'rgba(255,255,255,0.42)'} strokeWidth="1.5" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={visibility === t ? 'var(--gold)' : 'rgba(255,255,255,0.42)'} strokeWidth="1.5" aria-hidden="true">
-                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                        <path d="M7 11V7a5 5 0 0110 0v4" />
-                      </svg>
-                    )}
-                  </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: visibility === t ? 'var(--gold)' : 'rgba(255,255,255,0.93)' }}>{t === 'public' ? 'Public' : 'Privé'}</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>{t === 'public' ? 'Visible par tous' : 'Accès par code'}</p>
-                </Button>
-              ))}
-            </div>
-            {errors.visibility && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.visibility}</p>}
-            {visibility === 'private' && (
-              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <InputField
-                  label="Code d'accès maître (optionnel)"
-                  placeholder={hasPrivateCodeServer ? 'Un code est déjà configuré' : 'Ex: NEON2026'}
-                  value={privateCodeInput}
-                  onChange={(e) => setPrivateCodeInput(e.target.value.toUpperCase())}
-                  locked={locked}
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.08em', textTransform: 'uppercase' }}
-                />
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
-                  {hasPrivateCodeServer
-                    ? 'Un code est déjà configuré — laisse vide pour le conserver, ou saisis-en un nouveau pour le remplacer.'
-                    : 'Tu pourras aussi générer des codes individuels depuis ton tableau de bord après publication.'}
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Genre musical */}
@@ -1853,7 +1763,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               { label: 'Date', val: dateStr || '—' },
               { label: 'Horaires', val: timeStart ? `${timeStart} → ${timeEnd || '?'}` : '—' },
               { label: 'DJ / Artiste', val: artists.filter((a) => a.name?.trim()).map((a) => a.name.trim()).join(', ') || '—' },
-              { label: 'Visibilité', val: visibility === 'private' ? 'Privé' : 'Publique' },
               { label: 'Genre musical', val: category === 'Autre' ? customGenre.trim() || 'Autre' : category || 'Autre' },
               {
                 label: 'Ciblage',

@@ -123,10 +123,9 @@ describeIntegration('agentHomepageConfig (intégration, vraie base) — #9 phase
   })
 
   describe('listCandidateEventsForActualite', () => {
-    it('ne propose que les événements découvrables : jamais annulé, jamais privé', async () => {
+    it('ne propose que les événements découvrables : jamais annulé', async () => {
       const visible = await seedEvent({ name: 'Visible' })
       await seedEvent({ name: 'Annulé', cancelled: true })
-      await seedEvent({ name: 'Privé', isPrivate: true })
 
       const candidates = await listCandidateEventsForActualite()
       expect(candidates.map((c) => c.id)).toEqual([String(visible._id)])

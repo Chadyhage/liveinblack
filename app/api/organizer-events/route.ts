@@ -72,8 +72,6 @@ const eventFormSchema = z.object({
   dj: z.string().default(''),
   performers: z.array(z.string()).default([]),
   minAge: z.number().min(0).max(99).default(18),
-  isPrivate: z.boolean().default(false),
-  privateCode: z.string().nullable().optional(),
   publishAt: z.string().nullable().optional(),
   closingDate: z.string().nullable().optional(),
 })

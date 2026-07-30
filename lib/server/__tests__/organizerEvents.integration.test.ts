@@ -92,15 +92,6 @@ describeIntegration('organizerEvents (intégration, vraie base) — CRUD événe
       if (result.ok) return
       expect(result.error).toBe('group_place_requires_price')
     })
-
-    it('hache le code privé, ne stocke jamais le code en clair', async () => {
-      const result = await createOrganizerEvent({ id: 'org-1' }, 'Organisateur Test', baseForm({ isPrivate: true, privateCode: 'SECRET123' }))
-      expect(result.ok).toBe(true)
-      if (!result.ok) return
-      const doc = await Event.findById(result.eventId).select('+privateCodeHash').lean()
-      expect(doc?.privateCodeHash).toBeTruthy()
-      expect(doc?.privateCodeHash).not.toBe('SECRET123')
-    })
   })
 
   describe('updateOrganizerEvent — propriété et verrouillage post-vente', () => {
@@ -282,8 +273,8 @@ describeIntegration('organizerEvents (intégration, vraie base) — CRUD événe
       if (!result.ok) expect(result.error).toBe('forbidden')
     })
 
-    it('renvoie locked=false et sold=0 par place tant que rien n’est vendu, jamais le hash du code privé', async () => {
-      const mine = await createOrganizerEvent({ id: 'org-1' }, 'Moi', baseForm({ isPrivate: true, privateCode: 'SECRET1' }))
+    it('renvoie locked=false et sold=0 par place tant que rien n’est vendu', async () => {
+      const mine = await createOrganizerEvent({ id: 'org-1' }, 'Moi', baseForm())
       if (!mine.ok) throw new Error('seed failed')
 
       const result = await getMyOrganizerEventDetail({ id: 'org-1' }, mine.eventId)
@@ -292,9 +283,6 @@ describeIntegration('organizerEvents (intégration, vraie base) — CRUD événe
       expect(result.event.locked).toBe(false)
       expect(result.event.totalSold).toBe(0)
       expect(result.event.places[0].sold).toBe(0)
-      expect(result.event.isPrivate).toBe(true)
-      expect(result.event.hasPrivateCode).toBe(true)
-      expect(result.event).not.toHaveProperty('privateCodeHash')
     })
 
     it('renvoie locked=true et le sold réel par place dès qu’une vente existe', async () => {

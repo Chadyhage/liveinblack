@@ -4,7 +4,6 @@ import Event, { type EventDoc } from '../models/Event'
 import Order from '../models/Order'
 import Ticket from '../models/Ticket'
 import { loadEventContext } from './eventOrders'
-import { hashCode } from './events'
 import { regionToCurrency, eventCurrency } from '../shared/money'
 import { getRegionByName } from '../shared/regions'
 import { notifyNewEvent } from './organizerFollowNotifications'
@@ -88,8 +87,6 @@ export interface EventFormInput {
   dj?: string
   performers?: string[]
   minAge?: number
-  isPrivate?: boolean
-  privateCode?: string | null
   publishAt?: string | null
   closingDate?: string | null
 }
@@ -103,7 +100,6 @@ export interface OrganizerEventView {
   cancelled: boolean
   postponed: boolean
   publishAt: string | null
-  isPrivate: boolean
   imageUrl: string | null
   videoUrl: string | null
   city: string
@@ -176,9 +172,6 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     if (place.groupType === 'group' && !(place.price > 0)) return { ok: false, status: 400, error: 'group_place_requires_price' }
   }
 
-  let privateCodeHash: string | null = null
-  if (input.isPrivate && input.privateCode?.trim()) privateCodeHash = hashCode(input.privateCode)
-
   const event = await Event.create({
     name: input.name.trim(),
     subtitle: input.subtitle || '',
@@ -214,8 +207,6 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     performers: input.performers || [],
     minAge: input.minAge ?? 18,
     userCreated: true,
-    isPrivate: Boolean(input.isPrivate),
-    privateCodeHash,
     createdBy: caller.id,
     organizerId: caller.id,
     organizerName: callerName,
@@ -223,13 +214,11 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
   })
 
   // Alerte `newEvent` aux abonnés — port de old/api/send-email.js:
-  // notifyFollowers, mêmes deux exclusions ("Limite V1 assumée" du legacy) :
-  // un événement PRIVÉ ne notifie jamais (les abonnés n'y ont pas
-  // nécessairement accès) ; un événement à publication DIFFÉRÉE (publishAt
-  // futur) ne notifie pas non plus à l'instant de la création — seule une
-  // publication IMMÉDIATE déclenche l'email ici. Ne doit jamais faire
-  // échouer la création de l'événement : erreur avalée, jamais propagée.
-  if (!event.isPrivate && !event.publishAt) {
+  // notifyFollowers : un événement à publication DIFFÉRÉE (publishAt futur)
+  // ne notifie pas à l'instant de la création — seule une publication
+  // IMMÉDIATE déclenche l'email ici. Ne doit jamais faire échouer la
+  // création de l'événement : erreur avalée, jamais propagée.
+  if (!event.publishAt) {
     try {
       await notifyNewEvent(caller.id, callerName, {
         id: String(event._id),
@@ -308,11 +297,6 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
     // — la devise, elle, n'est JAMAIS recalculée ici, seulement à la
     // création).
     if (input.region !== undefined) event.region = getRegionByName(input.region).name
-    if (input.isPrivate !== undefined) {
-      event.isPrivate = input.isPrivate
-      if (input.isPrivate && input.privateCode?.trim()) event.privateCodeHash = hashCode(input.privateCode)
-      if (!input.isPrivate) event.privateCodeHash = null
-    }
   }
 
   // Menu : verrouillé dès qu'une vente quelconque existe sur l'événement
@@ -400,7 +384,6 @@ export async function listMyOrganizerEvents(caller: OrganizerEventCaller): Promi
         cancelled: Boolean(e.cancelled),
         postponed: Boolean(e.postponedFrom),
         publishAt: e.publishAt ? new Date(e.publishAt).toISOString() : null,
-        isPrivate: Boolean(e.isPrivate),
         imageUrl: e.imageUrl ?? null,
         videoUrl: e.videoUrl ?? null,
         city: e.city ?? '',
@@ -463,8 +446,6 @@ export interface OrganizerEventDetailView {
   dj: string
   performers: string[]
   minAge: number
-  isPrivate: boolean
-  hasPrivateCode: boolean
   publishAt: string | null
   closingDate: string | null
   cancelled: boolean
@@ -476,20 +457,14 @@ export interface OrganizerEventDetailView {
 export type GetEventDetailResult = ErrResult | { ok: true; event: OrganizerEventDetailView }
 
 // Vue COMPLÈTE d'un événement pour le wizard d'édition — jamais utilisée
-// pour un affichage public (`privateCodeHash` n'est jamais chargé ni
-// exposé, seul un booléen `hasPrivateCode` indique sa présence). `locked` et
-// `sold` par place sont des indications de present PURE UI (griser les
-// champs) — la vraie frontière de verrouillage reste updateOrganizerEvent,
-// re-vérifiée serveur à chaque sauvegarde, jamais dérivée de ce que le
-// client renvoie ici.
+// pour un affichage public. `locked` et `sold` par place sont des
+// indications de present PURE UI (griser les champs) — la vraie frontière
+// de verrouillage reste updateOrganizerEvent, re-vérifiée serveur à chaque
+// sauvegarde, jamais dérivée de ce que le client renvoie ici.
 export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, eventId: string): Promise<GetEventDetailResult> {
   await getDb()
 
-  // `privateCodeHash` a select:false sur le schéma — même un chargement
-  // "privilégié" côté propriétaire doit le redemander explicitement, sinon
-  // `hasPrivateCode` serait TOUJOURS faux (jamais exposé en clair, voir la
-  // vue OrganizerEventDetailView : seul le booléen sort d'ici).
-  const event = await Event.findById(eventId).select('+privateCodeHash').lean()
+  const event = await Event.findById(eventId).lean()
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }
   if (event.organizerId !== caller.id && event.createdBy !== caller.id) return { ok: false, status: 403, error: 'forbidden' }
 
@@ -541,8 +516,6 @@ export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, ev
       dj: event.dj ?? '',
       performers: event.performers ?? [],
       minAge: event.minAge ?? 18,
-      isPrivate: Boolean(event.isPrivate),
-      hasPrivateCode: Boolean(event.privateCodeHash),
       publishAt: event.publishAt ? new Date(event.publishAt).toISOString() : null,
       closingDate: event.closingDate ? new Date(event.closingDate).toISOString() : null,
       cancelled: Boolean(event.cancelled),

@@ -1,26 +1,14 @@
 import { NextResponse } from 'next/server'
 import { getEventById } from '@/lib/server/events'
 import { getPublicOrganizerByUserId } from '@/lib/server/organizers'
-import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 
 // Détail d'un événement en JSON — miroir de resolveEvent() dans
-// app/(public)/events/[id]/page.tsx (même cookie de déverrouillage signé, même
-// frontière de sécurité : un event privé ne renvoie ses données que si le
-// cookie posé par POST /api/events/[eventId]/unlock est présent et valide).
+// app/(public)/events/[id]/page.tsx.
 export async function GET(req: Request, { params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params
-  const cookieHeader = req.headers.get('cookie') || ''
-  const unlockToken = cookieHeader
-    .split(';')
-    .map((c) => c.trim())
-    .find((c) => c.startsWith(`${unlockCookieName(eventId)}=`))
-    ?.split('=')[1]
-
-  const unlocked = verifyEventUnlockToken(eventId, unlockToken)
-  const result = await getEventById(eventId, { unlocked })
+  const result = await getEventById(eventId)
 
   if (result.status === 'not_found') return NextResponse.json({ error: 'not_found' }, { status: 404 })
-  if (result.status === 'locked') return NextResponse.json({ error: 'locked', id: result.id }, { status: 403 })
 
   // Pass-through pur (aucune logique recalculée) : miroir de la section
   // "Organisateur" de app/(public)/events/[id]/page.tsx, qui résout le slug/

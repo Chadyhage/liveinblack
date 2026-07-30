@@ -18,8 +18,6 @@ export type EventLike = {
   endTime?: string
   closingDate?: string | Date | null
   cancelled?: boolean
-  isPrivate?: boolean
-  visibility?: string
   isDemo?: boolean
   demoLabel?: string
   publishAt?: string | Date | null

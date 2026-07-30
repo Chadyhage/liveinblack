@@ -36,7 +36,6 @@ export async function listPublicOrganizersWithNextEvent(): Promise<PublicOrganiz
   const organizerIds = profiles.map((profile) => profile.userId)
   const docs = await Event.find({
     organizerId: { $in: organizerIds },
-    isPrivate: { $ne: true },
     cancelled: { $ne: true },
   })
     .select('organizerId name date dateDisplay time endTime closingDate city region publishAt cancelled')
@@ -95,7 +94,6 @@ export async function getOrganizerEvents(organizerId: string): Promise<{ upcomin
   await getDb()
   const docs = await Event.find({
     organizerId,
-    isPrivate: { $ne: true },
     cancelled: { $ne: true },
   })
     .sort({ date: -1 })

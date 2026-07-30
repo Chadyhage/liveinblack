@@ -14,7 +14,6 @@ const ACTIONS: { key: EventActionKey; label: string; color: string }[] = [
   { key: 'guests', label: 'Guestlist', color: 'var(--teal)' },
   { key: 'staff', label: 'Équipe', color: 'var(--gold)' },
   { key: 'promo', label: 'Codes promo', color: 'var(--violet)' },
-  { key: 'codes', label: 'Codes', color: 'rgba(255,255,255,0.85)' },
   { key: 'duplicate', label: 'Dupliquer', color: 'var(--violet)' },
   { key: 'edit', label: 'Modifier', color: 'var(--gold)' },
   { key: 'postpone', label: 'Reporter', color: 'var(--gold)' },
@@ -29,7 +28,6 @@ function statusBadge(event: OrganizerEventView): { label: string; background: st
 }
 
 export default function EventDashboardCard({ event, onAction }: { event: OrganizerEventView; onAction: (action: EventActionKey, event: OrganizerEventView) => void }) {
-  const actions = ACTIONS.filter((a) => a.key !== 'codes' || event.isPrivate)
   const badge = statusBadge(event)
 
   return (
@@ -77,7 +75,7 @@ export default function EventDashboardCard({ event, onAction }: { event: Organiz
           Voir la page de l&rsquo;événement →
         </Link>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
-          {actions.map((action) => (
+          {ACTIONS.map((action) => (
             <Button
               key={action.key}
               variant="secondary"

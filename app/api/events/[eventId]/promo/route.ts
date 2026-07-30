@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
@@ -7,7 +6,6 @@ import Event from '@/lib/models/Event'
 import PromoCode from '@/lib/models/PromoCode'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { resolvePromo, promoLabel, promoUnitDiscount } from '@/lib/server/promos'
-import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 import { isEventEnded } from '@/lib/shared/event-time'
 
 const schema = z.object({
@@ -31,10 +29,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ eventId
   if (!event) return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
   if (event.cancelled || isEventEnded(event)) return NextResponse.json({ error: 'booking_closed' }, { status: 409 })
   if (event.publishAt && new Date(event.publishAt).getTime() > Date.now()) return NextResponse.json({ error: 'event_not_published' }, { status: 409 })
-  if (event.isPrivate) {
-    const token = (await cookies()).get(unlockCookieName(eventId))?.value
-    if (!verifyEventUnlockToken(eventId, token)) return NextResponse.json({ error: 'private_event_locked' }, { status: 403 })
-  }
 
   const place = event.places?.find((item) => item.id === parsed.data.placeId)
   if (!place) return NextResponse.json({ error: 'place_not_found' }, { status: 404 })

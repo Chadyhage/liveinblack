@@ -40,7 +40,6 @@ export type FreeCheckoutInput = {
   isTable: boolean
   preorders?: Array<{ name: string; qty: number }>
   ticketPreorders?: Array<{ ticketIndex: number; items: Array<{ name: string; qty: number; showOptionId?: string; showInfo?: string }> }>
-  privateAccessVerified?: boolean
 }
 
 export type FreeCheckoutResult =
@@ -93,7 +92,6 @@ export async function freeCheckout(input: FreeCheckoutInput): Promise<FreeChecko
     preorders: input.preorders || [],
     ticketPreorders: input.ticketPreorders || [],
     rail: 'free',
-    privateAccessVerified: input.privateAccessVerified,
   })
   if (!orderResult.ok) return orderResult
   const order = orderResult.order

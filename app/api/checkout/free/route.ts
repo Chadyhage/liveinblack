@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { freeCheckout } from '@/lib/server/freeCheckout'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
-import { verifyEventUnlockToken, unlockCookieName } from '@/lib/server/eventUnlock'
 
 // Remplace la branche "ÉVÉNEMENT GRATUIT" de src/pages/EventDetailPage.jsx
 // (confirmBooking(), création directe côté client) — ici entièrement
@@ -40,12 +38,6 @@ export async function POST(req: Request) {
   const event = await Event.findById(eventId).lean()
   if (!event) return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
 
-  let privateAccessVerified = false
-  if (event.isPrivate) {
-    const cookieStore = await cookies()
-    privateAccessVerified = verifyEventUnlockToken(eventId, cookieStore.get(unlockCookieName(eventId))?.value)
-  }
-
   const result = await freeCheckout({
     userId: session.user.id,
     eventId,
@@ -54,7 +46,6 @@ export async function POST(req: Request) {
     isTable,
     preorders,
     ticketPreorders,
-    privateAccessVerified,
   })
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
 

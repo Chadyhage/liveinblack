@@ -10,7 +10,6 @@ export interface OrganizerEventView {
   cancelled: boolean
   postponed: boolean
   publishAt: string | null
-  isPrivate: boolean
   imageUrl: string | null
   videoUrl: string | null
   city: string
@@ -22,7 +21,7 @@ export interface OrganizerEventView {
   revenue: number
 }
 
-export type EventActionKey = 'stats' | 'bookings' | 'boost' | 'guests' | 'staff' | 'promo' | 'codes' | 'duplicate' | 'edit' | 'postpone' | 'delete'
+export type EventActionKey = 'stats' | 'bookings' | 'boost' | 'guests' | 'staff' | 'promo' | 'duplicate' | 'edit' | 'postpone' | 'delete'
 
 export function formatMoney(amount: number, currency: 'EUR' | 'XOF'): string {
   if (currency === 'XOF') return `${Math.round(amount).toLocaleString('fr-FR')} FCFA`

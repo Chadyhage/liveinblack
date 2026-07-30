@@ -88,7 +88,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   event_cancelled: 'Cet événement a été annulé.',
   event_ended: 'Cet événement est déjà terminé.',
   event_not_published: "Cet événement n'est pas encore publié.",
-  private_event_locked: 'Cet événement est privé — déverrouille-le avant de réserver.',
   place_not_found: "Cette place n'existe plus. Réactualise la page.",
   not_a_group_place: "Cette place n'est pas une place de groupe.",
   max_per_account_exceeded: 'Tu as atteint la limite autorisée pour cette place sur ce compte.',

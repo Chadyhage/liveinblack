@@ -6,8 +6,7 @@
 // couvre le comportement réel (visibilité publique, verrouillage privé).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { listPublicEvents, searchPublicEvents, getEventById, verifyPrivateEventCode, hashCode } from '../events'
-import { signEventUnlock, verifyEventUnlockToken } from '../eventUnlock'
+import { listPublicEvents, searchPublicEvents, getEventById } from '../events'
 import { createOrganizerEvent } from '../organizerEvents'
 import Event from '../../models/Event'
 import EventOrder from '../../models/EventOrder'
@@ -57,9 +56,8 @@ async function seedEvent(overrides: Partial<Record<string, unknown>> = {}) {
 
 describeIntegration('events (intégration, vraie base) — routes JSON publiques (#mobile)', () => {
   describe('listPublicEvents', () => {
-    it('exclut les événements privés et annulés', async () => {
+    it('exclut les événements annulés', async () => {
       await seedEvent({ name: 'Public' })
-      await seedEvent({ name: 'Privé', isPrivate: true })
       await seedEvent({ name: 'Annulé', cancelled: true })
 
       const events = await listPublicEvents()
@@ -74,35 +72,16 @@ describeIntegration('events (intégration, vraie base) — routes JSON publiques
     })
   })
 
-  describe('getEventById + verrouillage', () => {
-    it("un événement privé n'est visible qu'avec unlocked=true", async () => {
-      const id = await seedEvent({ isPrivate: true })
-
-      const locked = await getEventById(id)
-      expect(locked).toEqual({ status: 'locked', id })
-
-      const unlocked = await getEventById(id, { unlocked: true })
-      expect(unlocked.status).toBe('ok')
+  describe('getEventById', () => {
+    it('renvoie ok pour un événement existant', async () => {
+      const id = await seedEvent()
+      const result = await getEventById(id)
+      expect(result.status).toBe('ok')
     })
 
     it('renvoie not_found pour un id invalide ou inexistant', async () => {
       expect(await getEventById('not-an-object-id')).toEqual({ status: 'not_found' })
       expect(await getEventById(new mongoose.Types.ObjectId().toString())).toEqual({ status: 'not_found' })
-    })
-  })
-
-  describe('déverrouillage : code + cookie signé (miroir POST /api/events/[eventId]/unlock)', () => {
-    it('un code correct valide, un jeton de cookie signé pour cet event est ensuite vérifiable', async () => {
-      const id = await seedEvent({ isPrivate: true, privateCodeHash: hashCode('SECRET1') })
-
-      expect(await verifyPrivateEventCode(id, 'wrong')).toBe(false)
-      expect(await verifyPrivateEventCode(id, 'secret1')).toBe(true) // insensible à la casse (hashCode normalise)
-
-      const token = signEventUnlock(id)
-      expect(verifyEventUnlockToken(id, token)).toBe(true)
-      expect(verifyEventUnlockToken(id, 'faux-token')).toBe(false)
-      // Le jeton d'un event ne doit jamais déverrouiller un autre event.
-      expect(verifyEventUnlockToken('un-autre-id', token)).toBe(false)
     })
   })
 })

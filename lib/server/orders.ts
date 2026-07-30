@@ -36,8 +36,6 @@ export type CreateOrderInput = {
   ticketPreorders?: Array<{ ticketIndex: number; items: Array<{ name: string; qty: number; showOptionId?: string; showInfo?: string }> }>
   /** 'free' = lib/server/freeCheckout.ts — place gratuite, aucun rail de paiement à choisir (H07/H08 restent appliqués identiquement). */
   rail: 'stripe' | 'fedapay' | 'free'
-  /** Le caller (route API) a déjà vérifié le cookie de déverrouillage si l'event est privé. */
-  privateAccessVerified?: boolean
   /** Assurance-annulation optionnelle (lib/shared/fees.ts::CANCELLATION_PROTECTION) — jamais sur une place gratuite. */
   cancellationProtection?: boolean
 }
@@ -54,7 +52,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled' } // H07
   if (isEventEnded(event)) return { ok: false, status: 409, error: 'event_ended' } // H07
   if (event.publishAt && event.publishAt.getTime() > Date.now()) return { ok: false, status: 409, error: 'event_not_published' } // H07
-  if (event.isPrivate && !input.privateAccessVerified) return { ok: false, status: 403, error: 'private_event_locked' } // H07
 
   const place = event.places?.find((p) => p.id === input.placeId)
   if (!place) return { ok: false, status: 404, error: 'place_not_found' }

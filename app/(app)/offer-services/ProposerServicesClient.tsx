@@ -293,6 +293,13 @@ export default function ProposerServicesClient({
 
   const [showItemForm, setShowItemForm] = useState(false)
   const [newItem, setNewItem] = useState<NewItemForm>(EMPTY_ITEM)
+  // Fichiers choisis avant même que l'offre existe (id serveur pas encore
+  // attribué) — on garde le File + une URL locale (createObjectURL) pour
+  // la prévisualisation, révoquée à la fermeture/l'annulation du formulaire
+  // ou à la publication. L'upload réel se fait après la création de l'offre
+  // (handleAddItem), enchaîné dans le même clic sur « Publier ».
+  const [newItemFiles, setNewItemFiles] = useState<{ file: File; url: string }[]>([])
+  const [addingItem, setAddingItem] = useState(false)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<NewItemForm | null>(null)
   const [mediaUploading, setMediaUploading] = useState(false)
@@ -499,10 +506,56 @@ export default function ProposerServicesClient({
   function resetItemForm() {
     setNewItem(EMPTY_ITEM)
     setShowItemForm(false)
+    newItemFiles.forEach((f) => URL.revokeObjectURL(f.url))
+    setNewItemFiles([])
+  }
+
+  function addNewItemFiles(fileList: FileList | null) {
+    if (!fileList || !fileList.length) return
+    const accepted: { file: File; url: string }[] = []
+    for (const file of Array.from(fileList)) {
+      const isImage = file.type.startsWith('image/')
+      const isVideo = file.type.startsWith('video/')
+      if (!isImage && !isVideo) {
+        notify('Utilise une photo JPG, PNG, WEBP ou une vidéo MP4, WEBM, MOV.')
+        continue
+      }
+      if (isVideo && !['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)) {
+        notify('Utilise une vidéo MP4, WEBM ou MOV.')
+        continue
+      }
+      if (isVideo && file.size > 30_000_000) {
+        notify('La vidéo doit faire 30 Mo maximum.')
+        continue
+      }
+      if (isImage && file.size > 10_000_000) {
+        notify("L'image doit faire 10 Mo maximum.")
+        continue
+      }
+      accepted.push({ file, url: URL.createObjectURL(file) })
+    }
+    if (!accepted.length) return
+    setNewItemFiles((current) => {
+      const combined = [...current, ...accepted]
+      if (combined.length > 4) {
+        notify('Maximum 4 médias par offre.')
+        combined.slice(4).forEach((f) => URL.revokeObjectURL(f.url))
+      }
+      return combined.slice(0, 4)
+    })
+  }
+
+  function removeNewItemFile(index: number) {
+    setNewItemFiles((current) => {
+      const target = current[index]
+      if (target) URL.revokeObjectURL(target.url)
+      return current.filter((_, i) => i !== index)
+    })
   }
 
   async function handleAddItem() {
     if (!newItem.name.trim()) return notify('Donne un nom à cette offre.')
+    setAddingItem(true)
     try {
       const res = await fetch('/api/providers/me/catalog', {
         method: 'POST',
@@ -517,13 +570,51 @@ export default function ProposerServicesClient({
         }),
       })
       const data = await res.json()
-      if (!res.ok || !data.ok) return notify('Impossible d’ajouter cette offre.')
-      setProfile(data.profile)
+      if (!res.ok || !data.ok) {
+        notify('Impossible d’ajouter cette offre.')
+        setAddingItem(false)
+        return
+      }
+      // L'API renvoie le profil avec l'offre ajoutée en fin de catalogue
+      // (addCatalogItem fait un push) — c'est le seul moyen de récupérer
+      // son id fraîchement généré côté serveur pour y attacher les médias.
+      let profile: ProviderProfileView = data.profile
+      const newItemId = profile.catalog[profile.catalog.length - 1]?.id
+
+      if (newItemId && newItemFiles.length) {
+        for (const { file } of newItemFiles) {
+          try {
+            const isVideo = file.type.startsWith('video/')
+            const media = isVideo
+              ? { upload: await uploadPublicMedia(file, 'provider-catalog') }
+              : { dataUri: await resizeImageToDataUri(file, 1280) }
+            const mediaRes = await fetch(`/api/providers/me/catalog/${newItemId}/media`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(media),
+            })
+            const mediaData = await mediaRes.json()
+            if (!mediaRes.ok || !mediaData.ok) throw new Error(mediaData.error || 'upload_failed')
+            profile = mediaData.profile
+          } catch {
+            // L'offre existe déjà côté serveur : on ne la perd pas, on
+            // prévient juste que ses médias n'ont pas tous été envoyés.
+            setProfile(profile)
+            resetItemForm()
+            notify('Offre créée, mais l’envoi des photos/vidéos a échoué. Modifie l’offre pour réessayer.')
+            setAddingItem(false)
+            return
+          }
+        }
+      }
+
+      setProfile(profile)
       resetItemForm()
       notify('Offre ajoutée au catalogue.')
     } catch {
       notify('Impossible d’ajouter cette offre.')
     }
+    setAddingItem(false)
   }
 
   function startEdit(item: CatalogItemView) {
@@ -1000,15 +1091,54 @@ export default function ProposerServicesClient({
                   <Field label="Description">
                     <Textarea style={{ minHeight: 96 }} value={newItem.description} onChange={(e) => setNewItem((c) => ({ ...c, description: e.target.value }))} placeholder="Ce qui est inclus, durée, conditions principales…" />
                   </Field>
+
+                  <div>
+                    <span style={{ display: 'block', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Photos / vidéos (optionnel)</span>
+                    {newItemFiles.length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginBottom: 8 }}>
+                        {newItemFiles.map((f, i) => (
+                          <div key={`${f.file.name}-${i}`} style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#05060b', aspectRatio: '16 / 10' }}>
+                            {f.file.type.startsWith('video/') ? (
+                              <video src={f.url} muted preload="metadata" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <NextImage src={f.url} alt="" fill unoptimized style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
+                            )}
+                            <Button variant="ghost" onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
+                              ×
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {newItemFiles.length < 4 && (
+                      <Label style={{ display: 'block', width: '100%', minHeight: 64, borderRadius: 13, border: '1px dashed rgba(255,255,255,.18)', background: 'rgba(255,255,255,.04)', color: 'rgba(255,255,255,.55)', cursor: addingItem ? 'wait' : 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, textAlign: 'center', lineHeight: '64px', marginBottom: 0 }}>
+                        {`+ Ajouter une photo ou une vidéo (${newItemFiles.length}/4)`}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                          multiple
+                          hidden
+                          disabled={addingItem}
+                          onChange={(e) => {
+                            addNewItemFiles(e.target.files)
+                            e.target.value = ''
+                          }}
+                        />
+                      </Label>
+                    )}
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.35)', margin: '6px 0 0' }}>
+                      JPG, PNG, WEBP, MP4, WEBM ou MOV. Envoyés dès la publication de l&rsquo;offre — tu pourras aussi en ajouter ou en retirer plus tard.
+                    </p>
+                  </div>
+
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <Button onClick={handleAddItem} style={primaryButton}>
+                    <Button onClick={handleAddItem} disabled={addingItem} loading={addingItem} loadingText="Publication…" style={primaryButton}>
                       Publier dans le catalogue
                     </Button>
-                    <Button variant="secondary" onClick={resetItemForm} style={secondaryButton}>
+                    <Button variant="secondary" onClick={resetItemForm} disabled={addingItem} style={secondaryButton}>
                       Annuler
                     </Button>
                   </div>
-                  <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.4)', margin: 0 }}>Tu pourras ajouter des photos/vidéos une fois l&rsquo;offre créée.</p>
                 </div>
               </div>
             )}
