@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         line_items: lineItems,
         customer_email: session.user.email || undefined,
         success_url: `${SITE}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-        cancel_url: `${SITE}/payment-cancelled?event_id=${encodeURIComponent(order.eventId)}`,
+        cancel_url: `${SITE}/payment-success?cancelled=1&event_id=${encodeURIComponent(order.eventId)}`,
         metadata: { orderId },
         locale: 'fr',
       },

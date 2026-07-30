@@ -2,7 +2,9 @@ import PaymentSuccessClient from '@/app/components/PaymentSuccessClient'
 
 export const dynamic = 'force-dynamic'
 
-// Cible de app/api/checkout/route.ts (success_url, Stripe : ?session_id=&order_id=),
+// Cible de app/api/checkout/route.ts (success_url, Stripe : ?session_id=&order_id=,
+// cancel_url : ?cancelled=1&event_id=, fusionné ici — voir stripeCancelledEventId
+// ci-dessous, l'ancienne page statique /payment-cancelled a été retirée),
 // app/api/checkout/fedapay/route.ts (callbackUrl, FedaPay : FedaPay ajoute
 // lui-même ?id=&status=&close= sur ce retour unique — succès ET abandon), et
 // app/components/EventCheckoutPanel.tsx pour une place gratuite (rail 'free' —
@@ -14,7 +16,7 @@ export const dynamic = 'force-dynamic'
 export default async function PaiementReussiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string; id?: string; status?: string; close?: string; order_id?: string; free?: string }>
+  searchParams: Promise<{ session_id?: string; id?: string; status?: string; close?: string; order_id?: string; free?: string; cancelled?: string; event_id?: string }>
 }) {
   const params = await searchParams
   const sessionId = params.session_id || null
@@ -25,6 +27,15 @@ export default async function PaiementReussiPage({
   // sont là ET que le flag free=true est explicitement posé par
   // EventCheckoutPanel.
   const freeOrderId = !sessionId && !fedapayTxnId && params.free === 'true' ? params.order_id || null : null
+  const stripeCancelledEventId = !sessionId && !fedapayTxnId && !freeOrderId && params.cancelled === '1' ? params.event_id || null : null
 
-  return <PaymentSuccessClient sessionId={sessionId} fedapayTxnId={fedapayTxnId} fedapayClose={fedapayClose} freeOrderId={freeOrderId} />
+  return (
+    <PaymentSuccessClient
+      sessionId={sessionId}
+      fedapayTxnId={fedapayTxnId}
+      fedapayClose={fedapayClose}
+      freeOrderId={freeOrderId}
+      stripeCancelledEventId={stripeCancelledEventId}
+    />
+  )
 }

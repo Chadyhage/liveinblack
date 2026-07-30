@@ -65,21 +65,27 @@ export default function PaymentSuccessClient({
   fedapayTxnId,
   fedapayClose,
   freeOrderId,
+  stripeCancelledEventId,
 }: {
   sessionId: string | null
   fedapayTxnId: string | null
   fedapayClose: boolean
   freeOrderId: string | null
+  stripeCancelledEventId?: string | null
 }) {
   const router = useRouter()
   const isFedapay = !sessionId && !!fedapayTxnId
   const isFree = !sessionId && !fedapayTxnId && !!freeOrderId
+  // Retour direct du cancel_url Stripe (jamais de session_id, jamais de
+  // webhook à attendre — la commande n'a même pas été créée) : état
+  // "cancelled" immédiat, même écran que l'abandon FedaPay.
+  const isStripeCancelled = !sessionId && !fedapayTxnId && !freeOrderId && !!stripeCancelledEventId
 
-  const missingParams = !sessionId && !fedapayTxnId && !freeOrderId
-  const [state, setState] = useState<State>(missingParams ? 'error' : 'loading')
+  const missingParams = !sessionId && !fedapayTxnId && !freeOrderId && !isStripeCancelled
+  const [state, setState] = useState<State>(isStripeCancelled ? 'cancelled' : missingParams ? 'error' : 'loading')
   const [ticketCount, setTicketCount] = useState(0)
   const [eventName, setEventName] = useState('')
-  const [eventId, setEventId] = useState('')
+  const [eventId, setEventId] = useState(stripeCancelledEventId || '')
   const [errorMsg, setErrorMsg] = useState(missingParams ? 'Paramètres de session manquants.' : '')
   const [copied, setCopied] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -91,7 +97,7 @@ export default function PaymentSuccessClient({
   }
 
   useEffect(() => {
-    if (missingParams) return
+    if (missingParams || isStripeCancelled) return
 
     let cancelled = false
     ;(async () => {
@@ -159,7 +165,7 @@ export default function PaymentSuccessClient({
       setState(result)
     })()
     return () => { cancelled = true }
-  }, [sessionId, fedapayTxnId, fedapayClose, freeOrderId, isFedapay, isFree, missingParams, attempt])
+  }, [sessionId, fedapayTxnId, fedapayClose, freeOrderId, isFedapay, isFree, missingParams, isStripeCancelled, attempt])
 
   // Auto-refresh borné : tant que « en attente », on re-vérifie tout seul
   // toutes les 3,5 s (jusqu'à 5 fois) — le webhook finit en général en

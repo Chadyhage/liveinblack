@@ -141,7 +141,7 @@ export async function POST(req: Request) {
         ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
         customer_email: session.user.email || undefined,
         success_url: `${SITE}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
-        cancel_url: `${SITE}/payment-cancelled?event_id=${encodeURIComponent(eventId)}`,
+        cancel_url: `${SITE}/payment-success?cancelled=1&event_id=${encodeURIComponent(eventId)}`,
         metadata: { orderId },
         locale: 'fr',
       },
