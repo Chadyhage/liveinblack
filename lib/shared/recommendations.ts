@@ -164,7 +164,12 @@ function eventArtistNames(event: RecommendationEvent): string[] {
 // matcherait à tort le budget "Gratuit".
 function eventMinPrice(event: RecommendationEvent): number | null {
   const prices = (event.places || [])
-    .map((p) => Number(p.price))
+    // `Number(null) === 0` — sans ce garde, une place mal formée avec
+    // `price: null` passait le filtre ci-dessous et faisait croire l'event
+    // gratuit (bug confirmé par audit), exactement ce que le commentaire
+    // au-dessus interdit. `undefined` était déjà correctement écarté
+    // (Number(undefined) = NaN), seul `null` posait problème.
+    .map((p) => (p.price == null ? NaN : Number(p.price)))
     .filter((n) => Number.isFinite(n) && n >= 0)
   return prices.length ? Math.min(...prices) : null
 }

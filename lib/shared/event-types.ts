@@ -16,6 +16,9 @@ export type EventLike = {
   date?: string
   time?: string
   endTime?: string
+  // Nom de région (lib/shared/regions.ts, PAS un id — voir lib/models/Event.ts)
+  // — source du fuseau horaire réel de l'événement, voir event-time.ts.
+  region?: string
   closingDate?: string | Date | null
   cancelled?: boolean
   isDemo?: boolean

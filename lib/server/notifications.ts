@@ -60,7 +60,14 @@ export async function upsertMessageNotification(userId: string, conversationId: 
 
 export async function listNotifications(userId: string, { limit = 20 }: { limit?: number } = {}) {
   await getDb()
-  const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).limit(limit).lean()
+  // Trié sur `updatedAt`, pas `createdAt` : upsertMessageNotification()
+  // rafraîchit (jamais ne recrée) la notification d'une conversation active,
+  // donc `createdAt` reste figé à sa toute première apparition — un nouveau
+  // message dans une conversation vieille de plusieurs semaines restait
+  // enterré loin dans la liste malgré le badge non-lu (bug confirmé par
+  // audit). `updatedAt` est géré automatiquement par { timestamps: true }
+  // sur CHAQUE écriture (création ET $set), donc toujours à jour ici.
+  const notifications = await Notification.find({ userId }).sort({ updatedAt: -1 }).limit(limit).lean()
   return notifications.map((n) => ({
     id: String(n._id),
     type: n.type,

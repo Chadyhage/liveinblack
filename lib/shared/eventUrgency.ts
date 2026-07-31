@@ -2,32 +2,16 @@
 // cartes d'événements (liste + Top 3). Pures : prennent un event, renvoient de
 // quoi afficher countdown + stock.
 import type { EventLike } from './event-types'
+import { eventStartMs, eventEndMs } from './event-time'
 
-export function getEventStartTimestamp(event: EventLike | null | undefined): number {
-  if (!event?.date) return 0
-  try {
-    const [sh, sm] = (event.time || '23:00').split(':').map(Number)
-    const d = new Date(event.date + 'T00:00:00')
-    d.setHours(sh, sm, 0, 0)
-    return d.getTime()
-  } catch {
-    return 0
-  }
-}
-
-export function getEventEndTimestamp(event: EventLike | null | undefined): number {
-  const start = getEventStartTimestamp(event)
-  if (!start) return 0
-  try {
-    const [eh, em] = (event!.endTime || event!.time || '23:59').split(':').map(Number)
-    const end = new Date(event!.date + 'T00:00:00')
-    end.setHours(eh, em, 0, 0)
-    if (end.getTime() < start) end.setDate(end.getDate() + 1)
-    return end.getTime()
-  } catch {
-    return 0
-  }
-}
+// Ré-exports de event-time.ts (mêmes noms historiques de ce fichier, gardés
+// pour ne pas toucher tous les appelants) — évite de dupliquer le calcul
+// début/fin d'un événement une seconde fois : ce fichier calculait autrefois
+// sa propre version, interprétée dans le fuseau de la machine qui exécute le
+// code plutôt que celui de l'événement (même bug que event-time.ts, corrigé
+// une seule fois là-bas).
+export const getEventStartTimestamp = eventStartMs
+export const getEventEndTimestamp = eventEndMs
 
 export function isEventOngoingOrStartingWithin(
   event: EventLike | null | undefined,
