@@ -25,6 +25,7 @@ import {
   Handshake,
 } from 'lucide-react'
 import { Button, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const CONV_PAGE_SIZE = 20
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
@@ -343,7 +344,13 @@ export default function MessagesClient({
   initialStarred,
 }: MessagesClientProps) {
   const [conversations, setConversations] = useState<ConversationView[]>(initialConversations)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  // Conversation ouverte reflétée dans l'URL (?conversationId=) — un lien
+  // direct vers une conversation précise doit rester partageable ET survivre
+  // à un rafraîchissement de page (avant, ce paramètre n'était lu qu'une
+  // fois au montage puis retiré exprès, voir l'effet de deep-link plus bas).
+  const [activeIdParam, setActiveIdParam] = useQueryParamState<string>('conversationId', '')
+  const activeId = activeIdParam || null
+  const setActiveId = (id: string | null) => setActiveIdParam(id ?? '')
   const [messages, setMessages] = useState<MessageView[]>([])
   const [hasMoreOlder, setHasMoreOlder] = useState(false)
   const [loadingOlder, setLoadingOlder] = useState(false)
@@ -443,26 +450,23 @@ export default function MessagesClient({
   // troisième argument (snapshot serveur), jamais `window`.
   const isDesktop = useSyncExternalStore(subscribeToDesktopQuery, getDesktopSnapshot, getDesktopServerSnapshot)
 
-  // ─── Deep-link depuis une page externe (ex. "Demander ce service" sur la
-  // page publique d'un prestataire, voir ProviderCatalogInquiry.tsx) : la
-  // conversation vient d'être créée côté serveur juste avant la navigation
-  // vers /messages?conversationId=…, donc déjà présente dans la liste que
-  // renverra refreshConversations — appelée ici immédiatement (sans attendre
-  // le premier tick du polling ci-dessous) pour éviter un en-tête de thread
-  // vide le temps que la liste initiale (chargée côté serveur AVANT cette
-  // création) rattrape son retard. Lu depuis `window.location.search`
-  // (jamais `useSearchParams`, absent de tout le reste de ce composant) —
-  // exécuté une seule fois au montage, puis retiré de l'URL pour qu'un
-  // rafraîchissement de page ne rouvre pas indéfiniment la même conversation.
+  // ─── Deep-link : /messages?conversationId=… ouvre directement le fil
+  // correspondant — `activeId` vient déjà de l'URL (voir useQueryParamState
+  // ci-dessus), ce lien reste maintenant valable après un rafraîchissement
+  // de page (changement voulu : avant, le paramètre était retiré de l'URL
+  // après un seul chargement pour ne PAS rouvrir la même conversation au
+  // refresh — désormais c'est exactement le comportement recherché, un lien
+  // direct doit rester partageable et stable).
+  //
+  // Cas d'usage d'origine (ex. "Demander ce service" sur la page publique
+  // d'un prestataire, voir ProviderCatalogInquiry.tsx) : la conversation
+  // vient d'être créée côté serveur juste avant la navigation vers cette
+  // page, donc absente de la liste chargée côté serveur AVANT sa création —
+  // on relit immédiatement la liste au montage si une conversation est
+  // active, pour éviter un en-tête de thread vide le temps que le polling
+  // ci-dessous rattrape son retard.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const conversationId = params.get('conversationId')
-    if (!conversationId) return
-    openConversation(conversationId)
-    params.delete('conversationId')
-    const rest = params.toString()
-    window.history.replaceState(null, '', rest ? `${window.location.pathname}?${rest}` : window.location.pathname)
-
+    if (!activeId) return
     let cancelled = false
     async function run() {
       const res = await apiFetch<{ conversations: ConversationView[] }>('/api/conversations')
@@ -472,6 +476,7 @@ export default function MessagesClient({
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ─── Polling : conversations, amis, messages, frappe, présence ───
