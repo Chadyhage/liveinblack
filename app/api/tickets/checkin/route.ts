@@ -11,6 +11,11 @@ const bodySchema = z
   .object({
     token: z.string().min(1).optional(),
     ticketCode: z.string().min(1).optional(),
+    // Événement du scanner APPELANT — sans ce champ, un billet de
+    // l'événement B se check-in avec succès depuis le scanner de
+    // l'événement A (bug de sécurité confirmé par audit) : voir la
+    // comparaison ticket.eventId !== eventId dans checkinTicket.
+    eventId: z.string().min(1),
   })
   .refine((v) => Boolean(v.token) !== Boolean(v.ticketCode), { message: 'token ou ticketCode requis (un seul des deux)' })
 
@@ -21,7 +26,9 @@ export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
 
-  const input = parsed.data.token ? { token: parsed.data.token } : { ticketCode: parsed.data.ticketCode! }
+  const input = parsed.data.token
+    ? { token: parsed.data.token, eventId: parsed.data.eventId }
+    : { ticketCode: parsed.data.ticketCode!, eventId: parsed.data.eventId }
   const result = await checkinTicket({ id: session.user.id, roles: session.user.roles }, input)
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })

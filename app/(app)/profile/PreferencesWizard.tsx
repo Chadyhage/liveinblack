@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Modal, Avatar } from '@/app/components/ui'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
@@ -336,6 +336,14 @@ export default function PreferencesModal({
   const [prefs, setPrefs] = useState<Preferences>({ ...EMPTY_PREFERENCES, ...(initialPreferences || {}) })
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimer.current) clearTimeout(advanceTimer.current)
+    }
+  }, [])
 
   if (!open) return null
 
@@ -345,14 +353,14 @@ export default function PreferencesModal({
   const val = prefs[current.key]
   const hasValue = current.type === 'single' ? Boolean(val) : ((val as string[]) || []).length > 0
 
-  async function persist(next: Preferences) {
+  async function persist(next: Preferences): Promise<boolean> {
     setSaving(true)
     onSaved(next)
     try {
-      await fetch('/api/profil/preferences', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) })
+      const response = await fetch('/api/profil/preferences', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) })
+      return response.ok
     } catch {
-      // Silencieux — même logique que le legacy (fire-and-forget), l'état
-      // local reste la source de vérité affichée pendant l'édition.
+      return false
     } finally {
       setSaving(false)
     }
@@ -370,15 +378,37 @@ export default function PreferencesModal({
   function pickSingle(id: string) {
     const next = { ...prefs, [current.key]: prefs[current.key] === id ? '' : id }
     setPrefs(next)
-    persist(next)
-    if (next[current.key]) setTimeout(() => (isLast ? setDone(true) : setStep((s) => s + 1)), 260)
+    setSaveError(false)
+    const savePromise = persist(next)
+    if (advanceTimer.current) clearTimeout(advanceTimer.current)
+    if (next[current.key]) {
+      advanceTimer.current = setTimeout(async () => {
+        advanceTimer.current = null
+        if (isLast) {
+          const ok = await savePromise
+          setSaveError(!ok)
+          if (ok) setDone(true)
+        } else {
+          setStep((s) => s + 1)
+        }
+      }, 260)
+    }
   }
-  function goNext() {
-    persist(prefs)
-    if (isLast) setDone(true)
-    else setStep((s) => s + 1)
+  async function goNext() {
+    setSaveError(false)
+    const ok = await persist(prefs)
+    if (isLast) {
+      if (ok) setDone(true)
+      else setSaveError(true)
+    } else {
+      setStep((s) => s + 1)
+    }
   }
   function goBack() {
+    if (advanceTimer.current) {
+      clearTimeout(advanceTimer.current)
+      advanceTimer.current = null
+    }
     setStep((s) => Math.max(0, s - 1))
   }
 
@@ -451,6 +481,12 @@ export default function PreferencesModal({
                 />
               )}
             </div>
+
+            {saveError && (
+              <p style={{ fontSize: 12.5, color: 'rgba(220,100,100,0.9)', margin: '14px 0 0' }}>
+                L&apos;enregistrement a échoué — vérifie ta connexion et réessaie.
+              </p>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 26 }}>
               {step > 0 && (

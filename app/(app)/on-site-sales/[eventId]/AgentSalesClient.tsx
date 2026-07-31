@@ -67,6 +67,13 @@ export default function AgentSalesClient({
       setResult({ kind: 'err', text: 'Renseigne au moins un email ou un numéro de téléphone pour envoyer le billet.' })
       return
     }
+    // Sans cette garde, un numéro Momo vide passait quand même — le serveur
+    // décrémente déjà le stock avant de rejeter la vente, un champ oublié
+    // consommait donc une place pour rien (bug confirmé par audit).
+    if (method === 'momo' && !momoNumber.trim()) {
+      setResult({ kind: 'err', text: 'Renseigne le numéro Mobile Money du client.' })
+      return
+    }
     setBusy(true)
     setResult(null)
     try {
@@ -283,4 +290,12 @@ const SALE_ERROR_LABELS: Record<string, string> = {
   event_ended: 'Cet événement est déjà terminé.',
   forbidden: 'Tu n’es pas autorisé à vendre des billets pour cet événement.',
   too_many_unpaid_cash_sales: 'Trop de ventes espèces en attente de règlement — régule tes ventes en attente avant d’en vendre de nouvelles.',
+  fedapay_error: 'La demande Mobile Money n’a pas pu être envoyée — réessaie ou passe en espèces.',
+  place_not_found: 'Cette place n’existe plus — recharge la page.',
+  not_a_group_place: 'Cette place n’est pas une place de groupe.',
+  no_group_at_door: 'La vente de groupe n’est pas disponible en vente à l’entrée.',
+  order_creation_failed: 'Impossible de créer la commande — réessaie.',
+  organizer_unresolved: 'Organisateur introuvable pour cet événement — contacte le support.',
+  event_not_found: 'Cet événement est introuvable.',
+  internal_error: 'Erreur interne — réessaie.',
 }

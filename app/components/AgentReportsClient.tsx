@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
-import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -43,12 +43,16 @@ export default function AgentReportsClient() {
   const [reports, setReports] = useState<ReportItem[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
-  const [filter, setFilter] = useQueryParamState<FilterKey>('filter', 'open')
-  const [search, setSearch] = useQueryParamState<string>('q', '')
+  const [filter] = useQueryParamState<FilterKey>('filter', 'open')
+  const [search] = useQueryParamState<string>('q', '')
 
   const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
   const page = Number(pageParam)
   const setPage = (n: number) => setPageParam(String(n))
+  // Filtre/recherche + reset de page doivent être écrits dans l'URL en une
+  // seule fois (voir useSetQueryParams) — deux setValue() successifs
+  // écrasent l'un l'autre.
+  const setQueryParams = useSetQueryParams()
 
   const [activeIdParam, setActiveIdParam] = useQueryParamState<string>('report', '', { push: true })
   const activeId = activeIdParam || null
@@ -163,6 +167,8 @@ export default function AgentReportsClient() {
       setActiveId(null)
       setNote('')
       await Promise.all([loadList(filter), loadCounts()])
+    } catch {
+      showToast('Connexion impossible — réessaie.', 'error')
     } finally {
       setBusyId(null)
     }
@@ -203,7 +209,7 @@ export default function AgentReportsClient() {
               <Button
                 key={f.key}
                 variant="ghost"
-                onClick={() => { setFilter(f.key); setPage(1) }}
+                onClick={() => setQueryParams({ filter: f.key === 'open' ? null : f.key, page: null })}
                 style={{
                   padding: '12px 10px',
                   borderRadius: 12,
@@ -225,13 +231,13 @@ export default function AgentReportsClient() {
             style={search ? { paddingRight: 34 } : undefined}
             placeholder="Rechercher (signalé, signalant, motif…)"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })}
           />
           {search && (
             <Button
               variant="ghost"
               aria-label="Effacer la recherche"
-              onClick={() => { setSearch(''); setPage(1) }}
+              onClick={() => setQueryParams({ q: null, page: null })}
               style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
               ×
@@ -333,7 +339,10 @@ export default function AgentReportsClient() {
                 ) : (
                   <Button
                     variant="primary"
-                    onClick={() => setActiveId(r.id)}
+                    onClick={() => {
+                      setActiveId(r.id)
+                      setNote(r.handledNote || '')
+                    }}
                     style={{ padding: '10px 16px', borderRadius: 3, fontWeight: 500, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }}
                   >
                     Marquer comme traité

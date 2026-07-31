@@ -119,6 +119,7 @@ const CHECKIN_ERROR_MESSAGES: Record<string, string> = {
   ticket_not_found: 'Billet introuvable.',
   revoked: 'Ce billet a été révoqué — entrée refusée.',
   event_not_found: "Cet événement n'existe plus.",
+  wrong_event: 'Ce billet appartient à un autre événement — vérifie que tu es sur le bon scanner.',
   forbidden: "Tu n'as pas les droits pour scanner ce billet.",
   stale_or_invalid_token: 'QR périmé ou invalide — redemande un billet à jour au titulaire.',
   manual_entry_not_allowed_for_reassigned_seat: "Ce siège a été réattribué — la saisie manuelle n'est pas acceptée ici, scanne le QR à jour.",
@@ -359,7 +360,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         const res = await fetch('/api/tickets/checkin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(input),
+          body: JSON.stringify({ ...input, eventId }),
         })
         const data = await parseJson<CheckinSuccessResponse>(res)
         if (!res.ok || !('ok' in data) || !data.ok) {
@@ -378,7 +379,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         setCheckinBusy(false)
       }
     },
-    [enterServiceMode]
+    [enterServiceMode, eventId]
   )
 
   const handleScanValue = useCallback(
@@ -439,19 +440,25 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
   async function handleAddItem(menuItem: MenuItemView) {
     if (!ticketCode) return
+    const code = ticketCode
     const key = `add:${menuItem.name}`
     setBusyKey(key)
     try {
       const res = await fetch('/api/event-orders/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, ticketId: ticketCode, menuItemId: menuItem.name, quantity: 1 }),
+        body: JSON.stringify({ eventId, ticketId: code, menuItemId: menuItem.name, quantity: 1 }),
       })
       const data = await parseJson<AddSuccessResponse>(res)
       if (!res.ok || !('ok' in data) || !data.ok) {
         pushToast(orderErrorMessage('error' in data ? data.error : undefined))
         return
       }
+      // Même garde de péremption que fetchOrders : si le staff a déjà switché
+      // vers un autre billet (enterServiceMode a réinitialisé items: []) pendant
+      // que cet ajout était en vol, ne pas injecter la ligne du billet précédent
+      // dans la liste du nouveau billet affiché.
+      if (ticketCodeRef.current !== code) return
       setItems((prev) => [...prev, data.item])
     } catch {
       pushToast('Connexion impossible — réessaie.')

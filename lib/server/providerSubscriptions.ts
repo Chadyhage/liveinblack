@@ -426,45 +426,66 @@ export async function runSubscriptionReminderCron(): Promise<{ scanned: number; 
 
     for (const profile of profiles) {
       scanned++
-      const cycle = cycleKey(profile)
-      const prevSent = profile.subReminders?.cycle === cycle ? sentToRecord(profile.subReminders.sent) : {}
-      const due = dueReminders(profile, now, prevSent)
-      const status = deriveSubStatus(profile, now)
+      // Isolation par profil : sans ce try/catch, une exception sur le
+      // profil N (fetch user, envoi email…) faisait avorter toute la boucle
+      // — les profils N+1..fin ne recevaient ni rappel ni démotion
+      // subscriptionActive:false ce jour-là, ET le `patch` du profil N
+      // lui-même n'était jamais écrit, donc les jalons DÉJÀ envoyés avec
+      // succès avant l'exception étaient renvoyés le lendemain (bug confirmé
+      // par audit — CronLock protège contre un chevauchement de RUNS, pas
+      // contre un item qui casse le run en cours).
+      try {
+        const cycle = cycleKey(profile)
+        const prevSent = profile.subReminders?.cycle === cycle ? sentToRecord(profile.subReminders.sent) : {}
+        const due = dueReminders(profile, now, prevSent)
+        const status = deriveSubStatus(profile, now)
 
-      const patch: Record<string, unknown> = {}
-      let changed = false
+        const patch: Record<string, unknown> = {}
+        let changed = false
 
-      if (status === 'expired' && profile.subscriptionActive === true) {
-        patch.subscriptionActive = false
-        patch.subscriptionStatus = status
-        changed = true
-        await User.updateOne({ _id: profile.userId }, { $set: { prestataireSubActive: false, prestataireSubStatus: 'expired' } })
-      } else if (profile.subscriptionStatus !== status) {
-        patch.subscriptionStatus = status
-        changed = true
-      }
-
-      if (due.length) {
-        const sent: Record<string, number> = { ...prevSent }
-        // Contrairement au legacy (qui réserve l'email à 4 des 6 jalons et
-        // s'appuie sur le in-app pour les autres), cette migration n'a pas
-        // encore de centre de notifications in-app (#89+) — l'email est le
-        // SEUL canal, donc chaque jalon dû est envoyé pour ne pas en perdre.
-        const user = await User.findById(profile.userId).select('email').lean()
-        for (const key of due) {
-          if (user?.email) {
-            const result = await sendEmail(user.email, subscriptionReminderEmail(key, `${SITE}/offer-services`))
-            if (result.ok) emails++
-          }
-          sent[key] = now
-          reminders++
-          if (key === 'hidden') hidden++
+        if (status === 'expired' && profile.subscriptionActive === true) {
+          patch.subscriptionActive = false
+          patch.subscriptionStatus = status
+          changed = true
+          await User.updateOne({ _id: profile.userId }, { $set: { prestataireSubActive: false, prestataireSubStatus: 'expired' } })
+        } else if (profile.subscriptionStatus !== status) {
+          patch.subscriptionStatus = status
+          changed = true
         }
-        patch.subReminders = { cycle, sent }
-        changed = true
-      }
 
-      if (changed) await ProviderProfile.updateOne({ _id: profile._id }, { $set: patch })
+        if (due.length) {
+          const sent: Record<string, number> = { ...prevSent }
+          // Contrairement au legacy (qui réserve l'email à 4 des 6 jalons et
+          // s'appuie sur le in-app pour les autres), ce rappel-ci reste
+          // email-only (lib/server/notifications.ts existe déjà pour
+          // d'autres évènements — candidatures, messages, abonnements suivis
+          // — mais rien n'y branche encore les jalons d'abonnement) — chaque
+          // jalon dû est donc envoyé pour ne pas en perdre.
+          const user = await User.findById(profile.userId).select('email').lean()
+          for (const key of due) {
+            let ok = false
+            if (user?.email) {
+              const result = await sendEmail(user.email, subscriptionReminderEmail(key, `${SITE}/offer-services`))
+              ok = result.ok
+              if (ok) emails++
+            }
+            // Un jalon n'est marqué "envoyé" QUE si l'email est réellement
+            // parti — sinon `sent[key]=now` sans succès consommait
+            // définitivement ce jalon pour tout le cycle (dueReminders
+            // n'émet qu'une clé par bande), le prestataire n'était donc plus
+            // jamais relancé avant expiration (bug confirmé par audit).
+            if (ok) sent[key] = now
+            reminders++
+            if (key === 'hidden') hidden++
+          }
+          patch.subReminders = { cycle, sent }
+          changed = true
+        }
+
+        if (changed) await ProviderProfile.updateOne({ _id: profile._id }, { $set: patch })
+      } catch (err) {
+        console.error('[providerSubscriptions] cron: échec sur un profil, on continue avec les suivants', profile._id, err)
+      }
     }
 
     return { scanned, reminders, emails, hidden }

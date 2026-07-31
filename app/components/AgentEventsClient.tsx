@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
-import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -75,11 +75,15 @@ export default function AgentEventsClient() {
   const [events, setEvents] = useState<AgentEvent[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
-  const [search, setSearch] = useQueryParamState<string>('q', '')
-  const [filter, setFilter] = useQueryParamState<FilterKey>('filter', 'all')
+  const [search] = useQueryParamState<string>('q', '')
+  const [filter] = useQueryParamState<FilterKey>('filter', 'all')
   const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
   const page = Number(pageParam)
   const setPage = (n: number) => setPageParam(String(n))
+  // Recherche/filtre + reset de page doivent être écrits dans l'URL en une
+  // seule fois (voir useSetQueryParams) — deux setValue() successifs
+  // écrasent l'un l'autre.
+  const setQueryParams = useSetQueryParams()
 
   const [adminCancel, setAdminCancel] = useState<{ id: string; name: string } | null>(null)
   const [adminCancelMsg, setAdminCancelMsg] = useState('')
@@ -205,7 +209,7 @@ export default function AgentEventsClient() {
           ))}
         </div>
 
-        <Input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+        <Input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })} />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {FILTERS.map((f) => {
@@ -215,7 +219,7 @@ export default function AgentEventsClient() {
               <Button
                 key={f.key}
                 variant="ghost"
-                onClick={() => { setFilter(f.key); setPage(1) }}
+                onClick={() => setQueryParams({ filter: f.key === 'all' ? null : f.key, page: null })}
                 style={{
                   padding: '7px 12px',
                   borderRadius: 999,

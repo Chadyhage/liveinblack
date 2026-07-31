@@ -803,12 +803,14 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
       <Button onClick={() => setOpen(true)} variant="primary" style={goldButtonStyle}>
         {tags.length > 0 ? 'Modifier mes goûts' : 'Renseigner mes goûts'}
       </Button>
-      <PreferencesModal
-        open={open}
-        onClose={() => setOpen(false)}
-        initialPreferences={user.preferences}
-        onSaved={(next) => setUser({ ...user, preferences: next })}
-      />
+      {open && (
+        <PreferencesModal
+          open={open}
+          onClose={() => setOpen(false)}
+          initialPreferences={user.preferences}
+          onSaved={(next) => setUser({ ...user, preferences: next })}
+        />
+      )}
     </Card>
   )
 }

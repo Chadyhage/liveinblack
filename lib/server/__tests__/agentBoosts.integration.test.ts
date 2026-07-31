@@ -120,8 +120,12 @@ describeIntegration('listActiveBoostsForAgent (intégration, vraie base) — pan
     })
 
     const result = await listActiveBoostsForAgent()
-    expect(result.conflicts).toHaveLength(1)
-    expect(result.conflicts[0].id).toBe('BOOST-CONFLICT-1')
+    // `conflicts` cherche sur TOUTES les vues (pas seulement `active`) —
+    // un conflit réel (finalizeBoost.ts) est toujours créé déjà résolu, donc
+    // même un conflit "actif" au sens de ce fixture synthétique doit rester
+    // visible à l'agent une fois remboursé/en échec, pas disparaître du
+    // panneau "Conflits — action requise".
+    expect(result.conflicts.map((b) => b.id).sort()).toEqual(['BOOST-CONFLICT-1', 'BOOST-REFUNDED-1'])
     // Le remboursé n'est pas "actif" (isBoostActive exclut conflict===true).
     expect(result.expired.map((b) => b.id)).toContain('BOOST-REFUNDED-1')
     // Revenu net : seul le boost non remboursé/annulé compte, une seule fois.

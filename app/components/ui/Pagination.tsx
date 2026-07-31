@@ -94,7 +94,8 @@ function buildPageList(page: number, pageCount: number): (number | '…')[] {
 // courante (ex. après un filtre).
 export function pagedSlice<T>(items: T[], page: number, pageSize: number): { pageItems: T[]; pageCount: number } {
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize))
-  const safePage = Math.min(page, pageCount)
+  const normalizedPage = Math.max(1, Number.isFinite(page) ? Math.floor(page) : 1)
+  const safePage = Math.min(normalizedPage, pageCount)
   const start = (safePage - 1) * pageSize
   return { pageItems: items.slice(start, start + pageSize), pageCount }
 }

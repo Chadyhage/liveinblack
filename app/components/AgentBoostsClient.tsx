@@ -142,7 +142,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({data.active.length})</p>
+              <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
               {activeList.length === 0 ? (
                 <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
                   <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
@@ -193,9 +193,9 @@ function BoostCard({ b }: { b: AgentBoostView }) {
         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 999, padding: '2px 9px' }}>
           {b.region || 'Toutes régions'}
         </span>
-        {b.conflict && b.active && (
+        {b.conflict && (
           <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>
-            CONFLIT DE CRÉNEAU
+            {b.status === 'refund_failed' ? 'REMBOURSEMENT ÉCHOUÉ' : 'CONFLIT DE CRÉNEAU'}
           </span>
         )}
         <span style={{ marginLeft: 'auto', fontWeight: 800, fontSize: 15, color: 'var(--gold)' }}>{fmtMoney(b.price, 'EUR')}</span>
@@ -211,7 +211,9 @@ function BoostCard({ b }: { b: AgentBoostView }) {
         <p style={{ fontSize: 11.5, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
           {b.status === 'refunded_conflict'
             ? 'Conflit de créneau : ce boost a été remboursé AUTOMATIQUEMENT par le webhook. Rien à faire — ne pas re-rembourser dans Stripe.'
-            : 'Deux organisateurs ont payé ce créneau. Vérifie dans Stripe si le remboursement automatique est passé avant toute action manuelle.'}
+            : b.status === 'refund_failed'
+              ? "Conflit de créneau : le remboursement automatique a ÉCHOUÉ. Rembourse manuellement dans Stripe dès que possible, l'acheteur n'a pas reçu son boost."
+              : 'Deux organisateurs ont payé ce créneau. Vérifie dans Stripe si le remboursement automatique est passé avant toute action manuelle.'}
         </p>
       )}
     </div>

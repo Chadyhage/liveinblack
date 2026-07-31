@@ -86,7 +86,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const holder = await seedHolder()
     await seedTicket(event.id, { userId: holder.id })
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.alreadyCheckedIn).toBe(false)
@@ -94,7 +94,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
 
     const freshHolder = await User.findById(holder.id).lean()
     expect(freshHolder?.points).toBe(1)
-    const freshTicket = await Ticket.findOne({ ticketCode: 'TICK0001' }).lean()
+    const freshTicket = await Ticket.findOne({ ticketCode: 'TICK0001', eventId: event.id }).lean()
     expect(freshTicket?.checkedInAt).toBeTruthy()
     expect(freshTicket?.checkedInBy).toBe('organizer-1')
   })
@@ -104,8 +104,8 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const holder = await seedHolder()
     await seedTicket(event.id, { userId: holder.id })
 
-    await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
-    const second = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
+    const second = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(second.ok).toBe(true)
     if (!second.ok) return
     expect(second.alreadyCheckedIn).toBe(true)
@@ -120,7 +120,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const holder = await seedHolder()
     await seedTicket(event.id, { userId: holder.id, place: 'Gratuit', placePrice: 0, totalPrice: 0, paid: false })
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.pointAwarded).toBe(false)
@@ -133,7 +133,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id, { paid: false })
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.status).toBe(403)
@@ -144,7 +144,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id, { paid: false, stripeSessionId: 'cs_test_123' })
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.error).toBe('payment_pending')
@@ -154,7 +154,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id, { revoked: true })
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.status).toBe(409)
@@ -165,7 +165,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id)
 
-    const result = await checkinTicket({ id: 'random-user', roles: ['client'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'random-user', roles: ['client'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.status).toBe(403)
@@ -180,11 +180,11 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
       roster: { 'staff-server': { role: 'serveur', addedBy: 'organizer-1' }, 'staff-dj': { role: 'dj', addedBy: 'organizer-1' } },
     })
 
-    const asServer = await checkinTicket({ id: 'staff-server', roles: ['client'] }, { ticketCode: 'TICK0001' })
+    const asServer = await checkinTicket({ id: 'staff-server', roles: ['client'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(asServer.ok).toBe(true)
 
-    await Ticket.updateOne({ ticketCode: 'TICK0001' }, { $set: { checkedInAt: null, checkedInBy: null } })
-    const asDj = await checkinTicket({ id: 'staff-dj', roles: ['client'] }, { ticketCode: 'TICK0001' })
+    await Ticket.updateOne({ ticketCode: 'TICK0001', eventId: event.id }, { $set: { checkedInAt: null, checkedInBy: null } })
+    const asDj = await checkinTicket({ id: 'staff-dj', roles: ['client'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(asDj.ok).toBe(false)
     if (asDj.ok) return
     expect(asDj.error).toBe('forbidden')
@@ -194,7 +194,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id)
 
-    const result = await checkinTicket({ id: 'some-agent', roles: ['agent'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'some-agent', roles: ['agent'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(true)
   })
 
@@ -202,7 +202,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent({ date: '2020-01-01', time: '22:00', endTime: '05:00' })
     await seedTicket(event.id)
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.error).toBe('event_ended')
@@ -215,15 +215,15 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const staleToken = signTicketToken({ ticketCode: 'TICK0001', seatVersion: 1, entryNonce: 'nonce-v1' })
 
     // Le siège est réattribué : seatVersion et entryNonce tournent en base.
-    await Ticket.updateOne({ ticketCode: 'TICK0001' }, { $set: { seatVersion: 2, entryNonce: 'nonce-v2' } })
+    await Ticket.updateOne({ ticketCode: 'TICK0001', eventId: event.id }, { $set: { seatVersion: 2, entryNonce: 'nonce-v2' } })
 
-    const withStale = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { token: staleToken })
+    const withStale = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { token: staleToken, eventId: event.id })
     expect(withStale.ok).toBe(false)
     if (withStale.ok) return
     expect(withStale.error).toBe('stale_or_invalid_token')
 
     const freshToken = signTicketToken({ ticketCode: 'TICK0001', seatVersion: 2, entryNonce: 'nonce-v2' })
-    const withFresh = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { token: freshToken })
+    const withFresh = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { token: freshToken, eventId: event.id })
     expect(withFresh.ok).toBe(true)
   })
 
@@ -231,7 +231,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id, { tableId: 'tbl_1', seatVersion: 2, entryNonce: 'nonce-v2' })
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.error).toBe('manual_entry_not_allowed_for_reassigned_seat')
@@ -241,7 +241,7 @@ describeIntegration('checkinTicket (intégration, transaction réelle)', () => {
     const event = await seedEvent()
     await seedTicket(event.id)
 
-    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001' })
+    const result = await checkinTicket({ id: 'organizer-1', roles: ['organisateur'] }, { ticketCode: 'TICK0001', eventId: event.id })
     expect(result.ok).toBe(true)
   })
 })

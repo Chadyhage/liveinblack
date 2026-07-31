@@ -83,7 +83,15 @@ export async function listActiveBoostsForAgent(): Promise<AgentBoostsResult> {
 
   const active = views.filter((v) => v.active)
   const expired = views.filter((v) => !v.active)
-  const conflicts = active.filter((v) => v.conflict)
+  // `conflicts` cherché sur TOUTES les vues, pas seulement `active` : un
+  // conflit est désormais toujours créé déjà résolu (remboursé ou en échec
+  // de remboursement, voir finalizeBoost.ts) avec un expiresAt figé au
+  // moment du conflit — jamais dans le futur — donc `isActiveForAgent` le
+  // classe systématiquement en `expired`. Filtrer sur `active` viderait ce
+  // panneau en permanence, exactement le bug confirmé par audit : l'agent
+  // ne voyait JAMAIS aucun conflit, y compris un remboursement Stripe en
+  // échec qui a besoin d'une action manuelle immédiate.
+  const conflicts = views.filter((v) => v.conflict)
   const totalRevenue = views.filter((v) => !isRefunded(v.status)).reduce((sum, v) => sum + v.price, 0)
 
   return { active, conflicts, expired, totalRevenue }

@@ -341,7 +341,7 @@ export default function OrganizerOnboardingWizard({
                     <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
                     <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                   </div>
-                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;email professionnel ci-dessus.</p>
+                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>
                 </>
               )}
             </div>

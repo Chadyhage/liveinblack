@@ -86,7 +86,7 @@ describeIntegration('guestlist (intégration, vraie base) — invitations gratui
       expect(added.ok).toBe(true)
       if (!added.ok) return
 
-      const checkin = await checkinTicket({ id: 'org-1', roles: ['organisateur'] }, { ticketCode: added.entry.ticketCode })
+      const checkin = await checkinTicket({ id: 'org-1', roles: ['organisateur'] }, { ticketCode: added.entry.ticketCode, eventId })
       expect(checkin.ok).toBe(true)
     })
   })
@@ -111,7 +111,7 @@ describeIntegration('guestlist (intégration, vraie base) — invitations gratui
       const { eventId, placeId } = await seedEvent()
       const added = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Ami Test' })
       if (!added.ok) throw new Error('setup failed')
-      await checkinTicket({ id: 'org-1', roles: ['organisateur'] }, { ticketCode: added.entry.ticketCode })
+      await checkinTicket({ id: 'org-1', roles: ['organisateur'] }, { ticketCode: added.entry.ticketCode, eventId })
 
       const result = await removeGuestlistEntry({ id: 'org-1' }, { eventId, ticketCode: added.entry.ticketCode })
       expect(result.ok).toBe(false)

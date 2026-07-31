@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: 'Devenir organisateur — LIVEINBLACK',
 }
 
-const LOCKED_STATUSES = ['submitted', 'under_review', 'resubmitted', 'approved']
+const LOCKED_STATUSES = ['submitted', 'under_review', 'resubmitted', 'approved', 'rejected']
 
 export default async function InscriptionOrganisateurPage() {
   const session = await auth()

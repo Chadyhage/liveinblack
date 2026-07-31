@@ -21,7 +21,9 @@ export interface CheckinCaller {
   roles: string[]
 }
 
-export type CheckinInput = { token: string; ticketCode?: never } | { ticketCode: string; token?: never }
+export type CheckinInput =
+  | { token: string; ticketCode?: never; eventId: string }
+  | { ticketCode: string; token?: never; eventId: string }
 
 export interface CheckinTicketView {
   ticketCode: string
@@ -58,6 +60,14 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
   // outil est la playlist, pas le contrôle d'entrée, cf. #75). ──
   const event = await Event.findById(ticket.eventId)
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }
+
+  // ── Le scanner appelant doit être ouvert sur LE MÊME événement que le
+  // billet (bug de sécurité confirmé par audit : sans ce contrôle, un billet
+  // de l'événement B se check-in avec succès depuis le scanner de
+  // l'événement A — écriture irréversible de checkedInAt/checkedInBy et
+  // crédit de point sur le mauvais événement, sans qu'aucun signal d'erreur
+  // n'avertisse le staff). ──
+  if (ticket.eventId !== input.eventId) return { ok: false, status: 409, error: 'wrong_event' }
 
   let allowed = caller.roles.includes('agent')
   if (!allowed && (event.organizerId === caller.id || event.createdBy === caller.id)) allowed = true

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
 import { Button, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
-import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -67,6 +67,16 @@ const TOAST_LABEL: Record<ModerationOp, string> = {
   note: 'Note enregistrée.',
 }
 
+// Codes bruts renvoyés par POST /api/agent/reviews/[id]/moderate (voir
+// moderateReview dans lib/server/providerReviews.ts) — jamais affichés tels
+// quels à l'agent.
+const MODERATE_ERROR_LABELS: Record<string, string> = {
+  forbidden: 'Action réservée aux agents.',
+  invalid_body: 'Requête invalide — réessaie.',
+  note_required: 'La note ne peut pas être vide.',
+  review_not_found: 'Cet avis est introuvable (déjà traité ailleurs ?).',
+}
+
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }
 const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }
 
@@ -100,12 +110,16 @@ export default function AgentReviewsClient() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
 
-  const [statusFilter, setStatusFilter] = useQueryParamState<'all' | 'reported' | ReviewStatus>('status', 'all')
-  const [ratingFilter, setRatingFilter] = useQueryParamState<'all' | '1' | '2' | '3' | '4' | '5'>('rating', 'all')
-  const [search, setSearch] = useQueryParamState<string>('q', '')
+  const [statusFilter] = useQueryParamState<'all' | 'reported' | ReviewStatus>('status', 'all')
+  const [ratingFilter] = useQueryParamState<'all' | '1' | '2' | '3' | '4' | '5'>('rating', 'all')
+  const [search] = useQueryParamState<string>('q', '')
   const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
   const page = Number(pageParam)
   const setPage = (n: number) => setPageParam(String(n))
+  // Filtres/recherche + reset de page doivent être écrits dans l'URL en une
+  // seule fois (voir useSetQueryParams) — deux setValue() successifs
+  // écrasent l'un l'autre.
+  const setQueryParams = useSetQueryParams()
 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -191,7 +205,7 @@ export default function AgentReviewsClient() {
       })
       const data = await res.json()
       if (!res.ok || !data.ok) {
-        showToast(data.error || 'Action impossible.', 'error')
+        showToast(MODERATE_ERROR_LABELS[data.error] || 'Action impossible.', 'error')
         return
       }
       setConfirmDeleteId(null)
@@ -199,6 +213,8 @@ export default function AgentReviewsClient() {
       setNoteText('')
       showToast(TOAST_LABEL[op], 'success')
       await loadList()
+    } catch {
+      showToast('Connexion impossible — réessaie.', 'error')
     } finally {
       setBusyId(null)
     }
@@ -228,7 +244,7 @@ export default function AgentReviewsClient() {
         <Input
           placeholder="Rechercher (prestataire, auteur, texte...)"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })}
         />
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -244,7 +260,7 @@ export default function AgentReviewsClient() {
             <Button
               key={f.key}
               variant="ghost"
-              onClick={() => { setStatusFilter(f.key); setPage(1) }}
+              onClick={() => setQueryParams({ status: f.key === 'all' ? null : f.key, page: null })}
               style={{
                 padding: '7px 12px',
                 borderRadius: 999,
@@ -266,7 +282,7 @@ export default function AgentReviewsClient() {
             <Button
               key={n}
               variant="ghost"
-              onClick={() => { setRatingFilter(n); setPage(1) }}
+              onClick={() => setQueryParams({ rating: n === 'all' ? null : n, page: null })}
               style={{
                 padding: '7px 12px',
                 borderRadius: 999,

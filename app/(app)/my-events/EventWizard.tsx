@@ -649,8 +649,8 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     }
     setErrors((err) => ({ ...err, video: '' }))
     setVideoUploading(true)
+    const localPreview = URL.createObjectURL(file)
     try {
-      const localPreview = URL.createObjectURL(file)
       setVideoPreview(localPreview)
       setVideoName(file.name || 'Vidéo d’aperçu')
       const url = await registerUploadedVideo(file)
@@ -658,6 +658,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       setVideoUrl(url)
       setVideoPreview(url)
     } catch {
+      URL.revokeObjectURL(localPreview)
+      setVideoPreview(null)
+      setVideoName('')
       setErrors((err) => ({ ...err, video: "L'envoi de la vidéo a échoué — réessaie." }))
     } finally {
       setVideoUploading(false)
@@ -1074,7 +1077,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   </span>
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
-                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 8 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
+                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 30 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
                   </span>
                 </Button>
               )}

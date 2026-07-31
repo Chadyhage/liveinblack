@@ -251,7 +251,16 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
   const order = orderResult.order
 
   if (input.method === 'momo') {
-    if (!input.momoMode || !input.momoPhone) return { ok: false, status: 400, error: 'momo_phone_required' }
+    // createAgentSaleOrder a déjà décrémenté le stock (place.available) et
+    // sauvegardé l'event AVANT ce bloc — toute sortie sans passer par
+    // releaseAgentSaleOrder laisse ce siège définitivement invendable (bug
+    // confirmé par audit : un numéro Momo vide ou un échec FedaPay
+    // consommait une place sans jamais la restituer, sans cron pour la
+    // récupérer — l'index TTL d'Order ne couvre que status:'expired').
+    if (!input.momoMode || !input.momoPhone || !input.momoPhone.number?.trim()) {
+      await releaseAgentSaleOrder(String(order._id))
+      return { ok: false, status: 400, error: 'momo_phone_required' }
+    }
     try {
       const txn = await createTransaction({
         description: `${order.placeType} — vente agent`.slice(0, 200),
@@ -266,6 +275,7 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
       return { ok: true, orderId: String(order._id), status: 'pending_momo_confirmation', ticketCodes: [] }
     } catch (err) {
       console.error('[agentSales] momo send failed:', err)
+      await releaseAgentSaleOrder(String(order._id))
       return { ok: false, status: 502, error: 'fedapay_error' }
     }
   }
@@ -288,11 +298,25 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
   const amountTotalMinor = order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor
   const settlementMode = input.settlementMode || 'agent_settles'
 
+  // organizerId||createdBy — même repli que assertSalesAgent/checkinTicket
+  // (un event peut n'avoir que createdBy renseigné). Sans le repli, le
+  // règlement s'enregistrait avec organizerId:'' — le check de solde
+  // (trySettleCash) lisait alors SellerBalance{sellerUid:''} (toujours à 0,
+  // vente bloquée en pending_cash_settlement) et, en mode agent_settles, la
+  // recette organisateur était créditée sur ce solde fantôme, impossible à
+  // reverser à personne (bug confirmé par audit).
+  const eventOwner = await Event.findById(eventId).select('organizerId createdBy').lean()
+  const organizerId = eventOwner?.organizerId || eventOwner?.createdBy || ''
+  if (!organizerId) {
+    await releaseAgentSaleOrder(String(order._id))
+    return { ok: false, status: 500, error: 'organizer_unresolved' }
+  }
+
   await CashSaleSettlement.create({
     orderId: String(order._id),
     eventId,
     agentUid: agentCaller.id,
-    organizerId: (await Event.findById(eventId).select('organizerId createdBy').lean())?.organizerId || '',
+    organizerId,
     amountTotalMinor,
     currency: order.currency,
     libShareMinor: order.feeMinor,

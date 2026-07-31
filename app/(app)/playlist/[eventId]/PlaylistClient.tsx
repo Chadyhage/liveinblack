@@ -235,6 +235,20 @@ export default function PlaylistClient({
   const [playingKey, setPlayingKey] = useState<string | null>(null)
   const [toasts, setToasts] = useState<{ id: number; text: string; kind: 'ok' | 'warn' }[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  // `refreshPlaylist` est appelée depuis de nombreux endroits (polling ET
+  // handlers de mutation après un POST/DELETE), pas seulement l'effet de
+  // polling — impossible de la rendre "inline dans un seul useEffect" sans
+  // dupliquer sa logique à chaque site d'appel. À la place : un flag de
+  // montage vérifié avant chaque setState de la fonction, pour ne jamais
+  // committer l'état d'un fetch résolu après démontage (composant quitté
+  // pendant qu'une requête était en vol).
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   function pushToast(text: string, kind: 'ok' | 'warn' = 'warn') {
     const id = ++toastSeq
@@ -269,7 +283,7 @@ export default function PlaylistClient({
       hasTicket: boolean
       ticketCount: number
     }>(`/api/events/${eventId}/playlist`)
-    if (!res.ok) return
+    if (!res.ok || !mountedRef.current) return
     setSongs(res.data.songs)
     setNowPlaying(res.data.nowPlaying)
     setCanModerate(res.data.canModerate)
@@ -433,8 +447,14 @@ export default function PlaylistClient({
     await refreshPlaylist()
   }
 
+  // Sentinelle dédiée sur `busyId` (aucun `song.id` ne peut valoir cette
+  // chaîne) — même pattern de verrouillage que toutes les autres actions de
+  // modération de ce fichier, pour désactiver le bouton "Terminer" pendant
+  // l'appel plutôt que de laisser un double-tap déclencher deux DELETE.
   async function handleStopNow() {
+    setBusyId('now-playing')
     const res = await apiFetch(`/api/events/${eventId}/playlist/now-playing`, { method: 'DELETE' })
+    setBusyId(null)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -664,7 +684,14 @@ export default function PlaylistClient({
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nowPlaying.artist}</p>
           </div>
           {effectiveCanModerate && (
-            <Button variant="ghost" onClick={handleStopNow} style={ghostButtonStyle}>
+            <Button
+              variant="ghost"
+              disabled={busyId === 'now-playing'}
+              loading={busyId === 'now-playing'}
+              loadingText="…"
+              onClick={handleStopNow}
+              style={ghostButtonStyle}
+            >
               Terminer
             </Button>
           )}
