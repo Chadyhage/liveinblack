@@ -116,8 +116,16 @@ export default function StudioClient({
 
   // #encaissement (ancien lien de compatibilité, avant le passage en
   // ?tab=paiements) : redirige une seule fois vers le nouveau paramètre.
+  // Même chose pour ?connect=done/refresh — Stripe Connect ramène toujours
+  // l'organisateur sur /organizer-studio nu (lib/server/organizerPayouts.ts
+  // ne peut pas transmettre l'onglet cible sans élargir la liste blanche de
+  // chemins de retour, une surface de sécurité qu'on préfère ne pas toucher
+  // ici) : forcer l'onglet Paiements côté client si ce paramètre est présent,
+  // sinon l'organisateur revient sur la page publique sans jamais voir le
+  // statut de connexion qui vient d'être établi.
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#encaissement') setTab('paiements')
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('connect')) setTab('paiements')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

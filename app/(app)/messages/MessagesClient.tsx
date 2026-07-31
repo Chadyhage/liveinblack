@@ -350,7 +350,11 @@ export default function MessagesClient({
   // fois au montage puis retiré exprès, voir l'effet de deep-link plus bas).
   const [activeIdParam, setActiveIdParam] = useQueryParamState<string>('conversationId', '')
   const activeId = activeIdParam || null
-  const setActiveId = (id: string | null) => setActiveIdParam(id ?? '')
+  // Ouvrir une conversation empile une entrée d'historique (push) — le
+  // bouton retour doit revenir à la conversation précédente, pas quitter
+  // /messages entièrement. Fermer (id=null) reste en replace : "retour"
+  // après avoir fermé ne doit pas rouvrir ce qu'on vient de fermer.
+  const setActiveId = (id: string | null) => setActiveIdParam(id ?? '', { push: id != null })
   const [messages, setMessages] = useState<MessageView[]>([])
   const [hasMoreOlder, setHasMoreOlder] = useState(false)
   const [loadingOlder, setLoadingOlder] = useState(false)

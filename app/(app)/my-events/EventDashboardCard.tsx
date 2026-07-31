@@ -27,7 +27,15 @@ function statusBadge(event: OrganizerEventView): { label: string; background: st
   return { label: 'Publié', background: 'var(--teal)', color: 'var(--obsidian)' }
 }
 
-export default function EventDashboardCard({ event, onAction }: { event: OrganizerEventView; onAction: (action: EventActionKey, event: OrganizerEventView) => void }) {
+export default function EventDashboardCard({
+  event,
+  onAction,
+  duplicating = false,
+}: {
+  event: OrganizerEventView
+  onAction: (action: EventActionKey, event: OrganizerEventView) => void
+  duplicating?: boolean
+}) {
   const badge = statusBadge(event)
 
   return (
@@ -75,26 +83,36 @@ export default function EventDashboardCard({ event, onAction }: { event: Organiz
           Voir la page de l&rsquo;événement →
         </Link>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
-          {ACTIONS.map((action) => (
-            <Button
-              key={action.key}
-              variant="secondary"
-              onClick={() => onAction(action.key, event)}
-              style={{
-                padding: '9px 8px',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-                background: 'rgba(255,255,255,0.04)',
-                color: action.color,
-                font: '600 11.5px Inter, sans-serif',
-                letterSpacing: '.02em',
-                textAlign: 'left',
-                justifyContent: 'flex-start',
-              }}
-            >
-              {action.label}
-            </Button>
-          ))}
+          {ACTIONS.map((action) => {
+            // 'duplicate' n'a pas de modale de confirmation (contrairement à
+            // 'delete'/'postpone') — un double-clic pendant la requête POST
+            // en cours créait deux événements dupliqués. Les autres actions
+            // ouvrent toutes une modale/navigation, pas de risque équivalent.
+            const isDuplicating = action.key === 'duplicate' && duplicating
+            return (
+              <Button
+                key={action.key}
+                variant="secondary"
+                onClick={() => onAction(action.key, event)}
+                disabled={isDuplicating}
+                loading={isDuplicating}
+                loadingText="Duplication…"
+                style={{
+                  padding: '9px 8px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: action.color,
+                  font: '600 11.5px Inter, sans-serif',
+                  letterSpacing: '.02em',
+                  textAlign: 'left',
+                  justifyContent: 'flex-start',
+                }}
+              >
+                {action.label}
+              </Button>
+            )
+          })}
         </div>
       </div>
     </article>

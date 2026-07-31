@@ -8,7 +8,7 @@ import type { EventStatsView } from '@/lib/server/eventStats'
 import { eventStatsCsvRows } from '@/lib/shared/eventStats'
 import { formatMoney } from '../../types'
 import { Button, Select } from '@/app/components/ui'
-import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const TONE_COLOR: Record<string, string> = {
   gold: 'var(--gold)',
@@ -54,14 +54,19 @@ function downloadCsv(view: EventStatsView) {
 
 export default function StatistiquesClient({ eventId, initialView }: { eventId: string; initialView: EventStatsView }) {
   const [view, setView] = useState(initialView)
-  const [range, setRange] = useQueryParamState<'all' | '7d' | '30d'>('range', 'all')
-  const [place, setPlace] = useQueryParamState<string>('place', 'all')
+  const [range] = useQueryParamState<'all' | '7d' | '30d'>('range', 'all')
+  const [place] = useQueryParamState<string>('place', 'all')
+  // range et place doivent être écrits dans l'URL en une seule fois : deux
+  // useQueryParamState.setValue() successifs partagent le même searchParams
+  // "figé" au rendu, donc le second router.replace() écrasait le premier et
+  // un des deux filtres disparaissait de l'URL (confirmé par audit) — voir
+  // useSetQueryParams pour l'écriture atomique multi-paramètres.
+  const setQueryParams = useSetQueryParams()
   const [filterError, setFilterError] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function applyFilters(nextRange: typeof range, nextPlace: string) {
-    setRange(nextRange)
-    setPlace(nextPlace)
+    setQueryParams({ range: nextRange === 'all' ? null : nextRange, place: nextPlace === 'all' ? null : nextPlace })
     startTransition(async () => {
       const params = new URLSearchParams({ range: nextRange, place: nextPlace })
       try {

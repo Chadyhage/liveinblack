@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getOrCreateMyProviderProfile } from '@/lib/server/providerProfile'
 import { getMySubscriptionOverview } from '@/lib/server/providerSubscriptions'
+import { canProposeServices } from '@/lib/server/permissions'
 import MonAbonnementClient from './MonAbonnementClient'
 
 // Port de MonAbonnementPage.jsx (#8 phase prestataire, tâche #113). Le
@@ -21,14 +22,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-function requireProviderRole(roles: string[] | undefined) {
-  return Boolean(roles?.includes('prestataire'))
-}
-
 export default async function MonAbonnementPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
-  if (!requireProviderRole(session.user.roles)) redirect('/providers')
+  // Même garde que /offer-services (canProposeServices) — vérifie
+  // activeRole+prestStatus, jamais roles[] brut (CLAUDE.md : un compte
+  // multi-rôles peut porter 'prestataire' dans roles[] sans que ce soit son
+  // rôle actif, et un dossier rejeté doit rester bloqué même si le rôle est
+  // toujours listé).
+  if (!canProposeServices(session.user)) redirect('/providers')
 
   const caller = { id: session.user.id }
   const [profileResult, subscription] = await Promise.all([getOrCreateMyProviderProfile(caller), getMySubscriptionOverview(caller)])

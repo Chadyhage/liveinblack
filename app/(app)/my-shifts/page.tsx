@@ -21,21 +21,28 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-const ROLE_META: Record<string, { label: string; color: string; desc: string }> = {
-  serveur: { label: 'Serveur', color: 'var(--teal)', desc: 'Prends et sers les commandes au bar' },
-  scan: { label: 'Contrôle entrée', color: '#8b5cf6', desc: "Scanne les billets à l'entrée" },
-  manager: { label: 'Manager', color: 'var(--gold)', desc: 'Gestion complète de la soirée' },
-  dj: { label: 'DJ', color: '#e05aaa', desc: 'Gère la playlist interactive de la soirée' },
+// `soft`/`border` sont des rgba() FIXES, jamais dérivées de `color` par
+// concaténation de chaîne (ex. `${meta.color}55`) — quand color vaut
+// `var(--teal)`, ça produirait littéralement `var(--teal)55`, une valeur CSS
+// invalide (on ne peut pas suffixer un canal alpha à une custom property).
+// Un rgba() précalculé par rôle est la seule façon correcte de garder un
+// fond/bordure translucides cohérents avec `color`.
+const ROLE_META: Record<string, { label: string; color: string; soft: string; border: string; desc: string }> = {
+  serveur: { label: 'Serveur', color: 'var(--teal)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: 'Prends et sers les commandes au bar' },
+  scan: { label: 'Contrôle entrée', color: '#8b5cf6', soft: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.35)', desc: "Scanne les billets à l'entrée" },
+  manager: { label: 'Manager', color: 'var(--gold)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: 'Gestion complète de la soirée' },
+  dj: { label: 'DJ', color: '#e05aaa', soft: 'rgba(224, 90, 170, 0.12)', border: 'rgba(224, 90, 170, 0.35)', desc: 'Gère la playlist interactive de la soirée' },
   // 'vendeur' (#C, lib/server/agentSales.ts) ajouté après le reste de cette
   // page — manquait ici, ce qui faisait tomber sur le fallback générique
   // (couleur grise, description vide) ET, pire, redirigeait vers le scanner
   // au lieu de /on-site-sales/[eventId] (voir roleHref ci-dessous).
-  vendeur: { label: 'Vente sur place', color: 'var(--gold)', desc: 'Vends des billets cash ou Mobile Money' },
+  vendeur: { label: 'Vente sur place', color: 'var(--gold)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: 'Vends des billets cash ou Mobile Money' },
   // Rôle synthétique (pas une valeur EventStaff.roster[].role) — événement
   // que l'utilisateur organise lui-même, fusionné ici depuis l'ancien
   // /scanner (index), voir lib/server/staffEvents.ts.
-  owner: { label: 'Organisateur', color: 'var(--primary)', desc: "Ton événement — ouvre le scan pour contrôler l'entrée" },
+  owner: { label: 'Organisateur', color: 'var(--primary)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: "Ton événement — ouvre le scan pour contrôler l'entrée" },
 }
+const FALLBACK_ROLE_META = { label: '', color: 'var(--text-faint)', soft: 'rgba(255, 255, 255, 0.06)', border: 'rgba(255, 255, 255, 0.14)', desc: '' }
 
 // DJ → gestion de la playlist (#75/#47) ; vendeur → l'espace de vente sur
 // place (#C) ; tout autre rôle staff (scan, serveur, manager) → le scanner,
@@ -103,7 +110,7 @@ export default async function MesSoireesPage() {
         ) : (
           <div className="lb-dashboard-card-grid" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {events.map((ev) => {
-              const meta = ROLE_META[ev.role] ?? { label: ev.role, color: 'var(--text-faint)', desc: '' }
+              const meta = ROLE_META[ev.role] ? ROLE_META[ev.role] : { ...FALLBACK_ROLE_META, label: ev.role }
               const dateLine = [ev.dateDisplay, ev.city].filter(Boolean).join(' · ')
 
               return (
@@ -116,7 +123,7 @@ export default async function MesSoireesPage() {
                     padding: 18,
                     borderRadius: 16,
                     background: 'var(--surface)',
-                    border: `1px solid ${ev.live ? `${meta.color}55` : 'var(--border)'}`,
+                    border: `1px solid ${ev.live ? meta.border : 'var(--border)'}`,
                     boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                   }}
                 >
@@ -145,8 +152,8 @@ export default async function MesSoireesPage() {
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase',
                         color: meta.color,
-                        background: `${meta.color}1f`,
-                        border: `1px solid ${meta.color}59`,
+                        background: meta.soft,
+                        border: `1px solid ${meta.border}`,
                         borderRadius: 8,
                         padding: '4px 10px',
                       }}

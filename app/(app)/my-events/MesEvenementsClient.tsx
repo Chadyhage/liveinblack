@@ -286,7 +286,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
             {upcomingEvents.map((event) => (
-              <EventDashboardCard key={event.id} event={event} onAction={handleAction} />
+              <EventDashboardCard key={event.id} event={event} onAction={handleAction} duplicating={duplicating === event.id} />
             ))}
           </div>
         )}

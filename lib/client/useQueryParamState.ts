@@ -16,7 +16,7 @@ export function useQueryParamState<T extends string>(
   paramName: string,
   defaultValue: T,
   opts: { push?: boolean } = {}
-): [T, (value: T) => void] {
+): [T, (value: T, callOpts?: { push?: boolean }) => void] {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -24,7 +24,12 @@ export function useQueryParamState<T extends string>(
   const current = (searchParams.get(paramName) as T | null) ?? defaultValue
 
   const setValue = useCallback(
-    (value: T) => {
+    // `callOpts.push` permet de surcharger le mode push/replace par défaut
+    // du hook au cas par cas (ex. messagerie : ouvrir une conversation doit
+    // empiler une entrée d'historique — bouton retour = revenir à la
+    // précédente — mais la fermer doit rester en replace, sinon "retour"
+    // rouvrirait la conversation qu'on vient juste de fermer).
+    (value: T, callOpts?: { push?: boolean }) => {
       const params = new URLSearchParams(searchParams.toString())
       // Valeur par défaut = pas de paramètre dans l'URL (garde les liens
       // courts/propres pour le cas le plus courant).
@@ -32,11 +37,39 @@ export function useQueryParamState<T extends string>(
       else params.set(paramName, value)
       const query = params.toString()
       const url = query ? `${pathname}?${query}` : pathname
-      if (opts.push) router.push(url)
+      if (callOpts?.push ?? opts.push) router.push(url)
       else router.replace(url, { scroll: false })
     },
     [searchParams, pathname, paramName, defaultValue, opts.push, router]
   )
 
   return [current, setValue]
+}
+
+// Deux appels successifs à setValue() de useQueryParamState (un par
+// paramètre) partagent le même searchParams "figé" au rendu — le second
+// écrase le premier au lieu de les cumuler, un router.replace() gagnant sur
+// l'autre (bug confirmé : StatistiquesClient.tsx en perdait un des deux à
+// chaque changement de filtre). Cette variante prend TOUS les changements en
+// un seul objet et un seul router.replace/push, donc jamais de course entre
+// deux écritures d'URL. `null` retire le paramètre (valeur par défaut).
+export function useSetQueryParams(opts: { push?: boolean } = {}): (updates: Record<string, string | null>) => void {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  return useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === null) params.delete(key)
+        else params.set(key, value)
+      }
+      const query = params.toString()
+      const url = query ? `${pathname}?${query}` : pathname
+      if (opts.push) router.push(url)
+      else router.replace(url, { scroll: false })
+    },
+    [searchParams, pathname, opts.push, router]
+  )
 }
