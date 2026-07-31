@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import TabsSection from './TabsSection'
 import { PageShell } from '@/app/components/layout'
@@ -37,7 +38,15 @@ export default function PublicAboutPage() {
       </Section>
 
       <Section eyebrow="Pour qui ?" title="Trois façons de vivre Live in Black">
-        <TabsSection />
+        {/* TabsSection lit ?tab= via useSearchParams (onglet partageable par
+            URL) — sur cette page STATIQUE, Next.js exige une frontière
+            Suspense autour de tout composant client qui lit les search
+            params au prerender, sinon le build échoue (missing-suspense-
+            with-csr-bailout). Le fallback null ne dure qu'un instant côté
+            client, la page reste prerendue statiquement. */}
+        <Suspense fallback={null}>
+          <TabsSection />
+        </Suspense>
       </Section>
 
       <Section eyebrow="En 3 temps" title="De l'envie à la piste">
