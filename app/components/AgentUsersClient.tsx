@@ -79,14 +79,14 @@ interface BadgeColors {
 const ROLE_BADGE: Record<Role, BadgeColors> = {
   client: { color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' },
   organisateur: { color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
-  prestataire: { color: '#e05aaa', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
+  prestataire: { color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
   agent: { color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
 }
 
 function statusLabel(u: UserSummary): { label: string } & BadgeColors {
   if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
   if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' }
-  if (u.status === 'rejected') return { label: 'REFUSÉ', color: '#e05aaa', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
+  if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
   return { label: 'ACTIF', color: 'var(--primary)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' }
 }
 
@@ -138,6 +138,8 @@ export default function AgentUsersClient() {
   const setSelectedId = (id: string | null) => setUserParam(id ?? '')
   const [detail, setDetail] = useState<UserDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState(false)
+  const [detailRetry, setDetailRetry] = useState(0)
 
   const [editField, setEditField] = useState<{ field: EditableField; value: string } | null>(null)
   const [editBusy, setEditBusy] = useState(false)
@@ -202,6 +204,7 @@ export default function AgentUsersClient() {
   function closeDetail() {
     setSelectedId(null)
     setDetail(null)
+    setDetailError(false)
     setEditField(null)
     setConfirmDisable(false)
   }
@@ -220,11 +223,14 @@ export default function AgentUsersClient() {
     let cancelled = false
     async function run() {
       setDetailLoading(true)
+      setDetailError(false)
       try {
         const res = await fetch(`/api/agent/users/${selectedId}`)
         const data = await res.json()
         if (!res.ok || !data.ok) throw new Error('load_failed')
         if (!cancelled) setDetail(data.user)
+      } catch {
+        if (!cancelled) setDetailError(true)
       } finally {
         if (!cancelled) setDetailLoading(false)
       }
@@ -233,7 +239,7 @@ export default function AgentUsersClient() {
     return () => {
       cancelled = true
     }
-  }, [selectedId])
+  }, [selectedId, detailRetry])
 
   async function handleVerifyEmail() {
     if (!detail) return
@@ -515,7 +521,19 @@ export default function AgentUsersClient() {
           <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
           <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
             <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
-            {detailLoading || !detail ? (
+            {detailError ? (
+              <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le compte n’existe peut-être plus, ou une erreur serveur est survenue.</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
+                    Réessayer
+                  </Button>
+                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 12.5 }}>
+                    Fermer
+                  </Button>
+                </div>
+              </Card>
+            ) : detailLoading || !detail ? (
               <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
             ) : (
               <DetailPanel
@@ -548,7 +566,7 @@ export default function AgentUsersClient() {
             padding: '10px 18px',
             borderRadius: 10,
             background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
+            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : 'var(--pink)'}`,
             color: '#fff',
             fontSize: 13,
           }}

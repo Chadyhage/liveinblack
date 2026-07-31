@@ -70,6 +70,8 @@ export default function AgentDeletionClient() {
   const setSelectedId = (id: string | null) => setRequestParam(id ?? '')
   const [detail, setDetail] = useState<DeletionRequestDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState(false)
+  const [detailRetry, setDetailRetry] = useState(0)
 
   const [rejectNote, setRejectNote] = useState('')
   const [rejecting, setRejecting] = useState(false)
@@ -125,11 +127,14 @@ export default function AgentDeletionClient() {
     let cancelled = false
     async function run() {
       setDetailLoading(true)
+      setDetailError(false)
       try {
         const res = await fetch(`/api/agent/deletion-requests/${selectedId}`)
         const data = await res.json()
         if (!res.ok || !data.ok) throw new Error('load_failed')
         if (!cancelled) setDetail(data.request)
+      } catch {
+        if (!cancelled) setDetailError(true)
       } finally {
         if (!cancelled) setDetailLoading(false)
       }
@@ -138,11 +143,12 @@ export default function AgentDeletionClient() {
     return () => {
       cancelled = true
     }
-  }, [selectedId])
+  }, [selectedId, detailRetry])
 
   function closeDetail() {
     setSelectedId(null)
     setDetail(null)
+    setDetailError(false)
     setRejectNote('')
     setConfirmApprove(false)
   }
@@ -256,7 +262,19 @@ export default function AgentDeletionClient() {
           <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
           <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
             <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
-            {detailLoading || !detail ? (
+            {detailError ? (
+              <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. La demande n’existe peut-être plus, ou une erreur serveur est survenue.</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
+                    Réessayer
+                  </Button>
+                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 12.5 }}>
+                    Fermer
+                  </Button>
+                </div>
+              </Card>
+            ) : detailLoading || !detail ? (
               <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
             ) : (
               <DetailPanel

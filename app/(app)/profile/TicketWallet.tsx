@@ -1022,7 +1022,7 @@ function PremiumTicketCard({
                   <span style={{ color: 'var(--text-muted)' }}>
                     {it.name} ×{it.quantity}
                   </span>
-                  <span style={{ color: it.status === 'served' ? '#4ee8c8' : 'var(--gold)', fontWeight: 700, fontSize: 11 }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
+                  <span style={{ color: it.status === 'served' ? 'var(--teal)' : 'var(--gold)', fontWeight: 700, fontSize: 11 }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
                 </div>
               ))}
               <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '8px 0 0', lineHeight: 1.5 }}>

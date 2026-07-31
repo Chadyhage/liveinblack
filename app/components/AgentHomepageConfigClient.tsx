@@ -334,7 +334,7 @@ export default function AgentHomepageConfigClient() {
       <Card style={{ padding: '16px 18px' }}>
         <span style={{ ...labelStyle, marginBottom: 10 }}>Ajouter un événement</span>
         {atMax && (
-          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: '#c8a96e' }}>Maximum atteint ({MAX_EVENTS} événements). Retire-en un pour en ajouter un autre.</p>
+          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>Maximum atteint ({MAX_EVENTS} événements). Retire-en un pour en ajouter un autre.</p>
         )}
         <Input style={{ marginBottom: 10 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, ville…" />
         {candidates.length === 0 ? (
@@ -363,7 +363,7 @@ export default function AgentHomepageConfigClient() {
                   <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</span>
                   <span style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--text-faint)' }}>{[ev.dateDisplay || ev.date, ev.city].filter(Boolean).join(' · ')}</span>
                 </span>
-                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#4ee8c8' }}>+ Ajouter</span>
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: 'var(--teal)' }}>+ Ajouter</span>
               </Button>
             ))}
           </div>
@@ -399,7 +399,7 @@ export default function AgentHomepageConfigClient() {
         >
           Enregistrer
         </Button>
-        {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.ok ? '#4ee8c8' : '#ff9ed2' }}>{msg.text}</span>}
+        {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.ok ? 'var(--teal)' : '#ff9ed2' }}>{msg.text}</span>}
       </div>
       </div>
     </main>

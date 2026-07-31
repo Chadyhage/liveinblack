@@ -306,6 +306,8 @@ export default function ProposerServicesClient({
   const [mediaUploading, setMediaUploading] = useState(false)
   const [confirmRemoveItem, setConfirmRemoveItem] = useState<CatalogItemView | null>(null)
   const [removingItem, setRemovingItem] = useState(false)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [togglingItemId, setTogglingItemId] = useState<string | null>(null)
 
   const [reviews, setReviews] = useState(initialReviews)
   const [replyFor, setReplyFor] = useState<string | null>(null)
@@ -624,7 +626,8 @@ export default function ProposerServicesClient({
   }
 
   async function saveEditedItem() {
-    if (!editingItemId || !editingItem?.name.trim()) return
+    if (!editingItemId || !editingItem?.name.trim() || savingEdit) return
+    setSavingEdit(true)
     try {
       const res = await fetch(`/api/providers/me/catalog/${editingItemId}`, {
         method: 'PATCH',
@@ -639,7 +642,11 @@ export default function ProposerServicesClient({
         }),
       })
       const data = await res.json()
-      if (!res.ok || !data.ok) return notify('Impossible d’enregistrer cette offre.')
+      if (!res.ok || !data.ok) {
+        notify('Impossible d’enregistrer cette offre.')
+        setSavingEdit(false)
+        return
+      }
       setProfile(data.profile)
       setEditingItemId(null)
       setEditingItem(null)
@@ -647,26 +654,47 @@ export default function ProposerServicesClient({
     } catch {
       notify('Impossible d’enregistrer cette offre.')
     }
+    setSavingEdit(false)
   }
 
   async function toggleItem(item: CatalogItemView) {
-    const res = await fetch(`/api/providers/me/catalog/${item.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ available: item.available === false }),
-    })
-    const data = await res.json()
-    if (res.ok && data.ok) setProfile(data.profile)
+    if (togglingItemId === item.id) return
+    setTogglingItemId(item.id)
+    try {
+      const res = await fetch(`/api/providers/me/catalog/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ available: item.available === false }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        notify('Impossible de modifier la visibilité de cette offre.')
+      } else {
+        setProfile(data.profile)
+      }
+    } catch {
+      notify('Impossible de modifier la visibilité de cette offre.')
+    }
+    setTogglingItemId(null)
   }
 
   async function confirmDeleteItem() {
     if (!confirmRemoveItem) return
     setRemovingItem(true)
-    const res = await fetch(`/api/providers/me/catalog/${confirmRemoveItem.id}`, { method: 'DELETE' })
-    const data = await res.json()
-    if (res.ok && data.ok) {
+    try {
+      const res = await fetch(`/api/providers/me/catalog/${confirmRemoveItem.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        notify('Impossible de supprimer cette offre.')
+        setRemovingItem(false)
+        return
+      }
       setProfile(data.profile)
       notify('Offre supprimée.')
+    } catch {
+      notify('Impossible de supprimer cette offre.')
+      setRemovingItem(false)
+      return
     }
     setRemovingItem(false)
     setConfirmRemoveItem(null)
@@ -701,13 +729,21 @@ export default function ProposerServicesClient({
   }
 
   async function removeOfferMedia(itemId: string, mediaIndex: number) {
-    const res = await fetch(`/api/providers/me/catalog/${itemId}/media`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mediaIndex }),
-    })
-    const data = await res.json()
-    if (res.ok && data.ok) setProfile(data.profile)
+    setMediaUploading(true)
+    try {
+      const res = await fetch(`/api/providers/me/catalog/${itemId}/media`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaIndex }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) throw new Error(data.error || 'remove_failed')
+      setProfile(data.profile)
+      notify('Média supprimé.')
+    } catch {
+      notify('Le média n’a pas pu être supprimé.')
+    }
+    setMediaUploading(false)
   }
 
   // ── Avis ──
@@ -1225,11 +1261,12 @@ export default function ProposerServicesClient({
                         </div>
 
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <Button onClick={saveEditedItem} style={primaryButton}>
+                          <Button onClick={saveEditedItem} disabled={savingEdit} loading={savingEdit} loadingText="Enregistrement…" style={primaryButton}>
                             Enregistrer
                           </Button>
                           <Button
                             variant="secondary"
+                            disabled={savingEdit}
                             onClick={() => {
                               setEditingItemId(null)
                               setEditingItem(null)
@@ -1270,7 +1307,7 @@ export default function ProposerServicesClient({
                         </div>
                       </div>
                       <div className="provider-catalog-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        <Button variant="secondary" onClick={() => void toggleItem(item)} style={secondaryButton}>
+                        <Button variant="secondary" disabled={togglingItemId === item.id} onClick={() => void toggleItem(item)} style={secondaryButton}>
                           {item.available === false ? 'Publier' : 'Masquer'}
                         </Button>
                         <Button variant="secondary" onClick={() => startEdit(item)} style={secondaryButton}>
@@ -1345,7 +1382,7 @@ export default function ProposerServicesClient({
                           <Stars value={review.rating} size={14} />
                           <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
                           {review.verified && (
-                            <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, color: '#4ee8c8', background: 'rgba(78,232,200,.10)', border: '1px solid rgba(78,232,200,.35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
+                            <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, color: 'var(--primary)', background: 'rgba(184,243,74,.10)', border: '1px solid rgba(184,243,74,.35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
                           )}
                           {hidden && (
                             <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 999, padding: '2px 8px' }}>Masqué par la modération</span>

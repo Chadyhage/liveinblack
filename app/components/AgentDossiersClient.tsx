@@ -79,7 +79,7 @@ interface ApplicationDetail {
 }
 
 const SECTIONS: { key: string; label: string; color: string; statuses: ApplicationStatus[] }[] = [
-  { key: 'pending', label: 'En attente', color: '#c8a96e', statuses: ['submitted'] },
+  { key: 'pending', label: 'En attente', color: 'var(--gold)', statuses: ['submitted'] },
   { key: 'review', label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
   { key: 'correction', label: 'À corriger', color: '#f59e0b', statuses: ['needs_changes'] },
   { key: 'resubmitted', label: 'Re-soumis', color: '#a78bfa', statuses: ['resubmitted'] },
@@ -100,7 +100,7 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
 
 const STATUS_COLOR: Record<ApplicationStatus, string> = {
   draft: 'var(--text-faint)',
-  submitted: '#c8a96e',
+  submitted: 'var(--gold)',
   under_review: '#3b82f6',
   needs_changes: '#f59e0b',
   resubmitted: '#a78bfa',
@@ -120,7 +120,7 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
   reactivated: 'Réactivé',
 }
 const AUDIT_ACTION_COLOR: Record<string, string> = {
-  submitted: '#c8a96e',
+  submitted: 'var(--gold)',
   resubmitted: '#a78bfa',
   under_review: '#3b82f6',
   approve: '#22c55e',
@@ -188,6 +188,14 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
 
 const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
+
+// Les couleurs `var(--*)` ne supportent pas la concaténation d'un canal alpha
+// hexadécimal (`${'var(--gold)'}22` produit une chaîne CSS invalide) — voir
+// le même piège documenté dans AgentUsersClient.tsx. On retombe sur
+// l'équivalent rgba() précalculé de --gold (= --primary, #b8f34a) pour ce cas.
+function alphaBg(color: string): string {
+  return color.startsWith('var(') ? 'rgba(184,243,74,0.13)' : `${color}22`
+}
 
 function str(v: unknown): string {
   return v == null ? '' : String(v)
@@ -339,6 +347,8 @@ export default function AgentDossiersClient() {
   const setSelectedId = (id: string | null) => setDossierParam(id ?? '')
   const [detail, setDetail] = useState<ApplicationDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState(false)
+  const [detailRetry, setDetailRetry] = useState(0)
 
   const [activeAction, setActiveAction] = useState<'approve' | 'changes' | 'reject' | null>(null)
   const [actionNote, setActionNote] = useState('')
@@ -408,6 +418,7 @@ export default function AgentDossiersClient() {
   function closeDetail() {
     setSelectedId(null)
     setDetail(null)
+    setDetailError(false)
   }
 
   useEffect(() => {
@@ -415,6 +426,7 @@ export default function AgentDossiersClient() {
     let cancelled = false
     async function run() {
       setDetailLoading(true)
+      setDetailError(false)
       try {
         const res = await fetch(`/api/agent/applications/${selectedId}`)
         const data = await res.json()
@@ -423,6 +435,8 @@ export default function AgentDossiersClient() {
           setDetail(data.application)
           setNoteDraft(data.application.adminNote)
         }
+      } catch {
+        if (!cancelled) setDetailError(true)
       } finally {
         if (!cancelled) setDetailLoading(false)
       }
@@ -431,7 +445,7 @@ export default function AgentDossiersClient() {
     return () => {
       cancelled = true
     }
-  }, [selectedId])
+  }, [selectedId, detailRetry])
 
   useEffect(() => {
     if (!selectedId) return
@@ -549,7 +563,7 @@ export default function AgentDossiersClient() {
                   padding: '12px 10px',
                   borderRadius: 12,
                   border: `1px solid ${active ? s.color : 'var(--border)'}`,
-                  background: active ? `${s.color}22` : 'var(--surface)',
+                  background: active ? alphaBg(s.color) : 'var(--surface)',
                   textAlign: 'left',
                   display: 'block',
                 }}
@@ -623,7 +637,19 @@ export default function AgentDossiersClient() {
             >
               <X size={18} />
             </Button>
-            {detailLoading || !detail ? (
+            {detailError ? (
+              <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le dossier n’existe peut-être plus, ou une erreur serveur est survenue.</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
+                    Réessayer
+                  </Button>
+                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 12.5 }}>
+                    Fermer
+                  </Button>
+                </div>
+              </Card>
+            ) : detailLoading || !detail ? (
               <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
             ) : (
               <DetailPanel
@@ -692,7 +718,7 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ flex: 1, minWidth: 0, fontSize: compact ? 13 : 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.displayName}</span>
-          <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: `${STATUS_COLOR[app.status]}22`, color: STATUS_COLOR[app.status] }}>{STATUS_LABEL[app.status]}</span>
+          <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: alphaBg(STATUS_COLOR[app.status]), color: STATUS_COLOR[app.status] }}>{STATUS_LABEL[app.status]}</span>
         </div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>
           {typeLabel} · {app.userEmail} · {dateLabel}
@@ -749,7 +775,7 @@ function DetailPanel({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h2 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: 0 }}>{displayName}</h2>
-          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: `${STATUS_COLOR[detail.status]}22`, color: STATUS_COLOR[detail.status], fontWeight: 700 }}>
+          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: alphaBg(STATUS_COLOR[detail.status]), color: STATUS_COLOR[detail.status], fontWeight: 700 }}>
             {STATUS_LABEL[detail.status]}
           </span>
         </div>

@@ -94,7 +94,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
         .organizer-directory__grid{display:flex;flex-direction:column;gap:16px}
         .organizer-directory__card{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.2fr) 220px;min-height:260px;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
         .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(184, 243, 74,.35)}
-        .organizer-directory__cover{position:relative;min-height:230px;overflow:hidden;background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(200,169,110,.12),var(--obsidian))}
+        .organizer-directory__cover{position:relative;min-height:230px;overflow:hidden;background:linear-gradient(135deg,rgba(184,243,74,.35),rgba(184,243,74,.12),var(--obsidian))}
         .organizer-directory__cover:after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(4,4,11,.82),transparent 65%)}
         .organizer-directory__body{position:relative;padding:38px 34px;color:inherit;text-decoration:none;display:flex;flex-direction:column;justify-content:center}
         .organizer-directory__actions{padding:32px 24px;border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:12px}

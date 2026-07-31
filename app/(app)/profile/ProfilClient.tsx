@@ -75,8 +75,8 @@ function errorMessage(code: string, data?: { nextChangeAllowedAt?: string }): st
 // disabled et le spinner de chargement.
 const goldButtonStyle: React.CSSProperties = {
   borderRadius: 3,
-  background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
-  color: '#1a1508',
+  background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
+  color: 'var(--primary-ink)',
   textTransform: 'none',
   letterSpacing: 'normal',
   fontWeight: 500,

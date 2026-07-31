@@ -118,8 +118,8 @@ function RoleIcon({ role, size = 21 }: { role: RegRole; size?: number }) {
 // besoin de suffixer une transparence (1a/3a) — mêmes valeurs que les vars.
 const ROLE_CARDS: { role: RegRole; title: string; desc: string; badge: string | null; accent: string }[] = [
   { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: '#b8f34a' },
-  { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: '#8b5cf6' },
-  { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: '#c8a96e' },
+  { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: '#b8f34a' },
+  { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: '#b8f34a' },
 ]
 
 function withNext(path: string, next: string | null) {

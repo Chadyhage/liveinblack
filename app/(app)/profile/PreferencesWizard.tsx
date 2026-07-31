@@ -7,8 +7,8 @@ import { Button, Input, Modal, Avatar } from '@/app/components/ui'
 // profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
 // villes utilisent le proxy distant Deezer/Photon avec repli local et ajout
 // libre. Le moteur de scoring consomme ces préférences dans /events.
-const TEAL = '#4ee8c8'
-const VIOLET = '#8b5cf6'
+const TEAL = 'var(--teal)'
+const VIOLET = 'var(--violet)'
 
 const MUSIC_STYLES = [
   { id: 'afrobeat', label: 'Afrobeat' },

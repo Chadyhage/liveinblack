@@ -173,11 +173,21 @@ export default function ProviderCatalogInquiry({
 
     const trimmed = text.trim()
     if (trimmed) {
-      await apiFetch(`/api/conversations/${conversationId}/messages`, {
+      const textRes = await apiFetch(`/api/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'text', content: trimmed }),
       })
+      if (!textRes.ok) {
+        // La fiche du service est déjà envoyée (étape précédente réussie) —
+        // on ne bloque pas la navigation, mais un window.alert() natif
+        // jurerait avec le sheet custom du reste du composant. On réutilise
+        // le même encart d'erreur inline que les autres échecs ci-dessus, le
+        // temps qu'il soit visible avant la redirection vers la conversation.
+        setError('La demande a été envoyée, mais ton message n’a pas pu être transmis. Tu pourras le renvoyer depuis la conversation.')
+        setSending(false)
+        await new Promise((resolve) => setTimeout(resolve, 1600))
+      }
     }
 
     router.push(`/messages?conversationId=${encodeURIComponent(conversationId)}`)

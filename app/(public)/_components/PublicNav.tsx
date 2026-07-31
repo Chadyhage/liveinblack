@@ -280,6 +280,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         @media (min-width: 1100px) and (max-width: 1399px) {
           .lb-navlink-primary, .lb-nav-auth { display: inline-block }
           .lb-mobile-login { display: none !important }
+          .lb-burger { display: none !important }
         }
         @media (min-width: 1400px) {
           .lb-navlink { display: inline-block }
