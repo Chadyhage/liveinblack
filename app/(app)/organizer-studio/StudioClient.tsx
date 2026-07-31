@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import NextImage from 'next/image'
 import Link from 'next/link'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Check, Smartphone, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '@/lib/shared/social'
 import { regions } from '@/lib/shared/regions'
@@ -108,9 +109,17 @@ export default function StudioClient({
   // Page publique (profil, galerie) et Encaissement (Stripe Connect + Mobile
   // Money, PayoutSection ci-dessous) sont deux métiers distincts qui
   // partageaient une seule page à défilement — d'où le libellé de sidebar
-  // "Ma page & paiements" qui devait déjà nommer les deux. Séparés en onglets ;
-  // #encaissement reste un lien de compatibilité direct vers l'onglet paiements.
-  const [tab, setTab] = useState<'page' | 'paiements'>(() => (typeof window !== 'undefined' && window.location.hash === '#encaissement' ? 'paiements' : 'page'))
+  // "Ma page & paiements" qui devait déjà nommer les deux. Séparés en onglets
+  // reflétés dans l'URL (?tab=paiements) — toute page/onglet du site doit
+  // rester partageable par lien direct, pas seulement un état React.
+  const [tab, setTab] = useQueryParamState<'page' | 'paiements'>('tab', 'page')
+
+  // #encaissement (ancien lien de compatibilité, avant le passage en
+  // ?tab=paiements) : redirige une seule fois vers le nouveau paramètre.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#encaissement') setTab('paiements')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     fetch('/api/organizer-events')

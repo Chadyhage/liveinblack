@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -50,7 +51,9 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
   const [data, setData] = useState<BoostsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [page, setPage] = useState(1)
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
 
   async function load() {
     setLoading(true)

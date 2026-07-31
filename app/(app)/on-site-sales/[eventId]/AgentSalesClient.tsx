@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Input, Select, Checkbox, Label } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 export interface PlaceView {
   id: string
@@ -36,7 +37,7 @@ export default function AgentSalesClient({
   places: PlaceView[]
   initialDashboard: AgentSalesDashboardView
 }) {
-  const [mode, setMode] = useState<'onsite' | 'door'>('onsite')
+  const [mode, setMode] = useQueryParamState<'onsite' | 'door'>('mode', 'onsite')
   const [placeId, setPlaceId] = useState(places[0]?.id || '')
   const [qty, setQty] = useState(1)
   const [isTable, setIsTable] = useState(false)

@@ -14,6 +14,7 @@ import { REVIEW_REPORT_REASONS, computeReviewStats } from '@/lib/shared/reviews'
 import { Stars } from '@/app/components/StarRating'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Button, Input, Textarea, Select, Label } from '@/app/components/ui'
 
 // Port de ProposerServicesPage.jsx + MyProviderReviews.jsx (#8 phase
@@ -282,7 +283,7 @@ export default function ProposerServicesClient({
   // ou un upload avatar/couverture (déjà persisté serveur), jamais à chaque frappe.
   const [savedProfile, setSavedProfile] = useState(initialProfile)
   const [subscription, setSubscription] = useState(initialSubscription)
-  const [tab, setTab] = useState<'profil' | 'catalogue' | 'avis'>('profil')
+  const [tab, setTab] = useQueryParamState<'profil' | 'catalogue' | 'avis'>('tab', 'profil')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<'avatar' | 'cover' | ''>('')

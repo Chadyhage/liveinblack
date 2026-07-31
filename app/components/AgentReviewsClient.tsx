@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
 import { Button, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -99,10 +100,12 @@ export default function AgentReviewsClient() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
 
-  const [statusFilter, setStatusFilter] = useState<'all' | 'reported' | ReviewStatus>('all')
-  const [ratingFilter, setRatingFilter] = useState<'all' | '1' | '2' | '3' | '4' | '5'>('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useQueryParamState<'all' | 'reported' | ReviewStatus>('status', 'all')
+  const [ratingFilter, setRatingFilter] = useQueryParamState<'all' | '1' | '2' | '3' | '4' | '5'>('rating', 'all')
+  const [search, setSearch] = useQueryParamState<string>('q', '')
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)

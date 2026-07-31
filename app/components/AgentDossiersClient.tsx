@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
@@ -329,11 +330,13 @@ export default function AgentDossiersClient() {
   const [applications, setApplications] = useState<ApplicationSummary[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
-  const [section, setSection] = useState('pending')
+  const [section, setSection] = useQueryParamState<string>('section', 'pending')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [dossierParam, setDossierParam] = useQueryParamState<string>('dossier', '', { push: true })
+  const selectedId = dossierParam || null
+  const setSelectedId = (id: string | null) => setDossierParam(id ?? '')
   const [detail, setDetail] = useState<ApplicationDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 

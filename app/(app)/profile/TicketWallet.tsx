@@ -7,6 +7,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
 import { Button, Input, Pagination, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
 
@@ -181,9 +182,9 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
               </Link>
             </div>
 
-            {buckets.upcoming.length > 0 && <Section label={`À venir (${buckets.upcoming.length})`} groups={buckets.upcoming} currentUserId={currentUserId} />}
-            {buckets.past.length > 0 && <Section label={`Événements passés (${buckets.past.length})`} groups={buckets.past} currentUserId={currentUserId} />}
-            {buckets.cancelled.length > 0 && <Section label={`Annulés (${buckets.cancelled.length})`} groups={buckets.cancelled} currentUserId={currentUserId} />}
+            {buckets.upcoming.length > 0 && <Section label={`À venir (${buckets.upcoming.length})`} groups={buckets.upcoming} currentUserId={currentUserId} paramName="page" />}
+            {buckets.past.length > 0 && <Section label={`Événements passés (${buckets.past.length})`} groups={buckets.past} currentUserId={currentUserId} paramName="pastPage" />}
+            {buckets.cancelled.length > 0 && <Section label={`Annulés (${buckets.cancelled.length})`} groups={buckets.cancelled} currentUserId={currentUserId} paramName="cancelledPage" />}
           </>
         )}
       </div>
@@ -288,8 +289,20 @@ function SeatHoldsPanel() {
   )
 }
 
-function Section({ label, groups, currentUserId }: { label: string; groups: TicketWalletGroupView[]; currentUserId: string }) {
-  const [page, setPage] = useState(1)
+function Section({
+  label,
+  groups,
+  currentUserId,
+  paramName,
+}: {
+  label: string
+  groups: TicketWalletGroupView[]
+  currentUserId: string
+  paramName: string
+}) {
+  const [pageParam, setPageParam] = useQueryParamState<string>(paramName, '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
   const { pageItems, pageCount } = pagedSlice(groups, page, GROUP_PAGE_SIZE)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

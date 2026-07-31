@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { Button, Card } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 // Seule partie interactive de la page (bascule entre les 3 profils) — le
 // reste de /c-est-quoi est statique. Port de la logique JourneyVisual/tabs de
@@ -59,7 +59,10 @@ const JOURNEYS: Record<TabId, Array<[string, string, string]>> = {
 }
 
 export default function TabsSection() {
-  const [activeTab, setActiveTab] = useState<TabId>('client')
+  // Page publique sans auth — un lien direct vers un onglet (ex. le
+  // parcours "organisateur") doit être partageable, d'où ?tab= plutôt qu'un
+  // simple useState local.
+  const [activeTab, setActiveTab] = useQueryParamState<TabId>('tab', 'client')
   const current = TABS.find((t) => t.id === activeTab)!
 
   return (

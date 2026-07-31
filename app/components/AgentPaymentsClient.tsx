@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
 import AgentBoostsClient from '@/app/components/AgentBoostsClient'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -145,7 +146,10 @@ const tealBtn: React.CSSProperties = { ...btnBase, background: 'var(--teal)', co
 const ghostBtn: React.CSSProperties = { ...btnBase, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'none', letterSpacing: 'normal' }
 
 export default function AgentPaymentsClient() {
-  const [section, setSection] = useState<SectionKey>('payouts')
+  // Onglet reflété dans l'URL (?section=) — un lien vers "Alertes paiement"
+  // ou "Boosts" doit rester partageable, pas seulement atteignable en
+  // cliquant depuis Paiements.
+  const [section, setSection] = useQueryParamState<SectionKey>('section', 'payouts')
 
   const [failedPayouts, setFailedPayouts] = useState<FailedPayout[]>([])
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequestView[]>([])

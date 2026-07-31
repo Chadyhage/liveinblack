@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -42,12 +43,16 @@ export default function AgentReportsClient() {
   const [reports, setReports] = useState<ReportItem[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
-  const [filter, setFilter] = useState<FilterKey>('open')
-  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useQueryParamState<FilterKey>('filter', 'open')
+  const [search, setSearch] = useQueryParamState<string>('q', '')
 
-  const [page, setPage] = useState(1)
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
 
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeIdParam, setActiveIdParam] = useQueryParamState<string>('report', '', { push: true })
+  const activeId = activeIdParam || null
+  const setActiveId = (id: string | null) => setActiveIdParam(id ?? '')
   const [note, setNote] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
 

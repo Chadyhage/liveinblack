@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import { Avatar, Button, Card, Checkbox, Pagination, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 20
 
@@ -57,7 +58,9 @@ const DEFAULT_ALERTS: AlertSettings = {
 
 export default function FollowedOrganizersClient({ initialFollows, suggestions }: { initialFollows: FollowedOrganizerView[]; suggestions: OrganizerSuggestion[] }) {
   const [follows, setFollows] = useState(initialFollows)
-  const [page, setPage] = useState(1)
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
   const { pageItems: pagedFollows, pageCount } = pagedSlice(follows, page, PAGE_SIZE)
 
   function remove(organizerId: string) {

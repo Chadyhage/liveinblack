@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
 
 const PAGE_SIZE = 15
@@ -59,10 +60,14 @@ export default function AgentDeletionClient() {
   const [requests, setRequests] = useState<DeletionRequestSummary[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [search, setSearch] = useQueryParamState<string>('q', '')
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam) || 1
+  const setPage = (p: number) => setPageParam(String(p))
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [requestParam, setRequestParam] = useQueryParamState<string>('request', '', { push: true })
+  const selectedId = requestParam || null
+  const setSelectedId = (id: string | null) => setRequestParam(id ?? '')
   const [detail, setDetail] = useState<DeletionRequestDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 

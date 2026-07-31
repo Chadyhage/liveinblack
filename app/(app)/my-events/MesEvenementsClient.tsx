@@ -16,6 +16,7 @@ import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
 import { Button, Modal, Pagination, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAST_PAGE_SIZE = 15
 
@@ -41,13 +42,20 @@ type ModalState =
 
 export default function MesEvenementsClient({ initialEvents, initialStripeChargesEnabled, initialMomos }: MesEvenementsClientProps) {
   const [events, setEvents] = useState(initialEvents)
-  const [view, setView] = useState<'dashboard' | 'create'>('dashboard')
-  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  // Vue tableau de bord vs. wizard plein écran (création/édition), reflétée
+  // dans l'URL (?event=new pour créer, ?event=<id> pour éditer, absent pour
+  // le dashboard) — un lien vers "éditer cet événement précis" doit rester
+  // partageable, pas seulement atteignable en cliquant depuis le dashboard.
+  const [eventParam, setEventParam] = useQueryParamState<string>('event', '', { push: true })
+  const view: 'dashboard' | 'create' = eventParam ? 'create' : 'dashboard'
+  const editingEventId = eventParam && eventParam !== 'new' ? eventParam : null
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [duplicating, setDuplicating] = useState<string | null>(null)
   const [now] = useState(() => Date.now())
-  const [pastPage, setPastPage] = useState(1)
+  const [pastPageParam, setPastPageParam] = useQueryParamState<string>('pastPage', '1')
+  const pastPage = Number(pastPageParam) || 1
+  const setPastPage = (n: number) => setPastPageParam(String(n))
 
   async function refreshEvents() {
     const res = await fetch('/api/organizer-events')
@@ -79,8 +87,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
   const { pageItems: pagedPastEvents, pageCount: pastPageCount } = useMemo(() => pagedSlice(pastEvents, pastPage, PAST_PAGE_SIZE), [pastEvents, pastPage])
 
   function startCreate() {
-    setEditingEventId(null)
-    setView('create')
+    setEventParam('new')
   }
 
   async function duplicateEvent(event: OrganizerEventView) {
@@ -166,8 +173,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         void duplicateEvent(event)
         return
       case 'edit':
-        setEditingEventId(event.id)
-        setView('create')
+        setEventParam(event.id)
         return
       case 'postpone':
         setModal({ type: 'postpone', event })
@@ -186,10 +192,10 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
     return (
       <EventWizard
         eventId={editingEventId}
-        onClose={() => setView('dashboard')}
+        onClose={() => setEventParam('')}
         onSaved={async () => {
           await refreshEvents()
-          setView('dashboard')
+          setEventParam('')
           setMessage({ type: 'success', text: editingEventId ? 'Événement mis à jour.' : 'Ta soirée est en ligne.' })
         }}
       />
@@ -230,7 +236,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l&rsquo;argent n&rsquo;est pas versé automatiquement.
           </p>
           <Link
-            href="/organizer-studio?section=encaissement"
+            href="/organizer-studio?tab=paiements"
             style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5, textDecoration: 'none' }}
           >
             Configurer mon encaissement

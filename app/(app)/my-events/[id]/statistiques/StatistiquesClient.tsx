@@ -8,6 +8,7 @@ import type { EventStatsView } from '@/lib/server/eventStats'
 import { eventStatsCsvRows } from '@/lib/shared/eventStats'
 import { formatMoney } from '../../types'
 import { Button, Select } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const TONE_COLOR: Record<string, string> = {
   gold: 'var(--gold)',
@@ -53,8 +54,8 @@ function downloadCsv(view: EventStatsView) {
 
 export default function StatistiquesClient({ eventId, initialView }: { eventId: string; initialView: EventStatsView }) {
   const [view, setView] = useState(initialView)
-  const [range, setRange] = useState<'all' | '7d' | '30d'>('all')
-  const [place, setPlace] = useState('all')
+  const [range, setRange] = useQueryParamState<'all' | '7d' | '30d'>('range', 'all')
+  const [place, setPlace] = useQueryParamState<string>('place', 'all')
   const [filterError, setFilterError] = useState(false)
   const [isPending, startTransition] = useTransition()
 

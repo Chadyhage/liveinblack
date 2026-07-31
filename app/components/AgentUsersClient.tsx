@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { X } from 'lucide-react'
 import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
 
@@ -124,13 +125,17 @@ export default function AgentUsersClient() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
 
-  const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [search, setSearch] = useQueryParamState<string>('q', '')
+  const [roleFilter, setRoleFilter] = useQueryParamState<RoleFilter>('role', 'all')
+  const [statusFilter, setStatusFilter] = useQueryParamState<StatusFilter>('status', 'all')
   const [onlineOnly, setOnlineOnly] = useState(false)
-  const [page, setPage] = useState(1)
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam) || 1
+  const setPage = (p: number) => setPageParam(String(p))
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [userParam, setUserParam] = useQueryParamState<string>('user', '', { push: true })
+  const selectedId = userParam || null
+  const setSelectedId = (id: string | null) => setUserParam(id ?? '')
   const [detail, setDetail] = useState<UserDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
 
@@ -74,9 +75,11 @@ export default function AgentEventsClient() {
   const [events, setEvents] = useState<AgentEvent[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<FilterKey>('all')
-  const [page, setPage] = useState(1)
+  const [search, setSearch] = useQueryParamState<string>('q', '')
+  const [filter, setFilter] = useQueryParamState<FilterKey>('filter', 'all')
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
 
   const [adminCancel, setAdminCancel] = useState<{ id: string; name: string } | null>(null)
   const [adminCancelMsg, setAdminCancelMsg] = useState('')

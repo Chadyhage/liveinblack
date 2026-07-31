@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Button, Input } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 interface PlaylistSong {
   id: string
@@ -223,8 +224,11 @@ export default function PlaylistClient({
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [participantTab, setParticipantTab] = useState<'top' | 'mine' | 'rules'>('top')
-  const [moderationTab, setModerationTab] = useState<'all' | PlaylistSong['status']>('all')
+  // Deux filtres d'onglet coexistent sur cette page pour deux rôles
+  // différents (participant / DJ modérateur) — paramètres distincts (?tab=
+  // et ?mod=) pour ne jamais se collisionner l'un l'autre dans l'URL.
+  const [participantTab, setParticipantTab] = useQueryParamState<'top' | 'mine' | 'rules'>('tab', 'top')
+  const [moderationTab, setModerationTab] = useQueryParamState<'all' | PlaylistSong['status']>('mod', 'all')
   const [djSort, setDjSort] = useState<'likes' | 'recent'>('likes')
   const [previewMode, setPreviewMode] = useState(false)
   const [copied, setCopied] = useState(false)
