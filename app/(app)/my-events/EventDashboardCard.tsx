@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/app/components/ui'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import type { EventActionKey, OrganizerEventView } from './types'
 
 // Port de EventDashboardCard (MesEvenementsPage.jsx lignes 208-236) — carte
@@ -49,12 +50,7 @@ export default function EventDashboardCard({
         overflow: 'hidden',
       }}
     >
-      <div style={{ height: 220, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', position: 'relative', display: 'grid', placeItems: 'center' }}>
-        {!event.imageUrl && (
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={1.6} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l2.6 6.6L22 10l-6 5 1.5 7-5.5-3.6L6.5 22 8 15 2 10l7.4-1.4z" />
-          </svg>
-        )}
+      <div style={{ height: 220, background: `url(${event.imageUrl || placeholderPhotoUrl(event.id, 640, 220)}) center/cover`, position: 'relative', display: 'grid', placeItems: 'center' }}>
         <span
           style={{
             position: 'absolute',

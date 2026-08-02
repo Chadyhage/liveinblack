@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { PublicEvent } from '@/lib/server/events'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 // Carte utilisée dans les rangées catégorie d'/evenements (équivalent
 // EventCard/EventPoster du legacy, fusionnés en un seul composant).
@@ -37,9 +38,14 @@ export default function EventListCard({ event, reason, eager = false }: { event:
       }}
     >
       <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
-        {event.imageUrl && (
-          <Image src={event.imageUrl} alt={event.name} fill loading={eager ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 700px) 86vw, 300px" />
-        )}
+        <Image
+          src={event.imageUrl || placeholderPhotoUrl(event.id, 600, 340)}
+          alt={event.name}
+          fill
+          loading={eager ? 'eager' : undefined}
+          style={{ objectFit: 'cover' }}
+          sizes="(max-width: 700px) 86vw, 300px"
+        />
         {countdown && (
           <span
             style={{

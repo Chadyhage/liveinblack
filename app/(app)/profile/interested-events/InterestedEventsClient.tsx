@@ -7,6 +7,7 @@ import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
 import { Pagination, pagedSlice } from '@/app/components/ui'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const PAGE_SIZE = 20
 
@@ -154,8 +155,8 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
   const card = (
     <div style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
       <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'rgba(184, 243, 74, 0.2)'}, var(--obsidian))` }}>
-        {ev?.imageUrl && (
-          <Image src={ev.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
+        {ev && (
+          <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 400, 158)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.85), transparent 60%)' }} />
         <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 6 }}>

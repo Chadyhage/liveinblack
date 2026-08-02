@@ -16,6 +16,7 @@ import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { eventStartMs } from '@/lib/shared/event-time'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import HomeAmbienceButton from './HomeAmbienceButton'
 import HomeGreeting from './HomeGreeting'
 import { SectionHeader } from '@/app/components/ui'
@@ -184,9 +185,13 @@ export default async function AccueilPage() {
                   style={{ ...card, flexShrink: 0, width: 'clamp(320px,29vw,390px)', overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit', scrollSnapAlign: 'start' }}
                 >
                   <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
-                    {e.imageUrl && (
-                      <Image src={e.imageUrl} alt={e.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
-                    )}
+                    <Image
+                      src={e.imageUrl || placeholderPhotoUrl(e.id, 440, 248)}
+                      alt={e.name}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      sizes="(max-width: 768px) 100vw, 220px"
+                    />
                     <span
                       style={{
                         position: 'absolute',
@@ -269,13 +274,11 @@ export default async function AccueilPage() {
               {featuredProviders.map((p) => {
                 const categories = getProviderCategories(p)
                 const pc = categories[0] || getProviderCategory(p.prestataireType)
-                const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl
+                const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl || placeholderPhotoUrl(p.userId, 440, 248)
                 return (
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ position: 'relative', minHeight: 180, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
-                      {coverImage && (
-                        <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
-                      )}
+                      <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                       <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                         {pc.label}
                         {categories.length > 1 ? ` +${categories.length - 1}` : ''}
@@ -404,9 +407,13 @@ function HomeEventCard({ event, badge, boosted = false, reason }: { event: Publi
   return (
     <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
       <div style={{ position: 'relative', aspectRatio: '16/9', background: `radial-gradient(circle at 25% 10%,${event.color || '#8444ff'}55,transparent 58%),var(--surface-2)` }}>
-        {event.imageUrl && (
-          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 230px" />
-        )}
+        <Image
+          src={event.imageUrl || placeholderPhotoUrl(event.id, 460, 259)}
+          alt={event.name}
+          fill
+          style={{ objectFit: 'cover' }}
+          sizes="(max-width: 768px) 100vw, 230px"
+        />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
         {badge ? (
           <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 26, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>

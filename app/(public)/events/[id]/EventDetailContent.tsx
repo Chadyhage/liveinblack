@@ -9,6 +9,7 @@ import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { normalizeShowOptions } from '@/lib/shared/showOptions'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/permissions'
 import { EventCheckoutPanel, EventInterestButtonClient, ResaleListingsSection } from '@/app/components/features'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
@@ -92,9 +93,14 @@ export default async function EventDetailContent({
 
       {/* HERO */}
       <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
-        {event.imageUrl && (
-          <Image src={event.imageUrl} alt={event.name} fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
-        )}
+        <Image
+          src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
+          alt={event.name}
+          fill
+          loading="eager"
+          style={{ objectFit: 'cover' }}
+          sizes="(max-width: 768px) 100vw, 880px"
+        />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
         <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
           <EventShareButton eventName={event.name} />

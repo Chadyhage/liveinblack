@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { Button, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const CONV_PAGE_SIZE = 20
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
@@ -2853,7 +2854,9 @@ function EventCard({ content }: { content: string | null }) {
       style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
     >
       <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
-        {ev.image ? (
+        {ev.id ? (
+          <NextImage src={ev.image || placeholderPhotoUrl(ev.id, 480, 270)} alt={ev.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
+        ) : ev.image ? (
           <NextImage src={ev.image} alt={ev.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
@@ -2886,7 +2889,9 @@ function CatalogItemCard({ content }: { content: string | null }) {
       style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
     >
       <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
-        {it.image ? (
+        {it.providerId ? (
+          <NextImage src={it.image || placeholderPhotoUrl(it.providerId, 480, 270)} alt={it.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
+        ) : it.image ? (
           <NextImage src={it.image} alt={it.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
