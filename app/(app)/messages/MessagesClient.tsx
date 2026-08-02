@@ -23,6 +23,7 @@ import {
   Play,
   Pause,
   Handshake,
+  Send,
 } from 'lucide-react'
 import { Button, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
@@ -1514,7 +1515,17 @@ export default function MessagesClient({
                       <span style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>{conv.lastMessageAt ? formatTime(conv.lastMessageAt) : ''}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                      <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: conv.unreadCount > 0 && !conv.mutedForMe ? 'var(--text)' : 'var(--text-faint)',
+                          fontWeight: conv.unreadCount > 0 && !conv.mutedForMe ? 600 : 400,
+                          margin: '2px 0 0',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {conv.lastMessage || 'Aucun message'}
                       </p>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -1860,26 +1871,38 @@ export default function MessagesClient({
                         }}
                         placeholder="Écris un message…"
                         rows={1}
-                        style={{ ...inputStyle, marginBottom: 0, flex: 1, resize: 'none', maxHeight: 120 }}
+                        style={{
+                          ...inputStyle,
+                          marginBottom: 0,
+                          flex: 1,
+                          resize: 'none',
+                          maxHeight: 120,
+                          borderRadius: 22,
+                          background: 'var(--surface)',
+                        }}
                       />
                       {composerText.trim() ? (
                         <Button
                           variant="primary"
                           onClick={handleSend}
                           disabled={busy}
+                          aria-label={editingMessageId ? 'Modifier' : 'Envoyer'}
+                          title={editingMessageId ? 'Modifier' : 'Envoyer'}
                           style={{
-                            padding: '10px 20px',
-                            borderRadius: 3,
-                            fontWeight: 500,
-                            fontSize: 13,
-                            textTransform: 'none',
-                            letterSpacing: 'normal',
-                            color: '#fff',
-                            background: busy ? 'rgba(143,86,255,0.5)' : 'var(--violet-cta)',
+                            width: 42,
+                            height: 42,
+                            padding: 0,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#04120e',
+                            background: busy ? 'rgba(62,214,181,0.5)' : 'var(--teal-solid)',
                             cursor: busy ? 'default' : 'pointer',
+                            flexShrink: 0,
                           }}
                         >
-                          {editingMessageId ? 'Modifier' : 'Envoyer'}
+                          {editingMessageId ? <Check size={18} /> : <Send size={17} />}
                         </Button>
                       ) : (
                         <Button
@@ -1891,8 +1914,8 @@ export default function MessagesClient({
                             height: 42,
                             padding: 0,
                             borderRadius: '50%',
-                            background: 'var(--violet-cta)',
-                            color: '#fff',
+                            background: 'var(--teal-solid)',
+                            color: '#04120e',
                             flexShrink: 0,
                           }}
                           aria-label="Message vocal"
@@ -2492,9 +2515,9 @@ function MessageRow({
           }}
           style={{
             padding: message.deletedForAll ? '8px 14px' : ['image', 'poll', 'event_poll', 'story', 'event', 'catalog_item'].includes(message.type) ? 6 : '9px 14px',
-            borderRadius: isMine ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
-            background: isMine ? '#7a3bf2' : 'var(--surface)',
-            border: `1px solid ${isMine ? 'rgba(255,255,255,0.1)' : 'var(--border)'}`,
+            borderRadius: isMine ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
+            background: isMine ? 'rgba(62,214,181,0.16)' : 'var(--surface)',
+            border: `1px solid ${isMine ? 'rgba(62,214,181,0.32)' : 'var(--border)'}`,
             maxWidth: '100%',
             cursor: 'context-menu',
             boxShadow: highlighted ? '0 0 0 2px rgba(255,255,255,0.85)' : 'none',
