@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { ArrowLeft, X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
@@ -330,13 +330,16 @@ function Section({
 function BackHeader({ onBack, title }: { onBack: () => void; title: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+      {/* Cible tactile élargie (44x44 min, padding symétrique) — l'ancien
+          glyphe seul « ‹ » sans minWidth ni padding gauche laissait une zone
+          cliquable trop étroite sur mobile. */}
       <Button
         variant="ghost"
         onClick={onBack}
-        style={{ fontSize: 22, padding: '4px 8px 4px 0', color: 'var(--text-muted)' }}
+        style={{ minWidth: 44, padding: '10px', color: 'var(--text-muted)' }}
         aria-label="Retour"
       >
-        ‹
+        <ArrowLeft size={18} />
       </Button>
       <h1 className="font-display lb-dashboard-title">{title}</h1>
     </div>
