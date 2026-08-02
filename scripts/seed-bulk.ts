@@ -161,6 +161,8 @@ async function main() {
       zonesIntervention: [region.id],
       followersCount: randInt(10, 900),
       totalEventsCount: 0,
+      avatarUrl: unsplashUrl(i + 20, 200, 200),
+      bannerUrl: unsplashUrl(i, 1200, 500),
       media: [{ id: `m${i}`, url: unsplashUrl(i, 800, 600), type: 'image', visibility: 'public', displayOrder: 0 }],
       proPhone: `+228 9${randInt(0, 9)} ${randInt(10, 99)} ${randInt(10, 99)} ${randInt(10, 99)}`,
     })
@@ -204,11 +206,14 @@ async function main() {
       phone: `+228 9${randInt(0, 9)} ${randInt(10, 99)} ${randInt(10, 99)} ${randInt(10, 99)}`,
       catalogCurrency: region.currency,
       subscriptionActive: true,
+      photoUrl: unsplashUrl(i + 40, 200, 200),
+      coverUrl: unsplashUrl(i + 60, 1200, 500),
       catalog: [
         {
           id: 'c1',
           name: `Prestation ${PROVIDER_TYPE_NAMES[category]}`,
           description: 'Prestation standard, matériel/équipe inclus.',
+          media: [{ url: unsplashUrl(i + 60, 800, 600), type: 'image' }],
           price: randInt(20, 300) * 1000,
           currency: region.currency,
           unit: 'soirée',

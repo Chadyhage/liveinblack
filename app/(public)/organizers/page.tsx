@@ -11,6 +11,7 @@ import {
   matchesEntityRegion,
 } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
 import { Button, Checkbox, Input, PageLinks, pageSlice } from '@/app/components/ui'
@@ -170,9 +171,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
               return (
                   <article key={organizer.userId} className="organizer-directory__card lb-card">
                   <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__cover" aria-label={`Découvrir ${organizer.publicName}`}>
-                    {organizer.bannerUrl && (
-                      <Image src={organizer.bannerUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 820px) 100vw, 240px" />
-                    )}
+                    <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 800, 500)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 820px) 100vw, 240px" />
                     <div style={{ position: 'absolute', zIndex: 2, left: 18, bottom: 18, width: 58, height: 58, borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(4,4,11,.9)', background: 'var(--surface-2)', display: 'grid', placeItems: 'center', color: 'var(--teal)', fontSize: 23, fontWeight: 800 }}>
                       {organizer.avatarUrl ? (
                         <Image src={organizer.avatarUrl} alt={organizer.publicName} width={58} height={58} style={{ objectFit: 'cover' }} />

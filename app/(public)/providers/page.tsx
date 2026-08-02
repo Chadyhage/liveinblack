@@ -6,6 +6,7 @@ import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/pu
 import { getProviderCategories, getProviderCategory, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import FilterSelect from '../_components/FilterSelect'
 import { Button, Input, PageLinks, pageSlice } from '@/app/components/ui'
 
@@ -126,7 +127,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
             const categories = getProviderCategories(p)
             const pc = categories[0] || getProviderCategory(p.prestataireType)
             const visibleCatalog = (p.catalog || []).filter((item) => item.available !== false)
-            const coverImage = p.coverUrl || firstCatalogImage(p.catalog)
+            const coverImage = p.coverUrl || firstCatalogImage(p.catalog) || placeholderPhotoUrl(p.userId, 800, 600)
             return (
               <Link
                 key={p.userId}

@@ -1,7 +1,13 @@
 import { Footer, PublicNav } from '@/app/components/layout'
 import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default function PublicLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode
+  modal: React.ReactNode
+}) {
   return (
     <div
       className="lb-public-layout"
@@ -22,6 +28,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>{children}</div>
       <Footer />
       <AmbientMusicPlayer />
+      {modal}
     </div>
   )
 }
