@@ -86,7 +86,7 @@ export default function PaymentSuccessClient({
   const [ticketCount, setTicketCount] = useState(0)
   const [eventName, setEventName] = useState('')
   const [eventId, setEventId] = useState(stripeCancelledEventId || '')
-  const [errorMsg, setErrorMsg] = useState(missingParams ? 'Paramètres de session manquants.' : '')
+  const [errorMsg, setErrorMsg] = useState(missingParams ? "Impossible de retrouver ta commande. Vérifie tes billets ou réessaie depuis l'événement." : '')
   const [copied, setCopied] = useState(false)
   const [attempt, setAttempt] = useState(0)
 
