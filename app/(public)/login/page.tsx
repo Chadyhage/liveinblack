@@ -23,9 +23,20 @@ export default function LoginPage() {
         </>
       }
     >
-      <Suspense fallback={null}>
+      <Suspense fallback={<AuthFormFallback />}>
         <AuthForm />
       </Suspense>
     </AuthSplitLayout>
+  )
+}
+
+function AuthFormFallback() {
+  return (
+    <div aria-label="Chargement du formulaire" style={{ width: '100%', maxWidth: 420 }}>
+      <h1 className="font-display" style={{ fontSize: 28, color: 'var(--teal)', margin: '0 0 12px' }}>Connexion</h1>
+      <div className="lb-loading-panel" style={{ minHeight: 340 }}>
+        <span>Préparation du formulaire…</span>
+      </div>
+    </div>
   )
 }

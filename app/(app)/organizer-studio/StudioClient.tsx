@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import NextImage from 'next/image'
 import Link from 'next/link'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
@@ -57,6 +57,7 @@ export interface PayoutStatusView {
 }
 
 const ZONE_OPTIONS = [{ id: 'international', name: 'International', flag: '🌍' }, ...regions]
+const subscribeToNothing = () => () => {}
 
 function resizeImageToDataUri(file: File, maxDim = 1280, quality = 0.85): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -105,6 +106,7 @@ export default function StudioClient({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [events, setEvents] = useState<{ id: string; name: string }[]>([])
   const [linkCopied, setLinkCopied] = useState(false)
+  const publicOrigin = useSyncExternalStore(subscribeToNothing, () => window.location.origin, () => '')
   const [crop, setCrop] = useState<{ kind: 'avatar' | 'banner'; src: string } | null>(null)
   // Page publique (profil, galerie) et Encaissement (Stripe Connect + Mobile
   // Money, PayoutSection ci-dessous) sont deux métiers distincts qui
@@ -139,7 +141,8 @@ export default function StudioClient({
   }, [])
 
   const slug = profile.slug
-  const publicUrl = typeof window !== 'undefined' ? `${window.location.origin}/organizers/${slug}` : `/organizers/${slug}`
+  const publicPath = `/organizers/${slug}`
+  const publicUrl = publicOrigin ? `${publicOrigin}${publicPath}` : publicPath
   const zones = normalizeRegionIds(profile.zonesIntervention.length ? profile.zonesIntervention : [profile.regionId]).filter(Boolean)
 
   function update(patch: Partial<OrganizerProfileView>) {
@@ -283,8 +286,8 @@ export default function StudioClient({
           style={{
             padding: '10px 14px',
             borderRadius: 10,
-            border: profile.status === 'public' ? '1px solid rgba(78,232,200,0.35)' : '1px solid var(--border-strong)',
-            background: profile.status === 'public' ? 'rgba(78,232,200,0.1)' : 'rgba(255,255,255,0.05)',
+            border: profile.status === 'public' ? '1px solid rgba(184,243,74,0.35)' : '1px solid var(--border-strong)',
+            background: profile.status === 'public' ? 'rgba(184,243,74,0.1)' : 'rgba(255,255,255,0.05)',
             color: profile.status === 'public' ? 'var(--teal)' : 'var(--text-muted)',
             fontSize: 11.5,
             fontWeight: 700,
@@ -304,7 +307,7 @@ export default function StudioClient({
               padding: '12px 14px',
               borderRadius: 12,
               border: `1px solid ${tab === t ? 'var(--gold)' : 'var(--border)'}`,
-              background: tab === t ? 'rgba(200,169,110,0.14)' : 'var(--surface)',
+              background: tab === t ? 'rgba(184,243,74,0.14)' : 'var(--surface)',
               color: tab === t ? 'var(--gold)' : 'var(--text-muted)',
               fontSize: 13,
               fontWeight: 700,
@@ -325,7 +328,7 @@ export default function StudioClient({
             padding: '12px 14px',
             marginBottom: 14,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'rgba(78,232,200,0.5)' : 'rgba(224,90,170,0.5)'}`,
+            border: `1px solid ${message.type === 'success' ? 'rgba(184,243,74,0.5)' : 'rgba(224,90,170,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
             fontSize: 13,
@@ -363,7 +366,7 @@ export default function StudioClient({
           {linkCopied ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Copié <Check size={13} /></span> : 'Copier le lien'}
         </Button>
         {profile.status === 'public' && (
-          <Link href={`/organizers/${slug}`} style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href={`/organizers/${slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
             Voir ma page
           </Link>
         )}
@@ -383,7 +386,7 @@ export default function StudioClient({
                   <span style={{ fontSize: 32, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <label style={{ display: 'inline-block', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>
+              <label style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
                 {uploading === 'avatar' ? 'Envoi…' : 'Changer le logo'}
                 <input
                   type="file"
@@ -405,7 +408,7 @@ export default function StudioClient({
                   <NextImage src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
                 )}
               </div>
-              <label style={{ display: 'inline-block', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>
+              <label style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
                 {uploading === 'banner' ? 'Envoi…' : 'Changer la bannière'}
                 <input
                   type="file"
@@ -423,7 +426,7 @@ export default function StudioClient({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             <div>
               <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Nom public</Label>
               <Input value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} />
@@ -451,7 +454,7 @@ export default function StudioClient({
                         padding: '8px 14px',
                         borderRadius: 20,
                         border: `1px solid ${sel ? 'var(--teal)' : 'var(--border)'}`,
-                        background: sel ? 'rgba(78,232,200,0.14)' : 'rgba(255,255,255,0.06)',
+                        background: sel ? 'rgba(184,243,74,0.14)' : 'rgba(255,255,255,0.06)',
                         color: sel ? 'var(--teal)' : 'var(--text-muted)',
                         fontSize: 12.5,
                         fontWeight: 600,
@@ -467,7 +470,7 @@ export default function StudioClient({
               </p>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(200,169,110,0.28)', background: 'rgba(200,169,110,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(184,243,74,0.28)', background: 'rgba(184,243,74,0.06)' }}>
                 <span aria-hidden="true" style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={18} /> : <CreditCard size={18} />}</span>
                 <div>
                   <p style={{ font: '700 12.5px Inter, sans-serif', color: 'var(--gold)', margin: 0 }}>
@@ -492,7 +495,7 @@ export default function StudioClient({
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Réseaux sociaux</Label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 8 }}>
                 {SOCIAL_NETWORKS.map((net) => (
                   <div key={net.key} style={{ display: 'grid', gap: 5 }}>
                     <Label style={{ font: '600 10.5px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>{net.label}</Label>
@@ -516,7 +519,7 @@ export default function StudioClient({
         <aside style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
-            <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(78,232,200,0.12), rgba(200,169,110,0.12))' }} />
+            <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
             <div style={{ padding: 16 }}>
               <div style={{ width: 64, height: 64, marginTop: -32, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
@@ -815,7 +818,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           </>
         ) : status.connected && status.chargesEnabled ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(78,232,200,0.15)', color: 'var(--teal)', fontSize: 11, fontWeight: 700 }}>Compte connecté</span>
+            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(184,243,74,0.15)', color: 'var(--teal)', fontSize: 11, fontWeight: 700 }}>Compte connecté</span>
             <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>Les paiements sont versés automatiquement sur ton compte bancaire (2-7 jours ouvrés).</p>
           </div>
         ) : (
@@ -841,8 +844,8 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
         <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 12px' }}>
           Chaque événement est payé automatiquement sur le numéro du <strong style={{ color: 'var(--gold)' }}>pays de l&rsquo;événement</strong>. Ajoute un numéro pour chaque pays où tu organises.
         </p>
-        <div style={{ display: 'grid', gap: 12 }}>
-          {openCountries.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun pays encore. Ajoute-en un ci-dessous.</p>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+          {openCountries.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)', gridColumn: '1 / -1' }}>Aucun pays encore. Ajoute-en un ci-dessous.</p>}
           {openCountries.map((code) => {
             const region = MOMO_REGIONS.find((r) => r.momoCountry === code)
             if (!region) return null

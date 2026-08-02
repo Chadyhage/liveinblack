@@ -868,7 +868,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   if (loadError) {
     return (
-      <main style={{ maxWidth: 640, margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
+      <main style={{ maxWidth: 720, margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
         <p style={{ color: 'var(--pink)', fontSize: 14, marginBottom: 18 }}>{loadError}</p>
         <Button
           variant="secondary"
@@ -883,7 +883,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   if (cancelled) {
     return (
-      <main style={{ maxWidth: 720, margin: '0 auto', padding: '30px 20px 100px' }}>
+      <main style={{ maxWidth: 860, margin: '0 auto', padding: '30px 20px 100px' }}>
         <div
           style={{
             background: 'var(--surface-2)',
@@ -921,7 +921,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   const currency = regionToCurrency(region)
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: '20px 16px 100px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main style={{ maxWidth: 860, margin: '0 auto', padding: '20px 16px 100px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Button
@@ -956,7 +956,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <div
           style={{
             background: 'var(--surface-2)',
-            border: '1px solid rgba(200,169,110,0.35)',
+            border: '1px solid rgba(184, 243, 74,0.35)',
             borderRadius: 12,
             padding: '14px 16px',
             display: 'flex',
@@ -1002,7 +1002,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 borderRadius: 12,
                 overflow: 'hidden',
                 aspectRatio: '16/9',
-                border: imagePreview ? '1px solid rgba(200,169,110,0.35)' : '2px dashed rgba(255,255,255,0.14)',
+                border: imagePreview ? '1px solid rgba(184, 243, 74,0.35)' : '2px dashed rgba(255,255,255,0.14)',
                 background: '#0b0c12',
               }}
             >
@@ -1042,7 +1042,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 minHeight: 118,
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: videoPreview ? '1px solid rgba(78,232,200,0.32)' : '1px dashed rgba(255,255,255,0.14)',
+                border: videoPreview ? '1px solid rgba(184, 243, 74,0.32)' : '1px dashed rgba(255,255,255,0.14)',
                 background: '#0b0c12',
               }}
             >
@@ -1070,7 +1070,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   onClick={() => videoInputRef.current?.click()}
                   style={{ minHeight: 118, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 13, padding: 16, border: 0, background: 'transparent', textAlign: 'left' }}
                 >
-                  <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'rgba(78,232,200,0.10)', border: '1px solid rgba(78,232,200,0.28)', color: 'var(--teal)', flexShrink: 0 }}>
+                  <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'rgba(184, 243, 74,0.10)', border: '1px solid rgba(184, 243, 74,0.28)', color: 'var(--teal)', flexShrink: 0 }}>
                     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
@@ -1092,19 +1092,21 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           </div>
 
           {/* Champs de base */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <InputField label="Nom de l'événement *" placeholder="Ex: NEON NIGHT Vol.3" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <InputField label="Nom de l'événement *" placeholder="Ex: NEON NIGHT Vol.3" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
+            </div>
             <InputField label="Sous-titre" placeholder="Ex: Une nuit afro-house hors du temps" value={subtitle} maxLength={120} onChange={(e) => setSubtitle(e.target.value)} />
             <InputField label="Date *" type="date" value={dateStr} min={locked ? undefined : new Date().toISOString().split('T')[0]} onChange={(e) => setDateStr(e.target.value)} error={errors.date} locked={locked} />
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
                 <InputField label="Heure début" type="time" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} locked={locked} />
                 <InputField label="Heure fin" type="time" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} locked={locked} />
               </div>
               {errors.timeEnd && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
             </div>
 
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={S.label}>Description courte</label>
               <Textarea
                 style={{ ...S.inputBase, resize: 'none', height: 80 }}
@@ -1115,7 +1117,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </div>
 
             {/* DJs / Artistes */}
-            <div style={{ ...S.card, padding: 12 }}>
+            <div style={{ ...S.card, padding: 12, gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                 <div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>DJs / Artistes</p>
@@ -1177,8 +1179,8 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     padding: '10px',
                     borderRadius: 10,
                     display: 'block',
-                    border: category === g ? '1px solid rgba(200,169,110,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                    background: category === g ? 'rgba(200,169,110,0.10)' : 'var(--surface)',
+                    border: category === g ? '1px solid rgba(184, 243, 74,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                    background: category === g ? 'rgba(184, 243, 74,0.10)' : 'var(--surface)',
                     fontFamily: 'Inter, sans-serif',
                     fontSize: 12,
                     fontWeight: 600,
@@ -1199,7 +1201,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   placeholder="Précise le genre (ex : Afropop, Jazz, Amapiano…)"
                   value={customGenre}
                   onChange={(e) => setCustomGenre(e.target.value)}
-                  style={{ ...S.inputBase, padding: '9px 14px', border: customGenre.trim() ? '1px solid rgba(200,169,110,0.45)' : '1px solid rgba(200,169,110,0.22)' }}
+                  style={{ ...S.inputBase, padding: '9px 14px', border: customGenre.trim() ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid rgba(184, 243, 74,0.22)' }}
                 />
               </div>
             )}
@@ -1267,8 +1269,8 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   style={{
                     padding: '9px 18px',
                     borderRadius: 10,
-                    border: minAge === value ? '1px solid rgba(78,232,200,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                    background: minAge === value ? 'rgba(78,232,200,0.12)' : 'var(--surface)',
+                    border: minAge === value ? '1px solid rgba(184, 243, 74,0.55)' : '1px solid rgba(255,255,255,0.10)',
+                    background: minAge === value ? 'rgba(184, 243, 74,0.12)' : 'var(--surface)',
                     color: minAge === value ? 'var(--teal)' : 'rgba(255,255,255,0.6)',
                     fontFamily: 'Inter, sans-serif',
                     fontSize: 12,
@@ -1343,12 +1345,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             const placeHasSales = place.sold > 0
             const menuChoices = menuItems.filter((m) => m.name.trim() && m.price > 0)
             return (
-              <div key={place.key} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(200,169,110,0.25)' } : {}) }}>
+              <div key={place.key} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(184, 243, 74,0.25)' } : {}) }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
                     {placeHasSales && (
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 8, padding: '4px 10px' }}>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 8, padding: '4px 10px' }}>
                         {place.sold} vendu{place.sold > 1 ? 's' : ''}
                       </span>
                     )}
@@ -1403,7 +1405,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                       }}
                     />
                     {placeHasSales && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(200,169,110,0.85)', marginTop: 4 }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>
                         Minimum : {place.sold} (déjà vendu{place.sold > 1 ? 's' : ''})
                       </p>
                     )}
@@ -1418,7 +1420,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                       locked={placeHasSales || place.groupType === 'group'}
                     />
                     {place.groupType === 'group' && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(78,232,200,0.75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
                     )}
                   </div>
                 </div>
@@ -1487,7 +1489,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                       </div>
                     ))}
                     {place.photos.length < MAX_PLACE_PHOTOS && (
-                      <label style={{ width: 66, height: 66, borderRadius: 8, border: '1px dashed rgba(200,169,110,0.4)', background: 'rgba(200,169,110,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', color: 'var(--gold)', flexShrink: 0 }}>
+                      <label style={{ width: 66, height: 66, borderRadius: 8, border: '1px dashed rgba(184, 243, 74,0.4)', background: 'rgba(184, 243, 74,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', color: 'var(--gold)', flexShrink: 0 }}>
                         <input
                           type="file"
                           accept="image/*"
@@ -1532,7 +1534,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                       {place.included.map((inc, k) => {
                         const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
                         return (
-                          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(78,232,200,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(255,255,255,0.04)' }}>
+                          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(184, 243, 74,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(255,255,255,0.04)' }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <Select
                                 value={inc.name}
@@ -1565,7 +1567,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                             />
                             <span
                               title="Inclus gratuitement dans le billet"
-                              style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(78,232,200,0.35)', background: 'rgba(78,232,200,0.14)', color: 'var(--teal)' }}
+                              style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.14)', color: 'var(--teal)' }}
                             >
                               Offert
                             </span>
@@ -1586,7 +1588,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                           onClick={() =>
                             setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: menuChoices[0].name.trim(), qty: 1 }] } : p)))
                           }
-                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(78,232,200,0.14)', border: '1px solid rgba(78,232,200,0.35)', color: 'var(--teal)', fontFamily: 'Inter, sans-serif', fontSize: 12 }}
+                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', color: 'var(--teal)', fontFamily: 'Inter, sans-serif', fontSize: 12 }}
                         >
                           + Inclure un article du menu
                         </Button>
@@ -1614,12 +1616,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             <InputField label="Nom du lieu" placeholder="Ex: Club Le Baroque, Salle des Fêtes..." value={venueName} onChange={(e) => setVenueName(e.target.value)} locked={locked} />
             <InputField label="Adresse" placeholder="Ex: 12 rue de la Paix" value={address} onChange={(e) => setAddress(e.target.value)} locked={locked} />
             <InputField label="Ville *" placeholder="Ex: Paris, Lomé, Abidjan..." value={city} onChange={(e) => setCity(e.target.value)} error={errors.city} locked={locked} />
 
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -1642,7 +1644,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(78,232,200,0.15)' }}>
+          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(184, 243, 74,0.15)' }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
@@ -1655,29 +1657,29 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </div>
           </div>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(200,169,110,0.18)' } : {}) }}>
+          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(184, 243, 74,0.18)' } : {}) }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Playlist interactive</p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
-              {locked && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(200,169,110,0.85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
+              {locked && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
             </div>
             <Toggle value={playlist} onChange={() => setPlaylist((v) => !v)} disabled={locked} />
           </div>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(200,169,110,0.18)' } : {}) }}>
+          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(184, 243, 74,0.18)' } : {}) }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Précommande de consommations</p>
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
-              {locked && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(200,169,110,0.85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
+              {locked && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
             </div>
             <Toggle value={preorder} onChange={() => setPreorder((v) => !v)} disabled={locked} />
           </div>
 
           {preorder && (
-            <div style={{ borderTop: '1px solid rgba(200,169,110,0.15)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
+            <div style={{ borderTop: '1px solid rgba(184, 243, 74,0.15)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
               <p style={{ ...S.label, color: 'var(--gold)', marginBottom: 4 }}>Définir ta carte / menu</p>
               {locked ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(200,169,110,0.85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(184, 243, 74,0.85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
               ) : (
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
               )}
@@ -1724,7 +1726,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 disabled={locked}
                 style={{ ...S.inputBase, colorScheme: 'dark', ...(locked ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
               />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: locked ? 'rgba(200,169,110,0.85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: locked ? 'rgba(184, 243, 74,0.85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
                 {locked ? "Verrouillé — l'événement est déjà publié." : 'L’événement apparaîtra sur le site à cette date et heure. Laisse vide pour publier immédiatement.'}
               </p>
             </div>

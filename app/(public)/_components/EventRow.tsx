@@ -4,15 +4,18 @@ import EventListCard from './EventListCard'
 // Rangée horizontale style Netflix (scroll natif CSS, pas de JS nécessaire).
 // `reasons` (optionnel) : eventId → texte du badge "recommandé pour toi"
 // (lib/shared/recommendations.ts), transmis tel quel à EventListCard.
-export default function EventRow({ title, events, reasons }: { title: string; events: PublicEvent[]; reasons?: Record<string, string> }) {
+export default function EventRow({ title, events, reasons, eagerFirst = false }: { title: string; events: PublicEvent[]; reasons?: Record<string, string>; eagerFirst?: boolean }) {
   if (events.length === 0) return null
   return (
-    <div style={{ marginBottom: 38 }}>
-      <h2 style={{ fontSize: 19, fontWeight: 800, margin: '0 0 16px', padding: '0 0' }}>{title}</h2>
+    <section style={{ marginBottom: 52 }} aria-label={title}>
+      <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between', gap: 18, marginBottom: 18 }}>
+        <h2 className="font-display" style={{ fontSize: 'clamp(24px, 3vw, 34px)', lineHeight: 1, letterSpacing: '.01em', margin: 0 }}>{title}</h2>
+        <span style={{ color: 'var(--text-faint)', fontSize: 12.5, whiteSpace: 'nowrap' }}>{events.length} événement{events.length > 1 ? 's' : ''}</span>
+      </div>
       <div style={{ position: 'relative' }}>
-        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '0 0 8px', scrollbarWidth: 'thin' }}>
-          {events.map((event) => (
-            <EventListCard key={event.id} event={event} reason={reasons?.[event.id]} />
+        <div style={{ display: 'flex', gap: 22, overflowX: 'auto', padding: '0 0 14px', scrollbarWidth: 'thin', scrollSnapType: 'x proximity' }}>
+          {events.map((event, index) => (
+            <EventListCard key={event.id} event={event} reason={reasons?.[event.id]} eager={eagerFirst && index === 0} />
           ))}
         </div>
         {/* Affordance visuelle de scroll horizontal — sans elle, rien
@@ -30,6 +33,6 @@ export default function EventRow({ title, events, reasons }: { title: string; ev
           }}
         />
       </div>
-    </div>
+    </section>
   )
 }

@@ -343,7 +343,7 @@ export default function AgentPaymentsClient() {
                   padding: '12px 10px',
                   borderRadius: 12,
                   border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
-                  background: active ? 'rgba(200,169,110,0.14)' : 'var(--surface)',
+                  background: active ? 'rgba(184, 243, 74,0.14)' : 'var(--surface)',
                   textAlign: 'left',
                   display: 'block',
                 }}
@@ -459,7 +459,7 @@ function PayoutsSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ ...cardStyle, background: 'rgba(200,169,110,0.06)', borderColor: 'rgba(200,169,110,0.3)' }}>
+      <div style={{ ...cardStyle, background: 'rgba(184, 243, 74,0.06)', borderColor: 'rgba(184, 243, 74,0.3)' }}>
         <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
           Filet de sécurité. Le flux normal est le versement automatique — EUR via Stripe Connect, XOF via Mobile Money à la fin de chaque événement. Ci-dessous : les échecs
           de versement auto (XOF) et les soldes EUR/ledger hors Stripe Connect à régler à la main. Jamais d&apos;addition entre devises.
@@ -564,7 +564,7 @@ function PayoutCard({
   setConfirm: (a: ConfirmAction) => void
 }) {
   return (
-    <div style={{ ...cardStyle, borderColor: requestId ? 'rgba(200,169,110,0.3)' : 'var(--border)' }}>
+    <div style={{ ...cardStyle, borderColor: requestId ? 'rgba(184, 243, 74,0.3)' : 'var(--border)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 2px' }}>{sellerName}</p>

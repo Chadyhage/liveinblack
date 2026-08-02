@@ -2,13 +2,11 @@
 
 import NextImage from 'next/image'
 import { useRef, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { INTERNATIONAL_REGION_ID } from '@/lib/shared/locations'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '@/lib/shared/social'
 import { PROVIDER_CATEGORIES, CATALOG_CATEGORIES, getPrimaryProviderType, getProviderCategory } from '@/lib/shared/providerCategories'
-import { subPresentation, subPriceLabel, type SubWindow } from '@/lib/shared/providerSubscription'
 import { fmtMoney } from '@/lib/shared/money'
 import { REVIEW_REPORT_REASONS, computeReviewStats } from '@/lib/shared/reviews'
 import { Stars } from '@/app/components/StarRating'
@@ -16,6 +14,7 @@ import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Button, Input, Textarea, Select, Label } from '@/app/components/ui'
+import SubscriptionPanel from './SubscriptionPanel'
 
 // Port de ProposerServicesPage.jsx + MyProviderReviews.jsx (#8 phase
 // prestataire, tâche #91). Contrairement au legacy (facturation chargée
@@ -24,9 +23,9 @@ import { Button, Input, Textarea, Select, Label } from '@/app/components/ui'
 // Avatar et couverture utilisent le recadrage partagé avant leur upload.
 
 const FONT = 'Inter, system-ui, sans-serif'
-const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
+const C = { obsidian: '#04040b', teal: 'var(--primary)', gold: 'var(--primary)', pink: '#e05aaa' }
 
-const card: React.CSSProperties = { background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
+const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: '0 18px 46px rgba(0,0,0,.22)' }
 const primaryButton: React.CSSProperties = {
   minHeight: 44,
   border: '1px solid rgba(255,255,255,.14)',
@@ -242,7 +241,15 @@ export interface SubscriptionOverview {
   prestataireSubActive: boolean
   prestataireSubStatus: string | null
   prestataireSubEnd: string | null
-  prestataireSubRail: string | null
+  prestataireSubRail: 'stripe' | 'fedapay' | null
+  payments: {
+    id: string
+    rail: 'stripe' | 'fedapay'
+    amountMinor: number
+    currency: 'EUR' | 'XOF'
+    paidAt: string
+    receiptUrl: string | null
+  }[]
 }
 
 export interface ReviewView {
@@ -283,12 +290,11 @@ export default function ProposerServicesClient({
   // ou un upload avatar/couverture (déjà persisté serveur), jamais à chaque frappe.
   const [savedProfile, setSavedProfile] = useState(initialProfile)
   const [subscription, setSubscription] = useState(initialSubscription)
-  const [tab, setTab] = useQueryParamState<'profil' | 'catalogue' | 'avis'>('tab', 'profil')
+  const [tab, setTab] = useQueryParamState<'profil' | 'catalogue' | 'avis' | 'abonnement'>('tab', 'profil')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<'avatar' | 'cover' | ''>('')
   const [crop, setCrop] = useState<{ field: 'photoUrl' | 'coverUrl'; src: string } | null>(null)
-  const [renewing, setRenewing] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -446,47 +452,6 @@ export default function ProposerServicesClient({
   }
 
   // ── Abonnement ──
-  async function handleStripeSubscribe() {
-    if (renewing) return
-    setRenewing(true)
-    try {
-      const res = await fetch('/api/subscriptions/checkout', { method: 'POST' })
-      const data = await res.json()
-      if (res.ok && data.alreadyActive) {
-        setRenewing(false)
-        notify('Ton abonnement est déjà actif.')
-        return
-      }
-      if (res.ok && data.url) {
-        window.location.href = data.url
-        return
-      }
-      setRenewing(false)
-      notify('Impossible de démarrer le paiement. Réessaie.')
-    } catch {
-      setRenewing(false)
-      notify('Erreur réseau. Réessaie dans un instant.')
-    }
-  }
-
-  async function handleFedapaySubscribe() {
-    if (renewing) return
-    setRenewing(true)
-    try {
-      const res = await fetch('/api/subscriptions/checkout/fedapay', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok || !data.url) {
-        setRenewing(false)
-        notify(typeof data.error === 'string' ? data.error : 'Impossible de démarrer le paiement. Réessaie.')
-        return
-      }
-      window.location.href = data.url
-    } catch {
-      setRenewing(false)
-      notify('Erreur réseau. Réessaie dans un instant.')
-    }
-  }
-
   async function handleBillingRegionChange(regionId: string) {
     try {
       const res = await fetch('/api/providers/me/billing-region', {
@@ -789,8 +754,6 @@ export default function ProposerServicesClient({
   const published = reviews.filter((r) => r.status === 'published')
   const { avg, count, dist } = computeReviewStats(published)
 
-  const subWindow: SubWindow = { subscriptionStartedAt: null, subscriptionExpiresAt: profile.subscriptionExpiresAt ? new Date(profile.subscriptionExpiresAt) : null, gracePeriodEndsAt: profile.gracePeriodEndsAt ? new Date(profile.gracePeriodEndsAt) : null }
-
   return (
     <>
       <style>{`
@@ -833,87 +796,12 @@ export default function ProposerServicesClient({
           </Button>
         </header>
 
-        {subscription.currency === 'EUR' ? (
-          (() => {
-            const active = profile.subscriptionActive
-            const color = active ? '#4ee8c8' : '#e05aaa'
-            return (
-              <section style={{ ...card, padding: 16, marginTop: 18, borderColor: `${color}44`, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                <div style={{ width: 8, alignSelf: 'stretch', minHeight: 40, borderRadius: 8, background: color, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, margin: 0, color }}>{active ? 'Abonnement actif' : 'Abonnement inactif'}</h2>
-                    <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color, background: `${color}1e`, border: `1px solid ${color}55`, borderRadius: 999, padding: '2px 8px' }}>{active ? 'Actif' : 'Inactif'}</span>
-                  </div>
-                  <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>
-                    {active ? 'Ton profil est visible. Renouvellement automatique chaque mois par carte bancaire.' : "Ton profil n'est pas visible publiquement. Active ton abonnement pour le mettre en ligne."}
-                  </p>
-                  <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>9,99 € / mois · carte bancaire (Stripe) · renouvellement automatique</p>
-                </div>
-                {!active && (
-                  <Button onClick={handleStripeSubscribe} disabled={renewing} loading={renewing} loadingText="Redirection…" style={{ ...primaryButton, whiteSpace: 'nowrap' }}>
-                    Activer mon abonnement
-                  </Button>
-                )}
-              </section>
-            )
-          })()
-        ) : (
-          (() => {
-            const p = subPresentation(subWindow)
-            const dim = p.tone === 'off'
-            return (
-              <section style={{ ...card, padding: 16, marginTop: 18, borderColor: `${p.color}44`, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                <div style={{ width: 8, alignSelf: 'stretch', minHeight: 40, borderRadius: 8, background: p.color, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <h2 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, margin: 0, color: dim ? 'rgba(255,255,255,.9)' : p.color }}>{p.title}</h2>
-                    {p.status !== 'none' && (
-                      <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', color: p.color, background: `${p.color}1e`, border: `1px solid ${p.color}55`, borderRadius: 999, padding: '2px 8px' }}>
-                        {p.status === 'active' ? 'Actif' : p.status === 'expiring_soon' ? 'Expire bientôt' : p.status === 'grace' ? 'Grâce' : 'Expiré'}
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '5px 0 0', lineHeight: 1.45 }}>{p.message}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)', margin: '4px 0 0' }}>{subPriceLabel()} · Mobile Money (FedaPay) · renouvellement manuel</p>
-                </div>
-                <Button onClick={handleFedapaySubscribe} disabled={renewing} loading={renewing} loadingText="Redirection…" style={{ ...primaryButton, whiteSpace: 'nowrap' }}>
-                  {p.cta}
-                </Button>
-              </section>
-            )
-          })()
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.5)' }}>
-            Pays de facturation : {billingRegion ? `${billingRegion.flag} ${billingRegion.name}` : 'à renseigner'}
-          </span>
-          {subscription.canChangeBilling ? (
-            <Select
-              aria-label="Pays de facturation"
-              size="sm"
-              value={subscription.billingRegionId}
-              onChange={handleBillingRegionChange}
-              options={regions.map((r) => ({ value: r.id, label: `${r.flag} ${r.name}` }))}
-            />
-          ) : (
-            <span style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.35)' }}>Termine ou annule ton abonnement pour en changer.</span>
-          )}
-        </div>
-
-        {/* Port du lien legacy vers la page détaillée de l'abonnement (durée,
-            historique, résiliation) — absent de ce bandeau jusqu'ici. */}
-        <Button variant="ghost" onClick={() => router.push('/my-subscription')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, color: C.teal, fontFamily: FONT, fontSize: 12.5, fontWeight: 700, padding: 0 }}>
-          Détails et historique de mon abonnement <ChevronRight size={14} />
-        </Button>
-
         {message && (
           // position:'sticky' — un message déclenché depuis un onglet
           // (ex. erreur de validation catalogue) reste visible même si
           // l'utilisateur a déjà scrollé, au lieu de rester bloqué en haut
           // de page hors du champ de vision.
-          <div role="status" style={{ ...card, position: 'sticky', top: 12, zIndex: 30, padding: '12px 14px', marginTop: 12, borderColor: 'rgba(200,169,110,.35)' }}>
+          <div role="status" style={{ ...card, position: 'sticky', top: 12, zIndex: 30, padding: '12px 14px', marginTop: 12, borderColor: 'rgba(184, 243, 74,.35)' }}>
             <p style={{ fontFamily: FONT, fontSize: 12.5, color: '#fff', margin: 0 }}>{message}</p>
           </div>
         )}
@@ -922,7 +810,8 @@ export default function ProposerServicesClient({
           {[
             { id: 'profil' as const, label: 'Ma page publique', shortLabel: 'Ma page' },
             { id: 'catalogue' as const, label: `Catalogue (${profile.catalog.length})`, shortLabel: `Catalogue (${profile.catalog.length})` },
-            { id: 'avis' as const, label: 'Mes avis', shortLabel: 'Mes avis' },
+            { id: 'avis' as const, label: 'Mes avis', shortLabel: 'Avis' },
+            { id: 'abonnement' as const, label: 'Abonnement', shortLabel: 'Abonnement' },
           ].map((item) => (
             <Button
               key={item.id}
@@ -942,8 +831,8 @@ export default function ProposerServicesClient({
               <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
               <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,.42)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
               {hasUnsavedProfileChanges && (
-                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'rgba(200,169,110,.10)', border: '1px solid rgba(200,169,110,.38)', color: 'rgba(255,255,255,.88)' }}>
-                  <span style={{ width: 28, height: 28, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, color: C.gold, background: 'rgba(200,169,110,.12)', border: '1px solid rgba(200,169,110,.28)' }}>
+                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.38)', color: 'rgba(255,255,255,.88)' }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, color: C.gold, background: 'rgba(184, 243, 74,.12)', border: '1px solid rgba(184, 243, 74,.28)' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 9v4" />
                       <path d="M12 17h.01" />
@@ -956,14 +845,14 @@ export default function ProposerServicesClient({
                   </div>
                 </div>
               )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
                 <Field label="Nom de la page">
                   <Input value={profile.name} onChange={(e) => update({ name: e.target.value })} placeholder="Nom commercial ou nom de scène" />
                 </Field>
                 <Field label="Accroche professionnelle" helper="Une phrase courte visible en haut de ta page.">
                   <Input maxLength={120} value={profile.headline} onChange={(e) => update({ headline: e.target.value })} placeholder="Ex. DJ afro-house pour soirées privées et clubs" />
                 </Field>
-                <Field label="Mes activités" helper="Tu peux en choisir plusieurs. La première sélectionnée est la catégorie principale.">
+                <Field label="Mes activités" helper="Tu peux en choisir plusieurs. La première sélectionnée est la catégorie principale." >
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {PROVIDER_CATEGORIES.map((item) => {
                       const selected = profile.prestataireTypes.includes(item.id)
@@ -980,17 +869,17 @@ export default function ProposerServicesClient({
                     })}
                   </div>
                 </Field>
-                <Field label="Présentation">
-                  <Textarea style={{ minHeight: 125 }} value={profile.description} onChange={(e) => update({ description: e.target.value })} placeholder="Présente ton activité, ton style et ce qui te différencie." />
-                </Field>
-                <div className="provider-fields-two">
-                  <Field label="Ville de base">
-                    <Input value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Paris, Lomé, Cotonou…" />
-                  </Field>
-                  <Field label="Site principal">
-                    <Input value={profile.socialLinks.website || profile.website || ''} onChange={(e) => update({ website: e.target.value, socialLinks: { ...profile.socialLinks, website: e.target.value } })} placeholder="https://tonsite.com" />
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label="Présentation">
+                    <Textarea style={{ minHeight: 125 }} value={profile.description} onChange={(e) => update({ description: e.target.value })} placeholder="Présente ton activité, ton style et ce qui te différencie." />
                   </Field>
                 </div>
+                <Field label="Ville de base">
+                  <Input value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Paris, Lomé, Cotonou…" />
+                </Field>
+                <Field label="Site principal">
+                  <Input value={profile.socialLinks.website || profile.website || ''} onChange={(e) => update({ website: e.target.value, socialLinks: { ...profile.socialLinks, website: e.target.value } })} placeholder="https://tonsite.com" />
+                </Field>
                 <Field label="Pays de base" helper="Un seul pays de référence, affiché avec ta ville (pas d'option « International » ici). Il ne modifie jamais ta facturation.">
                   <Select
                     value={profile.regionId}
@@ -998,29 +887,33 @@ export default function ProposerServicesClient({
                     options={regions.map((r) => ({ value: r.id, label: `${r.flag} ${r.name}` }))}
                   />
                 </Field>
-                <Field label="Pays / régions d'intervention" helper="Sélectionne tous les pays où tu peux te déplacer ou fournir ta prestation.">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {[{ id: INTERNATIONAL_REGION_ID, name: 'International', flag: '🌍' }, ...regions].map((r) => {
-                      const selected = profile.zonesIntervention.includes(r.id)
-                      return (
-                        <Button key={r.id} variant="ghost" onClick={() => toggleZone(r.id)} style={{ padding: '8px 12px', borderRadius: 999, fontFamily: FONT, fontSize: 12, color: selected ? C.teal : 'rgba(255,255,255,.62)', background: selected ? 'rgba(78,232,200,.1)' : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? 'rgba(78,232,200,.55)' : 'rgba(255,255,255,.12)'}` }}>
-                          {r.flag} {r.name}
-                        </Button>
-                      )
-                    })}
-                  </div>
-                </Field>
-                <Field label="Réseaux sociaux" helper="Colle un lien complet ou juste ton @pseudo.">
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 12 }}>
-                    {SOCIAL_NETWORKS.filter((n) => n.key !== 'website').map((network) => (
-                      <Label key={network.key} style={{ display: 'grid', gap: 5, marginBottom: 0 }}>
-                        <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)' }}>{network.label}</span>
-                        <Input value={profile.socialLinks[network.key] || ''} onChange={(e) => update({ socialLinks: { ...profile.socialLinks, [network.key]: e.target.value } })} placeholder={network.placeholder} />
-                      </Label>
-                    ))}
-                  </div>
-                </Field>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label="Pays / régions d'intervention" helper="Sélectionne tous les pays où tu peux te déplacer ou fournir ta prestation.">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {[{ id: INTERNATIONAL_REGION_ID, name: 'International', flag: '🌍' }, ...regions].map((r) => {
+                        const selected = profile.zonesIntervention.includes(r.id)
+                        return (
+                          <Button key={r.id} variant="ghost" onClick={() => toggleZone(r.id)} style={{ padding: '8px 12px', borderRadius: 999, fontFamily: FONT, fontSize: 12, color: selected ? C.teal : 'rgba(255,255,255,.62)', background: selected ? 'rgba(184, 243, 74,.1)' : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? 'rgba(184, 243, 74,.55)' : 'rgba(255,255,255,.12)'}` }}>
+                            {r.flag} {r.name}
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  </Field>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label="Réseaux sociaux" helper="Colle un lien complet ou juste ton @pseudo.">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                      {SOCIAL_NETWORKS.filter((n) => n.key !== 'website').map((network) => (
+                        <Label key={network.key} style={{ display: 'grid', gap: 5, marginBottom: 0 }}>
+                          <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)' }}>{network.label}</span>
+                          <Input value={profile.socialLinks[network.key] || ''} onChange={(e) => update({ socialLinks: { ...profile.socialLinks, [network.key]: e.target.value } })} placeholder={network.placeholder} />
+                        </Label>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <Button onClick={handleSaveProfile} disabled={saving || Boolean(uploading)} loading={Boolean(uploading)} loadingText="Envoi de l’image…" style={{ ...primaryButton, alignSelf: 'flex-start' }}>
                     {saving ? 'Enregistrement…' : 'Enregistrer ma page'}
                   </Button>
@@ -1089,35 +982,35 @@ export default function ProposerServicesClient({
             {showItemForm && (
               <div style={{ ...card, padding: 18, marginBottom: 14 }}>
                 <h3 style={{ fontFamily: FONT, fontSize: 18, margin: '0 0 14px' }}>Nouvelle offre</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <Field label="Nom de l'offre">
-                    <Input value={newItem.name} onChange={(e) => setNewItem((c) => ({ ...c, name: e.target.value }))} placeholder="DJ set 3 heures, location de salle…" />
-                  </Field>
-                  <div className="provider-fields-two">
-                    <Field label="Tarif indicatif" helper="Laisse vide (ou saisis 0) pour afficher « Tarif sur demande ».">
-                      <Input type="number" min="0" value={newItem.price} onChange={(e) => setNewItem((c) => ({ ...c, price: e.target.value }))} placeholder="Optionnel" />
-                    </Field>
-                    <Field label="Devise">
-                      <Select
-                        value={newItem.currency || catalogDefaultCurrency}
-                        onChange={(value) => setNewItem((c) => ({ ...c, currency: value }))}
-                        options={[
-                          { value: 'EUR', label: 'Euro (€)' },
-                          { value: 'XOF', label: 'Franc CFA (FCFA)' },
-                        ]}
-                      />
-                    </Field>
-                    <Field label="Unité">
-                      <Select
-                        value={newItem.unit}
-                        onChange={(value) => setNewItem((c) => ({ ...c, unit: value }))}
-                        options={[
-                          { value: '', label: 'Aucune' },
-                          ...['heure', 'soirée', 'jour', 'personne', 'unité', 'lot', 'forfait'].map((v) => ({ value: v, label: `par ${v}` })),
-                        ]}
-                      />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <Field label="Nom de l'offre">
+                      <Input value={newItem.name} onChange={(e) => setNewItem((c) => ({ ...c, name: e.target.value }))} placeholder="DJ set 3 heures, location de salle…" />
                     </Field>
                   </div>
+                  <Field label="Tarif indicatif" helper="Laisse vide (ou saisis 0) pour afficher « Tarif sur demande ».">
+                    <Input type="number" min="0" value={newItem.price} onChange={(e) => setNewItem((c) => ({ ...c, price: e.target.value }))} placeholder="Optionnel" />
+                  </Field>
+                  <Field label="Devise">
+                    <Select
+                      value={newItem.currency || catalogDefaultCurrency}
+                      onChange={(value) => setNewItem((c) => ({ ...c, currency: value }))}
+                      options={[
+                        { value: 'EUR', label: 'Euro (€)' },
+                        { value: 'XOF', label: 'Franc CFA (FCFA)' },
+                      ]}
+                    />
+                  </Field>
+                  <Field label="Unité">
+                    <Select
+                      value={newItem.unit}
+                      onChange={(value) => setNewItem((c) => ({ ...c, unit: value }))}
+                      options={[
+                        { value: '', label: 'Aucune' },
+                        ...['heure', 'soirée', 'jour', 'personne', 'unité', 'lot', 'forfait'].map((v) => ({ value: v, label: `par ${v}` })),
+                      ]}
+                    />
+                  </Field>
                   <Field label="Catégorie">
                     <Select
                       value={newItem.category}
@@ -1125,11 +1018,13 @@ export default function ProposerServicesClient({
                       options={[{ value: '', label: 'Sans catégorie' }, ...catalogCategories.map((v) => ({ value: v, label: v }))]}
                     />
                   </Field>
-                  <Field label="Description">
-                    <Textarea style={{ minHeight: 96 }} value={newItem.description} onChange={(e) => setNewItem((c) => ({ ...c, description: e.target.value }))} placeholder="Ce qui est inclus, durée, conditions principales…" />
-                  </Field>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <Field label="Description">
+                      <Textarea style={{ minHeight: 96 }} value={newItem.description} onChange={(e) => setNewItem((c) => ({ ...c, description: e.target.value }))} placeholder="Ce qui est inclus, durée, conditions principales…" />
+                    </Field>
+                  </div>
 
-                  <div>
+                  <div style={{ gridColumn: '1 / -1' }}>
                     <span style={{ display: 'block', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Photos / vidéos (optionnel)</span>
                     {newItemFiles.length > 0 && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginBottom: 8 }}>
@@ -1168,7 +1063,7 @@ export default function ProposerServicesClient({
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <Button onClick={handleAddItem} disabled={addingItem} loading={addingItem} loadingText="Publication…" style={primaryButton}>
                       Publier dans le catalogue
                     </Button>
@@ -1195,7 +1090,7 @@ export default function ProposerServicesClient({
                     <div key={item.id} style={{ ...card, padding: 16 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <Input value={editingItem.name} onChange={(e) => setEditingItem((c) => (c ? { ...c, name: e.target.value } : c))} />
-                        <div className="provider-fields-two">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
                           <Input type="number" min="0" value={editingItem.price} onChange={(e) => setEditingItem((c) => (c ? { ...c, price: e.target.value } : c))} placeholder="Tarif sur demande" />
                           <Label style={{ display: 'block' }}>
                             <span style={{ display: 'block', fontFamily: FONT, fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Devise</span>
@@ -1298,7 +1193,7 @@ export default function ProposerServicesClient({
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <h3 style={{ fontFamily: FONT, fontSize: 17, margin: 0, wordBreak: 'break-word' }}>{item.name}</h3>
-                            <span style={{ padding: '3px 9px', borderRadius: 8, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'rgba(78,232,200,.12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'rgba(78,232,200,.35)'}` }}>
+                            <span style={{ padding: '3px 9px', borderRadius: 8, fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'rgba(184, 243, 74,.12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'rgba(184, 243, 74,.35)'}` }}>
                               {item.available === false ? 'Masquée' : 'Publiée'}
                             </span>
                           </div>
@@ -1333,8 +1228,8 @@ export default function ProposerServicesClient({
         {tab === 'avis' && (
           <section>
             {reportMsg && (
-              <div role="status" style={{ ...card, padding: '12px 16px', marginBottom: 12, borderColor: 'rgba(78,232,200,.35)' }}>
-                <p style={{ fontFamily: FONT, fontSize: 12.5, color: '#4ee8c8', margin: 0 }}>{reportMsg}</p>
+              <div role="status" style={{ ...card, padding: '12px 16px', marginBottom: 12, borderColor: 'rgba(184, 243, 74,.35)' }}>
+                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'var(--primary)', margin: 0 }}>{reportMsg}</p>
               </div>
             )}
 
@@ -1466,7 +1361,7 @@ export default function ProposerServicesClient({
                                   setReplyText(review.reply?.text || '')
                                   setReplyErr('')
                                 }}
-                                style={{ ...ghostButtonSmall, padding: 0, color: '#4ee8c8' }}
+                                style={{ ...ghostButtonSmall, padding: 0, color: 'var(--primary)' }}
                               >
                                 {review.reply?.text ? 'Modifier ma réponse' : 'Répondre'}
                               </Button>
@@ -1491,6 +1386,29 @@ export default function ProposerServicesClient({
                 </div>
               </>
             )}
+          </section>
+        )}
+
+        {tab === 'abonnement' && (
+          <section>
+            <SubscriptionPanel profile={profile} subscription={subscription} />
+            <div style={{ ...card, padding: 20, marginTop: 16 }}>
+              <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Pays de facturation</h2>
+              <p style={{ margin: '7px 0 14px', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.55 }}>
+                {billingRegion ? `${billingRegion.flag} ${billingRegion.name}` : 'Choisis ton pays pour afficher le bon tarif et le bon moyen de paiement.'}
+              </p>
+              {subscription.canChangeBilling ? (
+                <Select
+                  aria-label="Pays de facturation"
+                  value={subscription.billingRegionId}
+                  onChange={handleBillingRegionChange}
+                  options={regions.map((region) => ({ value: region.id, label: `${region.flag} ${region.name}` }))}
+                  style={{ maxWidth: 420 }}
+                />
+              ) : (
+                <p style={{ margin: 0, color: 'var(--text-faint)', fontSize: 13 }}>Termine ou annule ton abonnement actuel pour changer de pays.</p>
+              )}
+            </div>
           </section>
         )}
       </main>

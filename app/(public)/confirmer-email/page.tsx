@@ -1,5 +1,8 @@
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 import ConfirmEmailChangeClient from '@/app/components/ConfirmEmailChangeClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Confirmer ma nouvelle adresse e-mail — LIVEINBLACK', robots: { index: false, follow: false } }
 
 export const dynamic = 'force-dynamic'
 

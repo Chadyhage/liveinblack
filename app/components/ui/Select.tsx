@@ -105,6 +105,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
         aria-controls={listboxId}
         {...aria}
         style={{
+          minHeight: 44,
           width: '100%',
           display: 'flex',
           alignItems: 'center',

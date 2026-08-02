@@ -117,7 +117,7 @@ export default function AgentSalesClient({
   }
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: '28px 20px 60px' }}>
+    <main style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px 60px' }}>
       <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px' }}>Vente sur place</h1>
       <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '0 0 20px' }}>{eventName}</p>
 
@@ -188,7 +188,7 @@ export default function AgentSalesClient({
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           <div>
             <Label>Nom (optionnel)</Label>
             <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nom du client" />
@@ -197,10 +197,10 @@ export default function AgentSalesClient({
             <Label>Email</Label>
             <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="ton@email.com" />
           </div>
-        </div>
-        <div>
-          <Label>Téléphone {!contactEmail.trim() ? '(email ou téléphone requis)' : '(optionnel)'}</Label>
-          <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+228 90 00 00 00" />
+          <div>
+            <Label>Téléphone {!contactEmail.trim() ? '(email ou téléphone requis)' : '(optionnel)'}</Label>
+            <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+228 90 00 00 00" />
+          </div>
         </div>
 
         <div>

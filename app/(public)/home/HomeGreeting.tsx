@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 // Client component pour lire l'heure LOCALE du visiteur (new Date() côté
 // serveur utiliserait la région du serveur Vercel, pas forcément celle de
@@ -17,12 +17,13 @@ function getTimeGreeting(): string {
   return 'Bonne nuit'
 }
 
+const subscribeToNothing = () => () => {}
+
 export default function HomeGreeting({ firstName }: { firstName: string }) {
-  // `typeof window` est undefined pendant le rendu serveur (HTML vide pour
-  // ce composant) et défini dès le premier rendu client, qui calcule alors
-  // la vraie salutation avec l'heure LOCALE du visiteur — jamais de mismatch
-  // d'hydratation à gérer, contrairement à un calcul fait dans un effect.
-  const [greeting] = useState(() => (typeof window !== 'undefined' ? getTimeGreeting() : ''))
+  // Le snapshot serveur reste vide pendant l'hydratation, puis React lit
+  // l'heure locale du navigateur. Le premier arbre client est ainsi identique
+  // au HTML serveur avant d'afficher la salutation sans reconstruire la page.
+  const greeting = useSyncExternalStore(subscribeToNothing, getTimeGreeting, () => '')
 
   if (!greeting) return null
 

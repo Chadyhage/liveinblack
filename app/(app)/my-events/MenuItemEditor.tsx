@@ -266,7 +266,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
       </div>
 
       {item.hasShow && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(200,169,110,0.18)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(184,243,74,0.18)' }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>Shows disponibles pour cet article</p>
           {item.showOptions.map((option, optionIndex) => (
             <div key={option.id} style={{ ...cardStyle, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -302,7 +302,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
               )}
             </div>
           ))}
-          <Button variant="secondary" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ fontSize: 12, color: 'var(--gold)', border: '1px solid rgba(200,169,110,.35)', borderRadius: 9, background: 'rgba(200,169,110,.08)' }}>+ Ajouter un show</Button>
+          <Button variant="secondary" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ fontSize: 12, color: 'var(--gold)', border: '1px solid rgba(184,243,74,.35)', borderRadius: 9, background: 'rgba(184,243,74,.08)' }}>+ Ajouter un show</Button>
         </div>
       )}
 

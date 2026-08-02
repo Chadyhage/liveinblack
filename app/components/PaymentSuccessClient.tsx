@@ -31,7 +31,7 @@ const COLORS = {
 const CARD: React.CSSProperties = {
   background: 'var(--surface-2)',
   border: '1px solid var(--border)',
-  borderRadius: 20,
+  borderRadius: 'var(--radius-lg)',
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
@@ -236,16 +236,16 @@ export default function PaymentSuccessClient({
 
         {state === 'cancelled' && (
           <>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px', background: 'rgba(200,169,110,0.08)', border: '2px solid rgba(200,169,110,0.40)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px', background: 'rgba(184, 243, 74,0.08)', border: '2px solid rgba(184, 243, 74,0.40)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="15" y1="9" x2="9" y2="15" />
                 <line x1="9" y1="9" x2="15" y2="15" />
               </svg>
             </div>
-            <p className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
               Paiement annulé
-            </p>
+            </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Aucun montant n&apos;a été débité. Tu peux retourner à l&apos;événement et réessayer quand tu veux.
             </p>

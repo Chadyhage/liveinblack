@@ -198,7 +198,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
           </div>
         ) : step === 'pay' && chosen && chosenTier ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-            <div style={{ padding: 18, border: '1px solid rgba(200,169,110,0.3)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
+            <div style={{ padding: 18, border: '1px solid rgba(184,243,74,0.3)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
               <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
@@ -265,7 +265,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   fontWeight: 500,
                   textTransform: 'none',
                   letterSpacing: 'normal',
-                  boxShadow: paying ? 'none' : '0 6px 20px rgba(200,169,110,0.25)',
+                  boxShadow: paying ? 'none' : '0 6px 20px rgba(184,243,74,0.25)',
                 }}
               >
                 {`Payer ${formatPrice(chosenTier.price)}`}
@@ -298,8 +298,8 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         textAlign: 'left',
                         display: 'block',
                         color: '#fff',
-                        border: active ? '1px solid rgba(200,169,110,0.65)' : '1px solid rgba(255,255,255,0.08)',
-                        background: active ? 'rgba(200,169,110,0.14)' : 'rgba(255,255,255,0.04)',
+                        border: active ? '1px solid rgba(184,243,74,0.65)' : '1px solid rgba(255,255,255,0.08)',
+                        background: active ? 'rgba(184,243,74,0.14)' : 'rgba(255,255,255,0.04)',
                         opacity: blocked ? 0.78 : 1,
                       }}
                     >
@@ -369,8 +369,8 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         justifyContent: 'flex-start',
                         textAlign: 'left',
                         display: 'block',
-                        border: selected ? '1px solid rgba(78,232,200,0.7)' : '1px solid rgba(255,255,255,0.08)',
-                        background: selected ? 'rgba(78,232,200,0.12)' : 'rgba(255,255,255,0.04)',
+                        border: selected ? '1px solid rgba(184,243,74,0.7)' : '1px solid rgba(255,255,255,0.08)',
+                        background: selected ? 'rgba(184,243,74,0.12)' : 'rgba(255,255,255,0.04)',
                         opacity: disabled ? 0.38 : 1,
                       }}
                     >
@@ -406,7 +406,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 fontSize: 14,
                 background: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                 color: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.35)' : '#181206',
-                boxShadow: !selectedPlan || positionBlocked(selectedPlan.position) ? 'none' : '0 6px 20px rgba(200,169,110,0.25)',
+                boxShadow: !selectedPlan || positionBlocked(selectedPlan.position) ? 'none' : '0 6px 20px rgba(184,243,74,0.25)',
               }}
             >
               {selectedPlan && chosenTier ? `Continuer · ${formatPrice(chosenTier.price)}` : 'Sélectionne une durée'}

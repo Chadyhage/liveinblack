@@ -267,8 +267,8 @@ export default function AgentReviewsClient() {
                 fontSize: 10,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                border: statusFilter === f.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
-                background: statusFilter === f.key ? 'rgba(200,169,110,0.15)' : 'var(--surface)',
+                border: statusFilter === f.key ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
+                background: statusFilter === f.key ? 'rgba(184, 243, 74,0.15)' : 'var(--surface)',
                 color: statusFilter === f.key ? 'var(--gold)' : 'var(--text-faint)',
               }}
             >
@@ -289,8 +289,8 @@ export default function AgentReviewsClient() {
                 fontSize: 10,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                border: ratingFilter === n ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
-                background: ratingFilter === n ? 'rgba(200,169,110,0.15)' : 'var(--surface)',
+                border: ratingFilter === n ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
+                background: ratingFilter === n ? 'rgba(184, 243, 74,0.15)' : 'var(--surface)',
                 color: ratingFilter === n ? 'var(--gold)' : 'var(--text-faint)',
               }}
             >
@@ -431,7 +431,7 @@ function ReviewCard({
       <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: '10px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
 
       {review.reply?.text && (
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.55, margin: '8px 0 0', paddingLeft: 12, borderLeft: '2px solid rgba(200,169,110,.35)' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.55, margin: '8px 0 0', paddingLeft: 12, borderLeft: '2px solid rgba(184, 243, 74,.35)' }}>
           <strong style={{ color: 'var(--gold)' }}>Réponse presta :</strong> {review.reply.text}
         </p>
       )}
@@ -467,7 +467,7 @@ function ReviewCard({
               variant="primary"
               onClick={() => onAction(review, 'note', noteText.trim())}
               disabled={busy || !noteText.trim()}
-              style={{ ...btnBase, background: '#3ed6b5', color: '#04120e', opacity: busy || !noteText.trim() ? 0.5 : 1 }}
+              style={{ ...btnBase, background: 'var(--primary-strong)', color: '#04120e', opacity: busy || !noteText.trim() ? 0.5 : 1 }}
             >
               Enregistrer
             </Button>
@@ -493,7 +493,7 @@ function ReviewCard({
             </Button>
           )}
           {review.status === 'hidden' && (
-            <Button variant="primary" onClick={() => onAction(review, 'publish')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, background: '#3ed6b5', color: '#04120e' }}>
+            <Button variant="primary" onClick={() => onAction(review, 'publish')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, background: 'var(--primary-strong)', color: '#04120e' }}>
               Republier
             </Button>
           )}

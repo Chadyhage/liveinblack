@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import AccountMenu from './AccountMenu'
 import { IconButton } from '@/app/components/ui'
-import { Menu, X } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/home', label: 'Accueil' },
@@ -14,11 +14,68 @@ const NAV_LINKS = [
   { href: '/providers', label: 'Prestataires' },
   { href: '/organizers', label: 'Organisateurs' },
   { href: '/about', label: "C'est quoi" },
-  // "Recherche" seul prêtait à confusion à côté de "Événements", qui a sa
-  // propre recherche interne (events uniquement) — /search couvre en plus
-  // organisateurs et prestataires, d'où le libellé explicite.
-  { href: '/search', label: 'Recherche globale' },
 ]
+
+// Recherche globale (événements + organisateurs + prestataires) déplacée
+// directement dans le header — auparavant une simple entrée de nav vers
+// /search, une page dédiée pour un besoin aussi fréquent forçait un aller-retour
+// inutile. Icône collapsible : clic ouvre un champ inline, soumission navigue
+// vers /search?q=… (page conservée comme destination, plus comme seul point d'entrée).
+function HeaderSearch() {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    const q = value.trim()
+    router.push(q ? `/search?q=${encodeURIComponent(q)}` : '/search')
+    setOpen(false)
+  }
+
+  return (
+    <form
+      role="search"
+      onSubmit={handleSubmit}
+      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+    >
+      {open && (
+        <input
+          ref={inputRef}
+          type="search"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={() => { if (!value) setOpen(false) }}
+          placeholder="Rechercher…"
+          aria-label="Recherche globale"
+          style={{
+            width: 180,
+            minHeight: 40,
+            padding: '0 12px',
+            borderRadius: 999,
+            border: '1px solid var(--border-strong)',
+            background: 'var(--surface)',
+            color: 'var(--text)',
+            fontSize: 13.5,
+            fontFamily: 'inherit',
+          }}
+        />
+      )}
+      <IconButton
+        type={open ? 'submit' : 'button'}
+        onClick={() => { if (!open) setOpen(true) }}
+        label="Recherche globale"
+        icon={<Search size={18} strokeWidth={2} aria-hidden="true" />}
+        style={{ background: 'var(--surface)', color: 'var(--text)' }}
+      />
+    </form>
+  )
+}
 
 export interface DashboardNavLink {
   label: string
@@ -124,6 +181,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             </Link>
           )
         })}
+        <span className="lb-navlink">
+          <HeaderSearch />
+        </span>
         {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
         {status === 'unauthenticated' && !onLoginPage && (
           <>
@@ -206,6 +266,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
           }}
         >
+          <div style={{ padding: '14px 22px 4px' }}>
+            <HeaderSearch />
+          </div>
           {dashboardLinks && dashboardLinks.length > 0 && (
             <>
               <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -276,14 +339,17 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           gap: 24px;
         }
         .lb-navlink { display: none }
-        .lb-navlink-mobile { display: inline-flex }
+        .lb-navlink-mobile { display: inline-flex; align-items: center; justify-content: center; }
+        .lb-nav-auth { align-items: center; justify-content: center; line-height: 1; }
         @media (min-width: 1100px) and (max-width: 1399px) {
-          .lb-navlink-primary, .lb-nav-auth { display: inline-block }
+          .lb-navlink-primary { display: inline-block }
+          .lb-nav-auth { display: inline-flex }
           .lb-mobile-login { display: none !important }
-          .lb-burger { display: none !important }
+          .lb-burger { display: inline-flex }
         }
         @media (min-width: 1400px) {
           .lb-navlink { display: inline-block }
+          .lb-nav-auth { display: inline-flex !important }
           .lb-navlink-mobile { display: none !important }
         }
         @media (min-width: 1100px) {

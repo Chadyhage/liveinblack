@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button } from '@/app/components/ui'
+import { Button, SkeletonCard } from '@/app/components/ui'
 import { DonutChart } from '@/app/components/ui/charts/DonutChart'
 import { LineChartCard } from '@/app/components/ui/charts/LineChartCard'
 
@@ -120,14 +120,19 @@ export default function AgentDashboardClient() {
         )}
 
         {loading || !stats ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>Chargement…</p>
+          <div aria-label="Chargement du tableau de bord" className="lb-dashboard-card-grid">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : (
           <>
             <section>
               <p style={sectionTitleStyle}>Métriques business</p>
 
-              <div style={{ ...cardStyle, borderColor: 'rgba(200,169,110,0.30)', borderLeft: '3px solid rgba(200,169,110,0.6)', marginBottom: 10 }}>
-                <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(200,169,110,0.7)', margin: 0 }}>Revenus plateforme</p>
+              <div style={{ ...cardStyle, borderColor: 'rgba(184, 243, 74,0.30)', borderLeft: '3px solid rgba(184, 243, 74,0.6)', marginBottom: 10 }}>
+                <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(184, 243, 74,0.7)', margin: 0 }}>Revenus plateforme</p>
                 <p style={{ fontSize: 42, fontWeight: 300, color: 'var(--gold)', margin: '6px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.platformRevenueEUR, 'EUR')}</p>
                 {stats.revenue.ticketFeeRevenueXOF > 0 && (
                   <p style={{ fontSize: 24, fontWeight: 300, color: 'var(--teal)', margin: '6px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.ticketFeeRevenueXOF, 'XOF')}</p>

@@ -98,7 +98,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         <div>
-          <Link href="/profile" style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
             ← Retour au profil
           </Link>
           <h1 className="font-display lb-dashboard-title" style={{ marginTop: 10 }}>Organisateurs suivis</h1>
@@ -114,7 +114,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 18px' }}>Suis tes organisateurs préférés pour être alerté de leurs prochains événements.</p>
             <Link
               href="/organizers"
-              style={{ display: 'inline-block', padding: '11px 22px', borderRadius: 10, background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)', color: '#1a1508', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '11px 22px', borderRadius: 10, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
             >
               Découvrir les organisateurs
             </Link>
@@ -133,7 +133,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
         {suggestions.length > 0 && (
           <div>
             <h2 style={{ fontSize: 'clamp(22px,4vw,34px)', fontWeight: 800, margin: '0 0 12px' }}>Organisateurs à suivre</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px,280px))', gap: 12 }}>
+            <div className="lb-card-grid">
               {suggestions
                 .filter((s) => !follows.some((f) => f.organizerId === s.organizerId))
                 .map((s) => (

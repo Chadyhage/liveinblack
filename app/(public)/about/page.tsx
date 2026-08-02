@@ -44,13 +44,13 @@ export default function PublicAboutPage() {
             params au prerender, sinon le build échoue (missing-suspense-
             with-csr-bailout). Le fallback null ne dure qu'un instant côté
             client, la page reste prerendue statiquement. */}
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="lb-loading-panel" style={{ minHeight: 280 }}>Préparation de la présentation…</div>}>
           <TabsSection />
         </Suspense>
       </Section>
 
       <Section eyebrow="En 3 temps" title="De l'envie à la piste">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 14 }}>
+        <div className="lb-card-grid">
           {[
             ['1', 'Découvre', 'Parcours les soirées et les prestataires, filtre par ville et par style.'],
             ['2', 'Réserve', 'Paiement sécurisé, billet QR immédiat, tout reste dans ton compte.'],
@@ -66,32 +66,32 @@ export default function PublicAboutPage() {
       </Section>
 
       <Section eyebrow="La confiance" title="Tout est protégé et sécurisé">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 14 }}>
+        <div className="lb-card-grid">
           {[
             ['Paiements sécurisés', 'Transactions protégées, billets authentiques avec QR unique — impossible à falsifier.'],
             ['Profils sélectionnés', 'Chaque organisateur et prestataire visible sur la plateforme a été validé par notre équipe.'],
             ['Tes données te protègent', "On ne partage jamais ton contact sans ton accord. Confidentialité réelle, pas cosmétique."],
             ['Un vrai support', 'Une question, un souci ? On répond. La nuit mérite du soin.'],
-          ].map(([t, d]) => (
-            <div key={t} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>
-              <p style={{ fontSize: 15.5, fontWeight: 800, margin: 0 }}>{t}</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.55 }}>{d}</p>
-            </div>
+          ].map(([t, d], index) => (
+            <details key={t} open={index === 0} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '0 18px' }}>
+              <summary style={{ minHeight: 56, display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: 15.5, fontWeight: 800 }}>{t}</summary>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.55 }}>{d}</p>
+            </details>
           ))}
         </div>
       </Section>
 
       <section style={{ padding: '20px 22px 0' }}>
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 24, textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,40px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href="/login?mode=register" style={{ padding: '14px 26px', borderRadius: 999, fontSize: 15, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>
+            <Link href="/login?mode=register" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '11px 26px', borderRadius: 999, fontSize: 15, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>
               Créer mon compte
             </Link>
-            <Link href="/events" style={{ padding: '13px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
+            <Link href="/events" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
               Voir les événements
             </Link>
           </div>
@@ -103,7 +103,7 @@ export default function PublicAboutPage() {
 
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
-    <section style={{ padding: '56px clamp(20px, 3vw, 48px)', maxWidth: 1280, margin: '0 auto' }}>
+    <section style={{ padding: 'clamp(42px, 5vw, 56px) clamp(20px, 3vw, 48px)', maxWidth: 1280, margin: '0 auto' }}>
       <SectionHeader eyebrow={eyebrow} title={title} align="center" level={2} />
       {children}
     </section>

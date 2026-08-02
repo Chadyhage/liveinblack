@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell } from 'lucide-react'
-import { Avatar, Button } from '@/app/components/ui'
+import { Avatar, Button, Skeleton } from '@/app/components/ui'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
 // session existe — avant ce composant, un utilisateur connecté voyait
@@ -270,7 +270,7 @@ export default function AccountMenu({
               Messages
             </div>
             <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-              {conversations === null && <p style={{ padding: 16, fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Chargement…</p>}
+              {conversations === null && <div aria-label="Chargement des conversations" style={{ padding: 16, display: 'grid', gap: 9 }}><Skeleton height={12} /><Skeleton width="72%" height={10} /><Skeleton width="86%" height={10} /></div>}
               {conversations !== null && conversations.length === 0 && (
                 <p style={{ padding: 16, fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Aucune conversation pour l&apos;instant.</p>
               )}
@@ -376,14 +376,14 @@ export default function AccountMenu({
                     setNotifications((list) => list?.map((n) => ({ ...n, read: true })) ?? null)
                     fetch('/api/notifications/read-all', { method: 'POST' }).catch(() => {})
                   }}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 11, cursor: 'pointer', padding: 0 }}
+                  style={{ minHeight: 44, background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 12.5, cursor: 'pointer', padding: '8px 0 8px 12px' }}
                 >
                   Tout marquer lu
                 </button>
               )}
             </div>
             <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-              {notifications === null && <p style={{ padding: 16, fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Chargement…</p>}
+              {notifications === null && <div aria-label="Chargement des notifications" style={{ padding: 16, display: 'grid', gap: 9 }}><Skeleton height={12} /><Skeleton width="72%" height={10} /><Skeleton width="86%" height={10} /></div>}
               {notifications !== null && notifications.length === 0 && (
                 <p style={{ padding: 16, fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Aucune notification pour l&apos;instant.</p>
               )}
@@ -392,6 +392,7 @@ export default function AccountMenu({
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
                   style={{
+                    minHeight: 56,
                     display: 'block',
                     width: '100%',
                     textAlign: 'left',

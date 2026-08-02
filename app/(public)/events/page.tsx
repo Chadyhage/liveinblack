@@ -10,8 +10,9 @@ import { isEventTonight } from '@/lib/shared/eventUrgency'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
 import EventListCard from '../_components/EventListCard'
 import EventRow from '../_components/EventRow'
-import { Button, EmptyState, Input, SectionHeader, PageLinks, pageSlice } from '@/app/components/ui'
+import { IconButton, EmptyState, Input, SectionHeader, PageLinks, pageSlice } from '@/app/components/ui'
 import { PageShell } from '@/app/components/layout'
+import { Search } from 'lucide-react'
 
 const SEARCH_PAGE_SIZE = 24
 
@@ -81,32 +82,19 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
 
   return (
     <PageShell maxWidth={1480}>
-      <div className="lb-directory-intro" style={{ marginBottom: 44 }}>
+      <div style={{ marginBottom: 36, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
         <SectionHeader eyebrow="La programmation" title="Événements" description="Découvre les prochaines expériences, soirées et rendez-vous près de chez toi." compact />
-        <div className="lb-events-tools">
-          <form action="/events" method="get" className="lb-search-panel">
-            <div>
-              <p className="lb-tool-label">Trouver une sortie</p>
-              <p className="lb-tool-help">Recherche par nom, ville, artiste ou style musical.</p>
-            </div>
-            <div className="lb-search-panel__controls">
-              <Input
-                type="search"
-                name="q"
-                defaultValue={search}
-                placeholder="Événement, ville, artiste, style…"
-                style={{ flex: 1, minWidth: 0, minHeight: 52, fontSize: 15 }}
-              />
-              <Button
-                type="submit"
-                variant="primary"
-                style={{ minHeight: 52, padding: '12px 26px', textTransform: 'none', letterSpacing: 'normal', fontSize: 14 }}
-              >
-                Rechercher
-              </Button>
-            </div>
-          </form>
-        </div>
+        <form action="/events" method="get" style={{ display: 'flex', gap: 10, minWidth: 0, flex: '1 1 320px', maxWidth: 460 }}>
+          <Input
+            type="search"
+            name="q"
+            defaultValue={search}
+            placeholder="Nom, ville, artiste, style…"
+            aria-label="Rechercher un événement"
+            style={{ flex: 1, minWidth: 0, minHeight: 48 }}
+          />
+          <IconButton type="submit" label="Rechercher" icon={<Search size={18} strokeWidth={2} aria-hidden="true" />} tone="accent" size={48} />
+        </form>
       </div>
 
       {search ? (
@@ -114,7 +102,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       ) : (
         <>
           {recommendations.length > 0 && (
-            <EventRow title="Recommandé pour toi" events={recommendations.map((r) => r.event)} reasons={reasons} />
+            <EventRow title="Recommandé pour toi" events={recommendations.map((r) => r.event)} reasons={reasons} eagerFirst />
           )}
           <CategoryRails events={events} boostedIds={boostedIds} scores={scores} reasons={reasons} />
         </>
@@ -164,9 +152,9 @@ function SearchResults({
   }
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
-        {paged.map((event) => (
-          <EventListCard key={event.id} event={event} reason={reasons[event.id]} />
+      <div className="lb-card-grid">
+        {paged.map((event, index) => (
+          <EventListCard key={event.id} event={event} reason={reasons[event.id]} eager={index === 0} />
         ))}
       </div>
       <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={results.length} pageSize={SEARCH_PAGE_SIZE} />
@@ -200,7 +188,7 @@ function CategoryRails({
 
   return (
     <>
-      <EventRow title="À la une" events={sortByScore(featured, scores)} reasons={reasons} />
+      <EventRow title="À la une" events={sortByScore(featured, scores)} reasons={reasons} eagerFirst />
       <EventRow title="Ce soir" events={sortByScore(tonight, scores)} reasons={reasons} />
       {byCategory.map(({ category, events: catEvents }) => (
         <EventRow key={category} title={category} events={sortByScore(catEvents, scores)} reasons={reasons} />

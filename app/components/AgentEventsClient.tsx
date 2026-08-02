@@ -226,8 +226,8 @@ export default function AgentEventsClient() {
                   fontSize: 10,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  border: active ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
-                  background: active ? 'rgba(200,169,110,0.15)' : 'var(--surface)',
+                  border: active ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
+                  background: active ? 'rgba(184, 243, 74,0.15)' : 'var(--surface)',
                   color: active ? 'var(--gold)' : 'var(--text-faint)',
                 }}
               >

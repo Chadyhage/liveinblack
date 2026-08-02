@@ -92,7 +92,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
               Ce lien de confirmation n&apos;est plus valable. Relance la demande de changement d&apos;e-mail depuis ton profil.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('#c8a96e', '#141007')}>Retour au profil</Button>
+              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('var(--primary-strong)', 'var(--primary-ink)')}>Retour au profil</Button>
             </div>
           </>
         )}

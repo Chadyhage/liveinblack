@@ -41,7 +41,7 @@ function checkPasswordStrength(pwd: string) {
 const cardStyle: React.CSSProperties = {
   background: 'var(--surface-2)',
   border: '1px solid var(--border)',
-  borderRadius: 20,
+  borderRadius: 'var(--radius-lg)',
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 const btnPrimary: React.CSSProperties = {
@@ -462,9 +462,9 @@ export default function AuthForm() {
       `}</style>
 
       <div style={{ marginBottom: 26 }}>
-        <p className="font-display" style={{ fontSize: 28, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
+        <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
-        </p>
+        </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0' }}>
           {mode === 'login' ? 'Connecte-toi pour retrouver tes billets et tes soirées.' : "Crée ton compte pour découvrir ce qui se passe près de toi."}
         </p>

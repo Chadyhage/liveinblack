@@ -1,9 +1,11 @@
 // Port de src/components/StarRating.jsx — étoiles de notation (affichage
-// lecture seule + saisie 1-5). Couleur champagne var(--gold)/#c8a96e.
+// lecture seule + saisie 1-5). Couleur var(--gold)/var(--primary) (#b8f34a) —
+// littéral requis car utilisé comme attribut SVG `fill`, pas `style`, donc
+// pas de var(--*) possible ici.
 import { useId, useRef } from 'react'
 import { Button } from '@/app/components/ui'
 
-const GOLD = '#c8a96e'
+const GOLD = '#b8f34a'
 
 function StarIcon({ fill, size, gradientId }: { fill: 'full' | 'half' | 'empty'; size: number; gradientId: string }) {
   const id = gradientId

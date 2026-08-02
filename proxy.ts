@@ -13,7 +13,7 @@ import { auth } from '@/auth'
 const AUTH_REQUIRED_PREFIXES = ['/profile', '/messages', '/scanner', '/my-shifts', '/order', '/my-application', '/playlist']
 const ORGANISATEUR_OR_AGENT_PREFIXES = ['/my-events']
 const ORGANISATEUR_ONLY_PREFIXES = ['/organizer-studio']
-const SERVICE_ACCESS_PREFIXES = ['/offer-services', '/my-subscription']
+const SERVICE_ACCESS_PREFIXES = ['/offer-services']
 const AGENT_ONLY_PREFIXES = ['/agent']
 
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {
@@ -78,7 +78,6 @@ export const config = {
     '/my-events/:path*',
     '/organizer-studio/:path*',
     '/offer-services/:path*',
-    '/my-subscription/:path*',
     '/agent/:path*',
   ],
 }

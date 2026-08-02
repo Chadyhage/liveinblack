@@ -12,7 +12,7 @@ import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/share
 // HomePage.jsx (voir lib/shared/recommendations.ts). Absent pour tout usage
 // non personnalisé (visiteur anonyme, rangées catégorie normales) : aucun
 // changement visuel pour ces cas.
-export default function EventListCard({ event, reason }: { event: PublicEvent; reason?: string }) {
+export default function EventListCard({ event, reason, eager = false }: { event: PublicEvent; reason?: string; eager?: boolean }) {
   const prices = (event.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
   const min = prices.length ? Math.min(...prices) : null
   const countdown = getEventCountdown(event)
@@ -26,18 +26,19 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
       style={{
         display: 'block',
         flex: '0 0 auto',
-        width: 300,
+        width: 'clamp(320px, 29vw, 390px)',
         textDecoration: 'none',
         color: 'inherit',
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
+        background: 'linear-gradient(180deg, var(--surface-2), var(--surface))',
+        border: '1px solid var(--border-strong)',
         borderRadius: 'var(--radius-xl)',
         overflow: 'hidden',
+        boxShadow: '0 18px 48px rgba(0,0,0,.24)',
       }}
     >
-      <div style={{ position: 'relative', aspectRatio: '16/10', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
-          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 700px) 86vw, 300px" />
+          <Image src={event.imageUrl} alt={event.name} fill loading={eager ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 700px) 86vw, 300px" />
         )}
         {countdown && (
           <span
@@ -97,9 +98,14 @@ export default function EventListCard({ event, reason }: { event: PublicEvent; r
           </span>
         )}
       </div>
-      <div style={{ padding: '16px 16px 18px' }}>
-        <p style={{ fontSize: 16, lineHeight: 1.25, fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.name}</p>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 0' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+      <div style={{ minHeight: 126, padding: '20px 20px 22px', display: 'flex', flexDirection: 'column' }}>
+        <p style={{ fontSize: 19, lineHeight: 1.22, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
+        <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '9px 0 0' }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ')}</p>
+        {(event.category || event.organizer) && (
+          <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 'auto 0 0', paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+            {[event.category, event.organizer].filter(Boolean).join(' · ')}
+          </p>
+        )}
       </div>
     </Link>
   )

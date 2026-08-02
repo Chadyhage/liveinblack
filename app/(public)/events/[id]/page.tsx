@@ -111,7 +111,7 @@ export default async function EventDetailPage({
       {/* HERO */}
       <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
         {event.imageUrl && (
-          <Image src={event.imageUrl} alt={event.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
+          <Image src={event.imageUrl} alt={event.name} fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
         <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -236,7 +236,7 @@ export default async function EventDetailPage({
           {bookingDisabledReason && (
             <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--pink)', margin: '0 0 12px' }}>Réservations fermées — {bookingDisabledReason}</p>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+          <div className="lb-card-grid">
             {event.places.map((place) => {
               const fillPct = place.total > 0 ? Math.round(((place.total - place.available) / place.total) * 100) : 0
               return (
@@ -268,7 +268,7 @@ export default async function EventDetailPage({
           place sélectionnée) */}
       {!session?.user && event.menu?.length ? (
         <Section title="Carte / précommande">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+          <div className="lb-card-grid">
             {event.menu.filter((item) => item.available !== false).map((item) => (
               <div key={item.name} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
@@ -333,7 +333,7 @@ export default async function EventDetailPage({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ padding: '22px 22px 0' }}>
+    <section className="lb-detail-section">
       <h2 style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>{title}</h2>
       {children}
     </section>

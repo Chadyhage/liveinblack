@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
-import { Button, Input, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -142,6 +142,13 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
 
   return (
     <main className="lb-dashboard-page">
+      <style>{`
+        @media (max-width: 480px) {
+          .ticket-wallet-face { flex-direction: column; }
+          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 2px dashed rgba(255,255,255,0.15); }
+          .ticket-wallet-meta { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)) !important; }
+        }
+      `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <BackHeader onBack={onBack} title="Mes billets" />
 
@@ -168,6 +175,9 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
               <Link
                 href="/events"
                 style={{
+                  minHeight: 44,
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   alignSelf: 'flex-start',
                   padding: '9px 16px',
                   borderRadius: 10,
@@ -261,7 +271,7 @@ function SeatHoldsPanel() {
   if (active.length === 0) return null
 
   return (
-    <div style={{ ...cardStyle, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, border: '1px solid rgba(200,169,110,.35)' }}>
+    <div style={{ ...cardStyle, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, border: '1px solid rgba(184, 243, 74,.35)' }}>
       <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Places bloquées</p>
       {active.map((hold) => (
         <div key={hold.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
@@ -340,7 +350,7 @@ function TicketGlyph() {
         width: 44,
         height: 44,
         borderRadius: 12,
-        background: 'rgba(200,169,110,0.12)',
+        background: 'rgba(184, 243, 74,0.12)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -418,7 +428,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
             width: 52,
             height: 52,
             borderRadius: 10,
-            background: event?.imageUrl ? `url(${event.imageUrl}) center/cover` : 'rgba(200,169,110,0.12)',
+            background: event?.imageUrl ? `url(${event.imageUrl}) center/cover` : 'rgba(184, 243, 74,0.12)',
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
@@ -447,7 +457,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
           {cancelled && <Pill color="#e05aaa" bg="rgba(224,90,170,0.12)">Annulé</Pill>}
           {past && !cancelled && <Pill color="var(--text-faint)" bg="rgba(255,255,255,0.06)">Terminé</Pill>}
-          <Pill color="var(--teal)" bg="rgba(78,232,200,0.10)">
+          <Pill color="var(--teal)" bg="rgba(184, 243, 74,0.10)">
             {group.myTickets.length} billet{group.myTickets.length > 1 ? 's' : ''}
           </Pill>
         </div>
@@ -926,7 +936,7 @@ function PremiumTicketCard({
           {flashMsg}
         </div>
       )}
-      <div style={{ display: 'flex' }}>
+      <div className="ticket-wallet-face" style={{ display: 'flex' }}>
         <div style={{ flex: 1, padding: 16, minWidth: 0 }}>
           <p style={{ fontSize: 10.5, fontWeight: 700, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
             Live in Black · Billet officiel
@@ -935,12 +945,12 @@ function PremiumTicketCard({
             {countdown && !inactive && <Pill color="#04120e" bg="var(--teal-solid)">{countdown}</Pill>}
             {(event?.minAge ?? 0) >= 18 && (
               <span title="Pièce d'identité pouvant être demandée à l'entrée">
-                <Pill color="var(--gold)" bg="rgba(200,169,110,0.14)">18+</Pill>
+                <Pill color="var(--gold)" bg="rgba(184, 243, 74,0.14)">18+</Pill>
               </span>
             )}
           </div>
           <p style={{ fontWeight: 800, fontSize: 18, color: '#fff', margin: '0 0 12px' }}>{event?.name ?? 'Événement'}</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+          <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
             <MetaCell label="Place" value={ticket.place} />
             <MetaCell label="Date" value={event?.dateDisplay || event?.date || ''} />
             <MetaCell label="Billet" value={String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')} />
@@ -948,6 +958,7 @@ function PremiumTicketCard({
         </div>
 
         <div
+          className="ticket-wallet-qr"
           style={{
             width: 140,
             flexShrink: 0,
@@ -1010,7 +1021,7 @@ function PremiumTicketCard({
       {showIncluded && (
         <div style={{ padding: '0 16px 16px' }}>
           {included === null ? (
-            <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Chargement…</p>
+            <Skeleton width="72%" height={13} />
           ) : included.length === 0 ? (
             <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)' }}>
               <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Aucune option incluse.</p>

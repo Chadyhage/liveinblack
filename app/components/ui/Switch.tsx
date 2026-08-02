@@ -29,7 +29,7 @@ const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   return (
     <label
       htmlFor={id}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.55 : 1, ...style }}
+      style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.55 : 1, ...style }}
     >
       <span style={{ position: 'relative', width: 38, height: 22, flexShrink: 0 }}>
         <input

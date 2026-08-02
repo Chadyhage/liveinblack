@@ -1400,9 +1400,9 @@ export default function MessagesClient({
       {showListPane && (
         <aside
           style={{
-            width: isDesktop ? 340 : '100%',
+            width: isDesktop && conversations.length > 0 ? 340 : '100%',
             flexShrink: 0,
-            borderRight: isDesktop ? '1px solid var(--border)' : 'none',
+            borderRight: isDesktop && conversations.length > 0 ? '1px solid var(--border)' : 'none',
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
@@ -1550,7 +1550,7 @@ export default function MessagesClient({
         </aside>
       )}
 
-      {showThreadPane && (
+      {showThreadPane && conversations.length > 0 && (
         <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: '100vh' }}>
           {!activeConversation ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

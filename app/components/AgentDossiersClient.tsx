@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
@@ -344,7 +344,7 @@ export default function AgentDossiersClient() {
 
   const [dossierParam, setDossierParam] = useQueryParamState<string>('dossier', '', { push: true })
   const selectedId = dossierParam || null
-  const setSelectedId = (id: string | null) => setDossierParam(id ?? '')
+  const setSelectedId = useCallback((id: string | null) => setDossierParam(id ?? ''), [setDossierParam])
   const [detail, setDetail] = useState<ApplicationDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState(false)
@@ -415,11 +415,11 @@ export default function AgentDossiersClient() {
     }
   }, [])
 
-  function closeDetail() {
+  const closeDetail = useCallback(() => {
     setSelectedId(null)
     setDetail(null)
     setDetailError(false)
-  }
+  }, [setSelectedId])
 
   useEffect(() => {
     if (!selectedId) return
@@ -454,7 +454,7 @@ export default function AgentDossiersClient() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedId])
+  }, [selectedId, closeDetail])
 
   const activeSection = SECTIONS.find((s) => s.key === section) || SECTIONS[0]
 
@@ -650,7 +650,7 @@ export default function AgentDossiersClient() {
                 </div>
               </Card>
             ) : detailLoading || !detail ? (
-              <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
+              <div style={{ padding: '20px 0' }}><SkeletonRow columns={1} /></div>
             ) : (
               <DetailPanel
                 detail={detail}

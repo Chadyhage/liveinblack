@@ -215,7 +215,7 @@ export default function AgentHomepageConfigClient() {
         )}
 
         {dirty && (
-          <Card style={{ border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.06)', padding: '10px 14px' }}>
+          <Card style={{ border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.06)', padding: '10px 14px' }}>
             <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0, fontWeight: 700 }}>Modifications non enregistrées — pense à cliquer sur « Enregistrer ».</p>
           </Card>
         )}

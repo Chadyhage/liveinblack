@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
 
@@ -67,7 +67,7 @@ export default function AgentDeletionClient() {
 
   const [requestParam, setRequestParam] = useQueryParamState<string>('request', '', { push: true })
   const selectedId = requestParam || null
-  const setSelectedId = (id: string | null) => setRequestParam(id ?? '')
+  const setSelectedId = useCallback((id: string | null) => setRequestParam(id ?? ''), [setRequestParam])
   const [detail, setDetail] = useState<DeletionRequestDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState(false)
@@ -145,13 +145,13 @@ export default function AgentDeletionClient() {
     }
   }, [selectedId, detailRetry])
 
-  function closeDetail() {
+  const closeDetail = useCallback(() => {
     setSelectedId(null)
     setDetail(null)
     setDetailError(false)
     setRejectNote('')
     setConfirmApprove(false)
-  }
+  }, [setSelectedId])
 
   useEffect(() => {
     if (!selectedId) return
@@ -160,7 +160,7 @@ export default function AgentDeletionClient() {
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [selectedId])
+  }, [selectedId, closeDetail])
 
   const term = search.trim().toLowerCase()
   const filtered = term
@@ -275,7 +275,7 @@ export default function AgentDeletionClient() {
                 </div>
               </Card>
             ) : detailLoading || !detail ? (
-              <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
+              <div style={{ padding: '20px 0' }}><SkeletonRow columns={1} /></div>
             ) : (
               <DetailPanel
                 detail={detail}

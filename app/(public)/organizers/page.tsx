@@ -142,7 +142,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             value="1"
             defaultChecked={upcomingOnly}
             label="Événement à venir"
-            style={{ minHeight: 42, padding: '0 13px', borderRadius: 999, border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,.04)', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
+            style={{ minHeight: 44, padding: '0 13px', borderRadius: 999, border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,.04)', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
           />
           <Button
             type="submit"

@@ -92,7 +92,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
               <Link
                 key={s}
                 href={`/search?q=${encodeURIComponent(s)}`}
-                style={{ padding: '9px 16px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
               >
                 {s}
               </Link>
@@ -113,9 +113,9 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
         <>
           {matchedEvents.length > 0 && (
             <ResultSection title="Événements">
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                {matchedEvents.map((e) => (
-                  <EventListCard key={e.id} event={e} />
+              <div className="lb-card-grid">
+                {matchedEvents.map((e, index) => (
+                  <EventListCard key={e.id} event={e} eager={index === 0} />
                 ))}
               </div>
             </ResultSection>

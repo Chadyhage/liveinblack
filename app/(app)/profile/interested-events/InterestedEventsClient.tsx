@@ -67,7 +67,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
   return (
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Link href="/profile" style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
           ← Profil
         </Link>
 
@@ -78,7 +78,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
           </div>
           <Link
             href="/events"
-            style={{ padding: '10px 20px', borderRadius: 999, border: '1px solid var(--gold)', color: 'var(--gold)', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
+            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 999, border: '1px solid var(--gold)', color: 'var(--gold)', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
           >
             Explorer
           </Link>
@@ -86,7 +86,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
 
         {items.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: '56px 24px' }}>
-            <div style={{ width: 60, height: 60, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.08)' }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184, 243, 74,0.08)' }}>
               <HeartOutline />
             </div>
             <p style={{ fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Aucun événement sauvegardé</p>
@@ -136,7 +136,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 }
 
 function Grid({ children }: { children: React.ReactNode }) {
-  return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px,1fr))', gap: 14 }}>{children}</div>
+  return <div className="lb-card-grid">{children}</div>
 }
 
 function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemView; inactive: boolean; onRemoved: () => void }) {
@@ -153,7 +153,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
 
   const card = (
     <div style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
-      <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || '#c8a96e'}33, var(--obsidian))` }}>
+      <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'rgba(184, 243, 74, 0.2)'}, var(--obsidian))` }}>
         {ev?.imageUrl && (
           <Image src={ev.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
         )}

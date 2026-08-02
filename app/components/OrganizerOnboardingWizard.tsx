@@ -51,9 +51,9 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
   borderRadius: 3,
   border: 'none',
-  background: 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
+  background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
   opacity: disabled ? 0.4 : 1,
-  color: '#1a1508',
+  color: 'var(--primary-ink)',
   fontWeight: 500,
   fontSize: 14,
   textTransform: 'none',
@@ -238,7 +238,7 @@ export default function OrganizerOnboardingWizard({
 
   return (
     <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 680, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Organisateur</h1>
@@ -261,85 +261,95 @@ export default function OrganizerOnboardingWizard({
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
-              <div>
-                <Label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</Label>
-                <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
-              </div>
-              <div>
-                <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
-                <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
-              </div>
-              <div>
-                <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
-                <Input
-                  style={inputStyle}
-                  type="email"
-                  value={form.emailPro}
-                  onChange={(e) => set('emailPro', e.target.value)}
-                  placeholder="contact@monclub.com"
-                />
-              </div>
-              <div>
-                <Label style={labelStyle}>Téléphone professionnel {requiredMark}</Label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Select
-                    value={form.telephoneProCode}
-                    onChange={(value) => set('telephoneProCode', value)}
-                    options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.country} ${r.dial}` }))}
-                  />
-                  <Input style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
+              {/* Grille responsive (2 colonnes dès que la place le permet, 1
+                  sous ~460px de large) au lieu d'un empilement systématique
+                  sur une seule colonne — le formulaire n'utilisait qu'une
+                  fraction de la largeur disponible dans AuthSplitLayout. */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</Label>
+                  <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
                 </div>
-              </div>
-              <Checkbox
-                label="Pas de lieu fixe (établissement en ligne / itinérant)"
-                checked={form.noFixedAddress}
-                onChange={(e) => set('noFixedAddress', e.target.checked)}
-              />
-              {!form.noFixedAddress && (
                 <div>
-                  <Label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</Label>
-                  <Input style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
+                  <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
+                  <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
                 </div>
-              )}
-              <div>
-                <Label style={labelStyle}>Site web / Instagram</Label>
-                <Input style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
+                <div>
+                  <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
+                  <Input
+                    style={inputStyle}
+                    type="email"
+                    value={form.emailPro}
+                    onChange={(e) => set('emailPro', e.target.value)}
+                    placeholder="contact@monclub.com"
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Label style={labelStyle}>Téléphone professionnel {requiredMark}</Label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Select
+                      value={form.telephoneProCode}
+                      onChange={(value) => set('telephoneProCode', value)}
+                      options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.country} ${r.dial}` }))}
+                    />
+                    <Input style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
+                  </div>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Checkbox
+                    label="Pas de lieu fixe (établissement en ligne / itinérant)"
+                    checked={form.noFixedAddress}
+                    onChange={(e) => set('noFixedAddress', e.target.checked)}
+                  />
+                </div>
+                {!form.noFixedAddress && (
+                  <div>
+                    <Label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</Label>
+                    <Input style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
+                  </div>
+                )}
+                <div>
+                  <Label style={labelStyle}>Site web / Instagram</Label>
+                  <Input style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
+                </div>
               </div>
 
               {mode === 'anonymous' && (
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
                   <h3 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ton compte de connexion</h3>
-                  <div>
-                    <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
-                    <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label style={labelStyle}>Mot de passe {requiredMark}</Label>
-                    <div style={{ position: 'relative' }}>
-                      <Input
-                        style={{ ...inputStyle, paddingRight: 56 }}
-                        type={showRegPassword ? 'text' : 'password'}
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        placeholder="Minimum 8 caractères"
-                      />
-                      <Button
-                        variant="link"
-                        type="button"
-                        aria-pressed={showRegPassword}
-                        aria-label={showRegPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
-                        onClick={() => setShowRegPassword((v) => !v)}
-                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
-                      >
-                        <IconEye open={showRegPassword} />
-                        {showRegPassword ? 'Cacher' : 'Voir'}
-                      </Button>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
+                      <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                     </div>
-                  </div>
-                  <div>
-                    <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
-                    <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                    <div>
+                      <Label style={labelStyle}>Mot de passe {requiredMark}</Label>
+                      <div style={{ position: 'relative' }}>
+                        <Input
+                          style={{ ...inputStyle, paddingRight: 56 }}
+                          type={showRegPassword ? 'text' : 'password'}
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          placeholder="Minimum 8 caractères"
+                        />
+                        <Button
+                          variant="link"
+                          type="button"
+                          aria-pressed={showRegPassword}
+                          aria-label={showRegPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
+                          onClick={() => setShowRegPassword((v) => !v)}
+                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
+                        >
+                          <IconEye open={showRegPassword} />
+                          {showRegPassword ? 'Cacher' : 'Voir'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
+                      <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                    </div>
                   </div>
                   <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>
                 </>
@@ -410,7 +420,7 @@ export default function OrganizerOnboardingWizard({
                             padding: '8px 14px',
                             borderRadius: 999,
                             border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
-                            background: active ? 'rgba(200,169,110,0.14)' : 'transparent',
+                            background: active ? 'rgba(184, 243, 74,0.14)' : 'transparent',
                             color: active ? 'var(--gold)' : '#fff',
                             fontSize: 12.5,
                           }}

@@ -1,4 +1,7 @@
 import BoostActiveClient from '@/app/components/BoostActiveClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Activation du boost — LIVEINBLACK', robots: { index: false, follow: false } }
 
 export const dynamic = 'force-dynamic'
 

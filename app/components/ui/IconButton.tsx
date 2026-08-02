@@ -19,7 +19,7 @@ const TONE_STYLES: Record<IconButtonTone, CSSProperties> = {
 }
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
-  { label, icon, tone = 'default', size = 38, disabled, style, type = 'button', ...rest },
+  { label, icon, tone = 'default', size = 44, disabled, style, type = 'button', ...rest },
   ref
 ) {
   return (
@@ -33,6 +33,8 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       style={{
         width: size,
         height: size,
+        minWidth: 44,
+        minHeight: 44,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

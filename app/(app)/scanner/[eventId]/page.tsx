@@ -58,7 +58,7 @@ function GateScreen({ title, message }: { title: string; message: string }) {
         </div>
         <p style={{ fontWeight: 800, fontSize: 22, color: 'var(--pink)', margin: '0 0 10px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href="/scanner" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
+        <Link href="/my-shifts" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Événements
         </Link>
       </div>

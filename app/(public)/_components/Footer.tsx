@@ -33,13 +33,13 @@ export default function Footer() {
       }}
     >
       <div style={{ maxWidth: 1480, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-      <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+      <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
         {LEGAL_LINKS.map((link) => (
-          <Link key={link.href} href={link.href} style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link key={link.href} href={link.href} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
             {link.label}
           </Link>
         ))}
-        <a href={`mailto:${LEGAL.contactEmail}`} style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <a href={`mailto:${LEGAL.contactEmail}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
           Contact
         </a>
       </nav>

@@ -1,5 +1,8 @@
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 import ResetPasswordClient from '@/app/components/ResetPasswordClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Réinitialiser mon mot de passe — LIVEINBLACK', robots: { index: false, follow: false } }
 
 export const dynamic = 'force-dynamic'
 

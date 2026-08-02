@@ -30,6 +30,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
         type="button"
         onClick={reset}
         style={{
+          minHeight: 44,
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,

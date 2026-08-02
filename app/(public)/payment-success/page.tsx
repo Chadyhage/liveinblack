@@ -1,4 +1,7 @@
 import PaymentSuccessClient from '@/app/components/PaymentSuccessClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'État du paiement — LIVEINBLACK', robots: { index: false, follow: false } }
 
 export const dynamic = 'force-dynamic'
 

@@ -42,6 +42,12 @@
   --z-modal: 3000;
   --focus-ring: 0 0 0 3px rgba(184, 243, 74, 0.28);
 
+  /* Typographie hors-ligne : Geist local pour l'interface, pile condensée
+     système pour conserver l'impact des grands titres. */
+  --font-open-sans: var(--font-interface);
+  --font-montserrat: var(--font-interface);
+  --font-display: Impact, "Arial Narrow", "Helvetica Neue Condensed", sans-serif;
+
   --background: var(--obsidian);
   --foreground: var(--text);
 }
@@ -56,13 +62,8 @@ html {
   --font-sans: var(--font-open-sans);
 }
 
-/* Migration typographique (design de référence
-   chillandgroovefestival.com, décision client 2026-07-26) : Montserrat pour
-   TOUS les titres (h1-h6, classes .heading), Open Sans pour le texte
-   courant, Anton pour l'affichage impact (hero/compteurs — substitut libre
-   à "Gagalin", police payante non redistribuable). Ne jamais utiliser ces
-   variables directement sans passer par ces règles/classes : la source
-   unique de la police reste ici. */
+/* Geist auto-hébergé pour le texte et pile condensée locale pour l'affichage.
+   La source unique des familles reste dans ces variables. */
 body {
   position: relative;
   isolation: isolate;
@@ -152,7 +153,7 @@ textarea::placeholder {
 
 .lb-events-tools {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(320px, .8fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 26px;
 }
@@ -269,6 +270,89 @@ textarea::placeholder {
   gap: 16px !important;
 }
 
+/* Primitives de composition partagées. Elles remplacent les grilles locales
+   à 220/240 px et les faux panneaux transparents repérés pendant l'audit. */
+.lb-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: clamp(18px, 2vw, 26px);
+  align-items: stretch;
+}
+
+.lb-card-grid > .lb-card {
+  width: 100% !important;
+  min-height: 100%;
+}
+
+.lb-card-grid:has(> .lb-card:only-child) {
+  grid-template-columns: minmax(min(100%, 360px), 560px);
+}
+
+.lb-detail-section {
+  margin-top: 18px;
+  padding: clamp(18px, 2.4vw, 26px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .16);
+}
+
+.lb-loading-panel {
+  width: 100%;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+/* Les textes courants ne doivent pas hériter des micro-tailles historiques.
+   Les badges et métadonnées inline (spans) conservent volontairement leur
+   échelle compacte. */
+:where(main, .lb-dashboard-page, .lb-page-shell) :where(p, label, input, select, textarea, button)[style*='font-size: 9px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) :where(p, label, input, select, textarea, button)[style*='font-size: 10px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) :where(p, label, input, select, textarea, button)[style*='font-size: 10.5px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) :where(p, label, input, select, textarea, button)[style*='font-size: 11px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) :where(p, label, input, select, textarea, button)[style*='font-size: 11.5px'] {
+  font-size: 12.5px !important;
+}
+
+:where(main, .lb-dashboard-page, .lb-page-shell) :where(p, label, input, select, textarea, button)[style*='font-size: 12px'] {
+  font-size: 13px !important;
+}
+
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 500 10px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 600 10px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 700 10px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 500 10.5px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 600 10.5px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 700 10.5px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 500 11px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 600 11px'],
+:where(main, .lb-dashboard-page, .lb-page-shell) [style*='font: 700 11px'] {
+  font-size: 12.5px !important;
+}
+
+/* Cibles de navigation suffisamment grandes sur souris comme sur tactile. */
+:where(.lb-public-nav, .lb-dashboard-sidebar) :where(a, button),
+:where(.lb-page-shell, .lb-dashboard-page) a[class*='button'] {
+  min-height: 44px;
+}
+
+/* Les cartes de pilotage contiennent jusqu'à dix actions. À trois colonnes
+   dans la zone utile du dashboard elles tombaient autour de 298 px et
+   devenaient des listes de micro-boutons. Deux cartes respirantes sont plus
+   lisibles sur desktop ; la grille repasse naturellement à une colonne
+   lorsque 440 px ne sont plus disponibles. */
+.lb-organizer-event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  gap: 18px;
+}
+
 @media (max-width: 820px) {
   .lb-events-tools { grid-template-columns: 1fr; }
 }
@@ -282,6 +366,13 @@ textarea::placeholder {
   .lb-dashboard-page { min-height: calc(100vh - 130px); padding-bottom: 92px; }
   .lb-responsive-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .lb-dashboard-card-grid { grid-template-columns: 1fr; }
+  .provider-directory__filters,
+  .organizer-directory__filters { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .provider-directory__filters > :first-child,
+  .organizer-directory__filters > :first-child { grid-column: 1 / -1; }
+  .provider-directory__filters > button:last-child,
+  .organizer-directory__filters > button:last-child { width: 100%; }
+  .lb-detail-section { padding: 18px 16px; }
 }
 
 button,

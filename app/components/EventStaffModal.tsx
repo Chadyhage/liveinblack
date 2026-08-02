@@ -19,7 +19,7 @@
 //      recherche affiche nom + email.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Input, Modal } from '@/app/components/ui'
+import { Button, Input, Modal, Skeleton } from '@/app/components/ui'
 
 const FONT = 'Inter, sans-serif'
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
@@ -345,7 +345,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '20px 0' }}>
             <Spinner />
-            <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>Chargement…</p>
+            <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
           <p style={{ fontFamily: FONT, fontSize: 13, color: '#ff9ed2', textAlign: 'center', padding: '20px 0', margin: 0 }}>

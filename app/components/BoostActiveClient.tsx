@@ -16,7 +16,7 @@ const COLORS = { pink: 'var(--pink)', gold: 'var(--gold)', muted: 'rgba(255,255,
 const CARD: React.CSSProperties = {
   background: 'var(--surface-2)',
   border: '1px solid var(--border)',
-  borderRadius: 20,
+  borderRadius: 'var(--radius-lg)',
   boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
 }
 
@@ -96,9 +96,9 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 24px', border: `2px solid ${COLORS.dim}`, borderTopColor: COLORS.pink, animation: 'lib-boost-spin 0.9s linear infinite' }} />
-            <p className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
+            <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
               Activation du boost…
-            </p>
+            </h1>
           </>
         )}
 
@@ -109,9 +109,9 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
             </div>
-            <p className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
+            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
               Boost activé
-            </p>
+            </h1>
             {boostInfo && (
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', margin: 0, lineHeight: 1.6 }}>
                 Ton événement {boostInfo.eventName ? `« ${boostInfo.eventName} »` : ''} apparaît
@@ -144,9 +144,9 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
                 <circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} />
               </svg>
             </div>
-            <p className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
               Erreur d&apos;activation
-            </p>
+            </h1>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
               {errorMsg}
             </p>

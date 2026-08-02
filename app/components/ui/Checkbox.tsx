@@ -33,6 +33,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
     <label
       htmlFor={id}
       style={{
+        minHeight: 44,
         display: 'flex',
         alignItems: description ? 'flex-start' : 'center',
         gap: 10,

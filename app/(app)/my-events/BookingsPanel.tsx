@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatMoney } from './types'
-import { Button, Spinner } from '@/app/components/ui'
+import { Button, SkeletonList } from '@/app/components/ui'
 
 // Port de BookingsPanel (MesEvenementsPage.jsx lignes 3727-3884) — panneau
 // plein écran (pas une petite modale) de détail des réservations d'un
@@ -69,11 +69,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 22px 60px' }}>
         {error && <p style={{ color: 'var(--pink)', fontSize: 13 }}>{error}</p>}
-        {!data && !error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '20px 0', color: 'var(--text-muted)', fontSize: 13 }}>
-            <Spinner size={16} text="Chargement…" />
-          </div>
-        )}
+        {!data && !error && <SkeletonList rows={3} columns={2} />}
 
         {data && data.ticketCount === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>

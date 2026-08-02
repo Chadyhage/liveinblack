@@ -169,13 +169,13 @@ export default function CookieConsentBanner() {
         }
 
         .cc-btn-accept {
-          background: rgba(78,232,200,0.08);
-          border: 1px solid rgba(78,232,200,0.42);
+          background: rgba(184, 243, 74,0.08);
+          border: 1px solid rgba(184, 243, 74,0.42);
           color: rgba(255,255,255,0.88);
         }
         .cc-btn-accept:hover {
-          background: rgba(78,232,200,0.14);
-          border-color: rgba(78,232,200,0.65);
+          background: rgba(184, 243, 74,0.14);
+          border-color: rgba(184, 243, 74,0.65);
           color: rgba(255,255,255,0.98);
         }
         .cc-btn-accept:active {
@@ -243,8 +243,8 @@ export default function CookieConsentBanner() {
                   textTransform: 'none',
                   letterSpacing: 'normal',
                   whiteSpace: 'nowrap',
-                  background: 'rgba(78,232,200,0.08)',
-                  border: '1px solid rgba(78,232,200,0.42)',
+                  background: 'rgba(184, 243, 74,0.08)',
+                  border: '1px solid rgba(184, 243, 74,0.42)',
                   color: 'rgba(255,255,255,0.88)',
                 }}
               >

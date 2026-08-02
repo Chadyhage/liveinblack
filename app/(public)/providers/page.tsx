@@ -69,7 +69,9 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       <style>{`
         .provider-directory__filters{display:grid;grid-template-columns:minmax(320px,1.6fr) minmax(220px,.7fr) auto;gap:10px;margin:0 0 22px}
         .provider-directory__field{min-width:0;padding:11px 14px;border-radius:var(--radius-pill);border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13.5px}
-        @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{grid-template-columns:1fr}.provider-directory__filters button{width:100%;min-height:42px}}
+        .provider-directory__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:clamp(18px,2vw,26px)}
+        .provider-directory__grid:has(>.lb-card:only-child){grid-template-columns:minmax(min(100%,360px),560px)}
+        @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{grid-template-columns:1fr}.provider-directory__filters button{width:100%;min-height:44px}.provider-directory__grid{grid-template-columns:1fr}}
       `}</style>
       <div style={{ maxWidth: 1480, margin: '0 auto' }}>
       <header className="lb-directory-hero">
@@ -119,7 +121,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       {filtered.length === 0 ? (
         <p style={{ color: 'var(--text-muted)' }}>Aucun prestataire ne correspond à ta recherche.</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 16 }}>
+        <div className="provider-directory__grid">
           {paged.map((p) => {
             const categories = getProviderCategories(p)
             const pc = categories[0] || getProviderCategory(p.prestataireType)
@@ -130,9 +132,9 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
                 key={p.userId}
                 href={`/providers/${encodeURIComponent(p.userId)}`}
                 className="lb-card"
-                style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}
+                style={{ display: 'flex', flexDirection: 'column', minHeight: 410, textDecoration: 'none', color: 'inherit', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', boxShadow: '0 18px 48px rgba(0,0,0,.24)' }}
               >
-                <div style={{ position: 'relative', height: 120, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))` }}>
+                <div style={{ position: 'relative', minHeight: 190, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))` }}>
                   {coverImage && (
                     <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 230px" />
                   )}
@@ -157,19 +159,21 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
                     {pc.label}
                     {categories.length > 1 ? ` +${categories.length - 1}` : ''}
                   </span>
-                  <div style={{ position: 'absolute', left: 14, bottom: -22, width: 52, height: 52, borderRadius: '50%', border: '2px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'grid', placeItems: 'center', color: '#04120e', fontSize: 20, fontWeight: 800 }}>
+                  <div style={{ position: 'absolute', left: 20, bottom: -30, width: 68, height: 68, borderRadius: '50%', border: '3px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'grid', placeItems: 'center', color: '#04120e', fontSize: 24, fontWeight: 800, boxShadow: '0 10px 24px rgba(0,0,0,.32)' }}>
                     {p.photoUrl ? (
-                      <Image src={p.photoUrl} alt={p.name} width={52} height={52} style={{ objectFit: 'cover' }} />
+                      <Image src={p.photoUrl} alt={p.name} width={68} height={68} style={{ objectFit: 'cover' }} />
                     ) : p.name?.[0]?.toUpperCase()}
                   </div>
                 </div>
-                <div style={{ padding: '30px 14px 15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <p style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>{p.name}</p>
-                  {p.headline && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '4px 0 0' }}>{p.headline}</p>}
-                  {(p.city || p.location || p.country) && <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>}
-                  {p.description && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '8px 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
-                  {visibleCatalog.length > 0 && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', fontWeight: 700, margin: '12px 0 0' }}>{visibleCatalog.length} offre{visibleCatalog.length !== 1 ? 's' : ''} au catalogue</p>}
-                  {(p.ratingCount || 0) > 0 && <p style={{ fontSize: 11.5, color: 'var(--gold)', fontWeight: 800, margin: '6px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}><Star size={12} fill="currentColor" /> {(p.ratingAvg || 0).toFixed(1)} · {p.ratingCount} avis</p>}
+                <div style={{ padding: '42px 22px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <p style={{ fontSize: 20, lineHeight: 1.2, fontWeight: 800, margin: 0 }}>{p.name}</p>
+                  {p.headline && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '7px 0 0', lineHeight: 1.45 }}>{p.headline}</p>}
+                  {(p.city || p.location || p.country) && <p style={{ fontSize: 13, color: 'var(--gold)', margin: '8px 0 0', fontWeight: 700 }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>}
+                  {p.description && <p style={{ fontSize: 13.5, lineHeight: 1.55, color: 'var(--text-faint)', margin: '14px 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.description}</p>}
+                  <div style={{ marginTop: 'auto', paddingTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTop: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 700 }}>{visibleCatalog.length > 0 ? `${visibleCatalog.length} offre${visibleCatalog.length !== 1 ? 's' : ''}` : 'Voir le profil'}</span>
+                    {(p.ratingCount || 0) > 0 && <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}><Star size={14} fill="currentColor" /> {(p.ratingAvg || 0).toFixed(1)} · {p.ratingCount}</span>}
+                  </div>
                 </div>
               </Link>
             )
@@ -179,7 +183,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
 
       <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
 
-      <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(200,169,110,.3)', background: 'var(--surface)' }}>
+      <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(184, 243, 74,.3)', background: 'var(--surface)' }}>
         <h2 className="font-display" style={{ margin: 0, fontSize: 32, letterSpacing: '.01em' }}>Tu es prestataire ?</h2>
         <p style={{ maxWidth: 500, margin: '10px auto 20px', color: 'var(--text-muted)', lineHeight: 1.6 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
         <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 999, background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5 }}>Devenir prestataire</Link>
@@ -194,6 +198,9 @@ function CategoryChip({ label, href, active, color }: { label: string; href: str
     <Link
       href={href}
       style={{
+        minHeight: 44,
+        display: 'inline-flex',
+        alignItems: 'center',
         fontSize: 12.5,
         fontWeight: 700,
         padding: '7px 14px',

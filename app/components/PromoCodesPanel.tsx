@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney, currencySymbol } from '@/lib/shared/money'
-import { Button, Input, Select, Label, Modal } from '@/app/components/ui'
+import { Button, Input, Select, Label, Modal, Skeleton } from '@/app/components/ui'
 
 const FONT = 'Inter, sans-serif'
 const inputStyle: React.CSSProperties = {
@@ -257,7 +257,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                 <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
               </path>
             </svg>
-            <p style={{ color: 'rgba(255,255,255,.45)', font: `500 13px ${FONT}`, margin: 0 }}>Chargement…</p>
+            <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
           <p style={{ marginTop: 18, color: '#ff9ed2', font: `500 13px ${FONT}` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>

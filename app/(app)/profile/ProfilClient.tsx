@@ -141,7 +141,7 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
           {/* Le nom/téléphone/année de naissance s'éditent sur Paramètres du
               compte (formulaires plus lourds) — lien direct ici pour ne pas
               faire deviner où se trouve "modifier mes infos". */}
-          <Link href="/profile/parametres" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
+          <Link href="/profile/parametres" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>
             Modifier mes informations →
           </Link>
           <Button
@@ -164,7 +164,7 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             </Card>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+          <div className="lb-dashboard-card-grid">
             <QuickAccessCard href="/profile/parametres" icon={<Settings size={18} />} label="Paramètres du compte" />
             <QuickAccessCard href="/profile/billets" icon={<Ticket size={18} />} label="Mes billets" />
             <QuickAccessCard href="/profile/interested-events" icon={<Heart size={18} />} label="Mes favoris" />
@@ -351,7 +351,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           width: 80,
           height: 80,
           borderRadius: '50%',
-          background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'rgba(200,169,110,0.18)',
+          background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'rgba(184, 243, 74,0.18)',
           fontSize: 28,
           fontWeight: 800,
           color: 'var(--gold)',
@@ -472,6 +472,11 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
   const q = normalizeQuery(query)
   const tokens = q.split(/\s+/).filter(Boolean)
   const filtered = tokens.length === 0 ? entries : entries.filter((e) => tokens.every((t) => e.keywords.some((k) => normalizeQuery(k).includes(t)) || normalizeQuery(e.id).includes(t)))
+  const settingGroups = [
+    { title: 'Profil et préférences', ids: ['identite', 'goûts'] },
+    { title: 'Confidentialité et données', ids: ['visibilite', 'confidentialite', 'mes donnees'] },
+    { title: 'Connexion et sécurité', ids: ['email', 'mot de passe', 'danger'] },
+  ]
 
   return (
     <main className="profile-settings lb-dashboard-page lb-dashboard-page--medium">
@@ -505,10 +510,23 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
             </Button>
           </Card>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 380px), 1fr))', gap: 14, alignItems: 'start' }}>
-            {filtered.map((entry) => (
-              <div key={entry.id}>{entry.render({ user, setUser })}</div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {settingGroups.map((group, groupIndex) => {
+              const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
+              if (groupEntries.length === 0) return null
+              return (
+                <details key={group.title} open={tokens.length > 0 || groupIndex === 0} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', background: 'var(--surface-2)', padding: '0 14px 14px' }}>
+                  <summary style={{ minHeight: 52, display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--text)', fontSize: 15, fontWeight: 800 }}>
+                    {group.title}
+                  </summary>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 14, alignItems: 'start' }}>
+                    {groupEntries.map((entry) => (
+                      <div key={entry.id}>{entry.render({ user, setUser })}</div>
+                    ))}
+                  </div>
+                </details>
+              )
+            })}
           </div>
         )}
       </div>
@@ -975,7 +993,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
       </div>
 
       {user.pendingEmail ? (
-        <div style={{ padding: 14, borderRadius: 10, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)' }}>
+        <div style={{ padding: 14, borderRadius: 10, background: 'rgba(184, 243, 74,0.08)', border: '1px solid rgba(184, 243, 74,0.25)' }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '0 0 4px' }}>Vérification en attente</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Un lien a été envoyé à {user.pendingEmail}. Ouvre-le pour confirmer le changement.
@@ -1223,7 +1241,7 @@ export function SupportPanel({ onBack }: { onBack?: () => void }) {
             <Accordion items={FAQ.map((f) => ({ question: f.q, answer: f.a }))} />
           </Card>
 
-          <Card style={{border: '1px solid rgba(200,169,110,0.25)'}}>
+          <Card style={{border: '1px solid rgba(184, 243, 74,0.25)'}}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.</p>
             <Button onClick={copyEmail} variant="primary" style={{ ...goldButtonStyle, marginBottom: 10 }}>
               {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}

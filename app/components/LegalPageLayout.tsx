@@ -5,10 +5,10 @@ import LegalBackButton from './LegalBackButton'
 // cookies, CGU/CGV).
 
 const CARD: React.CSSProperties = {
-  background: '#0e0f16',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 12,
-  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: '0 18px 46px rgba(0,0,0,0.22)',
 }
 
 const FONTS = {
@@ -17,10 +17,10 @@ const FONTS = {
 }
 
 const COLORS = {
-  gold: '#c8a96e',
-  teal: '#4ee8c8',
-  muted: 'rgba(255,255,255,0.62)',
-  dim: 'rgba(255,255,255,0.45)',
+  gold: 'var(--gold)',
+  teal: 'var(--teal)',
+  muted: 'var(--text-muted)',
+  dim: 'var(--text-faint)',
 }
 
 export type LegalSectionItem = string | { label: string; value?: string }
@@ -50,15 +50,11 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         padding: '20px 16px 48px',
       }}
     >
-      {/* Fond « Filigrane rose » (handoff 4a) — esprit papier officiel, réservé
-          à la famille des pages légales ; les cartes sombres opaques restent
-          lisibles par-dessus. */}
+      {/* Filigrane discret, harmonisé avec l'univers sombre du produit. */}
       <FiligraneRoseBg />
       <div style={{ maxWidth: 980, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-          {/* Encre (#0B0B12) et non blanc : l'en-tête est posé directement sur
-              le papier rose du filigrane, pas sur une carte sombre. */}
           <LegalBackButton />
           <div>
             <h1
@@ -66,35 +62,38 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
               style={{
                 fontSize: 24,
                 letterSpacing: '.01em',
-                color: '#0B0B12',
+                color: 'var(--text)',
                 margin: 0,
                 lineHeight: 1.2,
               }}
             >
               {title}
             </h1>
-            <p style={{ fontFamily: FONTS.body, fontSize: 12, color: 'rgba(11,11,18,0.55)', margin: '4px 0 0' }}>
+            <p style={{ fontFamily: FONTS.body, fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
               Dernière mise à jour : {lastUpdate}
             </p>
           </div>
         </div>
 
         {/* Sommaire */}
-        <nav aria-label="Sommaire" style={{ ...CARD, padding: '16px 20px', marginBottom: 16 }}>
-          <p
+        <details open style={{ ...CARD, padding: '14px 20px', marginBottom: 16 }}>
+          <summary
             style={{
               fontFamily: FONTS.body,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 700,
               color: 'rgba(255,255,255,0.55)',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
-              margin: '0 0 10px',
+              minHeight: 44,
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
             }}
           >
             Sommaire
-          </p>
-          <ol
+          </summary>
+          <nav aria-label="Sommaire"><ol
             style={{
               margin: 0,
               padding: 0,
@@ -115,7 +114,9 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                     textDecoration: 'none',
                     display: 'flex',
                     gap: 8,
-                    padding: '3px 0',
+                    minHeight: 44,
+                    alignItems: 'center',
+                    padding: '8px 0',
                     lineHeight: 1.5,
                   }}
                 >
@@ -124,11 +125,11 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 </a>
               </li>
             ))}
-          </ol>
-        </nav>
+          </ol></nav>
+        </details>
 
         {/* Sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sections.map((s) => (
             <div key={s.n} id={`legal-section-${s.n}`} style={{ ...CARD, padding: '20px 20px', scrollMarginTop: 24 }}>
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
@@ -255,16 +256,13 @@ const FILIGRANE_TEXT = Array(8).fill('LIVE IN BLACK').join(' · ') // couvre ≥
 // offsetD/offsetM : décalage horizontal desktop/mobile (fixe, pas de scroll —
 // voir la note de perf dans le composant légataire src/components/FiligraneRoseBg.jsx).
 const FILIGRANE_LINES: { color: string; offsetD: number; offsetM: number; mobileOnly?: boolean }[] = [
-  { color: 'rgba(255,77,166,0.07)', offsetD: -60, offsetM: -40 },
-  { color: 'rgba(132,68,255,0.055)', offsetD: -420, offsetM: -260 },
-  { color: 'rgba(11,11,18,0.03)', offsetD: -220, offsetM: -140 },
-  { color: 'rgba(255,77,166,0.055)', offsetD: -560, offsetM: -340 },
-  { color: 'rgba(132,68,255,0.05)', offsetD: -80, offsetM: -80, mobileOnly: true },
+  { color: 'rgba(184,243,74,0.025)', offsetD: -60, offsetM: -40 },
+  { color: 'rgba(139,92,246,0.03)', offsetD: -420, offsetM: -260 },
+  { color: 'rgba(255,255,255,0.018)', offsetD: -220, offsetM: -140 },
+  { color: 'rgba(224,90,170,0.025)', offsetD: -560, offsetM: -340 },
+  { color: 'rgba(139,92,246,0.025)', offsetD: -80, offsetM: -80, mobileOnly: true },
 ]
 
-// Port de src/components/FiligraneRoseBg.jsx — fond « papier rose » réservé à
-// la famille des pages légales. Fond CLAIR : le texte au-dessus doit rester
-// encre (#0B0B12), pas blanc.
 function FiligraneRoseBg() {
   return (
     <div
@@ -276,7 +274,7 @@ function FiligraneRoseBg() {
         pointerEvents: 'none',
         overflow: 'hidden',
         background:
-          'radial-gradient(circle at 80% 0%, rgba(132,68,255,0.05), transparent 40%), linear-gradient(180deg, #FBF0F6 0%, #F6E2ED 100%)',
+          'radial-gradient(circle at 80% 0%, rgba(139,92,246,0.09), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <style>{`

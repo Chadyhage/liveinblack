@@ -418,8 +418,8 @@ export default function EventCheckoutPanel({
             marginBottom: 14,
             padding: '12px 14px',
             borderRadius: 12,
-            background: 'rgba(200,169,110,0.08)',
-            border: '1px solid rgba(200,169,110,0.3)',
+            background: 'rgba(184, 243, 74,0.08)',
+            border: '1px solid rgba(184, 243, 74,0.3)',
             borderLeft: '3px solid var(--gold)',
           }}
         >
@@ -442,8 +442,8 @@ export default function EventCheckoutPanel({
           style={{
             marginBottom: 14,
             padding: '14px 16px',
-            background: 'rgba(200,169,110,0.07)',
-            border: '1px solid rgba(200,169,110,0.22)',
+            background: 'rgba(184, 243, 74,0.07)',
+            border: '1px solid rgba(184, 243, 74,0.22)',
             borderRadius: 14,
           }}
         >
@@ -458,7 +458,7 @@ export default function EventCheckoutPanel({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+      <div className="lb-card-grid">
         {places.map((place) => {
           const isSelected = selectedPlaceId === place.id
           const soldOut = place.available <= 0
@@ -723,7 +723,7 @@ export default function EventCheckoutPanel({
                   {Array.from({ length: ticketCount }, (_, index) => {
                     const count = Object.values(preordersByTicket[index] || {}).reduce((sum, value) => sum + value, 0)
                     const active = preorderTicketIndex === index
-                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'rgba(200,169,110,.12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
+                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'rgba(184, 243, 74,.12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
                   })}
                 </div>
               )}
@@ -737,7 +737,7 @@ export default function EventCheckoutPanel({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: `1px solid ${q > 0 ? 'rgba(200,169,110,0.3)' : 'var(--border)'}`,
+                      border: `1px solid ${q > 0 ? 'rgba(184, 243, 74,0.3)' : 'var(--border)'}`,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -785,7 +785,7 @@ export default function EventCheckoutPanel({
           </div>
 
           {eventMinAge >= 18 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.22)', borderRadius: 12, padding: '11px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(184, 243, 74,0.07)', border: '1px solid rgba(184, 243, 74,0.22)', borderRadius: 12, padding: '11px 14px' }}>
               <span
                 style={{
                   flexShrink: 0,
@@ -795,7 +795,7 @@ export default function EventCheckoutPanel({
                   width: 30,
                   height: 30,
                   borderRadius: '50%',
-                  border: '1px solid rgba(200,169,110,0.4)',
+                  border: '1px solid rgba(184, 243, 74,0.4)',
                   fontSize: 11,
                   fontWeight: 700,
                   color: 'var(--gold)',
@@ -831,8 +831,8 @@ export default function EventCheckoutPanel({
               textTransform: 'none',
               letterSpacing: 'normal',
               color: buyDisabled ? 'var(--text-faint)' : '#04120e',
-              background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg,#c8a96e,#e0c48a)',
-              boxShadow: buyDisabled ? 'none' : '0 8px 26px rgba(200,169,110,0.32)',
+              background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg, var(--primary), var(--primary-strong))',
+              boxShadow: buyDisabled ? 'none' : '0 8px 26px rgba(184, 243, 74,0.32)',
             }}
           >
             {disabled ? bookingDisabledReason : buyLabel}
@@ -958,7 +958,7 @@ function SummaryRow({ label, value, accent, strong }: { label: string; value: st
   return <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span style={{ color: strong ? 'var(--text)' : 'var(--text-muted)', fontSize: strong ? 14 : 12.5, fontWeight: strong ? 800 : 500 }}>{label}</span><span style={{ color: accent ? 'var(--primary)' : strong ? 'var(--gold)' : 'var(--text)', fontSize: strong ? 18 : 12.5, fontWeight: strong ? 900 : 700, textAlign: 'right' }}>{value}</span></div>
 }
 
-const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(200,169,110,.32)', background: 'rgba(200,169,110,.08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
+const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,.32)', background: 'rgba(184, 243, 74,.08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
 const modalBackdrop: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(8px)' }
 const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }

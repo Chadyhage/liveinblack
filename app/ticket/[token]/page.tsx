@@ -39,7 +39,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           >
             <AlertCircle size={38} strokeWidth={1.8} color="var(--pink)" aria-hidden="true" />
           </div>
-          <p style={{ fontWeight: 800, fontSize: 25, letterSpacing: '-0.4px', color: 'var(--pink)', margin: '0 0 10px' }}>Billet invalide</p>
+          <h1 className="font-display" style={{ fontWeight: 800, fontSize: 25, letterSpacing: '-0.4px', color: 'var(--pink)', margin: '0 0 10px' }}>Billet invalide</h1>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
             Ce QR code n&apos;est pas reconnu, a été falsifié, ou n&apos;est plus à jour.
           </p>
@@ -97,7 +97,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           >
             <CheckCircle2 size={34} strokeWidth={2.5} color="var(--primary)" aria-hidden="true" />
           </div>
-          <p style={{ fontWeight: 800, fontSize: 26, color: 'var(--primary)', margin: '0 0 5px', letterSpacing: '-0.4px' }}>Billet valide</p>
+          <h1 className="font-display" style={{ fontWeight: 800, fontSize: 26, color: 'var(--primary)', margin: '0 0 5px', letterSpacing: '-0.4px' }}>Billet valide</h1>
         </div>
 
         {ticket.guestName && (

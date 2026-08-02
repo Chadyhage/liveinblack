@@ -27,6 +27,9 @@ export default function NotFound() {
       <Link
         href="/home"
         style={{
+          minHeight: 44,
+          display: 'inline-flex',
+          alignItems: 'center',
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,

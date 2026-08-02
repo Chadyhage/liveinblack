@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { X } from 'lucide-react'
 import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
@@ -78,14 +78,14 @@ interface BadgeColors {
 }
 const ROLE_BADGE: Record<Role, BadgeColors> = {
   client: { color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' },
-  organisateur: { color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
+  organisateur: { color: 'var(--gold)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' },
   prestataire: { color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
-  agent: { color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
+  agent: { color: 'var(--gold)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' },
 }
 
 function statusLabel(u: UserSummary): { label: string } & BadgeColors {
   if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
-  if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' }
+  if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' }
   if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
   return { label: 'ACTIF', color: 'var(--primary)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' }
 }
@@ -135,7 +135,7 @@ export default function AgentUsersClient() {
 
   const [userParam, setUserParam] = useQueryParamState<string>('user', '', { push: true })
   const selectedId = userParam || null
-  const setSelectedId = (id: string | null) => setUserParam(id ?? '')
+  const setSelectedId = useCallback((id: string | null) => setUserParam(id ?? ''), [setUserParam])
   const [detail, setDetail] = useState<UserDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState(false)
@@ -201,13 +201,13 @@ export default function AgentUsersClient() {
     }
   }, [queryString])
 
-  function closeDetail() {
+  const closeDetail = useCallback(() => {
     setSelectedId(null)
     setDetail(null)
     setDetailError(false)
     setEditField(null)
     setConfirmDisable(false)
-  }
+  }, [setSelectedId])
 
   useEffect(() => {
     if (!selectedId) return
@@ -216,7 +216,7 @@ export default function AgentUsersClient() {
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [selectedId])
+  }, [selectedId, closeDetail])
 
   useEffect(() => {
     if (!selectedId) return
@@ -397,8 +397,8 @@ export default function AgentUsersClient() {
                 fontSize: 10.5,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                background: roleFilter === f.key ? 'rgba(200,169,110,0.18)' : 'transparent',
-                border: roleFilter === f.key ? '1px solid rgba(200,169,110,0.45)' : '1px solid var(--border)',
+                background: roleFilter === f.key ? 'rgba(184, 243, 74,0.18)' : 'transparent',
+                border: roleFilter === f.key ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
                 color: roleFilter === f.key ? 'var(--gold)' : 'var(--text-faint)',
               }}
             >
@@ -439,8 +439,8 @@ export default function AgentUsersClient() {
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               gap: 5,
-              background: onlineOnly ? 'rgba(78,232,200,0.14)' : 'transparent',
-              border: onlineOnly ? '1px solid rgba(78,232,200,0.5)' : '1px solid var(--border)',
+              background: onlineOnly ? 'rgba(184, 243, 74,0.14)' : 'transparent',
+              border: onlineOnly ? '1px solid rgba(184, 243, 74,0.5)' : '1px solid var(--border)',
               color: onlineOnly ? 'var(--teal)' : 'var(--text-faint)',
             }}
           >
@@ -481,8 +481,8 @@ export default function AgentUsersClient() {
                         width: 36,
                         height: 36,
                         borderRadius: '50%',
-                        background: u.role === 'agent' ? 'rgba(200,169,110,0.12)' : 'rgba(255,255,255,0.05)',
-                        border: u.role === 'agent' ? '1px solid rgba(200,169,110,0.35)' : '1px solid var(--border)',
+                        background: u.role === 'agent' ? 'rgba(184, 243, 74,0.12)' : 'rgba(255,255,255,0.05)',
+                        border: u.role === 'agent' ? '1px solid rgba(184, 243, 74,0.35)' : '1px solid var(--border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -534,7 +534,7 @@ export default function AgentUsersClient() {
                 </div>
               </Card>
             ) : detailLoading || !detail ? (
-              <p style={{ fontSize: 13, color: 'var(--text-faint)', textAlign: 'center', padding: '40px 0' }}>Chargement…</p>
+              <div style={{ padding: '20px 0' }}><SkeletonRow columns={1} /></div>
             ) : (
               <DetailPanel
                 detail={detail}
@@ -622,8 +622,8 @@ function DetailPanel({
             height: 48,
             borderRadius: '50%',
             flexShrink: 0,
-            background: 'rgba(78,232,200,0.08)',
-            border: '1px solid rgba(78,232,200,0.22)',
+            background: 'rgba(184, 243, 74,0.08)',
+            border: '1px solid rgba(184, 243, 74,0.22)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -672,8 +672,8 @@ function DetailPanel({
                 padding: '10px 0',
                 borderRadius: 3,
                 fontWeight: 500,
-                background: 'rgba(78,232,200,0.12)',
-                border: '1px solid rgba(78,232,200,0.4)',
+                background: 'rgba(184, 243, 74,0.12)',
+                border: '1px solid rgba(184, 243, 74,0.4)',
                 color: 'var(--teal)',
                 fontSize: 12,
                 textTransform: 'none',
@@ -791,7 +791,7 @@ function DetailPanel({
               variant="secondary"
               onClick={() => setConfirmDisable(true)}
               disabled={actionBusy}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)', color: 'var(--gold)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.55)', color: 'var(--gold)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
             >
               Suspendre le compte
             </Button>

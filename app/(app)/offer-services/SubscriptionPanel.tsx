@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/app/components/ui'
 import { regions } from '@/lib/shared/regions'
 import { subPresentation, subPriceLabel, type SubWindow } from '@/lib/shared/providerSubscription'
@@ -17,8 +16,8 @@ import type { getMySubscriptionOverview } from '@/lib/server/providerSubscriptio
 type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>>
 
 const FONT = 'Inter, system-ui, sans-serif'
-const C = { obsidian: '#04040b', teal: '#4ee8c8', gold: '#c8a96e', pink: '#e05aaa' }
-const card: React.CSSProperties = { background: '#0e0f16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }
+const C = { obsidian: 'var(--obsidian)', teal: 'var(--teal)', gold: 'var(--gold)', pink: 'var(--pink)' }
+const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: '0 18px 46px rgba(0,0,0,0.22)' }
 const primaryButton: React.CSSProperties = { background: C.gold, color: C.obsidian, fontFamily: FONT, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(value: string | null | undefined): string {
@@ -49,8 +48,7 @@ function InfoTile({ label, value, accent }: { label: string; value: string; acce
   )
 }
 
-export default function MonAbonnementClient({ profile, subscription }: { profile: ProviderProfileView; subscription: SubscriptionOverview }) {
-  const router = useRouter()
+export default function SubscriptionPanel({ profile, subscription }: { profile: ProviderProfileView; subscription: SubscriptionOverview }) {
   const [renewing, setRenewing] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -134,17 +132,12 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
   }
 
   return (
-    <>
-      <main className="lb-dashboard-page lb-dashboard-page--medium">
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/offer-services')}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,.5)', fontFamily: FONT, fontSize: 12.5, padding: 0, marginBottom: 14 }}
-        >
-          ← Mon espace
-        </Button>
-        <h1 className="font-display lb-dashboard-title">Mon abonnement</h1>
-        <p className="lb-dashboard-description" style={{ fontFamily: FONT }}>Gère la visibilité de ton profil et retrouve l’historique de tes paiements.</p>
+    <section aria-labelledby="provider-subscription-title">
+        <div style={{ marginBottom: 20 }}>
+          <p style={{ margin: 0, color: 'var(--gold)', fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Visibilité et facturation</p>
+          <h2 id="provider-subscription-title" className="font-display" style={{ margin: '7px 0 0', fontSize: 'clamp(28px,4vw,40px)', lineHeight: 1 }}>Mon abonnement</h2>
+          <p className="lb-dashboard-description" style={{ fontFamily: FONT, marginTop: 9 }}>Gère la visibilité de ton profil et retrouve l’historique de tes paiements.</p>
+        </div>
 
         <section style={{ ...card, padding: 18, marginTop: 20, borderLeft: `3px solid ${color}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -199,7 +192,6 @@ export default function MonAbonnementClient({ profile, subscription }: { profile
             </div>
           )}
         </section>
-      </main>
-    </>
+    </section>
   )
 }

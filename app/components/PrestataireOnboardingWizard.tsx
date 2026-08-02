@@ -80,8 +80,8 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
   borderRadius: 3,
   border: 'none',
-  background: disabled ? 'rgba(200,169,110,0.3)' : 'linear-gradient(180deg,#d8bd8a,#c8a96e)',
-  color: '#1a1508',
+  background: disabled ? 'rgba(184, 243, 74,0.3)' : 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
+  color: 'var(--primary-ink)',
   fontWeight: 500,
   fontSize: 14,
   textTransform: 'none',
@@ -92,7 +92,7 @@ const chip = (active: boolean): React.CSSProperties => ({
   padding: '8px 14px',
   borderRadius: 999,
   border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
-  background: active ? 'rgba(200,169,110,0.14)' : 'transparent',
+  background: active ? 'rgba(184, 243, 74,0.14)' : 'transparent',
   color: active ? 'var(--gold)' : '#fff',
   fontSize: 12.5,
   cursor: 'pointer',
@@ -289,7 +289,7 @@ export default function PrestataireOnboardingWizard({
 
   return (
     <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 680, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Prestataire</h1>
@@ -329,49 +329,53 @@ export default function PrestataireOnboardingWizard({
                 />
                 <Input style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
               </div>
-              <div>
-                <Label style={labelStyle}>Ville</Label>
-                <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
-              </div>
-              <div>
-                <Label style={labelStyle}>Pays</Label>
-                <Select
-                  value={form.pays}
-                  onChange={(value) => set('pays', value)}
-                  options={regions.map((r) => ({ value: r.country, label: `${r.flag} ${r.country}` }))}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+                <div>
+                  <Label style={labelStyle}>Ville</Label>
+                  <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
+                </div>
+                <div>
+                  <Label style={labelStyle}>Pays</Label>
+                  <Select
+                    value={form.pays}
+                    onChange={(value) => set('pays', value)}
+                    options={regions.map((r) => ({ value: r.country, label: `${r.flag} ${r.country}` }))}
+                  />
+                </div>
               </div>
 
               {mode === 'anonymous' && (
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                  <div>
-                    <Label style={labelStyle}>Adresse e-mail (identifiant de connexion)</Label>
-                    <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label style={labelStyle}>Mot de passe</Label>
-                    <div style={{ position: 'relative' }}>
-                      <Input
-                        style={{ ...inputStyle, paddingRight: 56 }}
-                        type={showRegPwd ? 'text' : 'password'}
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        placeholder="Minimum 8 caractères"
-                      />
-                      <Button
-                        variant="link"
-                        type="button"
-                        onClick={() => setShowRegPwd((v) => !v)}
-                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
-                      >
-                        {showRegPwd ? 'Cacher' : 'Voir'}
-                      </Button>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <Label style={labelStyle}>Adresse e-mail (identifiant de connexion)</Label>
+                      <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                     </div>
-                  </div>
-                  <div>
-                    <Label style={labelStyle}>Confirmer le mot de passe</Label>
-                    <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                    <div>
+                      <Label style={labelStyle}>Mot de passe</Label>
+                      <div style={{ position: 'relative' }}>
+                        <Input
+                          style={{ ...inputStyle, paddingRight: 56 }}
+                          type={showRegPwd ? 'text' : 'password'}
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          placeholder="Minimum 8 caractères"
+                        />
+                        <Button
+                          variant="link"
+                          type="button"
+                          onClick={() => setShowRegPwd((v) => !v)}
+                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
+                        >
+                          {showRegPwd ? 'Cacher' : 'Voir'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label style={labelStyle}>Confirmer le mot de passe</Label>
+                      <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                    </div>
                   </div>
                 </>
               )}
@@ -396,7 +400,7 @@ export default function PrestataireOnboardingWizard({
                 <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} />
               </div>
               {types.includes('artiste') && (
-                <div style={{ padding: 10, borderRadius: 10, background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.2)' }}>
+                <div style={{ padding: 10, borderRadius: 10, background: 'rgba(184, 243, 74,0.06)', border: '1px solid rgba(184, 243, 74,0.2)' }}>
                   <Label style={labelStyle}>Nom de scène (visible car « Artiste » est sélectionné)</Label>
                   <Input style={inputStyle} value={form.nomScene} onChange={(e) => set('nomScene', e.target.value)} />
                 </div>

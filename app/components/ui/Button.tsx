@@ -17,9 +17,9 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 }
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { padding: '8px 14px', fontSize: 12.5, borderRadius: 10, gap: 6 },
-  md: { padding: '11px 18px', fontSize: 13.5, borderRadius: 12, gap: 8 },
-  lg: { padding: '14px 22px', fontSize: 15, borderRadius: 14, gap: 8 },
+  sm: { minHeight: 44, padding: '8px 14px', fontSize: 12.5, borderRadius: 10, gap: 6 },
+  md: { minHeight: 44, padding: '11px 18px', fontSize: 13.5, borderRadius: 12, gap: 8 },
+  lg: { minHeight: 48, padding: '14px 22px', fontSize: 15, borderRadius: 14, gap: 8 },
 }
 
 function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties {
@@ -75,6 +75,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       type={type}
       disabled={isDisabled}
       style={{
+        minHeight: 44,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

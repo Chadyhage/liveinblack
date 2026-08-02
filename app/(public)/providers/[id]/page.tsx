@@ -60,13 +60,18 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 88px', width: '100%' }}>
       <div style={{ padding: '18px 0 0' }}>
-        <Link href="/providers" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/providers" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 230, margin: '18px 22px 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(184, 243, 74,.28), var(--obsidian))' }}>
+      <div style={{ position: 'relative', height: 230, margin: '18px 0 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(184,243,74,.18))' }}>
         {provider.coverUrl && (
-          <Image src={provider.coverUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
+          <Image src={provider.coverUrl} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
+        )}
+        {!provider.coverUrl && (
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', padding: 22, color: 'rgba(255,255,255,.5)', fontFamily: 'var(--font-display), sans-serif', fontSize: 'clamp(24px,5vw,48px)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+            {provider.name}
+          </div>
         )}
       </div>
 
@@ -82,9 +87,9 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
         {provider.headline && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 0' }}>{provider.headline}</p>}
         <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           {categories.map((c) => (
-            <span key={c.id} style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '4px 10px', borderRadius: 999 }}>
+            <span key={c.id} style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 11.5, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '5px 11px', borderRadius: 999 }}>
               {c.label}
             </span>
           ))}
@@ -100,7 +105,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
           <Section title="Réseaux">
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {socialEntries.map(([key, value]) => (
-                <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5, color: 'var(--primary)', textDecoration: 'none', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 999, padding: '6px 14px' }}>
+                <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--primary)', textDecoration: 'none', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 999, padding: '8px 14px' }}>
                   {SOCIAL_LABELS[key] || key}
                 </a>
               ))}
@@ -118,12 +123,12 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
             </p>
           ) : null}
           {websiteUrl && (
-            <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--teal)', display: 'block', marginTop: 6, textDecoration: 'none' }}>
+            <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, fontSize: 13, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
               {provider.website}
             </a>
           )}
           {provider.phone && (
-            <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ display: 'inline-block', fontSize: 13, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+            <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
               {provider.phone}
             </a>
           )}
@@ -131,7 +136,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
 
         {visibleCatalog.length > 0 && (
           <Section title="Catalogue">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+            <div className="lb-card-grid">
               {visibleCatalog.map((item) => {
                 // Même règle que getOfferMedia (legacy PublicPrestatairePage.jsx) :
                 // la vignette de l'image d'aperçu privilégie une image, jamais
@@ -195,7 +200,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginTop: 24 }}>
+    <section className="lb-detail-section">
       <h2 style={{ fontSize: 14, fontWeight: 400, margin: '0 0 10px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>

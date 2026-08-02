@@ -495,7 +495,7 @@
 |---|---|
 | **Titre** | Accès direct à une route protégée sans session redirige vers `/login?next=...` |
 | **Priorité** | Critique |
-| **Étapes** | Tenter d'accéder sans session à `/profile`, `/messages`, `/scanner`, `/my-shifts`, `/order`, `/my-application`, `/onboarding-organizer`, `/onboarding-provider`, `/playlist`, `/my-events`, `/organizer-studio`, `/offer-services`, `/my-subscription`, `/agent`. |
+| **Étapes** | Tenter d'accéder sans session à `/profile`, `/messages`, `/my-shifts`, `/order`, `/my-application`, `/playlist`, `/my-events`, `/organizer-studio`, `/offer-services`, `/scanner/[eventId]` et `/agent`. |
 | **Résultat attendu** | Chaque route redirige vers `/login?next={pathname}`. |
 | **Couverture auto existante** | Aucune. |
 
@@ -1784,9 +1784,9 @@ Convention des IDs : `PRF-xxx` (profil/identité), `PRV-xxx` (préférences), `S
 
 ### 5.0 Périmètre et fichiers couverts
 
-Cette section couvre le parcours complet du compte Prestataire : `app/components/PrestataireOnboardingWizard.tsx` (candidature en 6 étapes), `app/(app)/offer-services/{page.tsx,ProposerServicesClient.tsx}` (« Mon espace prestataire » — profil public + catalogue + gestion d'avis), `app/(app)/my-subscription/{page.tsx,MonAbonnementClient.tsx}` (abonnement dédié), `app/(public)/providers/[id]/page.tsx` + `app/components/ProviderCatalogInquiry.tsx` (page publique + demande de devis), `app/components/ProviderReviewsClient.tsx` (avis), et la logique serveur `lib/server/{providerProfile,providerSubscriptions,providerBilling,providerReviews,providers,permissions,messaging,applications}.ts` + `lib/shared/providerCategories.ts`.
+Cette section couvre le parcours complet du compte Prestataire : `app/components/PrestataireOnboardingWizard.tsx` (candidature en 6 étapes), `app/(app)/offer-services/{page.tsx,ProposerServicesClient.tsx,SubscriptionPanel.tsx}` (« Mon espace prestataire » — profil public, catalogue, avis et abonnement fusionnés), `app/(public)/providers/[id]/page.tsx` + `app/components/ProviderCatalogInquiry.tsx` (page publique + demande de devis), `app/components/ProviderReviewsClient.tsx` (avis), et la logique serveur `lib/server/{providerProfile,providerSubscriptions,providerBilling,providerReviews,providers,permissions,messaging,applications}.ts` + `lib/shared/providerCategories.ts`.
 
-**Constat de code notable (à vérifier en priorité, voir PROV-034) :** `lib/server/permissions.ts::canProposeServices` sait bloquer un `prestStatus` à `'rejected'` (mais **pas** `'pending'` — asymétrie volontaire ou bug résiduel avec `canCreateEvent` qui bloque les deux), mais cette fonction n'est **appelée nulle part** en dehors de `lib/server/applications.ts` et de son test unitaire (`grep canProposeServices` ne remonte que ces deux fichiers). La route réelle `app/api/providers/me/catalog/route.ts` et la page serveur `app/(app)/offer-services/page.tsx` ne vérifient que `session.user.roles.includes('prestataire')` — **jamais `prestStatus`**. Il faut donc valider expérimentalement si un compte avec `prestStatus: 'pending'` ou `'rejected'` peut réellement créer des items de catalogue aujourd'hui (PROV-034/PROV-035) ; si oui, c'est un gap fonctionnel à signaler, pas une confirmation du comportement attendu.
+**Constat de code notable :** `app/(app)/offer-services/page.tsx` applique `canProposeServices` avant de charger l'espace. Un dossier rejeté est bloqué, tandis qu'un dossier en attente conserve volontairement l'accès à la préparation de son espace.
 
 ---
 
@@ -2009,7 +2009,7 @@ Couverture auto existante : aucune (rendu conditionnel simple, à vérifier visu
 **PROV-030 — Achat abonnement rail EUR (Stripe) : checkout puis activation**
 Priorité : Critique
 Préconditions : `providerBillingRegionId` dérivant une devise EUR, aucun abonnement actif.
-Étapes : Depuis `/my-subscription` (ou bannière `/offer-services`), cliquer « Activer mon abonnement ». Compléter le paiement Stripe test.
+Étapes : Depuis `/offer-services?tab=abonnement`, cliquer « Activer mon abonnement ». Compléter le paiement Stripe test.
 Résultat attendu : `createStripeSubscriptionCheckout` crée une session Stripe (`mode:'subscription'`, `plan=SUBSCRIPTION.PRESTATAIRE`) ; `prestataireSubActive` reste `false` tant que le paiement n'est pas confirmé (ni au moment de la création de session) ; au retour réussi, `confirmStripeSubscriptionCheckout` ou le webhook `checkout.session.completed` active immédiatement (`mirrorStripeStatus` avec `active:true`) et rend le profil visible dans l'annuaire (`subscriptionActive:true` sur `ProviderProfile`).
 Couverture auto existante : `providerSubscriptions.integration.test.ts` → « crée une session Checkout et ne mute pas prestataireSubActive avant paiement », « webhook Stripe — checkout.session.completed — active immédiatement au retour de checkout, avant customer.subscription.* ».
 
@@ -2029,7 +2029,7 @@ Couverture auto existante : `providerSubscriptions.integration.test.ts` → « r
 **PROV-033 — Achat abonnement rail XOF (FedaPay) et renouvellement manuel**
 Priorité : Critique
 Préconditions : Compte facturant en XOF, aucun abonnement actif.
-Étapes : Depuis `/my-subscription`, cliquer le CTA XOF (`handleFedapaySubscribe`), compléter le paiement Mobile Money simulé, revenir sur le site.
+Étapes : Depuis `/offer-services?tab=abonnement`, cliquer le CTA XOF (`handleFedapaySubscribe`), compléter le paiement Mobile Money simulé, revenir sur le site.
 Résultat attendu : `createFedapaySubscriptionCheckout` crée une transaction FedaPay pour `PROVIDER_SUB.price` et pose `pendingFedapaySubTxnId` ; le webhook `handleFedapaySubscriptionPayment` vérifie que le montant payé correspond exactement (`transactionAmountMatches`) — en cas de non-correspondance, crée une `PaymentAlert` (`sub_amount_mismatch`) et **ne prolonge rien** ; en cas de correspondance, prolonge de `PROVIDER_SUB.periodDays` jours à partir de l'expiration précédente (jamais depuis « maintenant » si l'abonnement est renouvelé en avance) et active `subscriptionActive` sur le profil.
 Couverture auto existante : `providerSubscriptions.integration.test.ts` → « crée une transaction FedaPay et pose le registre pendingFedapaySubTxnId », « crée une PaymentAlert et ne mirrore rien si le montant ne correspond pas », « prolonge l'abonnement de PROVIDER_SUB.periodDays jours pour un premier paiement », « prolonge depuis l'expiration actuelle (pas depuis maintenant) pour un renouvellement anticipé ».
 
@@ -2064,13 +2064,13 @@ Couverture auto existante : `lib/server/__tests__/providerBillingRegion.test.ts`
 **PROV-038 — Défaut de pays de facturation dérivé du dossier de candidature**
 Priorité : Basse
 Préconditions : Compte prestataire sans `providerBillingRegionId` explicite, ayant un dossier de candidature avec `pays` renseigné (ex. Togo).
-Étapes : Premier accès à `/my-subscription`.
+Étapes : Premier accès à l'onglet `/offer-services?tab=abonnement`.
 Résultat attendu : `deriveDefaultBillingRegion` dérive le pays depuis le dernier dossier prestataire (`Application.findOne({type:'prestataire'}).sort({updatedAt:-1})`) plutôt que de forcer `'france'` par défaut ; la valeur est persistée sur `User.providerBillingRegionId` dès ce premier appel (pas seulement en mémoire).
 Couverture auto existante : `providerBillingRegion.test.ts` / `providerBilling.integration.test.ts` — à confirmer précisément.
 
 **PROV-039 — Historique des paiements affiché**
 Priorité : Basse
-Étapes : Sur `/my-subscription`, consulter la section « Historique des paiements » après plusieurs cycles de paiement (Stripe et/ou FedaPay).
+Étapes : Sur `/offer-services?tab=abonnement`, consulter la section « Historique des paiements » après plusieurs cycles de paiement (Stripe et/ou FedaPay).
 Résultat attendu : Chaque paiement confirmé (`invoice.paid` Stripe ou webhook FedaPay approuvé) apparaît une seule fois (clé d'idempotence `${rail}:${externalId}` avec `$setOnInsert`) — un replay du même événement webhook ne duplique pas la ligne ; lien « Voir le reçu » présent pour Stripe (`invoice_pdf`/`hosted_invoice_url`) si disponible, badge « PAYÉ » sinon (cas FedaPay, pas de reçu hébergé).
 Couverture auto existante : `providerSubscriptions.integration.test.ts` → « historique Stripe — enregistre invoice.paid une seule fois et l'expose au propriétaire ».
 
@@ -2755,7 +2755,7 @@ Priorité : Critique
 Préconditions : (a) compte `agent` sans lien avec l'événement, (b) compte organisateur propriétaire de l'événement (`organizerId`/`createdBy`), (c) compte staff roster avec rôle `serveur`/`manager`/`scan`, (d) compte staff roster avec rôle `dj`, (e) compte client lambda sans aucun rôle sur l'événement.
 Étapes :
 1. Pour chaque profil (a)-(e), se connecter et tenter un check-in sur le même billet du même événement.
-Résultat attendu : (a) autorisé quel que soit l'événement (`caller.roles.includes('agent')` — accès universel, asymétrie assumée par rapport à la liste `/scanner` elle-même, voir commentaire `app/(app)/scanner/page.tsx` L15-25) ; (b) autorisé (propriétaire) ; (c) autorisé (roster, rôle ≠ dj) ; (d) **403 forbidden** — le DJ a accès à la playlist, pas au contrôle d'entrée (#75) ; (e) 403 forbidden. Chaque cas testé indépendamment du chargement d'événements sur `/scanner` (page index) qui, elle, n'accorde PAS de bypass universel à l'agent (voir commentaire dédié).
+Résultat attendu : (a) autorisé quel que soit l'événement (`caller.roles.includes('agent')`) ; (b) autorisé (propriétaire) ; (c) autorisé (roster, rôle ≠ dj) ; (d) **403 forbidden** — le DJ a accès à la playlist, pas au contrôle d'entrée (#75) ; (e) 403 forbidden. La sélection de mission se fait depuis `/my-shifts`, puis le contrôle s'ouvre sur `/scanner/[eventId]`.
 Couverture auto existante : `ticketCheckin.integration.test.ts` — « refuse un scan par quelqu'un qui n'est ni agent, ni organisateur de l'event, ni staff », « autorise un membre du staff (serveur) mais refuse un DJ (#75) », « un agent peut toujours scanner, quel que soit l'événement ».
 
 **SCAN-010 — Événement terminé : entrée refusée même avec billet valide**
@@ -2819,7 +2819,7 @@ Couverture auto existante : non identifiée — manuel.
 Priorité : Haute
 Étapes :
 1. Démarrer un checkout Stripe puis cliquer « Retour » / fermer la page de paiement Stripe sans payer.
-Résultat attendu : Redirection vers `/payment-cancelled` (route renommée depuis `/paiement-annule`, redirection 308 permanente confirmée dans `next.config.ts`), aucune place bloquée durablement (à vérifier vs. mécanisme de hold, `seatHolds.ts`).
+Résultat attendu : Redirection vers `/payment-success?cancelled=1` ; les anciennes URL `/payment-cancelled` et `/paiement-annule` répondent par une redirection permanente vers cet état canonique. Aucune place ne reste bloquée durablement.
 Couverture auto existante : non identifiée — manuel.
 
 **PAY-004 — Checkout FedaPay réussi (mobile money) → webhook `transaction.approved`**
@@ -2931,7 +2931,7 @@ Préconditions : Build de production ou `next dev`, DevTools ouvert (onglet Cons
 1. Naviguer sur la page d'accueil publique (`/home`), une page événement, la recherche, le login/signup.
 2. Naviguer sur au moins un dashboard authentifié de chaque rôle (client `/profile`, organisateur `/organizer-studio`, prestataire `/offer-services`, agent `/agent`, scanner `/scanner/[eventId]`).
 3. Sur chaque page, inspecter la console pour toute ligne « Refused to load/execute... violates the following Content Security Policy directive ».
-Résultat attendu : Zéro violation CSP. Vérifier en particulier : images Cloudinary (`res.cloudinary.com`), pochettes iTunes (`*.mzstatic.com`), audio itunes (`audio-ssl.itunes.apple.com`), images Unsplash du hero legacy (`images.unsplash.com`), polices self-hébergées (`font-src 'self' data:` — aucune police externe Google Fonts requise grâce à `next/font/google` qui les télécharge au build). `script-src 'self' 'unsafe-inline'` doit couvrir les scripts Next.js + Vercel Analytics/Speed Insights (servis en `self` via le bundle Next, pas en cross-origin).
+Résultat attendu : Zéro violation CSP. Vérifier en particulier : images Cloudinary (`res.cloudinary.com`), pochettes iTunes (`*.mzstatic.com`), audio iTunes (`audio-ssl.itunes.apple.com`), images Unsplash du hero (`images.unsplash.com`) et police Geist auto-hébergée via `next/font/local`. `script-src 'self' 'unsafe-inline'` doit couvrir les scripts Next.js + Vercel Analytics/Speed Insights.
 Couverture auto existante : aucune — pas de test automatisé de CSP identifié ; vérification manuelle console obligatoire à chaque déploiement touchant `next.config.ts` ou ajoutant une ressource externe.
 
 **NF-002 — En-têtes de sécurité présents sur toutes les réponses**
@@ -2967,7 +2967,7 @@ Couverture auto existante : aucune — manuel/smoke test à ajouter.
 Priorité : Haute
 Étapes :
 1. GET `/robots.txt`.
-2. Vérifier `Disallow` pour `/api/`, `/profile`, `/messages`, `/scanner`, `/my-shifts`, `/my-events`, `/my-application`, `/my-subscription`, `/organizer-studio`, `/offer-services`, `/agent`, `/onboarding-organizer`, `/onboarding-provider`, `/order`, `/playlist`.
+2. Vérifier `Disallow` pour `/api/`, `/profile`, `/messages`, `/scanner`, `/my-shifts`, `/my-events`, `/my-application`, `/organizer-studio`, `/offer-services`, `/agent`, `/order` et `/playlist`.
 3. Vérifier `Allow: /` pour le reste et la ligne `Sitemap: {SITE}/sitemap.xml`.
 Résultat attendu : Fichier conforme, cohérent avec les `robots: { index: false, follow: false }` déjà posés en metadata des pages authentifiées (double barrière documentée).
 Couverture auto existante : aucune — manuel.
@@ -2987,7 +2987,7 @@ Priorité : Haute
 Étapes :
 1. Onglet Network, filtrer par domaine, charger n'importe quelle page.
 2. Rechercher toute requête vers `fonts.googleapis.com` ou `fonts.gstatic.com`.
-Résultat attendu : Aucune requête vers ces domaines — Montserrat, Open Sans et Anton sont téléchargées au build par `next/font/google` et servies en `self` (cohérent avec `font-src 'self' data:` en CSP, NF-001). Vérifier aussi visuellement que le rendu des titres utilise bien Anton (`--font-display`, cf. `app/(app)/scanner/page.tsx` `className="font-display"` sur le `<h1>`) et non une police de repli.
+Résultat attendu : Aucune requête vers ces domaines — la police d'interface Geist est auto-hébergée via `next/font/local` et les titres utilisent la pile condensée locale définie par `--font-display`.
 Couverture auto existante : aucune — manuel (Network tab).
 
 ### 8.4 Images / `next/image`
@@ -3067,4 +3067,3 @@ Couverture auto existante : aucune — manuel, priorité basse (esthétique).
 
 
 ---
-

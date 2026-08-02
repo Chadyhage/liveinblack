@@ -219,7 +219,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             padding: '12px 14px',
             marginBottom: 14,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'rgba(78,232,200,0.5)' : 'rgba(224,90,170,0.5)'}`,
+            border: `1px solid ${message.type === 'success' ? 'rgba(184,243,74,0.5)' : 'rgba(224,90,170,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
             fontSize: 13,
@@ -230,45 +230,45 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       )}
 
       {payoutGapLabel && (
-        <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)' }}>
+        <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid rgba(184,243,74,0.35)', background: 'rgba(184,243,74,0.08)' }}>
           <p style={{ font: '700 14px Inter, sans-serif', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 12px' }}>
             Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l&rsquo;argent n&rsquo;est pas versé automatiquement.
           </p>
           <Link
             href="/organizer-studio?tab=paiements"
-            style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5, textDecoration: 'none' }}
+            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5, textDecoration: 'none' }}
           >
             Configurer mon encaissement
           </Link>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 16, marginBottom: 28 }}>
         <Button
           variant="ghost"
           onClick={startCreate}
-          style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.08)', cursor: 'pointer', display: 'block', fontWeight: 400 }}
+          style={{ minHeight: 142, textAlign: 'left', padding: 22, borderRadius: 'var(--radius-lg)', border: '1px solid rgba(184,243,74,0.4)', background: 'linear-gradient(135deg,rgba(184,243,74,.14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 16px 38px rgba(0,0,0,.2)' }}
         >
-          <p style={{ font: '700 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 6px' }}>Nouveau</p>
-          <p style={{ font: '600 15px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Créer un événement</p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>De A à Z — lieux, places, options</p>
+          <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Créer un événement</p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Configure le lieu, les billets et toutes les options.</p>
         </Button>
         <Link
           href="/organizer-studio"
-          style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)', textDecoration: 'none', display: 'block' }}
+          style={{ minHeight: 142, textAlign: 'left', padding: 22, borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 16px 38px rgba(0,0,0,.2)' }}
         >
-          <p style={{ font: '700 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 6px' }}>Audience</p>
-          <p style={{ font: '600 15px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Ma page publique</p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Active ta page pour apparaître chez les clients</p>
+          <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Audience</p>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Ma page publique</p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Présente ton univers et configure tes encaissements.</p>
         </Link>
         <Link
           href="/my-shifts"
-          style={{ textAlign: 'left', padding: 16, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface)', textDecoration: 'none', display: 'block' }}
+          style={{ minHeight: 142, textAlign: 'left', padding: 22, borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 16px 38px rgba(0,0,0,.2)' }}
         >
-          <p style={{ font: '700 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 6px' }}>Entrée</p>
-          <p style={{ font: '600 15px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Scanner les billets</p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Vérifie les QR à l&rsquo;entrée en temps réel</p>
+          <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Entrée</p>
+          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Scanner les billets</p>
+          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Contrôle les QR codes et suis les entrées en direct.</p>
         </Link>
       </div>
 
@@ -284,7 +284,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             <p style={{ color: 'var(--text-muted)', fontSize: 12.5, margin: 0 }}>Crée ton premier événement pour le retrouver ici.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+          <div className="lb-organizer-event-grid">
             {upcomingEvents.map((event) => (
               <EventDashboardCard key={event.id} event={event} onAction={handleAction} duplicating={duplicating === event.id} />
             ))}

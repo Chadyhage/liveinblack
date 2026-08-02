@@ -175,41 +175,43 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
 
         {/* Add guest form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 14, marginBottom: 16 }}>
-          <div>
-            <Label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
-              Nom de l&apos;invité
-            </Label>
-            <Input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex : Aminata Koné"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 10,
-                padding: '10px 12px',
-                color: '#fff',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 14,
-              }}
-            />
-          </div>
-          {event.places.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
             <div>
               <Label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
-                Type de place
+                Nom de l&apos;invité
               </Label>
-              <Select
-                value={placeId}
-                onChange={(value) => setPlaceId(value)}
-                options={event.places.map((place) => ({
-                  value: place.id,
-                  label: `${place.type} — normalement ${fmtMoney(place.price, event.currency)}, offert à l'invité`,
-                }))}
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex : Aminata Koné"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 10,
+                  padding: '10px 12px',
+                  color: '#fff',
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: 14,
+                }}
               />
             </div>
-          )}
+            {event.places.length > 0 && (
+              <div>
+                <Label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>
+                  Type de place
+                </Label>
+                <Select
+                  value={placeId}
+                  onChange={(value) => setPlaceId(value)}
+                  options={event.places.map((place) => ({
+                    value: place.id,
+                    label: `${place.type} — normalement ${fmtMoney(place.price, event.currency)}, offert à l'invité`,
+                  }))}
+                />
+              </div>
+            )}
+          </div>
           {error && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', margin: 0 }}>{error}</p>}
           <Button
             variant="primary"

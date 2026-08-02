@@ -11,8 +11,8 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { padding: '10px 12px', fontSize: 12.5, borderRadius: 'var(--radius-md)' },
-  md: { padding: '12px 14px', fontSize: 13.5, borderRadius: 'var(--radius-md)' },
+  sm: { minHeight: 44, padding: '10px 12px', fontSize: 12.5, borderRadius: 'var(--radius-md)' },
+  md: { minHeight: 46, padding: '12px 14px', fontSize: 13.5, borderRadius: 'var(--radius-md)' },
 }
 
 // Champ texte custom de l'app — un <input> réel reste nécessaire sous le

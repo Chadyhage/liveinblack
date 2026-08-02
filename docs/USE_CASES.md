@@ -118,7 +118,7 @@
 - Créer/éditer sa page publique (photo, description, catégories, zones d'intervention)
 - Gérer son catalogue de prestations (nom, description, prix, unité, médias par item)
 - Répondre aux demandes de devis reçues via la messagerie (catalogue → conversation)
-- Gérer son abonnement (visibilité renforcée, `/my-subscription`)
+- Gérer son abonnement et son historique de paiement dans l'onglet `/offer-services?tab=abonnement`
 - Consulter ses avis clients, signaler un avis abusif
 
 ### 4.3 Commande de services (côté client d'un autre rôle)

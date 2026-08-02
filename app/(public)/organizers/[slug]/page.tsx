@@ -38,13 +38,18 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 80px', width: '100%' }}>
       <div style={{ padding: '18px 0 0' }}>
-        <Link href="/organizers" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <Link href="/organizers" style={{ minHeight: 44, fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <ArrowLeft size={14} /> Organisateurs
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 200, margin: '14px 22px 0', borderRadius: 18, overflow: 'hidden', background: 'linear-gradient(135deg, rgba(139,92,246,.3), var(--obsidian))' }}>
+      <div style={{ position: 'relative', height: 220, margin: '14px 0 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(139,92,246,.22))' }}>
         {organizer.bannerUrl && (
-          <Image src={organizer.bannerUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
+          <Image src={organizer.bannerUrl} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
+        )}
+        {!organizer.bannerUrl && (
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', padding: 22, color: 'rgba(255,255,255,.5)', fontFamily: 'var(--font-display), sans-serif', fontSize: 'clamp(24px,5vw,48px)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+            {organizer.publicName}
+          </div>
         )}
       </div>
 
@@ -95,7 +100,7 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
           {upcoming.length === 0 ? (
             <p style={{ fontSize: 13.5, color: 'var(--text-faint)' }}>Aucun événement à venir pour le moment.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            <div className="lb-card-grid">
               {upcoming.map((e) => {
                 const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
                 const min = prices.length ? Math.min(...prices) : null
@@ -120,7 +125,7 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
 
         {past.length > 0 && (
           <Section title="Événements passés">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            <div className="lb-card-grid">
               {past.map((e) => (
                 <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 12px', opacity: 0.75 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>{e.name}</p>
@@ -157,7 +162,7 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
           <Section title="Contact">
             {organizer.city && <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
             {organizer.proPhone && (
-              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ display: 'inline-block', fontSize: 13.5, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13.5, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
                 {organizer.proPhone}
               </a>
             )}
@@ -179,7 +184,7 @@ function KPI({ value, label }: { value: number; label: string }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginTop: 26 }}>
+    <section className="lb-detail-section">
       <h2 style={{ fontSize: 14, fontWeight: 400, margin: '0 0 10px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>

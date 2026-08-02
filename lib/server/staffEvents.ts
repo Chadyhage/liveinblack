@@ -8,7 +8,7 @@ import { isEventLive, isEventStarted } from '../shared/event-time'
 // (staff_assignments/{eventId__uid}) dédié UNIQUEMENT parce que Firestore ne peut
 // pas requêter une clé arbitraire imbriquée dans une map. Un Mongoose Map se
 // stocke comme un objet Mongo brut (voir lib/models/EventStaff.ts et le même
-// pattern dans app/(app)/scanner/page.tsx) : `roster.${uid}` est directement
+// pattern utilisé par les accès scanner) : `roster.${uid}` est directement
 // requêtable, donc aucun index inversé séparé n'est nécessaire côté Mongo — ceci
 // est la source de vérité unique (le roster event_staff lui-même), pas une copie.
 
@@ -113,5 +113,8 @@ export async function listMyStaffedEvents(caller: StaffCaller): Promise<StaffedE
     return a.started ? b.sortDate.localeCompare(a.sortDate) : a.sortDate.localeCompare(b.sortDate)
   })
 
-  return results.map(({ sortDate: _sortDate, ...view }) => view)
+  return results.map(({ sortDate, ...view }) => {
+    void sortDate
+    return view
+  })
 }
