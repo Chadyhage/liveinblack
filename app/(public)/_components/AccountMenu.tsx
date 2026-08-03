@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell } from 'lucide-react'
+import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell, ChevronDown } from 'lucide-react'
 import { Avatar, Button, Skeleton } from '@/app/components/ui'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
@@ -203,6 +203,7 @@ export default function AccountMenu({
 
   return (
     <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
+      <style>{`@media (max-width: 640px) { .lb-acct-name { display: none !important } }`}</style>
       <div style={{ position: 'relative' }}>
         <Button
           variant="ghost"
@@ -216,6 +217,8 @@ export default function AccountMenu({
           style={{
             width: 36,
             height: 36,
+            minWidth: 36,
+            minHeight: 36,
             padding: 0,
             borderRadius: 10,
             border: '1px solid var(--border-strong)',
@@ -317,6 +320,8 @@ export default function AccountMenu({
           style={{
             width: 36,
             height: 36,
+            minWidth: 36,
+            minHeight: 36,
             padding: 0,
             borderRadius: 10,
             border: '1px solid var(--border-strong)',
@@ -423,26 +428,53 @@ export default function AccountMenu({
             setMessagesOpen(false)
             setNotifOpen(false)
           }}
-          aria-label="Mon compte"
+          aria-label={user.name ? `Mon compte — ${user.name}` : 'Mon compte'}
           aria-expanded={accountOpen}
           style={{
-            width: 36,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: 'auto',
             height: 36,
-            padding: 0,
-            borderRadius: '50%',
+            minWidth: 36,
+            minHeight: 36,
+            padding: '0 10px 0 3px',
+            borderRadius: 999,
             border: '1px solid var(--border-strong)',
-            background: user.image ? 'transparent' : 'var(--teal-solid)',
-            color: '#04120e',
-            overflow: 'hidden',
-            fontSize: 14,
-            fontWeight: 800,
+            background: 'var(--surface)',
+            color: 'var(--text)',
           }}
         >
-          {user.image ? (
-            <Image src={user.image} alt="" width={36} height={36} style={{ objectFit: 'cover' }} />
-          ) : (
-            initial
+          <span
+            style={{
+              width: 30,
+              height: 30,
+              minWidth: 30,
+              minHeight: 30,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: user.image ? 'transparent' : 'var(--teal-solid)',
+              color: '#04120e',
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            {user.image ? (
+              <Image src={user.image} alt="" width={30} height={30} style={{ objectFit: 'cover', width: 30, height: 30 }} />
+            ) : (
+              initial
+            )}
+          </span>
+          {user.name && (
+            <span className="lb-acct-name" style={{ fontSize: 13, fontWeight: 700, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.name.split(' ')[0]}
+            </span>
           )}
+          <ChevronDown size={14} strokeWidth={2.4} aria-hidden="true" style={{ flexShrink: 0, opacity: 0.7, transform: accountOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s ease' }} />
         </Button>
 
         {accountOpen && (

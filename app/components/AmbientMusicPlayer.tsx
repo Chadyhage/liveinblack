@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { Pause, Play, Shuffle, Volume2 } from 'lucide-react'
+import { Music4, Pause, Play, Shuffle, SkipForward, Volume1, Volume2, VolumeX, X } from 'lucide-react'
 import { DISCS, subscribe, getState, getServerSnapshot, play, toggle, playRandom, setVolume, playTrack } from '@/lib/client/musicEngine'
-import { Button, Input, Slider } from '@/app/components/ui'
+import { Button, IconButton, Input, Slider } from '@/app/components/ui'
 
 // useSyncExternalStore (pas useState+useEffect) : lit le moteur audio, un
 // store externe au sens React, sans jamais déclencher de setState synchrone
@@ -45,51 +45,49 @@ const DISC_ASSETS: Record<string, { img: string; bgPosition: string; filter: str
   },
 }
 
-// Platine vinyle/CD SVG — pastille de couleur dynamique, sillons fins, reflet
-// métallique rotatif et bras de lecture animé.
-function Vinyl({ size = 30, color = '#b8f34a', spinning, arm = false }: { size?: number; color?: string; spinning: boolean; arm?: boolean }) {
-  const gid = 'v-' + size + '-' + color.replace('#', '')
+// Mini égaliseur animé (3 barres) — remplace l'ancien bras de lecture comme
+// indicateur "en lecture" : plus lisible en petit format, et purement
+// décoratif donc gelé sous prefers-reduced-motion (cf. règle globale
+// `.amp-eq` ci-dessous) sans perdre l'information (le disque reste visible).
+function EqBars({ active, color = 'var(--primary)' }: { active: boolean; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.45))' }}>
-      <defs>
-        <radialGradient id={gid + 'label'} cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
-          <stop offset="30%" stopColor={color} />
-          <stop offset="100%" stopColor={color} stopOpacity="0.4" />
-        </radialGradient>
-        <linearGradient id={gid + 'sheen'} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
-          <stop offset="35%" stopColor="rgba(255,255,255,0.18)" />
-          <stop offset="50%" stopColor="rgba(255,255,255,0.01)" />
-          <stop offset="65%" stopColor="rgba(255,255,255,0.18)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
-        </linearGradient>
-      </defs>
+    <span className="amp-eq" aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 2, height: 12, width: 14 }}>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className={active ? 'amp-eq-bar amp-eq-bar-active' : 'amp-eq-bar'}
+          style={{ display: 'block', width: 3, borderRadius: 1.5, background: color, animationDelay: `${i * 0.14}s` }}
+        />
+      ))}
+    </span>
+  )
+}
 
-      <g className={spinning ? 'amp-spin' : ''} style={{ transformOrigin: '50px 50px' }}>
-        <circle cx="50" cy="50" r="48" fill="#08080b" stroke="rgba(255,255,255,0.07)" strokeWidth="0.8" />
-        <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="32" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="24" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="15" fill={`url(#${gid}label)`} stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="11" fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
-        <circle cx="50" cy="50" r="7" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="3" fill="#040406" stroke="rgba(255,255,255,0.25)" strokeWidth="0.5" />
-        <circle cx="50" cy="50" r="48" fill={`url(#${gid}sheen)`} pointerEvents="none" />
-      </g>
-
-      {arm && (
-        <g className="amp-tonearm" style={{ transform: spinning ? 'rotate(0deg)' : 'rotate(-22deg)' }}>
-          <line x1="80" y1="18" x2="55" y2="46" stroke="#d8d8de" strokeWidth="3.4" strokeLinecap="round" />
-          <line x1="80" y1="18" x2="55" y2="46" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
-          <circle cx="80" cy="18" r="5" fill="#2a2a30" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-          <circle cx="55" cy="46" r="2.6" fill="#555" />
-        </g>
-      )}
-    </svg>
+// Pastille disque compacte — utilisée comme vignette dans la liste et sur le
+// déclencheur flottant. Remplace l'ancien SVG "platine vinyle + bras de
+// lecture" par une simple pochette circulaire (image du disque ou pochette
+// de piste custom), plus proche des conventions Spotify/Apple Music mini-
+// player demandées par le client, avec un léger effet de rotation en lecture.
+function DiscArt({ size, imgSrc, bgPosition, filter, spinning, ring }: { size: number; imgSrc: string; bgPosition: string; filter: string; spinning: boolean; ring?: boolean }) {
+  return (
+    <span
+      className={spinning ? 'amp-disc amp-disc-spin' : 'amp-disc'}
+      style={{
+        display: 'block',
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        flexShrink: 0,
+        backgroundImage: `url(${imgSrc})`,
+        backgroundSize: 'cover',
+        backgroundPosition: bgPosition,
+        filter,
+        boxShadow: ring ? `0 0 0 2px var(--obsidian), 0 0 0 3.5px var(--primary), 0 6px 16px rgba(0,0,0,0.5)` : '0 4px 10px rgba(0,0,0,0.4)',
+        position: 'relative',
+      }}
+    >
+      <span style={{ position: 'absolute', inset: '38%', borderRadius: '50%', background: 'rgba(4,4,11,0.88)', border: '1px solid rgba(255,255,255,0.18)' }} />
+    </span>
   )
 }
 
@@ -111,6 +109,11 @@ const HIDE_ON = ['/messages', '/scanner']
 const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup']
 
 const SEEN_KEY = 'lib_ambiance_seen'
+// Durée de la transition d'ouverture/fermeture du panneau — utilisée à la
+// fois dans le CSS et pour retarder le démontage après fermeture (même
+// convention que SlideOverModal.tsx : état "monté" piloté par
+// requestAnimationFrame, transform/opacity en CSS, pas de lib d'animation).
+const PANEL_TRANSITION_MS = 220
 
 interface SearchResult {
   title: string
@@ -122,6 +125,11 @@ interface SearchResult {
 export default function AmbientMusicPlayer() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  // Le panneau reste monté un court instant après la fermeture logique pour
+  // laisser la transition de sortie se jouer (translateY + opacity), au lieu
+  // de disparaître brutalement comme avant.
+  const [panelMounted, setPanelMounted] = useState(false)
+  const [panelVisible, setPanelVisible] = useState(false)
   const st = useSyncExternalStore(subscribeToMusicEngine, getState, getServerSnapshot)
   // Chip « Ambiance » : visible à l'arrivée tant que le lecteur n'a jamais été
   // ouvert (flag localStorage), puis se replie tout seul après ~5 s. Lecture
@@ -146,6 +154,7 @@ export default function AmbientMusicPlayer() {
   const btnRef = useRef<HTMLDivElement>(null)
   const searchDebRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const searchReqRef = useRef(0)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Fade d'apparition du chip (simple fade, compatible prefers-reduced-motion)
   useEffect(() => {
@@ -163,6 +172,22 @@ export default function AmbientMusicPlayer() {
   // Nettoyage du debounce de recherche
   useEffect(() => () => clearTimeout(searchDebRef.current), [])
 
+  // Montage/démontage du panneau piloté par `open`, avec un aller-retour par
+  // requestAnimationFrame pour déclencher la transition d'entrée (même
+  // convention que SlideOverModal.tsx) et un délai avant démontage pour
+  // laisser la transition de sortie se jouer.
+  useEffect(() => {
+    clearTimeout(closeTimerRef.current)
+    if (open) {
+      setPanelMounted(true)
+      const raf = requestAnimationFrame(() => setPanelVisible(true))
+      return () => cancelAnimationFrame(raf)
+    }
+    setPanelVisible(false)
+    closeTimerRef.current = setTimeout(() => setPanelMounted(false), PANEL_TRANSITION_MS)
+    return () => clearTimeout(closeTimerRef.current)
+  }, [open])
+
   // Fermer le panneau au clic extérieur
   useEffect(() => {
     if (!open) return
@@ -173,16 +198,30 @@ export default function AmbientMusicPlayer() {
     return () => document.removeEventListener('mousedown', h)
   }, [open])
 
+  // Fermer au clavier (Échap) — accessibilité standard pour un panneau flottant
+  useEffect(() => {
+    if (!open) return
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [open])
+
   if (HIDE_ON.some((p) => pathname?.startsWith(p))) return null
   if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
-  const accent = '#b8f34a'
+  const accent = 'var(--primary)'
   const activeAsset = DISC_ASSETS[current.id]
   const track = st.track
   const bigCover = track?.cover ? track.cover.replace('100x100', '400x400').replace('60x60', '400x400') : null
   const chipShown = chipReady && (chipIntro || st.playing)
   const chipLabel = st.playing ? (track ? track.title : current.name) : 'Ambiance'
+  const heroImg = track && bigCover ? bigCover : activeAsset.img
+  const heroFilter = track && bigCover ? 'brightness(0.6)' : activeAsset.filter
+  const heroPos = track && bigCover ? 'center' : activeAsset.bgPosition
+  const volumeIcon = st.volume <= 0 ? <VolumeX size={15} strokeWidth={2} aria-hidden="true" /> : st.volume < 0.5 ? <Volume1 size={15} strokeWidth={2} aria-hidden="true" /> : <Volume2 size={15} strokeWidth={2} aria-hidden="true" />
 
   function togglePanel() {
     if (!open) {
@@ -237,18 +276,31 @@ export default function AmbientMusicPlayer() {
     setSearching(false)
   }
 
+  function nextDisc() {
+    // "Suivant" — bascule sur le disque suivant de la liste (boucle), même
+    // logique que playRandom() côté moteur mais déterministe : utile quand on
+    // écoute déjà un disque et qu'on veut avancer plutôt que retomber sur le
+    // même par hasard. N'agit pas sur une piste custom (pas de notion
+    // d'ordre côté recherche iTunes) — bascule alors sur le premier disque.
+    const idx = track ? -1 : DISCS.findIndex((d) => d.id === current.id)
+    const next = DISCS[(idx + 1 + DISCS.length) % DISCS.length]
+    play(next.id)
+  }
+
   return (
     <div className="amp-root" style={{ position: 'fixed', right: 14, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 86px)', zIndex: 45, fontFamily: 'Inter, sans-serif' }}>
       <style>{`
-        .amp-spin { animation: amp-spin 2.4s linear infinite; }
         @keyframes amp-spin { to { transform: rotate(360deg); } }
-        @keyframes amp-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
-        .amp-tonearm { transition: transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275); transform-origin: 80% 18%; }
-        .amp-press { transition: transform 0.18s cubic-bezier(0.3,0.9,0.3,1), box-shadow 0.2s ease, border-color 0.2s ease; }
-        .amp-press:active { transform: scale(0.96); }
+        .amp-disc-spin { animation: amp-spin 3.2s linear infinite; }
+        @keyframes amp-eq-bounce { 0%, 100% { height: 3px; } 50% { height: 12px; } }
+        .amp-eq-bar { height: 3px; transition: height 0.15s ease; }
+        .amp-eq-bar-active { animation: amp-eq-bounce 0.9s ease-in-out infinite; }
+        .amp-press { transition: transform 0.15s cubic-bezier(0.3,0.9,0.3,1); }
+        .amp-press:active { transform: scale(0.94); }
         @media (prefers-reduced-motion: reduce) {
-          .amp-spin { animation: none; }
-          .amp-press, .amp-tonearm { transition: none; }
+          .amp-disc-spin { animation: none; }
+          .amp-eq-bar-active { animation: none; height: 8px; }
+          .amp-press { transition: none; }
         }
         /* Sur petit écran, réduit l'emprise du bouton flottant pour limiter le
            chevauchement avec le contenu scrollable en dessous (ex. le texte de
@@ -259,100 +311,59 @@ export default function AmbientMusicPlayer() {
             bottom: calc(env(safe-area-inset-bottom, 0px) + var(--cookie-consent-height, 0px) + 18px) !important;
           }
           .amp-trigger { width: 52px !important; height: 52px !important; }
+          .amp-panel { width: min(92vw, 320px) !important; }
           .mp-chip { display: none !important; }
         }
-        .mp-btn-card {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 10px;
-          border-radius: 12px;
-          cursor: pointer;
-          text-align: left;
-          overflow: hidden;
-          height: 48px;
-          background: transparent;
-          border: 1px solid rgba(255,255,255,0.06);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.22,0.9,0.3,1);
-        }
-        .mp-btn-card:hover {
-          transform: translateY(-2px);
-        }
-        .mp-btn-card:active {
-          transform: translateY(0) scale(0.97);
-        }
-        .mp-btn-bg {
-          position: absolute;
-          inset: 0;
-          background-size: cover;
-          z-index: 0;
-          transition: transform 0.5s cubic-bezier(0.22,0.9,0.3,1);
-        }
-        .mp-btn-card:hover .mp-btn-bg {
-          transform: scale(1.12);
-        }
-        .mp-chip { transition: opacity 0.45s ease; }
+        .mp-chip { transition: opacity 0.3s ease; }
         .mp-res { background: transparent; transition: background 0.15s; }
         .mp-res:hover { background: rgba(255,255,255,0.06); }
+        .mp-disc-card { transition: border-color 0.2s, transform 0.2s; }
+        .mp-disc-card:hover { transform: translateY(-1px); }
         @media (prefers-reduced-motion: reduce) {
           .mp-chip { transition: none; }
         }
       `}</style>
 
-      {open && (
+      {panelMounted && (
         <div
           ref={panelRef}
+          role="dialog"
+          aria-modal="false"
+          aria-label="Ambiance musicale"
+          className="amp-panel"
           style={{
             position: 'absolute',
             bottom: 74,
             right: 0,
-            width: 288,
+            width: 300,
             background: 'var(--surface-2)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 20,
+            border: '1px solid var(--border-strong)',
+            borderRadius: 'var(--radius-xl)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
             padding: 14,
-            animation: 'amp-pop 0.2s cubic-bezier(0.22,0.9,0.3,1)',
             maxHeight: 'calc(100vh - 220px)',
             overflowY: 'auto',
+            opacity: panelVisible ? 1 : 0,
+            transform: panelVisible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.98)',
+            transformOrigin: 'bottom right',
+            transition: `opacity ${PANEL_TRANSITION_MS}ms ease, transform ${PANEL_TRANSITION_MS}ms cubic-bezier(0.22,0.9,0.3,1)`,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, padding: '0 2px' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>Ambiance</span>
-            <Button
-              onClick={() => playRandom()}
-              variant="ghost"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '5px 10px',
-                borderRadius: 999,
-                background: 'rgba(184, 243, 74,0.12)',
-                border: '1px solid rgba(184, 243, 74,0.42)',
-                color: 'var(--primary)',
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 11,
-                fontWeight: 700,
-                transition: 'all 0.2s',
-              }}
-            >
-              <Shuffle size={13} strokeWidth={2.4} aria-hidden="true" />
-              Au hasard
-            </Button>
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Ambiance</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconButton label="Un disque au hasard" icon={<Shuffle size={14} strokeWidth={2.4} aria-hidden="true" />} tone="accent" size={30} onClick={() => playRandom()} />
+              <IconButton label="Fermer" icon={<X size={15} strokeWidth={2} aria-hidden="true" />} size={30} onClick={() => setOpen(false)} />
+            </div>
           </div>
 
+          {/* Carte "now playing" — pochette/fond, titre/artiste, play-pause,
+              suivant, égaliseur animé comme indicateur de lecture. */}
           <div
             style={{
               position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 14px',
-              borderRadius: 16,
-              border: `1px solid ${accent}44`,
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-strong)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
               marginBottom: 12,
               overflow: 'hidden',
@@ -362,10 +373,10 @@ export default function AmbientMusicPlayer() {
               style={{
                 position: 'absolute',
                 inset: 0,
-                backgroundImage: `url(${track && bigCover ? bigCover : activeAsset.img})`,
+                backgroundImage: `url(${heroImg})`,
                 backgroundSize: 'cover',
-                backgroundPosition: track && bigCover ? 'center' : activeAsset.bgPosition,
-                filter: track && bigCover ? 'brightness(0.75)' : activeAsset.filter,
+                backgroundPosition: heroPos,
+                filter: heroFilter,
                 zIndex: 0,
               }}
             />
@@ -373,39 +384,42 @@ export default function AmbientMusicPlayer() {
               style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(180deg, rgba(10,10,14,0.3) 0%, rgba(10,10,14,0.88) 100%)',
+                background: 'linear-gradient(180deg, rgba(10,10,14,0.35) 0%, rgba(10,10,14,0.9) 100%)',
                 zIndex: 1,
               }}
             />
 
-            <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-              <Vinyl size={42} color={accent} spinning={st.playing} arm />
+            <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '12px 12px 12px 12px' }}>
+              <DiscArt size={44} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning={st.playing} ring />
               <div style={{ flex: 1, minWidth: 0, lineHeight: 1.15 }}>
-                <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {track ? track.title : current.name}
-                </p>
-                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 800, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {track ? track.title : current.name}
+                  </p>
+                  {st.playing && <EqBars active color={accent} />}
+                </div>
+                <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.62)', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {track ? track.artist || 'Extrait 30 s' : st.playing ? 'En lecture…' : current.desc}
                 </p>
               </div>
-              <Button
-                onClick={() => toggle(track ? undefined : current.id)}
-                aria-label={st.playing ? 'Pause' : 'Jouer'}
-                variant="ghost"
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: '50%',
-                  flexShrink: 0,
-                  padding: 0,
-                  border: 'none',
-                  background: accent,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                  transition: 'transform 0.2s',
-                }}
-              >
-                {st.playing ? <Pause size={14} strokeWidth={2.8} color="#171500" aria-hidden="true" /> : <Play size={14} strokeWidth={2.8} fill="#171500" color="#171500" aria-hidden="true" />}
-              </Button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                {!track && (
+                  <IconButton
+                    label="Disque suivant"
+                    icon={<SkipForward size={15} strokeWidth={2.2} aria-hidden="true" />}
+                    size={32}
+                    style={{ color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
+                    onClick={nextDisc}
+                  />
+                )}
+                <IconButton
+                  label={st.playing ? 'Mettre en pause' : 'Jouer'}
+                  icon={st.playing ? <Pause size={15} strokeWidth={2.8} aria-hidden="true" /> : <Play size={15} strokeWidth={2.8} fill="var(--primary-ink)" aria-hidden="true" />}
+                  size={36}
+                  style={{ borderRadius: '50%', border: 'none', background: accent, color: 'var(--primary-ink)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', transition: 'transform 0.15s cubic-bezier(0.3,0.9,0.3,1)' }}
+                  onClick={() => toggle(track ? undefined : current.id)}
+                />
+              </div>
             </div>
           </div>
 
@@ -420,8 +434,8 @@ export default function AmbientMusicPlayer() {
                 width: '100%',
                 boxSizing: 'border-box',
                 background: 'var(--obsidian)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: 999,
+                border: '1px solid var(--border-strong)',
+                borderRadius: 'var(--radius-pill)',
                 padding: '11px 36px 11px 12px',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
@@ -432,7 +446,7 @@ export default function AmbientMusicPlayer() {
             />
             {searching && (
               <span
-                className="amp-spin"
+                className="amp-disc-spin"
                 style={{
                   position: 'absolute',
                   right: 11,
@@ -452,9 +466,9 @@ export default function AmbientMusicPlayer() {
           {results.length > 0 && (
             <div
               style={{
-                background: '#0e0f16',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 12,
+                background: 'var(--surface)',
+                border: '1px solid var(--border-strong)',
+                borderRadius: 'var(--radius-lg)',
                 marginBottom: 10,
                 maxHeight: 230,
                 overflowY: 'auto',
@@ -474,15 +488,16 @@ export default function AmbientMusicPlayer() {
                     padding: '7px 10px',
                     minHeight: 46,
                     border: 'none',
+                    borderRadius: 0,
                     textAlign: 'left',
                     justifyContent: 'flex-start',
-                    borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                    borderTop: i > 0 ? '1px solid var(--border)' : 'none',
                   }}
                 >
                   {r.cover ? (
-                    <Image src={r.cover} alt="" width={32} height={32} style={{ borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                    <Image src={r.cover} alt="" width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
-                    <span style={{ width: 32, height: 32, borderRadius: 6, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
+                    <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
                   )}
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</span>
@@ -494,86 +509,68 @@ export default function AmbientMusicPlayer() {
           )}
 
           {query.trim().length >= 2 && !searching && results.length === 0 && (
-            <p style={{ margin: '0 0 10px', padding: '0 2px', fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,0.45)' }}>Aucun résultat pour cette recherche.</p>
+            <p style={{ margin: '0 0 10px', padding: '0 2px', fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'var(--text-faint)' }}>Aucun résultat pour cette recherche.</p>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-            {DISCS.map((d, idx) => {
-              const isCur = d.id === current.id
+          {/* Liste des ambiances — rangée compacte type "file d'attente" plutôt
+              que la grille de cartes précédente : pastille ronde + nom + tag,
+              coche visuelle sur l'ambiance active. */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+            {DISCS.map((d) => {
+              const isCur = d.id === current.id && !track
               const asset = DISC_ASSETS[d.id]
-              const isLast = idx === DISCS.length - 1
               return (
                 <Button
                   key={d.id}
                   onClick={() => play(d.id)}
                   variant="ghost"
+                  aria-pressed={isCur}
                   style={{
-                    position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 10px',
-                    borderRadius: 12,
+                    gap: 10,
+                    padding: '7px 8px',
+                    borderRadius: 'var(--radius-md)',
                     textAlign: 'left',
-                    overflow: 'hidden',
-                    height: 48,
-                    background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    gridColumn: isLast ? '1 / span 2' : undefined,
-                    borderColor: isCur ? accent : 'rgba(255,255,255,0.06)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                    transition: 'border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.22,0.9,0.3,1)',
+                    height: 44,
+                    background: isCur ? 'rgba(184, 243, 74,0.1)' : 'transparent',
+                    border: `1px solid ${isCur ? 'rgba(184, 243, 74,0.4)' : 'transparent'}`,
+                    justifyContent: 'flex-start',
                   }}
                 >
-                  <div
-                    className="mp-btn-bg"
-                    style={{
-                      backgroundImage: `url(${asset.img})`,
-                      backgroundPosition: asset.bgPosition,
-                      filter: asset.filter,
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: isCur ? 'linear-gradient(180deg, rgba(184, 243, 74,0.16) 0%, rgba(10,10,14,0.92) 100%)' : 'linear-gradient(180deg, rgba(4,4,8,0.25) 0%, rgba(10,10,14,0.95) 100%)',
-                      zIndex: 1,
-                    }}
-                  />
-                  <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-                    <Vinyl size={22} color={accent} spinning={isCur && st.playing} />
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.1 }}>
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
-                      <span
-                        style={{
-                          fontFamily: 'Inter, sans-serif',
-                          fontSize: 10.5,
-                          color: isCur ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.45)',
-                          letterSpacing: '0.01em',
-                          marginTop: 1,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {d.desc}
-                      </span>
-                    </div>
-                  </div>
+                  <DiscArt size={28} imgSrc={asset.img} bgPosition={asset.bgPosition} filter={asset.filter} spinning={isCur && st.playing} />
+                  <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.1, flex: 1 }}>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
+                    <span
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: 10.5,
+                        color: isCur ? 'rgba(255,255,255,0.6)' : 'var(--text-faint)',
+                        letterSpacing: '0.01em',
+                        marginTop: 1,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {d.desc}
+                    </span>
+                  </span>
+                  {isCur && <EqBars active={st.playing} color={accent} />}
                 </Button>
               )
             })}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 2px' }}>
-            <Volume2 size={15} strokeWidth={2} color="rgba(255,255,255,0.52)" aria-hidden="true" />
+            <span style={{ color: 'rgba(255,255,255,0.52)', display: 'inline-flex' }}>{volumeIcon}</span>
             <Slider
               min="0"
               max="1"
               step="0.01"
               value={st.volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
+              aria-label="Volume"
               style={{ flex: 1, accentColor: accent }}
             />
           </div>
@@ -590,41 +587,51 @@ export default function AmbientMusicPlayer() {
             style={{
               maxWidth: 180,
               minHeight: 44,
-              padding: '11px 16px',
-              borderRadius: 999,
+              padding: '10px 16px 10px 12px',
+              borderRadius: 'var(--radius-pill)',
               background: 'var(--surface-2)',
-              border: '1px solid rgba(255,255,255,0.14)',
+              border: '1px solid var(--border-strong)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
               display: 'flex',
               alignItems: 'center',
+              gap: 7,
             }}
           >
+            {st.playing && <EqBars active color={accent} />}
             <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chipLabel}</span>
           </Button>
         </span>
-        <span className="amp-trigger" style={{ display: 'inline-flex' }}>
-          <Button
+        <span className="amp-trigger amp-press" style={{ display: 'inline-flex' }}>
+          <button
             onClick={togglePanel}
             title="Ambiance musicale"
-            variant="ghost"
+            aria-expanded={open}
+            aria-label="Ambiance musicale"
+            type="button"
             style={{
               position: 'relative',
-              width: 64,
-              height: 64,
+              width: 60,
+              height: 60,
               borderRadius: '50%',
               flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               background: 'var(--surface-2)',
-              border: `2px solid ${st.playing ? accent : 'rgba(255,255,255,0.22)'}`,
-              boxShadow: '0 10px 28px rgba(0,0,0,0.55)',
+              border: `2px solid ${st.playing ? accent : 'var(--border-strong)'}`,
+              boxShadow: st.playing ? `0 0 0 4px rgba(184, 243, 74,0.14), 0 10px 28px rgba(0,0,0,0.55)` : '0 10px 28px rgba(0,0,0,0.55)',
               transition: 'border-color 0.3s, box-shadow 0.3s',
+              cursor: 'pointer',
+              padding: 0,
             }}
           >
-            <Vinyl size={36} color={accent} spinning={st.playing} arm />
-            {st.playing && <span style={{ position: 'absolute', top: 5, right: 5, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)' }} />}
-          </Button>
+            {st.playing ? (
+              <DiscArt size={38} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning ring={false} />
+            ) : (
+              <Music4 size={24} strokeWidth={1.8} color="rgba(255,255,255,0.8)" aria-hidden="true" />
+            )}
+            {st.playing && <span style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)' }} />}
+          </button>
         </span>
       </div>
     </div>

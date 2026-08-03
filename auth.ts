@@ -70,6 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: String(user._id),
           email: user.email,
           name: [user.firstName, user.lastName].filter(Boolean).join(' '),
+          image: user.avatarUrl || null,
           roles: user.roles,
           activeRole: user.activeRole,
           status: user.status,
@@ -126,10 +127,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (Date.now() - lastChecked < SESSION_REVALIDATE_INTERVAL_MS) return token
 
       await getDb()
-      const dbUser = await User.findById(token.sub).select('disabled sessionVersion').lean()
+      const dbUser = await User.findById(token.sub).select('disabled sessionVersion avatarUrl').lean()
       if (!dbUser || dbUser.disabled || (dbUser.sessionVersion || 0) !== (token.sessionVersion || 0)) {
         return null
       }
+      // Revalidé sur le même intervalle que sessionVersion ci-dessus — sans
+      // ça, une photo de profil changée dans ProfilClient.tsx ne
+      // remonterait dans le header qu'à la prochaine reconnexion (30 jours).
+      token.picture = dbUser.avatarUrl || null
       token.checkedAt = Date.now()
       return token
     },
