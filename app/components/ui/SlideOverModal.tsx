@@ -90,7 +90,7 @@ export default function SlideOverModal({ children, maxWidth = 680 }: SlideOverMo
           variant="ghost"
           onClick={close}
           aria-label="Fermer"
-          style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, width: 38, height: 38, padding: 0, borderRadius: '50%', color: 'rgba(255,255,255,0.7)', background: 'rgba(4,4,11,0.55)', backdropFilter: 'blur(6px)', lineHeight: 1 }}
+          style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: '50%', color: 'rgba(255,255,255,0.7)', background: 'rgba(4,4,11,0.55)', backdropFilter: 'blur(6px)', lineHeight: 1 }}
         >
           <X size={18} strokeWidth={1.8} aria-hidden="true" />
         </Button>

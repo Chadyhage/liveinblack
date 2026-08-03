@@ -371,7 +371,7 @@ export default async function AccueilPage() {
                 <li key={f} style={featItem}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
               ))}
             </ul>
-            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--gold)', color: '#04120e' }}>Devenir prestataire</Link>
+            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--gold)', color: 'var(--primary-ink)' }}>Devenir prestataire</Link>
           </div>
         </div>
       </Section>}

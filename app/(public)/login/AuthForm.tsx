@@ -588,7 +588,7 @@ export default function AuthForm() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
                       <p style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
                       {badge && (
-                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(200,169,110,0.35)', background: 'rgba(200,169,110,0.12)' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.12)' }}>
                           {badge}
                         </span>
                       )}

@@ -95,7 +95,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
                 const min = prices.length ? Math.min(...prices) : null
                 return (
                   <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ aspectRatio: '4/3', position: 'relative', background: `linear-gradient(135deg, ${e.color || '#c8a96e'}33, var(--obsidian))` }}>
+                    <div style={{ aspectRatio: '4/3', position: 'relative', background: `linear-gradient(135deg, ${e.color || '#b8f34a'}33, var(--obsidian))` }}>
                       {e.imageUrl && (
                         <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 200px" />
                       )}

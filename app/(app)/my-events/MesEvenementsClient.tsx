@@ -15,7 +15,7 @@ import GuestlistModal from './GuestlistModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button, Modal, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, EmptyState, Modal, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAST_PAGE_SIZE = 15
@@ -279,10 +279,11 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           Mes soirées en cours
         </p>
         {upcomingEvents.length === 0 ? (
-          <div style={{ padding: '30px 20px', textAlign: 'center', border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)' }}>
-            <p style={{ color: '#fff', fontSize: 14, margin: '0 0 4px' }}>Aucun événement pour l&rsquo;instant</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: 12.5, margin: 0 }}>Crée ton premier événement pour le retrouver ici.</p>
-          </div>
+          <EmptyState
+            title="Aucun événement pour l’instant"
+            description="Crée ton premier événement pour le retrouver ici, gérer ses billets et suivre tes ventes."
+            action={<Button variant="primary" onClick={startCreate}>Créer mon premier événement</Button>}
+          />
         ) : (
           <div className="lb-organizer-event-grid">
             {upcomingEvents.map((event) => (

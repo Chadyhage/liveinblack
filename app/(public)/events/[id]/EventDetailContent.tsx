@@ -92,7 +92,7 @@ export default async function EventDetailContent({
       </div>
 
       {/* HERO */}
-      <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
           alt={event.name}
@@ -304,7 +304,7 @@ export default async function EventDetailContent({
           ) : (
             <Link
               href={loginHref}
-              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--teal-solid)', textDecoration: 'none' }}
             >
               Se connecter pour réserver
             </Link>

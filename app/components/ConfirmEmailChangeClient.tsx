@@ -75,7 +75,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
               {email ? `${email} est désormais ton adresse de connexion.` : 'Ta nouvelle adresse est confirmée.'}
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('#3ed6b5', '#04120e')}>Retour au profil</Button>
+              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('var(--primary-strong)', 'var(--primary-ink)')}>Retour au profil</Button>
             </div>
           </>
         )}

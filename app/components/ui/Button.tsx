@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, useState } from 'react'
 import type { ButtonHTMLAttributes, CSSProperties } from 'react'
 import Spinner from './Spinner'
 
@@ -69,11 +69,21 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
 ) {
   const isDisabled = Boolean(disabled || loading)
   const isLink = variant === 'link'
+  const [hovered, setHovered] = useState(false)
+  const [pressed, setPressed] = useState(false)
+  // Feedback hover/active centralisé ici (et pas via className, volontairement
+  // absent de ButtonProps — voir commentaire plus bas) pour que tous les
+  // boutons de l'app répondent visuellement sans dupliquer de CSS par écran.
+  const interactive = !isDisabled && !isLink
   return (
     <button
       ref={ref}
       type={type}
       disabled={isDisabled}
+      onMouseEnter={(e) => { setHovered(true); rest.onMouseEnter?.(e) }}
+      onMouseLeave={(e) => { setHovered(false); setPressed(false); rest.onMouseLeave?.(e) }}
+      onMouseDown={(e) => { setPressed(true); rest.onMouseDown?.(e) }}
+      onMouseUp={(e) => { setPressed(false); rest.onMouseUp?.(e) }}
       style={{
         minHeight: 44,
         display: 'inline-flex',
@@ -83,8 +93,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         fontFamily: 'inherit',
         cursor: isDisabled ? (loading ? 'wait' : 'not-allowed') : 'pointer',
         width: fullWidth ? '100%' : undefined,
-        transition: 'opacity 0.15s ease, transform 0.1s ease',
+        transition: 'opacity 0.15s ease, transform 0.1s ease, filter 0.15s ease',
         opacity: isDisabled && !loading ? 0.6 : 1,
+        filter: interactive && hovered ? 'brightness(1.08)' : undefined,
+        transform: interactive && pressed ? 'translateY(1px)' : undefined,
         ...(isLink ? {} : SIZE_STYLES[size]),
         ...variantStyle(variant, isDisabled),
         ...style,
