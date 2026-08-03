@@ -416,7 +416,7 @@ export default function PreferencesModal({
     <Modal onClose={onClose} maxWidth={520}>
         {done ? (
           <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(78,232,200,0.12)', border: '1px solid rgba(78,232,200,0.4)' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184, 243, 74,0.12)', border: '1px solid rgba(184, 243, 74,0.4)' }}>
               <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>

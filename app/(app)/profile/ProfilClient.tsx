@@ -196,6 +196,7 @@ function QuickAccessCard({ href, icon, label }: { href: string; icon: React.Reac
   return (
     <Link
       href={href}
+      className="lb-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -414,7 +415,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                   variant="secondary"
                   aria-label={control.label}
                   onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
-                  style={{ width: 36, height: 36, padding: 0, borderRadius: 10, fontSize: 17 }}
+                  style={{ width: 36, height: 36, minHeight: 36, minWidth: 36, padding: 0, borderRadius: 10, fontSize: 17 }}
                 >
                   {control.glyph}
                 </Button>

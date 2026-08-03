@@ -636,7 +636,7 @@ export default function PlaylistClient({
             padding: '9px 13px',
             borderRadius: 10,
             border: `1px solid ${HEX.gold}55`,
-            background: 'rgba(200,169,110,0.08)',
+            background: 'rgba(184, 243, 74,0.08)',
             fontSize: 12,
             color: 'var(--gold)',
             marginBottom: 16,
@@ -662,7 +662,7 @@ export default function PlaylistClient({
             padding: '12px 16px',
             borderRadius: 14,
             border: `1px solid ${HEX.gold}55`,
-            background: 'linear-gradient(135deg, rgba(200,169,110,0.14), rgba(139,92,246,0.10))',
+            background: 'linear-gradient(135deg, rgba(184, 243, 74,0.14), rgba(139,92,246,0.10))',
             marginBottom: 18,
           }}
         >
@@ -745,7 +745,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: moderationTab === f.key ? 'var(--gold)' : 'var(--text-muted)',
-                  background: moderationTab === f.key ? 'rgba(200,169,110,0.12)' : 'rgba(255,255,255,0.04)',
+                  background: moderationTab === f.key ? 'rgba(184, 243, 74,0.12)' : 'rgba(255,255,255,0.04)',
                   borderColor: moderationTab === f.key ? `${HEX.gold}73` : 'var(--border)',
                 }}
               >
@@ -807,7 +807,7 @@ export default function PlaylistClient({
                         ...smallButtonStyle,
                         borderColor: nowPlaying?.id === song.id ? 'var(--gold)' : 'var(--border)',
                         color: nowPlaying?.id === song.id ? 'var(--gold)' : smallButtonStyle.color,
-                        background: nowPlaying?.id === song.id ? 'rgba(200,169,110,0.16)' : smallButtonStyle.background,
+                        background: nowPlaying?.id === song.id ? 'rgba(184, 243, 74,0.16)' : smallButtonStyle.background,
                       }}
                     >
                       Jouer maintenant
@@ -1082,6 +1082,8 @@ export default function PlaylistClient({
                             style={{
                               width: 34,
                               height: 34,
+                              minWidth: 34,
+                              minHeight: 34,
                               borderRadius: 10,
                               flexShrink: 0,
                               cursor: 'pointer',
@@ -1132,7 +1134,7 @@ export default function PlaylistClient({
                 </div>
               </div>
 
-              <div style={{ ...cardStyle, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(200,169,110,0.28)' }}>
+              <div style={{ ...cardStyle, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(184, 243, 74,0.28)' }}>
                 <div style={{ marginTop: 2, flexShrink: 0 }}>
                   <HeadphonesIcon />
                 </div>
@@ -1226,6 +1228,8 @@ function SearchResultsList({
                 style={{
                   width: 36,
                   height: 36,
+                  minWidth: 36,
+                  minHeight: 36,
                   borderRadius: 8,
                   flexShrink: 0,
                   overflow: 'hidden',
@@ -1289,6 +1293,8 @@ function SongRow({
         style={{
           width: 42,
           height: 42,
+          minWidth: 42,
+          minHeight: 42,
           borderRadius: 9,
           flexShrink: 0,
           overflow: 'hidden',
@@ -1370,6 +1376,8 @@ function DjSongRow({
         style={{
           width: 42,
           height: 42,
+          minWidth: 42,
+          minHeight: 42,
           borderRadius: 9,
           flexShrink: 0,
           overflow: 'hidden',

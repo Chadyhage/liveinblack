@@ -164,7 +164,7 @@ const GROUP_MUTE_DURATIONS: { id: string; label: string; ms: number | null }[] =
   { id: 'forever', label: "Jusqu'à réactivation", ms: null },
 ]
 
-const AVATAR_COLORS = ['#c8a96e', '#8b5cf6', '#e05aaa', '#3b82f6', '#4ee8c8', '#f59e0b']
+const AVATAR_COLORS = ['var(--primary)', '#8b5cf6', '#e05aaa', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
 
 const ERROR_MESSAGES: Record<string, string> = {
   auth_required: 'Ta session a expiré — reconnecte-toi.',
@@ -1716,6 +1716,8 @@ export default function MessagesClient({
                     bottom: 96,
                     width: 38,
                     height: 38,
+                    minWidth: 38,
+                    minHeight: 38,
                     padding: 0,
                     borderRadius: '50%',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
@@ -1899,13 +1901,15 @@ export default function MessagesClient({
                           style={{
                             width: 42,
                             height: 42,
+                            minWidth: 42,
+                            minHeight: 42,
                             padding: 0,
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: '#04120e',
-                            background: busy ? 'rgba(62,214,181,0.5)' : 'var(--teal-solid)',
+                            background: busy ? 'rgba(159, 224, 34,0.5)' : 'var(--teal-solid)',
                             cursor: busy ? 'default' : 'pointer',
                             flexShrink: 0,
                           }}
@@ -1920,6 +1924,8 @@ export default function MessagesClient({
                           style={{
                             width: 42,
                             height: 42,
+                            minWidth: 42,
+                            minHeight: 42,
                             padding: 0,
                             borderRadius: '50%',
                             background: 'var(--teal-solid)',
@@ -2235,6 +2241,8 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
         position: 'relative',
         width: 32,
         height: 32,
+        minWidth: 32,
+        minHeight: 32,
         padding: 0,
         borderRadius: '50%',
         fontSize: 14,
@@ -2335,8 +2343,8 @@ function GroupAvatar({ conv, size = 38 }: { conv: { avatar: string | null; name:
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'rgba(200,169,110,0.14)',
-        border: '1px solid rgba(200,169,110,0.3)',
+        background: 'rgba(184, 243, 74,0.14)',
+        border: '1px solid rgba(184, 243, 74,0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -2524,8 +2532,8 @@ function MessageRow({
           style={{
             padding: message.deletedForAll ? '8px 14px' : ['image', 'poll', 'event_poll', 'story', 'event', 'catalog_item'].includes(message.type) ? 6 : '9px 14px',
             borderRadius: isMine ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-            background: isMine ? 'rgba(62,214,181,0.16)' : 'var(--surface)',
-            border: `1px solid ${isMine ? 'rgba(62,214,181,0.32)' : 'var(--border)'}`,
+            background: isMine ? 'rgba(159, 224, 34,0.16)' : 'var(--surface)',
+            border: `1px solid ${isMine ? 'rgba(159, 224, 34,0.32)' : 'var(--border)'}`,
             maxWidth: '100%',
             cursor: 'context-menu',
             boxShadow: highlighted ? '0 0 0 2px rgba(255,255,255,0.85)' : 'none',
@@ -2545,8 +2553,8 @@ function MessageRow({
                   variant="secondary"
                   onClick={() => onReact(message.id, emoji)}
                   style={{
-                    background: reactedByMe ? 'rgba(78,232,200,0.14)' : 'var(--surface-2)',
-                    border: `1px solid ${reactedByMe ? 'rgba(78,232,200,0.3)' : 'var(--border)'}`,
+                    background: reactedByMe ? 'rgba(184, 243, 74,0.14)' : 'var(--surface-2)',
+                    border: `1px solid ${reactedByMe ? 'rgba(184, 243, 74,0.3)' : 'var(--border)'}`,
                     borderRadius: 10,
                     padding: '2px 6px',
                     display: 'flex',
@@ -2834,7 +2842,7 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
                 overflow: 'hidden',
               }}
             >
-              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(78,232,200,0.22)' }} />
+              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(184, 243, 74,0.22)' }} />
               <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {votedByMe && <span style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span>}
                 {opt.text}
@@ -3436,8 +3444,8 @@ function FriendsPanel({
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     color: 'var(--teal)',
-                    background: 'rgba(78,232,200,0.12)',
-                    border: '1px solid rgba(78,232,200,0.35)',
+                    background: 'rgba(184, 243, 74,0.12)',
+                    border: '1px solid rgba(184, 243, 74,0.35)',
                     borderRadius: 999,
                     padding: '2px 8px',
                   }}

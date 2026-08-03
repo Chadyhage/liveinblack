@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -196,14 +195,17 @@ export default function AccountMenu({
   }
 
   const totalUnread = (conversations ?? []).reduce((sum, c) => sum + c.unreadCount, 0)
-  const initial = (user.name?.trim()?.[0] || user.email?.trim()?.[0] || '?').toUpperCase()
   const dashboards = (user.roles ?? [])
     .map((role) => (DASHBOARD_BY_ROLE[role] ? { role, ...DASHBOARD_BY_ROLE[role] } : null))
     .filter((d): d is { role: string; href: string; label: string } => d !== null)
 
   return (
     <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
-      <style>{`@media (max-width: 640px) { .lb-acct-name { display: none !important } }`}</style>
+      <style>{`
+        @media (max-width: 640px) { .lb-acct-name { display: none !important } }
+        .lb-menu-row { transition: background 0.15s ease; }
+        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: var(--surface); }
+      `}</style>
       <div style={{ position: 'relative' }}>
         <Button
           variant="ghost"
@@ -284,6 +286,7 @@ export default function AccountMenu({
                     key={c.id}
                     href={`/messages?conversationId=${encodeURIComponent(c.id)}`}
                     onClick={() => setMessagesOpen(false)}
+                    className="lb-menu-row"
                     style={{ display: 'flex', gap: 10, padding: '10px 14px', textDecoration: 'none', color: 'inherit', alignItems: 'center' }}
                   >
                     <Avatar src={avatar} name={name} size="md" />
@@ -396,6 +399,7 @@ export default function AccountMenu({
                 <button
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
+                  className="lb-menu-row"
                   style={{
                     minHeight: 56,
                     display: 'block',
@@ -445,30 +449,7 @@ export default function AccountMenu({
             color: 'var(--text)',
           }}
         >
-          <span
-            style={{
-              width: 30,
-              height: 30,
-              minWidth: 30,
-              minHeight: 30,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: user.image ? 'transparent' : 'var(--teal-solid)',
-              color: '#04120e',
-              fontSize: 13,
-              fontWeight: 800,
-            }}
-          >
-            {user.image ? (
-              <Image src={user.image} alt="" width={30} height={30} style={{ objectFit: 'cover', width: 30, height: 30 }} />
-            ) : (
-              initial
-            )}
-          </span>
+          <Avatar src={user.image} name={user.name || user.email || '?'} size="sm" style={{ width: 30, height: 30 }} />
           {user.name && (
             <span className="lb-acct-name" style={{ fontSize: 13, fontWeight: 700, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.name.split(' ')[0]}
