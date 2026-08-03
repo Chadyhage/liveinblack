@@ -145,6 +145,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         {onRemove && (
           <Button
             variant="ghost"
+            aria-label="Supprimer l'article"
             onClick={onRemove}
             disabled={disabled}
             style={{ display: 'flex', alignItems: 'center', padding: 2 }}

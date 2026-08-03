@@ -1398,7 +1398,7 @@ export default function MessagesClient({
   const showThreadPane = isDesktop || mobileView === 'thread'
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', background: 'var(--obsidian)' }}>
+    <main style={{ height: 'calc(100dvh - 61px)', display: 'flex', background: 'var(--obsidian)' }}>
       {showListPane && (
         <aside
           style={{
@@ -1407,7 +1407,8 @@ export default function MessagesClient({
             borderRight: isDesktop && conversations.length > 0 ? '1px solid var(--border)' : 'none',
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '100vh',
+            height: '100%',
+            overflow: 'hidden',
           }}
         >
           <div style={{ padding: '18px 16px 12px' }}>
@@ -1571,7 +1572,7 @@ export default function MessagesClient({
       )}
 
       {showThreadPane && conversations.length > 0 && (
-        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: '100vh' }}>
+        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden' }}>
           {!activeConversation ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MessagingEmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
@@ -1709,6 +1710,7 @@ export default function MessagesClient({
               {showScrollButton && (
                 <Button
                   variant="secondary"
+                  aria-label="Défiler vers le bas"
                   onClick={scrollToBottom}
                   style={{
                     position: 'absolute',
@@ -1785,7 +1787,7 @@ export default function MessagesClient({
                       }}
                     >
                       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
-                      <Button variant="ghost" onClick={handleEditCancel} style={{ padding: 0 }}>
+                      <Button variant="ghost" aria-label="Annuler la modification" onClick={handleEditCancel} style={{ padding: 0 }}>
                         <X size={14} />
                       </Button>
                     </div>

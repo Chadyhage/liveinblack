@@ -203,10 +203,17 @@ export default function AccountMenu({
     <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
       <style>{`
         @media (max-width: 640px) { .lb-acct-name { display: none !important } }
+        /* Sous 480px, le header n'a pas la place pour logo + recherche +
+           messages + notifications + avatar + burger sans déborder — ces
+           deux raccourcis restent accessibles via /messages (icône déjà
+           dans lb-mobile-menu) et la cloche via le dropdown compte, donc
+           les masquer ici ne retire aucun accès, juste la place qu'ils
+           prenaient dans le header. */
+        @media (max-width: 480px) { .lb-acct-quick { display: none !important } }
         .lb-menu-row { transition: background 0.15s ease; }
         .lb-menu-row:hover, .lb-menu-row:focus-visible { background: var(--surface); }
       `}</style>
-      <div style={{ position: 'relative' }}>
+      <div className="lb-acct-quick" style={{ position: 'relative' }}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -310,7 +317,7 @@ export default function AccountMenu({
         )}
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div className="lb-acct-quick" style={{ position: 'relative' }}>
         <Button
           variant="ghost"
           onClick={() => {
