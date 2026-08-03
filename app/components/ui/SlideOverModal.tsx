@@ -73,7 +73,11 @@ export default function SlideOverModal({ children, maxWidth = 680 }: SlideOverMo
           top: 0,
           right: 0,
           bottom: 0,
-          width: `min(${maxWidth}px, 100vw)`,
+          // 3/4 de l'écran sur desktop (au moins maxWidth si 75vw est plus
+          // étroit, ex. petits écrans desktop), plein écran sur mobile — le
+          // min(...,100vw) externe garantit qu'on ne déborde jamais le
+          // viewport quand maxWidth dépasse la largeur d'un mobile.
+          width: `min(max(75vw, ${maxWidth}px), 100vw)`,
           background: 'var(--obsidian)',
           borderLeft: '1px solid var(--border-strong)',
           boxShadow: '-24px 0 64px rgba(0,0,0,0.55)',
