@@ -147,7 +147,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 >
                   {s.n}
                 </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
                   <h2
                     style={{
                       fontFamily: FONTS.display,

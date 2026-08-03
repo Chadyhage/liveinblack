@@ -14,9 +14,9 @@ import { Button } from '@/app/components/ui'
 // cliqué depuis un email, potentiellement hors session active ou sur un
 // autre appareil — même convention que /verify-email et /reset-password.
 
-const COLORS = { teal: '#b8f34a', pink: '#ff7b7b' }
+const COLORS = { teal: 'var(--primary)', pink: 'var(--pink)' }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })

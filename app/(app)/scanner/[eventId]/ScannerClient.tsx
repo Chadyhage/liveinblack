@@ -828,7 +828,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                   fontSize: 10.5,
                                   fontWeight: 700,
                                   color: 'var(--teal-solid)',
-                                  background: 'rgba(62,214,181,0.16)',
+                                  background: 'rgba(159,224,34,0.16)',
                                   padding: '3px 9px',
                                   borderRadius: 999,
                                   whiteSpace: 'nowrap',

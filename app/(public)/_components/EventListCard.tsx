@@ -37,7 +37,7 @@ export default function EventListCard({ event, reason, eager = false }: { event:
         boxShadow: '0 18px 48px rgba(0,0,0,.24)',
       }}
     >
-      <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 600, 340)}
           alt={event.name}
