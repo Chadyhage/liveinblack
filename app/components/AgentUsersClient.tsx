@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { X } from 'lucide-react'
-import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
 
 const PAGE_SIZE = 15
 
@@ -377,7 +377,7 @@ export default function AgentUsersClient() {
               variant="ghost"
               aria-label="Effacer la recherche"
               onClick={() => { setSearch(''); setPage(1) }}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, minHeight: 22, minWidth: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
               <X size={12} />
             </Button>
@@ -461,9 +461,7 @@ export default function AgentUsersClient() {
             ))}
           </div>
         ) : users.length === 0 ? (
-          <Card style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Aucun compte trouvé</p>
-          </Card>
+          <EmptyState title="Aucun compte trouvé" description="Aucun compte ne correspond aux filtres actuels." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pageItems.map((u) => {
@@ -813,19 +811,16 @@ function DetailPanel({
 
 function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-      <Card style={{ position: 'relative', maxWidth: 360, width: '90%', textAlign: 'center' }}>
-        <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
-            Annuler
-          </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
-            Confirmer
-          </Button>
-        </div>
-      </Card>
-    </div>
+    <Modal onClose={onCancel} maxWidth={360} hideClose contentStyle={{ textAlign: 'center' }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
+          Annuler
+        </Button>
+        <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
+          Confirmer
+        </Button>
+      </div>
+    </Modal>
   )
 }

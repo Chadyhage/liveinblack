@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronUp, ChevronDown, X } from 'lucide-react'
-import { Button, Card, Input, Switch } from '@/app/components/ui'
+import { Button, Card, Input, Switch, Skeleton } from '@/app/components/ui'
 
 // Port de src/components/ActualiteAdminPanel.jsx (#9 phase agent/admin, tab
 // 'actualite') — édition du carrousel « Actualité » de l'accueil : actif
@@ -193,8 +193,11 @@ export default function AgentHomepageConfigClient() {
     return (
       <main className="lb-dashboard-page">
         <div>
-          <Card style={{ padding: '28px 18px', textAlign: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Chargement de la configuration…</span>
+          <Card style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <Skeleton width="35%" height={16} />
+            <Skeleton width="100%" height={44} radius={10} />
+            <Skeleton width="100%" height={44} radius={10} />
+            <Skeleton width="60%" height={12} />
           </Card>
         </div>
       </main>
@@ -416,6 +419,8 @@ function IconBtn({ children, label, onClick, disabled, danger }: { children: Rea
       style={{
         width: 30,
         height: 30,
+        minHeight: 30,
+        minWidth: 30,
         borderRadius: 8,
         padding: 0,
         background: danger ? 'rgba(224,90,170,0.14)' : 'rgba(255,255,255,0.06)',

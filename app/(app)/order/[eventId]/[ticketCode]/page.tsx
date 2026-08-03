@@ -71,8 +71,8 @@ function GateScreen({
   variant?: 'error' | 'notice'
 }) {
   const accent = variant === 'notice' ? 'var(--gold)' : 'var(--pink)'
-  const accentBg = variant === 'notice' ? 'rgba(200,169,110,0.08)' : 'rgba(224,90,170,0.08)'
-  const accentBorder = variant === 'notice' ? 'rgba(200,169,110,0.35)' : 'rgba(224,90,170,0.35)'
+  const accentBg = variant === 'notice' ? 'rgba(184,243,74,0.08)' : 'rgba(224,90,170,0.08)'
+  const accentBorder = variant === 'notice' ? 'rgba(184,243,74,0.35)' : 'rgba(224,90,170,0.35)'
   return (
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', maxWidth: 360 }}>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Button, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
 import AgentBoostsClient from '@/app/components/AgentBoostsClient'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
@@ -450,10 +450,7 @@ function PayoutsSection({
 
   if (empty) {
     return (
-      <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
-        <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>Aucun reversement en attente</p>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Les soldes vendeurs non reversés automatiquement apparaîtront ici.</p>
-      </div>
+      <EmptyState title="Aucun reversement en attente" description="Les soldes vendeurs non reversés automatiquement apparaîtront ici." />
     )
   }
 
@@ -636,9 +633,7 @@ function RefundsSection({
         (Stripe) sont, eux, remboursés automatiquement.
       </p>
       {refunds.length === 0 ? (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Aucun remboursement mobile money en attente</p>
-        </div>
+        <EmptyState title="Aucun remboursement mobile money en attente" description="Les remboursements FedaPay à traiter manuellement apparaîtront ici." />
       ) : (
         pageItems.map((r) => (
           <div key={r.id} style={cardStyle}>
@@ -680,9 +675,7 @@ function AlertsSection({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.55 }}>Vérifie le paiement dans Stripe ou FedaPay avant de rembourser ou de clôturer l&apos;alerte.</p>
       {alerts.length === 0 ? (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: 32 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Aucune anomalie à traiter</p>
-        </div>
+        <EmptyState title="Aucune anomalie à traiter" description="Les paiements signalés comme anormaux apparaîtront ici." />
       ) : (
         pageItems.map((a) => (
           <div key={a.id} style={{ ...cardStyle, padding: 18, borderColor: 'rgba(224,90,170,0.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
@@ -745,20 +738,17 @@ function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAc
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
-      <div onClick={busy ? undefined : onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-      <div style={{ position: 'relative', ...cardStyle, maxWidth: 400, width: '100%', textAlign: 'center' }}>
-        <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>{title}</p>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.5 }}>{helper}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onCancel} disabled={busy} style={ghostBtn}>
-            Annuler
-          </Button>
-          <Button variant="primary" onClick={onConfirm} disabled={busy} loading={busy} loadingText="…" style={tealBtn}>
-            Confirmer
-          </Button>
-        </div>
+    <Modal onClose={busy ? () => {} : onCancel} maxWidth={400} hideClose contentStyle={{ textAlign: 'center' }}>
+      <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>{title}</p>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.5 }}>{helper}</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button variant="secondary" onClick={onCancel} disabled={busy} style={ghostBtn}>
+          Annuler
+        </Button>
+        <Button variant="primary" onClick={onConfirm} disabled={busy} loading={busy} loadingText="…" style={tealBtn}>
+          Confirmer
+        </Button>
       </div>
-    </div>
+    </Modal>
   )
 }

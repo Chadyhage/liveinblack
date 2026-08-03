@@ -42,7 +42,7 @@ export default function Modal({ onClose, children, maxWidth = 520, hideClose, co
             variant="ghost"
             onClick={onClose}
             aria-label="Fermer"
-            style={{ position: 'absolute', top: 12, right: 12, width: 34, height: 34, padding: 0, color: 'rgba(255,255,255,0.58)', lineHeight: 1 }}
+            style={{ position: 'absolute', top: 12, right: 12, width: 34, height: 34, minHeight: 34, minWidth: 34, padding: 0, color: 'rgba(255,255,255,0.58)', lineHeight: 1 }}
           >
             <X size={18} strokeWidth={1.8} aria-hidden="true" />
           </Button>

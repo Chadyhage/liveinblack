@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Button, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -144,9 +144,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
               {activeList.length === 0 ? (
-                <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
-                  <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
-                </div>
+                <EmptyState title="Aucun boost actif" description="Aucun événement n’a de boost en cours actuellement." />
               ) : (
                 <>
                   {pageItems.map((b) => <BoostCard key={b.id} b={b} />)}

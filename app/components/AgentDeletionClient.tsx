@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
 
 const PAGE_SIZE = 15
 
@@ -242,10 +242,10 @@ export default function AgentDeletionClient() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <Card style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{search ? 'Aucun résultat' : 'Aucune demande en attente'}</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{search ? `Aucune demande ne correspond à « ${search} ».` : 'Aucun compte n’a demandé sa suppression pour le moment.'}</p>
-          </Card>
+          <EmptyState
+            title={search ? 'Aucun résultat' : 'Aucune demande en attente'}
+            description={search ? `Aucune demande ne correspond à « ${search} ».` : 'Aucun compte n’a demandé sa suppression pour le moment.'}
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {pageItems.map((r) => (
@@ -447,35 +447,32 @@ function DetailPanel({
       </div>
 
       {confirmApprove && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => !actionBusy && setConfirmApprove(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.8)', backdropFilter: 'blur(8px)' }} />
-          <Card style={{ position: 'relative', maxWidth: 380, width: '90%', textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</p>
-            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
-              Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.
-            </p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button
-                variant="secondary"
-                onClick={() => setConfirmApprove(false)}
-                disabled={actionBusy}
-                style={{ flex: 1, borderRadius: 8, fontSize: 13 }}
-              >
-                Annuler
-              </Button>
-              <Button
-                variant="danger"
-                onClick={onApprove}
-                disabled={actionBusy}
-                loading={actionBusy}
-                loadingText="…"
-                style={{ flex: 1, borderRadius: 3, fontWeight: 500, background: '#c2347f', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
-              >
-                Confirmer la suppression
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <Modal onClose={() => !actionBusy && setConfirmApprove(false)} maxWidth={380} hideClose contentStyle={{ textAlign: 'center' }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</p>
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
+            Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmApprove(false)}
+              disabled={actionBusy}
+              style={{ flex: 1, borderRadius: 8, fontSize: 13 }}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={onApprove}
+              disabled={actionBusy}
+              loading={actionBusy}
+              loadingText="…"
+              style={{ flex: 1, borderRadius: 3, fontWeight: 500, background: '#c2347f', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+            >
+              Confirmer la suppression
+            </Button>
+          </div>
+        </Modal>
       )}
     </div>
   )

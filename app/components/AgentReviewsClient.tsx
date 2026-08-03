@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Input, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Button, Input, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -306,11 +306,7 @@ export default function AgentReviewsClient() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', margin: 0 }}>
-              {reviews.length === 0 ? 'Aucun avis pour le moment' : 'Aucun avis ne correspond aux filtres'}
-            </p>
-          </div>
+          <EmptyState title={reviews.length === 0 ? 'Aucun avis pour le moment' : 'Aucun avis ne correspond aux filtres'} />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {pageItems.map((review) => (

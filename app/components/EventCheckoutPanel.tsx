@@ -960,7 +960,7 @@ function SummaryRow({ label, value, accent, strong }: { label: string; value: st
 
 const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,.32)', background: 'rgba(184, 243, 74,.08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
 const modalBackdrop: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(8px)' }
-const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
+const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, minWidth: 36, minHeight: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
 const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
 const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }
@@ -976,6 +976,8 @@ function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onCli
       style={{
         width: 28,
         height: 28,
+        minWidth: 28,
+        minHeight: 28,
         borderRadius: 8,
         fontSize: 15,
         fontWeight: 700,
