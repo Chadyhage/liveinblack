@@ -110,7 +110,10 @@ export default async function EventDetailContent({
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 11, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '4px 10px', borderRadius: 999 }}>ANNULÉ</span>
           )}
-          <h1 className="font-display" style={{ fontSize: 'clamp(26px, 6vw, 44px)', margin: 0, letterSpacing: '.01em', textShadow: '0 2px 12px rgba(0,0,0,0.55)' }}>{event.name}</h1>
+          {/* Ombre resserrée (6px vs 12px) : un flou large sur une police
+              condensée à traits fins, posée sur une photo, se lisait comme un
+              double contour fantôme plutôt qu'une vraie ombre portée. */}
+          <h1 className="font-display" style={{ fontSize: 'clamp(26px, 6vw, 44px)', margin: 0, letterSpacing: '.01em', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{event.name}</h1>
           {event.subtitle && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '6px 0 0' }}>{event.subtitle}</p>}
           {event.tags?.length ? (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>

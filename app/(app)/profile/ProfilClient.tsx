@@ -73,10 +73,12 @@ function errorMessage(code: string, data?: { nextChangeAllowedAt?: string }): st
 // (auparavant généré par l'helper `primaryBtn`) — passé via la prop `style`
 // de <Button variant="primary">, qui gère déjà elle-même l'opacité/curseur
 // disabled et le spinner de chargement.
+// Ne PAS fixer `background`/`color` ici : un dégradé toujours plein posé
+// au-dessus du fond "désactivé" de <Button> (géré par variantStyle) rendait
+// les boutons "Enregistrer" ternes/olive tant qu'aucun champ n'était modifié,
+// au lieu du gris-vert clair et propre déjà prévu pour l'état disabled.
 const goldButtonStyle: React.CSSProperties = {
   borderRadius: 3,
-  background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
-  color: 'var(--primary-ink)',
   textTransform: 'none',
   letterSpacing: 'normal',
   fontWeight: 500,

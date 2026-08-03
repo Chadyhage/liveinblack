@@ -483,7 +483,7 @@ export default function AuthForm() {
         />
 
         {mode === 'login' && loginError && (
-          <div className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 13, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.5 }}>
+          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 13, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.5 }}>
             {loginError}
           </div>
         )}
@@ -513,7 +513,8 @@ export default function AuthForm() {
                 disabled={loginLoading}
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                invalid={loginError === 'Email ou mot de passe incorrect.'}
+                invalid={loginError === 'Email ou mot de passe incorrect.' || (loginError === 'Merci de renseigner ton email et ton mot de passe.' && !loginEmail.trim()) || loginError === 'Adresse email invalide.'}
+                aria-describedby={loginError ? 'login-error' : undefined}
               />
             </div>
             <div>
@@ -528,7 +529,8 @@ export default function AuthForm() {
                   disabled={loginLoading}
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  invalid={loginError === 'Email ou mot de passe incorrect.'}
+                  invalid={loginError === 'Email ou mot de passe incorrect.' || (loginError === 'Merci de renseigner ton email et ton mot de passe.' && !loginPassword)}
+                  aria-describedby={loginError ? 'login-error' : undefined}
                   style={{ paddingRight: 56 }}
                 />
                 <span className="lb-toggle-btn" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>

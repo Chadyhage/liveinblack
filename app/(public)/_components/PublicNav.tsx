@@ -105,11 +105,28 @@ function isCurrentPath(pathname: string, href: string) {
 // pour la sidebar : deux boutons "menu" empilés sur mobile (un pour les
 // liens publics, un pour le dashboard) était confus — un seul point d'entrée,
 // comme sur Facebook mobile.
+const PRIMARY_HREFS = ['/home', '/events', '/providers', '/organizers']
+
 export default function PublicNav({ dashboardLinks }: { dashboardLinks?: DashboardNavLink[] } = {}) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Entre 1100 et 1399px, les liens "primaires" sont déjà affichés inline
+  // (règle .lb-navlink-primary plus bas) : le tiroir ne doit alors proposer
+  // que ce qui manque (« C'est quoi »), jamais les répéter.
+  const [primaryLinksInline, setPrimaryLinksInline] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1100px)').matches
+  )
   const pathname = usePathname()
   const onLoginPage = pathname === '/login'
   const { data: session, status } = useSession()
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1100px)')
+    function handleChange(event: MediaQueryListEvent) {
+      setPrimaryLinksInline(event.matches)
+    }
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -301,7 +318,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               </p>
             </>
           )}
-          {NAV_LINKS.map((link) => {
+          {NAV_LINKS.filter((link) => !primaryLinksInline || !PRIMARY_HREFS.includes(link.href)).map((link) => {
             const active = isCurrentPath(pathname, link.href)
             return (
               <Link

@@ -30,6 +30,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         disabled={disabled}
+        aria-invalid={invalid || undefined}
         onFocus={(e) => {
           setFocused(true)
           onFocus?.(e)

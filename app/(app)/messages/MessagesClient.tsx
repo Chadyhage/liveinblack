@@ -1553,6 +1553,14 @@ export default function MessagesClient({
                 </Button>
               )
             })}
+            {/* Avec 1-2 conversations, la zone flex:1 laisse un grand vide noir
+                sous la liste (surtout mobile plein écran) — un indice discret
+                comble l'espace au lieu d'un fond nu. */}
+            {conversations.length > 0 && conversations.length <= 2 && filteredConversations.length === conversations.length && (
+              <div style={{ marginTop: 18, padding: '18px 14px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 12.5, lineHeight: 1.6 }}>
+                <p style={{ margin: 0 }}>Envoie un message à un organisateur ou un prestataire pour démarrer une nouvelle discussion.</p>
+              </div>
+            )}
           </div>
           {convPageCount > 1 && (
             <div style={{ padding: '4px 12px 10px' }}>

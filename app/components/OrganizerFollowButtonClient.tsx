@@ -12,7 +12,11 @@ import { Button } from '@/app/components/ui'
 // cette façon (voir le lien "Se connecter pour réserver" de
 // app/(public)/evenements/[id]/page.tsx).
 
-export type FollowAppearance = 'default' | 'premium'
+// 'outline' : utilisé quand ce bouton est affiché juste à côté d'une action
+// principale déjà pleine (ex. « Envoyer un message » sur la fiche
+// organisateur) — deux pills pleines vert vif de même poids visuel côte à
+// côte laissaient croire aux deux actions d'être équivalentes.
+export type FollowAppearance = 'default' | 'premium' | 'outline'
 
 export default function OrganizerFollowButtonClient({
   organizerId,
@@ -123,7 +127,9 @@ export default function OrganizerFollowButtonClient({
     ? { ...base, background: 'rgba(184, 243, 74,0.12)', border: '1px solid rgba(184, 243, 74,0.35)', color: 'var(--primary)' }
     : appearance === 'premium'
       ? { ...base, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)' }
-      : { ...base, background: 'var(--primary)', color: 'var(--primary-ink)' }
+      : appearance === 'outline'
+        ? { ...base, background: 'transparent', border: '1px solid rgba(184, 243, 74,.55)', color: 'var(--text)' }
+        : { ...base, background: 'var(--primary)', color: 'var(--primary-ink)' }
 
   return (
     <div ref={rootRef} style={{ position: 'relative', display: 'inline-block' }}>

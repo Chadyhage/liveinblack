@@ -39,7 +39,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
   const router = useRouter()
   const missingParams = !sessionId || !boostId
   const [state, setState] = useState<State>(missingParams ? 'error' : 'loading')
-  const [errorMsg, setErrorMsg] = useState(missingParams ? 'Paramètres de session manquants.' : '')
+  const [errorMsg, setErrorMsg] = useState(missingParams ? 'Impossible de retrouver cette activation de boost. Réessaie depuis la page de ton événement.' : '')
   const [boostInfo, setBoostInfo] = useState<BoostInfo | null>(null)
 
   useEffect(() => {
