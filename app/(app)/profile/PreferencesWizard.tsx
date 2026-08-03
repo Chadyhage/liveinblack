@@ -255,7 +255,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 variant="ghost"
                 onClick={() => remove(v)}
                 aria-label={`Retirer ${v}`}
-                style={{ width: 18, height: 18, padding: 0, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1 }}
+                style={{ width: 18, height: 18, minHeight: 18, minWidth: 18, padding: 0, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1 }}
               >
                 ×
               </Button>

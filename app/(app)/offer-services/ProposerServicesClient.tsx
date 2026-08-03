@@ -1035,7 +1035,7 @@ export default function ProposerServicesClient({
                             ) : (
                               <NextImage src={f.url} alt="" fill unoptimized style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                             )}
-                            <Button variant="ghost" onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
+                            <Button variant="ghost" onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, minHeight: 32, minWidth: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
                               ×
                             </Button>
                           </div>
@@ -1125,7 +1125,7 @@ export default function ProposerServicesClient({
                                   ) : (
                                     <NextImage src={m.url} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                                   )}
-                                  <Button variant="ghost" onClick={() => void removeOfferMedia(item.id, i)} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
+                                  <Button variant="ghost" onClick={() => void removeOfferMedia(item.id, i)} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, minHeight: 32, minWidth: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
                                     ×
                                   </Button>
                                 </div>

@@ -1841,7 +1841,7 @@ export default function MessagesClient({
                       <Button
                         variant="primary"
                         onClick={() => stopRecording(true)}
-                        style={{ borderRadius: '50%', width: 34, height: 34, padding: 0 }}
+                        style={{ borderRadius: '50%', width: 34, height: 34, minHeight: 34, minWidth: 34, padding: 0 }}
                         aria-label="Envoyer"
                       >
                         <Check size={18} />
@@ -2776,7 +2776,7 @@ function VoiceBubble({ content }: { content: string | null }) {
       <Button
         variant="ghost"
         onClick={handlePlay}
-        style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
+        style={{ width: 30, height: 30, minHeight: 30, minWidth: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
       >
         {playing ? <Pause size={14} /> : <Play size={14} />}
       </Button>

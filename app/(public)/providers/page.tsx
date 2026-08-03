@@ -8,7 +8,7 @@ import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoTex
 import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, EmptyState, Input, PageLinks, pageSlice } from '@/app/components/ui'
 
 const PAGE_SIZE = 24
 
@@ -120,7 +120,10 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       </div>
 
       {filtered.length === 0 ? (
-        <p style={{ color: 'var(--text-muted)' }}>Aucun prestataire ne correspond à ta recherche.</p>
+        <EmptyState
+          title="Aucun prestataire ne correspond à ta recherche"
+          description="Essaie d'élargir ta recherche, de changer de région ou de catégorie."
+        />
       ) : (
         <div className="provider-directory__grid">
           {paged.map((p) => {

@@ -8,7 +8,7 @@ import {
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import EventListCard from '../_components/EventListCard'
-import { Button, Input } from '@/app/components/ui'
+import { Button, EmptyState, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'Recherche — LIVEINBLACK',
@@ -100,15 +100,18 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           </div>
         </div>
       ) : totalResults === 0 ? (
-        <div>
-          <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
-          <Link
-            href="/events"
-            style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
-          >
-            Parcourir les événements
-          </Link>
-        </div>
+        <EmptyState
+          title={`Aucun résultat pour « ${query} »`}
+          description="Essaie un autre mot-clé, ou parcours les événements du moment."
+          action={
+            <Link
+              href="/events"
+              style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
+            >
+              Parcourir les événements
+            </Link>
+          }
+        />
       ) : (
         <>
           {matchedEvents.length > 0 && (

@@ -14,7 +14,7 @@ import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Checkbox, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, Checkbox, EmptyState, Input, PageLinks, pageSlice } from '@/app/components/ui'
 
 const PAGE_SIZE = 20
 
@@ -159,10 +159,11 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
         </p>
 
         {filtered.length === 0 ? (
-          <div style={{ maxWidth: 520, margin: '0 auto', padding: 38, textAlign: 'center', border: '1px solid var(--border)', borderRadius: 18, background: 'var(--surface)' }}>
-            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Aucun organisateur ne correspond à ces critères.</p>
-            <Link href="/organizers" style={{ display: 'inline-block', marginTop: 14, color: 'var(--teal)', fontWeight: 700 }}>Effacer les filtres</Link>
-          </div>
+          <EmptyState
+            title="Aucun organisateur ne correspond à ces critères"
+            description="Essaie d'élargir ta recherche ou d'effacer les filtres."
+            action={<Link href="/organizers" style={{ display: 'inline-block', color: 'var(--teal)', fontWeight: 700 }}>Effacer les filtres</Link>}
+          />
         ) : (
           <div className="organizer-directory__grid">
             {paged.map((organizer) => {
