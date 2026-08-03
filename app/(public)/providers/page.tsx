@@ -74,7 +74,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
         .provider-directory__grid:has(>.lb-card:only-child){grid-template-columns:minmax(min(100%,360px),560px)}
         @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{grid-template-columns:1fr}.provider-directory__filters button{width:100%;min-height:44px}.provider-directory__grid{grid-template-columns:1fr}}
       `}</style>
-      <div style={{ maxWidth: 1480, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1800, margin: '0 auto' }}>
       <header className="lb-directory-hero">
         <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
         <h1 className="font-display" style={{ fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em', margin: '10px 0 0' }}>Les prestataires qui font<br /><span style={{ color: 'var(--gold)' }}>vivre la nuit.</span></h1>

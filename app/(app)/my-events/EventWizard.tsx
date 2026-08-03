@@ -860,7 +860,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ maxWidth: 1320, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
         <Spinner size={22} />
       </main>
     )

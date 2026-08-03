@@ -60,7 +60,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
   const totalResults = matchedEvents.length + matchedOrganizers.length + matchedProviders.length
 
   return (
-    <main className="lb-page-shell" style={{ padding: '52px clamp(20px, 3vw, 48px) 88px', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+    <main className="lb-page-shell" style={{ padding: '52px clamp(20px, 3vw, 48px) 88px', maxWidth: 1800, margin: '0 auto', width: '100%' }}>
       <section className="lb-directory-intro" style={{ marginBottom: 36 }}>
       <h1 className="font-display" style={{ fontSize: 'clamp(36px, 6vw, 64px)', letterSpacing: '.01em', margin: 0 }}>Tout LIVEINBLACK, en une recherche.</h1>
       <p style={{ color: 'var(--text-muted)', maxWidth: 680, margin: '12px 0 24px', fontSize: 15 }}>Retrouve en même temps les événements, les organisateurs et les prestataires.</p>

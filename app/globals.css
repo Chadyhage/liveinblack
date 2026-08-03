@@ -221,14 +221,14 @@ textarea::placeholder {
 
 .lb-dashboard-page {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1600px;
   min-height: calc(100vh - 170px);
   margin: 0 auto;
   padding: 0 0 72px;
 }
 
 .lb-dashboard-page--medium {
-  max-width: 1120px;
+  max-width: 1320px;
 }
 
 .lb-dashboard-page--narrow {

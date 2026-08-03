@@ -81,7 +81,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <PageShell maxWidth={1480}>
+    <PageShell maxWidth={1800}>
       <div style={{ marginBottom: 36, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
         <SectionHeader eyebrow="La programmation" title="Événements" description="Découvre les prochaines expériences, soirées et rendez-vous près de chez toi." compact />
         <form action="/events" method="get" style={{ display: 'flex', gap: 10, minWidth: 0, flex: '1 1 320px', maxWidth: 460 }}>

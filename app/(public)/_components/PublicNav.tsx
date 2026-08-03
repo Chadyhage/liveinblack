@@ -346,7 +346,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
       <style>{`
         .lb-public-nav__inner {
           width: 100%;
-          max-width: 1560px;
+          max-width: 1800px;
           min-height: 64px;
           margin: 0 auto;
           padding: 0 28px;

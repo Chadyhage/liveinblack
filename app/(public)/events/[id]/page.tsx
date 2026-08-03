@@ -39,7 +39,7 @@ export default async function EventDetailPage({
   const { paiement } = await searchParams
 
   return (
-    <main style={{ maxWidth: 1180, margin: '0 auto', padding: '12px clamp(14px, 3vw, 42px) 80px', width: '100%' }}>
+    <main style={{ maxWidth: 1320, margin: '0 auto', padding: '12px clamp(14px, 3vw, 42px) 80px', width: '100%' }}>
       <EventDetailContent id={id} paiement={paiement} />
     </main>
   )

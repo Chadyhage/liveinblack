@@ -86,7 +86,7 @@ export default function CookieConsentBanner() {
         }
 
         .cc-inner {
-          max-width: 1480px;
+          max-width: 1800px;
           margin: 0 auto;
           display: flex;
           align-items: center;

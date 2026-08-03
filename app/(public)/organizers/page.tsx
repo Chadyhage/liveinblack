@@ -88,7 +88,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
     <main className="organizer-directory">
       <style>{`
         .organizer-directory{width:100%;min-height:100vh;padding:56px clamp(20px,3vw,48px) 88px}
-        .organizer-directory__wrap{max-width:1480px;margin:0 auto}
+        .organizer-directory__wrap{max-width:1800px;margin:0 auto}
         .organizer-directory__filters{display:grid;grid-template-columns:minmax(300px,1.7fr) minmax(190px,.75fr) minmax(190px,.75fr) auto auto;gap:10px;align-items:center;margin:0 0 42px}
         .organizer-directory__field{min-width:0;padding:11px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13px}
         .organizer-directory__check{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-muted);white-space:nowrap}

@@ -32,7 +32,7 @@ export default function Footer() {
         padding: '24px clamp(20px, 3vw, 48px)',
       }}
     >
-      <div style={{ maxWidth: 1480, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ maxWidth: 1800, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
       <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
         {LEGAL_LINKS.map((link) => (
           <Link key={link.href} href={link.href} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>

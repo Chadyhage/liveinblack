@@ -758,7 +758,7 @@ export default function ProposerServicesClient({
     <>
       <style>{`
         @keyframes lib-spin { to { transform: rotate(360deg) } }
-        .provider-workspace{max-width:1280px;margin:0 auto;padding:0 0 110px}
+        .provider-workspace{max-width:1600px;margin:0 auto;padding:0 0 110px}
         .provider-workspace-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
         .provider-profile-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:16px}
         .provider-fields-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
