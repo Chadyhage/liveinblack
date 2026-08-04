@@ -289,7 +289,7 @@ export default function PrestataireOnboardingWizard({
 
   return (
     <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 680, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 860, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Prestataire</h1>
@@ -329,7 +329,7 @@ export default function PrestataireOnboardingWizard({
                 />
                 <Input style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 14 }}>
                 <div>
                   <Label style={labelStyle}>Ville</Label>
                   <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
@@ -347,7 +347,7 @@ export default function PrestataireOnboardingWizard({
               {mode === 'anonymous' && (
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 14 }}>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <Label style={labelStyle}>Adresse e-mail (identifiant de connexion)</Label>
                       <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />

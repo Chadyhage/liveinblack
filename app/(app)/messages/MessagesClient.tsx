@@ -4,7 +4,7 @@ import NextImage from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import {
   Camera,
-  Pencil,
+  Plus,
   MessageCircle,
   Search,
   Pin,
@@ -811,6 +811,29 @@ export default function MessagesClient({
     refreshConversations()
   }
 
+  // Partage DIRECT d'un événement (carte cliquable, EventCard) — distinct de
+  // handleCreateEventPoll ci-dessus (sondage "On y va ?"). Avant ce correctif,
+  // "Partager un événement" ne menait QU'au sondage : aucun chemin serveur
+  // n'existait pour un message de type 'event' (voir SENDABLE_TYPES,
+  // lib/server/messaging.ts) — d'où le retour client "le partage
+  // d'événements ne marche pas".
+  async function handleShareEvent(eventId: string) {
+    if (!activeId) return
+    const res = await apiFetch<{ message: MessageView }>(`/api/conversations/${activeId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'event', content: '', eventId, replyToMessageId: replyTo?.id ?? undefined }),
+    })
+    if (!res.ok) {
+      pushToast(errorMessageFor(res.error))
+      return
+    }
+    setMessages((prev) => [...prev, res.data.message])
+    setReplyTo(null)
+    setShowEventPicker(false)
+    refreshConversations()
+  }
+
   // ─── Supprimer / marquer important / transférer ───
   async function handleDeleteForMe(messageId: string) {
     const res = await apiFetch(`/api/messages/${messageId}/delete`, {
@@ -987,7 +1010,16 @@ export default function MessagesClient({
         setRecordDuration(0)
         setIsRecording(false)
         if (shouldSendRef.current && audioChunksRef.current.length > 0) {
-          const actualMime = mr.mimeType || 'audio/webm'
+          // `MediaRecorder.mimeType` renvoie souvent le type AVEC ses
+          // paramètres codec (ex. "audio/webm;codecs=opus"). Si on garde ce
+          // type tel quel sur le Blob, le data URL produit ci-dessous devient
+          // "data:audio/webm;codecs=opus;base64,...", que le regex de
+          // validateDataUri (lib/server/cloudinary.ts, format strict
+          // "data:<mime>;base64,...") ne matche PLUS — l'upload échoue donc
+          // systématiquement en 'invalid_data_uri' et la note vocale n'est
+          // jamais envoyée. On ne garde que le type de base (avant le premier
+          // ';') pour rester compatible avec AUDIO_MIME_TYPES côté serveur.
+          const actualMime = (mr.mimeType || 'audio/webm').split(';')[0].trim() || 'audio/webm'
           const blob = new Blob(audioChunksRef.current, { type: actualMime })
           const dataUrl = await new Promise<string>((resolve) => {
             const reader = new FileReader()
@@ -1409,6 +1441,7 @@ export default function MessagesClient({
             flexDirection: 'column',
             height: '100%',
             overflow: 'hidden',
+            position: 'relative',
           }}
         >
           <div style={{ padding: '18px 16px 12px' }}>
@@ -1425,9 +1458,6 @@ export default function MessagesClient({
                 />
                 <IconButton title="Envoyer une photo" onClick={() => cameraFileInputRef.current?.click()}>
                   <Camera size={16} />
-                </IconButton>
-                <IconButton title="Nouvelle discussion" onClick={() => setPanel('newDirect')}>
-                  {received.length > 0 && <Badge count={received.length} />}<Pencil size={16} />
                 </IconButton>
                 <IconButton title="Menu" onClick={() => setShowListMenu((v) => !v)}>
                   ⋮
@@ -1568,6 +1598,36 @@ export default function MessagesClient({
               <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={filteredConversations.length} pageSize={CONV_PAGE_SIZE} />
             </div>
           )}
+          {/* Bouton flottant "+" (convention WhatsApp Web) — remplace l'ancienne
+              icône crayon "Nouvelle discussion" jugée peu lisible par le
+              client. Ouvre le même NewDirectModal (liste d'amis + recherche
+              par nom/email), inchangé sur le fond. */}
+          <button
+            type="button"
+            title="Nouvelle discussion"
+            aria-label="Nouvelle discussion"
+            onClick={() => setPanel('newDirect')}
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              right: 20,
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'var(--teal-solid)',
+              color: '#04120e',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+              cursor: 'pointer',
+              zIndex: 20,
+            }}
+          >
+            {received.length > 0 && <Badge count={received.length} />}
+            <Plus size={24} strokeWidth={2.4} />
+          </button>
         </aside>
       )}
 
@@ -2122,7 +2182,9 @@ export default function MessagesClient({
 
       {pollDraft && <PollDraftModal draft={pollDraft} onChange={setPollDraft} onSubmit={handleCreatePoll} onClose={() => setPollDraft(null)} />}
 
-      {showEventPicker && <EventPickerModal onPick={handleCreateEventPoll} onClose={() => setShowEventPicker(false)} />}
+      {showEventPicker && (
+        <EventPickerModal onShare={handleShareEvent} onPoll={handleCreateEventPoll} onClose={() => setShowEventPicker(false)} />
+      )}
 
       {photoPreview && (
         <ModalShell title="Envoyer la photo" onClose={() => setPhotoPreview(null)}>
@@ -3106,17 +3168,40 @@ function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () 
 }
 
 function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
+  // Transition d'ouverture calquée sur la convention déjà posée par
+  // EventShareButton.tsx (opacity + scale, ~180ms, piloté par un état
+  // "visible" basculé au prochain frame après montage — pas de lib
+  // d'animation dans ce repo). ModalShell est le composant partagé par TOUS
+  // les modals de ce fichier (photo, sondage, événement, nouvelle
+  // discussion, groupe, etc.) : cette seule transition couvre donc "modale
+  // animée" pour l'ensemble d'entre eux d'un coup.
+  const [visible, setVisible] = useState(false)
   useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true))
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [onClose])
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 200,
+        padding: 16,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity .18s ease',
+      }}
       onClick={onClose}
     >
       <div
@@ -3131,6 +3216,9 @@ function ModalShell({ title, onClose, wide, children }: { title: string; onClose
           maxHeight: '82vh',
           overflowY: 'auto',
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'scale(1)' : 'scale(0.96)',
+          transition: 'opacity .18s ease, transform .18s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
@@ -3914,11 +4002,22 @@ interface EventSearchResult {
   image: string | null
 }
 
-// "Partager un événement" (attach menu) → sondage 'On y va ?' via POST
-// /api/conversations/[id]/polls kind:'event_poll' (createEventPoll,
-// lib/server/polls.ts recharge de toute façon l'Event complet, jamais depuis
-// ce qui est affiché ici). Recherche débouncée sur GET /api/events/search.
-function EventPickerModal({ onPick, onClose }: { onPick: (eventId: string) => void; onClose: () => void }) {
+// "Partager un événement" (attach menu) → deux actions possibles par
+// résultat : partage direct (message 'event', EventCard cliquable — voir
+// handleShareEvent) ou sondage "On y va ?" (kind:'event_poll' via POST
+// /api/conversations/[id]/polls, handleCreateEventPoll). Dans les deux cas,
+// lib/server/{messaging,polls}.ts recharge l'Event complet depuis Mongo,
+// jamais depuis ce qui est affiché ici. Recherche débouncée sur GET
+// /api/events/search.
+function EventPickerModal({
+  onShare,
+  onPoll,
+  onClose,
+}: {
+  onShare: (eventId: string) => void
+  onPoll: (eventId: string) => void
+  onClose: () => void
+}) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<EventSearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -3949,19 +4048,27 @@ function EventPickerModal({ onPick, onClose }: { onPick: (eventId: string) => vo
           <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun événement trouvé.</p>
         )}
         {visibleResults.map((ev) => (
-          <Button key={ev.id} variant="ghost" onClick={() => onPick(ev.id)} style={{ ...rowButtonStyle, alignItems: 'center', fontWeight: 400 }}>
+          <div key={ev.id} style={{ ...rowButtonStyle, alignItems: 'center', display: 'flex', gap: 10 }}>
             <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)' }}>
               {ev.image && (
                 <NextImage src={ev.image} alt="" width={44} height={44} style={{ objectFit: 'cover' }} />
               )}
             </div>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ev.name}
               </p>
               <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>{[ev.date, ev.city].filter(Boolean).join(' · ')}</p>
             </div>
-          </Button>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <Button variant="secondary" size="sm" onClick={() => onShare(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                Partager
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => onPoll(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                Sondage
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
     </ModalShell>

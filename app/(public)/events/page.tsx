@@ -83,18 +83,25 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   return (
     <PageShell maxWidth={1800}>
       <div style={{ marginBottom: 36, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
-        <SectionHeader eyebrow="La programmation" title="Événements" description="Découvre les prochaines expériences, soirées et rendez-vous près de chez toi." compact />
-        <form action="/events" method="get" style={{ display: 'flex', gap: 10, minWidth: 0, flex: '1 1 320px', maxWidth: 460 }}>
+        <form action="/events" method="get" style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0, flex: '1 1 320px', maxWidth: 460 }}>
           <Input
             type="search"
             name="q"
             defaultValue={search}
             placeholder="Nom, ville, artiste, style…"
             aria-label="Rechercher un événement"
-            style={{ flex: 1, minWidth: 0, minHeight: 48 }}
+            style={{ width: '100%', minHeight: 48, borderRadius: 999, paddingRight: 48 }}
           />
-          <IconButton type="submit" label="Rechercher" icon={<Search size={18} strokeWidth={2} aria-hidden="true" />} tone="accent" size={48} />
+          <IconButton
+            type="submit"
+            label="Rechercher"
+            icon={<Search size={17} strokeWidth={2} aria-hidden="true" />}
+            tone="accent"
+            size={38}
+            style={{ position: 'absolute', right: 5, borderRadius: '50%' }}
+          />
         </form>
+        <SectionHeader eyebrow="La programmation" title="Événements" description="Découvre les prochaines expériences, soirées et rendez-vous près de chez toi." compact />
       </div>
 
       {search ? (

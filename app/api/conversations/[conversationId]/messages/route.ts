@@ -11,7 +11,7 @@ import { canOrderServices } from '@/lib/server/permissions'
 // 'catalog_item' l'appartenance réelle de `catalogItemId` au catalogue du
 // destinataire) vit entièrement côté serveur (sendMessage).
 const bodySchema = z.object({
-  type: z.enum(['text', 'image', 'voice', 'catalog_item']),
+  type: z.enum(['text', 'image', 'voice', 'catalog_item', 'event']),
   content: z.string(),
   // Encodée en base64 — présente pour un envoi photo/vocal depuis le
   // composeur (upload Cloudinary fait SERVEUR, voir sendMessage). Absente si
@@ -21,6 +21,8 @@ const bodySchema = z.object({
   // 'catalog_item' UNIQUEMENT : `content` est ignoré côté serveur pour ce
   // type, le payload réel est reconstruit depuis ce seul id — voir sendMessage.
   catalogItemId: z.string().min(1).optional(),
+  // 'event' UNIQUEMENT : même principe, voir sendMessage.
+  eventId: z.string().min(1).optional(),
 })
 
 export async function GET(req: Request, { params }: { params: Promise<{ conversationId: string }> }) {

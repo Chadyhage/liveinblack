@@ -9,7 +9,7 @@ import Image from 'next/image'
 // largeur — un seul endroit à maintenir pour ce comportement responsive.
 const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1400&q=80'
 
-export default function AuthSplitLayout({ children, tagline }: { children: ReactNode; tagline?: ReactNode }) {
+export default function AuthSplitLayout({ children, tagline, heroImage }: { children: ReactNode; tagline?: ReactNode; heroImage?: string }) {
   return (
     <main className="lb-auth-split" style={{ flex: 1, display: 'flex', minHeight: 'calc(100dvh - 64px)' }}>
       <style>{`
@@ -19,7 +19,7 @@ export default function AuthSplitLayout({ children, tagline }: { children: React
         }
       `}</style>
       <div className="lb-auth-split__visual" style={{ flex: '1 1 46%', position: 'relative', overflow: 'hidden' }}>
-        <Image src={HERO_IMG} alt="" fill priority sizes="50vw" style={{ objectFit: 'cover' }} />
+        <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="50vw" style={{ objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.15) 0%, rgba(4,4,11,0.55) 75%, rgba(4,4,11,0.85) 100%)' }} />
         {tagline && (
           <div style={{ position: 'absolute', left: 44, bottom: 48, right: 44 }}>

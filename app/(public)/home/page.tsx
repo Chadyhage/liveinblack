@@ -19,6 +19,7 @@ import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shar
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import HomeAmbienceButton from './HomeAmbienceButton'
 import HomeGreeting from './HomeGreeting'
+import HeroScrollIndicator from './HeroScrollIndicator'
 import { SectionHeader } from '@/app/components/ui'
 
 export const metadata: Metadata = {
@@ -118,7 +119,14 @@ export default async function AccueilPage() {
         }
       `}</style>
       {/* HERO */}
-      <section style={{ position: 'relative', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', textAlign: 'center' }}>
+      {/* minHeight en 100dvh (pas 85vh) + background sur la section elle-même :
+          à 85vh, l'image de fond (position absolute inset:0 = calée sur la
+          hauteur de la section) s'arrêtait avant le bas du viewport, laissant
+          apparaître un bandeau de fond nu avant la section suivante (retour
+          client). 100dvh gère aussi la barre d'adresse mobile (100vh classique
+          déborde sous Safari iOS) ; background sur la section évite tout flash
+          de fond par défaut pendant le chargement de l'image. */}
+      <section id="home-hero" style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', textAlign: 'center', background: 'var(--obsidian)', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${HERO_IMG})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.32 }} />
         <div
           style={{
@@ -153,6 +161,7 @@ export default async function AccueilPage() {
           </p>
           <HomeAmbienceButton />
         </div>
+        <HeroScrollIndicator targetId="home-next-section" />
       </section>
 
       {session?.user && topThree.length > 0 && (
@@ -404,6 +413,13 @@ export default async function AccueilPage() {
 function HomeEventCard({ event, badge, boosted = false, reason }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string }) {
   const prices = (event.places || []).map((place) => Number(place.price)).filter((price) => Number.isFinite(price) && price >= 0)
   const minPrice = prices.length ? Math.min(...prices) : null
+  // Cartes du "Top 3 du classement" (badge 01/02/03) avec des tailles de
+  // texte plus grandes que les autres grilles d'événements de la home —
+  // retour client : titres/labels du classement trop petits pour du contenu
+  // mis en avant. Le titre à 22px reste cohérent avec la hiérarchie du
+  // reste de la home (proche des 20-22px utilisés pour les titres de carte
+  // prestataires/section juste en dessous).
+  const isRanking = Boolean(badge)
   return (
     <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
       <div style={{ position: 'relative', aspectRatio: '16/9', background: `radial-gradient(circle at 25% 10%,${event.color || '#8444ff'}55,transparent 58%),var(--surface-2)` }}>
@@ -416,17 +432,17 @@ function HomeEventCard({ event, badge, boosted = false, reason }: { event: Publi
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
         {badge ? (
-          <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 26, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
+          <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 30, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
         ) : (
           <DateBadge dateISO={event.date} />
         )}
-        {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: 9.5, fontWeight: 900 }}>À LA UNE</span>}
+        {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: isRanking ? 10.5 : 9.5, fontWeight: 900 }}>À LA UNE</span>}
         {reason && <span style={{ position: 'absolute', left: 10, bottom: 10, maxWidth: 'calc(100% - 20px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '5px 9px', fontSize: 10.5, fontWeight: 700 }}>{reason}</span>}
       </div>
       <div style={{ minHeight: 138, padding: '20px 20px 22px', display: 'flex', flexDirection: 'column' }}>
-        <p style={{ margin: 0, color: '#fff', fontSize: 19, lineHeight: 1.22, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
-        <p style={{ margin: '9px 0 0', color: 'var(--text-muted)', fontSize: 14 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
-        <p style={{ margin: 'auto 0 0', paddingTop: 14, color: 'var(--gold)', fontSize: 13.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
+        <p style={{ margin: 0, color: '#fff', fontSize: isRanking ? 22 : 19, lineHeight: 1.22, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
+        <p style={{ margin: '9px 0 0', color: 'var(--text-muted)', fontSize: isRanking ? 15.5 : 14 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+        <p style={{ margin: 'auto 0 0', paddingTop: 14, color: 'var(--gold)', fontSize: isRanking ? 15 : 13.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
       </div>
     </Link>
   )

@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getMyApplication } from '@/lib/server/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
+
+// Photo distincte du visuel par défaut (login) — ambiance service/prestation
+// pour l'inscription prestataire, id issu du set vetted de lib/shared/placeholderImage.ts.
+const HERO_IMG = 'https://images.unsplash.com/photo-1522158637959-30385a09e0da?auto=format&fit=crop&w=1400&q=80'
 import PrestataireOnboardingWizard from '@/app/components/PrestataireOnboardingWizard'
 
 // Route unique "Devenir prestataire" — publique (mode anonyme, pas de
@@ -22,7 +26,7 @@ export default async function InscriptionPrestatairePage() {
     if (application && LOCKED_STATUSES.includes(application.status)) redirect('/my-application')
 
     return (
-      <AuthSplitLayout>
+      <AuthSplitLayout heroImage={HERO_IMG}>
         <PrestataireOnboardingWizard mode="loggedIn" initialFormData={application?.formData} initialCandidateNote={application?.candidateNote} />
       </AuthSplitLayout>
     )
@@ -30,6 +34,7 @@ export default async function InscriptionPrestatairePage() {
 
   return (
     <AuthSplitLayout
+      heroImage={HERO_IMG}
       tagline={
         <>
           DJ, SALLE, TRAITEUR…

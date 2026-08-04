@@ -52,7 +52,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
     >
       {/* Filigrane discret, harmonisé avec l'univers sombre du produit. */}
       <FiligraneRoseBg />
-      <div style={{ maxWidth: 980, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: 1440, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
           <LegalBackButton />

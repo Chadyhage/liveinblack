@@ -53,12 +53,12 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
 
   return (
     <>
-      <div style={{ padding: '18px 0 0' }}>
+      <div style={{ padding: '28px 22px 0' }}>
         <Link href="/providers" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 230, margin: '18px 0 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(184,243,74,.18))' }}>
+      <div style={{ position: 'relative', height: 230, margin: '18px 0 0', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(184,243,74,.18))' }}>
         <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
       </div>
 
@@ -82,44 +82,46 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
           ))}
         </div>
 
-        {provider.description && (
-          <Section title="À propos">
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{provider.description}</p>
-          </Section>
-        )}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'start' }}>
+          {provider.description && (
+            <Section title="À propos">
+              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{provider.description}</p>
+            </Section>
+          )}
 
-        {socialEntries.length > 0 && (
-          <Section title="Réseaux">
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {socialEntries.map(([key, value]) => (
-                <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--primary)', textDecoration: 'none', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 999, padding: '8px 14px' }}>
-                  {SOCIAL_LABELS[key] || key}
-                </a>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        <Section title="Coordonnées">
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>
-            {[provider.city || provider.location, provider.country].filter(Boolean).join(', ')}
-          </p>
-          {provider.zonesIntervention?.length ? (
-            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
-              Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
+          <Section title="Coordonnées">
+            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>
+              {[provider.city || provider.location, provider.country].filter(Boolean).join(', ')}
             </p>
-          ) : null}
-          {websiteUrl && (
-            <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, fontSize: 13, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
-              {provider.website}
-            </a>
+            {provider.zonesIntervention?.length ? (
+              <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
+                Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
+              </p>
+            ) : null}
+            {websiteUrl && (
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, fontSize: 13, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
+                {provider.website}
+              </a>
+            )}
+            {provider.phone && (
+              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+                {provider.phone}
+              </a>
+            )}
+          </Section>
+
+          {socialEntries.length > 0 && (
+            <Section title="Réseaux">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {socialEntries.map(([key, value]) => (
+                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--primary)', textDecoration: 'none', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 999, padding: '8px 14px' }}>
+                    {SOCIAL_LABELS[key] || key}
+                  </a>
+                ))}
+              </div>
+            </Section>
           )}
-          {provider.phone && (
-            <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
-              {provider.phone}
-            </a>
-          )}
-        </Section>
+        </div>
 
         {visibleCatalog.length > 0 && (
           <Section title="Catalogue">

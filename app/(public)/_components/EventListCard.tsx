@@ -66,7 +66,7 @@ export default function EventListCard({ event, reason, eager = false }: { event:
         {(stock || reason) && (
           <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
             {stock ? (
-              <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, color: '#fff', background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
+              <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, color: stock.ink, background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
                 {stock.label}
               </span>
             ) : (

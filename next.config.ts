@@ -93,6 +93,15 @@ const nextConfig: NextConfig = {
       { source: '/mes-soirees', destination: '/my-shifts', permanent: true },
       { source: '/scanner', destination: '/my-shifts', permanent: true },
       { source: '/agent/organisateurs', destination: '/agent', permanent: true },
+      // /admin n'est pas un second espace : l'espace agent (guard
+      // `requireAgent`, voir AGENTS.md) couvre déjà 100% de la gestion
+      // plateforme (comptes, événements, dossiers, paiements/boosts,
+      // suppressions, signalements, avis, actualité). Plutôt que de
+      // dupliquer cette surface sous /admin, on aliase l'URL demandée par
+      // le client vers l'espace existant — même redirection permanente que
+      // les autres alias de route ci-dessus.
+      { source: '/admin', destination: '/agent', permanent: true },
+      { source: '/admin/:path*', destination: '/agent/:path*', permanent: true },
     ]
   },
 };

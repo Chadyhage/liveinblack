@@ -288,6 +288,16 @@ textarea::placeholder {
   grid-template-columns: minmax(min(100%, 360px), 560px);
 }
 
+/* Grille compacte pour des listes secondaires (ex. événements à venir/passés
+   d'un profil organisateur) où la grande carte de .lb-card-grid (360px min)
+   prend toute la page pour ce qui n'est qu'un aperçu, pas la destination
+   principale. Colonnes bien plus petites, densité proche d'une liste. */
+.lb-card-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
 .lb-detail-section {
   margin-top: 18px;
   padding: clamp(18px, 2.4vw, 26px);

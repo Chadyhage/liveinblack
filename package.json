@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "seed": "node --env-file=.env.local --import tsx scripts/seed-dev.ts",
+    "seed:blog": "node --env-file=.env.local --import tsx scripts/seed-blog.ts",
     "seed:bulk": "node --env-file=.env.local --import tsx scripts/seed-bulk.ts",
     "seed:bulk:clean": "node --env-file=.env.local --import tsx scripts/seed-bulk-clean.ts",
     "cloudinary:setup": "node --import tsx scripts/setup-cloudinary-private-preset.ts",

@@ -232,3 +232,24 @@ export function organizerScheduleChangeEmail(
   `
   return { subject: `Reporté : ${event.name || 'un événement'}`, html: wrap(inner, site) }
 }
+
+// Notification interne envoyée à l'équipe LIVEINBLACK lors d'une soumission
+// du formulaire /contact (app/api/contact/route.ts) — remplace l'ancien lien
+// mailto: direct dans le footer public.
+export function contactRequestEmail(
+  data: { name: string; email: string; subject: string; message: string },
+  site: string = DEFAULT_SITE
+): Email {
+  const name = escapeHtml(data.name)
+  const email = escapeHtml(data.email)
+  const subjectLine = escapeHtml(data.subject)
+  const messageHtml = escapeHtml(data.message).replace(/\n/g, '<br/>')
+  const inner = `
+    ${h('Nouveau message de contact')}
+    ${p(`<strong style="color:#ffffff;">De :</strong> ${name} (<a href="mailto:${email}" style="color:rgba(78,232,200,0.7);">${email}</a>)`)}
+    ${p(`<strong style="color:#ffffff;">Sujet :</strong> ${subjectLine}`)}
+    ${p(messageHtml)}
+    ${p(`<span style="color:rgba(255,255,255,0.4);font-size:12px;">Envoyé depuis le formulaire de contact sur ${site}/contact.</span>`)}
+  `
+  return { subject: `[Contact] ${data.subject}`, html: wrap(inner, site) }
+}

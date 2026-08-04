@@ -224,19 +224,19 @@ export default function AccountMenu({
           aria-label="Messages"
           aria-expanded={messagesOpen}
           style={{
-            width: 36,
-            height: 36,
-            minWidth: 36,
-            minHeight: 36,
+            width: 40,
+            height: 40,
+            minWidth: 40,
+            minHeight: 40,
             padding: 0,
-            borderRadius: 10,
+            borderRadius: '50%',
             border: '1px solid var(--border-strong)',
             background: 'var(--surface)',
             color: 'var(--text)',
             position: 'relative',
           }}
         >
-          <MessageCircle size={17} />
+          <MessageCircle size={18} strokeWidth={2} />
           {totalUnread > 0 && (
             <span
               style={{
@@ -328,19 +328,19 @@ export default function AccountMenu({
           aria-label="Notifications"
           aria-expanded={notifOpen}
           style={{
-            width: 36,
-            height: 36,
-            minWidth: 36,
-            minHeight: 36,
+            width: 40,
+            height: 40,
+            minWidth: 40,
+            minHeight: 40,
             padding: 0,
-            borderRadius: 10,
+            borderRadius: '50%',
             border: '1px solid var(--border-strong)',
             background: 'var(--surface)',
             color: 'var(--text)',
             position: 'relative',
           }}
         >
-          <Bell size={17} />
+          <Bell size={18} strokeWidth={2} />
           {notifUnread > 0 && (
             <span
               style={{

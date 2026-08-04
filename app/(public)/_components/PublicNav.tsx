@@ -13,67 +13,259 @@ const NAV_LINKS = [
   { href: '/events', label: 'Événements' },
   { href: '/providers', label: 'Prestataires' },
   { href: '/organizers', label: 'Organisateurs' },
+  { href: '/blog', label: 'Blog' },
   { href: '/about', label: "C'est quoi" },
 ]
 
-// Recherche globale (événements + organisateurs + prestataires) déplacée
-// directement dans le header — auparavant une simple entrée de nav vers
-// /search, une page dédiée pour un besoin aussi fréquent forçait un aller-retour
-// inutile. Icône collapsible : clic ouvre un champ inline, soumission navigue
-// vers /search?q=… (page conservée comme destination, plus comme seul point d'entrée).
+interface QuickSearchEvent { id: string; name: string; dateDisplay: string | null; city: string | null; imageUrl: string | null }
+interface QuickSearchOrganizer { userId: string; slug: string; publicName: string; city: string | null; avatarUrl: string | null }
+interface QuickSearchProvider { userId: string; name: string; city: string | null; avatarUrl: string | null }
+interface QuickSearchResults { events: QuickSearchEvent[]; providers: QuickSearchProvider[]; organizers: QuickSearchOrganizer[] }
+
+const EMPTY_RESULTS: QuickSearchResults = { events: [], providers: [], organizers: [] }
+
+// Recherche globale (événements + organisateurs + prestataires) directement
+// dans le header — auparavant une simple entrée de nav vers /search, une page
+// dédiée pour un besoin aussi fréquent forçait un aller-retour inutile.
+// Icône collapsible : clic ouvre un champ inline. Au lieu de rediriger vers
+// /search à chaque frappe, on interroge GET /api/search/quick (top 3/catégorie,
+// mêmes fonctions serveur que /search — voir ce fichier) et on affiche un
+// dropdown de résultats en direct sous le champ ; /search reste la
+// destination de la recherche complète via « Voir tous les résultats » ou la
+// soumission du formulaire, jamais le seul point d'entrée.
+//
+// Pas de catégorie « Utilisateurs » : la seule recherche d'utilisateurs de
+// l'app (lib/server/friends.ts:searchUsers) exige une session et sert à
+// retrouver un contact de messagerie, ce n'est pas un répertoire public — ne
+// pas la détourner ici exposerait des comptes hors de ce cadre.
 function HeaderSearch() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
+  const [results, setResults] = useState<QuickSearchResults>(EMPTY_RESULTS)
+  const [loading, setLoading] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) inputRef.current?.focus()
   }, [open])
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const q = value.trim()
-    router.push(q ? `/search?q=${encodeURIComponent(q)}` : '/search')
+  // Convention useEffect + fetch du projet (CLAUDE.md) : logique de fetch
+  // inline dans une fonction async locale, flag `cancelled` pour éviter une
+  // mise à jour d'état après démontage/frappe suivante. Debounce 280ms pour
+  // ne pas interroger la base à chaque touche.
+  useEffect(() => {
+    const query = value.trim()
+    if (!query) {
+      setResults(EMPTY_RESULTS)
+      setLoading(false)
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    const timer = setTimeout(() => {
+      async function run() {
+        try {
+          const res = await fetch(`/api/search/quick?q=${encodeURIComponent(query)}`)
+          const data = await res.json()
+          if (cancelled) return
+          if (data?.ok) setResults({ events: data.events || [], providers: data.providers || [], organizers: data.organizers || [] })
+        } catch {
+          if (!cancelled) setResults(EMPTY_RESULTS)
+        } finally {
+          if (!cancelled) setLoading(false)
+        }
+      }
+      run()
+    }, 280)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [value])
+
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+        if (!value) setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open, value])
+
+  function goToFullResults(query: string) {
+    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
     setOpen(false)
+    setDropdownOpen(false)
   }
 
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    goToFullResults(value.trim())
+  }
+
+  const hasResults = results.events.length > 0 || results.providers.length > 0 || results.organizers.length > 0
+  const showDropdown = open && dropdownOpen && value.trim().length > 0
+
   return (
-    <form
-      role="search"
-      onSubmit={handleSubmit}
-      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-    >
-      {open && (
-        <input
-          ref={inputRef}
-          type="search"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onBlur={() => { if (!value) setOpen(false) }}
-          placeholder="Rechercher…"
-          aria-label="Recherche globale"
-          style={{
-            width: 180,
-            minHeight: 40,
-            padding: '0 12px',
-            borderRadius: 999,
-            border: '1px solid var(--border-strong)',
-            background: 'var(--surface)',
-            color: 'var(--text)',
-            fontSize: 13.5,
-            fontFamily: 'inherit',
-          }}
+    <div ref={rootRef} style={{ position: 'relative' }}>
+      <form
+        role="search"
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+      >
+        {open && (
+          <input
+            ref={inputRef}
+            type="search"
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value)
+              setDropdownOpen(true)
+            }}
+            onFocus={() => setDropdownOpen(true)}
+            placeholder="Rechercher…"
+            aria-label="Recherche globale"
+            style={{
+              width: 220,
+              minHeight: 40,
+              padding: '0 12px',
+              borderRadius: 999,
+              border: '1px solid var(--border-strong)',
+              background: 'var(--surface)',
+              color: 'var(--text)',
+              fontSize: 13.5,
+              fontFamily: 'inherit',
+            }}
+          />
+        )}
+        <IconButton
+          type={open ? 'submit' : 'button'}
+          onClick={() => { if (!open) setOpen(true) }}
+          label="Recherche globale"
+          icon={<Search size={18} strokeWidth={2} aria-hidden="true" />}
+          size={40}
+          style={{ background: 'var(--surface)', color: 'var(--text)', borderRadius: '50%' }}
         />
+      </form>
+
+      {showDropdown && (
+        <div
+          role="listbox"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 10px)',
+            right: 0,
+            width: 340,
+            maxWidth: '90vw',
+            maxHeight: 420,
+            overflowY: 'auto',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            borderRadius: 14,
+            boxShadow: '0 20px 48px rgba(0,0,0,.5)',
+            zIndex: 60,
+          }}
+        >
+          {loading && !hasResults && (
+            <p style={{ padding: 16, margin: 0, fontSize: 13, color: 'var(--text-faint)' }}>Recherche…</p>
+          )}
+          {!loading && !hasResults && (
+            <p style={{ padding: 16, margin: 0, fontSize: 13, color: 'var(--text-faint)' }}>Aucun résultat pour « {value.trim()} ».</p>
+          )}
+
+          {results.events.length > 0 && (
+            <QuickResultGroup title="Événements">
+              {results.events.map((e) => (
+                <Link
+                  key={e.id}
+                  href={`/events/${e.id}`}
+                  onClick={() => { setOpen(false); setDropdownOpen(false) }}
+                  className="lb-menu-row"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
+                >
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                    <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
+                  </span>
+                </Link>
+              ))}
+            </QuickResultGroup>
+          )}
+
+          {results.organizers.length > 0 && (
+            <QuickResultGroup title="Organisateurs">
+              {results.organizers.map((o) => (
+                <Link
+                  key={o.userId}
+                  href={`/organizers/${o.slug}`}
+                  onClick={() => { setOpen(false); setDropdownOpen(false) }}
+                  className="lb-menu-row"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{o.publicName}</span>
+                  {o.city && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{o.city}</span>}
+                </Link>
+              ))}
+            </QuickResultGroup>
+          )}
+
+          {results.providers.length > 0 && (
+            <QuickResultGroup title="Prestataires">
+              {results.providers.map((p) => (
+                <Link
+                  key={p.userId}
+                  href={`/providers/${encodeURIComponent(p.userId)}`}
+                  onClick={() => { setOpen(false); setDropdownOpen(false) }}
+                  className="lb-menu-row"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</span>
+                  {p.city && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{p.city}</span>}
+                </Link>
+              ))}
+            </QuickResultGroup>
+          )}
+
+          <button
+            type="button"
+            onClick={() => goToFullResults(value.trim())}
+            style={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'center',
+              padding: '11px 14px',
+              fontSize: 12.5,
+              fontWeight: 800,
+              color: 'var(--teal)',
+              background: 'transparent',
+              border: 'none',
+              borderTop: '1px solid var(--border)',
+              textTransform: 'uppercase',
+              letterSpacing: '.03em',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Voir tous les résultats
+          </button>
+        </div>
       )}
-      <IconButton
-        type={open ? 'submit' : 'button'}
-        onClick={() => { if (!open) setOpen(true) }}
-        label="Recherche globale"
-        icon={<Search size={18} strokeWidth={2} aria-hidden="true" />}
-        style={{ background: 'var(--surface)', color: 'var(--text)' }}
-      />
-    </form>
+    </div>
+  )
+}
+
+function QuickResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p style={{ padding: '10px 14px 4px', margin: 0, fontSize: 10.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
+      {children}
+    </div>
   )
 }
 
@@ -258,7 +450,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             aria-controls="lb-mobile-menu"
             label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             icon={mobileOpen ? <X size={18} strokeWidth={2} aria-hidden="true" /> : <Menu size={18} strokeWidth={2} aria-hidden="true" />}
-            style={{ background: 'var(--surface)', color: 'var(--text)' }}
+            size={40}
+            style={{ background: 'var(--surface)', color: 'var(--text)', borderRadius: '50%' }}
           />
         </span>
       </nav>
@@ -384,6 +577,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         @media (max-width: 640px) {
           .lb-public-nav__inner { min-height: 58px; padding: 0 14px; gap: 10px; }
         }
+        .lb-menu-row { transition: background 0.15s ease; }
+        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: var(--surface); }
       `}</style>
     </header>
   )

@@ -17,6 +17,7 @@ import {
   Flag,
   Star,
   Newspaper,
+  BookOpen,
   Settings,
   LifeBuoy,
 } from 'lucide-react'
@@ -51,7 +52,13 @@ export interface DashboardNavItem {
 export const COMMON_NAV: DashboardNavItem[] = [
   { label: 'Messages', href: '/messages', icon: MessageCircle },
   {
-    label: 'Mon profil',
+    // Renommé de "Mon profil" → "Mon compte" (retour client) : "Mes billets"
+    // ne doit pas donner l'impression de vivre dans un espace "profil
+    // public" — ce groupe est en réalité la gestion de compte (paramètres +
+    // billets), le label doit le dire plutôt que suggérer une vitrine
+    // publique. La route reste /profile (page d'accueil du groupe, cartes
+    // de raccourci), seul le libellé de nav change.
+    label: 'Mon compte',
     href: '/profile',
     icon: User,
     children: [
@@ -105,6 +112,10 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
     { label: 'Signalements', href: '/agent/signalements', icon: Flag },
     { label: 'Avis', href: '/agent/avis', icon: Star },
     { label: 'Actualité', href: '/agent/actualite', icon: Newspaper },
+    // Nouvelle entrée (pas un port legacy) : gestion des articles de
+    // lib/models/BlogPost.ts, jusqu'ici sans aucune UI (voir
+    // app/(app)/agent/blog/page.tsx).
+    { label: 'Blog', href: '/agent/blog', icon: BookOpen },
   ],
 }
 
