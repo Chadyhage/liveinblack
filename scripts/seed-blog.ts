@@ -169,7 +169,9 @@ const posts: SeedPost[] = [
     slug: 'conseils-choisir-dj-evenement',
     title: '5 conseils pour bien choisir son DJ pour un événement',
     excerpt: "Style musical, expérience du public, matériel, tarifs : les critères concrets pour sélectionner le DJ qui fera vraiment vivre ta soirée.",
-    coverImageUrl: 'https://images.unsplash.com/photo-1571266028243-e4bb35fd2ca6?auto=format&fit=crop&w=1200&q=80',
+    // Id remplacé — l'original (1571266028243-e4bb35fd2ca6) est un 404 Unsplash
+    // (vérifié en navigateur), repris ici du set vetted de lib/shared/placeholderImage.ts.
+    coverImageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80',
     category: 'guide',
     tags: ['DJ', 'prestataire', 'conseils', 'organisation'],
     authorName: 'La rédaction LIVEINBLACK',
