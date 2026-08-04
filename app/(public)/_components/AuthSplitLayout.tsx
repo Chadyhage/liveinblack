@@ -7,7 +7,7 @@ import Image from 'next/image'
 // contenu sans carte conteneur sur la moitié droite (décision produit
 // 2026-07). Le visuel disparaît sous 900px, le contenu repasse alors pleine
 // largeur — un seul endroit à maintenir pour ce comportement responsive.
-const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1400&q=80'
+const HERO_IMG = 'https://images.unsplash.com/photo-1496337589254-7e19d01cec44?auto=format&fit=crop&w=1400&q=80'
 
 export default function AuthSplitLayout({ children, tagline, heroImage }: { children: ReactNode; tagline?: ReactNode; heroImage?: string }) {
   return (

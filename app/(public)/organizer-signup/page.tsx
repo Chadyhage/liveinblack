@@ -6,7 +6,7 @@ import AuthSplitLayout from '../_components/AuthSplitLayout'
 
 // Photo distincte du visuel par défaut (login) — décor de salle/scène pour
 // l'inscription organisateur, id issu du set vetted de lib/shared/placeholderImage.ts.
-const HERO_IMG = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1400&q=80'
+const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1400&q=80'
 import OrganizerOnboardingWizard from '@/app/components/OrganizerOnboardingWizard'
 
 // Route unique "Devenir organisateur" — publique (mode anonyme, pas de
