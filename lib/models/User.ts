@@ -1,0 +1,137 @@
+import mongoose, { Schema, model, models, type InferSchemaType, type Model } from 'mongoose'
+
+// Remplace `users/{uid}` (Firestore) + Firebase Auth. Un compte peut porter
+// plusieurs rôles (décision de la réunion du 15/07/2026) : `roles` liste tout
+// ce que le compte a le droit d'utiliser, `activeRole` est l'interface
+// actuellement affichée. Les fonctions de lib/server/permissions.ts vérifient
+// toujours `activeRole`, jamais `roles` directement.
+export const ROLES = ['client', 'organisateur', 'prestataire', 'agent'] as const
+const STATUSES = ['active', 'pending', 'rejected'] as const
+const ROLE_APPROVAL_STATUSES = ['none', 'pending', 'active', 'rejected'] as const
+
+// Confidentialité (#6 phase profil, port de la section "Confidentialité" de
+// ProfilePage.jsx) — toutes à true par défaut, comme le legacy. `showOnline`
+// est réellement appliqué par lib/server/presence.ts (getPresence masque le
+// statut d'un compte qui l'a désactivé) et `readReceipts` par
+// lib/server/messaging.ts (un accusé de lecture n'est exposé aux AUTRES que
+// si son auteur a cette préférence active). `showAvatar` et
+// `personalizedRecommendations` pilote réellement le moteur de /events.
+// `showAvatar` reste la règle de visibilité à appliquer à toute future vue
+// sociale qui expose l'avatar personnel (les vues actuelles utilisent des
+// initiales ou les médias publics des profils professionnels).
+const privacySchema = new Schema(
+  {
+    showOnline: { type: Boolean, default: true },
+    showAvatar: { type: Boolean, default: true },
+    readReceipts: { type: Boolean, default: true },
+    personalizedRecommendations: { type: Boolean, default: true },
+  },
+  { _id: false }
+)
+
+export const NAME_COOLDOWN_DAYS = 14
+
+const userSchema = new Schema(
+  {
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
+    passwordHash: { type: String, required: true },
+    firstName: { type: String, default: '' },
+    lastName: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    avatarUrl: { type: String, default: null },
+    // Démographie facultative — jamais affichée sur un profil, jamais un
+    // contrôle d'âge (voir le hint exact du legacy dans ProfilePage.jsx) :
+    // sert uniquement aux statistiques anonymes côté organisateur.
+    birthYear: { type: Number, default: null },
+    gender: { type: String, enum: ['femme', 'homme', 'autre'], default: null },
+    // Cooldown de 14 jours entre deux changements de nom (NAME_COOLDOWN_MS
+    // côté legacy) — voir lib/server/profile.ts:updateName.
+    nameChangedAt: { type: Date, default: null },
+    // Changement d'email en attente de confirmation (verifyBeforeUpdateEmail
+    // côté legacy) — `email` ne change qu'à la confirmation du lien envoyé à
+    // CETTE adresse, jamais immédiatement à la demande. Voir
+    // lib/server/profile.ts : requestEmailChange / confirmEmailChange.
+    pendingEmail: { type: String, default: null },
+    privacy: { type: privacySchema, default: () => ({}) },
+    // Goûts déclarés (carte "Mes goûts", #6 phase profil) — forme libre
+    // (musicStyles[]/artists[]/eventTypes[]/cities[]/budget/ambiances[]/...),
+    // consommée par le moteur de recommandation de /events.
+    preferences: { type: mongoose.Schema.Types.Mixed, default: null },
+    roles: { type: [String], enum: ROLES, default: ['client'] },
+    activeRole: { type: String, enum: ROLES, default: 'client' },
+    status: { type: String, enum: STATUSES, default: 'active' },
+    // Statut d'approbation PAR RÔLE (#7 phase organisateur) — distinct du
+    // `status` global ci-dessus. Nécessaire pour ne jamais reproduire le bug
+    // legacy déjà corrigé une fois (audit #7 de src/utils/applications.js) :
+    // un organisateur déjà actif qui candidate en plus comme prestataire ne
+    // doit PAS se retrouver bloqué de ses deux interfaces le temps de la
+    // review du second dossier. Voir lib/server/permissions.ts.
+    orgStatus: { type: String, enum: ROLE_APPROVAL_STATUSES, default: 'none' },
+    prestStatus: { type: String, enum: ROLE_APPROVAL_STATUSES, default: 'none' },
+    emailVerifiedAt: { type: Date, default: null },
+    points: { type: Number, default: 0 },
+    lastSeenAt: { type: Date, default: null },
+    superAdmin: { type: Boolean, default: false },
+    // Suspension par un agent (#9 phase agent/admin, port de l'action Firebase
+    // Auth `set_disabled` de api/admin-accounts.js) — bloque uniquement la
+    // connexion (voir auth.ts:authorize), distinct du `status` d'approbation
+    // ci-dessus qui n'a pas de valeur 'banned' dans ce port.
+    disabled: { type: Boolean, default: false },
+
+    // Bumped whenever `disabled` is set to true or the account is anonymisé
+    // (auto-suppression cliente, suppression validée par un agent) — auth.ts
+    // compare cette valeur à celle gravée dans le JWT pour révoquer une
+    // session déjà émise (une stratégie JWT ne revalide sinon jamais le
+    // compte en base entre deux connexions, cf. audit pré-bascule).
+    sessionVersion: { type: Number, default: 0 },
+
+    // Stripe Connect (organisateurs éligibles — pays EUR/Connect uniquement).
+    // Écrit UNIQUEMENT par le webhook `account.updated`, jamais par le client.
+    stripeAccountId: { type: String, default: null },
+    stripeChargesEnabled: { type: Boolean, default: false },
+    stripeCountry: { type: String, default: null },
+
+    // Numéros mobile money pour les versements FedaPay, par code pays ISO-2
+    // ('tg','bj',...) — un organisateur peut vendre dans plusieurs zones XOF.
+    payoutMomos: { type: Map, of: String, default: {} },
+
+    // Comptes bloqués par CE compte — le blocage empêche l'envoi de messages
+    // dans les deux sens, voir lib/server/messaging.ts.
+    blockedUserIds: { type: [String], default: [] },
+
+    // Abonnement prestataire (#8 phase prestataire) — miroir de compte du
+    // statut réellement détenu par `ProviderProfile` (source de vérité, voir
+    // lib/models/ProviderProfile.ts), nécessaire pour les gates qui ne
+    // chargent que `User` (ex. changement de pays de facturation refusé tant
+    // qu'un abonnement est actif). `stripeCustomerId`/`stripeSubscriptionId`
+    // sont un Stripe BILLING classique (abonnement récurrent EUR), sans
+    // rapport avec `stripeAccountId` ci-dessus (Stripe CONNECT organisateur).
+    prestataireSubActive: { type: Boolean, default: false },
+    prestataireSubStatus: { type: String, default: null },
+    prestataireSubEnd: { type: Date, default: null },
+    prestataireSubRail: { type: String, enum: ['stripe', 'fedapay', null], default: null },
+    stripeSubscriptionId: { type: String, default: null },
+    stripeCustomerId: { type: String, default: null },
+
+    // Registre léger pour le webhook FedaPay (rail XOF) : le paiement d'abonnement
+    // est ponctuel (pas d'Order comme pour les billets), donc le webhook retrouve
+    // le compte propriétaire via ce txnId plutôt que de faire confiance aux
+    // métadonnées renvoyées par l'événement (même prudence que legacy
+    // fedapay_txns, voir lib/server/providerSubscriptions.ts).
+    pendingFedapaySubTxnId: { type: String, default: null },
+
+    // Pays de FACTURATION prestataire (rail EUR/Stripe vs XOF/FedaPay) —
+    // délibérément séparé de `ProviderProfile.zonesIntervention` (marketing,
+    // multi-pays) : ne peut changer que hors abonnement actif, voir
+    // lib/server/providerBilling.ts. Remplace la collection Firestore
+    // `provider_billing/{uid}` — un champ suffit, pas besoin d'un document à
+    // part pour cette seule valeur.
+    providerBillingRegionId: { type: String, default: null },
+  },
+  { timestamps: true }
+)
+
+export type UserDoc = InferSchemaType<typeof userSchema>
+export type UserModel = Model<UserDoc>
+
+export default (models.User as UserModel) || model<UserDoc>('User', userSchema)

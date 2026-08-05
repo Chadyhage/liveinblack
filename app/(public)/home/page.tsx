@@ -1,0 +1,462 @@
+import Link from 'next/link'
+import Image from 'next/image'
+import type { Metadata } from 'next'
+import { auth } from '@/auth'
+import { type PublicEvent } from '@/lib/server/events'
+import { type CatalogItem } from '@/lib/server/providers'
+import {
+  getCachedPublicEvents as listPublicEvents,
+  getCachedPublicProviders as listPublicProviders,
+  getCachedPublicHomepageConfig as getPublicHomepageConfig,
+  getCachedBoostedEventIds as getBoostedEventIds,
+} from '@/lib/server/publicCache'
+import { getMyProfile } from '@/lib/server/profile'
+import { listActiveInterestSignals } from '@/lib/server/eventInterests'
+import { fmtMoney, eventCurrency } from '@/lib/shared/money'
+import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
+import { eventStartMs } from '@/lib/shared/event-time'
+import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import HomeAmbienceButton from './HomeAmbienceButton'
+import HomeGreeting from './HomeGreeting'
+import { SectionHeader } from '@/app/components/ui'
+
+export const metadata: Metadata = {
+  title: 'LIVEINBLACK — La marketplace de la nuit et de l’événementiel',
+  description:
+    "Découvrez les soirées, prestataires et organisateurs du moment et réservez votre billet en quelques clics sur LIVEINBLACK.",
+}
+
+// Événements/prestataires changent en continu (nouvelles publications,
+// stock) — sans dépendance à cookies()/searchParams, Next.js prérendrait
+// sinon cette page une fois pour toutes au build.
+export const dynamic = 'force-dynamic'
+
+// Accueil unifié : vitrine de PublicLanding pour les visiteurs, enrichie du
+// Top 3 et des recommandations de HomePage pour les membres connectés.
+
+const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=80'
+
+// Accents du carrousel « Actualité » (#9 phase agent/admin, homepage-config) —
+// mêmes couleurs que ACTUALITE_ACCENTS côté agent (lib/models/HomepageConfig.ts).
+const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: string }> = {
+  teal: { dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
+  gold: { dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
+  pink: { dot: '#ff6b00', soft: 'rgba(255,107,0,0.14)', border: 'rgba(255,107,0,0.4)' },
+}
+
+function firstOfferImage(catalog: CatalogItem[] = []): string | null {
+  for (const item of catalog) {
+    const image = (item.media || []).find((m) => m?.url && m.type !== 'video')
+    if (image) return image.url
+  }
+  return null
+}
+
+const MONTHS_FR = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEP', 'OCT', 'NOV', 'DÉC']
+
+// Badge date façon "billet" (mois/jour empilés) — même langage visuel que
+// les cartes de pass du site de référence (chillandgroovefestival.com,
+// migration design demandée par le client) et déjà porté côté mobile
+// (components/EventCard.tsx), pour rester cohérent entre les deux plateformes.
+function DateBadge({ dateISO }: { dateISO: string }) {
+  const d = new Date(dateISO)
+  if (Number.isNaN(d.getTime())) return null
+  return (
+    <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(4,4,11,.78)', borderRadius: 8, padding: '5px 9px', textAlign: 'center', lineHeight: 1.1 }}>
+      <p style={{ margin: 0, fontSize: 9.5, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
+      <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff' }}>{d.getDate()}</p>
+    </div>
+  )
+}
+
+export default async function AccueilPage() {
+  const [allEvents, providers, actualiteConfig, boostedIds, session] = await Promise.all([listPublicEvents(), listPublicProviders(), getPublicHomepageConfig(), getBoostedEventIds(), auth()])
+
+  const events = [...allEvents].sort((a, b) => eventStartMs(a) - eventStartMs(b)).slice(0, 6)
+  const featuredProviders = providers.slice(0, 4)
+  const topThree = [...allEvents]
+    .sort((a, b) => Number(boostedIds.has(b.id)) - Number(boostedIds.has(a.id)) || eventStartMs(a) - eventStartMs(b))
+    .slice(0, 3)
+
+  let recommendations: ReturnType<typeof getRecommendedEvents<PublicEvent>> = []
+  let needsPreferences = false
+  if (session?.user) {
+    const [profile, interestHistory] = await Promise.all([getMyProfile({ id: session.user.id }), listActiveInterestSignals({ id: session.user.id })])
+    if (profile && profile.privacy.personalizedRecommendations !== false) {
+      needsPreferences = !profile.preferences || Object.keys(profile.preferences).length === 0
+      const topIds = new Set(topThree.map((event) => event.id))
+      recommendations = getRecommendedEvents({
+        preferences: profile.preferences as RecommendationPreferences | null,
+        interestHistory,
+        events: allEvents.filter((event) => !topIds.has(event.id)),
+        boostedIds,
+        currentUserId: session.user.id,
+        max: 6,
+      })
+    }
+  }
+
+  // Carrousel éditorial « Actualité » (#9 phase agent/admin) — additif : si la
+  // config est inactive/vide ou qu'aucun événement curé n'est plus découvrable
+  // (allEvents est déjà filtré par isClientDiscoverableEvent), la liste est
+  // vide et la section ci-dessous ne rend rien — jamais de layout cassé, et le
+  // reste de la page (section « À l'affiche » par défaut) n'est jamais affecté.
+  const byId = new Map(allEvents.map((e) => [e.id, e]))
+  const actualiteEvents = actualiteConfig.active ? actualiteConfig.eventIds.map((id) => byId.get(id)).filter((e): e is PublicEvent => Boolean(e)) : []
+  const actualiteAccent = ACTUALITE_ACCENTS[actualiteConfig.accent] ?? ACTUALITE_ACCENTS.teal
+
+  return (
+    <>
+      <style>{`
+        @keyframes lbHomeGreetingFadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .lb-home-greeting {
+          animation: lbHomeGreetingFadeIn 0.6s ease-out both;
+        }
+      `}</style>
+      {/* HERO */}
+      <section style={{ position: 'relative', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', textAlign: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${HERO_IMG})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.32 }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'radial-gradient(ellipse at 50% 30%, rgba(184, 243, 74,.14), transparent 55%), radial-gradient(ellipse at 80% 80%, rgba(159, 224, 34,.07), transparent 50%), linear-gradient(to bottom, rgba(7,8,13,.72) 0%, rgba(7,8,13,.55) 40%, rgba(7,8,13,.98) 100%)',
+          }}
+        />
+        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
+          <p style={{ fontSize: 34, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
+            L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
+          </p>
+          {session?.user && <HomeGreeting firstName={session.user.name ? session.user.name.trim().split(' ')[0] : ''} />}
+          <h1 className="font-display" style={{ fontSize: 'clamp(38px, 9vw, 78px)', lineHeight: 0.98, letterSpacing: '0.01em', margin: '22px 0 0' }}>
+            Les meilleures soirées,
+            <br />
+            <span style={{ color: 'var(--teal)' }}>au bout des doigts.</span>
+          </h1>
+          <p style={{ fontSize: 'clamp(15px,4vw,19px)', color: 'var(--text-muted)', margin: '18px auto 0', maxWidth: 520, lineHeight: 1.5 }}>
+            Réserve, découvre, profite. Ta prochaine sortie commence ici. Billets, soirées et prestataires réunis au même endroit.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
+            <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
+            <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
+          </div>
+          {!session?.user && <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 18 }}>
+            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Se connecter</Link>
+          </p>}
+          <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '18px 0 0', letterSpacing: '.01em' }}>
+            Gratuit · Ton billet QR dans ta poche · Aucune app à installer
+          </p>
+          <HomeAmbienceButton />
+        </div>
+      </section>
+
+      {session?.user && topThree.length > 0 && (
+        <Section eyebrow="Le classement" title="Top 3 du moment" sub="Les événements mis en avant et les prochaines dates à ne pas manquer.">
+          <div className="lb-card-grid">
+            {topThree.map((event, index) => <HomeEventCard key={event.id} event={event} badge={`0${index + 1}`} boosted={boostedIds.has(event.id)} />)}
+          </div>
+        </Section>
+      )}
+
+      {/* ACTUALITÉ (carrousel éditorial curé par l'agent) */}
+      {actualiteEvents.length > 0 && (
+        <section style={{ padding: '0 clamp(20px, 3vw, 48px)', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: actualiteAccent.soft, border: `1px solid ${actualiteAccent.border}` }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: actualiteAccent.dot }} />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: actualiteAccent.dot }}>{actualiteConfig.title}</span>
+            </span>
+            {actualiteConfig.subtitle && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{actualiteConfig.subtitle}</span>}
+          </div>
+          <div style={{ display: 'flex', gap: 22, overflowX: 'auto', paddingBottom: 14, scrollSnapType: 'x proximity' }}>
+            {actualiteEvents.map((e) => {
+              const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
+              const min = prices.length ? Math.min(...prices) : null
+              return (
+                <Link
+                  key={e.id}
+                  href={`/events/${e.id}`}
+                  className="lb-card"
+                  style={{ ...card, flexShrink: 0, width: 'clamp(320px,29vw,390px)', overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit', scrollSnapAlign: 'start' }}
+                >
+                  <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
+                    <Image
+                      src={e.imageUrl || placeholderPhotoUrl(e.id, 440, 248)}
+                      alt={e.name}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      sizes="(max-width: 768px) 100vw, 220px"
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 62,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: '#0b0d14',
+                        background: actualiteAccent.dot,
+                        padding: '4px 9px',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      À la une
+                    </span>
+                    <DateBadge dateISO={e.date} />
+                    {min != null && (
+                      <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 11, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(184, 243, 74,.4)' }}>
+                        dès {fmtMoney(min, eventCurrency(e))}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ minHeight: 108, padding: '18px 20px 20px' }}>
+                    <p style={{ fontSize: 19, lineHeight: 1.22, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
+                    <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {session?.user && recommendations.length > 0 && (
+        <Section eyebrow="Rien que pour toi" title="Nos recommandations pour toi" sub="Selon tes goûts, tes favoris et tes réservations.">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-18px 0 16px' }}>
+            <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
+          </div>
+          <div className="lb-card-grid">
+            {recommendations.map(({ event, reason }) => <HomeEventCard key={event.id} event={event} reason={reason} />)}
+          </div>
+        </Section>
+      )}
+
+      {session?.user && needsPreferences && (
+        <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
+          <div style={{ ...card, padding: '22px 24px', borderColor: 'rgba(184, 243, 74,.35)', background: 'linear-gradient(120deg,rgba(184, 243, 74,.12),rgba(159, 224, 34,.04)),var(--surface)' }}>
+            <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
+            <h2 style={{ margin: '7px 0 5px', fontSize: 21 }}>Des soirées vraiment faites pour toi</h2>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.55 }}>Indique tes styles, tes villes et ton budget. Cela prend moins d&apos;une minute et reste modifiable.</p>
+            <Link href="/profile" style={{ ...btnPrimary, marginTop: 14, padding: '10px 17px', fontSize: 12.5 }}>Régler mes goûts</Link>
+          </div>
+        </section>
+      )}
+
+      {/* ÉVÉNEMENTS À DÉCOUVRIR */}
+      {(!session?.user || recommendations.length === 0) && <Section eyebrow="À l'affiche" title="Des soirées à découvrir" sub="Explore librement. Pour réserver et garder ton billet, il te suffit d'un compte.">
+        {events.length === 0 ? (
+          <EmptyCard text="De nouvelles soirées arrivent très vite." ctaHref="/events" ctaLabel="Voir la page événements" />
+        ) : (
+          <>
+            <div className="lb-card-grid">
+              {events.map((event) => <HomeEventCard key={event.id} event={event} />)}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 22 }}>
+              <Link href="/events" style={btnGhost}>Tout voir</Link>
+            </div>
+          </>
+        )}
+      </Section>}
+
+      {/* PRESTATAIRES À LA UNE */}
+      <Section eyebrow="L'annuaire" title="Les prestataires de la nuit" sub="DJ, salles, sono, boissons… Trouve le bon prestataire et contacte-le en un clic.">
+        {featuredProviders.length === 0 ? (
+          <EmptyCard text="Les premiers prestataires arrivent très vite." ctaHref="/providers" ctaLabel="Voir l'annuaire" />
+        ) : (
+          <>
+            <div className="lb-card-grid">
+              {featuredProviders.map((p) => {
+                const categories = getProviderCategories(p)
+                const pc = categories[0] || getProviderCategory(p.prestataireType)
+                const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl || placeholderPhotoUrl(p.userId, 440, 248)
+                return (
+                  <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{ position: 'relative', minHeight: 180, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
+                      <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
+                      <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
+                        {pc.label}
+                        {categories.length > 1 ? ` +${categories.length - 1}` : ''}
+                      </span>
+                      <div style={{ position: 'absolute', left: 18, bottom: -28, width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 22, color: 'var(--obsidian)', boxShadow: '0 10px 24px rgba(0,0,0,.3)' }}>
+                        {p.photoUrl ? (
+                          <Image src={p.photoUrl} alt={p.name} width={64} height={64} style={{ objectFit: 'cover' }} />
+                        ) : (
+                          p.name?.[0]?.toUpperCase() || '?'
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ minHeight: 160, padding: '40px 20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <p style={{ fontSize: 20, lineHeight: 1.2, fontWeight: 800, margin: 0 }}>{p.name}</p>
+                      {(p.city || p.location || p.country) && (
+                        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>
+                      )}
+                      <span style={{ marginTop: 'auto', paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 13.5, fontWeight: 800, color: 'var(--teal)' }}>Voir le profil →</span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 22 }}>
+              <Link href="/providers" style={btnGhost}>Tous les prestataires</Link>
+            </div>
+          </>
+        )}
+      </Section>
+
+      {/* POURQUOI CRÉER UN COMPTE */}
+      {!session?.user && <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
+        <div className="lb-card-grid">
+          {[
+            ['Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
+            ['Ton QR code partout', 'Tes billets toujours dans ta poche.'],
+            ['Recommandations', 'Des soirées selon tes goûts et ta ville.'],
+            ['Favoris', 'Sauvegarde les événements qui te plaisent.'],
+            ['Messagerie', 'Parle aux organisateurs et prestataires.'],
+            ['Tes commandes', 'Précommandes et consos suivies.'],
+            ['Des points', "Chaque achat te rapproche d'avantages."],
+            ['Organisateurs suivis', 'Sois alerté des nouvelles dates de tes organisateurs préférés.'],
+          ].map(([t, d]) => (
+            <div key={t} style={{ ...card, padding: '18px 16px' }}>
+              <p style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>{t}</p>
+              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.4 }}>{d}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 26 }}>
+          <Link href="/login?mode=register" style={btnPrimary}>Créer mon compte gratuitement</Link>
+        </div>
+      </Section>}
+
+      {/* COMMENT ÇA MARCHE */}
+      {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 14 }}>
+          {[
+            ['1', 'Découvre une soirée', 'Parcours les événements près de chez toi.'],
+            ['2', 'Réserve ton billet', 'En quelques secondes, paiement sécurisé.'],
+            ['3', 'Présente ton QR', "Scan à l'entrée, et c'est parti."],
+          ].map(([n, t, d]) => (
+            <div key={n} style={{ ...card, padding: '20px 18px', position: 'relative' }}>
+              <span style={{ position: 'absolute', top: 14, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
+              <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{t}</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
+            </div>
+          ))}
+        </div>
+      </Section>}
+
+      {/* ORGANISATEURS + PRESTATAIRES */}
+      {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
+          <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(139,92,246,.75)' }}>
+            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--violet)', margin: 0 }}>Organisateur</p>
+            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
+            <ul style={featList}>
+              {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
+                <li key={f} style={featItem}><span style={{ color: 'var(--violet)' }}>◆</span> {f}</li>
+              ))}
+            </ul>
+            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: '#fff' }}>Créer un espace organisateur</Link>
+          </div>
+          <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
+            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
+            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
+            <ul style={featList}>
+              {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
+                <li key={f} style={featItem}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
+              ))}
+            </ul>
+            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--gold)', color: '#04120e' }}>Devenir prestataire</Link>
+          </div>
+        </div>
+      </Section>}
+
+      {/* CE QUE TON COMPTE DÉBLOQUE */}
+      {/* CTA FINAL */}
+      <section style={{ padding: '10px 22px 70px' }}>
+        <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), var(--surface-2)' }}>
+          <h2 className="font-display" style={{ fontSize: 'clamp(28px,7vw,46px)', letterSpacing: '.01em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
+          <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
+            {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
+            <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
+            <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
+          </div>
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 18 }}>
+            <Link href="/organizer-signup" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
+            <Link href="/provider-signup" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
+          </div>
+          {!session?.user && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
+            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
+          </p>}
+        </div>
+      </section>
+    </>
+  )
+}
+
+function HomeEventCard({ event, badge, boosted = false, reason }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string }) {
+  const prices = (event.places || []).map((place) => Number(place.price)).filter((price) => Number.isFinite(price) && price >= 0)
+  const minPrice = prices.length ? Math.min(...prices) : null
+  return (
+    <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: `radial-gradient(circle at 25% 10%,${event.color || '#8444ff'}55,transparent 58%),var(--surface-2)` }}>
+        <Image
+          src={event.imageUrl || placeholderPhotoUrl(event.id, 460, 259)}
+          alt={event.name}
+          fill
+          style={{ objectFit: 'cover' }}
+          sizes="(max-width: 768px) 100vw, 230px"
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
+        {badge ? (
+          <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 26, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
+        ) : (
+          <DateBadge dateISO={event.date} />
+        )}
+        {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: 9.5, fontWeight: 900 }}>À LA UNE</span>}
+        {reason && <span style={{ position: 'absolute', left: 10, bottom: 10, maxWidth: 'calc(100% - 20px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '5px 9px', fontSize: 10.5, fontWeight: 700 }}>{reason}</span>}
+      </div>
+      <div style={{ minHeight: 138, padding: '20px 20px 22px', display: 'flex', flexDirection: 'column' }}>
+        <p style={{ margin: 0, color: '#fff', fontSize: 19, lineHeight: 1.22, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
+        <p style={{ margin: '9px 0 0', color: 'var(--text-muted)', fontSize: 14 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+        <p style={{ margin: 'auto 0 0', paddingTop: 14, color: 'var(--gold)', fontSize: 13.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
+      </div>
+    </Link>
+  )
+}
+
+function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: string; sub?: string; children: React.ReactNode }) {
+  return (
+    <section style={{ padding: 'clamp(44px, 6vw, 64px) clamp(20px, 3vw, 48px)', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+      <SectionHeader eyebrow={eyebrow} title={title} description={sub} align="center" level={2} />
+      {children}
+    </section>
+  )
+}
+
+function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
+  return (
+    <div style={{ ...card, padding: 30, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
+      <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
+      <Link href={ctaHref} style={{ ...btnGhost, marginTop: 16, display: 'inline-block' }}>{ctaLabel}</Link>
+    </div>
+  )
+}
+
+// Boutons rectangulaires, texte MAJUSCULES + tracking — langage visuel du
+// site de référence (chillandgroovefestival.com : "PRENDRE MON PASS",
+// "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
+// mise en page oui, palette non).
+const card: React.CSSProperties = { background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xl)', boxShadow: '0 18px 48px rgba(0,0,0,.24)' }
+const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '12px 28px', borderRadius: 999, fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnGhost: React.CSSProperties = { minHeight: 44, padding: '11px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(184, 243, 74,.08)', border: '1px solid rgba(184, 243, 74,.55)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnSolid: React.CSSProperties = { minHeight: 44, padding: '11px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
+const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
+const featItem: React.CSSProperties = { fontSize: 13.5, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }

@@ -1,0 +1,221 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { fmtMoney } from '@/lib/shared/money'
+import { Button, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { useQueryParamState } from '@/lib/client/useQueryParamState'
+
+const PAGE_SIZE = 15
+
+// Port en LECTURE SEULE de la section « Boosts » de src/pages/AgentPage.jsx
+// (tab === 'boosts', #106 phase agent/admin) — voir lib/server/agentBoosts.ts
+// pour la lecture serveur. Le legacy n'a AUCUN bouton d'action ici (les
+// remboursements de conflit sont automatiques côté webhook, voir
+// lib/server/finalizeBoost.ts) : ce panneau reste donc strictement une vue,
+// pas de mutation, pas de filtres — le legacy n'en a pas non plus.
+
+interface AgentBoostView {
+  id: string
+  eventId: string
+  eventName: string
+  organizerName: string
+  position: number
+  region: string
+  price: number
+  days: number
+  purchasedAt: string
+  expiresAt: string
+  status: string
+  conflict: boolean
+  active: boolean
+}
+
+interface BoostsResponse {
+  active: AgentBoostView[]
+  conflicts: AgentBoostView[]
+  expired: AgentBoostView[]
+  totalRevenue: number
+}
+
+const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 14 }
+
+function fmtDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return '—'
+  }
+}
+
+export default function AgentBoostsClient({ embedded = false }: { embedded?: boolean } = {}) {
+  const [data, setData] = useState<BoostsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
+  const page = Number(pageParam)
+  const setPage = (n: number) => setPageParam(String(n))
+
+  async function load() {
+    setLoading(true)
+    setError(false)
+    try {
+      const res = await fetch('/api/agent/boosts')
+      const body = await res.json()
+      if (!res.ok || !body.ok) throw new Error('load_failed')
+      setData({ active: body.active, conflicts: body.conflicts, expired: body.expired, totalRevenue: body.totalRevenue })
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      setLoading(true)
+      setError(false)
+      try {
+        const res = await fetch('/api/agent/boosts')
+        const body = await res.json()
+        if (!res.ok || !body.ok) throw new Error('load_failed')
+        if (!cancelled) setData({ active: body.active, conflicts: body.conflicts, expired: body.expired, totalRevenue: body.totalRevenue })
+      } catch {
+        if (!cancelled) setError(true)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const activeList = useMemo(() => (data ? data.active.filter((b) => !b.conflict) : []), [data])
+  const { pageItems, pageCount } = useMemo(() => pagedSlice(activeList, page, PAGE_SIZE), [activeList, page])
+
+  const Wrapper = embedded ? 'div' : 'main'
+
+  return (
+    <Wrapper className={embedded ? undefined : 'lb-dashboard-page'}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {!embedded && <h1 className="font-display lb-dashboard-title">Boosts</h1>}
+
+        {error && (
+          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
+            <Button variant="secondary" onClick={load} style={{ fontSize: 12.5, flexShrink: 0 }}>
+              Recharger
+            </Button>
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} columns={2} />
+            ))}
+          </div>
+        ) : !data ? null : (
+          <>
+            <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {[
+                { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--teal)' },
+                { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? '#dc3232' : 'var(--text-muted)' },
+                { label: 'Revenus boosts', value: fmtMoney(data.totalRevenue, 'EUR'), color: 'var(--gold)' },
+              ].map((k) => (
+                <div key={k.label} style={{ ...cardStyle, textAlign: 'center' }}>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {data.conflicts.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8c8c', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Conflits — action requise</p>
+                {data.conflicts.map((b) => (
+                  <BoostCard key={b.id} b={b} />
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
+              {activeList.length === 0 ? (
+                <div style={{ ...cardStyle, padding: 26, textAlign: 'center' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Aucun boost actif</p>
+                </div>
+              ) : (
+                <>
+                  {pageItems.map((b) => <BoostCard key={b.id} b={b} />)}
+                  <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={activeList.length} pageSize={PAGE_SIZE} />
+                </>
+              )}
+            </div>
+
+            {data.expired.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-faint)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Expirés ({data.expired.length})</p>
+                {data.expired.slice(0, 10).map((b) => (
+                  <div key={b.id} style={{ opacity: 0.55 }}>
+                    <BoostCard b={b} />
+                  </div>
+                ))}
+                {data.expired.length > 10 && (
+                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+                    + {data.expired.length - 10} boost{data.expired.length - 10 > 1 ? 's' : ''} expiré{data.expired.length - 10 > 1 ? 's' : ''} supplémentaire{data.expired.length - 10 > 1 ? 's' : ''} non affiché{data.expired.length - 10 > 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Wrapper>
+  )
+}
+
+function BoostCard({ b }: { b: AgentBoostView }) {
+  return (
+    <div
+      style={{
+        ...cardStyle,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        ...(b.conflict && b.active ? { borderColor: 'rgba(220,50,50,0.5)' } : {}),
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--obsidian)', background: 'var(--gold)', borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 999, padding: '2px 9px' }}>
+          {b.region || 'Toutes régions'}
+        </span>
+        {b.conflict && (
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>
+            {b.status === 'refund_failed' ? 'REMBOURSEMENT ÉCHOUÉ' : 'CONFLIT DE CRÉNEAU'}
+          </span>
+        )}
+        <span style={{ marginLeft: 'auto', fontWeight: 800, fontSize: 15, color: 'var(--gold)' }}>{fmtMoney(b.price, 'EUR')}</span>
+      </div>
+      <p style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>
+        {b.eventName}
+        {b.organizerName ? ` · ${b.organizerName}` : ''}
+      </p>
+      <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>
+        Acheté le {fmtDate(b.purchasedAt)} · expire le {fmtDate(b.expiresAt)} · {b.days} jour{b.days > 1 ? 's' : ''}
+      </p>
+      {b.conflict && (
+        <p style={{ fontSize: 11.5, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
+          {b.status === 'refunded_conflict'
+            ? 'Conflit de créneau : ce boost a été remboursé AUTOMATIQUEMENT par le webhook. Rien à faire — ne pas re-rembourser dans Stripe.'
+            : b.status === 'refund_failed'
+              ? "Conflit de créneau : le remboursement automatique a ÉCHOUÉ. Rembourse manuellement dans Stripe dès que possible, l'acheteur n'a pas reçu son boost."
+              : 'Deux organisateurs ont payé ce créneau. Vérifie dans Stripe si le remboursement automatique est passé avant toute action manuelle.'}
+        </p>
+      )}
+    </div>
+  )
+}

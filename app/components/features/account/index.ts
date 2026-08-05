@@ -1,0 +1,5 @@
+export { default as ProfilClient } from '@/app/(app)/profile/ProfilClient'
+export { default as PreferencesWizard } from '@/app/(app)/profile/PreferencesWizard'
+export { default as TicketWallet } from '@/app/(app)/profile/TicketWallet'
+export { default as FollowedOrganizersClient } from '@/app/(app)/profile/followed-organizers/FollowedOrganizersClient'
+export { default as InterestedEventsClient } from '@/app/(app)/profile/interested-events/InterestedEventsClient'

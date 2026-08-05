@@ -1,0 +1,212 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { listMyStaffedEvents } from '@/lib/server/staffEvents'
+
+// Port de src/pages/MesSoireesPage.jsx — point d'entrée du MEMBRE STAFF
+// (serveur / contrôle entrée / DJ) invité sur la soirée d'un autre
+// organisateur, sans avoir lui-même le rôle organisateur. Pure lecture,
+// donc Server Component seul, sans sous-composant client (contrairement à
+// /scanner/[eventId] ou /commander/[eventId]/[ticketCode] qui ont besoin
+// d'interactivité).
+//
+// Fusionné avec l'ancien /scanner (index) : les deux pages répondaient à la
+// même question ("quel événement dois-je ouvrir ce soir ?"), l'une listant
+// les affectations roster (staff invité), l'autre les événements possédés
+// (organisateur) — voir lib/server/staffEvents.ts::listMyStaffedEvents, qui
+// fusionne maintenant les deux ensembles.
+export const metadata: Metadata = {
+  title: 'Mes soirées — LIVEINBLACK',
+  robots: { index: false, follow: false },
+}
+
+// `soft`/`border` sont des rgba() FIXES, jamais dérivées de `color` par
+// concaténation de chaîne (ex. `${meta.color}55`) — quand color vaut
+// `var(--teal)`, ça produirait littéralement `var(--teal)55`, une valeur CSS
+// invalide (on ne peut pas suffixer un canal alpha à une custom property).
+// Un rgba() précalculé par rôle est la seule façon correcte de garder un
+// fond/bordure translucides cohérents avec `color`.
+const ROLE_META: Record<string, { label: string; color: string; soft: string; border: string; desc: string }> = {
+  serveur: { label: 'Serveur', color: 'var(--teal)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: 'Prends et sers les commandes au bar' },
+  scan: { label: 'Contrôle entrée', color: '#8b5cf6', soft: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.35)', desc: "Scanne les billets à l'entrée" },
+  manager: { label: 'Manager', color: 'var(--gold)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: 'Gestion complète de la soirée' },
+  dj: { label: 'DJ', color: '#e05aaa', soft: 'rgba(224, 90, 170, 0.12)', border: 'rgba(224, 90, 170, 0.35)', desc: 'Gère la playlist interactive de la soirée' },
+  // 'vendeur' (#C, lib/server/agentSales.ts) ajouté après le reste de cette
+  // page — manquait ici, ce qui faisait tomber sur le fallback générique
+  // (couleur grise, description vide) ET, pire, redirigeait vers le scanner
+  // au lieu de /on-site-sales/[eventId] (voir roleHref ci-dessous).
+  vendeur: { label: 'Vente sur place', color: 'var(--gold)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: 'Vends des billets cash ou Mobile Money' },
+  // Rôle synthétique (pas une valeur EventStaff.roster[].role) — événement
+  // que l'utilisateur organise lui-même, fusionné ici depuis l'ancien
+  // /scanner (index), voir lib/server/staffEvents.ts.
+  owner: { label: 'Organisateur', color: 'var(--primary)', soft: 'rgba(184, 243, 74, 0.12)', border: 'rgba(184, 243, 74, 0.35)', desc: "Ton événement — ouvre le scan pour contrôler l'entrée" },
+}
+const FALLBACK_ROLE_META = { label: '', color: 'var(--text-faint)', soft: 'rgba(255, 255, 255, 0.06)', border: 'rgba(255, 255, 255, 0.14)', desc: '' }
+
+// DJ → gestion de la playlist (#75/#47) ; vendeur → l'espace de vente sur
+// place (#C) ; tout autre rôle staff (scan, serveur, manager) → le scanner,
+// qui démarre en mode « contrôle entrée » et bascule lui-même en mode
+// « service » dès qu'un billet est scanné (voir ScannerClient.tsx) — pas de
+// state de navigation à transmettre, contrairement au legacy qui passait
+// `{ mode, eventId }` en state de route.
+function roleHref(eventId: string, role: string): string {
+  if (role === 'dj') return `/playlist/${eventId}`
+  if (role === 'vendeur') return `/on-site-sales/${eventId}`
+  return `/scanner/${eventId}`
+}
+
+function roleCta(role: string): string {
+  if (role === 'dj') return 'Gérer la playlist'
+  if (role === 'scan' || role === 'owner') return 'Ouvrir le scan des entrées'
+  if (role === 'vendeur') return 'Ouvrir la vente sur place'
+  return 'Ouvrir le POS bar'
+}
+
+export default async function MesSoireesPage() {
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/login')
+  }
+
+  const events = await listMyStaffedEvents({ id: session.user.id })
+
+  return (
+    <main className="lb-dashboard-page lb-dashboard-page--medium">
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>
+          Équipe
+        </p>
+        <h1 className="font-display lb-dashboard-title" style={{ marginTop: 6 }}>Mes soirées</h1>
+        <p className="lb-dashboard-description" style={{ marginBottom: 24 }}>
+          Les événements où tu fais partie de l&apos;équipe, plus ceux que tu organises toi-même. Ouvre le POS le jour J pour servir, scanner ou vendre.
+        </p>
+
+        {events.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.6">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
+            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.55 }}>
+              Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), ou dès que tu crées toi-même un événement, elle apparaît ici.
+            </p>
+          </div>
+        ) : (
+          <div className="lb-dashboard-card-grid" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {events.map((ev) => {
+              const meta = ROLE_META[ev.role] ? ROLE_META[ev.role] : { ...FALLBACK_ROLE_META, label: ev.role }
+              const dateLine = [ev.dateDisplay, ev.city].filter(Boolean).join(' · ')
+
+              return (
+                <div
+                  key={ev.eventId}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 14,
+                    padding: 18,
+                    borderRadius: 16,
+                    background: 'var(--surface)',
+                    border: `1px solid ${ev.live ? meta.border : 'var(--border)'}`,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <p
+                        style={{
+                          fontSize: 18,
+                          fontWeight: 800,
+                          letterSpacing: '-0.4px',
+                          color: 'var(--text)',
+                          margin: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {ev.eventName || 'Événement'}
+                      </p>
+                      {dateLine && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '4px 0 0' }}>{dateLine}</p>}
+                    </div>
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: meta.color,
+                        background: meta.soft,
+                        border: `1px solid ${meta.border}`,
+                        borderRadius: 8,
+                        padding: '4px 10px',
+                      }}
+                    >
+                      {meta.label}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {ev.live ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: meta.color }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color }} /> En cours
+                      </span>
+                    ) : ev.started ? (
+                      <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Soirée terminée</span>
+                    ) : (
+                      <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>À venir</span>
+                    )}
+                    <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>· {meta.desc}</span>
+                  </div>
+
+                  <Link
+                    href={roleHref(ev.eventId, ev.role)}
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      minHeight: 48,
+                      borderRadius: 3,
+                      border: '1px solid var(--border-strong)',
+                      fontSize: 15,
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      letterSpacing: 'normal',
+                      color: 'var(--obsidian)',
+                      background: meta.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {roleCta(ev.role)}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
