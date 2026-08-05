@@ -7,11 +7,17 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // googletagmanager.com : chargement de gtag.js (Google Analytics), voir
+  // app/components/GoogleAnalytics.tsx — le script lui-même n'est injecté
+  // que si l'utilisateur a accepté les cookies, mais la CSP doit
+  // l'autoriser en amont sinon le navigateur bloque la requête même quand
+  // le composant décide de le charger.
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://firebasestorage.googleapis.com https://images.unsplash.com https://e-cdns-images.dzcdn.net https://*.mzstatic.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://firebasestorage.googleapis.com https://images.unsplash.com https://e-cdns-images.dzcdn.net https://*.mzstatic.com https://www.googletagmanager.com",
   "media-src 'self' blob: https://res.cloudinary.com https://audio-ssl.itunes.apple.com",
-  "connect-src 'self' https://itunes.apple.com https://api.cloudinary.com",
+  // google-analytics.com : envoi des hits gtag (mesure) une fois le script chargé.
+  "connect-src 'self' https://itunes.apple.com https://api.cloudinary.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com",
   "font-src 'self' data:",
 ].join('; ');
 
