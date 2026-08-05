@@ -29,7 +29,19 @@ export default function AuthSplitLayout({ children, tagline, heroImage }: { chil
           </div>
         )}
       </div>
-      <div className="lb-auth-split__form" style={{ flex: '1 1 54%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '56px clamp(24px, 5vw, 88px)', overflowY: 'auto' }}>
+      {/* flexDirection:'column' plutôt que la row par défaut : dans un flex
+          row, un enfant bloc sans flex-grow explicite se contente de sa
+          largeur de contenu "shrink-to-fit" (justifyContent:'center' le
+          centre sans jamais l'étirer) — c'était la cause racine de l'espace
+          vide constaté à droite des formulaires (organizer-signup,
+          provider-signup...) sur grand écran, quel que soit le maxWidth
+          déclaré côté enfant. En colonne, l'axe principal devient vertical
+          (justifyContent:'center' centre donc verticalement, comme avant)
+          et align-items:'stretch' (valeur par défaut, volontairement non
+          surchargée) étire l'enfant sur tout l'axe transversal — chaque page
+          garde le contrôle de sa propre largeur via son maxWidth +
+          margin:'0 auto' habituel (login, reset-password, wizards...). */}
+      <div className="lb-auth-split__form" style={{ flex: '1 1 54%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px clamp(10px, 2vw, 32px)', overflowY: 'auto' }}>
         {children}
       </div>
     </main>
