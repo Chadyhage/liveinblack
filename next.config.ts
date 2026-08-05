@@ -45,25 +45,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    const headerGroups = [{ source: '/(.*)', headers: securityHeaders }];
-    // CORS dev-only, jamais en production : /api/* n'a normalement pas
-    // besoin de CORS (consommé par des apps natives, pas soumises à cette
-    // politique navigateur). Ajouté uniquement pour tester LIB_Mobile en
-    // Expo Web (expo start --web) en local, où le navigateur bloquerait
-    // sinon l'appel cross-origin vers ce serveur de dev — jamais présent
-    // en build de production (voir NODE_ENV ci-dessous).
-    if (process.env.NODE_ENV !== 'production') {
-      headerGroups.push({
-        source: '/api/(.*)',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type,Authorization,Cookie' },
-        ],
-      });
-    }
-    return headerGroups;
+    return [{ source: '/(.*)', headers: securityHeaders }];
   },
   // Renommage FR -> EN de toutes les routes (voir CLAUDE.md / mapping de
   // migration) : redirections permanentes (308) pour ne casser aucun lien
