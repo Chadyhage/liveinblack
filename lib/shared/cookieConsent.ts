@@ -1,8 +1,9 @@
 // Port TypeScript de src/utils/cookies.js — gestion centralisée des
 // préférences cookies / stockage local. LIVEINBLACK n'embarque aucun pixel
-// publicitaire ni outil d'audience tiers. Le consentement ne conditionne donc
-// que les préférences de confort (ex. la dernière ambiance musicale
-// choisie), jamais la connexion ou les billets.
+// publicitaire ni outil de reciblage tiers. Le consentement conditionne les
+// préférences de confort (ex. la dernière ambiance musicale choisie) ET,
+// depuis l'ajout de Google Analytics, la mesure d'audience — jamais la
+// connexion ou les billets, qui restent strictement nécessaires.
 
 export const COOKIE_CONSENT_KEY = 'lib_cookie_consent'
 export const CONSENT_TTL_MS = 6 * 30 * 24 * 60 * 60 * 1000
@@ -16,7 +17,7 @@ export interface CookieConsent {
   categories: {
     essential: true
     preferences: boolean
-    analytics: false
+    analytics: boolean
     marketing: false
   }
 }
@@ -64,7 +65,7 @@ function normalizeConsent(raw: unknown): CookieConsent | null {
     categories: {
       essential: true,
       preferences: normalizedValue === 'accepted',
-      analytics: false,
+      analytics: normalizedValue === 'accepted',
       marketing: false,
     },
   }
@@ -103,6 +104,16 @@ export function saveCookieConsent(value: CookieConsentValue): CookieConsent | nu
       localStorage.removeItem('lib_music_volume')
       localStorage.removeItem('lib_music_disc')
     } catch {}
+    // Google Analytics écrit ses propres cookies (_ga, _ga_<container-id>) dès
+    // que gtag.js s'exécute — GoogleAnalytics.tsx ne le charge que si le
+    // consentement est accordé, mais si un utilisateur revient sur son choix
+    // après avoir accepté, ces cookies doivent disparaître immédiatement.
+    try {
+      document.cookie.split('; ').forEach((entry) => {
+        const name = entry.split('=')[0]
+        if (name === '_ga' || name.startsWith('_ga_') || name === '_gid' || name === '_gat') removeCookie(name)
+      })
+    } catch {}
   }
   try {
     window.dispatchEvent(new CustomEvent('lib:cookie-consent', { detail: getCookieConsent() }))
@@ -122,6 +133,10 @@ export function resetCookieConsent(): void {
 
 export function allowsFunctionalPreferences(): boolean {
   return getCookieConsent()?.categories?.preferences === true
+}
+
+export function allowsAnalytics(): boolean {
+  return getCookieConsent()?.categories?.analytics === true
 }
 
 export function getFunctionalPreference(key: string, fallback: string | null = null): string | null {
