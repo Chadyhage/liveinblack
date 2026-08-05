@@ -19,7 +19,7 @@ export default function SectionHeader({ eyebrow, title, description, align = 'le
           {eyebrow}
         </p>
       )}
-      <Heading style={{ margin: eyebrow ? '8px 0 0' : 0, color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 42px)', lineHeight: 1.02, fontWeight: 800, letterSpacing: '-.04em' }}>
+      <Heading style={{ margin: eyebrow ? '8px 0 0' : 0, color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 42px)', lineHeight: 1.02, fontWeight: 800, letterSpacing: '0.01em' }}>
         {title}
       </Heading>
       {description && <p style={{ maxWidth: 560, margin: '10px 0 0', marginInline: align === 'center' ? 'auto' : undefined, color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{description}</p>}

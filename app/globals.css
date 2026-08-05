@@ -96,8 +96,12 @@ h4, h5, h6 {
   font-weight: 700;
 }
 
+/* --font-display (Impact/Arial Narrow, déjà condensée) n'a pas besoin d'un
+   tracking négatif supplémentaire : -0.035em faisait se toucher/chevaucher
+   les glyphes aux grandes tailles (titres de section, ex. "TOP 3 DU MOMENT"),
+   d'autant plus visible en majuscules. Aligné sur .font-display (0.01em). */
 h1, h2, h3 {
-  letter-spacing: -0.035em;
+  letter-spacing: 0.01em;
 }
 
 ::selection {
