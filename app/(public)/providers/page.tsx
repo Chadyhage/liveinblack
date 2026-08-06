@@ -74,7 +74,7 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
         .provider-directory__field{min-width:0;padding:11px 14px;border-radius:var(--radius-pill);border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13.5px}
         .provider-directory__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:clamp(18px,2vw,26px)}
         .provider-directory__grid:has(>.lb-card:only-child){grid-template-columns:minmax(min(100%,360px),560px)}
-        @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{flex-direction:column;align-items:stretch}.provider-directory__search{max-width:none}.provider-directory__filters button{width:100%;min-height:44px}.provider-directory__grid{grid-template-columns:1fr}}
+        @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{flex-direction:column;align-items:stretch}.provider-directory__search{max-width:none;flex-basis:auto}.provider-directory__filters button{width:100%;min-height:44px}.provider-directory__grid{grid-template-columns:1fr}}
       `}</style>
       <div style={{ maxWidth: 1800, margin: '0 auto' }}>
       <header className="lb-directory-hero">
