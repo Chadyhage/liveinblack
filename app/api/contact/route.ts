@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { contactRequestEmail } from '@/lib/server/email-templates'
+import { contactRequestEmail } from '@/lib/server/emails'
 import { sendEmail } from '@/lib/server/email'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 import { LEGAL } from '@/lib/shared/legal'

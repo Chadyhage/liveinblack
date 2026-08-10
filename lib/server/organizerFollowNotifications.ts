@@ -2,7 +2,7 @@ import { getDb } from '../db/mongoose'
 import OrganizerFollow from '../models/OrganizerFollow'
 import User from '../models/User'
 import { sendEmail } from './email'
-import { organizerNewEventEmail, organizerScheduleChangeEmail, type FollowedEventSummary } from './email-templates'
+import { organizerNewEventEmail, organizerScheduleChangeEmail, type FollowedEventSummary } from './emails'
 import { createNotification } from './notifications'
 
 // LIVRAISON email des alertes d'abonnement organisateur — précédemment hors

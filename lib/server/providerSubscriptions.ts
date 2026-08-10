@@ -22,7 +22,7 @@ import { SUBSCRIPTION } from '../shared/fees'
 import { PROVIDER_SUB, computeRenewal, deriveSubStatus, dueReminders, cycleKey, type SubWindow } from '../shared/providerSubscription'
 import { getProviderBillingContext } from './providerBilling'
 import { sendEmail } from './email'
-import { subscriptionReminderEmail } from './email-templates'
+import { subscriptionReminderEmail } from './emails'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 

@@ -9,7 +9,7 @@ import {
   consumeVerificationToken,
   invalidateVerificationTokens,
 } from '../auth/verification-tokens'
-import { emailChangeVerificationEmail } from './email-templates'
+import { emailChangeVerificationEmail } from './emails'
 import { sendEmail } from './email'
 import { scrubAccountPII } from './accountPurge'
 import { isValidPhone } from '../shared/applicationValidation'
