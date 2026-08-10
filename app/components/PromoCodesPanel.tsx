@@ -16,8 +16,6 @@
 import { useEffect, useState } from 'react'
 import { fmtMoney, currencySymbol } from '@/lib/shared/money'
 import { Button, Input, Select, Label, Modal, Skeleton } from '@/app/components/ui'
-
-const FONT = 'Inter, sans-serif'
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
@@ -27,11 +25,10 @@ const inputStyle: React.CSSProperties = {
   background: '#0b0c12',
   color: 'rgba(255,255,255,.92)',
   outline: 'none',
-  fontFamily: FONT,
   fontSize: 13.5,
 }
 const labelStyle: React.CSSProperties = {
-  font: `600 10.5px ${FONT}`,
+  font: `600 10.5px var(--font-open-sans)`,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
   color: 'rgba(255,255,255,.55)',
@@ -242,8 +239,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
-            <h2 style={{ font: `700 28px ${FONT}`, letterSpacing: '.03em', margin: 0, color: '#fff' }}>Codes promo</h2>
-            <p style={{ font: `500 12px ${FONT}`, color: 'rgba(255,255,255,.5)', margin: '5px 0 0' }}>
+            <h2 style={{ font: `700 28px var(--font-open-sans)`, letterSpacing: '.03em', margin: 0, color: '#fff' }}>Codes promo</h2>
+            <p style={{ font: `500 12px var(--font-open-sans)`, color: 'rgba(255,255,255,.5)', margin: '5px 0 0' }}>
               {event.name} · réduction appliquée <strong style={{ color: 'rgba(255,255,255,.75)' }}>par billet</strong>
             </p>
           </div>
@@ -260,7 +257,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
-          <p style={{ marginTop: 18, color: '#ff9ed2', font: `500 13px ${FONT}` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
+          <p style={{ marginTop: 18, color: '#ff9ed2', font: `500 13px var(--font-open-sans)` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
         ) : (
           <>
             {/* Création */}
@@ -307,7 +304,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   <Input style={inputStyle} type="date" value={form.expiresAt} onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))} />
                 </div>
               </div>
-              {error && <p style={{ margin: '10px 0 0', color: '#ff9ed2', font: `500 12.5px ${FONT}` }}>{error}</p>}
+              {error && <p style={{ margin: '10px 0 0', color: '#ff9ed2', font: `500 12.5px var(--font-open-sans)` }}>{error}</p>}
               <Button
                 onClick={addCode}
                 loading={saving}
@@ -319,7 +316,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   borderRadius: 10,
                   background: saving ? 'rgba(255,255,255,.08)' : 'var(--gold)',
                   color: saving ? 'rgba(255,255,255,.4)' : '#04040b',
-                  font: `700 13px ${FONT}`,
+                  font: `700 13px var(--font-open-sans)`,
                   letterSpacing: '.03em',
                 }}
               >
@@ -330,7 +327,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             {/* Liste */}
             <div style={{ marginTop: 16 }}>
               {items.length === 0 ? (
-                <p style={{ color: 'rgba(255,255,255,.45)', font: `500 13px ${FONT}` }}>Aucun code promo sur cet événement pour l&apos;instant.</p>
+                <p style={{ color: 'rgba(255,255,255,.45)', font: `500 13px var(--font-open-sans)` }}>Aucun code promo sur cet événement pour l&apos;instant.</p>
               ) : (
                 items.map((p) => {
                   const expired = !!p.expiresAt && new Date(p.expiresAt).getTime() < nowMs
@@ -353,13 +350,13 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, font: `700 14px ${FONT}`, letterSpacing: '.05em', color: '#fff' }}>
+                        <p style={{ margin: 0, font: `700 14px var(--font-open-sans)`, letterSpacing: '.05em', color: '#fff' }}>
                           {p.code}
-                          <span style={{ marginLeft: 9, font: `700 12px ${FONT}`, color: 'var(--teal)' }}>
+                          <span style={{ marginLeft: 9, font: `700 12px var(--font-open-sans)`, color: 'var(--teal)' }}>
                             {p.type === 'percent' ? `-${p.value} %` : `-${fmtMoney(p.value, currency)}`} / billet
                           </span>
                         </p>
-                        <p style={{ margin: '3px 0 0', font: `500 11.5px ${FONT}`, color: 'rgba(255,255,255,.45)' }}>
+                        <p style={{ margin: '3px 0 0', font: `500 11.5px var(--font-open-sans)`, color: 'rgba(255,255,255,.45)' }}>
                           {Number(p.usedCount) || 0}
                           {(Number(p.maxUses) || 0) > 0 ? ` / ${p.maxUses}` : ''} utilisation{(Number(p.usedCount) || 0) > 1 ? 's' : ''}
                           {p.expiresAt ? ` · expire le ${new Date(p.expiresAt).toLocaleDateString('fr-FR')}` : ''}
@@ -376,7 +373,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                           border: '1px solid rgba(255,255,255,.14)',
                           background: 'rgba(255,255,255,.06)',
                           color: 'rgba(255,255,255,.8)',
-                          font: `600 11.5px ${FONT}`,
+                          font: `600 11.5px var(--font-open-sans)`,
                           flexShrink: 0,
                         }}
                       >
@@ -392,7 +389,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                           border: '1px solid rgba(224,90,170,.4)',
                           background: 'rgba(224,90,170,.10)',
                           color: '#ff9ed2',
-                          font: `600 11.5px ${FONT}`,
+                          font: `600 11.5px var(--font-open-sans)`,
                           flexShrink: 0,
                         }}
                       >
@@ -403,7 +400,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                 })
               )}
             </div>
-            <p style={{ margin: '12px 0 0', font: `500 11.5px ${FONT}`, color: 'rgba(255,255,255,.38)', lineHeight: 1.6 }}>
+            <p style={{ margin: '12px 0 0', font: `500 11.5px var(--font-open-sans)`, color: 'rgba(255,255,255,.38)', lineHeight: 1.6 }}>
               L&apos;acheteur saisit le code dans le récap de réservation — la réduction s&apos;applique au prix de chaque billet (une table = une fois sur le prix de la table). Les utilisations se
               comptent à l&apos;encaissement.
             </p>
@@ -438,8 +435,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
               gap: 14,
             }}
           >
-            <p style={{ font: `700 17px ${FONT}`, color: '#fff', margin: 0 }}>Supprimer ce code promo ?</p>
-            <p style={{ font: `500 13.5px ${FONT}`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+            <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>Supprimer ce code promo ?</p>
+            <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
               <strong style={{ color: '#fff' }}>{confirmRemove.code}</strong> sera définitivement supprimé, y compris son historique d&apos;utilisation ({Number(confirmRemove.usedCount) || 0}{' '}
               utilisation{(Number(confirmRemove.usedCount) || 0) > 1 ? 's' : ''}). Pour le retirer sans perdre l&apos;historique, utilise plutôt « Désactiver ».
             </p>
@@ -447,14 +444,14 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
               <Button
                 variant="secondary"
                 onClick={() => setConfirmRemove(null)}
-                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px ${FONT}` }}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px var(--font-open-sans)` }}
               >
                 Annuler
               </Button>
               <Button
                 variant="danger"
                 onClick={doConfirmRemove}
-                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px ${FONT}` }}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px var(--font-open-sans)` }}
               >
                 Supprimer
               </Button>

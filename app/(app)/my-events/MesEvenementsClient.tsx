@@ -231,7 +231,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {payoutGapLabel && (
         <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid rgba(184,243,74,0.35)', background: 'rgba(184,243,74,0.08)' }}>
-          <p style={{ font: '700 14px Inter, sans-serif', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
+          <p style={{ font: '700 14px var(--font-open-sans)', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 12px' }}>
             Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l&rsquo;argent n&rsquo;est pas versé automatiquement.
           </p>

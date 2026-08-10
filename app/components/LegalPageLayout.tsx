@@ -11,11 +11,6 @@ const CARD: React.CSSProperties = {
   boxShadow: '0 18px 46px rgba(0,0,0,0.22)',
 }
 
-const FONTS = {
-  display: 'Inter, sans-serif',
-  body: 'Inter, sans-serif',
-}
-
 const COLORS = {
   gold: 'var(--gold)',
   teal: 'var(--teal)',
@@ -69,7 +64,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
             >
               {title}
             </h1>
-            <p style={{ fontFamily: FONTS.body, fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
               Dernière mise à jour : {lastUpdate}
             </p>
           </div>
@@ -79,7 +74,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         <details open style={{ ...CARD, padding: '14px 20px', marginBottom: 16 }}>
           <summary
             style={{
-              fontFamily: FONTS.body,
               fontSize: 13,
               fontWeight: 700,
               color: 'rgba(255,255,255,0.55)',
@@ -108,7 +102,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 <a
                   href={`#legal-section-${s.n}`}
                   style={{
-                    fontFamily: FONTS.body,
                     fontSize: 13,
                     color: COLORS.muted,
                     textDecoration: 'none',
@@ -135,7 +128,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                 <span
                   style={{
-                    fontFamily: FONTS.body,
                     fontSize: 12,
                     fontWeight: 700,
                     color: COLORS.gold,
@@ -150,7 +142,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 <div style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
                   <h2
                     style={{
-                      fontFamily: FONTS.display,
                       fontWeight: 700,
                       fontSize: 17,
                       color: 'rgba(255,255,255,0.93)',
@@ -163,7 +154,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.body && (
                     <p
                       style={{
-                        fontFamily: FONTS.body,
                         fontSize: 14,
                         color: COLORS.muted,
                         margin: 0,
@@ -180,7 +170,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                         <li
                           key={i}
                           style={{
-                            fontFamily: FONTS.body,
                             fontSize: 14,
                             color: COLORS.muted,
                             lineHeight: 1.6,
@@ -204,7 +193,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.contact && (
                     <p
                       style={{
-                        fontFamily: FONTS.body,
                         fontSize: 14,
                         color: COLORS.muted,
                         margin: '8px 0 0',
@@ -234,7 +222,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           >
             <p
               style={{
-                fontFamily: FONTS.body,
                 fontSize: 12,
                 color: COLORS.dim,
                 textAlign: 'center',
@@ -280,7 +267,7 @@ function FiligraneRoseBg() {
       <style>{`
         .flg-line {
           white-space: nowrap; margin: 0; line-height: 0.9;
-          font-family: Inter, system-ui, sans-serif; font-weight: 900;
+          font-family: var(--font-open-sans); font-weight: 900;
           font-size: 88px; letter-spacing: -3px;
           margin-left: var(--off-d);
           user-select: none; -webkit-user-select: none;

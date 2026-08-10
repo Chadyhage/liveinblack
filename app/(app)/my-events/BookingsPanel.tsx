@@ -60,8 +60,8 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
           ←
         </Button>
         <div>
-          <h1 className="font-display" style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }}>{event.name}</h1>
-          <p style={{ font: '500 12px Inter, sans-serif', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+          <h1 className="font-display" style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }}>{event.name}</h1>
+          <p style={{ font: '500 12px var(--font-open-sans)', color: 'var(--text-muted)', margin: '2px 0 0' }}>
             Réservations · {data?.ticketCount ?? 0} billet(s)
           </p>
         </div>

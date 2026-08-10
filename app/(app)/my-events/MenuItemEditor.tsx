@@ -220,8 +220,8 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
         <div>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Disponible à la commande</p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Masque temporairement cet article sans le supprimer.</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Disponible à la commande</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Masque temporairement cet article sans le supprimer.</p>
         </div>
         <Toggle value={item.available !== false} disabled={disabled} onChange={() => set('available', item.available === false)} />
       </div>
@@ -251,8 +251,8 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Option show</p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Option show</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
         </div>
         <Toggle
           value={item.hasShow}
@@ -276,13 +276,13 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                 <Button variant="ghost" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ padding: 5 }}><IconClose size={13} color="rgba(220,100,100,.9)" /></Button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>Demander une information au client</span>
+                <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>Demander une information au client</span>
                 <Toggle value={option.requiresInfo} disabled={disabled} onChange={() => updateShowOption(option.id, { requiresInfo: !option.requiresInfo, ...(!option.requiresInfo ? {} : { infoPrompt: '' }) })} />
               </div>
               {option.requiresInfo && <Input style={{ fontSize: 12 }} placeholder="Ex: Prénom à écrire sur la pancarte ?" value={option.infoPrompt} disabled={disabled} onChange={(e) => updateShowOption(option.id, { infoPrompt: e.target.value })} />}
               {placeTypes.length > 1 && (
                 <div style={{ paddingTop: 5, borderTop: '1px solid rgba(255,255,255,.05)' }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Masquer ce show pour :</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Masquer ce show pour :</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {placeTypes.map((placeType) => {
                       const excluded = option.excludedPlaces.includes(placeType)
@@ -309,7 +309,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       {placeTypes.length > 1 && (
         <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Exclure de certaines places :</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Exclure de certaines places :</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {placeTypes.map((pt) => {
               const isExcluded = item.excludedPlaces.includes(pt)

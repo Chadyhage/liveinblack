@@ -64,7 +64,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
           <div style={{ display: 'grid', gap: 6 }}>
-            <Label style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Nouvelle date</Label>
+            <Label style={{ font: '600 11px var(--font-open-sans)', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Nouvelle date</Label>
             <Input
               type="date"
               value={date}
@@ -74,7 +74,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
             />
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
-            <Label style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Heure</Label>
+            <Label style={{ font: '600 11px var(--font-open-sans)', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Heure</Label>
             <Input
               type="time"
               value={time}

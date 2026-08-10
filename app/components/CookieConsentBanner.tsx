@@ -100,7 +100,7 @@ export default function CookieConsentBanner() {
         }
 
         .cc-title {
-          font-family: Inter, system-ui, sans-serif;
+          font-family: var(--font-open-sans);
           font-size: 13px;
           font-weight: 600;
           color: rgba(255,255,255,0.92);
@@ -109,7 +109,7 @@ export default function CookieConsentBanner() {
         }
 
         .cc-desc {
-          font-family: Inter, system-ui, sans-serif;
+          font-family: var(--font-open-sans);
           font-size: 12.5px;
           color: rgba(255,255,255,0.5);
           margin: 0;
@@ -139,7 +139,7 @@ export default function CookieConsentBanner() {
           padding: 10px 18px;
           border-radius: 8px;
           cursor: pointer;
-          font-family: Inter, system-ui, sans-serif;
+          font-family: var(--font-open-sans);
           font-size: 12.5px;
           font-weight: 800;
           text-transform: uppercase;
@@ -219,7 +219,6 @@ export default function CookieConsentBanner() {
                   minHeight: 40,
                   padding: '10px 18px',
                   borderRadius: 3,
-                  fontFamily: 'Inter, system-ui, sans-serif',
                   fontSize: 12.5,
                   textTransform: 'none',
                   letterSpacing: 'normal',
@@ -238,7 +237,6 @@ export default function CookieConsentBanner() {
                   minHeight: 40,
                   padding: '10px 18px',
                   borderRadius: 3,
-                  fontFamily: 'Inter, system-ui, sans-serif',
                   fontSize: 12.5,
                   textTransform: 'none',
                   letterSpacing: 'normal',

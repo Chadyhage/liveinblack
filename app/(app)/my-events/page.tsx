@@ -35,7 +35,7 @@ export default async function MesEvenementsPage() {
   if (permissionUser.activeRole === 'organisateur' && (permissionUser.orgStatus ?? permissionUser.status) === 'pending') {
     return (
       <main style={{ maxWidth: 640, margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
-        <p style={{ font: '700 11px Inter, sans-serif', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>
+        <p style={{ font: '700 11px var(--font-open-sans)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>
           Validation en cours
         </p>
         <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 22px' }}>
@@ -65,7 +65,7 @@ export default async function MesEvenementsPage() {
   if (!canCreateEvent(permissionUser)) {
     return (
       <main style={{ maxWidth: 640, margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
-        <h1 style={{ font: '400 34px Inter, sans-serif', color: '#fff', margin: '0 0 14px' }}>Accès restreint</h1>
+        <h1 style={{ font: '400 34px var(--font-open-sans)', color: '#fff', margin: '0 0 14px' }}>Accès restreint</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 10px' }}>
           {getCreateEventBlockedReason(permissionUser) ?? 'Cette section est réservée aux organisateurs.'}
         </p>

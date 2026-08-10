@@ -58,7 +58,7 @@ export default function EventDashboardCard({
             left: 10,
             padding: '4px 10px',
             borderRadius: 999,
-            font: '700 10px Inter, sans-serif',
+            font: '700 10px var(--font-open-sans)',
             letterSpacing: '.05em',
             textTransform: 'uppercase',
             color: badge.color,
@@ -75,7 +75,7 @@ export default function EventDashboardCard({
         </p>
         <Link
           href={`/events/${event.id}`}
-          style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', font: '600 12.5px Inter, sans-serif', color: 'var(--gold)', textDecoration: 'none' }}
+          style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', font: '600 12.5px var(--font-open-sans)', color: 'var(--gold)', textDecoration: 'none' }}
         >
           Voir la page de l&rsquo;événement →
         </Link>

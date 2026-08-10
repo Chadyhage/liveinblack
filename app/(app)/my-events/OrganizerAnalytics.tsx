@@ -78,20 +78,20 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {[...byCurrency.entries()].map(([currency, totals]) => (
             <span key={currency} style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ font: '600 26px Inter, sans-serif', color: '#fff' }}>{formatMoney(totals.revenue, currency)}</span>
-              {byCurrency.size > 1 && <span style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-faint)' }}>{currency}</span>}
+              <span style={{ font: '600 26px var(--font-open-sans)', color: '#fff' }}>{formatMoney(totals.revenue, currency)}</span>
+              {byCurrency.size > 1 && <span style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-faint)' }}>{currency}</span>}
             </span>
           ))}
         </span>
         {showFees && (
-          <span style={{ display: 'block', font: '500 11.5px Inter, sans-serif', color: 'var(--text-faint)', lineHeight: 1.6, margin: '8px 0 0' }}>
+          <span style={{ display: 'block', font: '500 11.5px var(--font-open-sans)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '8px 0 0' }}>
             Frais de service (5 % + 0,49 € par billet, plafonné à 2,50 € — ou 5 % + 300 FCFA, plafonné à 1 500 FCFA) payés par l&rsquo;acheteur. Tu conserves 100 % du prix affiché.
           </span>
         )}
       </Button>
       <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
         <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Billets émis</p>
-        <p style={{ font: '600 26px Inter, sans-serif', color: '#fff', margin: 0 }}>{totalTickets}</p>
+        <p style={{ font: '600 26px var(--font-open-sans)', color: '#fff', margin: 0 }}>{totalTickets}</p>
       </div>
 
       {topEvents.length > 0 && (

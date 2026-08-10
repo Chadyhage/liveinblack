@@ -20,8 +20,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Modal, Skeleton } from '@/app/components/ui'
-
-const FONT = 'Inter, sans-serif'
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
 // hex locales pour permettre la composition alpha (`${color}24` etc.), ce que
 // `var(--teal)` ne permet pas en concaténation de chaîne.
@@ -99,7 +97,6 @@ function Avatar({ name, size = 38 }: { name?: string; size?: number }) {
         justifyContent: 'center',
         background: 'rgba(255,255,255,0.06)',
         border: '1px solid rgba(255,255,255,0.10)',
-        fontFamily: FONT,
         fontWeight: 600,
         fontSize: size * 0.42,
         color: 'rgba(255,255,255,0.6)',
@@ -115,7 +112,6 @@ function RoleBadge({ role }: { role: string }) {
   return (
     <span
       style={{
-        fontFamily: FONT,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: '0.04em',
@@ -330,9 +326,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
-            <p style={{ fontFamily: FONT, fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.4px' }}>Équipe de la soirée</p>
+            <p style={{ fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.4px' }}>Équipe de la soirée</p>
           </div>
-          <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
             <span style={{ color: C.teal }}>{event.name}</span>
             {rosterEntries.length > 0 && (
               <>
@@ -348,14 +344,14 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
-          <p style={{ fontFamily: FONT, fontSize: 13, color: '#ff9ed2', textAlign: 'center', padding: '20px 0', margin: 0 }}>
+          <p style={{ fontSize: 13, color: '#ff9ed2', textAlign: 'center', padding: '20px 0', margin: 0 }}>
             Impossible de charger l&apos;équipe — vérifie ta connexion.
           </p>
         ) : (
           <>
             {/* Invite */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 15, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
-              <p style={{ fontFamily: FONT, fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', margin: 0 }}>Inviter un membre</p>
+              <p style={{ fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', margin: 0 }}>Inviter un membre</p>
 
               {/* Rôle */}
               <div style={{ display: 'flex', gap: 8 }}>
@@ -378,8 +374,8 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                         background: active ? `${r.color}22` : 'rgba(255,255,255,0.05)',
                       }}
                     >
-                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: active ? r.color : 'rgba(255,255,255,0.75)' }}>{r.label}</span>
-                      <span style={{ display: 'block', fontFamily: FONT, fontSize: 10.5, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>{r.desc}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: active ? r.color : 'rgba(255,255,255,0.75)' }}>{r.label}</span>
+                      <span style={{ display: 'block', fontSize: 10.5, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>{r.desc}</span>
                     </Button>
                   )
                 })}
@@ -397,7 +393,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   borderRadius: 10,
                   background: '#0b0c12',
                   border: '1px solid rgba(255,255,255,0.12)',
-                  fontFamily: FONT,
                   fontSize: 14,
                   color: 'rgba(255,255,255,0.92)',
                   outline: 'none',
@@ -406,11 +401,11 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
 
               {/* Résultats */}
               {query.trim().length > 0 && query.trim().length < 2 ? (
-                <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0' }}>Tape au moins 2 caractères.</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0' }}>Tape au moins 2 caractères.</p>
               ) : query.trim().length >= 2 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {visibleResults.length === 0 ? (
-                    <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0', lineHeight: 1.5 }}>
                       {searching ? (
                         'Recherche…'
                       ) : (
@@ -427,10 +422,10 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                       >
                         <Avatar name={u.name} size={36} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {u.name || 'Membre'}
                           </p>
-                          <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {u.email}
                           </p>
                         </div>
@@ -444,7 +439,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             borderRadius: 10,
                             border: '1px solid transparent',
                             color: '#04120e',
-                            fontFamily: FONT,
                             fontSize: 12.5,
                             fontWeight: 700,
                             background: 'var(--teal-solid)',
@@ -465,7 +459,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                 style={{
                   padding: '10px 14px',
                   borderRadius: 12,
-                  fontFamily: FONT,
                   fontSize: 13,
                   textAlign: 'center',
                   border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(184, 243, 74, 0.5)',
@@ -481,7 +474,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <p
                 style={{
-                  fontFamily: FONT,
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: '0.06em',
@@ -494,7 +486,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               </p>
 
               {rosterEntries.length === 0 ? (
-                <p style={{ fontFamily: FONT, fontSize: 12.5, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
                   Personne d&apos;autre pour l&apos;instant. Invite tes serveurs, contrôleurs d&apos;entrée ou ton DJ ci-dessus.
                 </p>
               ) : (
@@ -505,10 +497,10 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   >
                     <Avatar name={m.name} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: FONT, fontSize: 14.5, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 14.5, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {m.name || 'Membre'}
                       </p>
-                      <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0' }}>Ajouté à l&apos;équipe</p>
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0' }}>Ajouté à l&apos;équipe</p>
                     </div>
                     <RoleBadge role={m.role} />
                     <Button
@@ -537,7 +529,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               )}
             </div>
 
-            <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
               Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un{' '}
               <strong style={{ color: 'rgba(255,255,255,0.75)' }}>contrôle entrée</strong> peut scanner les billets. Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>DJ</strong> gère la
               playlist interactive (sons proposés, validation, en cours de lecture) — sans accès au scanner ni au bar. Toi seul (manager) peux annuler une commande ou consulter l&apos;historique.
@@ -584,9 +576,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               >
                 <IconAlert size={18} color="var(--pink)" />
               </span>
-              <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer de l&apos;équipe ?</p>
+              <p style={{ fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer de l&apos;équipe ?</p>
             </div>
-            <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
               <strong style={{ color: '#fff' }}>{confirmRemove.name}</strong> n&apos;aura plus accès au scanner de cette soirée. Tu pourras le réinviter à tout moment.
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
@@ -601,7 +593,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   background: 'rgba(255,255,255,0.08)',
                   border: '1px solid rgba(255,255,255,0.14)',
                   color: 'rgba(255,255,255,0.9)',
-                  fontFamily: FONT,
                   fontSize: 13.5,
                   fontWeight: 600,
                 }}
@@ -620,7 +611,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   background: 'var(--pink)',
                   border: '1px solid transparent',
                   color: '#fff',
-                  fontFamily: FONT,
                   fontSize: 13.5,
                   fontWeight: 700,
                 }}

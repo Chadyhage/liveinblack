@@ -103,7 +103,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
               </p>
             </div>
             <label style={{ display: 'grid', gap: 6, marginBottom: 6 }}>
-              <span style={{ font: '600 11px Inter, sans-serif', color: 'rgba(255,255,255,0.55)' }}>Message aux acheteurs (optionnel)</span>
+              <span style={{ font: '600 11px var(--font-open-sans)', color: 'rgba(255,255,255,0.55)' }}>Message aux acheteurs (optionnel)</span>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 500))}
