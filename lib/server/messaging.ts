@@ -8,6 +8,10 @@ import Event from '../models/Event'
 import Report from '../models/Report'
 import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { upsertMessageNotification } from './notifications'
+import { notifyUserById, notifyAllAgents } from './emails/notify'
+import { reportReceivedAgainstAccountEmail, newReportToReviewEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Port de src/utils/messaging.js vers un modèle Mongo un-document-par-message
 // (voir lib/models/Message.ts). Ferme l'audit C10 : le legacy stockait TOUS
@@ -1057,6 +1061,10 @@ export async function reportUser(caller: MessagingCaller, input: { targetUserId:
   const targetName = `${target.firstName ?? ''} ${target.lastName ?? ''}`.trim() || target.email
 
   await Report.create({ fromId: caller.id, fromName, targetId: targetUserId, targetName, reason })
+
+  await notifyUserById(targetUserId, () => reportReceivedAgainstAccountEmail(reason, `${SITE}/help`, SITE))
+  await notifyAllAgents(() => newReportToReviewEmail(`Utilisateur — ${targetName}`, `${SITE}/agent/signalements`, SITE))
+
   return { ok: true }
 }
 

@@ -18,6 +18,10 @@ import { cancelProviderSubscriptionForDeletion } from './providerSubscriptions'
 import { scrubAccountPII } from './accountPurge'
 import { eventEffectiveEndMs } from '../shared/event-time'
 import type { EventLike } from '../shared/event-types'
+import { notifyEmail, notifyAllAgents } from './emails/notify'
+import { accountDeletedEmail, deletionRequestToReviewEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Port de la section « Suppressions » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin, tâche #104) + de la purge api/admin-delete-account.js.
@@ -236,6 +240,9 @@ export async function approveDeletion(agent: AgentCaller, requestId: string, not
   const uid = request.userId
   const user = await User.findById(uid)
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
+  // Capturé AVANT anonymisation (user.email est réécrit en deleted-*@liveinblack.invalid
+  // plus bas) — c'est la SEULE occasion d'envoyer la confirmation à la vraie adresse.
+  const emailBeforeAnonymization = user.email
 
   const audit = await computeDeletionAudit(uid)
   if (audit.blockers.length > 0) return { ok: false, status: 409, error: 'deletion_blocked' }
@@ -325,6 +332,8 @@ export async function approveDeletion(agent: AgentCaller, requestId: string, not
     await session.endSession()
   }
 
+  await notifyEmail(emailBeforeAnonymization, () => accountDeletedEmail(SITE))
+
   return { ok: true }
 }
 
@@ -361,5 +370,9 @@ export async function createDeletionRequest(caller: CreateDeletionRequestCaller,
   if (existing) return { ok: true, request: { id: String(existing._id), status: 'pending' } }
 
   const created = await DeletionRequest.create({ userId: caller.id, reason: trimmed, requestedAt: new Date(), status: 'pending' })
+
+  const userLabel = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+  await notifyAllAgents(() => deletionRequestToReviewEmail(userLabel, 'sous 30 jours', `${SITE}/agent/suppressions`, SITE))
+
   return { ok: true, request: { id: String(created._id), status: 'pending' } }
 }

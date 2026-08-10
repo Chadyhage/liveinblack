@@ -2,8 +2,13 @@ import type Stripe from 'stripe'
 import Boost from '../models/Boost'
 import BoostSlot from '../models/BoostSlot'
 import PaymentAlert from '../models/PaymentAlert'
+import Event from '../models/Event'
 import stripe from './stripeClient'
 import { getBoostPlan } from '../shared/boosts'
+import { notifyUserById } from './emails/notify'
+import { boostConflictEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Finalisation d'un achat de boost (Stripe uniquement — 100% plateforme, pas
 // de FedaPay pour les boosts dans le legacy). Port de finalizeBoost() dans
@@ -81,6 +86,15 @@ export async function finalizeBoost(session: Stripe.Checkout.Session): Promise<v
       { key: `boost_slot_lost_${meta.boostId}` },
       { $set: { reason: refundOk ? 'boost_slot_lost' : 'boost_refund_failed', eventId: meta.eventId, details: { paymentIntent: session.payment_intent ? String(session.payment_intent) : null } } },
       { upsert: true }
+    )
+    const ev = await Event.findById(meta.eventId).select('name').lean()
+    await notifyUserById(meta.userId, () =>
+      boostConflictEmail(
+        ev?.name || 'ton événement',
+        refundOk ? 'ce créneau vient d’être pris par une autre réservation, tu as été remboursé' : 'ce créneau vient d’être pris par une autre réservation',
+        `${SITE}/spaces/organizer/${encodeURIComponent(meta.eventId)}/boost`,
+        SITE
+      )
     )
     return
   }

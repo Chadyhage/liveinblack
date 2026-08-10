@@ -9,8 +9,9 @@ import {
   consumeVerificationToken,
   invalidateVerificationTokens,
 } from '../auth/verification-tokens'
-import { emailChangeVerificationEmail } from './emails'
+import { emailChangeVerificationEmail, passwordChangedEmail } from './emails'
 import { sendEmail } from './email'
+import { notifyUserById } from './emails/notify'
 import { scrubAccountPII } from './accountPurge'
 import { isValidPhone } from '../shared/applicationValidation'
 import { isPasswordPolicyCompliant } from '../shared/passwordPolicy'
@@ -403,6 +404,8 @@ export async function changePassword(caller: ProfileCaller, input: { currentPass
   user.passwordHash = await bcrypt.hash(input.newPassword, 12)
   user.sessionVersion = (user.sessionVersion || 0) + 1
   await user.save()
+
+  await notifyUserById(caller.id, () => passwordChangedEmail(`${SITE}/profile/parametres`, SITE))
 
   return { ok: true }
 }

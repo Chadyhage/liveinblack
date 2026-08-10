@@ -12,7 +12,7 @@ import { generateUniqueTicketCode } from './ticketCode'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyUserById } from './emails/notify'
-import { ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail } from './emails'
+import { paymentFailedEmail, ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail } from './emails'
 import { fmtMoney } from '../shared/money'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -61,6 +61,8 @@ export async function fulfillOrder(
         { $set: { reason: 'amount_mismatch', eventId: order.eventId, details: { expected, paid: opts.paidAmountMinor } } },
         { upsert: true }
       )
+      const evName = (await Event.findById(order.eventId).select('name').lean())?.name || 'ton événement'
+      await notifyUserById(order.userId, () => paymentFailedEmail(evName, `${SITE}/profile/billets`, null, SITE))
       return { status: 'amount_mismatch' }
     }
   }

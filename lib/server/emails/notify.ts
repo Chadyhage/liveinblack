@@ -27,3 +27,16 @@ export async function notifyEmail(to: string | null | undefined, build: () => Em
     console.error('[emails] notifyEmail failed:', err)
   }
 }
+
+// Diffusion aux comptes agent (plateforme) — candidature/signalement/demande
+// de suppression à examiner. Point UNIQUE de résolution "qui sont les
+// agents" pour ne pas dupliquer cette requête à chaque call site
+// (applications.ts, messaging.ts, agentDeletion.ts...).
+export async function notifyAllAgents(build: () => Email): Promise<void> {
+  try {
+    const agents = await User.find({ roles: 'agent', disabled: { $ne: true } }).select('email').lean<{ email?: string }[]>()
+    await Promise.all(agents.filter((a) => a.email).map((a) => sendEmail(a.email as string, build())))
+  } catch (err) {
+    console.error('[emails] notifyAllAgents failed:', err)
+  }
+}

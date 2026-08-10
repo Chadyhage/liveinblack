@@ -11,7 +11,7 @@ import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyScheduleChange } from './organizerFollowNotifications'
 import { notifyUserById } from './emails/notify'
-import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail } from './emails'
+import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from './emails'
 import { fmtMoney } from '../shared/money'
 import type { OrderDoc } from '../models/Order'
 
@@ -102,20 +102,38 @@ export async function cancelOrganizerEvent(
   const paidOrders = await Order.find({ eventId, status: 'paid' })
   let refundedCount = 0
   let refundFailedCount = 0
+  let totalRefundedMajor = 0
   for (const order of paidOrders) {
     const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
     if (result.ok) {
       refundedCount++
+      const amountMajor = grossRefundMajor(order)
+      totalRefundedMajor += amountMajor
       // Email best-effort par acheteur remboursé — ne bloque jamais la boucle
       // (voir lib/server/emails/notify.ts). Délai indicatif générique (le rail
       // exact — Stripe carte vs FedaPay pending_manual — n'est pas exposé par
       // refundStripeOrder/recordFedapayRefund, on reste volontairement vague).
       await notifyUserById(order.userId, () =>
-        eventCancelledRefundEmail(event.name, fmtMoney(grossRefundMajor(order), order.currency), 'quelques jours ouvrés', event.cancellationMessage || null, SITE)
+        eventCancelledRefundEmail(event.name, fmtMoney(amountMajor, order.currency), 'quelques jours ouvrés', event.cancellationMessage || null, SITE)
       )
     } else {
       refundFailedCount++
     }
+  }
+
+  // Récap à l'organisateur — un seul email, même si aucun remboursement n'a
+  // eu lieu (event sans vente) : il sait que l'annulation a bien été traitée.
+  // Devise : toutes les commandes d'un même événement partagent la même
+  // devise (event.currency) — fmtMoney sur le total agrégé est donc valide.
+  if (paidOrders.length > 0) {
+    await notifyUserById(event.organizerId, () =>
+      cancellationFinancialImpactEmail(
+        event.name,
+        fmtMoney(totalRefundedMajor, paidOrders[0].currency),
+        refundFailedCount > 0 ? `${refundFailedCount} remboursement(s) ont échoué et nécessitent un suivi manuel.` : 'Tous les remboursements ont été traités avec succès.',
+        SITE
+      )
+    )
   }
 
   return { ok: true, refundedCount, refundFailedCount }
