@@ -6,7 +6,7 @@ import Event from '../models/Event'
 import stripe from './stripeClient'
 import { getBoostPlan } from '../shared/boosts'
 import { notifyUserById } from './emails/notify'
-import { boostConflictEmail } from './emails'
+import { boostConflictEmail, boostActivatedEmail } from './emails'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -117,4 +117,7 @@ export async function finalizeBoost(session: Stripe.Checkout.Session): Promise<v
   })
 
   await BoostSlot.updateOne({ slotId: meta.slotId }, { $set: { status: 'active', activeUntil: expiresAt } })
+
+  const ev = await Event.findById(meta.eventId).select('name').lean()
+  await notifyUserById(meta.userId, () => boostActivatedEmail(ev?.name || 'ton événement', `${days} jour(s)`, `${SITE}/spaces/organizer/${encodeURIComponent(meta.eventId)}`, SITE))
 }

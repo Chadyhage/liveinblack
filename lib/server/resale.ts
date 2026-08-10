@@ -10,7 +10,7 @@ import EventPayout from '../models/EventPayout'
 import { computeResaleFeeCents, computeResaleFeeXOF } from '../shared/fees'
 import { eventStartMs, isEventEnded } from '../shared/event-time'
 import { notifyUserById } from './emails/notify'
-import { resaleListingSoldEmail, ticketInvalidatedByResaleEmail, ticketPurchaseConfirmedEmail } from './emails'
+import { resaleListingSoldEmail, ticketInvalidatedByResaleEmail, ticketPurchaseConfirmedEmail, resaleListingCreatedEmail, resaleListingExpiredEmail } from './emails'
 import { fmtMoney } from '../shared/money'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -140,6 +140,9 @@ export async function listTicketForResale(caller: ResaleCaller, ticketCode: stri
       }
     })
     if (!listing) throw new ResaleError(500, 'listing_creation_failed')
+    await notifyUserById(caller.id, () =>
+      resaleListingCreatedEmail(event.name, fmtMoney(resalePriceMinor / mpm, currency), `${SITE}/profile/billets`, SITE)
+    )
     return { ok: true, listing }
   } catch (err) {
     if (err instanceof ResaleError) return { ok: false, status: err.status, error: err.code }
@@ -463,4 +466,27 @@ function momoCountryForRegion(region: string): string | null {
   const key = region.trim().toLowerCase()
   const map: Record<string, string> = { togo: 'tg', 'bénin': 'bj', benin: 'bj', 'côte d’ivoire': 'ci', senegal: 'sn', 'sénégal': 'sn' }
   return map[key] || null
+}
+
+// ─────────────────────────── expireStaleResaleListings ──────────────────────
+// Sweep cron (voir app/api/cron/resale-expiry/route.ts) — jusqu'ici AUCUN
+// code ne basculait jamais un ResaleListing en status:'expired' (vérifié :
+// la fenêtre n'était fermée qu'à la volée en lecture, listTicketForResale/
+// initiateResaleOrder ci-dessus). Un listing 'reserved' n'est jamais touché
+// ici (il a son propre cycle via releaseResaleOrder à l'expiration de
+// l'Order acheteur) — seuls les listings encore 'active' après closesAt sont
+// concernés.
+export async function expireStaleResaleListings(): Promise<{ expired: number }> {
+  await getDb()
+  const stale = await ResaleListing.find({ status: 'active', closesAt: { $lte: new Date() } }).lean()
+
+  let expiredCount = 0
+  for (const listing of stale) {
+    const claimed = await ResaleListing.updateOne({ _id: listing._id, status: 'active' }, { $set: { status: 'expired' } })
+    if (claimed.modifiedCount !== 1) continue
+    expiredCount += 1
+    const event = await Event.findById(listing.eventId).select('name').lean()
+    await notifyUserById(listing.sellerUid, () => resaleListingExpiredEmail(event?.name || 'cet événement', SITE))
+  }
+  return { expired: expiredCount }
 }

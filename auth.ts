@@ -2,13 +2,18 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { MongoDBAdapter } from '@auth/mongodb-adapter'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import clientPromise from './lib/db/mongodb-client'
 import { getDb } from './lib/db/mongoose'
 import User from './lib/models/User'
 import type { Role, AccountStatus, RoleApprovalStatus } from './lib/server/permissions'
 import { checkRateLimit, getRequestIp } from './lib/server/rateLimit'
+import { notifyEmail } from './lib/server/emails/notify'
+import { newDeviceLoginEmail } from './lib/server/emails'
 
 const SESSION_REVALIDATE_INTERVAL_MS = 5 * 60 * 1000
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+const MAX_KNOWN_DEVICES = 10
 
 // Remplace Firebase Auth. Stratégie JWT obligatoire avec le provider
 // Credentials (Auth.js ne persiste pas de session en base pour ce provider —
@@ -65,6 +70,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // une session complète.
         const isPureClient = !user.roles.includes('organisateur') && !user.roles.includes('prestataire') && !user.roles.includes('agent')
         if (isPureClient && !user.emailVerifiedAt) return null
+
+        // E16 : hash IP+UA (jamais l'un des deux en clair en base), comparé
+        // aux empreintes déjà connues — best-effort, ne bloque jamais la
+        // connexion si l'email échoue (notifyEmail avale ses erreurs).
+        const deviceHash = crypto
+          .createHash('sha256')
+          .update(`${getRequestIp(request)}|${request?.headers.get('user-agent') || ''}`)
+          .digest('hex')
+        const knownDevices: string[] = user.knownDeviceHashes || []
+        if (!knownDevices.includes(deviceHash)) {
+          await User.updateOne({ _id: user._id }, { $push: { knownDeviceHashes: { $each: [deviceHash], $slice: -MAX_KNOWN_DEVICES } } })
+          await notifyEmail(user.email, () =>
+            newDeviceLoginEmail(
+              { deviceLabel: null, approxLocation: null, when: new Date().toLocaleString('fr-FR') },
+              `${SITE}/profile`,
+              SITE
+            )
+          )
+        }
 
         return {
           id: String(user._id),

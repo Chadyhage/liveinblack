@@ -26,6 +26,11 @@ const cashSaleSettlementSchema = new Schema(
     settledAt: { type: Date, default: null },
     settledVia: { type: String, default: null },
     failReason: { type: String, default: null },
+    // Anti-doublon du rappel "règlement en attente" (voir
+    // lib/server/agentSales.ts::sendPendingCashSaleReminders) — jamais
+    // réinitialisé, une vente ne reçoit qu'un seul rappel sur toute sa durée
+    // en attente.
+    reminderSentAt: { type: Date, default: null },
   },
   { timestamps: true }
 )

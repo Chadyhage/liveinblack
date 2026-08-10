@@ -85,6 +85,14 @@ const userSchema = new Schema(
     // compte en base entre deux connexions, cf. audit pré-bascule).
     sessionVersion: { type: Number, default: 0 },
 
+    // Empreintes (hash IP+UA, jamais en clair) des appareils déjà vus à la
+    // connexion — permet à auth.ts d'envoyer l'email "nouvelle connexion"
+    // (E16) uniquement pour un appareil vraiment inconnu. Plafonné à 10,
+    // le plus ancien tombe à chaque nouvel ajout (voir $push/$slice dans
+    // auth.ts) — ce n'est pas un mécanisme de sécurité fort (pas de MFA),
+    // juste une alerte best-effort comme le reste des emails E1-E64.
+    knownDeviceHashes: { type: [String], default: [] },
+
     // Stripe Connect (organisateurs éligibles — pays EUR/Connect uniquement).
     // Écrit UNIQUEMENT par le webhook `account.updated`, jamais par le client.
     stripeAccountId: { type: String, default: null },

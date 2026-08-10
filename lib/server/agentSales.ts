@@ -13,7 +13,8 @@ import { isEventEnded } from '../shared/event-time'
 import { generateUniqueTicketCode } from './ticketCode'
 import { createTransaction, createToken, sendPaymentToUser, type MobileMoneyMode } from './fedapayClient'
 import { notifyUserById } from './emails/notify'
-import { cashSalesBlockedEmail } from './emails'
+import { cashSalesBlockedEmail, cashSalePendingSettlementEmail } from './emails'
+import { fmtMoney } from '../shared/money'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -515,4 +516,37 @@ export async function getAgentSalesDashboard(caller: AgentSaleCaller, eventId: s
       momoSales: orders.filter((o) => o.rail === 'fedapay' && o.status === 'paid').length,
     },
   }
+}
+
+// ─────────────────────── sendPendingCashSaleReminders ───────────────────────
+// Rappel agent "règlement en attente depuis Xj" — voir
+// app/api/cron/cash-sale-reminders/route.ts. `reminderSentAt` garantit un
+// seul rappel par vente en attente, jamais réinitialisé (une relance
+// répétée n'apporterait rien de plus qu'un seul rappel avant que le seuil de
+// blocage à 5 — cashSalesBlockedEmail, déjà câblé — ne prenne le relais).
+const PENDING_REMINDER_AFTER_MS = 2 * 24 * 60 * 60 * 1000 // 2 jours
+
+export async function sendPendingCashSaleReminders(): Promise<{ reminded: number }> {
+  await getDb()
+  const threshold = new Date(Date.now() - PENDING_REMINDER_AFTER_MS)
+  const pending = await CashSaleSettlement.find({ status: 'pending', reminderSentAt: null, createdAt: { $lte: threshold } }).lean()
+
+  let reminded = 0
+  for (const settlement of pending) {
+    const claimed = await CashSaleSettlement.updateOne({ _id: settlement._id, reminderSentAt: null }, { $set: { reminderSentAt: new Date() } })
+    if (claimed.modifiedCount !== 1) continue
+    const event = await Event.findById(settlement.eventId).select('name').lean()
+    const daysOverdue = Math.max(1, Math.round((Date.now() - settlement.createdAt!.getTime()) / (24 * 60 * 60 * 1000)))
+    await notifyUserById(settlement.agentUid, () =>
+      cashSalePendingSettlementEmail(
+        event?.name || 'cet événement',
+        fmtMoney(settlement.amountTotalMinor / (settlement.currency === 'XOF' ? 1 : 100), settlement.currency),
+        daysOverdue,
+        `${SITE}/agent`,
+        SITE
+      )
+    )
+    reminded += 1
+  }
+  return { reminded }
 }

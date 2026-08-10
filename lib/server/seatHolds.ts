@@ -5,6 +5,10 @@ import Order, { type OrderDoc } from '../models/Order'
 import SeatHold, { type SeatHoldDoc } from '../models/SeatHold'
 import { computeSeatHoldDepositMinor, computeTicketFeeCents, computeTicketFeeXOF, seatHoldDurationMs, type SeatHoldTier } from '../shared/fees'
 import { isEventEnded } from '../shared/event-time'
+import { notifyUserById } from './emails/notify'
+import { seatHoldExpiredEmail, seatHoldExpiringEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Blocage temporaire de place avec acompte — voir lib/models/SeatHold.ts pour
 // le cycle de vie complet. Deux Order distincts financent un hold : l'acompte
@@ -299,6 +303,7 @@ export async function releaseExpiredSeatHolds(): Promise<{ released: number }> {
   let released = 0
   for (const hold of expired) {
     const session = await mongoose.startSession()
+    let releasedThisHold = false
     try {
       await session.withTransaction(async () => {
         const fresh = await SeatHold.findById(hold._id).session(session)
@@ -311,8 +316,14 @@ export async function releaseExpiredSeatHolds(): Promise<{ released: number }> {
         }
         fresh.status = 'expired'
         await fresh.save({ session })
+        releasedThisHold = true
       })
-      released += 1
+      if (releasedThisHold) {
+        released += 1
+        // Hors transaction (jamais bloquant) — voir lib/server/emails/notify.ts.
+        const event = await Event.findById(hold.eventId).select('name').lean()
+        await notifyUserById(hold.userId, () => seatHoldExpiredEmail(event?.name || 'cet événement', `${SITE}/events/${encodeURIComponent(hold.eventId)}`, SITE))
+      }
     } catch (err) {
       console.error('[seatHolds] releaseExpiredSeatHolds failed for hold', String(hold._id), err)
     } finally {
@@ -320,4 +331,34 @@ export async function releaseExpiredSeatHolds(): Promise<{ released: number }> {
     }
   }
   return { released }
+}
+
+// Rappel "ta place expire bientôt" — fenêtre J-2h (voir
+// app/api/cron/seat-hold-reminders/route.ts, tourne plus fréquemment que le
+// sweep d'expiration ci-dessus). `reminderSentAt` garantit un seul rappel par
+// hold sur toute sa durée de vie, jamais réinitialisé.
+const REMINDER_WINDOW_START_MS = 1 * 60 * 60 * 1000 // 1h
+const REMINDER_WINDOW_END_MS = 2 * 60 * 60 * 1000 // 2h
+
+export async function sendSeatHoldExpiryReminders(): Promise<{ reminded: number }> {
+  await getDb()
+  const now = Date.now()
+  const holds = await SeatHold.find({
+    status: 'active',
+    reminderSentAt: null,
+    expiresAt: { $gte: new Date(now + REMINDER_WINDOW_START_MS), $lte: new Date(now + REMINDER_WINDOW_END_MS) },
+  }).lean()
+
+  let reminded = 0
+  for (const hold of holds) {
+    const claimed = await SeatHold.updateOne({ _id: hold._id, reminderSentAt: null }, { $set: { reminderSentAt: new Date() } })
+    if (claimed.modifiedCount !== 1) continue // déjà réclamé par un autre run concurrent
+    const event = await Event.findById(hold.eventId).select('name').lean()
+    const hoursLeft = Math.max(1, Math.round((hold.expiresAt!.getTime() - now) / (60 * 60 * 1000)))
+    await notifyUserById(hold.userId, () =>
+      seatHoldExpiringEmail(event?.name || 'cet événement', `${SITE}/checkout/seat-hold-balance/${String(hold._id)}`, `${hoursLeft}h`, SITE)
+    )
+    reminded += 1
+  }
+  return { reminded }
 }

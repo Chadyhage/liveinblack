@@ -180,6 +180,8 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   event.date = input.date
   if (input.time?.trim()) event.time = input.time
   const newWhen = [event.date, event.time].filter(Boolean).join(' · ')
+  // Nouvelle date ⇒ nouvelle fenêtre J-2 pertinente pour le récap organisateur.
+  event.recapEmailSentAt = null
 
   await event.save()
 

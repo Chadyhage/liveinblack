@@ -9,7 +9,7 @@ import Report from '../models/Report'
 import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { upsertMessageNotification } from './notifications'
 import { notifyUserById, notifyAllAgents } from './emails/notify'
-import { reportReceivedAgainstAccountEmail, newReportToReviewEmail } from './emails'
+import { reportReceivedAgainstAccountEmail, newReportToReviewEmail, newMessageDigestEmail } from './emails'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -746,6 +746,24 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
       upsertMessageNotification(recipientId, conversationIdStr, lastMessageLabel, `/messages?conversationId=${conversationIdStr}`)
     )
   )
+
+  // E20/E40 : pas de vraie agrégation par lot (aucun cron de digest n'existe,
+  // voir organizerFollowNotifications.ts pour le seul pattern de fan-out
+  // existant, non applicable ici) — on envoie un email "un message reçu hors
+  // ligne" seulement si le destinataire est hors ligne depuis plus de 30 min
+  // ou ne s'est jamais connecté, jamais si sa présence est fraîche (évite
+  // d'inonder un destinataire déjà en train de discuter dans l'app).
+  const OFFLINE_DIGEST_THRESHOLD_MS = 30 * 60 * 1000
+  if (recipientIds.length) {
+    const recipients = await User.find({ _id: { $in: recipientIds } }).select('lastSeenAt').lean()
+    const now = Date.now()
+    const conversationUrl = `${SITE}/messages?conversationId=${conversationIdStr}`
+    await Promise.all(
+      recipients
+        .filter((r) => !r.lastSeenAt || now - new Date(r.lastSeenAt).getTime() > OFFLINE_DIGEST_THRESHOLD_MS)
+        .map((r) => notifyUserById(String(r._id), () => newMessageDigestEmail(senderName, lastMessageLabel, conversationUrl, SITE)))
+    )
+  }
 
   const conversationSource = conversation.toObject({ flattenMaps: true }) as unknown as ConversationSource
   return {

@@ -12,7 +12,7 @@ import { generateUniqueTicketCode } from './ticketCode'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyUserById } from './emails/notify'
-import { paymentFailedEmail, ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail } from './emails'
+import { paymentFailedEmail, ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail, firstSaleEmail, salesMilestoneEmail } from './emails'
 import { fmtMoney } from '../shared/money'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -96,6 +96,10 @@ export async function fulfillOrder(
   const preorderTotalMajor = order.preorders.reduce((s, p) => s + (p.price / (isXof ? 1 : 100)) * p.qty, 0)
   const hasTicketPreorders = (order.ticketPreorders?.length || 0) > 0
 
+  // Capturé AVANT insertMany pour détecter la 1ère vente / un jalon franchi
+  // par CETTE commande (E24/E25) — jamais bloquant, best-effort après coup.
+  const soldBefore = await Ticket.countDocuments({ eventId: order.eventId, revoked: { $ne: true } })
+
   const ticketCodes: string[] = []
   const ticketDocs = []
   for (let seatIndex = 0; seatIndex < seatCount; seatIndex++) {
@@ -130,6 +134,29 @@ export async function fulfillOrder(
     })
   }
   await Ticket.insertMany(ticketDocs)
+
+  // E24/E25 (best-effort, jamais bloquant) — un seul email par commande, le
+  // jalon le plus significatif franchi par CETTE vente (complet > 80% > 50% >
+  // 1ère vente), pas un email par palier si une grosse commande groupe en
+  // franchit plusieurs d'un coup.
+  {
+    const soldAfter = soldBefore + seatCount
+    const capacity = (event.places || []).reduce((s, p) => s + (p.total || 0), 0)
+    const dashboardUrl = `${SITE}/spaces/organizer/${order.eventId}`
+    if (soldBefore === 0) {
+      await notifyUserById(event.organizerId, () => firstSaleEmail(event.name, dashboardUrl, SITE))
+    } else if (capacity > 0) {
+      const pctBefore = soldBefore / capacity
+      const pctAfter = soldAfter / capacity
+      if (pctBefore < 1 && pctAfter >= 1) {
+        await notifyUserById(event.organizerId, () => salesMilestoneEmail(event.name, 'Complet 🔥', dashboardUrl, SITE))
+      } else if (pctBefore < 0.8 && pctAfter >= 0.8) {
+        await notifyUserById(event.organizerId, () => salesMilestoneEmail(event.name, 'à 80% de ses places', dashboardUrl, SITE))
+      } else if (pctBefore < 0.5 && pctAfter >= 0.5) {
+        await notifyUserById(event.organizerId, () => salesMilestoneEmail(event.name, 'à 50% de ses places', dashboardUrl, SITE))
+      }
+    }
+  }
 
   // ── Table achetée : l'hôte obtient sa sentinelle de groupe (garde-fou
   // "1 place de groupe par compte et par événement", cf. GroupMembership.ts).

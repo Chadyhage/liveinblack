@@ -12,6 +12,10 @@ import {
   type MessagingCaller,
   type ConversationView,
 } from './messaging'
+import { notifyUserById } from './emails/notify'
+import { addedToGroupEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Port du cycle de vie des groupes de src/utils/messaging.js
 // (createGroup/leaveGroup/deleteGroup/setGroupMemberMute/clearGroupMemberMute/
@@ -164,6 +168,11 @@ export async function createGroup(caller: MessagingCaller, input: CreateGroupInp
   conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
   conversation.lastSenderId = caller.id
   await conversation.save()
+
+  const groupUrl = `${SITE}/conversation/${String(conversation._id)}`
+  for (const memberId of distinctOtherIds) {
+    await notifyUserById(memberId, () => addedToGroupEmail(name, callerName, groupUrl, SITE))
+  }
 
   return {
     ok: true,
@@ -416,6 +425,9 @@ export async function addMember(caller: MessagingCaller, input: AddMemberInput):
   conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
   conversation.lastSenderId = caller.id
   await conversation.save()
+
+  const groupUrl = `${SITE}/conversation/${String(conversation._id)}`
+  await notifyUserById(userId, () => addedToGroupEmail(conversation.name || 'un groupe', callerName, groupUrl, SITE))
 
   return {
     ok: true,
