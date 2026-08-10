@@ -1,8 +1,8 @@
 # LIVEINBLACK — Proposition de couverture email complète
 
-> **Statut : proposition à valider, aucun code écrit.** Base de départ : les 17 emails déjà existants (voir inventaire précédent) + tous les événements métier significatifs identifiés dans le code (`lib/server/*`, `app/api/*`) pour lesquels aucun email n'existe aujourd'hui. Organisé par rôle destinataire puis par domaine. Chaque ligne indique : déclencheur → destinataire(s) → sujet proposé → contenu → priorité.
+> **Statut : templates tous écrits (lib/server/emails/), vague P0 câblée et testée (commit f2290e5).** Base de départ : les 17 emails déjà existants (voir inventaire précédent) + tous les événements métier significatifs identifiés dans le code (`lib/server/*`, `app/api/*`) pour lesquels aucun email n'existe aujourd'hui. Organisé par rôle destinataire puis par domaine. Chaque ligne indique : déclencheur → destinataire(s) → sujet proposé → contenu → priorité.
 >
-> **Priorités** : 🔴 P0 = critique (argent, accès au billet, sécurité) — à faire en premier. 🟡 P1 = important (expérience, transparence). 🟢 P2 = confort (peut attendre une v2).
+> **Priorités** : 🔴 P0 = critique (argent, accès au billet, sécurité) — **câblé** (achat E1/E2/E14, annulation/report E7/E8, remboursement E9/E10, versement E29/E30/E31, revente E11/E13, staff E33/E34, blocage cash E45). 🟡 P1 = important (expérience, transparence) — templates prêts, pas encore câblés. 🟢 P2 = confort — templates prêts, pas encore câblés.
 >
 > **Total proposé : 47 nouveaux emails**, en plus des 17 existants = **64 emails** au total. (Pas "une centaine" — voir note de cadrage en fin de document sur pourquoi je ne recommande pas d'aller au-delà.)
 
