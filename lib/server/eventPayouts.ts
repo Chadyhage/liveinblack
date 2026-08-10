@@ -5,6 +5,11 @@ import CronLock from '../models/CronLock'
 import PaymentAlert from '../models/PaymentAlert'
 import { isFedapayConfigured, createPayout, startPayout, getPayout } from './fedapayClient'
 import { getEventEndTimestamp } from '../shared/eventUrgency'
+import { notifyUserById } from './emails/notify'
+import { payoutInitiatedEmail, payoutConfirmedEmail, payoutFailedEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Versement organisateur FedaPay/XOF. Stripe Connect est réglé directement par
 // Stripe. Un reversement FedaPay déjà créé est toujours rapproché avant toute
@@ -51,6 +56,10 @@ async function markFailed(
   code: string,
   expected: Record<string, unknown> = {}
 ): Promise<boolean> {
+  // Capturé AVANT l'update ($set claimedAmount: 0 juste après) — c'est le
+  // montant qui devait être versé, pour l'email d'échec.
+  const amountXOF = ep.claimedAmount > 0 ? ep.claimedAmount : ep.amountDueXOF
+
   const updated = await EventPayout.updateOne(
     { _id: ep._id, ...expected },
     { $set: { status: 'failed', failReason: reason, failCode: code, pendingPayoutId: null, claimedAmount: 0 } }
@@ -62,6 +71,11 @@ async function markFailed(
     { $set: { reason: 'auto_payout_failed', eventId: ep.eventId, sellerUid: ep.sellerUid, details: { code } } },
     { upsert: true }
   )
+  if (amountXOF > 0) {
+    await notifyUserById(ep.sellerUid, () =>
+      payoutFailedEmail(fmtMoney(amountXOF, 'XOF'), reason, `${SITE}/spaces/organizer/payouts`, SITE)
+    )
+  }
   return true
 }
 
@@ -127,6 +141,7 @@ async function settleSuccessfulPayout(
   )
   if (updated.modifiedCount !== 1) return 'ignored'
   await PaymentAlert.deleteOne({ key: `payout_${ep.eventId}` })
+  await notifyUserById(ep.sellerUid, () => payoutConfirmedEmail(fmtMoney(ep.claimedAmount, 'XOF'), payoutId, SITE))
   return 'paid'
 }
 
@@ -308,6 +323,8 @@ export async function processEventPayouts(now: number = Date.now()): Promise<Pro
           out.skipped++
           continue
         }
+
+        await notifyUserById(ep.sellerUid, () => payoutInitiatedEmail(event.name, fmtMoney(claim.claimedAmount, 'XOF'), 'quelques jours ouvrés', SITE))
 
         await startPayout(payout.id, { number, country: ep.momoCountry })
         countReconciliation(out, await reconcileEventPayout(payoutId, undefined, now))

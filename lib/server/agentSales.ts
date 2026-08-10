@@ -12,6 +12,10 @@ import { computeTicketFeeCents, computeTicketFeeXOF } from '../shared/fees'
 import { isEventEnded } from '../shared/event-time'
 import { generateUniqueTicketCode } from './ticketCode'
 import { createTransaction, createToken, sendPaymentToUser, type MobileMoneyMode } from './fedapayClient'
+import { notifyUserById } from './emails/notify'
+import { cashSalesBlockedEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Vente hors-application via agent désigné (#C —
 // LIVE_IN_BLACK_Achat_Tickets_Hors_Application_Version_Finale.docx). Rôle
@@ -285,11 +289,18 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
   const pendingCount = await CashSaleSettlement.countDocuments({ agentUid: agentCaller.id, status: 'pending' })
   if (pendingCount >= MAX_PENDING_CASH_SETTLEMENTS_PER_AGENT) {
     await releaseAgentSaleOrder(String(order._id))
+    // Alerte déjà active pour cet agent ? Sert aussi à ne pas ré-envoyer un
+    // email à CHAQUE tentative de vente bloquée tant qu'il n'a rien réglé —
+    // un seul email au moment où le blocage démarre.
+    const alreadyAlerted = await PaymentAlert.exists({ key: `cash_sale_agent_blocked_${agentCaller.id}` })
     await PaymentAlert.updateOne(
       { key: `cash_sale_agent_blocked_${agentCaller.id}` },
       { $set: { reason: 'cash_sale_too_many_unpaid', eventId, sellerUid: agentCaller.id, details: { pendingCount } } },
       { upsert: true }
     )
+    if (!alreadyAlerted) {
+      await notifyUserById(agentCaller.id, () => cashSalesBlockedEmail(pendingCount, `${SITE}/agent`, SITE))
+    }
     return { ok: false, status: 409, error: 'too_many_unpaid_cash_sales' }
   }
 

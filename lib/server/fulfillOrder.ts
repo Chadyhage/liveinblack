@@ -11,6 +11,11 @@ import { registerPromoUse } from './promos'
 import { generateUniqueTicketCode } from './ticketCode'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
+import { notifyUserById } from './emails/notify'
+import { ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Cœur PARTAGÉ de la finalisation d'une commande payée — utilisé par le
 // webhook Stripe ET le webhook FedaPay (le legacy dupliquait cette logique
@@ -167,6 +172,30 @@ export async function fulfillOrder(
   // ── Crédit vendeur (mode ledger uniquement — Connect 'auto' est déjà réglé
   // par Stripe au moment du paiement) + marquage payé/réglé, une seule fois. ──
   await settleOrder(order)
+
+  // Email de confirmation — best-effort, ne bloque jamais la réponse au
+  // webhook (voir lib/server/emails/notify.ts). Distingue solo/groupe comme
+  // dans EMAIL_COVERAGE_PROPOSAL.md (E1/E2).
+  const eventWhen = event.dateDisplay || null
+  const eventWhere = [event.location, event.city].filter(Boolean).join(', ') || null
+  const ticketUrl = `${SITE}/profile/billets`
+  const totalMajor = seatCount * unitMajor + preorderTotalMajor
+  const totalLabel = fmtMoney(totalMajor, order.currency)
+  if (order.isTable) {
+    await notifyUserById(order.userId, () =>
+      groupPurchaseConfirmedEmail(
+        { eventId: order.eventId, eventName: event.name, eventWhen, eventWhere, placeLabel: order.placeType, totalLabel, ticketUrl, seatCount },
+        SITE
+      )
+    )
+  } else {
+    await notifyUserById(order.userId, () =>
+      ticketPurchaseConfirmedEmail(
+        { eventId: order.eventId, eventName: event.name, eventWhen, eventWhere, placeLabel: order.placeType, quantity: seatCount, totalLabel, ticketUrl },
+        SITE
+      )
+    )
+  }
 
   return { status: 'ok', ticketCodes }
 }
