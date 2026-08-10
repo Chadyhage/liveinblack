@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 import { regions } from '@/lib/shared/regions'
 import { subPresentation, subPriceLabel, type SubWindow } from '@/lib/shared/providerSubscription'
 import type { ProviderProfileView } from '@/lib/server/providerProfile'
@@ -15,7 +15,7 @@ import type { getMySubscriptionOverview } from '@/lib/server/providerSubscriptio
 
 type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>>
 const C = { obsidian: 'var(--obsidian)', teal: 'var(--teal)', gold: 'var(--gold)', pink: 'var(--pink)' }
-const card: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: '0 18px 46px rgba(0,0,0,0.22)' }
+const CARD_SHADOW = '0 18px 46px rgba(0,0,0,0.22)'
 const primaryButton: React.CSSProperties = { background: C.gold, color: C.obsidian, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(value: string | null | undefined): string {
@@ -137,7 +137,7 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
           <p className="lb-dashboard-description" style={{ marginTop: 9 }}>Gère la visibilité de ton profil et retrouve l’historique de tes paiements.</p>
         </div>
 
-        <section style={{ ...card, padding: 18, marginTop: 20, borderLeft: `3px solid ${color}` }}>
+        <Card style={{ padding: 18, marginTop: 20, boxShadow: CARD_SHADOW, borderLeft: `3px solid ${color}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
             <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color }}>{title}</h2>
@@ -169,9 +169,9 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
               {cta}
             </Button>
           )}
-        </section>
+        </Card>
 
-        <section style={{ ...card, padding: 18, marginTop: 16 }}>
+        <Card style={{ padding: 18, marginTop: 16, boxShadow: CARD_SHADOW }}>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Historique des paiements</h2>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
           {subscription.payments.length === 0 ? (
@@ -189,7 +189,7 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
               ))}
             </div>
           )}
-        </section>
+        </Card>
     </section>
   )
 }

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
-import { EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
+import { Card, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const PAGE_SIZE = 20
@@ -35,8 +35,6 @@ export interface EventInterestItemView {
   createdAt: string
   event: InterestedEventView | null
 }
-
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }
 
 export default function InterestedEventsClient({ initialItems }: { initialItems: EventInterestItemView[] }) {
   const [items, setItems] = useState(initialItems)
@@ -150,7 +148,10 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         : `dès ${fmtMoney(ev.minPrice, ev.currency)}`
 
   const card = (
-    <div className={ev ? 'lb-card' : undefined} style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
+    <Card
+      className={ev ? 'lb-card' : undefined}
+      style={{ padding: 0, overflow: 'hidden', opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}
+    >
       <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'rgba(184, 243, 74, 0.2)'}, var(--obsidian))` }}>
         {ev && (
           <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 400, 158)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
@@ -176,7 +177,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Ajouté le {addedDate}</span>
         {priceLabel && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>{priceLabel}</span>}
       </div>
-    </div>
+    </Card>
   )
 
   return ev ? (
