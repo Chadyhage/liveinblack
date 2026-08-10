@@ -18,8 +18,8 @@ import { cancelProviderSubscriptionForDeletion } from './providerSubscriptions'
 import { scrubAccountPII } from './accountPurge'
 import { eventEffectiveEndMs } from '../shared/event-time'
 import type { EventLike } from '../shared/event-types'
-import { notifyEmail, notifyAllAgents } from './emails/notify'
-import { accountDeletedEmail, deletionRequestToReviewEmail } from './emails'
+import { notifyEmail, notifyUserById, notifyAllAgents } from './emails/notify'
+import { accountDeletedEmail, deletionRequestToReviewEmail, accountDeletionRequestedEmail } from './emails'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -373,6 +373,11 @@ export async function createDeletionRequest(caller: CreateDeletionRequestCaller,
 
   const userLabel = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
   await notifyAllAgents(() => deletionRequestToReviewEmail(userLabel, 'sous 30 jours', `${SITE}/agent/suppressions`, SITE))
+  // E19 : confirmation au demandeur lui-même — aucun flux d'annulation en
+  // libre-service n'existe (la demande est traitée manuellement par un
+  // agent, voir approveDeletion), le lien renvoie donc vers /profile où le
+  // compte reste pleinement utilisable tant que la demande est 'pending'.
+  await notifyUserById(caller.id, () => accountDeletionRequestedEmail(`${SITE}/profile`, 'sous 30 jours', SITE))
 
   return { ok: true, request: { id: String(created._id), status: 'pending' } }
 }

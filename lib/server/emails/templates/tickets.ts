@@ -94,12 +94,9 @@ export function seatHoldExpiredEmail(eventName: string, retryUrl: string, site: 
   return { subject: `Ta place pour ${eventName} a été libérée`, html: wrap(inner, { site, preheader: 'Le blocage de ta place a expiré.' }) }
 }
 
-export function ticketReceivedEmail(eventName: string, ticketUrl: string, fromLabel: string | null, site: string = DEFAULT_SITE): Email {
-  const evName = escapeHtml(eventName)
-  const inner = `
-    ${heading('Tu as reçu un billet 🎟️', 'accent')}
-    ${paragraph(`Un billet pour <strong style="color:#fff;">${evName}</strong> vient d'être transféré sur ton compte${fromLabel ? ` par ${escapeHtml(fromLabel)}` : ''}.`)}
-    ${button(ticketUrl, 'Voir mon billet et mon QR code')}
-  `
-  return { subject: `Tu as reçu un billet pour ${eventName}`, html: wrap(inner, { site, preheader: 'Un nouveau billet est disponible sur ton compte.' }) }
-}
+// ticketReceivedEmail (E6 "billet transféré/reçu") retiré : la proposition
+// (EMAIL_COVERAGE_PROPOSAL.md) fusionne explicitement E6 avec E1 — l'achat
+// d'un billet de revente (E14, lib/server/resale.ts::purchaseResaleListing)
+// envoie déjà ticketPurchaseConfirmedEmail au nouvel acheteur. Aucun autre
+// mécanisme de transfert/don de billet n'existe dans le code (vérifié) : ce
+// template n'avait donc aucun appelant possible.
