@@ -37,7 +37,11 @@ export function ticketPurchaseConfirmedEmail(t: TicketPurchaseSummary, site: str
     ${button(t.ticketUrl, 'Voir mon billet et mon QR code')}
     ${note("Garde ce billet à portée de main le jour J — présente le QR code à l'entrée.")}
   `
-  return { subject: `Ton billet pour ${t.eventName} est prêt 🎟️`, html: wrap(inner, { site, preheader: `Paiement confirmé pour ${t.eventName}.` }) }
+  return {
+    subject: `Ton billet pour ${t.eventName} est prêt 🎟️`,
+    html: wrap(inner, { site, preheader: `Paiement confirmé pour ${t.eventName}.` }),
+    inApp: { type: 'payment', title: 'Ton billet est prêt 🎟️', body: `Paiement confirmé pour ${t.eventName}.`, link: t.ticketUrl, push: true },
+  }
 }
 
 export interface GroupPurchaseSummary extends Omit<TicketPurchaseSummary, 'quantity'> {
@@ -60,7 +64,11 @@ export function groupPurchaseConfirmedEmail(t: GroupPurchaseSummary, site: strin
     ${button(t.ticketUrl, 'Voir les billets du groupe')}
     ${note("En tant qu'hôte du groupe, c'est à toi de redistribuer les billets à tes invités depuis l'app.")}
   `
-  return { subject: `Vos ${t.seatCount} billets pour ${t.eventName}`, html: wrap(inner, { site, preheader: `Réservation groupe confirmée pour ${t.eventName}.` }) }
+  return {
+    subject: `Vos ${t.seatCount} billets pour ${t.eventName}`,
+    html: wrap(inner, { site, preheader: `Réservation groupe confirmée pour ${t.eventName}.` }),
+    inApp: { type: 'payment', title: `Vos ${t.seatCount} billets sont prêts`, body: `Réservation groupe confirmée pour ${t.eventName}.`, link: t.ticketUrl, push: true },
+  }
 }
 
 export function paymentFailedEmail(eventName: string, retryUrl: string, reason: string | null, site: string = DEFAULT_SITE): Email {
@@ -71,7 +79,11 @@ export function paymentFailedEmail(eventName: string, retryUrl: string, reason: 
     ${paragraph('Ta place n\'est pas garantie tant que le paiement n\'est pas confirmé.')}
     ${button(retryUrl, 'Réessayer le paiement', 'danger')}
   `
-  return { subject: `Ton paiement pour ${eventName} n'a pas abouti`, html: wrap(inner, { site, preheader: 'Réessaie ton paiement pour garder ta place.' }) }
+  return {
+    subject: `Ton paiement pour ${eventName} n'a pas abouti`,
+    html: wrap(inner, { site, preheader: 'Réessaie ton paiement pour garder ta place.' }),
+    inApp: { type: 'payment', title: 'Ton paiement n’a pas abouti', body: `Réessaie pour garder ta place à ${eventName}.`, link: retryUrl, push: true },
+  }
 }
 
 export function seatHoldExpiringEmail(eventName: string, completeUrl: string, expiresInLabel: string, site: string = DEFAULT_SITE): Email {

@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell, ChevronDown } from 'lucide-react'
+import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell, BellRing, ChevronDown } from 'lucide-react'
 import { Avatar, Button, Skeleton } from '@/app/components/ui'
+import { isPushSupported, getPushPermissionState, subscribeToPush } from '@/lib/client/push'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
 // session existe — avant ce composant, un utilisateur connecté voyait
@@ -74,7 +75,26 @@ export default function AccountMenu({
   const [conversations, setConversations] = useState<ConversationPreview[] | null>(null)
   const [notifications, setNotifications] = useState<NotificationItem[] | null>(null)
   const [notifUnread, setNotifUnread] = useState(0)
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported' | null>(null)
+  const [pushSubscribing, setPushSubscribing] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+
+  // État de la permission push — lu une fois au montage (jamais de prompt
+  // automatique, seulement pour savoir si on affiche le bouton d'activation
+  // dans le dropdown Notifications ci-dessous).
+  useEffect(() => {
+    getPushPermissionState().then((state) => setPushPermission(isPushSupported() ? state : 'unsupported'))
+  }, [])
+
+  async function handleEnablePush() {
+    setPushSubscribing(true)
+    try {
+      const result = await subscribeToPush()
+      setPushPermission(result.ok ? 'granted' : await getPushPermissionState())
+    } finally {
+      setPushSubscribing(false)
+    }
+  }
 
   // Un compte peut porter plusieurs rôles à la fois (voir lib/models/User.ts)
   // — bascule activeRole côté serveur (POST /api/account/active-role, seule
@@ -397,6 +417,34 @@ export default function AccountMenu({
                 </button>
               )}
             </div>
+            {pushPermission === 'default' && (
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Recevoir les alertes urgentes même hors de l&apos;app</span>
+                <button
+                  onClick={handleEnablePush}
+                  disabled={pushSubscribing}
+                  style={{
+                    minHeight: 44,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 12px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    border: '1px solid rgba(184,243,74,.55)',
+                    background: 'transparent',
+                    color: 'var(--text)',
+                    cursor: pushSubscribing ? 'not-allowed' : 'pointer',
+                    opacity: pushSubscribing ? 0.6 : 1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <BellRing size={14} />
+                  Activer
+                </button>
+              </div>
+            )}
             <div style={{ maxHeight: 340, overflowY: 'auto' }}>
               {notifications === null && <div aria-label="Chargement des notifications" style={{ padding: 16, display: 'grid', gap: 9 }}><Skeleton height={12} /><Skeleton width="72%" height={10} /><Skeleton width="86%" height={10} /></div>}
               {notifications !== null && notifications.length === 0 && (

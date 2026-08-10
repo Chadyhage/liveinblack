@@ -22,7 +22,11 @@ export function resaleListingSoldEmail(eventName: string, netAmountLabel: string
     ${paragraph(`Ton billet pour <strong style="color:#fff;">${evName}</strong> a été vendu ! Tu recevras <strong style="color:#fff;">${netAmountLabel}</strong> (net de commission).`)}
     ${note(`Le versement arrive généralement sous ${payoutDelayLabel} après l'événement.`)}
   `
-  return { subject: `Ton billet pour ${eventName} a trouvé preneur 💸`, html: wrap(inner, { site, preheader: `Vente confirmée — ${netAmountLabel} à venir.` }) }
+  return {
+    subject: `Ton billet pour ${eventName} a trouvé preneur 💸`,
+    html: wrap(inner, { site, preheader: `Vente confirmée — ${netAmountLabel} à venir.` }),
+    inApp: { type: 'resale', title: 'Ton billet a trouvé preneur 💸', body: `${eventName} — ${netAmountLabel} net à venir.`, push: true },
+  }
 }
 
 export function resaleListingExpiredEmail(eventName: string, site: string = DEFAULT_SITE): Email {

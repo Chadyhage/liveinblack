@@ -11,7 +11,11 @@ export function staffAddedEmail(eventName: string, roleLabel: string, scannerUrl
     ${paragraph(`Tu as été ajouté à l'équipe de <strong style="color:#fff;">${evName}</strong> avec le rôle <strong style="color:#fff;">${escapeHtml(roleLabel)}</strong>.`)}
     ${button(scannerUrl, "Accéder à l'app le jour J")}
   `
-  return { subject: `Tu es staff sur ${eventName}`, html: wrap(inner, { site, preheader: `Rôle : ${roleLabel}` }) }
+  return {
+    subject: `Tu es staff sur ${eventName}`,
+    html: wrap(inner, { site, preheader: `Rôle : ${roleLabel}` }),
+    inApp: { type: 'staff', title: 'Tu es staff sur cet événement', body: `${eventName} — rôle : ${roleLabel}`, link: scannerUrl, push: true },
+  }
 }
 
 export function staffRemovedEmail(eventName: string, site: string = DEFAULT_SITE): Email {
@@ -20,5 +24,9 @@ export function staffRemovedEmail(eventName: string, site: string = DEFAULT_SITE
     ${heading('Tu n’es plus staff sur cet événement')}
     ${paragraph(`Tu as été retiré de l'équipe de <strong style="color:#fff;">${evName}</strong>.`)}
   `
-  return { subject: `Tu n'es plus staff sur ${eventName}`, html: wrap(inner, { site, preheader: 'Confirmation de retrait de l’équipe.' }) }
+  return {
+    subject: `Tu n'es plus staff sur ${eventName}`,
+    html: wrap(inner, { site, preheader: 'Confirmation de retrait de l’équipe.' }),
+    inApp: { type: 'staff', title: 'Retiré du staff', body: eventName, push: true },
+  }
 }

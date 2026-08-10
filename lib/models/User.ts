@@ -93,6 +93,24 @@ const userSchema = new Schema(
     // juste une alerte best-effort comme le reste des emails E1-E64.
     knownDeviceHashes: { type: [String], default: [] },
 
+    // Abonnements Web Push (navigateur) — un par appareil/navigateur ayant
+    // accepté les notifications push. Plafonné à 5 (voir $push/$slice dans
+    // app/api/push/subscribe/route.ts) pour éviter une croissance illimitée
+    // si l'utilisateur active la fonctionnalité sur beaucoup d'appareils.
+    // Une entrée invalide (410 Gone côté navigateur) est retirée
+    // automatiquement par lib/server/push.ts au premier envoi en échec.
+    pushSubscriptions: {
+      type: [
+        {
+          endpoint: { type: String, required: true },
+          p256dh: { type: String, required: true },
+          auth: { type: String, required: true },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
+
     // Stripe Connect (organisateurs éligibles — pays EUR/Connect uniquement).
     // Écrit UNIQUEMENT par le webhook `account.updated`, jamais par le client.
     stripeAccountId: { type: String, default: null },

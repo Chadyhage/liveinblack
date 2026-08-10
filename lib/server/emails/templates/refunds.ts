@@ -17,7 +17,11 @@ export function eventCancelledRefundEmail(eventName: string, amountLabel: string
     ${note(`Le remboursement apparaîtra sur ton moyen de paiement sous ${delayLabel}.`)}
     ${button(`${site}/events`, "Découvrir d'autres événements", 'outline')}
   `
-  return { subject: `${eventName} est annulé — tu es remboursé`, html: wrap(inner, { site, preheader: `Remboursement automatique de ${amountLabel}.` }) }
+  return {
+    subject: `${eventName} est annulé — tu es remboursé`,
+    html: wrap(inner, { site, preheader: `Remboursement automatique de ${amountLabel}.` }),
+    inApp: { type: 'refund', title: `${eventName} est annulé`, body: `Tu es remboursé de ${amountLabel}.`, link: `${site}/events`, push: true },
+  }
 }
 
 export function eventPostponedTicketHolderEmail(eventName: string, previousWhen: string, newWhen: string, refundUrl: string, site: string = DEFAULT_SITE): Email {
@@ -28,7 +32,11 @@ export function eventPostponedTicketHolderEmail(eventName: string, previousWhen:
     ${paragraph(`<span style="color:rgba(255,255,255,0.5);text-decoration:line-through;">${escapeHtml(previousWhen)}</span><br/><strong style="color:#b8f34a;">Nouvelle date : ${escapeHtml(newWhen)}</strong>`)}
     ${button(refundUrl, 'Je ne peux pas venir — demander un remboursement', 'outline')}
   `
-  return { subject: `${eventName} est reporté au ${newWhen}`, html: wrap(inner, { site, preheader: 'Ton billet reste valable à la nouvelle date.' }) }
+  return {
+    subject: `${eventName} est reporté au ${newWhen}`,
+    html: wrap(inner, { site, preheader: 'Ton billet reste valable à la nouvelle date.' }),
+    inApp: { type: 'refund', title: `${eventName} est reporté`, body: `Nouvelle date : ${newWhen}. Ton billet reste valable.`, link: refundUrl, push: true },
+  }
 }
 
 export function refundConfirmedEmail(eventName: string, amountLabel: string, delayLabel: string, site: string = DEFAULT_SITE): Email {
@@ -38,7 +46,11 @@ export function refundConfirmedEmail(eventName: string, amountLabel: string, del
     ${paragraph(`Ton remboursement de <strong style="color:#fff;">${amountLabel}</strong> pour <strong style="color:#fff;">${evName}</strong> a été traité.`)}
     ${note(`Le montant apparaîtra sur ton moyen de paiement sous ${delayLabel}.`)}
   `
-  return { subject: `Ton remboursement pour ${eventName} est confirmé`, html: wrap(inner, { site, preheader: `Remboursement de ${amountLabel} confirmé.` }) }
+  return {
+    subject: `Ton remboursement pour ${eventName} est confirmé`,
+    html: wrap(inner, { site, preheader: `Remboursement de ${amountLabel} confirmé.` }),
+    inApp: { type: 'refund', title: 'Remboursement confirmé', body: `${amountLabel} pour ${eventName}.`, push: true },
+  }
 }
 
 export function refundFailedEmail(eventName: string, reason: string | null, supportUrl: string, site: string = DEFAULT_SITE): Email {
@@ -48,7 +60,11 @@ export function refundFailedEmail(eventName: string, reason: string | null, supp
     ${paragraph(`Le remboursement de ton billet pour <strong style="color:#fff;">${evName}</strong> n'a pas pu être traité${reason ? ` (${escapeHtml(reason)})` : ''}.`)}
     ${button(supportUrl, 'Contacter le support', 'danger')}
   `
-  return { subject: `Ton remboursement pour ${eventName} a rencontré un problème`, html: wrap(inner, { site, preheader: 'Une action est nécessaire de ta part.' }) }
+  return {
+    subject: `Ton remboursement pour ${eventName} a rencontré un problème`,
+    html: wrap(inner, { site, preheader: 'Une action est nécessaire de ta part.' }),
+    inApp: { type: 'refund', title: 'Problème avec ton remboursement', body: `${eventName} — action requise.`, link: supportUrl, push: true },
+  }
 }
 
 export function ticketInvalidatedByResaleEmail(eventName: string, site: string = DEFAULT_SITE): Email {

@@ -13,7 +13,11 @@ export function newApplicationToReviewEmail(candidateName: string, type: 'organi
     ${paragraph(`<strong style="color:#fff;">${escapeHtml(candidateName)}</strong> a soumis un dossier de candidature ${type}.`)}
     ${button(backofficeUrl, 'Examiner le dossier', 'outline')}
   `
-  return { subject: 'Nouvelle candidature à examiner', html: wrap(inner, { site, preheader: `${candidateName} — candidature ${type}` }) }
+  return {
+    subject: 'Nouvelle candidature à examiner',
+    html: wrap(inner, { site, preheader: `${candidateName} — candidature ${type}` }),
+    inApp: { type: 'agent_queue', title: 'Nouvelle candidature à examiner', body: `${candidateName} — ${type}`, link: backofficeUrl, push: true },
+  }
 }
 
 export function newReportToReviewEmail(contentTypeLabel: string, backofficeUrl: string, site: string = DEFAULT_SITE): Email {
@@ -22,7 +26,11 @@ export function newReportToReviewEmail(contentTypeLabel: string, backofficeUrl: 
     ${paragraph(`Un signalement a été déposé concernant : <strong style="color:#fff;">${escapeHtml(contentTypeLabel)}</strong>.`)}
     ${button(backofficeUrl, 'Voir le signalement', 'outline')}
   `
-  return { subject: 'Nouveau signalement à modérer', html: wrap(inner, { site, preheader: contentTypeLabel }) }
+  return {
+    subject: 'Nouveau signalement à modérer',
+    html: wrap(inner, { site, preheader: contentTypeLabel }),
+    inApp: { type: 'agent_queue', title: 'Nouveau signalement à modérer', body: contentTypeLabel, link: backofficeUrl, push: true },
+  }
 }
 
 export function deletionRequestToReviewEmail(userLabel: string, legalDelayLabel: string, backofficeUrl: string, site: string = DEFAULT_SITE): Email {
@@ -32,7 +40,11 @@ export function deletionRequestToReviewEmail(userLabel: string, legalDelayLabel:
     ${note(`Délai légal de traitement : ${legalDelayLabel}.`)}
     ${button(backofficeUrl, 'Traiter la demande', 'outline')}
   `
-  return { subject: 'Demande de suppression à traiter', html: wrap(inner, { site, preheader: userLabel }) }
+  return {
+    subject: 'Demande de suppression à traiter',
+    html: wrap(inner, { site, preheader: userLabel }),
+    inApp: { type: 'agent_queue', title: 'Demande de suppression à traiter', body: userLabel, link: backofficeUrl, push: true },
+  }
 }
 
 export function cashSalePendingSettlementEmail(eventName: string, amountLabel: string, daysOverdue: number, backofficeUrl: string, site: string = DEFAULT_SITE): Email {
@@ -50,5 +62,9 @@ export function cashSalesBlockedEmail(pendingCount: number, backofficeUrl: strin
     ${paragraph(`Tu as ${pendingCount} ventes cash non réglées — le seuil de blocage (5) est atteint. Tes nouvelles ventes cash sont suspendues jusqu'à régularisation.`)}
     ${button(backofficeUrl, 'Régulariser mes ventes', 'danger')}
   `
-  return { subject: 'Tes ventes cash sont bloquées', html: wrap(inner, { site, preheader: `${pendingCount} ventes non réglées.` }) }
+  return {
+    subject: 'Tes ventes cash sont bloquées',
+    html: wrap(inner, { site, preheader: `${pendingCount} ventes non réglées.` }),
+    inApp: { type: 'agent_queue', title: 'Tes ventes cash sont bloquées', body: `${pendingCount} ventes non réglées.`, link: backofficeUrl, push: true },
+  }
 }

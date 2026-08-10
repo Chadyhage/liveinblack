@@ -8,7 +8,7 @@ import { getDb } from './lib/db/mongoose'
 import User from './lib/models/User'
 import type { Role, AccountStatus, RoleApprovalStatus } from './lib/server/permissions'
 import { checkRateLimit, getRequestIp } from './lib/server/rateLimit'
-import { notifyEmail } from './lib/server/emails/notify'
+import { notifyUserById } from './lib/server/emails/notify'
 import { newDeviceLoginEmail } from './lib/server/emails'
 
 const SESSION_REVALIDATE_INTERVAL_MS = 5 * 60 * 1000
@@ -73,7 +73,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // E16 : hash IP+UA (jamais l'un des deux en clair en base), comparé
         // aux empreintes déjà connues — best-effort, ne bloque jamais la
-        // connexion si l'email échoue (notifyEmail avale ses erreurs).
+        // connexion si l'email/notification échoue (notifyUserById avale ses
+        // erreurs). notifyUserById (pas notifyEmail) : user._id est déjà en
+        // scope, ce qui permet aussi une notification in-app/push — un cas
+        // de sécurité où l'alerte push a le plus de valeur.
         const deviceHash = crypto
           .createHash('sha256')
           .update(`${getRequestIp(request)}|${request?.headers.get('user-agent') || ''}`)
@@ -81,7 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const knownDevices: string[] = user.knownDeviceHashes || []
         if (!knownDevices.includes(deviceHash)) {
           await User.updateOne({ _id: user._id }, { $push: { knownDeviceHashes: { $each: [deviceHash], $slice: -MAX_KNOWN_DEVICES } } })
-          await notifyEmail(user.email, () =>
+          await notifyUserById(String(user._id), () =>
             newDeviceLoginEmail(
               { deviceLabel: null, approxLocation: null, when: new Date().toLocaleString('fr-FR') },
               `${SITE}/profile`,

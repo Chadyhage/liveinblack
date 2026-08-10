@@ -55,7 +55,11 @@ export function newDeviceLoginEmail(ctx: DeviceContext, secureAccountUrl: string
     ${paragraph('Si c\'était bien toi, tu peux ignorer cet email.')}
     ${button(secureAccountUrl, "Ce n'était pas moi — sécuriser mon compte", 'danger')}
   `
-  return { subject: 'Nouvelle connexion à ton compte LIVEINBLACK', html: wrap(inner, { site, preheader: 'Une nouvelle connexion vient d’avoir lieu sur ton compte.' }) }
+  return {
+    subject: 'Nouvelle connexion à ton compte LIVEINBLACK',
+    html: wrap(inner, { site, preheader: 'Une nouvelle connexion vient d’avoir lieu sur ton compte.' }),
+    inApp: { type: 'account', title: 'Nouvelle connexion à ton compte', body: details || undefined, link: secureAccountUrl, push: true },
+  }
 }
 
 export function passwordChangedEmail(secureAccountUrl: string, site: string = DEFAULT_SITE): Email {

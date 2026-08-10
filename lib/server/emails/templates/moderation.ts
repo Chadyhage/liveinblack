@@ -10,5 +10,9 @@ export function reportReceivedAgainstAccountEmail(natureLabel: string, supportUr
     ${paragraph(`Un signalement concernant ton compte a été déposé (${escapeHtml(natureLabel)}). Notre équipe l'examine.`)}
     ${note(`Si tu penses qu'il s'agit d'une erreur, contacte-nous : ${supportUrl}`)}
   `
-  return { subject: 'Un signalement a été déposé — action requise', html: wrap(inner, { site, preheader: 'Notre équipe examine un signalement te concernant.' }) }
+  return {
+    subject: 'Un signalement a été déposé — action requise',
+    html: wrap(inner, { site, preheader: 'Notre équipe examine un signalement te concernant.' }),
+    inApp: { type: 'report', title: 'Un signalement a été déposé', body: natureLabel, link: supportUrl, push: true },
+  }
 }
