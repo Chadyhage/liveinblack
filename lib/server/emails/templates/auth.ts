@@ -69,7 +69,11 @@ export function passwordChangedEmail(secureAccountUrl: string, site: string = DE
     ${note("Si tu n'es pas à l'origine de ce changement, sécurise ton compte immédiatement.")}
     ${button(secureAccountUrl, 'Ce n’était pas moi', 'danger')}
   `
-  return { subject: 'Ton mot de passe a été modifié', html: wrap(inner, { site, preheader: 'Confirmation de changement de mot de passe.' }) }
+  return {
+    subject: 'Ton mot de passe a été modifié',
+    html: wrap(inner, { site, preheader: 'Confirmation de changement de mot de passe.' }),
+    inApp: { type: 'account', title: 'Mot de passe modifié', link: secureAccountUrl, push: true },
+  }
 }
 
 export function accountDeletedEmail(site: string = DEFAULT_SITE): Email {
@@ -87,5 +91,9 @@ export function accountDeletionRequestedEmail(cancelUrl: string, delayLabel: str
     ${paragraph(`Ta demande de suppression de compte a bien été enregistrée. Elle sera traitée sous ${delayLabel}.`)}
     ${button(cancelUrl, 'Annuler la demande', 'outline')}
   `
-  return { subject: 'Ta demande de suppression de compte est prise en compte', html: wrap(inner, { site, preheader: 'Ta demande de suppression sera traitée bientôt.' }) }
+  return {
+    subject: 'Ta demande de suppression de compte est prise en compte',
+    html: wrap(inner, { site, preheader: 'Ta demande de suppression sera traitée bientôt.' }),
+    inApp: { type: 'account', title: 'Demande de suppression prise en compte', body: `Traitée sous ${delayLabel}.`, link: cancelUrl },
+  }
 }

@@ -13,5 +13,9 @@ export function interestedEventReminderEmail(eventName: string, eventWhen: strin
     ${paragraph(`Tu avais marqué <strong style="color:#fff;">${evName}</strong> (${escapeHtml(eventWhen)}) comme intéressant.`)}
     ${button(eventUrl, alreadyBought ? 'Voir mon billet' : 'Réserver maintenant', alreadyBought ? 'outline' : 'primary')}
   `
-  return { subject: `${eventName} c'est demain !`, html: wrap(inner, { site, preheader: eventWhen }) }
+  return {
+    subject: `${eventName} c'est demain !`,
+    html: wrap(inner, { site, preheader: eventWhen }),
+    inApp: { type: 'reminder', title: `${eventName} c'est demain !`, body: eventWhen, link: eventUrl },
+  }
 }

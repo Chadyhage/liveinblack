@@ -24,6 +24,8 @@ export const NOTIFICATION_TYPES = [
   'report',
   'account',
   'agent_queue',
+  'reminder',
+  'review',
 ] as const
 
 const notificationSchema = new Schema(

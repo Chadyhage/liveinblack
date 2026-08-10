@@ -15,5 +15,9 @@ export function newReviewReceivedEmail(context: string, rating: number, excerpt:
     ${paragraph(`<span style="color:#b8f34a;font-size:16px;">${starsLabel(rating)}</span>${excerpt ? `<br/><em style="color:rgba(255,255,255,0.7);">"${escapeHtml(excerpt)}"</em>` : ''}`)}
     ${button(replyUrl, "Répondre à l'avis", 'outline')}
   `
-  return { subject: `Nouvel avis sur ${context}`, html: wrap(inner, { site, preheader: starsLabel(rating) }) }
+  return {
+    subject: `Nouvel avis sur ${context}`,
+    html: wrap(inner, { site, preheader: starsLabel(rating) }),
+    inApp: { type: 'review', title: 'Nouvel avis reçu', body: `${context} — ${starsLabel(rating)}`, link: replyUrl },
+  }
 }

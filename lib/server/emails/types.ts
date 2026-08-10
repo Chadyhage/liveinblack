@@ -14,6 +14,8 @@ export type InAppNotificationType =
   | 'report'
   | 'account'
   | 'agent_queue'
+  | 'reminder'
+  | 'review'
 
 // Métadonnée optionnelle attachée à un email pour aussi déclencher une
 // notification in-app (lib/server/notifications.ts) et, si `push:true`, une

@@ -73,5 +73,9 @@ export function ticketInvalidatedByResaleEmail(eventName: string, site: string =
     ${heading('Ton billet a été transféré')}
     ${paragraph(`Ton billet pour <strong style="color:#fff;">${evName}</strong> a été vendu et n'est plus valable sur ton compte.`)}
   `
-  return { subject: `Ton billet pour ${eventName} a été transféré`, html: wrap(inner, { site, preheader: 'Confirmation de vente de ton billet.' }) }
+  return {
+    subject: `Ton billet pour ${eventName} a été transféré`,
+    html: wrap(inner, { site, preheader: 'Confirmation de vente de ton billet.' }),
+    inApp: { type: 'resale', title: 'Ton billet a été transféré', body: eventName },
+  }
 }

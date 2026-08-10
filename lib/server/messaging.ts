@@ -10,6 +10,7 @@ import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { upsertMessageNotification } from './notifications'
 import { notifyUserById, notifyAllAgents } from './emails/notify'
 import { reportReceivedAgainstAccountEmail, newReportToReviewEmail, newMessageDigestEmail } from './emails'
+import { sendPushToUser } from './push'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -761,7 +762,17 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
     await Promise.all(
       recipients
         .filter((r) => !r.lastSeenAt || now - new Date(r.lastSeenAt).getTime() > OFFLINE_DIGEST_THRESHOLD_MS)
-        .map((r) => notifyUserById(String(r._id), () => newMessageDigestEmail(senderName, lastMessageLabel, conversationUrl, SITE)))
+        .map(async (r) => {
+          const recipientId = String(r._id)
+          await notifyUserById(recipientId, () => newMessageDigestEmail(senderName, lastMessageLabel, conversationUrl, SITE))
+          // Pas de champ `inApp` sur newMessageDigestEmail : la notification
+          // in-app existe déjà via upsertMessageNotification ci-dessus
+          // (anti-spam par conversation) — un second createNotification()
+          // dupliquerait l'entrée. Le push, lui, n'a pas cet anti-spam
+          // (une seule notif système par appareil de toute façon), appelé
+          // directement ici plutôt que via le mécanisme `inApp`.
+          await sendPushToUser(recipientId, { title: `${senderName} t'a envoyé un message`, body: lastMessageLabel, url: conversationUrl })
+        })
     )
   }
 

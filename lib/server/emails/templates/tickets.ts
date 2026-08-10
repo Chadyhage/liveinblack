@@ -93,7 +93,11 @@ export function seatHoldExpiringEmail(eventName: string, completeUrl: string, ex
     ${paragraph(`Ta place bloquée pour <strong style="color:#fff;">${evName}</strong> expire dans ${escapeHtml(expiresInLabel)}.`)}
     ${button(completeUrl, 'Finaliser mon paiement')}
   `
-  return { subject: `Ta place pour ${eventName} expire bientôt`, html: wrap(inner, { site, preheader: `Encore ${expiresInLabel} pour finaliser ton paiement.` }) }
+  return {
+    subject: `Ta place pour ${eventName} expire bientôt`,
+    html: wrap(inner, { site, preheader: `Encore ${expiresInLabel} pour finaliser ton paiement.` }),
+    inApp: { type: 'payment', title: 'Ta place expire bientôt', body: `${eventName} — encore ${expiresInLabel}.`, link: completeUrl, push: true },
+  }
 }
 
 export function seatHoldExpiredEmail(eventName: string, retryUrl: string, site: string = DEFAULT_SITE): Email {
@@ -103,7 +107,11 @@ export function seatHoldExpiredEmail(eventName: string, retryUrl: string, site: 
     ${paragraph(`Le blocage de ta place pour <strong style="color:#fff;">${evName}</strong> a expiré sans paiement — elle a été remise en vente.`)}
     ${button(retryUrl, 'Retenter ma réservation', 'outline')}
   `
-  return { subject: `Ta place pour ${eventName} a été libérée`, html: wrap(inner, { site, preheader: 'Le blocage de ta place a expiré.' }) }
+  return {
+    subject: `Ta place pour ${eventName} a été libérée`,
+    html: wrap(inner, { site, preheader: 'Le blocage de ta place a expiré.' }),
+    inApp: { type: 'payment', title: 'Ta place a été libérée', body: eventName, link: retryUrl },
+  }
 }
 
 // ticketReceivedEmail (E6 "billet transféré/reçu") retiré : la proposition

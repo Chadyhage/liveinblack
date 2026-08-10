@@ -11,5 +11,9 @@ export function roleActivatedEmail(roleLabel: string, dashboardUrl: string, site
     ${paragraph(`Tu as maintenant accès à ton espace <strong style="color:#fff;">${escapeHtml(roleLabel)}</strong> sur LIVEINBLACK.`)}
     ${button(dashboardUrl, `Accéder à mon espace ${roleLabel}`)}
   `
-  return { subject: `Ton espace ${roleLabel} est prêt`, html: wrap(inner, { site, preheader: `Accès activé à ton espace ${roleLabel}.` }) }
+  return {
+    subject: `Ton espace ${roleLabel} est prêt`,
+    html: wrap(inner, { site, preheader: `Accès activé à ton espace ${roleLabel}.` }),
+    inApp: { type: 'account', title: `Ton espace ${roleLabel} est prêt`, link: dashboardUrl },
+  }
 }

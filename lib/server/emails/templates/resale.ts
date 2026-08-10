@@ -12,7 +12,11 @@ export function resaleListingCreatedEmail(eventName: string, priceLabel: string,
     ${paragraph(`Ton billet pour <strong style="color:#fff;">${evName}</strong> est maintenant proposé à la revente pour <strong style="color:#fff;">${priceLabel}</strong>.`)}
     ${button(manageUrl, 'Gérer mon annonce', 'outline')}
   `
-  return { subject: `Ton billet pour ${eventName} est en vente`, html: wrap(inner, { site, preheader: `Annonce active à ${priceLabel}.` }) }
+  return {
+    subject: `Ton billet pour ${eventName} est en vente`,
+    html: wrap(inner, { site, preheader: `Annonce active à ${priceLabel}.` }),
+    inApp: { type: 'resale', title: 'Ton billet est en vente', body: `${eventName} — ${priceLabel}.`, link: manageUrl },
+  }
 }
 
 export function resaleListingSoldEmail(eventName: string, netAmountLabel: string, payoutDelayLabel: string, site: string = DEFAULT_SITE): Email {
@@ -35,5 +39,9 @@ export function resaleListingExpiredEmail(eventName: string, site: string = DEFA
     ${heading('Ton annonce a expiré')}
     ${paragraph(`Ton annonce de revente pour <strong style="color:#fff;">${evName}</strong> a expiré sans trouver d'acheteur (la revente ferme automatiquement peu avant l'ouverture des portes).`)}
   `
-  return { subject: `Ton annonce pour ${eventName} a expiré`, html: wrap(inner, { site, preheader: 'La fenêtre de revente est fermée pour cet événement.' }) }
+  return {
+    subject: `Ton annonce pour ${eventName} a expiré`,
+    html: wrap(inner, { site, preheader: 'La fenêtre de revente est fermée pour cet événement.' }),
+    inApp: { type: 'resale', title: 'Ton annonce a expiré', body: eventName },
+  }
 }

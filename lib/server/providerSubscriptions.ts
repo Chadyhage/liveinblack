@@ -23,6 +23,8 @@ import { PROVIDER_SUB, computeRenewal, deriveSubStatus, dueReminders, cycleKey, 
 import { getProviderBillingContext } from './providerBilling'
 import { sendEmail } from './email'
 import { subscriptionReminderEmail } from './emails'
+import { createNotification } from './notifications'
+import { sendPushToUser } from './push'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -455,19 +457,30 @@ export async function runSubscriptionReminderCron(): Promise<{ scanned: number; 
 
         if (due.length) {
           const sent: Record<string, number> = { ...prevSent }
-          // Contrairement au legacy (qui réserve l'email à 4 des 6 jalons et
-          // s'appuie sur le in-app pour les autres), ce rappel-ci reste
-          // email-only (lib/server/notifications.ts existe déjà pour
-          // d'autres évènements — candidatures, messages, abonnements suivis
-          // — mais rien n'y branche encore les jalons d'abonnement) — chaque
-          // jalon dû est donc envoyé pour ne pas en perdre.
+          // Email + in-app pour chaque jalon dû (createNotification, plus
+          // push pour les 3 derniers jalons j0/grace/hidden — voir plus bas) ;
+          // chaque jalon dû est envoyé pour ne pas en perdre.
           const user = await User.findById(profile.userId).select('email').lean()
           for (const key of due) {
             let ok = false
             if (user?.email) {
-              const result = await sendEmail(user.email, subscriptionReminderEmail(key, `${SITE}/offer-services`))
+              const email = subscriptionReminderEmail(key, `${SITE}/offer-services`)
+              const result = await sendEmail(user.email, email)
               ok = result.ok
               if (ok) emails++
+              // Ce chemin envoie directement via sendEmail() (pas
+              // notifyUserById) — pas de champ `inApp` déclenché
+              // automatiquement, donc appel manuel de createNotification ici.
+              // Urgence croissante des jalons (j0/grace/hidden) ⇒ push en plus.
+              await createNotification({
+                userId: profile.userId,
+                type: 'reminder',
+                title: email.subject.replace(' — LIVEINBLACK', ''),
+                link: `${SITE}/offer-services`,
+              }).catch(() => {})
+              if (key === 'j0' || key === 'grace' || key === 'hidden') {
+                await sendPushToUser(profile.userId, { title: email.subject.replace(' — LIVEINBLACK', ''), url: `${SITE}/offer-services` })
+              }
             }
             // Un jalon n'est marqué "envoyé" QUE si l'email est réellement
             // parti — sinon `sent[key]=now` sans succès consommait

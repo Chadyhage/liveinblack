@@ -23,5 +23,9 @@ export function addedToGroupEmail(groupName: string, addedByName: string, groupU
     ${paragraph(`<strong style="color:#fff;">${escapeHtml(addedByName)}</strong> t'a ajouté au groupe <strong style="color:#fff;">${escapeHtml(groupName)}</strong>.`)}
     ${button(groupUrl, 'Voir le groupe')}
   `
-  return { subject: `Tu as été ajouté au groupe ${groupName}`, html: wrap(inner, { site, preheader: `Ajouté par ${addedByName}` }) }
+  return {
+    subject: `Tu as été ajouté au groupe ${groupName}`,
+    html: wrap(inner, { site, preheader: `Ajouté par ${addedByName}` }),
+    inApp: { type: 'group', title: 'Tu as été ajouté à un groupe', body: `${groupName} — ajouté par ${addedByName}`, link: groupUrl },
+  }
 }

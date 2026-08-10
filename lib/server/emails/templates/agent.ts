@@ -53,7 +53,11 @@ export function cashSalePendingSettlementEmail(eventName: string, amountLabel: s
     ${paragraph(`Une vente cash de <strong style="color:#fff;">${amountLabel}</strong> pour <strong style="color:#fff;">${escapeHtml(eventName)}</strong> est en attente de règlement depuis ${daysOverdue} jour(s).`)}
     ${button(backofficeUrl, 'Voir le règlement', 'outline')}
   `
-  return { subject: `Règlement en attente pour ${eventName}`, html: wrap(inner, { site, preheader: `${amountLabel} en attente.` }) }
+  return {
+    subject: `Règlement en attente pour ${eventName}`,
+    html: wrap(inner, { site, preheader: `${amountLabel} en attente.` }),
+    inApp: { type: 'agent_queue', title: 'Règlement en attente', body: `${eventName} — ${amountLabel}, ${daysOverdue}j`, link: backofficeUrl, push: true },
+  }
 }
 
 export function cashSalesBlockedEmail(pendingCount: number, backofficeUrl: string, site: string = DEFAULT_SITE): Email {

@@ -14,7 +14,11 @@ export function eventPublishedEmail(eventName: string, publicUrl: string, site: 
     ${button(publicUrl, "Voir la page de l'événement")}
     ${note('Pense à ajouter ton équipe et tes codes promo depuis ton espace organisateur.')}
   `
-  return { subject: `${eventName} est en ligne 🎉`, html: wrap(inner, { site, preheader: 'Ton événement est publié.' }) }
+  return {
+    subject: `${eventName} est en ligne 🎉`,
+    html: wrap(inner, { site, preheader: 'Ton événement est publié.' }),
+    inApp: { type: 'organizer_activity', title: 'Ton événement est en ligne 🎉', body: eventName, link: publicUrl },
+  }
 }
 
 export function firstSaleEmail(eventName: string, dashboardUrl: string, site: string = DEFAULT_SITE): Email {
@@ -24,7 +28,11 @@ export function firstSaleEmail(eventName: string, dashboardUrl: string, site: st
     ${paragraph(`Le premier billet pour <strong style="color:#fff;">${evName}</strong> vient d'être vendu.`)}
     ${button(dashboardUrl, 'Voir mes statistiques', 'outline')}
   `
-  return { subject: `Première vente pour ${eventName} !`, html: wrap(inner, { site, preheader: 'Ta billetterie a commencé.' }) }
+  return {
+    subject: `Première vente pour ${eventName} !`,
+    html: wrap(inner, { site, preheader: 'Ta billetterie a commencé.' }),
+    inApp: { type: 'organizer_activity', title: 'Première vente ! 🎟️', body: eventName, link: dashboardUrl },
+  }
 }
 
 export function salesMilestoneEmail(eventName: string, milestoneLabel: string, dashboardUrl: string, site: string = DEFAULT_SITE): Email {
@@ -34,7 +42,11 @@ export function salesMilestoneEmail(eventName: string, milestoneLabel: string, d
     ${paragraph(`<strong style="color:#fff;">${evName}</strong> vient d'atteindre ce jalon de ventes.`)}
     ${button(dashboardUrl, 'Voir mes statistiques', 'outline')}
   `
-  return { subject: `${evName} — ${milestoneLabel}`, html: wrap(inner, { site, preheader: milestoneLabel }) }
+  return {
+    subject: `${evName} — ${milestoneLabel}`,
+    html: wrap(inner, { site, preheader: milestoneLabel }),
+    inApp: { type: 'organizer_activity', title: milestoneLabel, body: eventName, link: dashboardUrl },
+  }
 }
 
 export interface EventRecapSummary {
@@ -57,7 +69,11 @@ export function eventRecapBeforeEventEmail(r: EventRecapSummary, site: string = 
     ${button(r.dashboardUrl, 'Voir le tableau de bord événement', 'outline')}
     ${note("Vérifie que ton staff a bien accès à l'app scanner avant le jour J.")}
   `
-  return { subject: `${r.eventName} c'est dans 2 jours`, html: wrap(inner, { site, preheader: `${r.ticketsSold} billets vendus, staff assigné.` }) }
+  return {
+    subject: `${r.eventName} c'est dans 2 jours`,
+    html: wrap(inner, { site, preheader: `${r.ticketsSold} billets vendus, staff assigné.` }),
+    inApp: { type: 'organizer_activity', title: `${r.eventName} c'est dans 2 jours`, body: `${r.ticketsSold} billets vendus, ${r.staffCount} staff assigné(s).`, link: r.dashboardUrl, push: true },
+  }
 }
 
 export function boostActivatedEmail(eventName: string, durationLabel: string, dashboardUrl: string, site: string = DEFAULT_SITE): Email {
@@ -67,7 +83,11 @@ export function boostActivatedEmail(eventName: string, durationLabel: string, da
     ${paragraph(`Le boost de <strong style="color:#fff;">${evName}</strong> est actif pour ${durationLabel}.`)}
     ${button(dashboardUrl, 'Voir mes statistiques', 'outline')}
   `
-  return { subject: `Ton boost pour ${eventName} est actif`, html: wrap(inner, { site, preheader: `Boost actif pour ${durationLabel}.` }) }
+  return {
+    subject: `Ton boost pour ${eventName} est actif`,
+    html: wrap(inner, { site, preheader: `Boost actif pour ${durationLabel}.` }),
+    inApp: { type: 'boost', title: 'Ton boost est actif', body: `${eventName} — ${durationLabel}.`, link: dashboardUrl },
+  }
 }
 
 export function boostConflictEmail(eventName: string, reason: string, alternativeUrl: string, site: string = DEFAULT_SITE): Email {
@@ -77,7 +97,11 @@ export function boostConflictEmail(eventName: string, reason: string, alternativ
     ${paragraph(`Le boost pour <strong style="color:#fff;">${evName}</strong> n'a pas pu être activé : ${escapeHtml(reason)}.`)}
     ${button(alternativeUrl, 'Choisir un autre créneau', 'danger')}
   `
-  return { subject: `Ton boost pour ${eventName} n'a pas pu être activé`, html: wrap(inner, { site, preheader: reason }) }
+  return {
+    subject: `Ton boost pour ${eventName} n'a pas pu être activé`,
+    html: wrap(inner, { site, preheader: reason }),
+    inApp: { type: 'boost', title: 'Boost non activé', body: `${eventName} — ${reason}`, link: alternativeUrl, push: true },
+  }
 }
 
 export function cancellationFinancialImpactEmail(eventName: string, totalRefundedLabel: string, payoutImpactLabel: string, site: string = DEFAULT_SITE): Email {
@@ -87,5 +111,9 @@ export function cancellationFinancialImpactEmail(eventName: string, totalRefunde
     ${paragraph(`Suite à l'annulation de <strong style="color:#fff;">${evName}</strong>, un total de <strong style="color:#fff;">${totalRefundedLabel}</strong> a été remboursé aux acheteurs.`)}
     ${note(payoutImpactLabel)}
   `
-  return { subject: `Impact financier de l'annulation de ${eventName}`, html: wrap(inner, { site, preheader: `${totalRefundedLabel} remboursés.` }) }
+  return {
+    subject: `Impact financier de l'annulation de ${eventName}`,
+    html: wrap(inner, { site, preheader: `${totalRefundedLabel} remboursés.` }),
+    inApp: { type: 'refund', title: "Impact financier de l'annulation", body: `${eventName} — ${totalRefundedLabel} remboursés.` },
+  }
 }
