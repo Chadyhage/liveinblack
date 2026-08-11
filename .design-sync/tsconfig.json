@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["../*"],
+      "next/link": ["./stubs/next-link.tsx"],
+      "next/image": ["./stubs/next-image.tsx"],
+      "next/navigation": ["./stubs/next-navigation.tsx"]
+    }
+  }
+}
