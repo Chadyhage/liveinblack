@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import TabsSection from './TabsSection'
 import { PageShell } from '@/app/components/layout'
-import { SectionHeader } from '@/app/components/ui'
+import { SectionHeader, Card } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: "C'est quoi LIVEINBLACK ? — LIVEINBLACK",
@@ -56,11 +56,11 @@ export default function PublicAboutPage() {
             ['2', 'Réserve', 'Paiement sécurisé, billet QR immédiat, tout reste dans ton compte.'],
             ['3', 'Profite', "Scan à l'entrée, commande sur place, et vis chaque nuit à fond."],
           ].map(([n, t, d]) => (
-            <div key={n} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 18px', position: 'relative' }}>
+            <Card key={n} style={{ padding: '20px 18px', position: 'relative' }}>
               <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
           <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{t}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
-            </div>
+            </Card>
           ))}
         </div>
       </Section>

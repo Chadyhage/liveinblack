@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Textarea, Label } from '@/app/components/ui'
 
 // Port de src/pages/PublicPrestatairePage.jsx (openServiceInquiry /
 // sendServiceInquiry) — "Demander ce service" par item de catalogue, sur la
@@ -220,15 +220,12 @@ export default function ProviderCatalogInquiry({
               Envoyer ce service à {providerName}
             </h3>
 
-            <div
+            <Card
               style={{
                 display: 'grid',
                 gridTemplateColumns: item.image ? '70px 1fr' : '1fr',
                 gap: 13,
                 padding: 12,
-                borderRadius: 16,
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
                 marginBottom: 14,
               }}
             >
@@ -248,7 +245,7 @@ export default function ProviderCatalogInquiry({
                   {Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                 </p>
               </div>
-            </div>
+            </Card>
 
             <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
               Message

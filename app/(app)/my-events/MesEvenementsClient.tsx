@@ -15,7 +15,7 @@ import GuestlistModal from './GuestlistModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button, EmptyState, Modal, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, Card, EmptyState, Modal, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAST_PAGE_SIZE = 15
@@ -298,7 +298,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
-              <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
+              <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(60%)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
@@ -315,7 +315,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                 >
                   Retirer de ma liste
                 </Button>
-              </div>
+              </Card>
             ))}
           </div>
           <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 10, lineHeight: 1.6 }}>
@@ -329,7 +329,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {pagedPastEvents.map((event) => (
-              <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
+              <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(30%)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
@@ -350,7 +350,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 20V10m8 10V4m8 16v-7" />
                   </svg>
                 </Link>
-              </div>
+              </Card>
             ))}
           </div>
           <Pagination page={pastPage} pageCount={pastPageCount} onPageChange={setPastPage} totalItems={pastEvents.length} pageSize={PAST_PAGE_SIZE} />

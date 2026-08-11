@@ -56,13 +56,13 @@ export default function EventVenueMap({ address }: { address: string }) {
             >
               Ouvrir dans Google Maps
             </a>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setOpen(false)}
-              style={{ flex: 1, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+              style={{ flex: 1, borderRadius: 10, fontSize: 13, fontWeight: 800 }}
             >
               Fermer
-            </button>
+            </Button>
           </div>
         </Modal>
       )}

@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, LockKeyhole } from 'lucide-react'
 import { getTicketDisplay } from '@/lib/server/tickets'
 import { fmtMoney } from '@/lib/shared/money'
 import TicketQr from './TicketQr'
+import { Card } from '@/app/components/ui'
 
 // Page volontairement PUBLIQUE (pas de vérification de session) : posséder le
 // jeton (donc avoir vu le QR) suffit à afficher le billet — exactement le
@@ -43,12 +44,12 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
             Ce QR code n&apos;est pas reconnu, a été falsifié, ou n&apos;est plus à jour.
           </p>
-          <div style={{ background: 'var(--surface)', border: '1px solid rgba(224,90,170,0.20)', borderRadius: 16, padding: '10px 16px', marginBottom: 20 }}>
+          <Card accent="rgba(224,90,170,0.20)" style={{ padding: '10px 16px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <LockKeyhole size={12} strokeWidth={1.5} color="var(--pink)" aria-hidden="true" />
               <p style={{ fontSize: 11, color: 'rgba(224,90,170,0.75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
             </div>
-          </div>
+          </Card>
           <Link
             href="/"
             style={{
@@ -70,12 +71,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
     )
   }
 
-  const cardStyle: React.CSSProperties = {
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    borderRadius: 16,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-  }
+  const CARD_SHADOW = '0 8px 24px rgba(0,0,0,0.35)'
   const qrUrl = `${SITE}/ticket/${token}`
 
   return (
@@ -101,18 +97,18 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
         </div>
 
         {ticket.guestName && (
-          <div style={{ ...cardStyle, padding: '14px 20px', textAlign: 'center' }}>
+          <Card style={{ boxShadow: CARD_SHADOW, padding: '14px 20px', textAlign: 'center' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Invité</p>
             <p style={{ fontWeight: 700, fontSize: 21, color: '#fff', margin: 0 }}>{ticket.guestName}</p>
-          </div>
+          </Card>
         )}
 
-        <div style={{ ...cardStyle, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+        <Card style={{ boxShadow: CARD_SHADOW, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <div style={{ padding: 16, background: '#fff', borderRadius: 12 }}>
             <TicketQr url={qrUrl} />
           </div>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em', margin: 0 }}>Présente ce QR code à l&apos;entrée</p>
-        </div>
+        </Card>
 
         <Link
           href={`/order/${ticket.eventId}/${ticket.ticketCode}`}
@@ -155,7 +151,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           Playlist de la soirée
         </Link>
 
-        <div style={{ ...cardStyle, padding: 20 }}>
+        <Card style={{ boxShadow: CARD_SHADOW }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Événement</p>
           <p style={{ fontWeight: 800, fontSize: 24, color: '#fff', textTransform: 'uppercase', lineHeight: 1.2, margin: '0 0 5px', letterSpacing: '0.01em' }}>
             {ticket.eventName}
@@ -172,10 +168,10 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               <p style={{ fontWeight: 700, fontSize: 20, color: 'var(--gold)', margin: 0 }}>{fmtMoney(ticket.placePrice, ticket.currency)}</p>
             </div>
           </div>
-        </div>
+        </Card>
 
         {ticket.preorders.length > 0 && (
-          <div style={{ ...cardStyle, padding: 20 }}>
+          <Card style={{ boxShadow: CARD_SHADOW }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Précommande</p>
             </div>
@@ -198,18 +194,18 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
         )}
 
-        <div style={{ ...cardStyle, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Card style={{ boxShadow: CARD_SHADOW, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Total payé</span>
           <span style={{ fontWeight: 800, fontSize: ticket.currency === 'XOF' ? 20 : 24, color: 'var(--gold)' }}>{fmtMoney(ticket.totalPrice, ticket.currency)}</span>
-        </div>
+        </Card>
 
-        <div style={{ ...cardStyle, padding: '12px 16px', textAlign: 'center' }}>
+        <Card style={{ boxShadow: CARD_SHADOW, padding: '12px 16px', textAlign: 'center' }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>Code billet</p>
           <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.08em', margin: 0 }}>{ticket.ticketCode}</p>
-        </div>
+        </Card>
       </div>
     </main>
   )
