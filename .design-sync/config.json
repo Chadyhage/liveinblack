@@ -37,11 +37,24 @@
     "SkeletonCard": "app/components/ui/Skeleton.tsx",
     "SkeletonList": "app/components/ui/Skeleton.tsx",
     "DonutChart": "app/components/ui/charts/DonutChart.tsx",
-    "LineChartCard": "app/components/ui/charts/LineChartCard.tsx"
+    "LineChartCard": "app/components/ui/charts/LineChartCard.tsx",
+    "ResetCookieConsentButton": "app/components/ResetCookieConsentButton.tsx",
+    "LegalBackButton": "app/components/LegalBackButton.tsx",
+    "AgeVerificationGate": "app/components/AgeVerificationGate.tsx",
+    "ImageCropperModal": "app/components/ImageCropperModal.tsx",
+    "Stars": "app/components/StarRating.tsx",
+    "StarInput": "app/components/StarRating.tsx",
+    "AgeGateModal": "app/components/AgeGateModal.tsx",
+    "CookieConsentBanner": "app/components/CookieConsentBanner.tsx",
+    "LegalPageLayout": "app/components/LegalPageLayout.tsx",
+    "ProviderCatalogInquiry": null
   },
   "overrides": {
     "LineChartCard": { "cardMode": "column" },
     "Modal": { "cardMode": "single", "primaryStory": "ConfirmCancel", "viewport": "700x900" },
-    "SlideOverModal": { "cardMode": "single", "primaryStory": "ProviderDetail", "viewport": "900x700" }
+    "SlideOverModal": { "cardMode": "single", "primaryStory": "ProviderDetail", "viewport": "900x700" },
+    "AgeGateModal": { "cardMode": "single", "primaryStory": "EighteenPlus" },
+    "ImageCropperModal": { "cardMode": "single", "primaryStory": "CircularCrop" },
+    "LegalPageLayout": { "cardMode": "single", "primaryStory": "Basic" }
   }
 }

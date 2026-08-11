@@ -133,3 +133,68 @@
 - All 30 previews were graded by a single agent pass, not cross-verified by
   a second reviewer — reasonable confidence, not the same bar as a
   multi-reviewer audit.
+
+## Batch 2 (web) — `@/app/components/ui` directory-import resolver bug
+
+The converter's `tsconfigPathsPlugin` (`.ds-sync/lib/bundle.mjs`) resolves a
+path-alias hit by trying extensions in this order: `''`, `.ts`, `.tsx`, …,
+`/index.ts`, … . For a wildcard rule like `"@/*": ["../*"]`, an import of
+`@/app/components/ui` (the real barrel *directory*, not a file) matches the
+`''` extension first via `existsSync(dir) === true` and returns the
+directory path itself — esbuild then fails with `Cannot read file
+"app/components/ui": is a directory`, because the loop never gets to try
+`/index.ts`. Hit this the moment a batch-2 component
+(`ResetCookieConsentButton.tsx` etc.) imported `Button` from
+`@/app/components/ui` instead of a relative `./Button` path (everything in
+batch 1 used relative imports, so this never came up before).
+
+**Not a `lib/bundle.mjs` bug worth forking** (that file is on the
+never-fork list) — fixed at the config layer instead:
+`.design-sync/tsconfig.json`'s `paths` now lists an EXACT (non-wildcard)
+rule for `@/app/components/ui` pointing straight at
+`../app/components/ui/index`, placed **before** the `@/*` wildcard rule.
+Rule order matters here: the resolver tries rules in the JSON object's key
+order and returns on the first one that resolves, so the exact rule wins
+before the wildcard ever gets a chance to mis-hit the directory. If a
+future component barrel-imports another directory the same way (e.g.
+`@/lib/server` or `@/app/components` itself), add another exact rule ahead
+of `@/*` the same way — don't fork `lib/bundle.mjs`.
+
+**Batch 2 outcome**: 9/10 candidate presentational `app/components/*.tsx`
+shipped (30 → 39 total). `ProviderCatalogInquiry` excluded
+(`componentSrcMap: null`) — it transitively imports `lib/shared/money.ts`,
+which has a Unicode combining-mark character class written as literal UTF-8
+combining characters (not `̀-ͯ` escapes) that esbuild's own
+parser/printer mis-handles ("Invalid regular expression: Range out of order
+in character class") even though the codepoints (U+0300-U+036F) are
+correctly ordered — confirmed by inspecting the raw bytes. This is an
+esbuild quirk with this exact literal-combining-mark regex style, not an
+app bug; several other `lib/shared/*.ts` files use the identical pattern
+(`locations.ts`, `providerBillingRegion.ts`, `recommendations.ts`,
+`organizerProfileValidation.ts`, `boosts.ts`, `showOptions.ts`) and will
+hit the same wall the moment any of THEM gets transitively pulled into a
+synced component. If a future batch needs one of those components, the
+practical fix is a `.design-sync/overrides/` fork of whichever lib file
+does the transitive pulling — NOT touching the real `lib/shared/*.ts`
+files themselves (they work fine in the app's real Next.js/SWC build; this
+is purely a converter-toolchain incompatibility).
+
+`LegalBackButton` and `CookieConsentBanner` shipped as floor cards (fully
+functional, unauthored) rather than forced previews:
+- `LegalBackButton` renders with genuinely invisible colors
+  (`rgba(11,11,18,*)` — near-black bg/icon) on the app's real dark
+  `var(--obsidian)` page background — a real app bug, not a preview
+  mistake (flagged separately via spawn_task for a code fix, not silently
+  patched here).
+- `CookieConsentBanner` mounts with an empty DOM (returns `null`) for the
+  first 800ms (real timer-gated first-paint, not a screenshot-timing crop
+  like the SlideOverModal/Modal/AgeGateModal cases) — the capture harness
+  has no way to wait past that, so the floor card is the honest choice
+  here rather than fighting the timing.
+
+`AgeGateModal`'s `EighteenPlus` story hits the exact same fixed-overlay
+top-crop quirk as `Modal`'s `ConfirmCancel` (see the CSS_IMPORT_MISSING/
+BUNDLE_EXPORT entry above) — same verdict (graded `good`, DOM content
+confirmed complete via `.render-check.json`'s `texts` field), same non-fix
+(nothing to fix, it's the harness's crop region on
+`position:fixed;inset:0` roots).
