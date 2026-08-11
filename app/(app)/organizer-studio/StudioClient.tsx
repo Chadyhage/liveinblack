@@ -13,7 +13,7 @@ import { fmtMoney } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import type { PublicMediaUploadReference } from '@/lib/shared/publicMediaUploads'
-import { Button, Input, Textarea, Checkbox, Radio, Select, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Checkbox, Radio, Select, Label } from '@/app/components/ui'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
 // (#7 phase organisateur, tâche #81). Avatar et bannière passent par le
@@ -340,7 +340,7 @@ export default function StudioClient({
 
       {tab === 'page' && (
       <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', marginBottom: 16, overflow: 'hidden' }}>
+      <Card style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, padding: 0, marginBottom: 16, overflow: 'hidden' }}>
         <div style={{ padding: 18, borderRight: '1px solid var(--border)' }}>
           <p style={{ font: '600 28px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Abonnés</p>
@@ -349,9 +349,9 @@ export default function StudioClient({
           <p style={{ font: '600 28px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.viewsCount}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Vues de la page</p>
         </div>
-      </div>
+      </Card>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)', marginBottom: 16, flexWrap: 'wrap' }}>
+      <Card style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', marginBottom: 16, flexWrap: 'wrap' }}>
         <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
         <Button
           variant="secondary"
@@ -370,11 +370,11 @@ export default function StudioClient({
             Voir ma page
           </Link>
         )}
-      </div>
+      </Card>
 
       <div className="studio-profile-grid">
         {/* Informations publiques */}
-        <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
+        <Card>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Informations publiques</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 14, marginBottom: 18 }}>
@@ -513,10 +513,10 @@ export default function StudioClient({
           <Button onClick={save} loading={saving} loadingText="Enregistrement…" fullWidth style={{ ...saveButtonStyle(saving), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)' }}>
             Enregistrer
           </Button>
-        </section>
+        </Card>
 
         {/* Aperçu + statut */}
-        <aside style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
+        <Card>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
             <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
@@ -549,11 +549,11 @@ export default function StudioClient({
             Enregistrer
           </Button>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textAlign: 'center', margin: '6px 0 0' }}>Enregistre l&rsquo;ensemble de ton profil, y compris les informations publiques.</p>
-        </aside>
+        </Card>
       </div>
 
       {/* Galerie */}
-      <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
             <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
@@ -628,7 +628,7 @@ export default function StudioClient({
             ))}
           </div>
         )}
-      </section>
+      </Card>
       </>
       )}
 
@@ -790,7 +790,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
   }
 
   return (
-    <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, display: 'grid', gap: 16 }} id="encaissement">
+    <Card style={{ display: 'grid', gap: 16 }} id="encaissement">
       <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
 
       <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
@@ -904,6 +904,6 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           Enregistrer mes numéros
         </Button>
       </div>
-    </section>
+    </Card>
   )
 }
