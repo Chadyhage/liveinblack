@@ -8,7 +8,7 @@ import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtecti
 import type { ShowOption } from '@/lib/shared/showOptions'
 import AgeGateModal from './AgeGateModal'
 import { Check, X } from 'lucide-react'
-import { Button, Input, Textarea, Checkbox } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Checkbox } from '@/app/components/ui'
 
 // Port INTERACTIF de la section « Réservation » de src/pages/EventDetailPage.jsx
 // (sélecteur de place + table/groupe, stepper de quantité, précommande, code
@@ -464,7 +464,7 @@ export default function EventCheckoutPanel({
           const soldOut = place.available <= 0
           const placeDisabled = soldOut || Boolean(blockedReason)
           return (
-            <div
+            <Card
               key={place.id}
               onClick={() => !placeDisabled && selectPlace(place.id)}
               onKeyDown={(event) => {
@@ -477,12 +477,10 @@ export default function EventCheckoutPanel({
               tabIndex={placeDisabled ? -1 : 0}
               aria-disabled={placeDisabled}
               aria-pressed={isSelected}
+              accent={isSelected ? 'var(--gold)' : undefined}
               style={{
                 textAlign: 'left',
                 cursor: placeDisabled ? 'not-allowed' : 'pointer',
-                background: 'var(--surface)',
-                border: `1px solid ${isSelected ? 'var(--gold)' : 'var(--border)'}`,
-                borderRadius: 12,
                 padding: 16,
                 opacity: placeDisabled ? 0.55 : 1,
               }}
@@ -553,14 +551,14 @@ export default function EventCheckoutPanel({
               <span style={{ display: 'inline-block', marginTop: 10, fontSize: 10.5, fontWeight: 700, color: isSelected ? 'var(--gold)' : 'var(--text-faint)' }}>
                 {isSelected ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={12} /> Choisi</span> : soldOut ? 'Complet' : 'Choisir'}
               </span>
-            </div>
+            </Card>
           )
         })}
       </div>
 
       {selectedPlace && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Place sélectionnée</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selectedPlace.type}</span>
@@ -710,10 +708,10 @@ export default function EventCheckoutPanel({
                 {grandTotal > 0 ? (currency === 'XOF' ? 'Sécurisé · Mobile Money (FedaPay)' : 'Sécurisé · Stripe') : 'Gratuit'}
               </span>
             </div>
-          </div>
+          </Card>
 
           {preorderEnabled && activeMenu.length > 0 && (
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
                 <p style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Précommande de consommations</p>
                 <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Optionnel · choisis les consommations de chaque billet.</p>
@@ -776,7 +774,7 @@ export default function EventCheckoutPanel({
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(preorderTotal, currency)}</span>
                 </div>
               )}
-            </div>
+            </Card>
           )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px' }}>
