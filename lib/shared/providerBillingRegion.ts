@@ -5,12 +5,11 @@
 // ailleurs — providerBillingCurrency() est la seule fonction à consulter pour
 // router un prestataire vers le bon rail de paiement.
 import { regions } from './regions'
+import { stripDiacritics } from './diacritics'
 
 function normKey(value: unknown): string {
   const token = typeof value === 'object' && value !== null ? ((value as { id?: string; name?: string }).id ?? (value as { name?: string }).name ?? '') : value
-  return String(token ?? '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(String(token ?? ''))
     .replace(/[\s']+/g, '-')
     .trim()
     .toLowerCase()

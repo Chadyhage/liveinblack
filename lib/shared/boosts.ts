@@ -1,6 +1,7 @@
 // Port TypeScript de lib/boosts.js — logique pure du système de boost
 // (Top 1/2/3). Utilisé côté public (calcul du podium) ET plus tard côté achat
 // (phase organisateur).
+import { stripDiacritics } from './diacritics'
 export type BoostTier = { label: string; price: number; days: number }
 export type BoostPlan = { position: number; label: string; description: string; color: string; tiers: BoostTier[] }
 
@@ -26,9 +27,7 @@ export function getBoostPlan(position: number, days: number): { plan: BoostPlan;
 }
 
 export function normalizeBoostRegion(value: string = ''): string {
-  const token = String(value || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  const token = stripDiacritics(String(value || ''))
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()

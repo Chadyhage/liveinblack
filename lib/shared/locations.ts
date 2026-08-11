@@ -1,5 +1,6 @@
 // Port TypeScript de src/utils/locations.js
 import { regions, type Region } from './regions'
+import { stripDiacritics } from './diacritics'
 
 export const INTERNATIONAL_REGION_ID = 'international'
 
@@ -20,9 +21,7 @@ const LEGACY_CITY_REGION = new Map<string, string>(
 )
 
 export function normalizeGeoText(value: unknown = ''): string {
-  return String(value)
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(String(value))
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
