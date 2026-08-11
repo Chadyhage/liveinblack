@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
+import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -37,7 +37,6 @@ interface BoostsResponse {
   totalRevenue: number
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 14 }
 
 function fmtDate(iso: string): string {
   try {
@@ -103,12 +102,12 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
         {!embedded && <h1 className="font-display lb-dashboard-title">Boosts</h1>}
 
         {error && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
             <Button variant="secondary" onClick={load} style={{ fontSize: 12.5, flexShrink: 0 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         {loading ? (
@@ -125,10 +124,10 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
                 { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? '#dc3232' : 'var(--text-muted)' },
                 { label: 'Revenus boosts', value: fmtMoney(data.totalRevenue, 'EUR'), color: 'var(--gold)' },
               ].map((k) => (
-                <div key={k.label} style={{ ...cardStyle, textAlign: 'center' }}>
+                <Card key={k.label} style={{ padding: 14, textAlign: 'center' }}>
                   <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
                   <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
-                </div>
+                </Card>
               ))}
             </div>
 
@@ -177,14 +176,9 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
 
 function BoostCard({ b }: { b: AgentBoostView }) {
   return (
-    <div
-      style={{
-        ...cardStyle,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        ...(b.conflict && b.active ? { borderColor: 'rgba(220,50,50,0.5)' } : {}),
-      }}
+    <Card
+      accent={b.conflict && b.active ? 'rgba(220,50,50,0.5)' : undefined}
+      style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--obsidian)', background: 'var(--gold)', borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
@@ -214,6 +208,6 @@ function BoostCard({ b }: { b: AgentBoostView }) {
               : 'Deux organisateurs ont payé ce créneau. Vérifie dans Stripe si le remboursement automatique est passé avant toute action manuelle.'}
         </p>
       )}
-    </div>
+    </Card>
   )
 }

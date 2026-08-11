@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
+import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
 import AgentBoostsClient from '@/app/components/AgentBoostsClient'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
@@ -139,7 +139,6 @@ const SECTIONS = [
 ] as const
 type SectionKey = (typeof SECTIONS)[number]['key']
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
 const tealBtn: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
@@ -320,14 +319,14 @@ export default function AgentPaymentsClient() {
         <h1 className="font-display lb-dashboard-title">Paiements</h1>
 
         {loadError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
               Lecture impossible d&apos;une obligation financière. Aucune action de règlement n&apos;est proposée tant que les montants réels ne sont pas connus — recharge la page.
             </p>
             <Button variant="secondary" onClick={loadAll} style={{ fontSize: 12.5, flexShrink: 0 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -456,12 +455,12 @@ function PayoutsSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ ...cardStyle, background: 'rgba(184, 243, 74,0.06)', borderColor: 'rgba(184, 243, 74,0.3)' }}>
+      <Card accent="rgba(184, 243, 74,0.3)" style={{ padding: 16, background: 'rgba(184, 243, 74,0.06)' }}>
         <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
           Filet de sécurité. Le flux normal est le versement automatique — EUR via Stripe Connect, XOF via Mobile Money à la fin de chaque événement. Ci-dessous : les échecs
           de versement auto (XOF) et les soldes EUR/ledger hors Stripe Connect à régler à la main. Jamais d&apos;addition entre devises.
         </p>
-      </div>
+      </Card>
 
       {failedPayouts.length > 0 && (
         <div>
@@ -471,7 +470,7 @@ function PayoutsSection({
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {failedPayoutsPageItems.map((p) => (
-              <div key={p.eventId} style={{ ...cardStyle, borderColor: 'rgba(224,90,170,0.3)', borderLeft: '3px solid rgba(224,90,170,0.6)' }}>
+              <Card key={p.eventId} accent="rgba(224,90,170,0.3)" style={{ padding: 16, borderLeft: '3px solid rgba(224,90,170,0.6)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                   <div style={{ minWidth: 0 }}>
                     <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.eventName}</p>
@@ -503,7 +502,7 @@ function PayoutsSection({
                     Marquer payé ({fmtXOF(p.amountDueXOF)})
                   </Button>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
           <Pagination page={failedPayoutsPage} pageCount={failedPayoutsPageCount} onPageChange={setFailedPayoutsPage} totalItems={failedPayouts.length} pageSize={PAGE_SIZE} />
@@ -561,7 +560,7 @@ function PayoutCard({
   setConfirm: (a: ConfirmAction) => void
 }) {
   return (
-    <div style={{ ...cardStyle, borderColor: requestId ? 'rgba(184, 243, 74,0.3)' : 'var(--border)' }}>
+    <Card accent={requestId ? 'rgba(184, 243, 74,0.3)' : undefined} style={{ padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 2px' }}>{sellerName}</p>
@@ -607,7 +606,7 @@ function PayoutCard({
           Solde à zéro — clore la demande
         </Button>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -636,7 +635,7 @@ function RefundsSection({
         <EmptyState title="Aucun remboursement mobile money en attente" description="Les remboursements FedaPay à traiter manuellement apparaîtront ici." />
       ) : (
         pageItems.map((r) => (
-          <div key={r.id} style={cardStyle}>
+          <Card key={r.id} style={{ padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
               <div style={{ minWidth: 0 }}>
                 <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>{fmtXOF(r.amountXOF)}</p>
@@ -649,7 +648,7 @@ function RefundsSection({
                 Marquer remboursé
               </Button>
             </div>
-          </div>
+          </Card>
         ))
       )}
       {refunds.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={refunds.length} pageSize={PAGE_SIZE} />}
@@ -678,7 +677,7 @@ function AlertsSection({
         <EmptyState title="Aucune anomalie à traiter" description="Les paiements signalés comme anormaux apparaîtront ici." />
       ) : (
         pageItems.map((a) => (
-          <div key={a.id} style={{ ...cardStyle, padding: 18, borderColor: 'rgba(224,90,170,0.32)', borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
+          <Card key={a.id} accent="rgba(224,90,170,0.32)" style={{ padding: 18, borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
               <div>
                 <p style={{ fontSize: 14, fontWeight: 750, color: '#fff', margin: '0 0 5px' }}>{ALERT_REASON_LABEL[a.reason] || a.reason}</p>
@@ -707,7 +706,7 @@ function AlertsSection({
             <Button variant="primary" style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 3, fontWeight: 500, border: '1px solid rgba(255,255,255,0.14)', textTransform: 'none', letterSpacing: 'normal', fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
               Marquer comme examiné
             </Button>
-          </div>
+          </Card>
         ))
       )}
       {alerts.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={alerts.length} pageSize={PAGE_SIZE} />}
