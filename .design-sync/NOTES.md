@@ -233,3 +233,44 @@ which is exactly the failure mode this fix eliminates. If a similar
 Unicode range is ever needed again, build it from `String.fromCharCode`/
 `.codePointAt()` the way `diacritics.ts` does, never as a literal
 character-class range.
+
+## Batch 4 (web) — mount-fetching components + closes out app/components/*.tsx
+
+Final 5 components (46 → 51), closing out ALL 37 `app/components/*.tsx`:
+`ProviderCatalogInquiry` (re-included now that batch 3's diacritics fix
+unblocks it), `ResaleListingsSection`, `VerifyEmailClient`,
+`ConfirmEmailChangeClient`, `BoostActiveClient` — the last 4 are the ones
+deferred in batch 2/3 because they fetch on MOUNT, not just on
+interaction.
+
+**Technique: `.design-sync/previews/_mockFetch.tsx`** — a shared
+`installMockFetch(rules)` helper that patches `window.fetch` at *preview
+module evaluation time* (top-level, outside any component/story
+function), matching request URLs by substring against canned JSON
+responses. This reliably wins the race against the target component's own
+`useEffect`-fired fetch: React only runs effects after the initial commit,
+so a synchronous patch during module eval is always in place before any
+component mounts. Confirmed via the actual captures — all 4 mount-fetching
+components' "success" states rendered **fully settled** (real mocked data
+visible: boost details, resale listings, "email vérifié" text), not stuck
+on a loading spinner — the microtask-resolved mocked fetch is fast enough
+that `package-capture.mjs`'s `settle()` (which waits on
+`document.fonts.ready` + image decode) gives it enough time regardless.
+
+Reuse this pattern for any future component that fetches on mount — copy
+the `installMockFetch([...])` call pattern from `VerifyEmailClient.tsx` or
+`ResaleListingsSection.tsx`. Rules are unmatched-URL-passthrough (falls
+back to the real `fetch`), so only the specific mount-time endpoint needs
+mocking, not everything the component might ever call.
+
+**This closes out all of `app/components/*.tsx` (37/37 accounted for)**:
+30 pure-presentational + interaction-only-fetch (batches 1-3) + these 5
+mount-fetching (batch 4) = every component in that directory now has
+either an authored preview or is a deliberate floor card
+(`LegalBackButton`, `CookieConsentBanner` — see batch 2 notes for why).
+
+Web total after this batch: **51 components** (30 `app/components/ui/` +
+21 `app/components/*.tsx`). Remaining phases for the "100+, web+mobile"
+goal: the ~25 `*Client.tsx` page-level screens under `app/(app)/` and
+`app/(public)/`, then the entire mobile (`LIB_Mobile`) pipeline — see the
+session's running status table for the up-to-date breakdown.

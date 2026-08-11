@@ -23,8 +23,6 @@ export { Stars, StarInput } from '../app/components/StarRating'
 export { default as AgeGateModal } from '../app/components/AgeGateModal'
 export { default as CookieConsentBanner } from '../app/components/CookieConsentBanner'
 export { default as LegalPageLayout } from '../app/components/LegalPageLayout'
-// ProviderCatalogInquiry deliberately excluded (componentSrcMap: null) —
-// see NOTES.md "Batch 2" for why.
 
 // Batch 3 — app/components/*.tsx components that DO have fetch logic, but
 // only on user interaction (not on mount) — safe to render statically from
@@ -38,3 +36,14 @@ export { default as PublicProfileActions } from '../app/components/PublicProfile
 export { default as ResetPasswordClient } from '../app/components/ResetPasswordClient'
 export { default as OrganizerOnboardingWizard } from '../app/components/OrganizerOnboardingWizard'
 export { default as PrestataireOnboardingWizard } from '../app/components/PrestataireOnboardingWizard'
+
+// Batch 4 — the remaining app/components/*.tsx: ProviderCatalogInquiry
+// (unblocked by the lib/shared/diacritics.ts fix) plus the 4 components
+// that DO fetch on mount, previewed via .design-sync/previews/_mockFetch.tsx
+// (window.fetch patched at story-module eval time, before the component's
+// own useEffect fires). This closes out all 37 app/components/*.tsx.
+export { default as ProviderCatalogInquiry } from '../app/components/ProviderCatalogInquiry'
+export { default as ResaleListingsSection } from '../app/components/ResaleListingsSection'
+export { default as VerifyEmailClient } from '../app/components/VerifyEmailClient'
+export { default as ConfirmEmailChangeClient } from '../app/components/ConfirmEmailChangeClient'
+export { default as BoostActiveClient } from '../app/components/BoostActiveClient'
