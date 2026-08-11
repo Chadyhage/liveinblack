@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { IconButton } from '@/app/components/ui'
 
 // Flèche de défilement animée en bas du hero (retour client, voix off) —
 // cible dynamiquement le prochain élément frère de la section hero plutôt
@@ -34,30 +35,25 @@ export default function HeroScrollIndicator({ targetId }: { targetId?: string })
           }
         }
       `}</style>
-      <button
-        type="button"
+      <IconButton
+        label="Défiler vers la section suivante"
         onClick={scrollToNext}
-        aria-label="Défiler vers la section suivante"
-        className="lb-hero-scroll-indicator"
+        size={40}
         style={{
           position: 'absolute',
           left: '50%',
           bottom: 22,
           transform: 'translateX(-50%)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 40,
-          height: 40,
-          padding: 0,
           border: 'none',
           background: 'transparent',
           color: 'var(--text-muted)',
-          cursor: 'pointer',
         }}
-      >
-        <ChevronDown size={28} strokeWidth={1.8} aria-hidden="true" />
-      </button>
+        icon={
+          <span className="lb-hero-scroll-indicator" style={{ display: 'inline-flex' }}>
+            <ChevronDown size={28} strokeWidth={1.8} aria-hidden="true" />
+          </span>
+        }
+      />
     </>
   )
 }

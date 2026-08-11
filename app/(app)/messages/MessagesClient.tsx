@@ -25,7 +25,7 @@ import {
   Handshake,
   Send,
 } from 'lucide-react'
-import { Button, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
@@ -1602,32 +1602,28 @@ export default function MessagesClient({
               icône crayon "Nouvelle discussion" jugée peu lisible par le
               client. Ouvre le même NewDirectModal (liste d'amis + recherche
               par nom/email), inchangé sur le fond. */}
-          <button
-            type="button"
-            title="Nouvelle discussion"
-            aria-label="Nouvelle discussion"
+          <UiIconButton
+            label="Nouvelle discussion"
             onClick={() => setPanel('newDirect')}
+            size={52}
             style={{
               position: 'absolute',
               bottom: 20,
               right: 20,
-              width: 52,
-              height: 52,
               borderRadius: '50%',
               border: 'none',
               background: 'var(--teal-solid)',
               color: '#04120e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
-              cursor: 'pointer',
               zIndex: 20,
             }}
-          >
-            {received.length > 0 && <Badge count={received.length} />}
-            <Plus size={24} strokeWidth={2.4} />
-          </button>
+            icon={
+              <>
+                {received.length > 0 && <Badge count={received.length} />}
+                <Plus size={24} strokeWidth={2.4} />
+              </>
+            }
+          />
         </aside>
       )}
 

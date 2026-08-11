@@ -145,10 +145,15 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
                 {link.label}
               </a>
             ))}
-            <button type="button" role="menuitem" onClick={() => { copyLink(); closeMenu() }} style={{ ...menuItemStyle, width: '100%', border: 0, background: 'transparent', cursor: 'pointer', font: 'inherit' }}>
+            <Button
+              variant="ghost"
+              role="menuitem"
+              onClick={() => { copyLink(); closeMenu() }}
+              style={{ ...menuItemStyle, width: '100%', minHeight: 'auto', justifyContent: 'flex-start', fontWeight: 600 }}
+            >
               <Copy size={16} strokeWidth={2} aria-hidden="true" />
               Copier le lien
-            </button>
+            </Button>
           </div>,
           document.body
         )}
