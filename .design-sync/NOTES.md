@@ -198,3 +198,38 @@ BUNDLE_EXPORT entry above) — same verdict (graded `good`, DOM content
 confirmed complete via `.render-check.json`'s `texts` field), same non-fix
 (nothing to fix, it's the harness's crop region on
 `position:fixed;inset:0` roots).
+
+## Batch 3 (web) — fixed the money.ts regex bug at the source
+
+7 more `app/components/*.tsx` components synced (39 → 46):
+`EventInterestButtonClient`, `OrganizerFollowButtonClient`,
+`ProviderReviewsClient`, `PublicProfileActions`, `ResetPasswordClient`,
+`OrganizerOnboardingWizard`, `PrestataireOnboardingWizard` — all
+props-driven, fetch only on user interaction (not on mount), same pattern
+as batches 1-2.
+
+`PrestataireOnboardingWizard` transitively imports `lib/shared/money.ts`
+— the exact same esbuild-breaking combining-mark regex documented under
+Batch 2 above. This time, rather than excluding another component,
+**fixed the root cause**: extracted a shared `lib/shared/diacritics.ts`
+(`stripDiacritics()`) that builds the U+0300-U+036F combining-marks range
+from `String.fromCharCode` instead of a literal character-class range —
+byte-for-byte identical regex semantics, just a spelling esbuild's
+parser/printer doesn't choke on. Updated all 6 affected files
+(`locations.ts`, `boosts.ts`, `money.ts`, `organizerProfileValidation.ts`,
+`providerBillingRegion.ts`, `recommendations.ts`) to use it. Verified
+zero behavior change: `npx tsc --noEmit -p .` clean, full `npx vitest run`
+206/206 passing (same count as before the change), before touching
+anything design-sync-side. This unblocks `ProviderCatalogInquiry` (batch 2's
+exclusion) for a future batch too — it wasn't re-included here to keep this
+batch's diff scoped to what was actually tested this round, but nothing
+should block it now.
+
+**Editing note for future syncs**: don't type the raw combining-mark
+characters (U+0300-U+036F) directly into any file in this repo, including
+comments — several editing attempts in this session had the literal
+characters silently reappear when typed via prose/escape-sequence text,
+which is exactly the failure mode this fix eliminates. If a similar
+Unicode range is ever needed again, build it from `String.fromCharCode`/
+`.codePointAt()` the way `diacritics.ts` does, never as a literal
+character-class range.

@@ -25,3 +25,16 @@ export { default as CookieConsentBanner } from '../app/components/CookieConsentB
 export { default as LegalPageLayout } from '../app/components/LegalPageLayout'
 // ProviderCatalogInquiry deliberately excluded (componentSrcMap: null) —
 // see NOTES.md "Batch 2" for why.
+
+// Batch 3 — app/components/*.tsx components that DO have fetch logic, but
+// only on user interaction (not on mount) — safe to render statically from
+// realistic initial props, same as batch 1/2. Mount-fetching components
+// (ResaleListingsSection, VerifyEmailClient, ConfirmEmailChangeClient,
+// BoostActiveClient) are deferred — see NOTES.md "Batch 3".
+export { default as EventInterestButtonClient } from '../app/components/EventInterestButtonClient'
+export { default as OrganizerFollowButtonClient } from '../app/components/OrganizerFollowButtonClient'
+export { default as ProviderReviewsClient } from '../app/components/ProviderReviewsClient'
+export { default as PublicProfileActions } from '../app/components/PublicProfileActions'
+export { default as ResetPasswordClient } from '../app/components/ResetPasswordClient'
+export { default as OrganizerOnboardingWizard } from '../app/components/OrganizerOnboardingWizard'
+export { default as PrestataireOnboardingWizard } from '../app/components/PrestataireOnboardingWizard'

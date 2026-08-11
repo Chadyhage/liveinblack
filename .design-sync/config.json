@@ -47,7 +47,14 @@
     "AgeGateModal": "app/components/AgeGateModal.tsx",
     "CookieConsentBanner": "app/components/CookieConsentBanner.tsx",
     "LegalPageLayout": "app/components/LegalPageLayout.tsx",
-    "ProviderCatalogInquiry": null
+    "ProviderCatalogInquiry": null,
+    "EventInterestButtonClient": "app/components/EventInterestButtonClient.tsx",
+    "OrganizerFollowButtonClient": "app/components/OrganizerFollowButtonClient.tsx",
+    "ProviderReviewsClient": "app/components/ProviderReviewsClient.tsx",
+    "PublicProfileActions": "app/components/PublicProfileActions.tsx",
+    "ResetPasswordClient": "app/components/ResetPasswordClient.tsx",
+    "OrganizerOnboardingWizard": "app/components/OrganizerOnboardingWizard.tsx",
+    "PrestataireOnboardingWizard": "app/components/PrestataireOnboardingWizard.tsx"
   },
   "overrides": {
     "LineChartCard": { "cardMode": "column" },
