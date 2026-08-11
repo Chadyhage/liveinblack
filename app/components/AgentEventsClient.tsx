@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -55,7 +55,6 @@ const STATUS_STYLE: Record<EventStatus, React.CSSProperties> = {
   cancelled: { color: '#e05aaa', borderColor: 'rgba(224,90,170,0.35)', background: 'rgba(224,90,170,0.1)' },
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 
 interface ToastState {
   message: string
@@ -187,12 +186,12 @@ export default function AgentEventsClient() {
         </div>
 
         {listError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
@@ -202,10 +201,10 @@ export default function AgentEventsClient() {
             { label: 'Passés', value: totalPast, color: 'var(--text-faint)' },
             { label: 'Annulés', value: totalCancelled, color: '#e05aaa' },
           ].map((s) => (
-            <div key={s.label} style={{ ...cardStyle, padding: '10px 8px', textAlign: 'center' }}>
+            <Card key={s.label} style={{ padding: '10px 8px', textAlign: 'center' }}>
               <p style={{ fontSize: 22, fontWeight: 700, color: s.color, margin: 0 }}>{s.value}</p>
               <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '2px 0 0' }}>{s.label}</p>
-            </div>
+            </Card>
           ))}
         </div>
 
@@ -297,7 +296,7 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
   const statusStyle = STATUS_STYLE[event.status]
   const [expanded, setExpanded] = useState(false)
   return (
-    <div style={{ ...cardStyle, padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
+    <Card style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
       <div
         style={{
           width: 56,
@@ -378,7 +377,7 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
           Voir
         </Link>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -400,7 +399,7 @@ function AdminCancelModal({
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.75)', backdropFilter: 'blur(6px)' }} onClick={onCancel} />
-      <div style={{ position: 'relative', width: 'min(460px, 100%)', ...cardStyle, borderColor: 'rgba(224,90,170,0.4)' }}>
+      <Card accent="rgba(224,90,170,0.4)" style={{ position: 'relative', width: 'min(460px, 100%)' }}>
         <p style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Annuler « {name} » ?</p>
         <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 14px', lineHeight: 1.6 }}>
           Action irréversible : rembourse automatiquement les acheteurs (carte via Stripe, mobile money mis en liste de remboursement), annule les billets, libère le stock et bloque tout versement
@@ -434,7 +433,7 @@ function AdminCancelModal({
             Annuler l&apos;événement
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

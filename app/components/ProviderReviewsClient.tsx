@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Stars, StarInput } from './StarRating'
 import { computeReviewStats, REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Textarea, Label } from '@/app/components/ui'
 
 // Port de src/components/ProviderReviews.jsx — section "Avis clients" d'une
 // page publique prestataire. Contrairement au legacy (modale d'auth inline
@@ -17,7 +17,6 @@ import { Button, Textarea, Label } from '@/app/components/ui'
 const GOLD = 'var(--primary)'
 const TEAL = 'var(--primary)'
 
-const card: React.CSSProperties = { padding: 20, borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
 const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12.5, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
 const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontSize: 13, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
@@ -179,7 +178,7 @@ export default function ProviderReviewsClient({
         {count > 0 && <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{count} avis</span>}
       </div>
 
-      <div style={card}>
+      <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
         {count === 0 ? (
           <div>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: 0 }}>
@@ -275,7 +274,7 @@ export default function ProviderReviewsClient({
             </div>
           </>
         )}
-      </div>
+      </Card>
 
       {showForm && (
         <Sheet onClose={() => !formBusy && setShowForm(false)}>

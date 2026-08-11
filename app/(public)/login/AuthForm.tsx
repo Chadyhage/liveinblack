@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
-import { Button, Input, Label, Select, Tabs } from '@/app/components/ui'
+import { Button, Card, Input, Label, Select, Tabs } from '@/app/components/ui'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -38,12 +38,6 @@ function checkPasswordStrength(pwd: string) {
   return { score, label: 'Fort', color: 'var(--teal)' }
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--surface-2)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-lg)',
-  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-}
 const btnPrimary: React.CSSProperties = {
   padding: '15px 24px',
   background: 'var(--teal-solid)',
@@ -787,7 +781,11 @@ export default function AuthForm() {
           aria-labelledby="forgot-modal-title"
           style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
         >
-          <div ref={forgotModalRef} onClick={(e) => e.stopPropagation()} style={{ ...cardStyle, padding: '32px 28px', maxWidth: 400, width: '100%' }}>
+          <Card
+            ref={forgotModalRef}
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'var(--surface-2)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: '32px 28px', maxWidth: 400, width: '100%' }}
+          >
             {!forgotSubmitted ? (
               <>
                 <h2 id="forgot-modal-title" style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
@@ -841,7 +839,7 @@ export default function AuthForm() {
                 </Button>
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
     </div>

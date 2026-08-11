@@ -95,7 +95,6 @@ function fmtDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
@@ -471,7 +470,7 @@ export default function AgentUsersClient() {
                   key={u.id}
                   variant="ghost"
                   onClick={() => setSelectedId(u.id)}
-                  style={{ ...cardStyle, padding: 12, display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left' }}
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 12, display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left' }}
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div

@@ -8,7 +8,7 @@ import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { validateOrganizerStep0, validateOrganizerStep1, type OrganizerFormData } from '@/lib/shared/applicationValidation'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
-import { Button, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
 // Port de src/pages/OnboardingOrganisateur.jsx (#7 phase organisateur) — 4
 // étapes (Établissement/Activité/Revenus/Documents), utilisé À LA FOIS par
@@ -44,7 +44,6 @@ const EMPTY_FORM: OrganizerFormData = {
   description: '',
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 14, outline: 'none' }
 const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
@@ -219,7 +218,7 @@ export default function OrganizerOnboardingWizard({
   if (submitted) {
     return (
       <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ ...cardStyle, maxWidth: 420, textAlign: 'center' }}>
+        <Card style={{ padding: 24, maxWidth: 420, textAlign: 'center' }}>
           <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
@@ -229,7 +228,7 @@ export default function OrganizerOnboardingWizard({
           <Link href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
             Retour à l&apos;accueil
           </Link>
-        </div>
+        </Card>
       </Shell>
     )
   }
@@ -257,7 +256,7 @@ export default function OrganizerOnboardingWizard({
           </div>
         </div>
 
-        <div style={cardStyle}>
+        <Card style={{ padding: 24 }}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
@@ -540,7 +539,7 @@ export default function OrganizerOnboardingWizard({
               </Button>
             )}
           </div>
-        </div>
+        </Card>
 
         <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
           {mode === 'anonymous'

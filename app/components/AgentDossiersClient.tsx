@@ -186,7 +186,6 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
   personne: 'Par personne',
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 // Les couleurs `var(--*)` ne supportent pas la concaténation d'un canal alpha
@@ -702,14 +701,15 @@ function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?:
       variant="ghost"
       onClick={onClick}
       style={{
-        ...cardStyle,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
         padding: compact ? '10px 12px' : 16,
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         textAlign: 'left',
         width: '100%',
-        border: compact ? '1px solid var(--border)' : cardStyle.border,
       }}
     >
       <Avatar src={null} name={app.displayName || '?'} size={compact ? 'sm' : 'md'} />

@@ -46,7 +46,6 @@ interface ToastState {
   kind: 'success' | 'error'
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<string, string> = { organisateur: 'Organisateur', prestataire: 'Prestataire', client: 'Client', agent: 'Agent' }
@@ -321,7 +320,7 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
     <Button
       variant="ghost"
       onClick={onClick}
-      style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 16, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
     >
       <Avatar src={null} name={request.userName || request.userEmail || '?'} size="md" />
       <div style={{ flex: 1, minWidth: 0 }}>
