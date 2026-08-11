@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 
 // Port de src/pages/OnSiteOrderPage.jsx (partie interactive uniquement — les
 // gates de chargement/accès vivent dans page.tsx, un Server Component). Ce
@@ -321,7 +321,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
         )}
 
         {hasOwnItems && (
-          <section style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+          <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)', padding: 18 }}>
             <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 12px' }}>
               Commande de ce billet
             </h2>
@@ -344,7 +344,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                 )
               })}
             </div>
-          </section>
+          </Card>
         )}
 
         <section>
@@ -352,12 +352,12 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
             Le menu
           </h2>
           {menu.length === 0 ? (
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '40px 20px', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)', padding: '40px 20px', textAlign: 'center' }}>
               <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucune carte disponible</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
                 L&apos;organisateur n&apos;a pas encore publié de menu pour la commande sur place.
               </p>
-            </div>
+            </Card>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
               {groups.map(([category, catItems]) => (
@@ -371,12 +371,9 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                       const lockedLine = !editable ? findLockedOwnLine(items, menuItem.name, currentUserId) : undefined
                       const busy = busyKey === menuItem.name
                       return (
-                        <div
+                        <Card
                           key={menuItem.name}
                           style={{
-                            background: 'var(--surface)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 12,
                             padding: '12px 14px',
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -422,7 +419,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                               </Button>
                             )}
                           </div>
-                        </div>
+                        </Card>
                       )
                     })}
                   </div>

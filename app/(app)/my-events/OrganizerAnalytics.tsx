@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { formatMoney, type OrganizerEventView } from './types'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 
 // Port de OrganizerAnalytics (MesEvenementsPage.jsx lignes
 // 3544-3725) — calculé ici depuis la liste d'événements déjà chargée par le
@@ -29,10 +29,10 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
 
   if (totalTickets === 0) {
     return (
-      <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>Aucune vente pour l&rsquo;instant.</p>
         <p style={{ color: 'var(--text-faint)', fontSize: 12, margin: '4px 0 0' }}>Tes ventes apparaîtront ici dès le premier billet.</p>
-      </div>
+      </Card>
     )
   }
 
@@ -89,13 +89,13 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
           </span>
         )}
       </Button>
-      <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
+      <Card style={{ padding: '16px 18px' }}>
         <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Billets émis</p>
         <p style={{ font: '600 26px var(--font-open-sans)', color: '#fff', margin: 0 }}>{totalTickets}</p>
-      </div>
+      </Card>
 
       {topEvents.length > 0 && (
-        <div style={{ gridColumn: '1 / -1', border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: '16px 18px' }}>
+        <Card style={{ gridColumn: '1 / -1', padding: '16px 18px' }}>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Par événement</p>
           <div style={{ display: 'grid', gap: 8 }}>
             {topEvents.map((e) => {
@@ -103,7 +103,7 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
               return <div key={e.id} style={{ display: 'grid', gap: 5 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5 }}><span style={{ color: '#fff' }}>{e.name}</span><span style={{ color: 'var(--gold)', fontWeight: 600 }}>{e.soldCount}/{e.totalCapacity} · {fill}% · {formatMoney(e.revenue, e.currency)}</span></div><div aria-label={`Remplissage ${fill} %`} style={{ height: 5, borderRadius: 999, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}><div style={{ width: `${fill}%`, height: '100%', borderRadius: 999, background: fill >= 90 ? 'var(--teal)' : 'var(--gold)' }} /></div></div>
             })}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   )

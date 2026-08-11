@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatMoney } from './types'
-import { Button, SkeletonList } from '@/app/components/ui'
+import { Button, Card, SkeletonList } from '@/app/components/ui'
 
 // Port de BookingsPanel (MesEvenementsPage.jsx lignes 3727-3884) — panneau
 // plein écran (pas une petite modale) de détail des réservations d'un
@@ -85,10 +85,10 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
               </h2>
               <div style={{ display: 'grid', gap: 8 }}>
                 {data.summaryByPlace.map((row) => (
-                  <div key={row.place} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
+                  <Card key={row.place} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px' }}>
                     <span style={{ color: '#fff', fontSize: 13 }}>{row.place}</span>
                     <span style={{ color: 'var(--gold)', fontSize: 13, fontWeight: 700 }}>{row.count}</span>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </section>
@@ -100,10 +100,10 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
                 </h2>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {data.preorderSummary.map((row) => (
-                    <div key={row.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
+                    <Card key={row.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px' }}>
                       <span style={{ color: '#fff', fontSize: 13 }}>{row.name}</span>
                       <span style={{ color: 'var(--gold)', fontSize: 13, fontWeight: 700 }}>× {row.qty}</span>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </section>
@@ -115,7 +115,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
               </h2>
               <div style={{ display: 'grid', gap: 8 }}>
                 {data.tickets.map((t) => (
-                  <div key={t.ticketCode} style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
+                  <Card key={t.ticketCode} style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
                       <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>
                         {t.place} · {t.ticketCode}
@@ -133,7 +133,7 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
                         ))}
                       </ul>
                     )}
-                  </div>
+                  </Card>
                 ))}
               </div>
             </section>
