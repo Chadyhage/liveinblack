@@ -7,7 +7,7 @@ import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/mon
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
-import { Button, Input, Textarea, Select, Spinner } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Select, Spinner } from '@/app/components/ui'
 import { IconClose, InputField, LockIcon, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
 
 // Port du wizard de création/édition d'événement en 5 étapes
@@ -174,12 +174,6 @@ const MAX_PLACE_PHOTOS = 6
 // ─────────────────────────────────────────────────────────────────────────
 
 const S = {
-  card: {
-    background: 'var(--surface)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 12,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-  } as React.CSSProperties,
   inputBase: {
     background: '#0b0c12',
     border: '1px solid rgba(255,255,255,0.12)',
@@ -1113,7 +1107,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </div>
 
             {/* DJs / Artistes */}
-            <div style={{ ...S.card, padding: 12, gridColumn: '1 / -1' }}>
+            <Card style={{ padding: 12, gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                 <div>
                   <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>DJs / Artistes</p>
@@ -1156,7 +1150,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   </Button>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
 
           {/* Genre musical */}
@@ -1339,7 +1333,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             const placeHasSales = place.sold > 0
             const menuChoices = menuItems.filter((m) => m.name.trim() && m.price > 0)
             return (
-              <div key={place.key} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(184, 243, 74,0.25)' } : {}) }}>
+              <Card key={place.key} accent={placeHasSales ? 'rgba(184, 243, 74,0.25)' : undefined} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
@@ -1590,7 +1584,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             )
           })}
 
@@ -1638,7 +1632,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(184, 243, 74,0.15)' }}>
+          <Card accent="rgba(184, 243, 74,0.15)" style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
@@ -1649,25 +1643,25 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               </svg>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
             </div>
-          </div>
+          </Card>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(184, 243, 74,0.18)' } : {}) }}>
+          <Card accent={locked ? 'rgba(184, 243, 74,0.18)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Playlist interactive</p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
               {locked && <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
             </div>
             <Toggle value={playlist} onChange={() => setPlaylist((v) => !v)} disabled={locked} />
-          </div>
+          </Card>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(184, 243, 74,0.18)' } : {}) }}>
+          <Card accent={locked ? 'rgba(184, 243, 74,0.18)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Précommande de consommations</p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
               {locked && <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
             </div>
             <Toggle value={preorder} onChange={() => setPreorder((v) => !v)} disabled={locked} />
-          </div>
+          </Card>
 
           {preorder && (
             <div style={{ borderTop: '1px solid rgba(184, 243, 74,0.15)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
@@ -1777,10 +1771,10 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               { label: 'Précommande conso', val: preorder ? `Activée (${menuItems.filter((i) => i.name.trim()).length} articles)` : 'Désactivée' },
               { label: 'QR Code billet', val: 'Activé — obligatoire' },
             ].map((r) => (
-              <div key={r.label} style={{ ...S.card, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <Card key={r.label} style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{r.label}</span>
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)', textAlign: 'right' }}>{r.val}</span>
-              </div>
+              </Card>
             ))}
           </div>
 
