@@ -8,7 +8,7 @@ import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoTex
 import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, EmptyState, IconButton, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, Card, EmptyState, IconButton, Input, PageLinks, pageSlice } from '@/app/components/ui'
 import { Search } from 'lucide-react'
 
 const PAGE_SIZE = 24
@@ -200,11 +200,11 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
 
       <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
 
-      <section style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center', borderRadius: 20, border: '1px solid rgba(184, 243, 74,.3)', background: 'var(--surface)' }}>
+      <Card accent="rgba(184, 243, 74,.3)" style={{ maxWidth: 820, margin: '54px auto 0', padding: '36px 24px', textAlign: 'center' }}>
         <h2 className="font-display" style={{ margin: 0, fontSize: 32, letterSpacing: '.01em' }}>Tu es prestataire ?</h2>
         <p style={{ maxWidth: 500, margin: '10px auto 20px', color: 'var(--text-muted)', lineHeight: 1.6 }}>Crée ta vitrine, présente ton catalogue et échange directement avec les organisateurs.</p>
         <Link href="/provider-signup" style={{ display: 'inline-block', padding: '13px 22px', borderRadius: 999, background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5 }}>Devenir prestataire</Link>
-      </section>
+      </Card>
       </div>
     </main>
   )

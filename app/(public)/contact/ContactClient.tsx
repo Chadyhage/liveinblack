@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import LegalBackButton from '@/app/components/LegalBackButton'
-import { Button, Input, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Label } from '@/app/components/ui'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -98,12 +98,12 @@ export default function ContactClient() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
-        <div style={{ ...CARD, padding: '28px 24px', maxWidth: 640 }}>
+        <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', maxWidth: 640 }}>
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '24px 8px' }}>
               <h2 style={{ fontSize: 17, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
-                Merci, ton message a bien été transmis à l'équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
+                Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
               </p>
               <Button variant="secondary" onClick={() => setStatus('idle')}>
                 Envoyer un autre message
@@ -174,9 +174,9 @@ export default function ContactClient() {
               </div>
             </form>
           )}
-        </div>
+        </Card>
 
-        <div style={{ ...CARD, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
             <h2 style={{ fontSize: 15, color: 'var(--text)', margin: '0 0 6px', fontWeight: 800 }}>Un délai de réponse rapide</h2>
             <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
@@ -199,7 +199,7 @@ export default function ContactClient() {
               ton espace connecté — la réponse y sera plus rapide et centralisée avec ton compte.
             </p>
           </div>
-        </div>
+        </Card>
         </div>
       </div>
     </div>

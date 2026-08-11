@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { listMyStaffedEvents } from '@/lib/server/staffEvents'
+import { Card } from '@/app/components/ui'
 
 // Port de src/pages/MesSoireesPage.jsx — point d'entrée du MEMBRE STAFF
 // (serveur / contrôle entrée / DJ) invité sur la soirée d'un autre
@@ -114,18 +115,10 @@ export default async function MesSoireesPage() {
               const dateLine = [ev.dateDisplay, ev.city].filter(Boolean).join(' · ')
 
               return (
-                <div
+                <Card
                   key={ev.eventId}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 14,
-                    padding: 18,
-                    borderRadius: 16,
-                    background: 'var(--surface)',
-                    border: `1px solid ${ev.live ? meta.border : 'var(--border)'}`,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-                  }}
+                  accent={ev.live ? meta.border : undefined}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 18, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ minWidth: 0 }}>
@@ -201,7 +194,7 @@ export default async function MesSoireesPage() {
                       <path d="M5 12h14M13 6l6 6-6 6" />
                     </svg>
                   </Link>
-                </div>
+                </Card>
               )
             })}
           </div>

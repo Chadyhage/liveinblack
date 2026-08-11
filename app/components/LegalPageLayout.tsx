@@ -1,4 +1,5 @@
 import LegalBackButton from './LegalBackButton'
+import { Card } from '@/app/components/ui'
 
 // Port de src/components/LegalPageLayout.jsx — layout réutilisable pour
 // toutes les pages légales (mentions légales, politique de confidentialité,
@@ -124,7 +125,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         {/* Sections */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sections.map((s) => (
-            <div key={s.n} id={`legal-section-${s.n}`} style={{ ...CARD, padding: '20px 20px', scrollMarginTop: 24 }}>
+            <Card key={s.n} id={`legal-section-${s.n}`} style={{ boxShadow: CARD.boxShadow, padding: '20px 20px', scrollMarginTop: 24 }}>
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                 <span
                   style={{
@@ -206,16 +207,16 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   )}
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* Footer notice */}
         {footerNotice && (
-          <div
+          <Card
+            accent="rgba(255,255,255,0.06)"
             style={{
-              ...CARD,
-              borderColor: 'rgba(255,255,255,0.06)',
+              boxShadow: CARD.boxShadow,
               padding: '14px 18px',
               marginTop: 16,
             }}
@@ -231,7 +232,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
             >
               {footerNotice}
             </p>
-          </div>
+          </Card>
         )}
       </div>
     </div>

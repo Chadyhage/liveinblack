@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonCard } from '@/app/components/ui'
+import { Card, Skeleton, SkeletonCard } from '@/app/components/ui'
 
 // Squelette instantané pour /profile — la page (Server Component) attend un
 // seul aller-retour DB (getMyProfile, findById par _id, déjà indexé) donc ce
@@ -21,11 +21,11 @@ export default function ProfileLoading() {
           </div>
         </header>
         <div className="profile-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 340px) 1fr', gap: 20, alignItems: 'start' }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
             <Skeleton width={88} height={88} radius={999} />
             <Skeleton width={140} height={18} />
             <Skeleton width={160} height={12} />
-          </div>
+          </Card>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <SkeletonCard />
             <div className="lb-dashboard-card-grid">
