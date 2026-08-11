@@ -6,7 +6,7 @@ import { ArrowLeft, X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
-import { Button, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
+import { Button, Card, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -115,11 +115,6 @@ function classify(group: TicketWalletGroupView): GroupBucket {
   return d.getTime() < today.getTime() ? 'past' : 'upcoming'
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 16,
-}
 
 export default function TicketWalletPanel({ groups, currentUserId, onBack }: { groups: TicketWalletGroupView[]; currentUserId: string; onBack: () => void }) {
   const buckets = useMemo(() => {
@@ -158,7 +153,7 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
           <EmptyWallet />
         ) : (
           <>
-            <div style={{ ...cardStyle, maxWidth: 620, padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Card style={{ maxWidth: 620, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <TicketGlyph />
                 <div>
@@ -190,7 +185,7 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
               >
                 Trouver une soirée
               </Link>
-            </div>
+            </Card>
 
             {buckets.upcoming.length > 0 && <Section label={`À venir (${buckets.upcoming.length})`} groups={buckets.upcoming} currentUserId={currentUserId} paramName="page" />}
             {buckets.past.length > 0 && <Section label={`Événements passés (${buckets.past.length})`} groups={buckets.past} currentUserId={currentUserId} paramName="pastPage" />}
@@ -271,7 +266,7 @@ function SeatHoldsPanel() {
   if (active.length === 0) return null
 
   return (
-    <div style={{ ...cardStyle, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, border: '1px solid rgba(184, 243, 74,.35)' }}>
+    <Card accent="rgba(184, 243, 74,.35)" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Places bloquées</p>
       {active.map((hold) => (
         <div key={hold.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
@@ -295,7 +290,7 @@ function SeatHoldsPanel() {
         </div>
       ))}
       {payErr && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5 }}>{payErr}</p>}
-    </div>
+    </Card>
   )
 }
 
@@ -369,7 +364,7 @@ function TicketGlyph() {
 
 function EmptyWallet() {
   return (
-    <div style={{ ...cardStyle, padding: '48px 24px', textAlign: 'center' }}>
+    <Card style={{ padding: '48px 24px', textAlign: 'center' }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
         <TicketGlyph />
       </div>
@@ -381,7 +376,7 @@ function EmptyWallet() {
       >
         Découvrir les événements
       </Link>
-    </div>
+    </Card>
   )
 }
 
@@ -421,7 +416,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
   }
 
   return (
-    <div style={{ ...cardStyle, overflow: 'hidden' }}>
+    <Card style={{ padding: 0, overflow: 'hidden' }}>
       <Link
         href={event ? `/events/${event.id}` : '#'}
         style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, textDecoration: 'none', color: 'inherit' }}
@@ -521,7 +516,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
             ))}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 

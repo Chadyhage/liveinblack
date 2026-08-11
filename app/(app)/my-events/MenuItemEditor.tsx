@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { currencySymbol } from '@/lib/shared/money'
 import type { ShowOption } from '@/lib/shared/showOptions'
-import { Button, Input, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Label } from '@/app/components/ui'
 
 // Sous-composant du wizard événement (EventWizard.tsx) — port de
 // MenuItemEditor (MesEvenementsPage.jsx lignes ~3281-3542).
@@ -42,12 +42,7 @@ export function emptyMenuItem(): MenuItemRow {
   }
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 12,
-  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-}
+const CARD_SHADOW = '0 8px 24px rgba(0,0,0,0.35)'
 
 function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }: { size?: number; color?: string }) {
   return (
@@ -137,7 +132,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
   }
 
   return (
-    <div style={{ ...cardStyle, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10, opacity: disabled ? 0.55 : 1 }}>
+    <Card style={{ boxShadow: CARD_SHADOW, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10, opacity: disabled ? 0.55 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif' }}>
           Article {index + 1}
@@ -270,7 +265,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid rgba(184,243,74,0.18)' }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>Shows disponibles pour cet article</p>
           {item.showOptions.map((option, optionIndex) => (
-            <div key={option.id} style={{ ...cardStyle, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Card key={option.id} style={{ boxShadow: CARD_SHADOW, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Input style={{ flex: 1, fontSize: 12 }} placeholder={`Show ${optionIndex + 1} — ex: pancartes + étincelles`} value={option.label} disabled={disabled} onChange={(e) => updateShowOption(option.id, { label: e.target.value })} />
                 <Button variant="ghost" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ padding: 5 }}><IconClose size={13} color="rgba(220,100,100,.9)" /></Button>
@@ -301,7 +296,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           ))}
           <Button variant="secondary" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ fontSize: 12, color: 'var(--gold)', border: '1px solid rgba(184,243,74,.35)', borderRadius: 9, background: 'rgba(184,243,74,.08)' }}>+ Ajouter un show</Button>
         </div>
@@ -346,6 +341,6 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
           </div>
         </div>
       )}
-    </div>
+    </Card>
   )
 }
