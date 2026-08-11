@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Button, Input } from '@/app/components/ui'
+import { Button, Card, Input } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 interface PlaylistSong {
@@ -714,7 +714,7 @@ export default function PlaylistClient({
             ))}
           </div>
 
-          <section style={{ ...cardStyle, marginBottom: 16 }}>
+          <Card style={{ padding: 14, marginBottom: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>Ajouter un son (auto-validé)</p>
             <Input
               value={query}
@@ -734,7 +734,7 @@ export default function PlaylistClient({
               />
             )}
             {noResults && <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '10px 0 0', textAlign: 'center' }}>Aucun résultat pour « {trimmedQuery} »</p>}
-          </section>
+          </Card>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
             {DJ_FILTERS.map((f) => (
@@ -796,7 +796,7 @@ export default function PlaylistClient({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {orderedModerationSongs.map((song) => (
-                <div key={song.id} style={cardStyle}>
+                <Card key={song.id} style={{ padding: 14 }}>
                   <DjSongRow song={song} currentUserId={currentUserId} playingKey={playingKey} onTogglePreview={togglePreviewAudio} />
                   <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                     <Button
@@ -840,7 +840,7 @@ export default function PlaylistClient({
                       Supprimer
                     </Button>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -895,15 +895,15 @@ export default function PlaylistClient({
                     const liked = song.likedBy.includes(currentUserId)
                     const isMine = song.addedBy === currentUserId
                     return (
-                      <div
+                      <Card
                         key={song.id}
+                        accent={rank === 1 ? `${HEX.gold}55` : undefined}
                         style={{
-                          ...cardStyle,
+                          padding: 14,
                           display: 'flex',
                           alignItems: 'center',
                           gap: 11,
-                          border: rank === 1 ? `1px solid ${HEX.gold}55` : cardStyle.border,
-                          background: rank === 1 ? '#14120d' : cardStyle.background,
+                          background: rank === 1 ? '#14120d' : undefined,
                         }}
                       >
                         <span style={{ fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: rank === 1 ? 'var(--gold)' : 'var(--text-faint)' }}>
@@ -934,7 +934,7 @@ export default function PlaylistClient({
                             {song.likedBy.length}
                           </span>
                         </Button>
-                      </div>
+                      </Card>
                     )
                   })}
                 </div>
@@ -945,7 +945,7 @@ export default function PlaylistClient({
           {participantTab === 'mine' && (
             <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {!effectiveIsCheckedIn && (
-                <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, padding: '28px 20px', textAlign: 'center' }}>
+                <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, padding: '28px 20px', textAlign: 'center' }}>
                   <p style={{ fontWeight: 800, fontSize: 19, letterSpacing: '-0.4px', margin: 0 }}>Conditions pour proposer un son</p>
                   <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, maxWidth: 320, lineHeight: 1.55 }}>
                     Pour proposer tes sons au DJ, tu dois remplir ces deux conditions :
@@ -998,7 +998,7 @@ export default function PlaylistClient({
                   <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0, lineHeight: 1.5 }}>
                     Une fois sur place et ton billet scanné, tu pourras proposer 1 son par billet au DJ.
                   </p>
-                </div>
+                </Card>
               )}
 
               {effectiveIsCheckedIn &&
@@ -1027,12 +1027,12 @@ export default function PlaylistClient({
                     {noResults && <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '10px 0 0', textAlign: 'center' }}>Aucun résultat pour « {trimmedQuery} »</p>}
                   </div>
                 ) : (
-                  <div style={{ ...cardStyle, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <Card style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--teal)', margin: 0 }}>
                       {ticketCount <= 1 ? 'Ton son est dans la playlist' : `${mySongs.length} / ${ticketCount} sons proposés`}
                     </p>
                     <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 0 }}>Tu as utilisé toutes tes propositions · 1 son par billet réservé</p>
-                  </div>
+                  </Card>
                 ))}
 
               {effectiveIsCheckedIn && (
@@ -1049,7 +1049,7 @@ export default function PlaylistClient({
                         // pas de rang. Mirrors PlaylistSystem.jsx lignes 754-758.
                         const rank = rankedSongs.findIndex((s) => s.id === song.id)
                         return (
-                        <div key={song.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Card key={song.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           {rank >= 0 && (
                             <span style={{ fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: 'var(--text-faint)' }}>
                               {rank + 1}
@@ -1097,7 +1097,7 @@ export default function PlaylistClient({
                           >
                             <TrashIcon />
                           </Button>
-                        </div>
+                        </Card>
                         )
                       })}
                     </div>
@@ -1109,7 +1109,7 @@ export default function PlaylistClient({
 
           {participantTab === 'rules' && (
             <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={cardStyle}>
+              <Card>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {[
                     ['Billet scanné requis', 'Tu dois être sur place et ton billet scanné pour proposer un son'],
@@ -1132,9 +1132,9 @@ export default function PlaylistClient({
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
 
-              <div style={{ ...cardStyle, display: 'flex', alignItems: 'flex-start', gap: 12, borderColor: 'rgba(184, 243, 74,0.28)' }}>
+              <Card accent="rgba(184, 243, 74,0.28)" style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                 <div style={{ marginTop: 2, flexShrink: 0 }}>
                   <HeadphonesIcon />
                 </div>
@@ -1144,7 +1144,7 @@ export default function PlaylistClient({
                     Le DJ peut ignorer la playlist, y ajouter ses propres sons ou retirer un contenu inapproprié. La playlist reste une suggestion de la salle.
                   </p>
                 </div>
-              </div>
+              </Card>
             </section>
           )}
         </>
@@ -1435,12 +1435,6 @@ function StatChip({ label, value, color }: { label: string; value: string | numb
   )
 }
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 12,
-  padding: 14,
-}
 
 const inputStyle: React.CSSProperties = {
   width: '100%',

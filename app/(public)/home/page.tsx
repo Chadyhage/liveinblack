@@ -20,7 +20,7 @@ import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import HomeAmbienceButton from './HomeAmbienceButton'
 import HomeGreeting from './HomeGreeting'
 import HeroScrollIndicator from './HeroScrollIndicator'
-import { SectionHeader } from '@/app/components/ui'
+import { SectionHeader, Card } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'LIVEINBLACK — La marketplace de la nuit et de l’événementiel',
@@ -248,12 +248,15 @@ export default async function AccueilPage() {
 
       {session?.user && needsPreferences && (
         <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
-          <div style={{ ...card, padding: '22px 24px', borderColor: 'rgba(184, 243, 74,.35)', background: 'linear-gradient(120deg,rgba(184, 243, 74,.12),rgba(159, 224, 34,.04)),var(--surface)' }}>
+          <Card
+            accent="rgba(184, 243, 74,.35)"
+            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,rgba(184, 243, 74,.12),rgba(159, 224, 34,.04)),var(--surface)' }}
+          >
             <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
             <h2 style={{ margin: '7px 0 5px', fontSize: 21 }}>Des soirées vraiment faites pour toi</h2>
             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.55 }}>Indique tes styles, tes villes et ton budget. Cela prend moins d&apos;une minute et reste modifiable.</p>
             <Link href="/profile" style={{ ...btnPrimary, marginTop: 14, padding: '10px 17px', fontSize: 12.5 }}>Régler mes goûts</Link>
-          </div>
+          </Card>
         </section>
       )}
 
@@ -331,10 +334,10 @@ export default async function AccueilPage() {
             ['Des points', "Chaque achat te rapproche d'avantages."],
             ['Organisateurs suivis', 'Sois alerté des nouvelles dates de tes organisateurs préférés.'],
           ].map(([t, d]) => (
-            <div key={t} style={{ ...card, padding: '18px 16px' }}>
+            <Card key={t} accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: '18px 16px' }}>
               <p style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>{t}</p>
               <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.4 }}>{d}</p>
-            </div>
+            </Card>
           ))}
         </div>
         <div style={{ textAlign: 'center', marginTop: 26 }}>
@@ -350,11 +353,11 @@ export default async function AccueilPage() {
             ['2', 'Réserve ton billet', 'En quelques secondes, paiement sécurisé.'],
             ['3', 'Présente ton QR', "Scan à l'entrée, et c'est parti."],
           ].map(([n, t, d]) => (
-            <div key={n} style={{ ...card, padding: '20px 18px', position: 'relative' }}>
+            <Card key={n} accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: '20px 18px', position: 'relative' }}>
               <span style={{ position: 'absolute', top: 14, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
               <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{t}</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
-            </div>
+            </Card>
           ))}
         </div>
       </Section>}
@@ -362,7 +365,7 @@ export default async function AccueilPage() {
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
-          <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(139,92,246,.75)' }}>
+          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid rgba(139,92,246,.75)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--violet)', margin: 0 }}>Organisateur</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
             <ul style={featList}>
@@ -371,8 +374,8 @@ export default async function AccueilPage() {
               ))}
             </ul>
             <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: '#fff' }}>Créer un espace organisateur</Link>
-          </div>
-          <div style={{ ...card, padding: 24, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
+          </Card>
+          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
             <ul style={featList}>
@@ -381,7 +384,7 @@ export default async function AccueilPage() {
               ))}
             </ul>
             <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--gold)', color: 'var(--primary-ink)' }}>Devenir prestataire</Link>
-          </div>
+          </Card>
         </div>
       </Section>}
 
@@ -459,10 +462,10 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
 
 function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
   return (
-    <div style={{ ...card, padding: 30, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
+    <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 30, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
       <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
       <Link href={ctaHref} style={{ ...btnGhost, marginTop: 16, display: 'inline-block' }}>{ctaLabel}</Link>
-    </div>
+    </Card>
   )
 }
 
@@ -471,6 +474,12 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
 // "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
 // mise en page oui, palette non).
 const card: React.CSSProperties = { background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xl)', boxShadow: '0 18px 48px rgba(0,0,0,.24)' }
+// Overrides passés à <Card> pour les usages non-<Link> ci-dessus : mêmes
+// tokens que `card` (fond dégradé, rayon xl, ombre), mais composés via le
+// primitif partagé plutôt que dupliqués — `card` reste nécessaire tel quel
+// pour les usages sur <Link>, que Card (toujours un <div>) ne peut pas
+// remplacer sans étendre son API avec un prop `as` (hors scope ici).
+const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
 const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '12px 28px', borderRadius: 999, fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
 const btnGhost: React.CSSProperties = { minHeight: 44, padding: '11px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(184, 243, 74,.08)', border: '1px solid rgba(184, 243, 74,.55)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
 const btnSolid: React.CSSProperties = { minHeight: 44, padding: '11px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
