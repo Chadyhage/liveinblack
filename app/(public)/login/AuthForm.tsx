@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { getSession, signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
+import { dashboardHrefForRole } from '@/lib/shared/dashboardRoutes'
 import { Button, Card, Input, Label, Select, Tabs } from '@/app/components/ui'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
@@ -125,7 +126,7 @@ export default function AuthForm() {
   const searchParams = useSearchParams()
   const next = safeInternalPath(searchParams.get('next'), '') || null
   const initialRole = searchParams.get('role')
-  const { status: sessionStatus } = useSession()
+  const { data: activeSession, status: sessionStatus } = useSession()
 
   // Visiter /login avec une session déjà active affichait quand même le
   // formulaire de connexion (nav en état connecté, contenu en état
@@ -133,9 +134,11 @@ export default function AuthForm() {
   // incohérent à l'écran.
   useEffect(() => {
     if (sessionStatus === 'authenticated') {
-      router.replace(next || '/profile')
+      // Toujours le vrai dashboard du rôle actif — jamais la page publique
+      // /home (confirmé en réunion live le 11/08/2026) ni /profile/parametres.
+      router.replace(next || dashboardHrefForRole(activeSession?.user?.activeRole))
     }
-  }, [sessionStatus, next, router])
+  }, [sessionStatus, activeSession, next, router])
 
   const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'register' ? 'register' : 'login')
   const [regStep, setRegStep] = useState<1 | 2>(initialRole === 'client' ? 2 : 1)
@@ -279,7 +282,12 @@ export default function AuthForm() {
         setLoginError('Email ou mot de passe incorrect.')
         return
       }
-      router.push(next || '/profile')
+      // Destination par défaut = le vrai dashboard du rôle actif — jamais la
+      // page publique /home ni /profile/parametres (confirmé en réunion live
+      // le 11/08/2026). signIn({redirect:false}) ne renvoie pas le rôle,
+      // getSession() relit le JWT fraîchement émis pour le connaître.
+      const freshSession = await getSession()
+      router.push(next || dashboardHrefForRole(freshSession?.user?.activeRole))
       router.refresh()
     } finally {
       setLoginLoading(false)
@@ -441,7 +449,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
+    <div className="lb-auth-form" style={{ width: '100%', maxWidth: 520, margin: '0 auto' }}>
       <style>{`
         @keyframes lb-spin { to { transform: rotate(360deg) } }
         .lb-role-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.05) !important }

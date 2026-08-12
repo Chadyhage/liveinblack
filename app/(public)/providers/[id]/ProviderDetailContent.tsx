@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getProviderByUserId } from '@/lib/server/providers'
+import { listPastEventsForProvider } from '@/lib/server/providerBookingHistory'
 import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { REGION_OPTIONS } from '@/lib/shared/locations'
@@ -42,7 +43,11 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
   // avant) ; connecté : seul un rôle actif prestataire ne peut pas commander
   // de service à un autre prestataire (canOrderServices).
   const canOrderCatalog = !session?.user || canOrderServices(session.user)
-  const [reviews, myReview] = await Promise.all([getPublishedReviews(id), session?.user ? getMyReviewFor({ id: session.user.id }, id) : Promise.resolve(null)])
+  const [reviews, myReview, pastEvents] = await Promise.all([
+    getPublishedReviews(id),
+    session?.user ? getMyReviewFor({ id: session.user.id }, id) : Promise.resolve(null),
+    listPastEventsForProvider(id),
+  ])
 
   const categories = getProviderCategories(provider)
   const visibleCatalog = (provider.catalog || []).filter((item) => item.available !== false)
@@ -178,6 +183,33 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                   </Card>
                 )
               })}
+            </div>
+          </Section>
+        )}
+
+        {pastEvents.length > 0 && (
+          <Section title="Événements passés">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {pastEvents.map((ev) => (
+                <Link
+                  key={ev.id}
+                  href={`/events/${ev.id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}
+                >
+                  {ev.imageUrl && (
+                    <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                      <Image src={ev.imageUrl} alt="" fill sizes="44px" style={{ objectFit: 'cover' }} />
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-faint)' }}>
+                      {ev.dateDisplay}
+                      {ev.city ? ` · ${ev.city}` : ''}
+                    </p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </Section>
         )}

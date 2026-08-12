@@ -188,12 +188,13 @@ export async function completeSeatHold(seatHoldId: string, completingOrderId: st
 // néanmoins entièrement réutilisé pour le paiement/mint du billet — seul le
 // point d'ENTRÉE (création de l'Order) est spécifique.
 //
-// unitPriceMinor de l'Order de complétion = SOLDE restant (prix figé -
-// acompte déjà payé), jamais le prix total : l'acompte est un paiement
-// séparé et définitivement acquis (non remboursable, décision produit) — le
-// billet final affichera donc `placePrice` = solde uniquement, cohérent avec
-// le fait qu'un remboursement éventuel de CET order ne pourrait de toute
-// façon jamais restituer l'acompte.
+// unitPriceMinor de l'Order de complétion = PRIX PLEIN figé au moment du
+// hold, jamais prix - acompte : l'acompte et le solde sont deux paiements
+// pleins et distincts (comme un acompte d'agence de voyage), l'acompte
+// servant uniquement à réserver la place et restant définitivement acquis
+// (non remboursable) — il n'est jamais déduit du solde à payer. Décision
+// produit confirmée le 11/08/2026 (le calcul précédent déduisait à tort
+// l'acompte du solde).
 export type CompleteSeatHoldResult = ErrResult | { ok: true; order: OrderDoc & { _id: mongoose.Types.ObjectId } }
 
 export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: string, rail: 'stripe' | 'fedapay'): Promise<CompleteSeatHoldResult> {
@@ -207,7 +208,7 @@ export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: 
   if (rail === 'stripe' && hold.currency !== 'EUR') return { ok: false, status: 400, error: 'wrong_rail_for_currency' }
   if (rail === 'fedapay' && hold.currency !== 'XOF') return { ok: false, status: 400, error: 'wrong_rail_for_currency' }
 
-  const balanceMinor = Math.max(0, hold.unitPriceMinor - hold.depositMinor)
+  const balanceMinor = hold.unitPriceMinor
   const feeMinor = hold.currency === 'XOF' ? computeTicketFeeXOF(hold.unitPriceMinor, 1) : computeTicketFeeCents(hold.unitPriceMinor, 1)
 
   const session = await mongoose.startSession()
@@ -278,7 +279,9 @@ function toSeatHoldView(hold: SeatHoldDoc & { _id: mongoose.Types.ObjectId }): S
     currency: hold.currency,
     unitPriceMinor: hold.unitPriceMinor,
     depositMinor: hold.depositMinor,
-    balanceDueMinor: Math.max(0, hold.unitPriceMinor - hold.depositMinor),
+    // Prix plein, pas prix - acompte : l'acompte est un paiement séparé déjà
+    // acquis, jamais déduit du solde (voir completeSeatHoldOrder ci-dessus).
+    balanceDueMinor: hold.unitPriceMinor,
     status: hold.status,
     createdAt: hold.createdAt.toISOString(),
     activatedAt: hold.activatedAt ? hold.activatedAt.toISOString() : null,

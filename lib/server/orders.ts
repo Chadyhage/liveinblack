@@ -95,7 +95,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   let promoUnitDiscountMinor = 0
   if (input.promoCode) {
     const requestedUses = isTable ? 1 : qty
-    const promoResult = await resolvePromo(PromoCode, input.eventId, input.promoCode, requestedUses)
+    const promoResult = await resolvePromo(PromoCode, input.eventId, input.promoCode, requestedUses, input.placeId)
     if (!promoResult.ok) return { ok: false, status: 400, error: promoResult.message }
     const discount = promoUnitDiscount(promoResult.promo, unitPriceMinor, minorPerMajor)
     if (discount >= unitPriceMinor) return { ok: false, status: 400, error: 'promo_makes_ticket_free' }

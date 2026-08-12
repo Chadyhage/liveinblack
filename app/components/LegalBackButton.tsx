@@ -25,20 +25,25 @@ export default function LegalBackButton() {
       aria-label="Retour"
       variant="ghost"
       style={{
-        width: 32,
-        height: 32,
-        minWidth: 32,
-        minHeight: 32,
-        borderRadius: '50%',
+        height: 44,
+        minHeight: 44,
+        padding: '0 14px 0 11px',
+        borderRadius: 12,
         flexShrink: 0,
-        background: 'rgba(11,11,18,0.06)',
-        border: '1px solid rgba(11,11,18,0.18)',
-        color: 'rgba(11,11,18,0.65)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid var(--border)',
+        color: 'var(--text-muted)',
+        fontSize: 14,
+        fontWeight: 600,
       }}
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="15 18 9 12 15 6" />
       </svg>
+      <span>Retour</span>
     </Button>
   )
 }

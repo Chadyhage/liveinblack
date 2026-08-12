@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getCachedPostBySlug as getPostBySlug, getCachedRelatedPosts as listRelatedPosts } from '@/lib/server/publicCache'
 import { regions } from '@/lib/shared/regions'
-import type { BlogCategoryId } from '@/lib/models/BlogPost'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const post = await getPostBySlug(slug)
   if (!post) return { title: 'Article — LIVEINBLACK' }
+  const coverImageUrl = reliablePhotoUrl(post.coverImageUrl, post.slug, 1200, 675)
 
   return {
     title: post.metaTitle,
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: post.metaDescription,
       type: 'article',
       url: `${SITE}/blog/${post.slug}`,
-      images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : undefined,
+      images: [{ url: coverImageUrl }],
       publishedTime: new Date(post.publishedAt as unknown as string).toISOString(),
     },
   }
@@ -45,6 +46,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound()
 
   const related = await listRelatedPosts(post, 3)
+  const coverImageUrl = reliablePhotoUrl(post.coverImageUrl, post.slug, 1200, 675)
   const publishedIso = new Date(post.publishedAt as unknown as string).toISOString()
   const publishedDisplay = new Date(post.publishedAt as unknown as string).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -55,13 +57,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     description: post.metaDescription,
     author: { '@type': 'Person', name: post.authorName },
     datePublished: publishedIso,
-    ...(post.coverImageUrl ? { image: [post.coverImageUrl] } : {}),
+    image: [coverImageUrl],
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE}/blog/${post.slug}` },
   }
 
   return (
-    <main style={{ padding: '40px clamp(16px, 3vw, 48px) 88px', width: '100%', minHeight: '100vh' }}>
-      {/* eslint-disable-next-line react/no-danger */}
+    <main className="lb-blog-article" style={{ padding: '40px clamp(16px, 3vw, 48px) 88px', width: '100%', minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -83,11 +84,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </p>
         </header>
 
-        {post.coverImageUrl && (
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '16/7', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 36, background: 'var(--obsidian)' }}>
-            <Image src={post.coverImageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="100vw" priority />
-          </div>
-        )}
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/7', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 36, background: 'var(--obsidian)' }}>
+          <Image src={coverImageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="100vw" priority />
+        </div>
 
         {/* Colonne de lecture ~720px, pattern LegalPageLayout.tsx */}
         <article

@@ -1,37 +1,28 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { ArrowUpRight, MapPin, Search, SlidersHorizontal, Users, X } from 'lucide-react'
 import { auth } from '@/auth'
 import { getCachedPublicOrganizersWithNextEvent as listPublicOrganizersWithNextEvent } from '@/lib/server/publicCache'
 import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
-import {
-  normalizeGeoText,
-  getEntityRegionIds,
-  getRegionName,
-  matchesEntityRegion,
-} from '@/lib/shared/locations'
+import { normalizeGeoText, getEntityRegionIds, getRegionName, matchesEntityRegion } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Checkbox, EmptyState, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, Checkbox, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import styles from './organizers.module.css'
 
 const PAGE_SIZE = 20
 
 export const metadata: Metadata = {
   title: 'Organisateurs — LIVEINBLACK',
-  description: "Découvrez les organisateurs d'événements et de soirées et suivez ceux qui font la nuit sur LIVEINBLACK.",
+  description: "Découvrez les organisateurs d'événements et suivez ceux qui font vivre la scène sur LIVEINBLACK.",
 }
 
 export const dynamic = 'force-dynamic'
 
-type DirectoryParams = {
-  q?: string
-  region?: string
-  upcoming?: string
-  sort?: string
-  page?: string
-}
+type DirectoryParams = { q?: string; region?: string; upcoming?: string; sort?: string; page?: string }
 
 export default async function PublicOrganizersPage({ searchParams }: { searchParams: Promise<DirectoryParams> }) {
   const [{ q, region = '', upcoming, sort = 'popular', page: pageParam }, organizers, session] = await Promise.all([
@@ -43,9 +34,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
   const upcomingOnly = upcoming === '1'
   const requestedPage = Math.max(1, Number(pageParam) || 1)
 
-  const followResult = session?.user
-    ? await listMyFollowedOrganizers({ id: session.user.id })
-    : { ok: true as const, follows: [] }
+  const followResult = session?.user ? await listMyFollowedOrganizers({ id: session.user.id }) : { ok: true as const, follows: [] }
   const followedIds = new Set(followResult.ok ? followResult.follows.map((follow) => follow.organizerId) : [])
 
   const filtered = organizers
@@ -53,162 +42,91 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
       if (upcomingOnly && !organizer.nextEvent) return false
       if (!matchesEntityRegion(organizer, region, organizer.eventRegions)) return false
       if (!search) return true
-      const zoneNames = getEntityRegionIds(organizer, organizer.eventRegions).map(getRegionName)
-      const hay = [
-        organizer.publicName,
-        organizer.city,
-        organizer.country,
-        organizer.shortDescription,
-        organizer.nextEvent?.name,
-        ...zoneNames,
-      ]
+      const zones = getEntityRegionIds(organizer, organizer.eventRegions).map(getRegionName)
+      return [organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, organizer.nextEvent?.name, ...zones]
         .filter(Boolean)
         .map(normalizeGeoText)
         .join(' ')
-      return hay.includes(normalizeGeoText(search))
+        .includes(normalizeGeoText(search))
     })
-    .sort((a, b) => {
-      if (sort !== 'recent') return (b.followersCount || 0) - (a.followersCount || 0)
-      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-    })
+    .sort((a, b) => sort === 'recent'
+      ? new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      : (b.followersCount || 0) - (a.followersCount || 0))
 
-  const { pageItems: paged, pageCount, safePage } = pageSlice(filtered, requestedPage, PAGE_SIZE)
-  function makeHref(p: number) {
+  const { pageItems, pageCount, safePage } = pageSlice(filtered, requestedPage, PAGE_SIZE)
+  const hasFilters = Boolean(search || region || upcomingOnly || sort !== 'popular')
+
+  function makeHref(page: number) {
     const params = new URLSearchParams()
     if (search) params.set('q', search)
     if (region) params.set('region', region)
     if (upcomingOnly) params.set('upcoming', '1')
     if (sort !== 'popular') params.set('sort', sort)
-    if (p > 1) params.set('page', String(p))
-    const qs = params.toString()
-    return qs ? `/organizers?${qs}` : '/organizers'
+    if (page > 1) params.set('page', String(page))
+    const query = params.toString()
+    return query ? `/organizers?${query}` : '/organizers'
   }
 
   return (
-    <main className="organizer-directory">
-      <style>{`
-        .organizer-directory{width:100%;min-height:100vh;padding:56px clamp(20px,3vw,48px) 88px}
-        .organizer-directory__wrap{max-width:1800px;margin:0 auto}
-        .organizer-directory__filters{display:grid;grid-template-columns:minmax(300px,1.7fr) minmax(190px,.75fr) minmax(190px,.75fr) auto auto;gap:10px;align-items:center;margin:0 0 42px}
-        .organizer-directory__field{min-width:0;padding:11px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13px}
-        .organizer-directory__check{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-muted);white-space:nowrap}
-        .organizer-directory__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px}
-        .organizer-directory__card{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
-        .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(184, 243, 74,.35)}
-        .organizer-directory__cover{position:relative;min-height:200px;overflow:hidden;background:linear-gradient(135deg,rgba(184,243,74,.35),rgba(184,243,74,.12),var(--obsidian))}
-        .organizer-directory__cover:after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(4,4,11,.82),transparent 65%)}
-        .organizer-directory__body{position:relative;padding:38px 24px 22px;color:inherit;text-decoration:none;display:flex;flex-direction:column;flex:1}
-        .organizer-directory__actions{padding:18px 24px 24px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
-        @media(max-width:820px){.organizer-directory__filters{grid-template-columns:1fr 1fr}.organizer-directory__filters button{grid-column:span 1}}
-        @media(max-width:620px){.organizer-directory{padding:32px 14px 92px}.organizer-directory__filters{grid-template-columns:1fr}.organizer-directory__filters button{grid-column:auto}.organizer-directory__grid{grid-template-columns:1fr}}
-      `}</style>
-      <div className="organizer-directory__wrap">
-        <header className="lb-directory-hero">
-          <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
-          <h1 className="font-display" style={{ margin: '10px 0 0', fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em' }}>
-            Les organisateurs qui font<br /><span style={{ color: 'var(--gold)' }}>vibrer la nuit.</span>
-          </h1>
-          <p style={{ maxWidth: 640, margin: '16px 0 0', color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>
-            Découvre leur univers, suis leur actualité et retrouve leurs prochains rendez-vous.
-          </p>
-        </header>
+    <main className={styles.page}>
+      <section className={styles.hero} aria-labelledby="organizers-title">
+        <p className={styles.eyebrow}>L’annuaire LIVEINBLACK</p>
+        <h1 id="organizers-title">Suivez celles et ceux qui créent l’émotion.</h1>
+        <p className={styles.intro}>Découvrez leur univers, suivez leur actualité et retrouvez leurs prochains rendez-vous.</p>
 
-        <form action="/organizers" method="get" className="organizer-directory__filters lb-directory-filters">
-          <Input
-            type="search"
-            name="q"
-            defaultValue={search}
-            placeholder="Nom, ville, événement…"
-            style={{ minWidth: 0, minHeight: 48, borderRadius: 999, background: '#0b0c12', fontSize: 14 }}
-          />
-          <FilterSelect
-            name="region"
-            defaultValue={region}
-            ariaLabel="Filtrer par région"
-            options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]}
-            style={{ minHeight: 48, borderRadius: 999, background: '#0b0c12', fontSize: 14 }}
-          />
-          <FilterSelect
-            name="sort"
-            defaultValue={sort}
-            ariaLabel="Trier les organisateurs"
-            options={[
-              { value: 'popular', label: 'Plus populaires' },
-              { value: 'recent', label: 'Plus récents' },
-            ]}
-            style={{ minHeight: 48, borderRadius: 999, background: '#0b0c12', fontSize: 14 }}
-          />
-          <Checkbox
-            name="upcoming"
-            value="1"
-            defaultChecked={upcomingOnly}
-            label="Événement à venir"
-            style={{ minHeight: 44, padding: '0 13px', borderRadius: 999, border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,.04)', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
-          />
-          <Button
-            type="submit"
-            variant="primary"
-            style={{ minHeight: 48, padding: '0 22px', borderRadius: 999, textTransform: 'none', letterSpacing: 'normal', fontSize: 13 }}
-          >
-            Filtrer
-          </Button>
+        <form action="/organizers" method="get" role="search" className={styles.searchPanel}>
+          <div className={styles.searchField}>
+            <Search size={22} aria-hidden="true" />
+            <Input type="search" name="q" defaultValue={search} placeholder="Nom, ville ou événement" aria-label="Rechercher un organisateur" containerStyle={{ flex: 1, minWidth: 0 }} style={{ border: 0, background: 'transparent', boxShadow: 'none' }} />
+          </div>
+          <FilterSelect name="region" defaultValue={region} ariaLabel="Filtrer par région" options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]} style={{ minHeight: 56, borderRadius: 15, background: 'rgba(255,255,255,.075)', borderColor: 'rgba(255,255,255,.14)', fontSize: 16, padding: '0 16px' }} />
+          <FilterSelect name="sort" defaultValue={sort} ariaLabel="Trier les organisateurs" options={[{ value: 'popular', label: 'Plus populaires' }, { value: 'recent', label: 'Plus récents' }]} style={{ minHeight: 56, borderRadius: 15, background: 'rgba(255,255,255,.075)', borderColor: 'rgba(255,255,255,.14)', fontSize: 16, padding: '0 16px' }} />
+          <div className={styles.upcomingFilter}><Checkbox name="upcoming" value="1" defaultChecked={upcomingOnly} label="Événement à venir" style={{ minHeight: 48, fontSize: 15, color: 'rgba(245,245,247,.75)' }} /></div>
+          <Button type="submit" className={styles.submitButton} style={{ minHeight: 52, borderRadius: 14, background: '#b8f34a', color: '#142000', fontSize: 16 }}>Appliquer</Button>
         </form>
+      </section>
 
-        <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>
-          {filtered.length} organisateur{filtered.length !== 1 ? 's' : ''}
-        </p>
+      <section className={styles.directory} aria-labelledby="organizer-directory-title">
+        <div className={styles.directoryHeader}>
+          <div><p className={styles.sectionKicker}><SlidersHorizontal size={18} aria-hidden="true" /> Explorer</p><h2 id="organizer-directory-title">Tous les organisateurs</h2></div>
+          <p className={styles.resultCount}>{filtered.length} profil{filtered.length > 1 ? 's' : ''}</p>
+        </div>
 
-        {filtered.length === 0 ? (
-          <EmptyState
-            title="Aucun organisateur ne correspond à ces critères"
-            description="Essaie d'élargir ta recherche ou d'effacer les filtres."
-            action={<Link href="/organizers" style={{ display: 'inline-block', color: 'var(--teal)', fontWeight: 700 }}>Effacer les filtres</Link>}
-          />
-        ) : (
-          <div className="organizer-directory__grid">
-            {paged.map((organizer) => {
+        {hasFilters && <div className={styles.activeFilters}><p>Résultats selon vos critères</p><Link href="/organizers"><X size={17} aria-hidden="true" /> Effacer les filtres</Link></div>}
+
+        {pageItems.length > 0 ? (
+          <div className={styles.grid}>
+            {pageItems.map((organizer, index) => {
               const zones = getEntityRegionIds(organizer).map(getRegionName).filter(Boolean)
               const isSelf = session?.user?.id === organizer.userId
               return (
-                  <article key={organizer.userId} className="organizer-directory__card lb-card">
-                  <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__cover" aria-label={`Découvrir ${organizer.publicName}`}>
-                    <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 800, 500)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 820px) 100vw, 240px" />
-                    <div style={{ position: 'absolute', zIndex: 2, left: 18, bottom: 18, width: 58, height: 58, borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(4,4,11,.9)', background: 'var(--surface-2)', display: 'grid', placeItems: 'center', color: 'var(--teal)', fontSize: 23, fontWeight: 800 }}>
-                      {organizer.avatarUrl ? (
-                        <Image src={organizer.avatarUrl} alt={organizer.publicName} width={58} height={58} style={{ objectFit: 'cover' }} />
-                      ) : organizer.publicName?.[0]?.toUpperCase()}
+                <article key={organizer.userId} className={styles.card}>
+                  <Link href={`/organizers/${organizer.slug}`} className={styles.cardLink} aria-label={`Découvrir ${organizer.publicName}`}>
+                    <div className={styles.visual}>
+                      <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 900, 600)} alt="" fill loading={index < 3 ? 'eager' : undefined} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, 30vw" />
+                      <div className={styles.scrim} />
+                      <div className={styles.avatar}>{organizer.avatarUrl ? <Image src={organizer.avatarUrl} alt="" fill sizes="72px" /> : organizer.publicName?.[0]?.toUpperCase()}</div>
+                    </div>
+                    <div className={styles.cardBody}>
+                      <h3>{organizer.publicName}</h3>
+                      {(organizer.city || zones.length > 0) && <p className={styles.location}><MapPin size={18} aria-hidden="true" />{[organizer.city, ...zones].filter(Boolean).slice(0, 3).join(' · ')}</p>}
+                      <p className={styles.description}>{organizer.shortDescription || 'Découvrez sa programmation et son univers.'}</p>
+                      <div className={styles.stats}><span><Users size={18} aria-hidden="true" />{organizer.followersCount || 0} abonné{(organizer.followersCount || 0) > 1 ? 's' : ''}</span></div>
+                      {organizer.nextEvent && <div className={styles.nextEvent}><span>Prochain événement</span><strong>{organizer.nextEvent.name}</strong></div>}
+                      <div className={styles.discover}>Découvrir la page <ArrowUpRight size={19} aria-hidden="true" /></div>
                     </div>
                   </Link>
-                  <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__body">
-                    <h2 style={{ margin: 0, fontSize: 21, lineHeight: 1.15 }}>{organizer.publicName}</h2>
-                    {(organizer.city || zones.length > 0) && <p style={{ margin: '7px 0 0', color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>{[organizer.city, ...zones].filter(Boolean).slice(0, 3).join(' · ')}</p>}
-                    <p style={{ margin: '14px 0 0', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{organizer.shortDescription || 'Découvre sa programmation et son univers.'}</p>
-                    {organizer.nextEvent && (
-                      <p style={{ margin: '16px 0 0', paddingTop: 13, borderTop: '1px solid var(--border)', color: 'var(--text-faint)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                        Prochain événement · <span style={{ color: '#fff' }}>{organizer.nextEvent.name}</span>
-                      </p>
-                    )}
-                  </Link>
-                  <div className="organizer-directory__actions">
-                    <Link href={`/organizers/${organizer.slug}`} style={{ display: 'block', padding: '13px 16px', borderRadius: 999, textAlign: 'center', textDecoration: 'none', color: 'var(--primary-ink)', background: 'var(--primary)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5 }}>Découvrir la page</Link>
-                    {!isSelf && (
-                      <OrganizerFollowButtonClient
-                        organizerId={organizer.userId}
-                        organizerName={organizer.publicName}
-                        initialFollowing={followedIds.has(organizer.userId)}
-                        isAuthenticated={Boolean(session?.user)}
-                        appearance="premium"
-                      />
-                    )}
-                  </div>
+                  {!isSelf && <div className={styles.follow}><OrganizerFollowButtonClient organizerId={organizer.userId} organizerName={organizer.publicName} initialFollowing={followedIds.has(organizer.userId)} isAuthenticated={Boolean(session?.user)} appearance="premium" /></div>}
                 </article>
               )
             })}
           </div>
+        ) : (
+          <div className={styles.empty}><Search size={28} aria-hidden="true" /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
         )}
 
         <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
-      </div>
+      </section>
     </main>
   )
 }

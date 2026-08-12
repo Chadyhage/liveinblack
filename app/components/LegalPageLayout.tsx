@@ -38,7 +38,8 @@ export interface LegalPageLayoutProps {
 
 export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sections, footerNotice }: LegalPageLayoutProps) {
   return (
-    <div
+    <main
+      className="lb-legal-page"
       style={{
         minHeight: '100vh',
         position: 'relative',
@@ -72,7 +73,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         </div>
 
         {/* Sommaire */}
-        <details open style={{ ...CARD, padding: '14px 20px', marginBottom: 16 }}>
+        <details className="lb-legal-toc" style={{ ...CARD, padding: '10px 20px', marginBottom: 16 }}>
           <summary
             style={{
               fontSize: 13,
@@ -235,7 +236,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           </Card>
         )}
       </div>
-    </div>
+    </main>
   )
 }
 
@@ -245,10 +246,10 @@ const FILIGRANE_TEXT = Array(8).fill('LIVE IN BLACK').join(' · ') // couvre ≥
 // voir la note de perf dans le composant légataire src/components/FiligraneRoseBg.jsx).
 const FILIGRANE_LINES: { color: string; offsetD: number; offsetM: number; mobileOnly?: boolean }[] = [
   { color: 'rgba(184,243,74,0.025)', offsetD: -60, offsetM: -40 },
-  { color: 'rgba(139,92,246,0.03)', offsetD: -420, offsetM: -260 },
+  { color: 'rgba(184,243,74,0.02)', offsetD: -420, offsetM: -260 },
   { color: 'rgba(255,255,255,0.018)', offsetD: -220, offsetM: -140 },
-  { color: 'rgba(224,90,170,0.025)', offsetD: -560, offsetM: -340 },
-  { color: 'rgba(139,92,246,0.025)', offsetD: -80, offsetM: -80, mobileOnly: true },
+  { color: 'rgba(184,243,74,0.018)', offsetD: -560, offsetM: -340 },
+  { color: 'rgba(255,255,255,0.015)', offsetD: -80, offsetM: -80, mobileOnly: true },
 ]
 
 function FiligraneRoseBg() {
@@ -262,7 +263,7 @@ function FiligraneRoseBg() {
         pointerEvents: 'none',
         overflow: 'hidden',
         background:
-          'radial-gradient(circle at 80% 0%, rgba(139,92,246,0.09), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+          'radial-gradient(circle at 80% 0%, rgba(184,243,74,0.07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <style>{`

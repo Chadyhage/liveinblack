@@ -236,7 +236,7 @@ export default function OrganizerOnboardingWizard({
   const progress = Math.round(((step + 1) / STEPS.length) * 100)
 
   return (
-    <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
+    <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 1080, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
@@ -267,15 +267,16 @@ export default function OrganizerOnboardingWizard({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <Label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</Label>
-                  <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
+                  <Input aria-label="Nom de l’établissement ou nom commercial" style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
-                  <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
+                  <Input aria-label="Numéro SIRET ou SIREN" style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
                   <Input
+                    aria-label="Email professionnel"
                     style={inputStyle}
                     type="email"
                     value={form.emailPro}
@@ -287,11 +288,12 @@ export default function OrganizerOnboardingWizard({
                   <Label style={labelStyle}>Téléphone professionnel {requiredMark}</Label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Select
+                      aria-label="Indicatif téléphonique professionnel"
                       value={form.telephoneProCode}
                       onChange={(value) => set('telephoneProCode', value)}
                       options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.country} ${r.dial}` }))}
                     />
-                    <Input style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
+                    <Input aria-label="Téléphone professionnel" style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
                   </div>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -304,12 +306,12 @@ export default function OrganizerOnboardingWizard({
                 {!form.noFixedAddress && (
                   <div>
                     <Label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</Label>
-                    <Input style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
+                    <Input aria-label="Adresse de l’établissement" style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
                   </div>
                 )}
                 <div>
                   <Label style={labelStyle}>Site web / Instagram</Label>
-                  <Input style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
+                  <Input aria-label="Site web ou compte Instagram" style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
                 </div>
               </div>
 
@@ -320,12 +322,13 @@ export default function OrganizerOnboardingWizard({
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
-                      <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                      <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                     </div>
                     <div>
                       <Label style={labelStyle}>Mot de passe {requiredMark}</Label>
                       <div style={{ position: 'relative' }}>
                         <Input
+                          aria-label="Mot de passe"
                           style={{ ...inputStyle, paddingRight: 56 }}
                           type={showRegPassword ? 'text' : 'password'}
                           value={regPassword}
@@ -347,7 +350,7 @@ export default function OrganizerOnboardingWizard({
                     </div>
                     <div>
                       <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
-                      <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                      <Input aria-label="Confirmation du mot de passe" style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                     </div>
                   </div>
                   <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>

@@ -431,21 +431,10 @@ export default function PlaylistClient({
     await refreshPlaylist()
   }
 
-  async function handlePlayNow(song: PlaylistSong) {
-    setBusyId(song.id)
-    const res = await apiFetch(`/api/events/${eventId}/playlist/now-playing`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ songId: song.id }),
-    })
-    setBusyId(null)
-    if (!res.ok) {
-      pushToast(errorMessageFor(res.error))
-      return
-    }
-    pushToast(`« ${song.title} » en cours — visible par la salle`, 'ok')
-    await refreshPlaylist()
-  }
+  // handlePlayNow (POST .../now-playing) supprimée avec le bouton "Jouer
+  // maintenant" (#E10, 11/08/2026) — l'app ne doit jamais prétendre jouer
+  // physiquement le son. `handleStopNow` reste : un bandeau "en cours" déjà
+  // actif avant ce changement doit pouvoir être arrêté proprement.
 
   // Sentinelle dédiée sur `busyId` (aucun `song.id` ne peut valoir cette
   // chaîne) — même pattern de verrouillage que toutes les autres actions de
@@ -798,28 +787,14 @@ export default function PlaylistClient({
               {orderedModerationSongs.map((song) => (
                 <Card key={song.id} style={{ padding: 14 }}>
                   <DjSongRow song={song} currentUserId={currentUserId} playingKey={playingKey} onTogglePreview={togglePreviewAudio} />
+                  {/* "Jouer maintenant"/"Marquer joué"/"Valider" retirés
+                      (#E10, confirmé en réunion live le 11/08/2026) — l'app
+                      ne doit jamais prétendre jouer physiquement le son, et
+                      le classement par likes des clients remplace
+                      entièrement la validation manuelle. Le DJ garde
+                      uniquement un filtre de contenu ("Refuser", distinct
+                      d'une validation) et le retrait ("Supprimer"). */}
                   <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="secondary"
-                      disabled={busyId === song.id}
-                      onClick={() => handlePlayNow(song)}
-                      style={{
-                        ...smallButtonStyle,
-                        borderColor: nowPlaying?.id === song.id ? 'var(--gold)' : 'var(--border)',
-                        color: nowPlaying?.id === song.id ? 'var(--gold)' : smallButtonStyle.color,
-                        background: nowPlaying?.id === song.id ? 'rgba(184, 243, 74,0.16)' : smallButtonStyle.background,
-                      }}
-                    >
-                      Jouer maintenant
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      disabled={busyId === song.id}
-                      onClick={() => handleSetStatus(song, 'validated')}
-                      style={{ ...smallButtonStyle, borderColor: song.status === 'validated' ? 'var(--teal)' : 'var(--border)' }}
-                    >
-                      Valider
-                    </Button>
                     <Button
                       variant="danger"
                       disabled={busyId === song.id}
@@ -827,14 +802,6 @@ export default function PlaylistClient({
                       style={{ ...smallButtonStyle, borderColor: song.status === 'refused' ? 'var(--pink)' : 'var(--border)' }}
                     >
                       Refuser
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      disabled={busyId === song.id}
-                      onClick={() => handleSetStatus(song, 'played')}
-                      style={{ ...smallButtonStyle, borderColor: song.status === 'played' ? 'var(--violet)' : 'var(--border)' }}
-                    >
-                      Marquer joué
                     </Button>
                     <Button variant="danger" disabled={busyId === song.id} onClick={() => handleModeratorRemove(song)} style={{ ...smallButtonStyle, color: 'var(--pink)' }}>
                       Supprimer

@@ -354,10 +354,10 @@ export default function AgentUsersClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--users">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Comptes</h1>
+          <div><h1 className="font-display lb-dashboard-title">Comptes</h1><p className="lb-dashboard-description">Recherchez, contrôlez et accompagnez les utilisateurs de la plateforme.</p></div>
         </div>
 
         {listError && (

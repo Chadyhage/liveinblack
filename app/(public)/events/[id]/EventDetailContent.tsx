@@ -86,7 +86,7 @@ export default async function EventDetailContent({
   return (
     <>
       <div style={{ padding: '18px 0 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
-        <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>
+        <Link href="/events" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
           Événements
         </Link>
         {event.city && <span> · {event.city}</span>}
@@ -226,7 +226,7 @@ export default async function EventDetailContent({
                   href={`https://www.google.com/maps/search/${encodeURIComponent([event.location, event.city].filter(Boolean).join(', '))}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
+                  style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
                 >
                   Ouvrir dans Google Maps →
                 </a>

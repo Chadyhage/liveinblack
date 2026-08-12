@@ -214,10 +214,10 @@ export default function AgentDeletionClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--deletions">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Suppressions</h1>
+          <div><h1 className="font-display lb-dashboard-title">Suppressions</h1><p className="lb-dashboard-description">Traitez les demandes de suppression avec leur contexte et leur historique.</p></div>
           {requests.length > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>{requests.length} en attente</span>
           )}

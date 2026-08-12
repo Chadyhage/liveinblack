@@ -181,7 +181,7 @@ export default function PaymentSuccessClient({
     : `Ton paiement pour ${eventName ? '« ' + eventName + ' »' : 'cet événement'} est confirmé. Tes billets sont disponibles dans ton compte.`
 
   return (
-    <main style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <main className="lb-status-page" style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <style>{`@keyframes lib-pay-spin { to { transform: rotate(360deg) } }`}</style>
       <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 460, width: '100%', textAlign: 'center' }}>
 
@@ -207,7 +207,7 @@ export default function PaymentSuccessClient({
             </h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <Button onClick={() => router.push('/profile')} style={btnSolid('var(--teal-solid)', '#04120e')}>Voir mes billets</Button>
+              <Button onClick={() => router.push('/profile/billets')} style={btnSolid('var(--teal-solid)', '#04120e')}>Voir mes billets</Button>
               <Button variant="secondary" onClick={() => router.push('/events')} style={btnGhostS}>Découvrir d&apos;autres événements</Button>
             </div>
           </>
@@ -225,7 +225,7 @@ export default function PaymentSuccessClient({
               On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: '#fff' }}>Mes billets</strong> d&apos;ici quelques instants — inutile de repayer.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <Button onClick={() => router.push('/profile')} style={{ ...btnSolid('var(--violet-cta)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</Button>
+              <Button onClick={() => router.push('/profile/billets')} style={{ ...btnSolid('var(--violet-cta)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</Button>
               <Button variant="secondary" onClick={() => setAttempt((a) => a + 1)} style={btnGhostS}>Vérifier maintenant</Button>
             </div>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>
@@ -274,7 +274,7 @@ export default function PaymentSuccessClient({
                 <IconMail size={16} color="#141007" />
                 {copied ? 'Adresse copiée' : "Copier l'email du support"}
               </Button>
-              <Button variant="secondary" onClick={() => router.push('/profile')} style={btnGhostS}>Voir mes billets</Button>
+              <Button variant="secondary" onClick={() => router.push('/profile/billets')} style={btnGhostS}>Voir mes billets</Button>
               <Button variant="ghost" onClick={() => router.push('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.55)' }}>Retour à l&apos;accueil</Button>
             </div>
             <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>

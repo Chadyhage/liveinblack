@@ -3,11 +3,12 @@
 import { forwardRef, useState } from 'react'
 import type { InputHTMLAttributes, CSSProperties } from 'react'
 
-export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className' | 'size'> {
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   invalid?: boolean
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
   size?: 'sm' | 'md'
+  containerStyle?: CSSProperties
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
@@ -20,14 +21,15 @@ const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
 // directement dans une page : toujours ce composant, pour un look et un
 // comportement (focus, erreur, icônes) garantis identiques partout.
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, leftIcon, rightIcon, size = 'md', style, onFocus, onBlur, disabled, ...rest },
+  { invalid, leftIcon, rightIcon, size = 'md', style, containerStyle, className, onFocus, onBlur, disabled, ...rest },
   ref
 ) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', ...containerStyle }}>
       {leftIcon && <span style={{ position: 'absolute', left: 12, display: 'flex', color: 'var(--text-faint)', pointerEvents: 'none' }}>{leftIcon}</span>}
       <input
+        className={className}
         ref={ref}
         disabled={disabled}
         aria-invalid={invalid || undefined}

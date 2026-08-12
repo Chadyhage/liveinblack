@@ -49,6 +49,13 @@ interface PromoCode {
   active: boolean
   expiresAt: string | null
   createdAt: string
+  placeIds?: string[]
+}
+
+interface EventPlace {
+  id: string
+  type: string
+  price: number
 }
 
 interface ListResponse {
@@ -72,7 +79,7 @@ interface ErrorResponse {
 }
 
 interface PromoCodesPanelProps {
-  event: { id: string; name: string; currency: 'EUR' | 'XOF' }
+  event: { id: string; name: string; currency: 'EUR' | 'XOF'; places?: EventPlace[] }
   onClose: () => void
 }
 
@@ -82,6 +89,9 @@ interface FormState {
   value: string
   maxUses: string
   expiresAt: string
+  // Vide = s'applique à toutes les places (comportement historique) — jamais
+  // pré-coché, l'organisateur choisit explicitement de restreindre.
+  placeIds: string[]
 }
 
 const CREATE_ERROR_MESSAGES: Record<string, string> = {
@@ -89,7 +99,8 @@ const CREATE_ERROR_MESSAGES: Record<string, string> = {
   code_taken: 'Ce code existe déjà sur cet événement.',
   invalid_value: 'Indique la valeur de la réduction.',
   percent_too_high: 'Maximum 99 % — pour offrir des places, utilise la guestlist (billets gratuits).',
-  fixed_covers_cheapest_ticket: "La réduction couvre le prix du billet le moins cher — pour offrir des places, utilise la guestlist.",
+  fixed_covers_cheapest_ticket: "La réduction couvre le prix du billet le moins cher (parmi les places sélectionnées) — pour offrir des places, utilise la guestlist.",
+  invalid_place_ids: 'Sélection de places invalide — recharge la page et réessaie.',
 }
 const GENERIC_ERROR = "Enregistrement impossible — vérifie ta connexion (ou droits organisateur)."
 
@@ -104,7 +115,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
   const [saving, setSaving] = useState(false)
   const [busyCode, setBusyCode] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [form, setForm] = useState<FormState>({ code: '', type: 'percent', value: '', maxUses: '', expiresAt: '' })
+  const [form, setForm] = useState<FormState>({ code: '', type: 'percent', value: '', maxUses: '', expiresAt: '', placeIds: [] })
+  const places = event.places || []
   const [confirmRemove, setConfirmRemove] = useState<PromoCode | null>(null)
   // L'horloge murale (Date.now()) ne doit jamais être lue pendant le rendu
   // (impur) — lecture unique via l'initialiseur paresseux de useState (même
@@ -158,6 +170,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
           value,
           maxUses: Math.max(0, Math.floor(Number(form.maxUses)) || 0),
           expiresAt: form.expiresAt || null,
+          placeIds: form.placeIds,
         }),
       })
       const data = (await res.json()) as CreateResponse | ErrorResponse
@@ -167,7 +180,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
         return
       }
       setItems((prev) => [data.promo, ...prev])
-      setForm({ code: '', type: form.type, value: '', maxUses: '', expiresAt: '' })
+      setForm({ code: '', type: form.type, value: '', maxUses: '', expiresAt: '', placeIds: [] })
     } catch {
       setError(GENERIC_ERROR)
     } finally {
@@ -303,6 +316,40 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   <Label style={labelStyle}>Expire le (optionnel)</Label>
                   <Input style={inputStyle} type="date" value={form.expiresAt} onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))} />
                 </div>
+                {places.length > 0 && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <Label style={labelStyle}>Types de place concernés (vide = toutes les places)</Label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                      {places.map((p) => {
+                        const active = form.placeIds.includes(p.id)
+                        return (
+                          <Button
+                            key={p.id}
+                            type="button"
+                            variant="ghost"
+                            onClick={() =>
+                              setForm((f) => ({
+                                ...f,
+                                placeIds: f.placeIds.includes(p.id) ? f.placeIds.filter((id) => id !== p.id) : [...f.placeIds, p.id],
+                              }))
+                            }
+                            style={{
+                              padding: '7px 11px',
+                              borderRadius: 8,
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              border: active ? '1px solid var(--teal)' : '1px solid rgba(255,255,255,.14)',
+                              background: active ? 'rgba(184, 243, 74,0.14)' : 'rgba(255,255,255,.05)',
+                              color: active ? 'var(--teal)' : 'rgba(255,255,255,.7)',
+                            }}
+                          >
+                            {p.type}
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
               {error && <p style={{ margin: '10px 0 0', color: '#ff9ed2', font: `500 12.5px var(--font-open-sans)` }}>{error}</p>}
               <Button
@@ -362,6 +409,11 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                           {p.expiresAt ? ` · expire le ${new Date(p.expiresAt).toLocaleDateString('fr-FR')}` : ''}
                           {expired ? ' · EXPIRÉ' : exhausted ? ' · ÉPUISÉ' : p.active === false ? ' · DÉSACTIVÉ' : ''}
                         </p>
+                        {p.placeIds && p.placeIds.length > 0 && (
+                          <p style={{ margin: '3px 0 0', font: `600 11px var(--font-open-sans)`, color: 'var(--gold)' }}>
+                            Limité à : {p.placeIds.map((id) => places.find((pl) => pl.id === id)?.type || id).join(', ')}
+                          </p>
+                        )}
                       </div>
                       <Button
                         variant="secondary"

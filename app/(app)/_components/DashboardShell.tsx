@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { ChevronDown, Globe } from 'lucide-react'
-import { IconButton } from '@/app/components/ui'
+import { ChevronDown, Globe, Menu, X } from 'lucide-react'
+import { Button, IconButton } from '@/app/components/ui'
 import AccountMenu from '@/app/(public)/_components/AccountMenu'
+import AgentWorkspaceShell from './AgentWorkspaceShell'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, FULL_BLEED_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import { getRoleLabel, type Role } from '@/lib/server/permissions'
-
-const SIDEBAR_WIDTH = 272
+import styles from './DashboardShell.module.css'
 
 const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
 
@@ -163,7 +163,11 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   }
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
-    return <>{children}</>
+    return <div className={styles.root}>{children}</div>
+  }
+
+  if (activeRole === 'agent') {
+    return <AgentWorkspaceShell badges={badges}>{children}</AgentWorkspaceShell>
   }
 
   const fullBleed = FULL_BLEED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
@@ -175,6 +179,16 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
     (item) => item.href !== '/my-shifts' || hasStaffedEvents || pathname.startsWith('/my-shifts')
   )
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
+  const personalItems = commonItems.filter((item) => ['/profile', '/profile/billets', '/profile/interested-events', '/my-shifts'].includes(item.href))
+  const communicationItems = commonItems.filter((item) => item.href === '/messages')
+  const accountItems = commonItems.filter((item) => ['/profile/parametres', '/help'].includes(item.href))
+  const memberGroups = [
+    { label: 'Mon activité', items: roleItems },
+    { label: activeRole === 'client' ? 'Mon espace' : 'Personnel', items: personalItems },
+    { label: 'Communication', items: communicationItems },
+    { label: 'Compte et assistance', items: accountItems },
+  ]
+  const navGroups = memberGroups.filter((group) => group.items.length > 0)
 
   // Comparaison de path simple : "/profile" et "/agent" sont des racines
   // partagées par plusieurs sous-routes réelles (/profile/billets,
@@ -190,181 +204,82 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   }
 
   return (
-    <>
-      <div
-        className="lb-dashboard-mobilebar"
-        style={{
-          display: 'none',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 10,
-          padding: '10px 14px',
-          borderBottom: '1px solid rgba(184, 243, 74,.14)',
-          background: 'var(--surface-2)',
-        }}
-      >
+    <div className={styles.root}>
+      <div className={styles.mobileBar}>
         <IconButton
           label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           onClick={() => setMobileOpen((v) => !v)}
-          icon={<ChevronDown size={18} style={{ transform: mobileOpen ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform .15s ease' }} />}
-          style={{ border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)' }}
+          icon={mobileOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
+          style={{ border: '1px solid rgba(255,255,255,.13)', borderRadius: 12, background: 'rgba(255,255,255,.08)', color: '#f5f5f7' }}
         />
-        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>
-          {activeRole === 'agent' ? 'Administration' : getRoleLabel(activeRole)}
-        </span>
+        <span className={styles.mobileTitle}>{`Espace ${getRoleLabel(activeRole)}`}</span>
         {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} /> : <span style={{ width: 40 }} />}
       </div>
 
       {mobileOpen && (
-        <div
-          className="lb-dashboard-mobiledrawer"
-          onClick={closeMobile}
-          style={{ display: 'none', flexDirection: 'column', gap: 4, padding: '10px 12px 16px', borderBottom: '1px solid rgba(184, 243, 74,.14)', background: 'var(--surface-2)' }}
-        >
-          {roleItems.length > 0 && <SidebarSectionLabel>{activeRole === 'agent' ? 'Gestion' : 'Mon activité'}</SidebarSectionLabel>}
-          {roleItems.map((item) => (
-            <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
-          ))}
-          {roleItems.flatMap((item) => item.children || []).map((child) => (
-            <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
-          ))}
-          <SidebarSectionLabel separated={roleItems.length > 0}>Mon compte</SidebarSectionLabel>
-          {commonItems.map((item) => (
-            <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
-          ))}
-          {commonItems.flatMap((item) => item.children || []).map((child) => (
-            <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
-          ))}
-          {upsell.map((item) => (
-            <SidebarLink key={item.href} item={item} active={isActive(item.href)} muted />
-          ))}
-          <div style={{ height: 1, background: 'var(--border)', margin: '8px 4px' }} />
-          <Link href="/home" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-            <Globe size={17} strokeWidth={1.8} />
-            <span>Voir la page publique</span>
-          </Link>
-        </div>
+        <>
+          <Button variant="ghost" className={styles.drawerBackdrop} onClick={closeMobile} aria-label="Fermer le menu" />
+          <nav className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
+            <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} mobile onNavigate={closeMobile} />
+            <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
+          </nav>
+        </>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-      <aside
-        className="lb-dashboard-sidebar"
-        style={{
-          width: SIDEBAR_WIDTH,
-          flexShrink: 0,
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRight: '1px solid rgba(184, 243, 74,.14)',
-          background: 'var(--surface-2)',
-        }}
-      >
-        {/* En-tête HORS du conteneur défilant du <nav> ci-dessous, exprès :
-            AccountMenu ouvre des dropdowns en position:absolute qui seraient
-            rognés par un ancêtre overflow:auto au moindre scroll. */}
-        <div
-          style={{
-            padding: '14px 14px 12px',
-            borderBottom: '1px solid rgba(184, 243, 74,.14)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', letterSpacing: 0.2 }}>
-              {activeRole === 'agent' ? 'Administration' : getRoleLabel(activeRole)}
-            </span>
-            {activeRole === 'agent' && (
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  lineHeight: 1.4,
-                  color: 'var(--gold)',
-                  background: 'rgba(184,243,74,.14)',
-                  border: '1px solid rgba(184,243,74,.3)',
-                  borderRadius: 999,
-                  padding: '1px 8px',
-                }}
-              >
-                Agent
-              </span>
-            )}
+      <div className={styles.layout}>
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>
+            <Link href="/profile" className={styles.brand} aria-label="LIVEINBLACK — vue d’ensemble">
+              <span className={styles.brandName}>LIVE<span>IN</span>BLACK</span>
+            </Link>
+            <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
+            <div className={styles.account}>
+              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} /> : null}
+            </div>
           </div>
-          {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
-        </div>
+          <nav className={styles.nav} aria-label="Navigation de l’espace privé">
+            <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} />
+          </nav>
+          <div className={styles.footer}>
+            <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
+          </div>
+        </aside>
 
-        <nav style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px 24px' }}>
-          {roleItems.length > 0 && <SidebarSectionLabel>{activeRole === 'agent' ? 'Gestion' : 'Mon activité'}</SidebarSectionLabel>}
-          {roleItems.map((item) => {
-            const autoOpen = isActive(item.href) || hasActiveDescendant(item)
-            return <SidebarItem key={`${item.href}:${autoOpen}`} item={item} isActive={isActive} autoOpen={autoOpen} badge={badges[item.href]} />
-          })}
-          <SidebarSectionLabel separated={roleItems.length > 0}>Mon compte</SidebarSectionLabel>
-          {commonItems.map((item) => {
-            const autoOpen = isActive(item.href) || hasActiveDescendant(item)
-            return <SidebarItem key={`${item.href}:${autoOpen}`} item={item} isActive={isActive} autoOpen={autoOpen} badge={badges[item.href]} />
-          })}
-          {upsell.length > 0 && (
-            <>
-              <div style={{ height: 1, background: 'var(--border)', margin: '10px 4px' }} />
-              {upsell.map((item) => (
-                <SidebarLink key={item.href} item={item} active={isActive(item.href)} muted />
-              ))}
-            </>
-          )}
-        </nav>
-
-        {/* Seul point de sortie vers le site public depuis le dashboard —
-            demande client 2026-08-11 : plus aucun lien de nav publique
-            (Accueil/Événements/...) une fois connecté, juste ce bouton
-            explicite pour repartir consulter le site. */}
-        <div style={{ padding: '10px 12px 14px', borderTop: '1px solid var(--border)' }}>
-          <Link
-            href="/home"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 12px',
-              borderRadius: 8,
-              color: 'var(--text-muted)',
-              fontSize: 13,
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            <Globe size={17} strokeWidth={1.8} />
-            <span>Voir la page publique</span>
-          </Link>
-        </div>
-      </aside>
-
-      <div className="lb-dashboard-main" style={{ flex: 1, minWidth: 0, ...(fullBleed ? {} : { padding: '36px clamp(20px, 3vw, 48px) 72px' }) }}>{children}</div>
+        <div className={`lb-dashboard-main ${styles.main}${fullBleed ? ` ${styles.mainFull}` : ''}`}>{children}</div>
       </div>
-
-      <style>{`
-        @media (max-width: 1099px) {
-          .lb-dashboard-sidebar { display: none !important; }
-          .lb-dashboard-mobilebar { display: flex !important; }
-          .lb-dashboard-mobiledrawer { display: flex !important; }
-        }
-      `}</style>
-    </>
+    </div>
   )
 }
 
-function SidebarSectionLabel({ children, separated = false }: { children: React.ReactNode; separated?: boolean }) {
+function SidebarNavigation({ groups, upsell, isActive, hasActiveDescendant, badges, mobile = false, onNavigate }: { groups: Array<{ label: string; items: DashboardNavItem[] }>; upsell: DashboardNavItem[]; isActive: (href: string) => boolean; hasActiveDescendant: (item: DashboardNavItem) => boolean; badges: Partial<Record<string, number>>; mobile?: boolean; onNavigate?: () => void }) {
   return (
-    <p style={{ margin: separated ? '18px 10px 6px' : '2px 10px 6px', paddingTop: separated ? 16 : 0, borderTop: separated ? '1px solid var(--border)' : 0, color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 800, letterSpacing: '.11em', textTransform: 'uppercase' }}>
-      {children}
-    </p>
+    <>
+      {groups.map((group) => (
+        <section key={group.label} className={styles.section} aria-label={group.label}>
+          <p className={styles.sectionLabel}>{group.label}</p>
+          <div className={styles.navList}>
+            {group.items.map((item) => {
+              const autoOpen = isActive(item.href) || hasActiveDescendant(item)
+              if (mobile && item.children?.length) {
+                return (
+                  <div key={item.href}>
+                    <SidebarLink item={item} active={isActive(item.href)} badge={badges[item.href]} onClick={onNavigate} />
+                    <div style={{ paddingLeft: 14 }}>{item.children.map((child) => <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact onClick={onNavigate} />)}</div>
+                  </div>
+                )
+              }
+              return <SidebarItem key={`${item.href}:${autoOpen}`} item={item} isActive={isActive} autoOpen={autoOpen} badge={badges[item.href]} />
+            })}
+          </div>
+        </section>
+      ))}
+      {upsell.length > 0 ? (
+        <section className={styles.section} aria-label="Développer votre activité">
+          <p className={styles.sectionLabel}>Développer votre activité</p>
+          <div className={styles.navList}>{upsell.map((item) => <SidebarLink key={item.href} item={item} active={isActive(item.href)} muted onClick={onNavigate} />)}</div>
+        </section>
+      ) : null}
+    </>
   )
 }
 
@@ -399,9 +314,9 @@ function SidebarItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          borderRadius: 8,
-          background: active ? 'rgba(184, 243, 74,.10)' : 'transparent',
-          borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
+          borderRadius: 13,
+          background: active ? 'rgba(184, 243, 74,.13)' : 'transparent',
+          border: active ? '1px solid rgba(184,243,74,.22)' : '1px solid transparent',
         }}
       >
         <Link
@@ -413,9 +328,10 @@ function SidebarItem({
             minWidth: 0,
             alignItems: 'center',
             gap: 10,
-            padding: '10px 8px 10px 9px',
+            minHeight: 48,
+            padding: '11px 8px 11px 12px',
             color: active ? 'var(--text)' : 'var(--text-muted)',
-            fontSize: 13.5,
+            fontSize: 14.5,
             fontWeight: active ? 700 : 600,
             textDecoration: 'none',
           }}
@@ -443,23 +359,25 @@ function SidebarItem({
   )
 }
 
-function SidebarLink({ item, active, muted, badge, compact }: { item: DashboardNavItem; active: boolean; muted?: boolean; badge?: number; compact?: boolean }) {
+function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: DashboardNavItem; active: boolean; muted?: boolean; badge?: number; compact?: boolean; onClick?: () => void }) {
   const Icon = item.icon
   return (
     <Link
       href={item.href}
+      onClick={onClick}
       aria-current={active ? 'page' : undefined}
       aria-label={badge ? `${item.label}, ${badge} en attente` : undefined}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 10,
-        padding: compact ? '8px 12px' : '10px 12px',
-        borderRadius: 8,
+        minHeight: compact ? 44 : 48,
+        padding: compact ? '9px 12px' : '11px 13px',
+        borderRadius: 13,
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
-        background: active ? 'rgba(184, 243, 74,.10)' : 'transparent',
-        borderLeft: active ? '3px solid var(--primary)' : '3px solid transparent',
-        fontSize: compact ? 12.5 : 13.5,
+        background: active ? 'rgba(184, 243, 74,.13)' : 'transparent',
+        border: active ? '1px solid rgba(184,243,74,.22)' : '1px solid transparent',
+        fontSize: compact ? 13.5 : 14.5,
         fontWeight: active ? 700 : 600,
         textDecoration: 'none',
       }}

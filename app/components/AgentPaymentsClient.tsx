@@ -314,9 +314,9 @@ export default function AgentPaymentsClient() {
   const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length, boosts: 0 }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--payments">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 className="font-display lb-dashboard-title">Paiements</h1>
+        <div><h1 className="font-display lb-dashboard-title">Paiements</h1><p className="lb-dashboard-description">Suivez les reversements, remboursements, alertes financières et boosts.</p></div>
 
         {loadError && (
           <Card accent="rgba(224,90,170,0.35)" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>

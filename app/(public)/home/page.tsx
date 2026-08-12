@@ -17,10 +17,10 @@ import { getProviderCategories, getProviderCategory } from '@/lib/shared/provide
 import { eventStartMs } from '@/lib/shared/event-time'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
-import HomeAmbienceButton from './HomeAmbienceButton'
 import HomeGreeting from './HomeGreeting'
 import HeroScrollIndicator from './HeroScrollIndicator'
-import { SectionHeader, Card } from '@/app/components/ui'
+import { ActionLink, Card, EditorialImageCard } from '@/app/components/ui'
+import styles from './home.module.css'
 
 export const metadata: Metadata = {
   title: 'LIVEINBLACK — La marketplace de la nuit et de l’événementiel',
@@ -35,8 +35,6 @@ export const dynamic = 'force-dynamic'
 
 // Accueil unifié : vitrine de PublicLanding pour les visiteurs, enrichie du
 // Top 3 et des recommandations de HomePage pour les membres connectés.
-
-const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=80'
 
 // Accents du carrousel « Actualité » (#9 phase agent/admin, homepage-config) —
 // mêmes couleurs que ACTUALITE_ACCENTS côté agent (lib/models/HomepageConfig.ts).
@@ -64,9 +62,9 @@ function DateBadge({ dateISO }: { dateISO: string }) {
   const d = new Date(dateISO)
   if (Number.isNaN(d.getTime())) return null
   return (
-    <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(4,4,11,.78)', borderRadius: 8, padding: '5px 9px', textAlign: 'center', lineHeight: 1.1 }}>
-      <p style={{ margin: 0, fontSize: 9.5, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
-      <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff' }}>{d.getDate()}</p>
+    <div style={{ position: 'absolute', top: 12, left: 12, minWidth: 44, background: 'rgba(18,18,20,.82)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 12, padding: '6px 9px', textAlign: 'center', lineHeight: 1.1 }}>
+      <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.72)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
+      <p style={{ margin: '2px 0 0', fontSize: 17, fontWeight: 700, color: '#fff' }}>{d.getDate()}</p>
     </div>
   )
 }
@@ -109,64 +107,45 @@ export default async function AccueilPage() {
 
   return (
     <>
-      <style>{`
-        @keyframes lbHomeGreetingFadeIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .lb-home-greeting {
-          animation: lbHomeGreetingFadeIn 0.6s ease-out both;
-        }
-      `}</style>
-      {/* HERO */}
-      {/* minHeight en 100dvh (pas 85vh) + background sur la section elle-même :
-          à 85vh, l'image de fond (position absolute inset:0 = calée sur la
-          hauteur de la section) s'arrêtait avant le bas du viewport, laissant
-          apparaître un bandeau de fond nu avant la section suivante (retour
-          client). 100dvh gère aussi la barre d'adresse mobile (100vh classique
-          déborde sous Safari iOS) ; background sur la section évite tout flash
-          de fond par défaut pendant le chargement de l'image. */}
-      <section id="home-hero" style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', textAlign: 'center', background: 'var(--obsidian)', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${HERO_IMG})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.32 }} />
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'radial-gradient(ellipse at 50% 30%, rgba(184, 243, 74,.14), transparent 55%), radial-gradient(ellipse at 80% 80%, rgba(159, 224, 34,.07), transparent 50%), linear-gradient(to bottom, rgba(7,8,13,.72) 0%, rgba(7,8,13,.55) 40%, rgba(7,8,13,.98) 100%)',
-          }}
+      {/* HERO : hauteur utile du viewport moins la navigation sticky. */}
+      <main className={styles.home}>
+      <section id="home-hero" className={styles.hero}>
+        <Image
+          src="/media1.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className={styles.heroImage}
         />
-        <div style={{ position: 'relative', maxWidth: 760, margin: '0 auto' }}>
-          <p style={{ fontSize: 34, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
-            L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
-          </p>
+        <div className={styles.heroOverlay} />
+        <div className={styles.heroContent}>
+          <p className={styles.heroEyebrow}>Votre nuit, simplement.</p>
           {session?.user && <HomeGreeting firstName={session.user.name ? session.user.name.trim().split(' ')[0] : ''} />}
-          <h1 className="font-display" style={{ fontSize: 'clamp(38px, 9vw, 78px)', lineHeight: 0.98, letterSpacing: '0.01em', margin: '22px 0 0' }}>
-            Les meilleures soirées,
+          <h1 className={styles.heroTitle}>
+            Les meilleures soirées.
             <br />
-            <span style={{ color: 'var(--teal)' }}>au bout des doigts.</span>
+            <span>à portée de main.</span>
           </h1>
-          <p style={{ fontSize: 'clamp(15px,4vw,19px)', color: 'var(--text-muted)', margin: '18px auto 0', maxWidth: 520, lineHeight: 1.5 }}>
-            Réserve, découvre, profite. Ta prochaine sortie commence ici. Billets, soirées et prestataires réunis au même endroit.
+          <p className={styles.heroDescription}>
+            Découvre les événements qui te ressemblent et réserve ton billet en quelques secondes.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
-            <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
-            <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
+          <div className={styles.heroActions}>
+            <Link href="/events" className={styles.primaryButton}>Voir les événements</Link>
+            <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.secondaryButton}>{session?.user ? 'Mes billets' : 'Créer un compte'}</Link>
           </div>
-          {!session?.user && <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 18 }}>
-            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Se connecter</Link>
-          </p>}
-          <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '18px 0 0', letterSpacing: '.01em' }}>
-            Gratuit · Ton billet QR dans ta poche · Aucune app à installer
-          </p>
-          <HomeAmbienceButton />
+          <ul className={styles.heroProof} aria-label="Avantages">
+            <li>Compte gratuit</li>
+            <li>Billet instantané</li>
+            <li>Accessible sur le web</li>
+          </ul>
         </div>
-        <HeroScrollIndicator targetId="home-next-section" />
+        <HeroScrollIndicator />
       </section>
 
       {session?.user && topThree.length > 0 && (
         <Section eyebrow="Le classement" title="Top 3 du moment" sub="Les événements mis en avant et les prochaines dates à ne pas manquer.">
-          <div className="lb-card-grid">
+          <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
             {topThree.map((event, index) => <HomeEventCard key={event.id} event={event} badge={`0${index + 1}`} boosted={boostedIds.has(event.id)} />)}
           </div>
         </Section>
@@ -174,7 +153,7 @@ export default async function AccueilPage() {
 
       {/* ACTUALITÉ (carrousel éditorial curé par l'agent) */}
       {actualiteEvents.length > 0 && (
-        <section style={{ padding: '0 clamp(20px, 3vw, 48px)', maxWidth: 1800, margin: '0 auto', width: '100%' }}>
+        <section className={styles.newsSection}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: actualiteAccent.soft, border: `1px solid ${actualiteAccent.border}` }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: actualiteAccent.dot }} />
@@ -182,7 +161,7 @@ export default async function AccueilPage() {
             </span>
             {actualiteConfig.subtitle && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{actualiteConfig.subtitle}</span>}
           </div>
-          <div style={{ display: 'flex', gap: 22, overflowX: 'auto', paddingBottom: 14, scrollSnapType: 'x proximity' }}>
+          <div className={styles.horizontalRail}>
             {actualiteEvents.map((e) => {
               const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
               const min = prices.length ? Math.min(...prices) : null
@@ -240,7 +219,7 @@ export default async function AccueilPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-18px 0 16px' }}>
             <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
           </div>
-          <div className="lb-card-grid">
+          <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
             {recommendations.map(({ event, reason }) => <HomeEventCard key={event.id} event={event} reason={reason} />)}
           </div>
         </Section>
@@ -266,8 +245,8 @@ export default async function AccueilPage() {
           <EmptyCard text="De nouvelles soirées arrivent très vite." ctaHref="/events" ctaLabel="Voir la page événements" />
         ) : (
           <>
-            <div className="lb-card-grid">
-              {events.map((event) => <HomeEventCard key={event.id} event={event} />)}
+            <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
+              {events.map((event, index) => <HomeEventCard key={event.id} event={event} eager={index === 0} />)}
             </div>
             <div style={{ textAlign: 'center', marginTop: 22 }}>
               <Link href="/events" style={btnGhost}>Tout voir</Link>
@@ -282,15 +261,15 @@ export default async function AccueilPage() {
           <EmptyCard text="Les premiers prestataires arrivent très vite." ctaHref="/providers" ctaLabel="Voir l'annuaire" />
         ) : (
           <>
-            <div className="lb-card-grid">
-              {featuredProviders.map((p) => {
+            <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
+              {featuredProviders.map((p, index) => {
                 const categories = getProviderCategories(p)
                 const pc = categories[0] || getProviderCategory(p.prestataireType)
                 const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl || placeholderPhotoUrl(p.userId, 440, 248)
                 return (
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ position: 'relative', minHeight: 180, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
-                      <Image src={coverImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
+                      <Image src={coverImage} alt="" fill loading={index === 0 ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                       <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                         {pc.label}
                         {categories.length > 1 ? ` +${categories.length - 1}` : ''}
@@ -323,57 +302,52 @@ export default async function AccueilPage() {
 
       {/* POURQUOI CRÉER UN COMPTE */}
       {!session?.user && <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
-        <div className="lb-card-grid">
+        <div className={styles.benefitGrid}>
           {[
             ['Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
             ['Ton QR code partout', 'Tes billets toujours dans ta poche.'],
             ['Recommandations', 'Des soirées selon tes goûts et ta ville.'],
             ['Favoris', 'Sauvegarde les événements qui te plaisent.'],
-            ['Messagerie', 'Parle aux organisateurs et prestataires.'],
-            ['Tes commandes', 'Précommandes et consos suivies.'],
-            ['Des points', "Chaque achat te rapproche d'avantages."],
-            ['Organisateurs suivis', 'Sois alerté des nouvelles dates de tes organisateurs préférés.'],
           ].map(([t, d]) => (
             <Card key={t} accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: '18px 16px' }}>
-              <p style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>{t}</p>
-              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.4 }}>{d}</p>
+              <p style={{ fontSize: 17, fontWeight: 650, margin: 0 }}>{t}</p>
+              <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '7px 0 0', lineHeight: 1.5 }}>{d}</p>
             </Card>
           ))}
         </div>
         <div style={{ textAlign: 'center', marginTop: 26 }}>
-          <Link href="/login?mode=register" style={btnPrimary}>Créer mon compte gratuitement</Link>
+          <Link href="/login?mode=register" className={styles.primaryButton}>Créer mon compte gratuitement</Link>
         </div>
       </Section>}
 
       {/* COMMENT ÇA MARCHE */}
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 22 }}>
           {[
-            ['1', 'Découvre une soirée', 'Parcours les événements près de chez toi.'],
-            ['2', 'Réserve ton billet', 'En quelques secondes, paiement sécurisé.'],
-            ['3', 'Présente ton QR', "Scan à l'entrée, et c'est parti."],
-          ].map(([n, t, d]) => (
-            <Card key={n} accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: '20px 18px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: 14, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
-              <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{t}</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
-            </Card>
+            ['01', 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1100&q=82', 'Une foule devant une scène de festival', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
+            ['02', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1100&q=82', 'Un public profitant d’un concert', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
+            ['03', 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1100&q=82', 'Une scène de concert illuminée', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
+          ].map(([n, src, alt, title, description]) => (
+            <EditorialImageCard key={n} src={src} alt={alt} badge={n} title={title} description={description} />
           ))}
+        </div>
+        <div style={{ marginTop: 28, textAlign: 'center' }}>
+          <ActionLink href="/about">Découvrir le fonctionnement complet</ActionLink>
         </div>
       </Section>}
 
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
-          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid rgba(139,92,246,.75)' }}>
-            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--violet)', margin: 0 }}>Organisateur</p>
+          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid var(--primary)' }}>
+            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: 0 }}>Organisateur</p>
             <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
             <ul style={featList}>
               {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
-                <li key={f} style={featItem}><span style={{ color: 'var(--violet)' }}>◆</span> {f}</li>
+                <li key={f} style={featItem}><span style={{ color: 'var(--primary)' }}>◆</span> {f}</li>
               ))}
             </ul>
-            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: '#fff' }}>Créer un espace organisateur</Link>
+            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: 'var(--primary-ink)' }}>Créer un espace organisateur</Link>
           </Card>
           <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
@@ -390,30 +364,31 @@ export default async function AccueilPage() {
 
       {/* CE QUE TON COMPTE DÉBLOQUE */}
       {/* CTA FINAL */}
-      <section style={{ padding: '10px 22px 70px' }}>
-        <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,.14), transparent 60%), var(--surface-2)' }}>
-          <h2 className="font-display" style={{ fontSize: 'clamp(28px,7vw,46px)', letterSpacing: '.01em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
+      <section className={styles.finalSection}>
+        <div className={styles.finalCard}>
+          <h2 style={{ fontSize: 'clamp(30px,7vw,48px)', letterSpacing: '-.04em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
             {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href={session?.user ? '/profile' : '/login?mode=register'} style={btnPrimary}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
-            <Link href="/events" style={btnGhost}>Découvrir les événements</Link>
+            <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.primaryButton}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
+            <Link href="/events" className={styles.secondaryButton}>Découvrir les événements</Link>
           </div>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 18 }}>
             <Link href="/organizer-signup" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
             <Link href="/provider-signup" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
           </div>
           {!session?.user && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
-            Déjà un compte ? <Link href="/login" style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
+            Déjà un compte ? <Link href="/login" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
           </p>}
         </div>
       </section>
+      </main>
     </>
   )
 }
 
-function HomeEventCard({ event, badge, boosted = false, reason }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string }) {
+function HomeEventCard({ event, badge, boosted = false, reason, eager = false }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string; eager?: boolean }) {
   const prices = (event.places || []).map((place) => Number(place.price)).filter((price) => Number.isFinite(price) && price >= 0)
   const minPrice = prices.length ? Math.min(...prices) : null
   // Cartes du "Top 3 du classement" (badge 01/02/03) avec des tailles de
@@ -430,6 +405,7 @@ function HomeEventCard({ event, badge, boosted = false, reason }: { event: Publi
           src={event.imageUrl || placeholderPhotoUrl(event.id, 460, 259)}
           alt={event.name}
           fill
+          loading={eager ? 'eager' : undefined}
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 100vw, 230px"
         />
@@ -453,8 +429,12 @@ function HomeEventCard({ event, badge, boosted = false, reason }: { event: Publi
 
 function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: string; sub?: string; children: React.ReactNode }) {
   return (
-    <section style={{ padding: 'clamp(44px, 6vw, 64px) clamp(20px, 3vw, 48px)', maxWidth: 1800, margin: '0 auto', width: '100%' }}>
-      <SectionHeader eyebrow={eyebrow} title={title} description={sub} align="center" level={2} />
+    <section className={styles.section}>
+      <header className={styles.sectionHeader}>
+        {eyebrow && <p className={styles.sectionEyebrow}>{eyebrow}</p>}
+        <h2 className={styles.sectionTitle}>{title}</h2>
+        {sub && <p className={styles.sectionDescription}>{sub}</p>}
+      </header>
       {children}
     </section>
   )
@@ -473,15 +453,15 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
 // site de référence (chillandgroovefestival.com : "PRENDRE MON PASS",
 // "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
 // mise en page oui, palette non).
-const card: React.CSSProperties = { background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-xl)', boxShadow: '0 18px 48px rgba(0,0,0,.24)' }
+const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 24, boxShadow: '0 20px 60px rgba(0,0,0,.22)' }
 // Overrides passés à <Card> pour les usages non-<Link> ci-dessus : mêmes
 // tokens que `card` (fond dégradé, rayon xl, ombre), mais composés via le
 // primitif partagé plutôt que dupliqués — `card` reste nécessaire tel quel
 // pour les usages sur <Link>, que Card (toujours un <div>) ne peut pas
 // remplacer sans étendre son API avec un prop `as` (hors scope ici).
 const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
-const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '12px 28px', borderRadius: 999, fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnGhost: React.CSSProperties = { minHeight: 44, padding: '11px 26px', borderRadius: 999, fontSize: 13.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', color: '#fff', background: 'rgba(184, 243, 74,.08)', border: '1px solid rgba(184, 243, 74,.55)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnSolid: React.CSSProperties = { minHeight: 44, padding: '11px 22px', borderRadius: 999, fontSize: 13.5, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
+const btnPrimary: React.CSSProperties = { minHeight: 48, padding: '12px 24px', borderRadius: 14, fontSize: 15, fontWeight: 650, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnGhost: React.CSSProperties = { minHeight: 48, padding: '11px 22px', borderRadius: 14, fontSize: 15, fontWeight: 650, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnSolid: React.CSSProperties = { minHeight: 48, padding: '11px 22px', borderRadius: 14, fontSize: 15, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
 const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
-const featItem: React.CSSProperties = { fontSize: 13.5, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }
+const featItem: React.CSSProperties = { fontSize: 15, lineHeight: 1.45, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }

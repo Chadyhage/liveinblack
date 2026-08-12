@@ -7,7 +7,7 @@ import Spinner from './Spinner'
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'link'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
-export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   loading?: boolean

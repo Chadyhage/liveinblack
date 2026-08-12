@@ -365,7 +365,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <GuestlistModalWithPlaces event={modal.event} onClose={() => setModal({ type: 'none' })} />
       )}
       {modal.type === 'staff' && <EventStaffModal event={{ id: modal.event.id, name: modal.event.name }} onClose={() => setModal({ type: 'none' })} />}
-      {modal.type === 'promo' && <PromoCodesPanel event={{ id: modal.event.id, name: modal.event.name, currency: modal.event.currency }} onClose={() => setModal({ type: 'none' })} />}
+      {modal.type === 'promo' && <PromoCodesPanelWithPlaces event={modal.event} onClose={() => setModal({ type: 'none' })} />}
       {modal.type === 'postpone' && (
         <PostponeModal
           event={{ id: modal.event.id, name: modal.event.name, date: modal.event.date, dateDisplay: modal.event.dateDisplay, time: modal.event.time }}
@@ -431,4 +431,45 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
     )
   }
   return <GuestlistModal event={{ id: event.id, name: event.name, places, currency: event.currency }} onClose={onClose} />
+}
+
+// Même besoin/pattern que GuestlistModalWithPlaces ci-dessus — les codes
+// promo peuvent maintenant être restreints à certains types de place (#E5,
+// confirmé en réunion live le 11/08/2026), le sélecteur a donc besoin du
+// catalogue de places, absent d'OrganizerEventView.
+function PromoCodesPanelWithPlaces({ event, onClose }: { event: OrganizerEventView; onClose: () => void }) {
+  const [places, setPlaces] = useState<{ id: string; type: string; price: number }[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/organizer-events/${event.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return
+        if (data.ok) setPlaces(data.event.places.map((p: { id: string; type: string; price: number }) => ({ id: p.id, type: p.type, price: p.price })))
+        else setPlaces([])
+      })
+      .catch(() => {
+        if (!cancelled) setPlaces([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [event.id])
+
+  if (!places) {
+    return (
+      <Modal onClose={onClose} hideClose contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
+        <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement des codes promo">
+          <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+            <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+            </path>
+          </svg>
+        </div>
+      </Modal>
+    )
+  }
+  return <PromoCodesPanel event={{ id: event.id, name: event.name, currency: event.currency, places }} onClose={onClose} />
 }

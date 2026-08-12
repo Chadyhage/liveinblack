@@ -17,7 +17,6 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
   const [visible, setVisible] = useState(false)
   const [copied, setCopied] = useState(false)
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
-  const [mounted, setMounted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -27,8 +26,6 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
   // `position: absolute` y serait rogné. Position calculée depuis le rect du
   // conteneur, en `position: fixed` (viewport), donc indépendante de tout
   // ancêtre à overflow contraint.
-  useEffect(() => setMounted(true), [])
-
   const openMenu = useCallback(() => {
     const rect = containerRef.current?.getBoundingClientRect()
     if (rect) setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right })
@@ -101,13 +98,12 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Partager ${eventName}`}
-        style={{ minHeight: 38, padding: '8px 13px', borderRadius: 999, border: '1px solid rgba(255,255,255,.24)', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(10px)', color: '#fff', fontSize: 12 }}
+        style={{ minHeight: 44, padding: '8px 13px', borderRadius: 999, border: '1px solid rgba(255,255,255,.24)', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(10px)', color: '#fff', fontSize: 12 }}
       >
         {copied ? 'Lien copié' : 'Partager'}
       </Button>
 
       {open &&
-        mounted &&
         menuPos &&
         createPortal(
           <div

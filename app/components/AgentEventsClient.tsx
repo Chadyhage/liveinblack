@@ -179,10 +179,10 @@ export default function AgentEventsClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--events">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Événements</h1>
+          <div><h1 className="font-display lb-dashboard-title">Événements</h1><p className="lb-dashboard-description">Supervisez la programmation publiée et intervenez sur les événements signalés.</p></div>
         </div>
 
         {listError && (

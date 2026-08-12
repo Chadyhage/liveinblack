@@ -525,10 +525,10 @@ export default function AgentDossiersClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--applications">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Dossiers</h1>
+          <div><h1 className="font-display lb-dashboard-title">Dossiers</h1><p className="lb-dashboard-description">Étudiez les candidatures organisateur et prestataire depuis une file de validation unique.</p></div>
           {totalAllPending > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {totalAllPending} en attente

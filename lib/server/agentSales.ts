@@ -3,6 +3,7 @@ import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
 import Order, { type OrderDoc } from '../models/Order'
 import Ticket from '../models/Ticket'
+import User from '../models/User'
 import EventStaff from '../models/EventStaff'
 import CashSaleSettlement from '../models/CashSaleSettlement'
 import SellerBalance from '../models/SellerBalance'
@@ -202,6 +203,23 @@ async function mintAgentSaleTickets(order: OrderDoc & { _id: mongoose.Types.Obje
   const unitMajor = order.unitPriceMinor / (order.currency === 'XOF' ? 1 : 100)
   const preorderTotalMajor = order.preorders.reduce((s, p) => s + (p.price / (order.currency === 'XOF' ? 1 : 100)) * p.qty, 0)
 
+  // Rattachement au VRAI compte du client si l'email saisi par l'agent
+  // correspond à un compte déjà inscrit (#E11, confirmé en réunion live le
+  // 11/08/2026 — auparavant toujours rattaché à l'agent, billet invité
+  // orphelin même quand un compte existait). `guestName` reste renseigné
+  // dans tous les cas (traçabilité), mais `userId` pointe le vrai titulaire
+  // dès qu'on peut le résoudre, comme un achat in-app normal (visible dans
+  // TicketWallet.tsx du client). Groupe : `hostUid` reste volontairement
+  // l'agent (décision produit déjà confirmée séparément le 25/07/2026 —
+  // l'agent désigne le premier participant nommé comme hôte technique, pas
+  // ce lookup par email).
+  const fallbackUserId = order.agentUid || order.userId
+  let resolvedUserId = fallbackUserId
+  if (order.contactEmail) {
+    const account = await User.findOne({ email: order.contactEmail }).select('_id').lean()
+    if (account) resolvedUserId = String(account._id)
+  }
+
   const ticketCodes: string[] = []
   const now = new Date()
   const docs = []
@@ -219,10 +237,11 @@ async function mintAgentSaleTickets(order: OrderDoc & { _id: mongoose.Types.Obje
       totalPrice: seatIndex === 0 ? unitMajor + preorderTotalMajor : unitMajor,
       currency: order.currency,
       preorders: seatIndex === 0 ? order.preorders.map((p) => ({ name: p.name, price: p.price / (order.currency === 'XOF' ? 1 : 100), qty: p.qty })) : [],
-      // Rattachement technique à l'agent (comme lib/server/guestlist.ts pour
-      // un invité sans compte) — le vrai destinataire est guestName/contact.
-      userId: order.agentUid || order.userId,
-      hostUid: order.isTable ? order.agentUid || order.userId : null,
+      // Rattaché au vrai compte du client si résolu ci-dessus, sinon
+      // rattachement technique à l'agent (comme lib/server/guestlist.ts pour
+      // un invité sans compte) — voir commentaire au-dessus de ce bloc.
+      userId: resolvedUserId,
+      hostUid: order.isTable ? fallbackUserId : null,
       tableId,
       seatIndex: order.isTable ? seatIndex : null,
       guestName: order.guestName,

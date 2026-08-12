@@ -8,7 +8,7 @@ import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import { Button, Card, Input, Textarea, Select, Spinner } from '@/app/components/ui'
-import { IconClose, InputField, LockIcon, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
+import { IconClose, InputField, LockIcon, NumberInputField, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
 
 // Port du wizard de création/édition d'événement en 5 étapes
 // (src/pages/MesEvenementsPage.jsx, vue 'create' — lignes ~2140-3274 pour le
@@ -73,7 +73,7 @@ interface ServerEventDetail {
   playlist: boolean
   preorder: boolean
   menu: MenuItemRow[] | null
-  artists: { name: string; role: string }[]
+  artists: { name: string; role: string; providerId?: string | null }[]
   dj: string
   performers: string[]
   minAge: number
@@ -120,7 +120,7 @@ interface EventFormInput {
   playlist?: boolean
   preorder?: boolean
   menu?: MenuItemRow[] | null
-  artists?: { name: string; role?: string }[]
+  artists?: { name: string; role?: string; providerId?: string | null }[]
   dj?: string
   performers?: string[]
   minAge?: number
@@ -131,6 +131,9 @@ interface EventFormInput {
 interface ArtistRow {
   name: string
   role: string
+  // Lien optionnel vers un vrai profil prestataire (#E7) — voir
+  // lib/models/Event.ts::artistSchema.providerId.
+  providerId?: string | null
 }
 
 interface PlaceRow {
@@ -409,6 +412,40 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   const [timeEnd, setTimeEnd] = useState('')
   const [showArtistSection, setShowArtistSection] = useState(false)
   const [artists, setArtists] = useState<ArtistRow[]>([])
+  // Recherche de prestataire à associer à une ligne du line-up (#E7,
+  // confirmé en réunion live le 11/08/2026) — index de la ligne ouverte,
+  // requête, résultats. Même seuil (2 caractères, 350ms) que la recherche
+  // staff d'EventStaffModal.tsx.
+  const [providerSearchFor, setProviderSearchFor] = useState<number | null>(null)
+  const [providerQuery, setProviderQuery] = useState('')
+  const [providerResults, setProviderResults] = useState<{ userId: string; name: string; headline?: string }[]>([])
+  const [providerSearching, setProviderSearching] = useState(false)
+
+  useEffect(() => {
+    // Résultats trop courts/absents : dérivés directement au rendu via
+    // `providerQuery.trim().length < 2` plus bas (aucun rendu de résultat
+    // sous 2 caractères), donc pas besoin de reset ici — évite un setState
+    // synchrone dans le corps de l'effet (même pattern qu'EventStaffModal.tsx).
+    const q = providerQuery.trim()
+    if (providerSearchFor === null || q.length < 2) return
+    let cancelled = false
+    const t = setTimeout(async () => {
+      setProviderSearching(true)
+      try {
+        const res = await fetch(`/api/providers?q=${encodeURIComponent(q)}`)
+        const data = await res.json().catch(() => null)
+        if (!cancelled) setProviderResults(res.ok && data?.ok ? data.providers.slice(0, 6) : [])
+      } catch {
+        if (!cancelled) setProviderResults([])
+      } finally {
+        if (!cancelled) setProviderSearching(false)
+      }
+    }, 350)
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [providerQuery, providerSearchFor])
   const [category, setCategory] = useState('')
   const [customGenre, setCustomGenre] = useState('')
   const [partyType, setPartyType] = useState('')
@@ -485,7 +522,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     setTimeStart(ev.time || '')
     setTimeEnd(ev.endTime || '')
     const filteredArtists = (ev.artists || []).filter((a) => a.name?.trim())
-    setArtists(filteredArtists.map((a) => ({ name: a.name, role: a.role || 'DJ' })))
+    setArtists(filteredArtists.map((a) => ({ name: a.name, role: a.role || 'DJ', providerId: a.providerId || null })))
     setShowArtistSection(filteredArtists.length > 0)
     if (ev.category && GENRES.includes(ev.category)) {
       setCategory(ev.category)
@@ -742,7 +779,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   function buildPayload(): EventFormInput {
     const finalCategory = category === 'Autre' ? customGenre.trim() || 'Autre' : category
     const tags = [partyType, ...musicStyles, ...ambiances].filter(Boolean).slice(0, 6)
-    const filteredArtists = artists.filter((a) => a.name.trim()).map((a) => ({ name: a.name.trim(), role: a.role }))
+    const filteredArtists = artists.filter((a) => a.name.trim()).map((a) => ({ name: a.name.trim(), role: a.role, providerId: a.providerId || null }))
     const dj = filteredArtists.length > 0 ? filteredArtists.map((a) => a.name).join(', ') : ''
     const validMenuItems = menuItems
       .filter((i) => i.name.trim() && i.price > 0)
@@ -758,10 +795,15 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     const menuNameSet = new Set(validMenuItems.map((i) => i.name.trim()))
     const anyIncluded = places.some((p) => p.included.length > 0)
 
+    // Un "avantage inclus" n'est plus obligatoirement un article réel du
+    // menu (#E6, confirmé en réunion live le 11/08/2026 — "Vestiaire offert"
+    // n'a jamais de raison d'être un item de précommande facturable) : seul
+    // un nom non vide est requis désormais. `menuNameSet` ne sert plus qu'à
+    // l'affichage (badge "correspond à un article de précommande" côté UI),
+    // jamais à filtrer/perdre silencieusement une saisie organisateur.
     function sanitizeIncluded(list: { name: string; qty: number }[]) {
-      return list
-        .map((inc) => ({ name: inc.name.trim(), qty: Math.max(1, Number(inc.qty) || 1) }))
-        .filter((inc) => inc.name && menuNameSet.has(inc.name))
+      void menuNameSet
+      return list.map((inc) => ({ name: inc.name.trim(), qty: Math.max(1, Number(inc.qty) || 1) })).filter((inc) => inc.name)
     }
 
     const locationValue = [venueName.trim(), address.trim()].filter(Boolean).join(', ')
@@ -1118,27 +1160,96 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               {showArtistSection && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {artists.map((a, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 130, flexShrink: 0 }}>
-                        <Select
-                          value={a.role}
-                          onChange={(value) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, role: value } : x)))}
-                          options={ARTIST_ROLES.map((r) => ({ value: r, label: r }))}
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 130, flexShrink: 0 }}>
+                          <Select
+                            value={a.role}
+                            onChange={(value) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, role: value } : x)))}
+                            options={ARTIST_ROLES.map((r) => ({ value: r, label: r }))}
+                          />
+                        </div>
+                        <Input
+                          style={{ ...S.inputBase, flex: 1 }}
+                          placeholder="Nom de l'artiste"
+                          value={a.name}
+                          onChange={(e) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: e.target.value, providerId: null } : x)))}
                         />
+                        <Button
+                          variant="ghost"
+                          title={a.providerId ? 'Prestataire associé — cliquer pour changer' : 'Associer un profil prestataire existant'}
+                          onClick={() => {
+                            setProviderSearchFor(providerSearchFor === i ? null : i)
+                            setProviderQuery('')
+                          }}
+                          style={{
+                            flexShrink: 0,
+                            width: 30,
+                            height: 30,
+                            minHeight: 30,
+                            minWidth: 30,
+                            borderRadius: 8,
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: a.providerId ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid rgba(255,255,255,0.14)',
+                            background: a.providerId ? 'rgba(184, 243, 74,0.14)' : 'rgba(255,255,255,0.06)',
+                            color: a.providerId ? 'var(--teal)' : 'rgba(255,255,255,0.7)',
+                            fontSize: 15,
+                            fontWeight: 800,
+                          }}
+                        >
+                          +
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))}
+                          style={{ background: 'none', border: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
+                        >
+                          <IconClose size={13} color="rgba(220,100,100,0.9)" />
+                        </Button>
                       </div>
-                      <Input
-                        style={{ ...S.inputBase, flex: 1 }}
-                        placeholder="Nom de l'artiste"
-                        value={a.name}
-                        onChange={(e) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: e.target.value } : x)))}
-                      />
-                      <Button
-                        variant="ghost"
-                        onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))}
-                        style={{ background: 'none', border: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
-                      >
-                        <IconClose size={13} color="rgba(220,100,100,0.9)" />
-                      </Button>
+                      {a.providerId && (
+                        <p style={{ fontSize: 11, color: 'var(--teal)', margin: '0 0 0 138px' }}>
+                          Lié à un profil prestataire — alimentera son historique d&apos;événements.
+                        </p>
+                      )}
+                      {providerSearchFor === i && (
+                        <div style={{ margin: '0 0 4px 138px', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <Input
+                            style={{ ...S.inputBase }}
+                            placeholder="Rechercher un prestataire par nom…"
+                            value={providerQuery}
+                            onChange={(e) => setProviderQuery(e.target.value)}
+                            autoFocus
+                          />
+                          {providerQuery.trim().length > 0 && providerQuery.trim().length < 2 ? (
+                            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Tape au moins 2 caractères.</p>
+                          ) : providerQuery.trim().length >= 2 ? (
+                            providerSearching ? (
+                              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Recherche…</p>
+                            ) : providerResults.length === 0 ? (
+                              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Aucun prestataire trouvé.</p>
+                            ) : (
+                              providerResults.map((p) => (
+                                <button
+                                  key={p.userId}
+                                  type="button"
+                                  onClick={() => {
+                                    setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: p.name, providerId: p.userId } : x)))
+                                    setProviderSearchFor(null)
+                                  }}
+                                  style={{ textAlign: 'left', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}
+                                >
+                                  {p.name}
+                                  {p.headline && <span style={{ color: 'rgba(255,255,255,0.45)' }}> · {p.headline}</span>}
+                                </button>
+                              ))
+                            )
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   ))}
                   <Button
@@ -1368,29 +1479,24 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     error={errors[`place_${place.key}`]}
                     locked={placeHasSales}
                   />
-                  <InputField
+                  <NumberInputField
                     label={`Prix (${currencySymbol(currency)})`}
-                    type="number"
                     placeholder="0 = gratuit"
                     value={place.price}
-                    onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, price: Number(e.target.value) || 0 } : p)))}
+                    min={0}
+                    onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, price: v } : p)))}
                     locked={placeHasSales}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div>
-                    <InputField
+                    <NumberInputField
                       label="Quantité disponible"
-                      type="number"
                       placeholder="Ex: 100"
                       value={place.qty}
                       min={placeHasSales ? place.sold : 0}
-                      onChange={(e) => {
-                        const newQty = parseInt(e.target.value, 10) || 0
-                        if (placeHasSales && newQty < place.sold) return
-                        setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, qty: newQty } : p)))
-                      }}
+                      onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, qty: v } : p)))}
                     />
                     {placeHasSales && (
                       <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>
@@ -1399,12 +1505,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     )}
                   </div>
                   <div>
-                    <InputField
+                    <NumberInputField
                       label={place.groupType === 'group' ? 'Réservations de groupe/compte' : 'Max/compte'}
-                      type="number"
                       placeholder="0 = illimité"
                       value={place.groupType === 'group' ? 1 : place.maxPerAccount}
-                      onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, maxPerAccount: Number(e.target.value) || 0 } : p)))}
+                      min={0}
+                      onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, maxPerAccount: v } : p)))}
                       locked={placeHasSales || place.groupType === 'group'}
                     />
                     {place.groupType === 'group' && (
@@ -1436,20 +1542,23 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <p style={{ ...S.label, color: 'var(--teal)' }}>Capacité du groupe</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <InputField
+                      <NumberInputField
                         label="Min personnes"
-                        type="number"
                         placeholder="Ex: 8"
-                        value={place.groupMin || ''}
-                        onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMin: Number(e.target.value) || 0 } : p)))}
+                        value={place.groupMin || 0}
+                        min={0}
+                        onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMin: v } : p)))}
                         locked={placeHasSales}
                       />
-                      <InputField
+                      <NumberInputField
                         label="Max personnes"
-                        type="number"
                         placeholder="Ex: 12"
-                        value={place.groupMax || ''}
-                        onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMax: Number(e.target.value) || 0 } : p)))}
+                        value={place.groupMax || 0}
+                        // Jamais en dessous du min déjà saisi — évite de
+                        // pouvoir enregistrer un groupMax < groupMin (bug
+                        // confirmé, validé aussi côté serveur ci-dessous).
+                        min={place.groupMin || 0}
+                        onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMax: v } : p)))}
                         locked={placeHasSales}
                       />
                     </div>
@@ -1508,68 +1617,81 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   </p>
                 </div>
 
-                {/* Options incluses */}
+                {/* Options incluses — deux façons de les renseigner : un texte
+                    libre ("avantage inclus", ex. "Vestiaire offert",
+                    demandé en réunion live le 11/08/2026, auparavant
+                    impossible à saisir sans passer par le menu) OU un
+                    article réel du menu/précommande (rattache un item
+                    facturable existant, offert gratuitement sur ce billet).
+                    Le champ modèle `included[].name` reste un simple texte
+                    dans les deux cas — la distinction est purement une
+                    facilité de saisie côté UI. */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
                   <p style={S.label}>
                     Options incluses dans ce billet <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
                   </p>
-                  {menuChoices.length === 0 && place.included.length === 0 ? (
+                  {place.included.length === 0 && (
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
-                      Tu pourras inclure des articles ici une fois que tu en auras ajouté dans Options avancées → Précommandes (étape suivante). Reviens sur cette étape après pour les rattacher à ce billet.
+                      Ex. « Vestiaire offert », « Accès zone VIP »… ou rattache un article de ta précommande (Options avancées → Précommandes) pour l&apos;offrir gratuitement sur ce billet.
                     </p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                      {place.included.map((inc, k) => {
-                        const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
-                        return (
-                          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(184, 243, 74,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(255,255,255,0.04)' }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <Select
-                                value={inc.name}
-                                onChange={(value) =>
-                                  setPlaces((prev) =>
-                                    prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: value } : x)) } : p))
-                                  )
-                                }
-                                size="sm"
-                                options={[
-                                  ...(!stillInMenu ? [{ value: inc.name, label: `${inc.name} (retiré du menu)` }] : []),
-                                  ...menuChoices.map((m) => ({
-                                    value: m.name.trim(),
-                                    label: `${m.emoji ? `${m.emoji} ` : ''}${m.name.trim()} · ${m.price} ${currencySymbol(currency)}`,
-                                  })),
-                                ]}
-                              />
-                            </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                    {place.included.map((inc, k) => {
+                      const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
+                      return (
+                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(184, 243, 74,0.22)' : 'rgba(255,255,255,0.10)'}`, background: 'rgba(255,255,255,0.04)' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <Input
-                              type="number"
-                              min={1}
-                              value={inc.qty || 1}
+                              value={inc.name}
+                              placeholder="Ex: Vestiaire offert"
                               onChange={(e) =>
                                 setPlaces((prev) =>
-                                  prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, qty: Math.max(1, parseInt(e.target.value, 10) || 1) } : x)) } : p))
+                                  prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: e.target.value } : x)) } : p))
                                 )
                               }
-                              title="Quantité incluse"
-                              style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12, padding: '8px 6px', textAlign: 'center' }}
+                              style={{ background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12.5, padding: '8px 10px' }}
                             />
-                            <span
-                              title="Inclus gratuitement dans le billet"
-                              style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.14)', color: 'var(--teal)' }}
-                            >
-                              Offert
-                            </span>
-                            <Button
-                              variant="ghost"
-                              onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
-                              title="Retirer cette option"
-                              style={{ flexShrink: 0, width: 24, height: 24, minHeight: 24, minWidth: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
-                            >
-                              ×
-                            </Button>
+                            {stillInMenu && (
+                              <p style={{ fontSize: 10.5, color: 'var(--teal)', margin: '4px 0 0' }}>Correspond à un article de ta précommande.</p>
+                            )}
                           </div>
-                        )
-                      })}
+                          <Input
+                            type="number"
+                            min={1}
+                            value={inc.qty || 1}
+                            onChange={(e) =>
+                              setPlaces((prev) =>
+                                prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, qty: Math.max(1, parseInt(e.target.value, 10) || 1) } : x)) } : p))
+                              )
+                            }
+                            title="Quantité incluse"
+                            style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12, padding: '8px 6px', textAlign: 'center' }}
+                          />
+                          <span
+                            title="Inclus gratuitement dans le billet"
+                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.14)', color: 'var(--teal)' }}
+                          >
+                            Offert
+                          </span>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
+                            title="Retirer cette option"
+                            style={{ flexShrink: 0, width: 24, height: 24, minHeight: 24, minWidth: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      )
+                    })}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: '', qty: 1 }] } : p)))}
+                        style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.85)', fontSize: 12 }}
+                      >
+                        + Ajouter un avantage
+                      </Button>
                       {menuChoices.length > 0 && (
                         <Button
                           variant="secondary"
@@ -1582,7 +1704,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                         </Button>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </Card>
             )

@@ -55,7 +55,7 @@ export default function EventInterestButtonClient({
     }
   }
 
-  const size = compact ? 30 : 34
+  const size = 44
   const style: React.CSSProperties = {
     position: 'relative',
     display: 'inline-flex',

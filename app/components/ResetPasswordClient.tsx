@@ -77,7 +77,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 420, margin: '0 auto', textAlign: state === 'form' ? 'left' : 'center' }}>
+    <div className="lb-auth-state" style={{ width: '100%', maxWidth: 520, margin: '0 auto', textAlign: state === 'form' ? 'left' : 'center' }}>
         {state === 'form' && (
           <>
             <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 8px' }}>Nouveau mot de passe</h1>

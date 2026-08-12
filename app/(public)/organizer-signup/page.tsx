@@ -30,7 +30,7 @@ export default async function InscriptionOrganisateurPage() {
     if (application && LOCKED_STATUSES.includes(application.status)) redirect('/my-application')
 
     return (
-      <AuthSplitLayout heroImage={HERO_IMG}>
+      <AuthSplitLayout heroImage={HERO_IMG} wide>
         <OrganizerOnboardingWizard mode="loggedIn" initialFormData={application?.formData} initialCandidateNote={application?.candidateNote} />
       </AuthSplitLayout>
     )
@@ -39,6 +39,7 @@ export default async function InscriptionOrganisateurPage() {
   return (
     <AuthSplitLayout
       heroImage={HERO_IMG}
+      wide
       tagline={
         <>
           CRÉE ET GÈRE

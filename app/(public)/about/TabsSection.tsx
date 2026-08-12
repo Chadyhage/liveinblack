@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-import { Button, Card } from '@/app/components/ui'
+import Image from 'next/image'
+import { ActionLink, Button, Card } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 // Seule partie interactive de la page (bascule entre les 3 profils) — le
@@ -11,7 +11,7 @@ import { useQueryParamState } from '@/lib/client/useQueryParamState'
 // fonctionnelle).
 type TabId = 'client' | 'organizer' | 'provider'
 
-const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; description: string; cta: string }> = [
+const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; description: string; cta: string; href: string; image: string; imageAlt: string }> = [
   {
     id: 'client',
     label: 'Tu sors',
@@ -20,6 +20,9 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
     description:
       'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.',
     cta: 'Créer mon compte',
+    href: '/login?mode=register',
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=82',
+    imageAlt: 'Un public profitant d’un concert',
   },
   {
     id: 'organizer',
@@ -29,6 +32,9 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
     description:
       'Crée et publie ton événement, vends tes billets en ligne, gère ta guestlist, scanne les entrées et suis tes ventes en temps réel — POS sur place inclus.',
     cta: 'Devenir organisateur',
+    href: '/organizer-signup',
+    image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1200&q=82',
+    imageAlt: 'Une scène de concert vue depuis le public',
   },
   {
     id: 'provider',
@@ -37,6 +43,9 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
     roleName: 'Le Prestataire',
     description: 'DJ, salle, sono, traiteur… Crée ta vitrine publique, sois visible des organisateurs et reçois des demandes de devis directement.',
     cta: 'Devenir prestataire',
+    href: '/provider-signup',
+    image: 'https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?auto=format&fit=crop&w=1200&q=82',
+    imageAlt: 'Un artiste en prestation sur scène',
   },
 ]
 
@@ -103,23 +112,16 @@ export default function TabsSection() {
           <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: current.color }}>{current.roleName}</span>
           <h3 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 12px', letterSpacing: '-0.6px' }}>{current.label}</h3>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 24px' }}>{current.description}</p>
-          <Link
-            href="/login?mode=register"
-            style={{
-              display: 'inline-block',
-              padding: '12px 18px',
-              borderRadius: 12,
-              fontSize: 14,
-              fontWeight: 700,
-              textDecoration: 'none',
-              color: current.id === 'organizer' ? '#fff' : 'var(--primary-ink)',
-              background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color,
-            }}
-          >
+          <ActionLink href={current.href} style={{ color: current.id === 'organizer' ? '#fff' : 'var(--primary-ink)', background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color }}>
             {current.cta}
-          </Link>
+          </ActionLink>
         </div>
-        <div style={{ padding: '24px 20px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+        <div style={{ overflow: 'hidden', borderRadius: 18, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.09)' }}>
+          <div style={{ position: 'relative', minHeight: 190 }}>
+            <Image src={current.image} alt={current.imageAlt} fill sizes="(max-width: 700px) calc(100vw - 80px), 42vw" style={{ objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 42%, rgba(5,5,8,.82))' }} />
+          </div>
+          <div style={{ padding: '20px 18px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             {JOURNEYS[activeTab].map(([number, title, detail]) => (
               <div key={title} style={{ textAlign: 'center' }}>
@@ -144,6 +146,7 @@ export default function TabsSection() {
                 <span style={{ display: 'block', fontSize: 10.5, lineHeight: 1.4, color: 'var(--text-faint)', marginTop: 4 }}>{detail}</span>
               </div>
             ))}
+          </div>
           </div>
         </div>
       </Card>

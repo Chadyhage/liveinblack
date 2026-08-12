@@ -287,7 +287,7 @@ export default function PrestataireOnboardingWizard({
   const types = form.prestataireTypes
 
   return (
-    <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
+    <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 1080, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
@@ -313,29 +313,31 @@ export default function PrestataireOnboardingWizard({
               <div style={{ display: 'flex', gap: 10 }}>
                 <div style={{ flex: 1 }}>
                   <Label style={labelStyle}>Prénom</Label>
-                  <Input style={inputStyle} value={form.prenom} onChange={(e) => set('prenom', e.target.value)} />
+                  <Input aria-label="Prénom" style={inputStyle} value={form.prenom} onChange={(e) => set('prenom', e.target.value)} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <Label style={labelStyle}>Nom</Label>
-                  <Input style={inputStyle} value={form.nom} onChange={(e) => set('nom', e.target.value)} />
+                  <Input aria-label="Nom" style={inputStyle} value={form.nom} onChange={(e) => set('nom', e.target.value)} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Select
+                  aria-label="Indicatif téléphonique"
                   value={form.telephoneCode}
                   onChange={(value) => set('telephoneCode', value)}
                   options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
                 />
-                <Input style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
+                <Input aria-label="Téléphone" style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                 <div>
                   <Label style={labelStyle}>Ville</Label>
-                  <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
+                  <Input aria-label="Ville" style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Pays</Label>
                   <Select
+                    aria-label="Pays"
                     value={form.pays}
                     onChange={(value) => set('pays', value)}
                     options={regions.map((r) => ({ value: r.country, label: `${r.flag} ${r.country}` }))}
@@ -349,12 +351,13 @@ export default function PrestataireOnboardingWizard({
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <Label style={labelStyle}>Adresse e-mail (identifiant de connexion)</Label>
-                      <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                      <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                     </div>
                     <div>
                       <Label style={labelStyle}>Mot de passe</Label>
                       <div style={{ position: 'relative' }}>
                         <Input
+                          aria-label="Mot de passe"
                           style={{ ...inputStyle, paddingRight: 56 }}
                           type={showRegPwd ? 'text' : 'password'}
                           value={regPassword}
@@ -364,6 +367,7 @@ export default function PrestataireOnboardingWizard({
                         <Button
                           variant="link"
                           type="button"
+                          aria-label={showRegPwd ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
                           onClick={() => setShowRegPwd((v) => !v)}
                           style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
                         >
@@ -373,7 +377,7 @@ export default function PrestataireOnboardingWizard({
                     </div>
                     <div>
                       <Label style={labelStyle}>Confirmer le mot de passe</Label>
-                      <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                      <Input aria-label="Confirmation du mot de passe" style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                     </div>
                   </div>
                 </>

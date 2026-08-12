@@ -9,6 +9,7 @@ import { eventStatsCsvRows } from '@/lib/shared/eventStats'
 import { formatMoney } from '../../types'
 import { Button, Card, Select } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
+import { stripDiacritics } from '@/lib/shared/diacritics'
 
 const TONE_COLOR: Record<string, string> = {
   gold: 'var(--gold)',
@@ -32,9 +33,7 @@ function slugifyEventName(name: string): string {
   // Normalise les accents (é, è, à…) avant de retirer les caractères non
   // alphanumériques, pour éviter un nom de fichier réduit à des tirets
   // (ex. "Café XL" → "cafe-xl" au lieu de "caf--xl").
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(name)
     .replace(/[^a-z0-9]+/gi, '-')
 }
 

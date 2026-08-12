@@ -1,0 +1,203 @@
+.lb-public-layout {
+  --public-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--public-font);
+}
+
+.lb-public-layout main { font-family: var(--public-font); }
+.lb-public-layout main h1,
+.lb-public-layout main h2,
+.lb-public-layout main h3 {
+  font-family: var(--public-font) !important;
+  text-transform: none !important;
+}
+
+.lb-public-layout :where(input, textarea, button, select) { font-family: inherit; }
+.lb-public-layout :where(a, button, summary, input, textarea, [role="button"]):focus-visible {
+  outline: 3px solid #b8f34a;
+  outline-offset: 3px;
+}
+
+/* Cartes éditoriales illustrées des parcours et pages d'aide */
+.lb-editorial-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .055);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, .22);
+}
+.lb-editorial-card__media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #17171a; }
+.lb-editorial-card__media img { object-fit: cover; transition: transform .35s ease; }
+.lb-editorial-card:hover .lb-editorial-card__media img { transform: scale(1.025); }
+.lb-editorial-card__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 52%, rgba(5, 5, 8, .64)); }
+.lb-editorial-card__badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  min-width: 42px;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 13px;
+  background: rgba(8, 8, 10, .72);
+  backdrop-filter: blur(14px);
+  color: #b8f34a;
+  font-size: 15px;
+  font-weight: 750;
+}
+.lb-editorial-card__body { padding: 24px; }
+.lb-editorial-card__body > p:first-child { margin: 0 0 8px; color: #b8f34a; font-size: 13px !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.lb-editorial-card__body h3 { margin: 0; color: #f5f5f7; font-size: 24px !important; line-height: 1.16; letter-spacing: -.03em; }
+.lb-editorial-card__body h3 + p { margin: 11px 0 0; color: rgba(245, 245, 247, .65); font-size: 16px !important; line-height: 1.58; }
+
+/* Pages de détail publiques */
+.lb-public-detail-page {
+  max-width: 1320px !important;
+  padding: 30px clamp(20px, 4vw, 56px) 112px !important;
+  background: transparent;
+}
+
+.lb-public-detail-page > :first-child > div:first-child,
+.lb-public-detail-page > div:first-child { font-size: 15px !important; }
+.lb-public-detail-page h1 { font-size: clamp(38px, 5.5vw, 62px) !important; line-height: 1.02 !important; letter-spacing: -.045em !important; }
+.lb-public-detail-page .lb-detail-section {
+  margin-top: 28px;
+  padding: clamp(24px, 3vw, 34px);
+  border-color: rgba(255, 255, 255, .12);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .055);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, .2);
+}
+.lb-public-detail-page .lb-detail-section > h2 { margin-bottom: 16px !important; color: #b8f34a !important; font-size: 17px !important; font-weight: 700 !important; letter-spacing: -.01em !important; text-transform: none !important; }
+.lb-public-detail-page .lb-detail-section p { font-size: 16px !important; line-height: 1.62 !important; }
+.lb-public-detail-page .lb-detail-section a { font-size: 15px !important; }
+
+/* Authentification, inscriptions et écrans de confirmation */
+.lb-auth-split { color-scheme: dark; }
+.lb-auth-split__form h1 {
+  color: #f5f5f7 !important;
+  font-size: clamp(36px, 4vw, 48px) !important;
+  font-weight: 720 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.045em !important;
+}
+.lb-auth-split__form h2 { color: #f5f5f7 !important; font-size: 20px !important; font-weight: 700 !important; letter-spacing: -.02em !important; }
+.lb-auth-split__form p { font-size: 16px !important; line-height: 1.58 !important; }
+.lb-auth-split__form label { margin-bottom: 9px !important; color: rgba(245, 245, 247, .76) !important; font-size: 15px !important; font-weight: 600 !important; }
+.lb-auth-split__form :where(input, textarea) {
+  min-height: 56px !important;
+  padding-inline: 16px !important;
+  border: 1px solid rgba(255, 255, 255, .15) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, .065) !important;
+  color: #f5f5f7 !important;
+  font-size: 17px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
+}
+.lb-auth-split__form :where(input, textarea)::placeholder { color: rgba(245, 245, 247, .34); }
+.lb-auth-split__form :where(input, textarea):focus { border-color: rgba(184, 243, 74, .75) !important; box-shadow: 0 0 0 4px rgba(184, 243, 74, .12) !important; }
+.lb-auth-split__form button,
+.lb-auth-split__form a[style*="primaryBtn"] { min-height: 50px; border-radius: 14px !important; font-size: 16px !important; font-weight: 650 !important; }
+.lb-auth-form > div:first-of-type { margin-bottom: 32px !important; }
+.lb-auth-form form { gap: 18px !important; }
+.lb-auth-form .lb-role-card {
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, .12) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, .055) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .14);
+}
+.lb-auth-form .lb-role-card button { min-height: 104px !important; padding: 20px !important; }
+.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(184, 243, 74, .48) !important; background: rgba(184, 243, 74, .065) !important; }
+.lb-auth-form [role="tablist"] { min-height: 48px; padding: 4px !important; border-radius: 13px !important; background: rgba(255, 255, 255, .075) !important; }
+.lb-auth-form [role="tab"] { min-height: 40px; border-radius: 10px !important; }
+.lb-auth-state {
+  padding: clamp(28px, 5vw, 48px) !important;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, .052);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .25);
+}
+.lb-auth-state > div:first-child { box-shadow: 0 14px 42px rgba(0, 0, 0, .22); }
+.lb-auth-wizard > div { gap: 28px !important; }
+.lb-auth-wizard > div > div:first-child p:first-child { margin-bottom: 10px !important; color: #b8f34a !important; font-size: 13px !important; font-weight: 700 !important; letter-spacing: .12em !important; }
+.lb-auth-wizard > div > div:first-child h1 { margin-bottom: 10px !important; }
+.lb-auth-wizard > div > div:nth-child(2) > div:last-child { height: 8px !important; }
+.lb-auth-wizard > div > div:nth-child(3) {
+  padding: clamp(24px, 4vw, 38px) !important;
+  border: 1px solid rgba(255, 255, 255, .11) !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, .05) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .22) !important;
+}
+.lb-auth-wizard h2,
+.lb-auth-wizard h3 { color: #f5f5f7 !important; font-size: 20px !important; font-weight: 700 !important; letter-spacing: -.02em !important; text-transform: none !important; }
+.lb-auth-wizard form,
+.lb-auth-wizard > div > div:nth-child(3) > div { gap: 20px !important; }
+
+/* Pages légales et contact */
+.lb-legal-page,
+.lb-contact-page {
+  padding: clamp(44px, 6vw, 78px) clamp(20px, 4vw, 56px) 112px !important;
+  background: #0a0a0d !important;
+}
+.lb-legal-page > div,
+.lb-contact-page > div { max-width: 1200px !important; }
+.lb-legal-page h1,
+.lb-contact-page h1 { font-size: clamp(38px, 5vw, 58px) !important; line-height: 1.04 !important; letter-spacing: -.045em !important; }
+.lb-legal-page h2,
+.lb-contact-page h2 { font-size: 20px !important; line-height: 1.25 !important; letter-spacing: -.02em !important; }
+.lb-legal-page p,
+.lb-legal-page li,
+.lb-contact-page p { font-size: 16px !important; line-height: 1.65 !important; }
+.lb-legal-page [class*="Card"],
+.lb-contact-page [class*="Card"] { border-radius: 22px !important; }
+.lb-legal-page details { border-radius: 20px !important; background: rgba(255, 255, 255, .055) !important; }
+.lb-legal-page summary,
+.lb-legal-page nav a { font-size: 15px !important; }
+.lb-contact-page input,
+.lb-contact-page textarea { min-height: 54px !important; border-radius: 14px !important; font-size: 16px !important; }
+.lb-contact-page label { font-size: 14px !important; }
+.lb-contact-page button { min-height: 50px; border-radius: 14px !important; font-size: 16px !important; }
+
+/* Lecture du blog */
+.lb-blog-article { padding: 54px clamp(20px, 4vw, 56px) 112px !important; background: #0a0a0d; }
+.lb-blog-article h1 { font-size: clamp(42px, 6vw, 72px) !important; line-height: 1.02 !important; letter-spacing: -.05em !important; }
+.lb-blog-article article { max-width: 760px !important; color: rgba(245, 245, 247, .72) !important; font-size: 18px !important; line-height: 1.78 !important; }
+.lb-blog-article article :where(h2, h3) { margin-top: 2em; color: #f5f5f7; font-size: 1.45em !important; letter-spacing: -.025em !important; }
+.lb-blog-article article a { color: #b8f34a; }
+
+/* Retours de paiement et d'activation */
+.lb-status-page { padding: clamp(54px, 8vw, 96px) 20px !important; background: #0a0a0d; }
+.lb-status-page > div { max-width: 560px !important; padding: clamp(34px, 5vw, 52px) !important; border-radius: 28px !important; background: rgba(255, 255, 255, .06) !important; }
+.lb-status-page h1 { font-size: clamp(32px, 4vw, 44px) !important; line-height: 1.08 !important; letter-spacing: -.04em !important; }
+.lb-status-page p { font-size: 16px !important; line-height: 1.65 !important; }
+.lb-status-page button,
+.lb-status-page a { min-height: 50px; border-radius: 14px !important; font-size: 16px !important; }
+
+@media (max-width: 900px) {
+  .lb-auth-state { padding: 34px 24px !important; }
+}
+
+@media (max-width: 640px) {
+  .lb-public-detail-page { padding: 18px 14px 88px !important; }
+  .lb-public-detail-page h1 { font-size: 38px !important; }
+  .lb-public-detail-page .lb-detail-section { padding: 22px 18px; border-radius: 20px; }
+  .lb-legal-page,
+  .lb-contact-page { padding: 38px 16px 88px !important; }
+  .lb-blog-article { padding: 36px 20px 88px !important; }
+  .lb-blog-article article { font-size: 17px !important; }
+  .lb-auth-split__form h1 { font-size: 36px !important; }
+  .lb-auth-form [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  .lb-auth-wizard > div > div:nth-child(3) { padding: 22px 18px !important; border-radius: 20px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lb-public-layout *,
+  .lb-public-layout *::before,
+  .lb-public-layout *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .lb-editorial-card__media img { transition: none; }
+  .lb-editorial-card:hover .lb-editorial-card__media img { transform: none; }
+}

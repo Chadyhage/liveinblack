@@ -20,9 +20,10 @@ export interface ModalProps {
 // `children` — cette coquille ne prescrit aucune mise en page interne.
 export default function Modal({ onClose, children, maxWidth = 520, hideClose, contentStyle }: ModalProps) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
+    <div className="lb-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="lb-modal-backdrop" style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
       <div
+        className="lb-modal-panel"
         style={{
           position: 'relative',
           width: '100%',

@@ -20,40 +20,25 @@ export default function HeroScrollIndicator({ targetId }: { targetId?: string })
   }, [targetId])
 
   return (
-    <>
-      <style>{`
-        @keyframes lbHeroChevronBounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(8px); }
-        }
-        .lb-hero-scroll-indicator {
-          animation: lbHeroChevronBounce 1.8s ease-in-out infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .lb-hero-scroll-indicator {
-            animation: none;
-          }
-        }
-      `}</style>
-      <IconButton
+    <IconButton
         label="Défiler vers la section suivante"
         onClick={scrollToNext}
-        size={40}
+        size={44}
         style={{
           position: 'absolute',
           left: '50%',
           bottom: 22,
           transform: 'translateX(-50%)',
-          border: 'none',
-          background: 'transparent',
-          color: 'var(--text-muted)',
+          border: '1px solid rgba(255,255,255,.18)',
+          background: 'rgba(18,18,20,.58)',
+          backdropFilter: 'blur(14px)',
+          color: 'rgba(255,255,255,.78)',
         }}
         icon={
-          <span className="lb-hero-scroll-indicator" style={{ display: 'inline-flex' }}>
-            <ChevronDown size={28} strokeWidth={1.8} aria-hidden="true" />
+          <span style={{ display: 'inline-flex' }}>
+            <ChevronDown size={22} strokeWidth={1.8} aria-hidden="true" />
           </span>
         }
       />
-    </>
   )
 }

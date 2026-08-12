@@ -21,7 +21,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
   const { id } = await params
 
   return (
-    <main style={{ maxWidth: 1400, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 88px', width: '100%' }}>
+    <main className="lb-public-detail-page" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 88px', width: '100%' }}>
       <ProviderDetailContent id={id} />
     </main>
   )

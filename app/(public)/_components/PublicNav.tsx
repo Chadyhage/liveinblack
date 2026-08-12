@@ -2,19 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import AccountMenu from './AccountMenu'
-import { IconButton } from '@/app/components/ui'
-import { Menu, Search, X } from 'lucide-react'
+import { Button, IconButton, Input } from '@/app/components/ui'
+import { LogIn, Menu, Search, UserPlus, X } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/home', label: 'Accueil' },
   { href: '/events', label: 'Événements' },
   { href: '/providers', label: 'Prestataires' },
   { href: '/organizers', label: 'Organisateurs' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/about', label: "C'est quoi" },
 ]
 
 interface QuickSearchEvent { id: string; name: string; dateDisplay: string | null; city: string | null; imageUrl: string | null }
@@ -25,32 +23,23 @@ interface QuickSearchResults { events: QuickSearchEvent[]; providers: QuickSearc
 const EMPTY_RESULTS: QuickSearchResults = { events: [], providers: [], organizers: [] }
 
 // Recherche globale (événements + organisateurs + prestataires) directement
-// dans le header — auparavant une simple entrée de nav vers /search, une page
-// dédiée pour un besoin aussi fréquent forçait un aller-retour inutile.
-// Icône collapsible : clic ouvre un champ inline. Au lieu de rediriger vers
-// /search à chaque frappe, on interroge GET /api/search/quick (top 3/catégorie,
-// mêmes fonctions serveur que /search — voir ce fichier) et on affiche un
-// dropdown de résultats en direct sous le champ ; /search reste la
-// destination de la recherche complète via « Voir tous les résultats » ou la
-// soumission du formulaire, jamais le seul point d'entrée.
+// dans le header — champ toujours visible (plus une icône à cliquer d'abord :
+// un aller-retour en plus pour une action aussi fréquente). Interroge
+// GET /api/search/quick (top 3/catégorie) et affiche un panneau de
+// suggestions en direct sous le champ à chaque frappe. Il n'existe plus de
+// page /search dédiée : ce champ + son panneau EST la recherche globale,
+// aucune redirection vers une page de résultats complets.
 //
 // Pas de catégorie « Utilisateurs » : la seule recherche d'utilisateurs de
 // l'app (lib/server/friends.ts:searchUsers) exige une session et sert à
 // retrouver un contact de messagerie, ce n'est pas un répertoire public — ne
 // pas la détourner ici exposerait des comptes hors de ce cadre.
 function HeaderSearch() {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
   const [results, setResults] = useState<QuickSearchResults>(EMPTY_RESULTS)
   const [loading, setLoading] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (open) inputRef.current?.focus()
-  }, [open])
 
   // Convention useEffect + fetch du projet (CLAUDE.md) : logique de fetch
   // inline dans une fonction async locale, flag `cancelled` pour éviter une
@@ -58,13 +47,8 @@ function HeaderSearch() {
   // ne pas interroger la base à chaque touche.
   useEffect(() => {
     const query = value.trim()
-    if (!query) {
-      setResults(EMPTY_RESULTS)
-      setLoading(false)
-      return
-    }
+    if (!query) return
     let cancelled = false
-    setLoading(true)
     const timer = setTimeout(() => {
       async function run() {
         try {
@@ -87,71 +71,64 @@ function HeaderSearch() {
   }, [value])
 
   useEffect(() => {
-    if (!open) return
+    if (!dropdownOpen) return
     function handleClickOutside(event: MouseEvent) {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
         setDropdownOpen(false)
-        if (!value) setOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [open, value])
-
-  function goToFullResults(query: string) {
-    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search')
-    setOpen(false)
-    setDropdownOpen(false)
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    goToFullResults(value.trim())
-  }
+  }, [dropdownOpen])
 
   const hasResults = results.events.length > 0 || results.providers.length > 0 || results.organizers.length > 0
-  const showDropdown = open && dropdownOpen && value.trim().length > 0
+  const showDropdown = dropdownOpen && value.trim().length > 0
 
   return (
-    <div ref={rootRef} style={{ position: 'relative' }}>
+    <div ref={rootRef} className="lb-header-search" style={{ position: 'relative' }}>
       <form
         role="search"
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        onSubmit={(e) => {
+          e.preventDefault()
+          setDropdownOpen(true)
+        }}
+        className="lb-header-search__form"
       >
-        {open && (
-          <input
-            ref={inputRef}
-            type="search"
-            value={value}
-            onChange={(e) => {
-              setValue(e.target.value)
-              setDropdownOpen(true)
-            }}
-            onFocus={() => setDropdownOpen(true)}
-            placeholder="Rechercher…"
-            aria-label="Recherche globale"
-            style={{
-              width: 220,
-              minHeight: 40,
-              padding: '0 12px',
-              borderRadius: 999,
-              border: '1px solid var(--border-strong)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-              fontSize: 13.5,
-              fontFamily: 'inherit',
-            }}
-          />
-        )}
-        <IconButton
-          type={open ? 'submit' : 'button'}
-          onClick={() => { if (!open) setOpen(true) }}
-          label="Recherche globale"
-          icon={<Search size={18} strokeWidth={2} aria-hidden="true" />}
-          size={40}
-          style={{ background: 'var(--surface)', color: 'var(--text)', borderRadius: '50%' }}
+        <Input
+          className="lb-header-search__input"
+          type="search"
+          value={value}
+          onChange={(e) => {
+            const nextValue = e.target.value
+            setValue(nextValue)
+            setResults(EMPTY_RESULTS)
+            setLoading(Boolean(nextValue.trim()))
+            setDropdownOpen(true)
+          }}
+          onFocus={() => setDropdownOpen(true)}
+          placeholder="Rechercher…"
+          aria-label="Recherche globale (événements, organisateurs, prestataires)"
+          containerStyle={{ flex: 1, minWidth: 0 }}
+          style={{
+            width: 188,
+            minHeight: 44,
+            padding: '0 8px 0 15px',
+            border: 0,
+            background: 'transparent',
+            color: '#f5f5f7',
+            fontSize: 14,
+            fontFamily: 'inherit',
+            boxShadow: 'none',
+          }}
         />
+        <Button
+          type="submit"
+          variant="ghost"
+          className="lb-header-search__button"
+          aria-label="Lancer la recherche"
+        >
+          <Search size={18} strokeWidth={2} aria-hidden="true" />
+        </Button>
       </form>
 
       {showDropdown && (
@@ -165,10 +142,11 @@ function HeaderSearch() {
             maxWidth: '90vw',
             maxHeight: 420,
             overflowY: 'auto',
-            background: 'var(--surface-2)',
-            border: '1px solid var(--border)',
-            borderRadius: 14,
-            boxShadow: '0 20px 48px rgba(0,0,0,.5)',
+            background: 'rgba(24,24,27,.96)',
+            backdropFilter: 'blur(24px) saturate(160%)',
+            border: '1px solid rgba(255,255,255,.12)',
+            borderRadius: 18,
+            boxShadow: '0 24px 64px rgba(0,0,0,.42)',
             zIndex: 60,
           }}
         >
@@ -185,7 +163,7 @@ function HeaderSearch() {
                 <Link
                   key={e.id}
                   href={`/events/${e.id}`}
-                  onClick={() => { setOpen(false); setDropdownOpen(false) }}
+                  onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
                 >
@@ -204,7 +182,7 @@ function HeaderSearch() {
                 <Link
                   key={o.userId}
                   href={`/organizers/${o.slug}`}
-                  onClick={() => { setOpen(false); setDropdownOpen(false) }}
+                  onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
                 >
@@ -221,7 +199,7 @@ function HeaderSearch() {
                 <Link
                   key={p.userId}
                   href={`/providers/${encodeURIComponent(p.userId)}`}
-                  onClick={() => { setOpen(false); setDropdownOpen(false) }}
+                  onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
                 >
@@ -231,29 +209,6 @@ function HeaderSearch() {
               ))}
             </QuickResultGroup>
           )}
-
-          <button
-            type="button"
-            onClick={() => goToFullResults(value.trim())}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'center',
-              padding: '11px 14px',
-              fontSize: 12.5,
-              fontWeight: 800,
-              color: 'var(--teal)',
-              background: 'transparent',
-              border: 'none',
-              borderTop: '1px solid var(--border)',
-              textTransform: 'uppercase',
-              letterSpacing: '.03em',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            Voir tous les résultats
-          </button>
         </div>
       )}
     </div>
@@ -301,14 +256,12 @@ const PRIMARY_HREFS = ['/home', '/events', '/providers', '/organizers']
 
 export default function PublicNav({ dashboardLinks }: { dashboardLinks?: DashboardNavLink[] } = {}) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  // Entre 1100 et 1399px, les liens "primaires" sont déjà affichés inline
-  // (règle .lb-navlink-primary plus bas) : le tiroir ne doit alors proposer
-  // que ce qui manque (« C'est quoi »), jamais les répéter.
+  // Entre 1100 et 1399px, les liens principaux sont déjà affichés inline :
+  // le tiroir reste réservé aux liens éventuels du tableau de bord.
   const [primaryLinksInline, setPrimaryLinksInline] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1100px)').matches
   )
   const pathname = usePathname()
-  const onLoginPage = pathname === '/login'
   const { data: session, status } = useSession()
 
   useEffect(() => {
@@ -350,96 +303,110 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
 
   return (
     <header
-      className="lb-public-nav"
+      className="lb-public-nav lb-apple-header"
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        background: 'rgba(7,8,13,0.86)',
-        backdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(184, 243, 74,.16)',
+        background: 'rgba(8,8,10,.74)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        borderBottom: '1px solid rgba(255,255,255,.09)',
       }}
     >
       <div className="lb-public-nav__inner">
       <Link
         href="/home"
         style={{
-          fontSize: 17,
-          letterSpacing: '0.12em',
-          color: 'var(--text)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
+          fontSize: 16,
+          letterSpacing: '-0.025em',
+          color: '#f5f5f7',
           textDecoration: 'none',
-          fontWeight: 800,
+          fontWeight: 700,
           flexShrink: 0,
         }}
       >
-        L<span style={{ color: 'var(--text)' }}>|</span>VE IN{' '}
-        <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
+        LIVE<span style={{ color: 'rgba(255,255,255,.52)', fontWeight: 500 }}>IN</span>BLACK
       </Link>
-      <nav aria-label="Navigation principale" style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-        {NAV_LINKS.map((link) => {
-          const active = isCurrentPath(pathname, link.href)
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`lb-navlink ${['/home', '/events', '/providers', '/organizers'].includes(link.href) ? 'lb-navlink-primary' : 'lb-navlink-secondary'}${active ? ' lb-navlink-active' : ''}`}
-              aria-current={active ? 'page' : undefined}
-              style={{ position: 'relative', color: active ? 'var(--primary)' : 'var(--text-muted)', textDecoration: 'none', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.055em', padding: '8px 0' }}
-            >
-              {link.label}
-            </Link>
-          )
-        })}
-        <span className="lb-navlink">
+      <nav aria-label="Navigation principale" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Nav publique (Accueil/Événements/Prestataires/Organisateurs)
+            masquée une fois connecté — remplacée par la sidebar de dashboard
+            (DashboardShell.tsx) sur les routes privées (confirmé en réunion
+            live le 11/08/2026). Un lien "Voir le site public" reste
+            disponible dans le menu profil (AccountMenu.tsx) pour y revenir. */}
+        {status !== 'authenticated' &&
+          NAV_LINKS.map((link) => {
+            const active = isCurrentPath(pathname, link.href)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`lb-navlink ${['/home', '/events', '/providers', '/organizers'].includes(link.href) ? 'lb-navlink-primary' : 'lb-navlink-secondary'}${active ? ' lb-navlink-active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+                style={{ position: 'relative', color: active ? '#f5f5f7' : 'rgba(255,255,255,.68)', textDecoration: 'none', fontSize: 13.5, fontWeight: active ? 650 : 500, letterSpacing: '-.01em', padding: '10px 11px', borderRadius: 10, background: active ? 'rgba(255,255,255,.1)' : 'transparent' }}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
+        <span className="lb-navlink lb-nav-search">
           <HeaderSearch />
         </span>
         {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
-        {status === 'unauthenticated' && !onLoginPage && (
+        {status !== 'authenticated' && (
           <>
             <Link
               href="/login"
               className="lb-navlink lb-nav-auth"
               style={{
-                padding: '9px 18px',
-                borderRadius: 999,
-                background: 'var(--gold)',
-                color: '#171500',
-                fontSize: 13,
-                fontWeight: 700,
+                minHeight: 44,
+                padding: '10px 17px',
+                borderRadius: 12,
+                background: 'var(--primary)',
+                color: 'var(--primary-ink)',
+                fontSize: 14,
+                fontWeight: 650,
                 textDecoration: 'none',
               }}
             >
-              Connexion
+              <LogIn size={16} strokeWidth={2} aria-hidden="true" />
+              <span>Connexion</span>
             </Link>
             <Link
               href="/login?mode=register"
               className="lb-navlink lb-nav-auth"
               style={{
-                padding: '9px 18px',
-                borderRadius: 999,
-                border: '1px solid rgba(184, 243, 74,.55)',
-                color: 'var(--text)',
-                fontSize: 13,
-                fontWeight: 700,
+                minHeight: 44,
+                padding: '10px 17px',
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,.18)',
+                background: 'rgba(255,255,255,.06)',
+                color: '#f5f5f7',
+                fontSize: 14,
+                fontWeight: 600,
                 textDecoration: 'none',
               }}
             >
-              Créer un compte
+              <UserPlus size={16} strokeWidth={2} aria-hidden="true" />
+              <span>Créer un compte</span>
             </Link>
             <Link
               href="/login"
               className="lb-navlink-mobile lb-mobile-login"
               style={{
-                padding: '8px 14px',
-                borderRadius: 999,
+                minHeight: 44,
+                padding: '10px 15px',
+                borderRadius: 12,
                 background: 'var(--teal-solid)',
                 color: '#04120e',
-                fontSize: 12.5,
-                fontWeight: 700,
+                fontSize: 14,
+                fontWeight: 650,
                 textDecoration: 'none',
               }}
             >
-              Connexion
+              <LogIn size={16} strokeWidth={2} aria-hidden="true" />
+              <span>Connexion</span>
             </Link>
           </>
         )}
@@ -450,8 +417,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             aria-controls="lb-mobile-menu"
             label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             icon={mobileOpen ? <X size={18} strokeWidth={2} aria-hidden="true" /> : <Menu size={18} strokeWidth={2} aria-hidden="true" />}
-            size={40}
-            style={{ background: 'var(--surface)', color: 'var(--text)', borderRadius: '50%' }}
+            size={44}
+            style={{ background: 'rgba(255,255,255,.08)', color: '#f5f5f7', border: '1px solid rgba(255,255,255,.13)', borderRadius: 12 }}
           />
         </span>
       </nav>
@@ -464,16 +431,19 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           style={{
             position: 'absolute',
             top: '100%',
-            left: 0,
-            right: 0,
+            left: 12,
+            right: 12,
             display: 'flex',
             flexDirection: 'column',
-            maxHeight: 'calc(100dvh - 58px - var(--cookie-consent-height, 0px))',
+            maxHeight: 'calc(100dvh - 76px - var(--cookie-consent-height, 0px))',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-            background: 'var(--surface-2)',
-            borderBottom: '1px solid var(--border)',
-            boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+            marginTop: 8,
+            background: 'rgba(24,24,27,.96)',
+            backdropFilter: 'blur(28px) saturate(170%)',
+            border: '1px solid rgba(255,255,255,.12)',
+            borderRadius: 20,
+            boxShadow: '0 24px 64px rgba(0,0,0,.46)',
           }}
         >
           <div style={{ padding: '14px 22px 4px' }}>
@@ -493,13 +463,15 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? 'page' : undefined}
                     style={{
-                      padding: '14px 22px',
-                      color: active ? 'var(--primary)' : 'var(--text)',
-                      background: active ? 'rgba(184, 243, 74,.08)' : 'transparent',
+                      minHeight: 48,
+                      padding: '13px 16px',
+                      margin: '2px 8px',
+                      borderRadius: 12,
+                      color: active ? '#f5f5f7' : 'rgba(255,255,255,.76)',
+                      background: active ? 'rgba(255,255,255,.1)' : 'transparent',
                       textDecoration: 'none',
-                      fontSize: 14.5,
-                      fontWeight: active ? 800 : 600,
-                      borderBottom: '1px solid var(--border)',
+                      fontSize: 16,
+                      fontWeight: active ? 650 : 500,
                     }}
                   >
                     {link.label}
@@ -520,37 +492,62 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 onClick={() => setMobileOpen(false)}
                 aria-current={active ? 'page' : undefined}
                 style={{
-                  padding: '14px 22px',
-                  color: active ? 'var(--primary)' : 'var(--text)',
-                  background: active ? 'rgba(184, 243, 74,.08)' : 'transparent',
+                  minHeight: 48,
+                  padding: '13px 16px',
+                  margin: '2px 8px',
+                  borderRadius: 12,
+                  color: active ? '#f5f5f7' : 'rgba(255,255,255,.76)',
+                  background: active ? 'rgba(255,255,255,.1)' : 'transparent',
                   textDecoration: 'none',
-                  fontSize: 14.5,
-                  fontWeight: active ? 800 : 600,
-                  borderBottom: '1px solid var(--border)',
+                  fontSize: 16,
+                  fontWeight: active ? 650 : 500,
                 }}
               >
                 {link.label}
               </Link>
             )
           })}
+          {status !== 'authenticated' && (
+            <div className="lb-mobile-auth-actions">
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="lb-mobile-auth-button lb-mobile-auth-button--secondary"
+              >
+                <LogIn size={18} strokeWidth={2} aria-hidden="true" />
+                <span>Connexion</span>
+              </Link>
+              <Link
+                href="/login?mode=register"
+                onClick={() => setMobileOpen(false)}
+                className="lb-mobile-auth-button lb-mobile-auth-button--primary"
+              >
+                <UserPlus size={18} strokeWidth={2} aria-hidden="true" />
+                <span>Créer un compte</span>
+              </Link>
+            </div>
+          )}
         </nav>
       )}
 
       <style>{`
         .lb-public-nav__inner {
           width: 100%;
-          max-width: 1800px;
+          max-width: 1440px;
           min-height: 64px;
           margin: 0 auto;
-          padding: 0 28px;
+          padding: 0 32px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 24px;
+          gap: 42px;
+          font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
         .lb-navlink { display: none }
         .lb-navlink-mobile { display: inline-flex; align-items: center; justify-content: center; }
-        .lb-nav-auth { align-items: center; justify-content: center; line-height: 1; }
+        .lb-mobile-login { gap: 7px; white-space: nowrap; }
+        .lb-nav-auth { align-items: center; justify-content: center; gap: 8px; line-height: 1; white-space: nowrap; }
+        .lb-nav-auth:first-of-type { margin-left: 10px; }
         @media (min-width: 1100px) and (max-width: 1399px) {
           .lb-navlink-primary { display: inline-block }
           .lb-nav-auth { display: inline-flex }
@@ -562,23 +559,54 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           .lb-nav-auth { display: inline-flex !important }
           .lb-navlink-mobile { display: none !important }
         }
-        @media (min-width: 1100px) {
-          .lb-navlink-active::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: -15px;
-            height: 3px;
-            border-radius: 999px;
-            background: var(--primary);
-          }
+        .lb-navlink { transition: color 160ms ease, background 160ms ease, opacity 160ms ease; }
+        .lb-navlink:not(.lb-nav-search):hover { color: #fff !important; background: rgba(255,255,255,.075) !important; }
+        .lb-header-search__form {
+          display: flex;
+          align-items: center;
+          min-height: 46px;
+          padding: 1px 3px 1px 1px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 14px;
+          background: rgba(255,255,255,.07);
+          transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
         }
+        .lb-header-search__form:focus-within {
+          border-color: rgba(184,243,74,.62);
+          background: rgba(255,255,255,.1);
+          box-shadow: 0 0 0 4px rgba(184,243,74,.11);
+        }
+        .lb-header-search__input { min-width: 0; outline: none; }
+        .lb-header-search__button {
+          width: 40px;
+          height: 40px;
+          flex: 0 0 40px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 0;
+          border-radius: 11px;
+          background: rgba(255,255,255,.1);
+          color: #f5f5f7;
+          cursor: pointer;
+          transition: color 160ms ease, background 160ms ease;
+        }
+        .lb-header-search__button:hover { color: var(--primary); background: rgba(255,255,255,.15); }
+        .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
-          .lb-public-nav__inner { min-height: 58px; padding: 0 14px; gap: 10px; }
+          .lb-public-nav__inner { min-height: 60px; padding: 0 14px; gap: 10px; }
+          .lb-header-search, .lb-header-search form { width: 100% !important; }
+          .lb-header-search__input { width: auto !important; flex: 1; }
         }
+        .lb-mobile-auth-actions { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 14px 16px 16px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,.09); }
+        .lb-mobile-auth-button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 650; }
+        .lb-mobile-auth-button--primary { color: var(--primary-ink); background: var(--primary); }
+        .lb-mobile-auth-button--secondary { color: #f5f5f7; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); }
         .lb-menu-row { transition: background 0.15s ease; }
-        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: var(--surface); }
+        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: rgba(255,255,255,.07); }
+        @media (prefers-reduced-motion: reduce) {
+          .lb-navlink, .lb-header-search__form, .lb-header-search__button, .lb-menu-row { transition: none; }
+        }
       `}</style>
     </header>
   )

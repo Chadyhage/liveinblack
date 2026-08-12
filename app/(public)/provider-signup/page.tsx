@@ -26,7 +26,7 @@ export default async function InscriptionPrestatairePage() {
     if (application && LOCKED_STATUSES.includes(application.status)) redirect('/my-application')
 
     return (
-      <AuthSplitLayout heroImage={HERO_IMG}>
+      <AuthSplitLayout heroImage={HERO_IMG} wide>
         <PrestataireOnboardingWizard mode="loggedIn" initialFormData={application?.formData} initialCandidateNote={application?.candidateNote} />
       </AuthSplitLayout>
     )
@@ -35,6 +35,7 @@ export default async function InscriptionPrestatairePage() {
   return (
     <AuthSplitLayout
       heroImage={HERO_IMG}
+      wide
       tagline={
         <>
           DJ, SALLE, TRAITEUR…

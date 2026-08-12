@@ -77,7 +77,13 @@ export async function checkinTicket(caller: CheckinCaller, input: CheckinInput):
     // le type inféré par Mongoose ne le reflète pas, d'où le cast.
     const roster = staff?.roster as Record<string, { role: string }> | undefined
     const entry = roster?.[caller.id]
-    if (entry && entry.role !== 'dj') allowed = true
+    // Seuls les rôles 'scan' et 'manager' peuvent valider une entrée — 'dj'
+    // (déjà exclu) ET 'serveur' (décision produit du 11/08/2026 : un serveur
+    // gère les commandes au bar, jamais le contrôle d'accès, pour qu'il ne
+    // puisse jamais re-scanner/valider un billet déjà entré comme le ferait
+    // le contrôle d'entrée — voir ScannerClient.tsx pour la séparation
+    // d'interface côté client, ce garde serveur est la frontière réelle).
+    if (entry && (entry.role === 'scan' || entry.role === 'manager')) allowed = true
   }
   if (!allowed) return { ok: false, status: 403, error: 'forbidden' }
 

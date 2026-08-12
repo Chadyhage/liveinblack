@@ -15,6 +15,11 @@ const promoCodeSchema = new Schema(
     active: { type: Boolean, default: true },
     expiresAt: { type: Date, default: null },
     createdBy: { type: String, default: null },
+    // Restriction à des types de place spécifiques (confirmé en réunion live
+    // le 11/08/2026) — absent/vide = s'applique à toutes les places, comme
+    // avant ce champ (comportement par défaut inchangé). Rempli = le code
+    // n'est valide que pour ces `place.id` précis.
+    placeIds: { type: [String], default: undefined },
   },
   { timestamps: true }
 )

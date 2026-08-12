@@ -109,12 +109,6 @@ const HIDE_ON = ['/messages', '/scanner']
 const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup']
 
 const SEEN_KEY = 'lib_ambiance_seen'
-// Durée de la transition d'ouverture/fermeture du panneau — utilisée à la
-// fois dans le CSS et pour retarder le démontage après fermeture (même
-// convention que SlideOverModal.tsx : état "monté" piloté par
-// requestAnimationFrame, transform/opacity en CSS, pas de lib d'animation).
-const PANEL_TRANSITION_MS = 220
-
 interface SearchResult {
   title: string
   artist: string
@@ -122,7 +116,7 @@ interface SearchResult {
   previewUrl: string | null
 }
 
-export default function AmbientMusicPlayer() {
+export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?: boolean }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   // Fermeture complète (distincte de la réduction) : coupe la lecture et
@@ -132,11 +126,6 @@ export default function AmbientMusicPlayer() {
   // fermer". Volontairement en mémoire (pas de localStorage) : une fermeture
   // ne doit pas suivre l'utilisateur d'une visite à l'autre.
   const [dismissed, setDismissed] = useState(false)
-  // Le panneau reste monté un court instant après la fermeture logique pour
-  // laisser la transition de sortie se jouer (translateY + opacity), au lieu
-  // de disparaître brutalement comme avant.
-  const [panelMounted, setPanelMounted] = useState(false)
-  const [panelVisible, setPanelVisible] = useState(false)
   const st = useSyncExternalStore(subscribeToMusicEngine, getState, getServerSnapshot)
   // Chip « Ambiance » : visible à l'arrivée tant que le lecteur n'a jamais été
   // ouvert (flag localStorage), puis se replie tout seul après ~5 s. Lecture
@@ -161,7 +150,6 @@ export default function AmbientMusicPlayer() {
   const btnRef = useRef<HTMLDivElement>(null)
   const searchDebRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const searchReqRef = useRef(0)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Fade d'apparition du chip (simple fade, compatible prefers-reduced-motion)
   useEffect(() => {
@@ -178,22 +166,6 @@ export default function AmbientMusicPlayer() {
 
   // Nettoyage du debounce de recherche
   useEffect(() => () => clearTimeout(searchDebRef.current), [])
-
-  // Montage/démontage du panneau piloté par `open`, avec un aller-retour par
-  // requestAnimationFrame pour déclencher la transition d'entrée (même
-  // convention que SlideOverModal.tsx) et un délai avant démontage pour
-  // laisser la transition de sortie se jouer.
-  useEffect(() => {
-    clearTimeout(closeTimerRef.current)
-    if (open) {
-      setPanelMounted(true)
-      const raf = requestAnimationFrame(() => setPanelVisible(true))
-      return () => cancelAnimationFrame(raf)
-    }
-    setPanelVisible(false)
-    closeTimerRef.current = setTimeout(() => setPanelMounted(false), PANEL_TRANSITION_MS)
-    return () => clearTimeout(closeTimerRef.current)
-  }, [open])
 
   // Fermer le panneau au clic extérieur
   useEffect(() => {
@@ -216,6 +188,7 @@ export default function AmbientMusicPlayer() {
   }, [open])
 
   if (HIDE_ON.some((p) => pathname?.startsWith(p))) return null
+  if (publicMode) return null
   if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
@@ -365,7 +338,7 @@ export default function AmbientMusicPlayer() {
         />
       ) : (
         <>
-      {panelMounted && (
+      {open && (
         <Card
           ref={panelRef}
           role="dialog"
@@ -383,10 +356,9 @@ export default function AmbientMusicPlayer() {
             boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
             maxHeight: 'calc(100vh - 200px)',
             overflowY: 'auto',
-            opacity: panelVisible ? 1 : 0,
-            transform: panelVisible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.98)',
+            opacity: 1,
+            transform: 'translateY(0) scale(1)',
             transformOrigin: 'bottom right',
-            transition: `opacity ${PANEL_TRANSITION_MS}ms ease, transform ${PANEL_TRANSITION_MS}ms cubic-bezier(0.22,0.9,0.3,1)`,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 2px' }}>

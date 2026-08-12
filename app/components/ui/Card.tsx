@@ -18,10 +18,11 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'>
 // listbox) ou une détection de clic extérieur par ref (ex.
 // AmbientMusicPlayer.tsx), plutôt que de forcer ces appelants à revenir à un
 // <div> stylé à la main "isolé" du design system.
-const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ children, style, accent, ...rest }, ref) {
+const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ children, style, accent, className, ...rest }, ref) {
   return (
     <div
       ref={ref}
+      className={`lb-card${className ? ` ${className}` : ''}`}
       {...rest}
       style={{
         background: 'var(--surface)',

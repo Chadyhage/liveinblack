@@ -72,13 +72,14 @@ export default function ContactClient() {
   }
 
   return (
-    <div
+    <main
+      className="lb-contact-page"
       style={{
         minHeight: '100vh',
         position: 'relative',
         zIndex: 1,
         padding: '20px 16px 48px',
-        background: 'radial-gradient(circle at 80% 0%, rgba(139,92,246,0.09), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+        background: 'radial-gradient(circle at 80% 0%, rgba(184,243,74,0.07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <div style={{ maxWidth: 1440, margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -202,6 +203,6 @@ export default function ContactClient() {
         </Card>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

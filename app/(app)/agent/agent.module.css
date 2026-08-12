@@ -1,0 +1,129 @@
+.workspace {
+  --agent-material: rgba(23, 23, 28, .76);
+  --agent-border: rgba(255, 255, 255, .115);
+  width: 100%;
+  min-width: 0;
+}
+
+.workspace :global(.lb-dashboard-page) { max-width: 1480px; }
+.workspace :global(.lb-dashboard-page) > div { gap: 28px !important; }
+.workspace :global(.lb-dashboard-page) > div > div:first-child:has(h1),
+.workspace :global(.lb-dashboard-page) > div > h1:first-child {
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+}
+
+.workspace :global(.lb-dashboard-title) {
+  color: #f5f5f7;
+  font-size: clamp(38px, 4.2vw, 56px) !important;
+  font-weight: 720 !important;
+  letter-spacing: -.045em !important;
+}
+
+.workspace :global(.lb-card) {
+  border-color: var(--agent-border) !important;
+  border-radius: 22px !important;
+  background: var(--agent-material) !important;
+  backdrop-filter: blur(24px) saturate(135%);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .22) !important;
+}
+
+.workspace :global(.lb-card):hover { transform: none; border-color: rgba(184, 243, 74, .24) !important; }
+.workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important; gap: 14px !important; }
+.workspace :global(.lb-responsive-metrics) > :global(.lb-card),
+.workspace :global(.lb-responsive-metrics) > button { min-height: 116px; padding: 20px !important; border-radius: 19px !important; }
+.workspace :global(.lb-dashboard-card-grid) { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px !important; }
+
+.workspace :where(input, textarea) { min-height: 52px !important; border-radius: 14px !important; background: rgba(255, 255, 255, .065) !important; font-size: 15px !important; }
+.workspace textarea { min-height: 110px !important; }
+.workspace button { min-height: 44px; border-radius: 12px !important; font-size: 14px !important; }
+.workspace label { color: rgba(245, 245, 247, .72) !important; font-size: 14px !important; }
+.workspace :global(.lb-modal-panel) { border-color: rgba(255, 255, 255, .13) !important; border-radius: 24px !important; background: rgba(27, 27, 32, .92) !important; backdrop-filter: blur(30px) saturate(150%); }
+
+.workspace section > p:first-child[style*="text-transform: uppercase"] { color: rgba(245, 245, 247, .52) !important; font-size: 13px !important; font-weight: 700 !important; letter-spacing: .08em !important; }
+.workspace [style*="overflow-x: auto"] { padding-bottom: 8px !important; scrollbar-width: thin; }
+.workspace [role="alert"] { border-radius: 16px !important; }
+
+/* Chaque outil conserve une identité fonctionnelle sans casser le système commun. */
+.workspace :global(.lb-agent-screen) { --screen-accent: #b8f34a; }
+.workspace :global(.lb-agent-screen--overview) { --screen-accent: #b8f34a; }
+.workspace :global(.lb-agent-screen--users) { --screen-accent: #70b7ff; }
+.workspace :global(.lb-agent-screen--events) { --screen-accent: #b8f34a; }
+.workspace :global(.lb-agent-screen--applications) { --screen-accent: #c4a7ff; }
+.workspace :global(.lb-agent-screen--payments) { --screen-accent: #ffd36a; }
+.workspace :global(.lb-agent-screen--deletions),
+.workspace :global(.lb-agent-screen--reports) { --screen-accent: #ff8fb2; }
+.workspace :global(.lb-agent-screen--reviews) { --screen-accent: #ffcf5a; }
+.workspace :global(.lb-agent-screen--homepage),
+.workspace :global(.lb-agent-screen--blog) { --screen-accent: #8ee7c5; }
+
+.workspace :global(.lb-agent-screen) > div > div:first-child:has(.lb-dashboard-title),
+.workspace :global(.lb-agent-screen) > div > div:first-child > div:has(.lb-dashboard-title) {
+  position: relative;
+}
+.workspace :global(.lb-agent-screen) .lb-dashboard-title::before {
+  content: "";
+  width: 34px;
+  height: 5px;
+  display: block;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: var(--screen-accent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--screen-accent) 46%, transparent);
+}
+.workspace :global(.lb-agent-screen) :where(input, textarea):focus { border-color: var(--screen-accent) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--screen-accent) 13%, transparent) !important; }
+
+/* L’accueil possède sa propre composition bento dans AgentDashboardClient :
+   aucun cadre générique n’est imposé aux sections afin de conserver son
+   rythme visuel et sa hiérarchie opérationnelle. */
+
+/* Comptes : recherche centrale et filtres compacts façon barre d’outils. */
+.workspace :global(.lb-agent-screen--users) > div > div[style*="position: relative"] { max-width: 760px; }
+.workspace :global(.lb-agent-screen--users) > div > div[style*="overflow-x: auto"] { padding: 8px; border: 1px solid var(--agent-border); border-radius: 16px; background: rgba(255, 255, 255, .035); }
+
+/* Événements : visuels plus généreux, lignes lisibles comme un catalogue de contrôle. */
+.workspace :global(.lb-agent-screen--events) :global(.lb-card)[style*="align-items: center"] { min-height: 92px; padding: 17px !important; }
+.workspace :global(.lb-agent-screen--events) :global(.lb-card)[style*="align-items: center"] > div:first-child { width: 68px !important; height: 68px !important; border-radius: 14px !important; }
+
+/* Files de traitement : onglets-métriques dominants et détail en feuille latérale. */
+.workspace :global(.lb-agent-screen--applications) :global(.lb-responsive-metrics) button,
+.workspace :global(.lb-agent-screen--payments) :global(.lb-responsive-metrics) button,
+.workspace :global(.lb-agent-screen--reports) > div > div[style*="grid-template-columns"] button { border-color: color-mix(in srgb, var(--screen-accent) 24%, transparent) !important; }
+.workspace :global(.lb-agent-screen--applications) div[style*="position: fixed"] > div:last-child,
+.workspace :global(.lb-agent-screen--deletions) div[style*="position: fixed"] > div:last-child { max-width: 680px !important; }
+
+/* Modération : davantage d’air entre les dossiers sensibles. */
+.workspace :global(.lb-agent-screen--deletions) > div > div:last-of-type,
+.workspace :global(.lb-agent-screen--reports) > div > div:last-of-type,
+.workspace :global(.lb-agent-screen--reviews) > div > div:last-of-type { gap: 16px !important; }
+.workspace :global(.lb-agent-screen--reports) :global(.lb-card) { border-left-color: var(--screen-accent) !important; }
+
+/* Contenus : zone de composition plus claire et formulaires éditoriaux plus larges. */
+.workspace :global(.lb-agent-screen--homepage) > div > :global(.lb-card),
+.workspace :global(.lb-agent-screen--blog) > div > :global(.lb-card) { padding: 24px !important; }
+.workspace :global(.lb-agent-screen--blog) :global(.lb-modal-panel) { max-width: 760px !important; }
+.workspace :global(.lb-agent-screen--blog) textarea { min-height: 150px !important; }
+.workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child {
+  border-color: rgba(255, 255, 255, .13) !important;
+  border-radius: 26px 26px 0 0 !important;
+  background: rgba(27, 27, 32, .94) !important;
+  backdrop-filter: blur(30px) saturate(150%);
+  box-shadow: 0 -26px 80px rgba(0, 0, 0, .45) !important;
+}
+.workspace div[style*="position: fixed"][style*="justify-content: center"] > div:last-child {
+  border-radius: 24px !important;
+  background: rgba(27, 27, 32, .94) !important;
+  backdrop-filter: blur(30px) saturate(150%);
+}
+
+@media (max-width: 760px) {
+  .workspace :global(.lb-dashboard-page) > div { gap: 22px !important; }
+  .workspace :global(.lb-dashboard-title) { font-size: 38px !important; }
+  .workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .workspace :global(.lb-responsive-metrics) > :global(.lb-card),
+  .workspace :global(.lb-responsive-metrics) > button { min-height: 104px; padding: 16px !important; }
+}
+
+@media (max-width: 460px) {
+  .workspace :global(.lb-responsive-metrics) { grid-template-columns: 1fr !important; }
+}

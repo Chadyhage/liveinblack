@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, LockKeyhole } from 'lucide-react'
 import { getTicketDisplay } from '@/lib/server/tickets'
 import { fmtMoney } from '@/lib/shared/money'
 import TicketQr from './TicketQr'
+import TicketRefundRequestButton from './TicketRefundRequestButton'
 import { Card } from '@/app/components/ui'
 
 // Page volontairement PUBLIQUE (pas de vérification de session) : posséder le
@@ -129,6 +130,11 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
         >
           Commander sur place
         </Link>
+
+        {/* Lien sécurisé de remboursement (#H2, Politique Annulation/
+            Remboursement §2) — uniquement pour un billet invité (sans
+            compte) : un titulaire de compte passe par /profile/billets. */}
+        {ticket.guestName && <TicketRefundRequestButton token={token} />}
 
         <Link
           href={`/playlist/${ticket.eventId}`}

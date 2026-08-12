@@ -20,12 +20,22 @@ describe('computeTicketFeeCents', () => {
 })
 
 describe('computeTicketFeeXOF', () => {
-  it('5% + 300 FCFA par billet', () => {
-    // 5000 FCFA → 5% = 250 + 300 = 550
-    expect(computeTicketFeeXOF(5000, 1)).toBe(550)
+  // Table d'exemples officielle (LIVE_IN_BLACK_Modele_Economique_CORRIGE.docx
+  // §1) : 5% du prix, plancher 200 FCFA, plafond 1500 FCFA par admission —
+  // PAS un montant fixe ajouté au pourcentage.
+  it('applique le plancher de 200 FCFA sous 4000 FCFA', () => {
+    expect(computeTicketFeeXOF(1000, 1)).toBe(200) // 5% = 50 < 200
+    expect(computeTicketFeeXOF(3000, 1)).toBe(200) // 5% = 150 < 200
+    expect(computeTicketFeeXOF(4000, 1)).toBe(200) // 5% = 200, pile le plancher
   })
-  it('plafonne à 1500 FCFA/billet', () => {
-    // 100000 FCFA → 5% = 5000 + 300 = 5300, plafonné à 1500
+  it('applique le pourcentage brut entre le plancher et le plafond', () => {
+    expect(computeTicketFeeXOF(5000, 1)).toBe(250)
+    expect(computeTicketFeeXOF(10000, 1)).toBe(500)
+    expect(computeTicketFeeXOF(20000, 1)).toBe(1000)
+    expect(computeTicketFeeXOF(30000, 1)).toBe(1500) // pile le plafond
+  })
+  it('plafonne à 1500 FCFA/admission au-delà de 30000 FCFA', () => {
+    expect(computeTicketFeeXOF(50000, 1)).toBe(1500)
     expect(computeTicketFeeXOF(100000, 1)).toBe(1500)
   })
   it('montants entiers (pas de décimales XOF)', () => {
