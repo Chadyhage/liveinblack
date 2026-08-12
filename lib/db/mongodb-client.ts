@@ -12,12 +12,21 @@ declare global {
   var __mongoClientPromise: Promise<MongoClient> | undefined
 }
 
+// Enveloppé dans une IIFE async — jamais un throw SYNCHRONE au chargement du
+// module (bug confirmé le 12/08/2026 : cassait le build Vercel, "Collecting
+// page data" importe toutes les routes, y compris celles import auth.ts →
+// ce module → crash immédiat avant même qu'une requête n'arrive). Même
+// principe que lib/db/mongoose.ts::getDb(), qui ne vérifie MONGODB_URI qu'À
+// L'APPEL, jamais à l'import — ici la vérification doit rester dans le
+// corps de la promesse (rejet asynchrone), jamais hors d'un `async`.
 function createClientPromise(): Promise<MongoClient> {
-  if (!MONGODB_URI) {
-    throw new Error('MONGODB_URI manquant — définis-le dans web/.env.local')
-  }
-  const client = new MongoClient(MONGODB_URI)
-  return client.connect()
+  return (async () => {
+    if (!MONGODB_URI) {
+      throw new Error('MONGODB_URI manquant — définis-le dans web/.env.local')
+    }
+    const client = new MongoClient(MONGODB_URI)
+    return client.connect()
+  })()
 }
 
 const clientPromise: Promise<MongoClient> = globalThis.__mongoClientPromise ?? createClientPromise()
