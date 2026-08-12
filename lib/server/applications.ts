@@ -3,10 +3,13 @@ import { getDb } from '../db/mongoose'
 import User from '../models/User'
 import Application, { type ApplicationDoc } from '../models/Application'
 import { DOCUMENT_MIME_TYPES, uploadDataUri } from './cloudinary'
-import { applicationReceivedEmail } from './email-templates'
+import { applicationReceivedEmail, newApplicationToReviewEmail } from './emails'
 import { sendEmail } from './email'
+import { notifyAllAgents } from './emails/notify'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 import { validateOrganizerFormData, type OrganizerFormData, validatePrestataireFormData, type PrestataireFormData, getRequiredDocs } from '../shared/applicationValidation'
-import { applicationApprovedEmail, applicationRejectedEmail, applicationNeedsChangesEmail } from './email-templates'
+import { applicationApprovedEmail, applicationRejectedEmail, applicationNeedsChangesEmail } from './emails'
 import { isPasswordPolicyCompliant } from '../shared/passwordPolicy'
 import { createNotification } from './notifications'
 import {
@@ -249,6 +252,7 @@ export async function submitOrganizerApplication(caller: ApplicationCaller, inpu
 
   const emailResult = await sendEmail(user.email, applicationReceivedEmail(user.email, undefined, 'organisateur'))
   if (!emailResult.ok) console.error('[submitOrganizerApplication] email failed for', user.email, emailResult.error)
+  await notifyAllAgents(() => newApplicationToReviewEmail([user.firstName, user.lastName].filter(Boolean).join(' ') || user.email, 'organisateur', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()) }
 }
@@ -312,6 +316,7 @@ export async function registerAndSubmitOrganizerApplication(input: RegisterAndSu
 
   const emailResult = await sendEmail(email, applicationReceivedEmail(email, undefined, 'organisateur'))
   if (!emailResult.ok) console.error('[registerAndSubmitOrganizerApplication] email failed for', email, emailResult.error)
+  await notifyAllAgents(() => newApplicationToReviewEmail(input.formData.nomCommercial || email, 'organisateur', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()), userId: String(user._id) }
 }
@@ -375,6 +380,7 @@ export async function submitPrestataireApplication(caller: ApplicationCaller, in
 
   const emailResult = await sendEmail(user.email, applicationReceivedEmail(user.email, undefined, 'prestataire'))
   if (!emailResult.ok) console.error('[submitPrestataireApplication] email failed for', user.email, emailResult.error)
+  await notifyAllAgents(() => newApplicationToReviewEmail([user.firstName, user.lastName].filter(Boolean).join(' ') || user.email, 'prestataire', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()) }
 }
@@ -434,6 +440,7 @@ export async function registerAndSubmitPrestataireApplication(input: RegisterAnd
 
   const emailResult = await sendEmail(email, applicationReceivedEmail(email, undefined, 'prestataire'))
   if (!emailResult.ok) console.error('[registerAndSubmitPrestataireApplication] email failed for', email, emailResult.error)
+  await notifyAllAgents(() => newApplicationToReviewEmail([input.formData.prenom, input.formData.nom].filter(Boolean).join(' ') || email, 'prestataire', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()), userId: String(user._id) }
 }

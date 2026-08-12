@@ -8,7 +8,7 @@ import {
   invalidateAllVerificationTokens,
   invalidateVerificationTokens,
 } from '../auth/verification-tokens'
-import { emailVerificationEmail, passwordResetEmail } from './email-templates'
+import { emailVerificationEmail, passwordResetEmail } from './emails'
 import { sendEmail } from './email'
 
 // Gestion des comptes utilisateurs côté agent (#9 phase agent/admin), port de

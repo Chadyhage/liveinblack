@@ -2,13 +2,18 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { MongoDBAdapter } from '@auth/mongodb-adapter'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import clientPromise from './lib/db/mongodb-client'
 import { getDb } from './lib/db/mongoose'
 import User from './lib/models/User'
 import type { Role, AccountStatus, RoleApprovalStatus } from './lib/server/permissions'
 import { checkRateLimit, getRequestIp } from './lib/server/rateLimit'
+import { notifyUserById } from './lib/server/emails/notify'
+import { newDeviceLoginEmail } from './lib/server/emails'
 
 const SESSION_REVALIDATE_INTERVAL_MS = 5 * 60 * 1000
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+const MAX_KNOWN_DEVICES = 10
 
 // Remplace Firebase Auth. Stratégie JWT obligatoire avec le provider
 // Credentials (Auth.js ne persiste pas de session en base pour ce provider —
@@ -66,10 +71,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const isPureClient = !user.roles.includes('organisateur') && !user.roles.includes('prestataire') && !user.roles.includes('agent')
         if (isPureClient && !user.emailVerifiedAt) return null
 
+        // E16 : hash IP+UA (jamais l'un des deux en clair en base), comparé
+        // aux empreintes déjà connues — best-effort, ne bloque jamais la
+        // connexion si l'email/notification échoue (notifyUserById avale ses
+        // erreurs). notifyUserById (pas notifyEmail) : user._id est déjà en
+        // scope, ce qui permet aussi une notification in-app/push — un cas
+        // de sécurité où l'alerte push a le plus de valeur.
+        const deviceHash = crypto
+          .createHash('sha256')
+          .update(`${getRequestIp(request)}|${request?.headers.get('user-agent') || ''}`)
+          .digest('hex')
+        const knownDevices: string[] = user.knownDeviceHashes || []
+        if (!knownDevices.includes(deviceHash)) {
+          await User.updateOne({ _id: user._id }, { $push: { knownDeviceHashes: { $each: [deviceHash], $slice: -MAX_KNOWN_DEVICES } } })
+          await notifyUserById(String(user._id), () =>
+            newDeviceLoginEmail(
+              { deviceLabel: null, approxLocation: null, when: new Date().toLocaleString('fr-FR') },
+              `${SITE}/profile`,
+              SITE
+            )
+          )
+        }
+
         return {
           id: String(user._id),
           email: user.email,
           name: [user.firstName, user.lastName].filter(Boolean).join(' '),
+          image: user.avatarUrl || null,
           roles: user.roles,
           activeRole: user.activeRole,
           status: user.status,
@@ -126,10 +154,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (Date.now() - lastChecked < SESSION_REVALIDATE_INTERVAL_MS) return token
 
       await getDb()
-      const dbUser = await User.findById(token.sub).select('disabled sessionVersion').lean()
+      const dbUser = await User.findById(token.sub).select('disabled sessionVersion avatarUrl').lean()
       if (!dbUser || dbUser.disabled || (dbUser.sessionVersion || 0) !== (token.sessionVersion || 0)) {
         return null
       }
+      // Revalidé sur le même intervalle que sessionVersion ci-dessus — sans
+      // ça, une photo de profil changée dans ProfilClient.tsx ne
+      // remonterait dans le header qu'à la prochaine reconnexion (30 jours).
+      token.picture = dbUser.avatarUrl || null
       token.checkedAt = Date.now()
       return token
     },

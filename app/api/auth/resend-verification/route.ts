@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { getDb } from '@/lib/db/mongoose'
 import User from '@/lib/models/User'
 import { issueVerificationToken, invalidateVerificationTokens } from '@/lib/auth/verification-tokens'
-import { emailVerificationEmail } from '@/lib/server/email-templates'
+import { emailVerificationEmail } from '@/lib/server/emails'
 import { sendEmail } from '@/lib/server/email'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 

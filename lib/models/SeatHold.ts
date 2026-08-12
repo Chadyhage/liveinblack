@@ -40,6 +40,10 @@ const seatHoldSchema = new Schema(
     // Renseigné UNIQUEMENT une fois `active` (activatedAt + durée du tier) —
     // null tant que l'acompte n'est pas confirmé payé.
     expiresAt: { type: Date, default: null },
+    // Anti-doublon du rappel "ta place expire bientôt" (voir
+    // lib/server/seatHolds.ts::sendSeatHoldExpiryReminders) — jamais réinitialisé,
+    // un hold ne reçoit qu'un seul rappel sur toute sa durée de vie.
+    reminderSentAt: { type: Date, default: null },
   },
   { timestamps: false }
 )

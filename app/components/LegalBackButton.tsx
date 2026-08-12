@@ -27,6 +27,8 @@ export default function LegalBackButton() {
       style={{
         width: 32,
         height: 32,
+        minWidth: 32,
+        minHeight: 32,
         borderRadius: '50%',
         flexShrink: 0,
         background: 'rgba(11,11,18,0.06)',

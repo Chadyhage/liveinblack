@@ -14,7 +14,7 @@ import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Checkbox, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, Checkbox, EmptyState, Input, PageLinks, pageSlice } from '@/app/components/ui'
 
 const PAGE_SIZE = 20
 
@@ -88,19 +88,19 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
     <main className="organizer-directory">
       <style>{`
         .organizer-directory{width:100%;min-height:100vh;padding:56px clamp(20px,3vw,48px) 88px}
-        .organizer-directory__wrap{max-width:1480px;margin:0 auto}
+        .organizer-directory__wrap{max-width:1800px;margin:0 auto}
         .organizer-directory__filters{display:grid;grid-template-columns:minmax(300px,1.7fr) minmax(190px,.75fr) minmax(190px,.75fr) auto auto;gap:10px;align-items:center;margin:0 0 42px}
         .organizer-directory__field{min-width:0;padding:11px 14px;border-radius:999px;border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13px}
         .organizer-directory__check{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-muted);white-space:nowrap}
-        .organizer-directory__grid{display:flex;flex-direction:column;gap:16px}
-        .organizer-directory__card{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.2fr) 220px;min-height:260px;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
+        .organizer-directory__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px}
+        .organizer-directory__card{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);box-shadow:0 18px 45px rgba(0,0,0,.2);transition:transform .25s ease,border-color .25s ease}
         .organizer-directory__card:hover{transform:translateY(-3px);border-color:rgba(184, 243, 74,.35)}
-        .organizer-directory__cover{position:relative;min-height:230px;overflow:hidden;background:linear-gradient(135deg,rgba(184,243,74,.35),rgba(184,243,74,.12),var(--obsidian))}
+        .organizer-directory__cover{position:relative;min-height:200px;overflow:hidden;background:linear-gradient(135deg,rgba(184,243,74,.35),rgba(184,243,74,.12),var(--obsidian))}
         .organizer-directory__cover:after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(4,4,11,.82),transparent 65%)}
-        .organizer-directory__body{position:relative;padding:38px 34px;color:inherit;text-decoration:none;display:flex;flex-direction:column;justify-content:center}
-        .organizer-directory__actions{padding:32px 24px;border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:12px}
-        @media(max-width:820px){.organizer-directory__filters{grid-template-columns:1fr 1fr}.organizer-directory__filters button{grid-column:span 1}.organizer-directory__card{grid-template-columns:minmax(210px,.8fr) 1.2fr}.organizer-directory__actions{grid-column:1/-1;border-left:0;border-top:1px solid var(--border);padding:16px 20px;flex-direction:row;align-items:center}.organizer-directory__actions>*{flex:1}}
-        @media(max-width:620px){.organizer-directory{padding:32px 14px 92px}.organizer-directory__filters{grid-template-columns:1fr}.organizer-directory__filters button{grid-column:auto}.organizer-directory__card{grid-template-columns:1fr}.organizer-directory__cover{min-height:170px}.organizer-directory__body{padding:30px 20px}.organizer-directory__actions{grid-column:auto}}
+        .organizer-directory__body{position:relative;padding:38px 24px 22px;color:inherit;text-decoration:none;display:flex;flex-direction:column;flex:1}
+        .organizer-directory__actions{padding:18px 24px 24px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+        @media(max-width:820px){.organizer-directory__filters{grid-template-columns:1fr 1fr}.organizer-directory__filters button{grid-column:span 1}}
+        @media(max-width:620px){.organizer-directory{padding:32px 14px 92px}.organizer-directory__filters{grid-template-columns:1fr}.organizer-directory__filters button{grid-column:auto}.organizer-directory__grid{grid-template-columns:1fr}}
       `}</style>
       <div className="organizer-directory__wrap">
         <header className="lb-directory-hero">
@@ -159,10 +159,11 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
         </p>
 
         {filtered.length === 0 ? (
-          <div style={{ maxWidth: 520, margin: '0 auto', padding: 38, textAlign: 'center', border: '1px solid var(--border)', borderRadius: 18, background: 'var(--surface)' }}>
-            <p style={{ color: 'var(--text-muted)', margin: 0 }}>Aucun organisateur ne correspond à ces critères.</p>
-            <Link href="/organizers" style={{ display: 'inline-block', marginTop: 14, color: 'var(--teal)', fontWeight: 700 }}>Effacer les filtres</Link>
-          </div>
+          <EmptyState
+            title="Aucun organisateur ne correspond à ces critères"
+            description="Essaie d'élargir ta recherche ou d'effacer les filtres."
+            action={<Link href="/organizers" style={{ display: 'inline-block', color: 'var(--teal)', fontWeight: 700 }}>Effacer les filtres</Link>}
+          />
         ) : (
           <div className="organizer-directory__grid">
             {paged.map((organizer) => {
@@ -179,9 +180,9 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                     </div>
                   </Link>
                   <Link href={`/organizers/${organizer.slug}`} className="organizer-directory__body">
-                    <h2 style={{ margin: 0, fontSize: 27, lineHeight: 1.1 }}>{organizer.publicName}</h2>
+                    <h2 style={{ margin: 0, fontSize: 21, lineHeight: 1.15 }}>{organizer.publicName}</h2>
                     {(organizer.city || zones.length > 0) && <p style={{ margin: '7px 0 0', color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>{[organizer.city, ...zones].filter(Boolean).slice(0, 3).join(' · ')}</p>}
-                    <p style={{ margin: '14px 0 0', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.6 }}>{organizer.shortDescription || 'Découvre sa programmation et son univers.'}</p>
+                    <p style={{ margin: '14px 0 0', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{organizer.shortDescription || 'Découvre sa programmation et son univers.'}</p>
                     {organizer.nextEvent && (
                       <p style={{ margin: '16px 0 0', paddingTop: 13, borderTop: '1px solid var(--border)', color: 'var(--text-faint)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
                         Prochain événement · <span style={{ color: '#fff' }}>{organizer.nextEvent.name}</span>

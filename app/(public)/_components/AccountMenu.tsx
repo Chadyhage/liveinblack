@@ -1,12 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell } from 'lucide-react'
+import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell, BellRing, ChevronDown } from 'lucide-react'
 import { Avatar, Button, Skeleton } from '@/app/components/ui'
+import { isPushSupported, getPushPermissionState, subscribeToPush } from '@/lib/client/push'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
 // session existe — avant ce composant, un utilisateur connecté voyait
@@ -75,7 +75,26 @@ export default function AccountMenu({
   const [conversations, setConversations] = useState<ConversationPreview[] | null>(null)
   const [notifications, setNotifications] = useState<NotificationItem[] | null>(null)
   const [notifUnread, setNotifUnread] = useState(0)
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported' | null>(null)
+  const [pushSubscribing, setPushSubscribing] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+
+  // État de la permission push — lu une fois au montage (jamais de prompt
+  // automatique, seulement pour savoir si on affiche le bouton d'activation
+  // dans le dropdown Notifications ci-dessous).
+  useEffect(() => {
+    getPushPermissionState().then((state) => setPushPermission(isPushSupported() ? state : 'unsupported'))
+  }, [])
+
+  async function handleEnablePush() {
+    setPushSubscribing(true)
+    try {
+      const result = await subscribeToPush()
+      setPushPermission(result.ok ? 'granted' : await getPushPermissionState())
+    } finally {
+      setPushSubscribing(false)
+    }
+  }
 
   // Un compte peut porter plusieurs rôles à la fois (voir lib/models/User.ts)
   // — bascule activeRole côté serveur (POST /api/account/active-role, seule
@@ -196,14 +215,25 @@ export default function AccountMenu({
   }
 
   const totalUnread = (conversations ?? []).reduce((sum, c) => sum + c.unreadCount, 0)
-  const initial = (user.name?.trim()?.[0] || user.email?.trim()?.[0] || '?').toUpperCase()
   const dashboards = (user.roles ?? [])
     .map((role) => (DASHBOARD_BY_ROLE[role] ? { role, ...DASHBOARD_BY_ROLE[role] } : null))
     .filter((d): d is { role: string; href: string; label: string } => d !== null)
 
   return (
     <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
-      <div style={{ position: 'relative' }}>
+      <style>{`
+        @media (max-width: 640px) { .lb-acct-name { display: none !important } }
+        /* Sous 480px, le header n'a pas la place pour logo + recherche +
+           messages + notifications + avatar + burger sans déborder — ces
+           deux raccourcis restent accessibles via /messages (icône déjà
+           dans lb-mobile-menu) et la cloche via le dropdown compte, donc
+           les masquer ici ne retire aucun accès, juste la place qu'ils
+           prenaient dans le header. */
+        @media (max-width: 480px) { .lb-acct-quick { display: none !important } }
+        .lb-menu-row { transition: background 0.15s ease; }
+        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: var(--surface); }
+      `}</style>
+      <div className="lb-acct-quick" style={{ position: 'relative' }}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -214,17 +244,19 @@ export default function AccountMenu({
           aria-label="Messages"
           aria-expanded={messagesOpen}
           style={{
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
+            minWidth: 40,
+            minHeight: 40,
             padding: 0,
-            borderRadius: 10,
+            borderRadius: '50%',
             border: '1px solid var(--border-strong)',
             background: 'var(--surface)',
             color: 'var(--text)',
             position: 'relative',
           }}
         >
-          <MessageCircle size={17} />
+          <MessageCircle size={18} strokeWidth={2} />
           {totalUnread > 0 && (
             <span
               style={{
@@ -281,6 +313,7 @@ export default function AccountMenu({
                     key={c.id}
                     href={`/messages?conversationId=${encodeURIComponent(c.id)}`}
                     onClick={() => setMessagesOpen(false)}
+                    className="lb-menu-row"
                     style={{ display: 'flex', gap: 10, padding: '10px 14px', textDecoration: 'none', color: 'inherit', alignItems: 'center' }}
                   >
                     <Avatar src={avatar} name={name} size="md" />
@@ -304,7 +337,7 @@ export default function AccountMenu({
         )}
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div className="lb-acct-quick" style={{ position: 'relative' }}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -315,17 +348,19 @@ export default function AccountMenu({
           aria-label="Notifications"
           aria-expanded={notifOpen}
           style={{
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
+            minWidth: 40,
+            minHeight: 40,
             padding: 0,
-            borderRadius: 10,
+            borderRadius: '50%',
             border: '1px solid var(--border-strong)',
             background: 'var(--surface)',
             color: 'var(--text)',
             position: 'relative',
           }}
         >
-          <Bell size={17} />
+          <Bell size={18} strokeWidth={2} />
           {notifUnread > 0 && (
             <span
               style={{
@@ -382,6 +417,34 @@ export default function AccountMenu({
                 </button>
               )}
             </div>
+            {pushPermission === 'default' && (
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Recevoir les alertes urgentes même hors de l&apos;app</span>
+                <button
+                  onClick={handleEnablePush}
+                  disabled={pushSubscribing}
+                  style={{
+                    minHeight: 44,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 12px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    border: '1px solid rgba(184,243,74,.55)',
+                    background: 'transparent',
+                    color: 'var(--text)',
+                    cursor: pushSubscribing ? 'not-allowed' : 'pointer',
+                    opacity: pushSubscribing ? 0.6 : 1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <BellRing size={14} />
+                  Activer
+                </button>
+              </div>
+            )}
             <div style={{ maxHeight: 340, overflowY: 'auto' }}>
               {notifications === null && <div aria-label="Chargement des notifications" style={{ padding: 16, display: 'grid', gap: 9 }}><Skeleton height={12} /><Skeleton width="72%" height={10} /><Skeleton width="86%" height={10} /></div>}
               {notifications !== null && notifications.length === 0 && (
@@ -391,6 +454,7 @@ export default function AccountMenu({
                 <button
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
+                  className="lb-menu-row"
                   style={{
                     minHeight: 56,
                     display: 'block',
@@ -423,26 +487,30 @@ export default function AccountMenu({
             setMessagesOpen(false)
             setNotifOpen(false)
           }}
-          aria-label="Mon compte"
+          aria-label={user.name ? `Mon compte — ${user.name}` : 'Mon compte'}
           aria-expanded={accountOpen}
           style={{
-            width: 36,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: 'auto',
             height: 36,
-            padding: 0,
-            borderRadius: '50%',
+            minWidth: 36,
+            minHeight: 36,
+            padding: '0 10px 0 3px',
+            borderRadius: 999,
             border: '1px solid var(--border-strong)',
-            background: user.image ? 'transparent' : 'var(--teal-solid)',
-            color: '#04120e',
-            overflow: 'hidden',
-            fontSize: 14,
-            fontWeight: 800,
+            background: 'var(--surface)',
+            color: 'var(--text)',
           }}
         >
-          {user.image ? (
-            <Image src={user.image} alt="" width={36} height={36} style={{ objectFit: 'cover' }} />
-          ) : (
-            initial
+          <Avatar src={user.image} name={user.name || user.email || '?'} size="sm" style={{ width: 30, height: 30 }} />
+          {user.name && (
+            <span className="lb-acct-name" style={{ fontSize: 13, fontWeight: 700, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.name.split(' ')[0]}
+            </span>
           )}
+          <ChevronDown size={14} strokeWidth={2.4} aria-hidden="true" style={{ flexShrink: 0, opacity: 0.7, transform: accountOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s ease' }} />
         </Button>
 
         {accountOpen && (

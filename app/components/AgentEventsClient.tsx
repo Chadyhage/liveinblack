@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Button, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -244,9 +244,10 @@ export default function AgentEventsClient() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', margin: 0 }}>{events.length === 0 ? 'Aucun événement publié' : 'Aucun résultat'}</p>
-          </div>
+          <EmptyState
+            title={events.length === 0 ? 'Aucun événement publié' : 'Aucun résultat'}
+            description={events.length === 0 ? 'Aucun événement n’a encore été publié sur la plateforme.' : 'Aucun événement ne correspond aux filtres actuels.'}
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {pageItems.map((ev) => (

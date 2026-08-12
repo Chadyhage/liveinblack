@@ -4,7 +4,7 @@ import NextImage from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import {
   Camera,
-  Pencil,
+  Plus,
   MessageCircle,
   Search,
   Pin,
@@ -164,7 +164,7 @@ const GROUP_MUTE_DURATIONS: { id: string; label: string; ms: number | null }[] =
   { id: 'forever', label: "Jusqu'à réactivation", ms: null },
 ]
 
-const AVATAR_COLORS = ['#c8a96e', '#8b5cf6', '#e05aaa', '#3b82f6', '#4ee8c8', '#f59e0b']
+const AVATAR_COLORS = ['var(--primary)', '#8b5cf6', '#e05aaa', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
 
 const ERROR_MESSAGES: Record<string, string> = {
   auth_required: 'Ta session a expiré — reconnecte-toi.',
@@ -811,6 +811,29 @@ export default function MessagesClient({
     refreshConversations()
   }
 
+  // Partage DIRECT d'un événement (carte cliquable, EventCard) — distinct de
+  // handleCreateEventPoll ci-dessus (sondage "On y va ?"). Avant ce correctif,
+  // "Partager un événement" ne menait QU'au sondage : aucun chemin serveur
+  // n'existait pour un message de type 'event' (voir SENDABLE_TYPES,
+  // lib/server/messaging.ts) — d'où le retour client "le partage
+  // d'événements ne marche pas".
+  async function handleShareEvent(eventId: string) {
+    if (!activeId) return
+    const res = await apiFetch<{ message: MessageView }>(`/api/conversations/${activeId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'event', content: '', eventId, replyToMessageId: replyTo?.id ?? undefined }),
+    })
+    if (!res.ok) {
+      pushToast(errorMessageFor(res.error))
+      return
+    }
+    setMessages((prev) => [...prev, res.data.message])
+    setReplyTo(null)
+    setShowEventPicker(false)
+    refreshConversations()
+  }
+
   // ─── Supprimer / marquer important / transférer ───
   async function handleDeleteForMe(messageId: string) {
     const res = await apiFetch(`/api/messages/${messageId}/delete`, {
@@ -987,7 +1010,16 @@ export default function MessagesClient({
         setRecordDuration(0)
         setIsRecording(false)
         if (shouldSendRef.current && audioChunksRef.current.length > 0) {
-          const actualMime = mr.mimeType || 'audio/webm'
+          // `MediaRecorder.mimeType` renvoie souvent le type AVEC ses
+          // paramètres codec (ex. "audio/webm;codecs=opus"). Si on garde ce
+          // type tel quel sur le Blob, le data URL produit ci-dessous devient
+          // "data:audio/webm;codecs=opus;base64,...", que le regex de
+          // validateDataUri (lib/server/cloudinary.ts, format strict
+          // "data:<mime>;base64,...") ne matche PLUS — l'upload échoue donc
+          // systématiquement en 'invalid_data_uri' et la note vocale n'est
+          // jamais envoyée. On ne garde que le type de base (avant le premier
+          // ';') pour rester compatible avec AUDIO_MIME_TYPES côté serveur.
+          const actualMime = (mr.mimeType || 'audio/webm').split(';')[0].trim() || 'audio/webm'
           const blob = new Blob(audioChunksRef.current, { type: actualMime })
           const dataUrl = await new Promise<string>((resolve) => {
             const reader = new FileReader()
@@ -1398,7 +1430,7 @@ export default function MessagesClient({
   const showThreadPane = isDesktop || mobileView === 'thread'
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', background: 'var(--obsidian)' }}>
+    <main style={{ height: 'calc(100dvh - 61px)', display: 'flex', background: 'var(--obsidian)' }}>
       {showListPane && (
         <aside
           style={{
@@ -1407,7 +1439,9 @@ export default function MessagesClient({
             borderRight: isDesktop && conversations.length > 0 ? '1px solid var(--border)' : 'none',
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '100vh',
+            height: '100%',
+            overflow: 'hidden',
+            position: 'relative',
           }}
         >
           <div style={{ padding: '18px 16px 12px' }}>
@@ -1424,9 +1458,6 @@ export default function MessagesClient({
                 />
                 <IconButton title="Envoyer une photo" onClick={() => cameraFileInputRef.current?.click()}>
                   <Camera size={16} />
-                </IconButton>
-                <IconButton title="Nouvelle discussion" onClick={() => setPanel('newDirect')}>
-                  {received.length > 0 && <Badge count={received.length} />}<Pencil size={16} />
                 </IconButton>
                 <IconButton title="Menu" onClick={() => setShowListMenu((v) => !v)}>
                   ⋮
@@ -1567,11 +1598,41 @@ export default function MessagesClient({
               <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={filteredConversations.length} pageSize={CONV_PAGE_SIZE} />
             </div>
           )}
+          {/* Bouton flottant "+" (convention WhatsApp Web) — remplace l'ancienne
+              icône crayon "Nouvelle discussion" jugée peu lisible par le
+              client. Ouvre le même NewDirectModal (liste d'amis + recherche
+              par nom/email), inchangé sur le fond. */}
+          <button
+            type="button"
+            title="Nouvelle discussion"
+            aria-label="Nouvelle discussion"
+            onClick={() => setPanel('newDirect')}
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              right: 20,
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'var(--teal-solid)',
+              color: '#04120e',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+              cursor: 'pointer',
+              zIndex: 20,
+            }}
+          >
+            {received.length > 0 && <Badge count={received.length} />}
+            <Plus size={24} strokeWidth={2.4} />
+          </button>
         </aside>
       )}
 
       {showThreadPane && conversations.length > 0 && (
-        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: '100vh' }}>
+        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden' }}>
           {!activeConversation ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MessagingEmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
@@ -1709,6 +1770,7 @@ export default function MessagesClient({
               {showScrollButton && (
                 <Button
                   variant="secondary"
+                  aria-label="Défiler vers le bas"
                   onClick={scrollToBottom}
                   style={{
                     position: 'absolute',
@@ -1716,6 +1778,8 @@ export default function MessagesClient({
                     bottom: 96,
                     width: 38,
                     height: 38,
+                    minWidth: 38,
+                    minHeight: 38,
                     padding: 0,
                     borderRadius: '50%',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
@@ -1783,7 +1847,7 @@ export default function MessagesClient({
                       }}
                     >
                       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
-                      <Button variant="ghost" onClick={handleEditCancel} style={{ padding: 0 }}>
+                      <Button variant="ghost" aria-label="Annuler la modification" onClick={handleEditCancel} style={{ padding: 0 }}>
                         <X size={14} />
                       </Button>
                     </div>
@@ -1841,7 +1905,7 @@ export default function MessagesClient({
                       <Button
                         variant="primary"
                         onClick={() => stopRecording(true)}
-                        style={{ borderRadius: '50%', width: 34, height: 34, padding: 0 }}
+                        style={{ borderRadius: '50%', width: 34, height: 34, minHeight: 34, minWidth: 34, padding: 0 }}
                         aria-label="Envoyer"
                       >
                         <Check size={18} />
@@ -1899,13 +1963,15 @@ export default function MessagesClient({
                           style={{
                             width: 42,
                             height: 42,
+                            minWidth: 42,
+                            minHeight: 42,
                             padding: 0,
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: '#04120e',
-                            background: busy ? 'rgba(62,214,181,0.5)' : 'var(--teal-solid)',
+                            background: busy ? 'rgba(159, 224, 34,0.5)' : 'var(--teal-solid)',
                             cursor: busy ? 'default' : 'pointer',
                             flexShrink: 0,
                           }}
@@ -1920,6 +1986,8 @@ export default function MessagesClient({
                           style={{
                             width: 42,
                             height: 42,
+                            minWidth: 42,
+                            minHeight: 42,
                             padding: 0,
                             borderRadius: '50%',
                             background: 'var(--teal-solid)',
@@ -2114,7 +2182,9 @@ export default function MessagesClient({
 
       {pollDraft && <PollDraftModal draft={pollDraft} onChange={setPollDraft} onSubmit={handleCreatePoll} onClose={() => setPollDraft(null)} />}
 
-      {showEventPicker && <EventPickerModal onPick={handleCreateEventPoll} onClose={() => setShowEventPicker(false)} />}
+      {showEventPicker && (
+        <EventPickerModal onShare={handleShareEvent} onPoll={handleCreateEventPoll} onClose={() => setShowEventPicker(false)} />
+      )}
 
       {photoPreview && (
         <ModalShell title="Envoyer la photo" onClose={() => setPhotoPreview(null)}>
@@ -2235,6 +2305,8 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
         position: 'relative',
         width: 32,
         height: 32,
+        minWidth: 32,
+        minHeight: 32,
         padding: 0,
         borderRadius: '50%',
         fontSize: 14,
@@ -2335,8 +2407,8 @@ function GroupAvatar({ conv, size = 38 }: { conv: { avatar: string | null; name:
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'rgba(200,169,110,0.14)',
-        border: '1px solid rgba(200,169,110,0.3)',
+        background: 'rgba(184, 243, 74,0.14)',
+        border: '1px solid rgba(184, 243, 74,0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -2524,8 +2596,8 @@ function MessageRow({
           style={{
             padding: message.deletedForAll ? '8px 14px' : ['image', 'poll', 'event_poll', 'story', 'event', 'catalog_item'].includes(message.type) ? 6 : '9px 14px',
             borderRadius: isMine ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-            background: isMine ? 'rgba(62,214,181,0.16)' : 'var(--surface)',
-            border: `1px solid ${isMine ? 'rgba(62,214,181,0.32)' : 'var(--border)'}`,
+            background: isMine ? 'rgba(159, 224, 34,0.16)' : 'var(--surface)',
+            border: `1px solid ${isMine ? 'rgba(159, 224, 34,0.32)' : 'var(--border)'}`,
             maxWidth: '100%',
             cursor: 'context-menu',
             boxShadow: highlighted ? '0 0 0 2px rgba(255,255,255,0.85)' : 'none',
@@ -2545,8 +2617,8 @@ function MessageRow({
                   variant="secondary"
                   onClick={() => onReact(message.id, emoji)}
                   style={{
-                    background: reactedByMe ? 'rgba(78,232,200,0.14)' : 'var(--surface-2)',
-                    border: `1px solid ${reactedByMe ? 'rgba(78,232,200,0.3)' : 'var(--border)'}`,
+                    background: reactedByMe ? 'rgba(184, 243, 74,0.14)' : 'var(--surface-2)',
+                    border: `1px solid ${reactedByMe ? 'rgba(184, 243, 74,0.3)' : 'var(--border)'}`,
                     borderRadius: 10,
                     padding: '2px 6px',
                     display: 'flex',
@@ -2776,7 +2848,7 @@ function VoiceBubble({ content }: { content: string | null }) {
       <Button
         variant="ghost"
         onClick={handlePlay}
-        style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
+        style={{ width: 30, height: 30, minHeight: 30, minWidth: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
       >
         {playing ? <Pause size={14} /> : <Play size={14} />}
       </Button>
@@ -2834,7 +2906,7 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
                 overflow: 'hidden',
               }}
             >
-              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(78,232,200,0.22)' }} />
+              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(184, 243, 74,0.22)' }} />
               <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {votedByMe && <span style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span>}
                 {opt.text}
@@ -3096,17 +3168,40 @@ function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () 
 }
 
 function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
+  // Transition d'ouverture calquée sur la convention déjà posée par
+  // EventShareButton.tsx (opacity + scale, ~180ms, piloté par un état
+  // "visible" basculé au prochain frame après montage — pas de lib
+  // d'animation dans ce repo). ModalShell est le composant partagé par TOUS
+  // les modals de ce fichier (photo, sondage, événement, nouvelle
+  // discussion, groupe, etc.) : cette seule transition couvre donc "modale
+  // animée" pour l'ensemble d'entre eux d'un coup.
+  const [visible, setVisible] = useState(false)
   useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true))
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [onClose])
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 200,
+        padding: 16,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity .18s ease',
+      }}
       onClick={onClose}
     >
       <div
@@ -3121,6 +3216,9 @@ function ModalShell({ title, onClose, wide, children }: { title: string; onClose
           maxHeight: '82vh',
           overflowY: 'auto',
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'scale(1)' : 'scale(0.96)',
+          transition: 'opacity .18s ease, transform .18s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
@@ -3436,8 +3534,8 @@ function FriendsPanel({
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     color: 'var(--teal)',
-                    background: 'rgba(78,232,200,0.12)',
-                    border: '1px solid rgba(78,232,200,0.35)',
+                    background: 'rgba(184, 243, 74,0.12)',
+                    border: '1px solid rgba(184, 243, 74,0.35)',
                     borderRadius: 999,
                     padding: '2px 8px',
                   }}
@@ -3904,11 +4002,22 @@ interface EventSearchResult {
   image: string | null
 }
 
-// "Partager un événement" (attach menu) → sondage 'On y va ?' via POST
-// /api/conversations/[id]/polls kind:'event_poll' (createEventPoll,
-// lib/server/polls.ts recharge de toute façon l'Event complet, jamais depuis
-// ce qui est affiché ici). Recherche débouncée sur GET /api/events/search.
-function EventPickerModal({ onPick, onClose }: { onPick: (eventId: string) => void; onClose: () => void }) {
+// "Partager un événement" (attach menu) → deux actions possibles par
+// résultat : partage direct (message 'event', EventCard cliquable — voir
+// handleShareEvent) ou sondage "On y va ?" (kind:'event_poll' via POST
+// /api/conversations/[id]/polls, handleCreateEventPoll). Dans les deux cas,
+// lib/server/{messaging,polls}.ts recharge l'Event complet depuis Mongo,
+// jamais depuis ce qui est affiché ici. Recherche débouncée sur GET
+// /api/events/search.
+function EventPickerModal({
+  onShare,
+  onPoll,
+  onClose,
+}: {
+  onShare: (eventId: string) => void
+  onPoll: (eventId: string) => void
+  onClose: () => void
+}) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<EventSearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -3939,19 +4048,27 @@ function EventPickerModal({ onPick, onClose }: { onPick: (eventId: string) => vo
           <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun événement trouvé.</p>
         )}
         {visibleResults.map((ev) => (
-          <Button key={ev.id} variant="ghost" onClick={() => onPick(ev.id)} style={{ ...rowButtonStyle, alignItems: 'center', fontWeight: 400 }}>
+          <div key={ev.id} style={{ ...rowButtonStyle, alignItems: 'center', display: 'flex', gap: 10 }}>
             <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)' }}>
               {ev.image && (
                 <NextImage src={ev.image} alt="" width={44} height={44} style={{ objectFit: 'cover' }} />
               )}
             </div>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ev.name}
               </p>
               <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>{[ev.date, ev.city].filter(Boolean).join(' · ')}</p>
             </div>
-          </Button>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <Button variant="secondary" size="sm" onClick={() => onShare(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                Partager
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => onPoll(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                Sondage
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
     </ModalShell>

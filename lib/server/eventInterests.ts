@@ -1,6 +1,12 @@
 import { getDb } from '../db/mongoose'
 import EventInterest from '../models/EventInterest'
 import Event from '../models/Event'
+import Ticket from '../models/Ticket'
+import { notifyUserById } from './emails/notify'
+import { interestedEventReminderEmail } from './emails'
+import { eventStartMs } from '../shared/event-time'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Port de src/utils/eventInterests.js ("Événements intéressés" — bouton
 // coeur sur une fiche événement + liste dédiée /profil/evenements-interesses,
@@ -200,4 +206,56 @@ export async function listActiveInterestSignals(caller: EventInterestCaller): Pr
     eventId: String(ev._id),
     musicStyles: (ev.musicStyles as string[] | undefined) ?? [],
   }))
+}
+
+// ────────────────────── sendInterestedEventReminders (E22) ──────────────────
+// Rappel J-1 pour chaque relation EventInterest active dont l'événement
+// démarre dans les prochaines 24-48h (fenêtre large pour tolérer la
+// fréquence du cron, cf. sendEventRecapReminders/sendSeatHoldExpiryReminders
+// — même pattern). Un seul email par relation (reminderSentAt), jamais par
+// utilisateur×événement s'il a retiré puis remarqué l'intérêt entre-temps
+// (nouveau document via l'upsert de markEventInterested, donc un nouveau
+// rappel légitime).
+
+const REMINDER_WINDOW_START_MS = 24 * 60 * 60 * 1000 // 1 jour
+const REMINDER_WINDOW_END_MS = 48 * 60 * 60 * 1000 // 2 jours
+
+export async function sendInterestedEventReminders(): Promise<{ reminded: number }> {
+  await getDb()
+  const now = Date.now()
+  const from = new Date(now).toISOString().slice(0, 10)
+  const to = new Date(now + REMINDER_WINDOW_END_MS + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
+  const candidateEvents = await Event.find({ date: { $gte: from, $lte: to }, cancelled: false }).lean()
+  const eventsInWindow = candidateEvents.filter((ev) => {
+    const startMs = eventStartMs(ev)
+    return startMs >= now + REMINDER_WINDOW_START_MS && startMs <= now + REMINDER_WINDOW_END_MS
+  })
+  if (eventsInWindow.length === 0) return { reminded: 0 }
+
+  const eventIds = eventsInWindow.map((ev) => String(ev._id))
+  const interests = await EventInterest.find({ eventId: { $in: eventIds }, status: 'active', reminderSentAt: null }).lean()
+  if (interests.length === 0) return { reminded: 0 }
+
+  const eventById = new Map(eventsInWindow.map((ev) => [String(ev._id), ev]))
+  let reminded = 0
+
+  for (const interest of interests) {
+    const claimed = await EventInterest.updateOne({ _id: interest._id, reminderSentAt: null }, { $set: { reminderSentAt: new Date() } })
+    if (claimed.modifiedCount !== 1) continue
+
+    const event = eventById.get(interest.eventId)
+    if (!event) continue
+
+    const alreadyBought = Boolean(
+      await Ticket.exists({ eventId: interest.eventId, userId: interest.userId, revoked: { $ne: true } })
+    )
+
+    await notifyUserById(interest.userId, () =>
+      interestedEventReminderEmail(event.name, [event.dateDisplay || event.date, event.time].filter(Boolean).join(' · '), `${SITE}/events/${interest.eventId}`, alreadyBought, SITE)
+    )
+    reminded += 1
+  }
+
+  return { reminded }
 }

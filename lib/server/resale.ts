@@ -9,6 +9,11 @@ import SellerBalance from '../models/SellerBalance'
 import EventPayout from '../models/EventPayout'
 import { computeResaleFeeCents, computeResaleFeeXOF } from '../shared/fees'
 import { eventStartMs, isEventEnded } from '../shared/event-time'
+import { notifyUserById } from './emails/notify'
+import { resaleListingSoldEmail, ticketInvalidatedByResaleEmail, ticketPurchaseConfirmedEmail, resaleListingCreatedEmail, resaleListingExpiredEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Bourse de revente officielle (LIVE_IN_BLACK_Systeme_de_revente.docx).
 // Principe : le paiement acheteur passe par le MÊME flux à deux temps que
@@ -135,6 +140,9 @@ export async function listTicketForResale(caller: ResaleCaller, ticketCode: stri
       }
     })
     if (!listing) throw new ResaleError(500, 'listing_creation_failed')
+    await notifyUserById(caller.id, () =>
+      resaleListingCreatedEmail(event.name, fmtMoney(resalePriceMinor / mpm, currency), `${SITE}/profile/billets`, SITE)
+    )
     return { ok: true, listing }
   } catch (err) {
     if (err instanceof ResaleError) return { ok: false, status: err.status, error: err.code }
@@ -326,9 +334,16 @@ export async function fulfillResaleOrder(orderId: string, opts: { paidAmountMino
   const session = await mongoose.startSession()
   const ticketCodes: string[] = []
   try {
+    // Anciens titulaires capturés AVANT rotation (t.userId est écrasé dans la
+    // boucle ci-dessous) — pour l'email E11 (ticketInvalidatedByResaleEmail),
+    // envoyé une fois par ancien titulaire distinct après la transaction.
+    const previousHolderUserIds = new Set<string>()
     await session.withTransaction(async () => {
       const tickets = await Ticket.find({ ticketCode: { $in: groupTicketCodes } }).session(session)
       const previousOrderIds = new Set(tickets.map((t) => t.orderId).filter((id): id is string => Boolean(id)))
+      for (const t of tickets) {
+        if (t.userId && t.userId !== order.userId) previousHolderUserIds.add(t.userId)
+      }
 
       for (const t of tickets) {
         rotateQr(t) // tue le QR de l'ancien détenteur — même billet, jamais un nouveau ticketCode
@@ -374,6 +389,29 @@ export async function fulfillResaleOrder(orderId: string, opts: { paidAmountMino
       order.settled = true
       await order.save({ session })
     })
+
+    // Emails best-effort, hors transaction (jamais bloquants) — voir
+    // lib/server/emails/notify.ts.
+    const event = await Event.findById(listing.eventId).select('name').lean()
+    const eventName = event?.name || 'ton événement'
+    if (listing.sellerNetMinor > 0) {
+      await notifyUserById(listing.sellerUid, () =>
+        resaleListingSoldEmail(eventName, fmtMoney(listing.sellerNetMinor / (listing.currency === 'XOF' ? 1 : 100), listing.currency), 'quelques jours après l’événement', SITE)
+      )
+    }
+    for (const previousUserId of previousHolderUserIds) {
+      await notifyUserById(previousUserId, () => ticketInvalidatedByResaleEmail(eventName, SITE))
+    }
+    // E14 (proposition) : l'achat d'un billet de revente reçoit la même
+    // confirmation qu'un achat normal (E1), ce parcours ne passant jamais par
+    // fulfillOrder.ts.
+    await notifyUserById(order.userId, () =>
+      ticketPurchaseConfirmedEmail(
+        { eventId: listing.eventId, eventName, eventWhen: null, eventWhere: null, placeLabel: 'Revente officielle', quantity: ticketCodes.length, totalLabel: fmtMoney((order.unitPriceMinor + order.feeMinor) / (order.currency === 'XOF' ? 1 : 100), order.currency), ticketUrl: `${SITE}/profile/billets` },
+        SITE
+      )
+    )
+
     return { status: 'ok', ticketCodes }
   } finally {
     await session.endSession()
@@ -428,4 +466,27 @@ function momoCountryForRegion(region: string): string | null {
   const key = region.trim().toLowerCase()
   const map: Record<string, string> = { togo: 'tg', 'bénin': 'bj', benin: 'bj', 'côte d’ivoire': 'ci', senegal: 'sn', 'sénégal': 'sn' }
   return map[key] || null
+}
+
+// ─────────────────────────── expireStaleResaleListings ──────────────────────
+// Sweep cron (voir app/api/cron/resale-expiry/route.ts) — jusqu'ici AUCUN
+// code ne basculait jamais un ResaleListing en status:'expired' (vérifié :
+// la fenêtre n'était fermée qu'à la volée en lecture, listTicketForResale/
+// initiateResaleOrder ci-dessus). Un listing 'reserved' n'est jamais touché
+// ici (il a son propre cycle via releaseResaleOrder à l'expiration de
+// l'Order acheteur) — seuls les listings encore 'active' après closesAt sont
+// concernés.
+export async function expireStaleResaleListings(): Promise<{ expired: number }> {
+  await getDb()
+  const stale = await ResaleListing.find({ status: 'active', closesAt: { $lte: new Date() } }).lean()
+
+  let expiredCount = 0
+  for (const listing of stale) {
+    const claimed = await ResaleListing.updateOne({ _id: listing._id, status: 'active' }, { $set: { status: 'expired' } })
+    if (claimed.modifiedCount !== 1) continue
+    expiredCount += 1
+    const event = await Event.findById(listing.eventId).select('name').lean()
+    await notifyUserById(listing.sellerUid, () => resaleListingExpiredEmail(event?.name || 'cet événement', SITE))
+  }
+  return { expired: expiredCount }
 }

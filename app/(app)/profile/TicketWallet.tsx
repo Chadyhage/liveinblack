@@ -481,6 +481,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
             <Button
               variant="secondary"
               size="sm"
+              aria-label="Fermer cette bannière"
               onClick={dismissBanner}
               style={{ borderRadius: 8 }}
             >
@@ -985,7 +986,7 @@ function PremiumTicketCard({
             </>
           ) : (
             <>
-              <div style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
+              <div role="img" aria-label="Code QR du billet, à scanner à l'entrée" style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
                 <QRCodeCanvas value={ticketUrl} size={84} level="H" />
               </div>
               <p style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: '0.04em', margin: 0 }}>{ticket.ticketCode}</p>
@@ -997,7 +998,7 @@ function PremiumTicketCard({
 
       {/* Canvas caché, plus grand, pour l'export PNG (identique au legacy). */}
       {!inactive && (
-        <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+        <div aria-hidden="true" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
           <QRCodeCanvas ref={qrExportRef} value={ticketUrl} size={500} level="H" />
         </div>
       )}

@@ -7,7 +7,26 @@ import { Schema, model, models, type InferSchemaType, type Model } from 'mongoos
 // messages via `meta.conversationId`) sans porter le mécanisme localStorage/sync,
 // qui n'a plus lieu d'être avec une session serveur + polling léger (voir
 // lib/server/notifications.ts).
-export const NOTIFICATION_TYPES = ['application_status', 'new_message', 'organizer_activity'] as const
+export const NOTIFICATION_TYPES = [
+  'application_status',
+  'new_message',
+  'organizer_activity',
+  // Ajoutés pour la parité avec le système d'email (lib/server/emails/) —
+  // mêmes domaines, voir le champ `inApp` optionnel sur chaque template dans
+  // lib/server/emails/types.ts.
+  'payment',
+  'refund',
+  'payout',
+  'boost',
+  'resale',
+  'staff',
+  'group',
+  'report',
+  'account',
+  'agent_queue',
+  'reminder',
+  'review',
+] as const
 
 const notificationSchema = new Schema(
   {

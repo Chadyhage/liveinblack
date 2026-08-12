@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
-import { Pagination, pagedSlice } from '@/app/components/ui'
+import { EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const PAGE_SIZE = 20
@@ -86,13 +86,10 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
         </div>
 
         {items.length === 0 ? (
-          <div style={{ ...cardStyle, textAlign: 'center', padding: '56px 24px' }}>
-            <div style={{ width: 60, height: 60, borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184, 243, 74,0.08)' }}>
-              <HeartOutline />
-            </div>
-            <p style={{ fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Aucun événement sauvegardé</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Sur une fiche événement, clique sur Intéressé pour le retrouver ici.</p>
-          </div>
+          <EmptyState
+            title="Aucun événement sauvegardé"
+            description="Sur une fiche événement, clique sur Intéressé pour le retrouver ici."
+          />
         ) : (
           <>
             <Section label={`À venir ${upcoming.length}`}>
@@ -153,7 +150,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         : `dès ${fmtMoney(ev.minPrice, ev.currency)}`
 
   const card = (
-    <div style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
+    <div className={ev ? 'lb-card' : undefined} style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
       <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'rgba(184, 243, 74, 0.2)'}, var(--obsidian))` }}>
         {ev && (
           <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 400, 158)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
@@ -193,16 +190,4 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
 
 function Badge({ children, color, bg }: { children: React.ReactNode; color: string; bg: string }) {
   return <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 999, color, background: bg }}>{children}</span>
-}
-
-function HeartOutline() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.8}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 20.727c-.372 0-.729-.14-1.006-.395C7.717 17.634 3 12.855 3 8.967 3 6.224 5.101 4 7.72 4c1.62 0 3.05.868 3.905 2.19a.44.44 0 00.75 0C13.23 4.868 14.66 4 16.28 4 18.9 4 21 6.224 21 8.967c0 3.888-4.717 8.667-7.994 11.365-.277.255-.634.395-1.006.395z"
-      />
-    </svg>
-  )
 }

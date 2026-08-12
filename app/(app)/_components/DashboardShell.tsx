@@ -207,8 +207,8 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
                 fontWeight: 800,
                 lineHeight: 1.4,
                 color: 'var(--gold)',
-                background: 'rgba(200,169,110,.14)',
-                border: '1px solid rgba(200,169,110,.3)',
+                background: 'rgba(184,243,74,.14)',
+                border: '1px solid rgba(184,243,74,.3)',
                 borderRadius: 999,
                 padding: '1px 8px',
               }}

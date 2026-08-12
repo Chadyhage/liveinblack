@@ -37,7 +37,7 @@ export default function EventListCard({ event, reason, eager = false }: { event:
         boxShadow: '0 18px 48px rgba(0,0,0,.24)',
       }}
     >
-      <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 600, 340)}
           alt={event.name}
@@ -66,7 +66,7 @@ export default function EventListCard({ event, reason, eager = false }: { event:
         {(stock || reason) && (
           <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
             {stock ? (
-              <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, color: '#fff', background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
+              <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 800, color: stock.ink, background: stock.color, padding: '3px 8px', borderRadius: 999 }}>
                 {stock.label}
               </span>
             ) : (

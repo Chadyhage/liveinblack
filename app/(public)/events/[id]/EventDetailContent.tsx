@@ -14,6 +14,7 @@ import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/perm
 import { EventCheckoutPanel, EventInterestButtonClient, ResaleListingsSection } from '@/app/components/features'
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
 import EventShareButton from './EventShareButton'
+import EventVenueMap from './EventVenueMap'
 
 // Contenu partagé entre la page dédiée (app/(public)/events/[id]/page.tsx) et
 // la route interceptée qui l'affiche en modal glissante depuis les listes
@@ -92,7 +93,10 @@ export default async function EventDetailContent({
       </div>
 
       {/* HERO */}
-      <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', aspectRatio: '16/9', background: `linear-gradient(135deg, ${event.color || '#c8a96e'}99, var(--surface))` }}>
+      {/* Hauteur fixe (~1/3 de l'ancien aspectRatio 16/9, retour client) au
+          lieu d'un aspectRatio qui poussait description/line-up/organisateur/
+          lieu trop bas sur desktop comme mobile. */}
+      <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', height: 130, background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
           alt={event.name}
@@ -130,7 +134,7 @@ export default async function EventDetailContent({
       {/* QUICK INFO STRIP */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 22px 0' }}>
         {countdown && <Chip label={countdown} tone={urgent ? 'urgent' : 'default'} />}
-        {stock && <Chip label={stock.label} color={stock.color} />}
+        {stock && <Chip label={stock.label} color={stock.color} ink={stock.ink} />}
         <Chip label={[event.dateDisplay, event.time].filter(Boolean).join(' · ')} />
         {event.location && <Chip label={event.location} />}
         {event.minAge ? <Chip label={`${event.minAge}+`} /> : null}
@@ -147,77 +151,89 @@ export default async function EventDetailContent({
         </div>
       )}
 
-      {/* DESCRIPTION */}
-      {event.description && (
-        <Section title="Description">
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{event.description}</p>
-        </Section>
-      )}
-
-      {/* ARTISTS */}
-      {(event.artists?.length || event.dj) ? (
-        <Section title="Line-up">
-          {event.artists?.length ? (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {event.artists.map((a) => (
-                <li key={a.name} style={{ fontSize: 13.5, color: 'var(--text)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px' }}>
-                  <strong>{a.name}</strong> <span style={{ color: 'var(--text-faint)' }}>· {a.role}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{event.dj}</p>
+      {/* DESCRIPTION / LINE-UP / ORGANISATEUR / LIEU — regroupés dans une
+          grille responsive (retour client : bloc trop étiré verticalement en
+          empilant chaque section pleine largeur) au lieu d'un empilement
+          strict. Pattern auto-fit/minmax déjà utilisé ailleurs dans l'app
+          (voir app/globals.css et ex. app/(app)/profile/ProfilClient.tsx). */}
+      {/* L'Organisateur est toujours rendu (fallback texte), donc cette
+          grille est toujours affichée — pas de condition supplémentaire ici. */}
+      <div style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 8, alignItems: 'start' }}>
+          {/* DESCRIPTION */}
+          {event.description && (
+            <Section title="Description">
+              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{event.description}</p>
+            </Section>
           )}
-        </Section>
-      ) : null}
 
-      {/* ORGANIZER */}
-      <Section title="Organisateur">
-        {organizerProfile ? (
-          <Link href={`/organizers/${organizerProfile.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                overflow: 'hidden',
-                background: 'var(--surface)',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: 15,
-                color: 'var(--text-muted)',
-              }}
-            >
-              {organizerProfile.avatarUrl ? (
-                <Image src={organizerProfile.avatarUrl} alt="" width={40} height={40} style={{ objectFit: 'cover' }} />
+          {/* ARTISTS */}
+          {(event.artists?.length || event.dj) ? (
+            <Section title="Line-up">
+              {event.artists?.length ? (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {event.artists.map((a) => (
+                    <li key={a.name} style={{ fontSize: 13.5, color: 'var(--text)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px' }}>
+                      <strong>{a.name}</strong> <span style={{ color: 'var(--text-faint)' }}>· {a.role}</span>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                organizerProfile.publicName?.[0]?.toUpperCase() || '?'
+                <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{event.dj}</p>
               )}
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 700 }}>{organizerProfile.publicName}</span>
-          </Link>
-        ) : (
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{event.organizerName || event.organizer || 'Organisateur'}</p>
-        )}
-      </Section>
+            </Section>
+          ) : null}
 
-      {/* VENUE */}
-      {(event.location || event.city) && (
-        <Section title="Lieu">
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{[event.location, event.city, event.region].filter(Boolean).join(', ')}</p>
-          <a
-            href={`https://www.google.com/maps/search/${encodeURIComponent([event.location, event.city].filter(Boolean).join(', '))}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
-          >
-            Ouvrir dans Google Maps →
-          </a>
-        </Section>
-      )}
+          {/* ORGANIZER */}
+          <Section title="Organisateur">
+            {organizerProfile ? (
+              <Link href={`/organizers/${organizerProfile.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    background: 'var(--surface)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: 15,
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  {organizerProfile.avatarUrl ? (
+                    <Image src={organizerProfile.avatarUrl} alt="" width={40} height={40} style={{ objectFit: 'cover' }} />
+                  ) : (
+                    organizerProfile.publicName?.[0]?.toUpperCase() || '?'
+                  )}
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{organizerProfile.publicName}</span>
+              </Link>
+            ) : (
+              <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{event.organizerName || event.organizer || 'Organisateur'}</p>
+            )}
+          </Section>
+
+          {/* VENUE */}
+          {(event.location || event.city) && (
+            <Section title="Lieu">
+              <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{[event.location, event.city, event.region].filter(Boolean).join(', ')}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
+                <a
+                  href={`https://www.google.com/maps/search/${encodeURIComponent([event.location, event.city].filter(Boolean).join(', '))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
+                >
+                  Ouvrir dans Google Maps →
+                </a>
+              </div>
+              <EventVenueMap address={[event.location, event.city, event.region].filter(Boolean).join(', ')} />
+            </Section>
+          )}
+      </div>
 
       {/* PLACES (lecture seule pour les visiteurs non connectés — la version
           interactive/cliquable est EventCheckoutPanel ci-dessous, réservée
@@ -304,7 +320,7 @@ export default async function EventDetailContent({
           ) : (
             <Link
               href={loginHref}
-              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--teal-solid)', textDecoration: 'none' }}
             >
               Se connecter pour réserver
             </Link>
@@ -331,7 +347,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function Chip({ label, tone, color }: { label: string; tone?: 'urgent' | 'default'; color?: string }) {
+function Chip({ label, tone, color, ink }: { label: string; tone?: 'urgent' | 'default'; color?: string; ink?: string }) {
   return (
     <span
       style={{
@@ -339,7 +355,7 @@ function Chip({ label, tone, color }: { label: string; tone?: 'urgent' | 'defaul
         fontWeight: 700,
         padding: '5px 11px',
         borderRadius: 999,
-        color: tone === 'urgent' ? '#fff' : 'var(--text)',
+        color: ink || (tone === 'urgent' ? '#fff' : 'var(--text)'),
         background: color ? color : tone === 'urgent' ? 'var(--pink)' : 'var(--surface)',
         border: color || tone === 'urgent' ? 'none' : '1px solid var(--border)',
       }}

@@ -14,9 +14,9 @@ import { Button } from '@/app/components/ui'
 // cliqué depuis un email, potentiellement hors session active ou sur un
 // autre appareil — même convention que /verify-email et /reset-password.
 
-const COLORS = { teal: '#b8f34a', pink: '#ff7b7b' }
+const COLORS = { teal: 'var(--primary)', pink: 'var(--pink)' }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 'var(--radius-pill)', cursor: 'pointer', fontSize: 14.5, fontWeight: 800,
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
   border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
 })
@@ -53,7 +53,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
   return (
     <>
       <style>{`@keyframes lib-confirm-email-spin { to { transform: rotate(360deg) } }`}</style>
-      <div style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-confirm-email-spin 0.9s linear infinite' }} />
@@ -75,7 +75,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
               {email ? `${email} est désormais ton adresse de connexion.` : 'Ta nouvelle adresse est confirmée.'}
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('#3ed6b5', '#04120e')}>Retour au profil</Button>
+              <Button onClick={() => router.push('/profile')} fullWidth style={btnSolid('var(--primary-strong)', 'var(--primary-ink)')}>Retour au profil</Button>
             </div>
           </>
         )}

@@ -3,6 +3,10 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getMyApplication } from '@/lib/server/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
+
+// Photo distincte du visuel par défaut (login) — décor de salle/scène pour
+// l'inscription organisateur, id issu du set vetted de lib/shared/placeholderImage.ts.
+const HERO_IMG = 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1400&q=80'
 import OrganizerOnboardingWizard from '@/app/components/OrganizerOnboardingWizard'
 
 // Route unique "Devenir organisateur" — publique (mode anonyme, pas de
@@ -26,7 +30,7 @@ export default async function InscriptionOrganisateurPage() {
     if (application && LOCKED_STATUSES.includes(application.status)) redirect('/my-application')
 
     return (
-      <AuthSplitLayout>
+      <AuthSplitLayout heroImage={HERO_IMG}>
         <OrganizerOnboardingWizard mode="loggedIn" initialFormData={application?.formData} initialCandidateNote={application?.candidateNote} />
       </AuthSplitLayout>
     )
@@ -34,6 +38,7 @@ export default async function InscriptionOrganisateurPage() {
 
   return (
     <AuthSplitLayout
+      heroImage={HERO_IMG}
       tagline={
         <>
           CRÉE ET GÈRE

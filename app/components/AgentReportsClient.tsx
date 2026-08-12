@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -238,7 +238,7 @@ export default function AgentReportsClient() {
               variant="ghost"
               aria-label="Effacer la recherche"
               onClick={() => setQueryParams({ q: null, page: null })}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
+              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, minHeight: 22, minWidth: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
             >
               ×
             </Button>
@@ -252,11 +252,10 @@ export default function AgentReportsClient() {
             ))}
           </div>
         ) : sorted.length === 0 ? (
-          <Card style={{ padding: 32, textAlign: 'center' }}>
-            <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
-              {filter === 'open' ? 'Aucun signalement' : 'Aucun signalement traité'}
-            </p>
-          </Card>
+          <EmptyState
+            title={filter === 'open' ? 'Aucun signalement' : 'Aucun signalement traité'}
+            description={filter === 'open' ? 'Aucun signalement n’est en attente de traitement.' : 'Aucun signalement n’a encore été traité.'}
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {pageItems.map((r) => (

@@ -860,7 +860,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 1180, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ maxWidth: 1320, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
         <Spinner size={22} />
       </main>
     )
@@ -928,7 +928,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           variant="ghost"
           aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
-          style={{ width: 36, height: 36, padding: 0, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
+          style={{ width: 36, height: 36, minHeight: 36, minWidth: 36, padding: 0, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
@@ -1482,7 +1482,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                           variant="ghost"
                           onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, photos: p.photos.filter((_, m) => m !== k) } : p)))}
                           title="Retirer"
-                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 12, lineHeight: '15px', padding: 0 }}
+                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, minHeight: 18, minWidth: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 12, lineHeight: '15px', padding: 0 }}
                         >
                           ×
                         </Button>
@@ -1575,7 +1575,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                               variant="ghost"
                               onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
                               title="Retirer cette option"
-                              style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
+                              style={{ flexShrink: 0, width: 24, height: 24, minHeight: 24, minWidth: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
                             >
                               ×
                             </Button>

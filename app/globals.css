@@ -96,8 +96,12 @@ h4, h5, h6 {
   font-weight: 700;
 }
 
+/* --font-display (Impact/Arial Narrow, déjà condensée) n'a pas besoin d'un
+   tracking négatif supplémentaire : -0.035em faisait se toucher/chevaucher
+   les glyphes aux grandes tailles (titres de section, ex. "TOP 3 DU MOMENT"),
+   d'autant plus visible en majuscules. Aligné sur .font-display (0.01em). */
 h1, h2, h3 {
-  letter-spacing: -0.035em;
+  letter-spacing: 0.01em;
 }
 
 ::selection {
@@ -221,14 +225,14 @@ textarea::placeholder {
 
 .lb-dashboard-page {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1600px;
   min-height: calc(100vh - 170px);
   margin: 0 auto;
   padding: 0 0 72px;
 }
 
 .lb-dashboard-page--medium {
-  max-width: 1120px;
+  max-width: 1320px;
 }
 
 .lb-dashboard-page--narrow {
@@ -286,6 +290,16 @@ textarea::placeholder {
 
 .lb-card-grid:has(> .lb-card:only-child) {
   grid-template-columns: minmax(min(100%, 360px), 560px);
+}
+
+/* Grille compacte pour des listes secondaires (ex. événements à venir/passés
+   d'un profil organisateur) où la grande carte de .lb-card-grid (360px min)
+   prend toute la page pour ce qui n'est qu'un aperçu, pas la destination
+   principale. Colonnes bien plus petites, densité proche d'une liste. */
+.lb-card-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
 }
 
 .lb-detail-section {

@@ -98,7 +98,8 @@ export async function uploadDataUri(dataUri: string, folder: string, policy: Upl
       version: res.version,
       bytes: res.bytes || validated.bytes,
     }
-  } catch {
+  } catch (err) {
+    console.error('[cloudinary] upload failed:', err)
     return { ok: false, error: 'upload_failed' }
   }
 }

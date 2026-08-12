@@ -9,7 +9,12 @@ import { activateSeatHold, completeSeatHold, releaseSeatHoldDepositOrder } from 
 import { handleFedapaySubscriptionPayment } from '@/lib/server/providerSubscriptions'
 import Order from '@/lib/models/Order'
 import User from '@/lib/models/User'
+import Event from '@/lib/models/Event'
 import { reconcileEventPayout } from '@/lib/server/eventPayouts'
+import { notifyUserById } from '@/lib/server/emails/notify'
+import { paymentFailedEmail } from '@/lib/server/emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Remplace la branche `webhook()` de api/fedapay.js (rail XOF). Miroir de
 // /api/webhooks/stripe — même cœur de finalisation partagé (fulfillOrder),
@@ -103,6 +108,12 @@ export async function POST(req: Request) {
         else if (order.kind === 'agent_sale') await releaseAgentSaleOrder(order._id.toString())
         else if (order.kind === 'seat_hold_deposit') await releaseSeatHoldDepositOrder(order._id.toString(), releaseOrder)
         else await releaseOrder(order._id.toString(), null)
+
+        // Refus/annulation FedaPay explicite (pas un simple panier abandonné,
+        // cf. checkout.session.expired côté Stripe qui ne déclenche jamais cet
+        // email — l'intention de payer était réelle ici).
+        const evName = (await Event.findById(order.eventId).select('name').lean())?.name || 'ton événement'
+        await notifyUserById(order.userId, () => paymentFailedEmail(evName, `${SITE}/events/${encodeURIComponent(order.eventId)}`, null, SITE))
       }
     }
     return NextResponse.json({ received: true })

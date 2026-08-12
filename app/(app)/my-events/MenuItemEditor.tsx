@@ -145,6 +145,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         {onRemove && (
           <Button
             variant="ghost"
+            aria-label="Supprimer l'article"
             onClick={onRemove}
             disabled={disabled}
             style={{ display: 'flex', alignItems: 'center', padding: 2 }}
@@ -162,7 +163,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
               variant="ghost"
               onClick={() => set('imageUrl', null)}
               aria-label="Retirer la photo"
-              style={{ position: 'absolute', top: -7, right: -7, width: 21, height: 21, borderRadius: '50%', border: 0, background: 'var(--pink)', color: '#fff', padding: 0 }}
+              style={{ position: 'absolute', top: -7, right: -7, width: 21, height: 21, minHeight: 21, minWidth: 21, borderRadius: '50%', border: 0, background: 'var(--pink)', color: '#fff', padding: 0 }}
             >
               ×
             </Button>

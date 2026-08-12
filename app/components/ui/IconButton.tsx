@@ -33,8 +33,8 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       style={{
         width: size,
         height: size,
-        minWidth: 44,
-        minHeight: 44,
+        minWidth: Math.min(size, 44),
+        minHeight: Math.min(size, 44),
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

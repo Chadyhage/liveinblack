@@ -4,6 +4,12 @@ import Event from '../models/Event'
 import EventStaff from '../models/EventStaff'
 import EventOrder from '../models/EventOrder'
 import User from '../models/User'
+import { notifyUserById } from './emails/notify'
+import { staffAddedEmail, staffRemovedEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
+const ROLE_LABEL: Record<string, string> = { scan: 'Scan', serveur: 'Service', dj: 'DJ', vendeur: 'Vendeur' }
 
 // Port de src/components/EventStaffModal.jsx (#7 phase organisateur) —
 // équipe d'une soirée (scan/serveur/dj), gérée EXCLUSIVEMENT par le
@@ -83,6 +89,11 @@ export async function addEventStaff(caller: StaffCaller, eventId: string, input:
     await event.save()
   }
 
+  // notifyUserById (pas notifyEmail) : target.id est déjà résolu ici, ce qui
+  // permet aussi la notification in-app/push (voir emails/notify.ts) — pas
+  // seulement l'email.
+  await notifyUserById(input.targetUserId, () => staffAddedEmail(event.name, ROLE_LABEL[input.role] || input.role, `${SITE}/my-shifts`, SITE))
+
   return { ok: true, member: { userId: input.targetUserId, role: input.role, name, addedAt: addedAt.toISOString() } }
 }
 
@@ -128,6 +139,8 @@ export async function removeEventStaff(caller: StaffCaller, eventId: string, tar
   } finally {
     await session.endSession()
   }
+
+  await notifyUserById(targetUserId, () => staffRemovedEmail(guard.event.name, SITE))
 
   return { ok: true, reassignedCount }
 }

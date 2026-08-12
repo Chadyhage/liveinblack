@@ -4,6 +4,7 @@ import {
   getCachedPublicOrganizers as listPublicOrganizers,
   getCachedPublicProviders as listPublicProviders,
 } from '@/lib/server/publicCache'
+import { listAllPublishedPostsForSitemap } from '@/lib/server/blog'
 
 // Même convention que app/ticket/[token]/page.tsx et les routes checkout :
 // PUBLIC_SITE_URL en env, jamais déduit de Host/Origin. Route native Next.js
@@ -16,6 +17,7 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: '/events', priority: 0.9, changeFrequency: 'daily' },
   { path: '/providers', priority: 0.8, changeFrequency: 'daily' },
   { path: '/organizers', priority: 0.8, changeFrequency: 'daily' },
+  { path: '/blog', priority: 0.7, changeFrequency: 'daily' },
   { path: '/about', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/search', priority: 0.4, changeFrequency: 'weekly' },
   { path: '/organizer-signup', priority: 0.6, changeFrequency: 'monthly' },
@@ -27,10 +29,11 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, organizers, providers] = await Promise.all([
+  const [events, organizers, providers, posts] = await Promise.all([
     listPublicEvents().catch(() => []),
     listPublicOrganizers().catch(() => []),
     listPublicProviders().catch(() => []),
+    listAllPublishedPostsForSitemap().catch(() => []),
   ])
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
@@ -58,5 +61,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticEntries, ...eventEntries, ...organizerEntries, ...providerEntries]
+  const postEntries: MetadataRoute.Sitemap = posts.map((p) => ({
+    url: `${SITE}/blog/${p.slug}`,
+    lastModified: p.updatedAt ? new Date(p.updatedAt as unknown as string) : new Date(p.publishedAt as unknown as string),
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
+
+  return [...staticEntries, ...eventEntries, ...organizerEntries, ...providerEntries, ...postEntries]
 }

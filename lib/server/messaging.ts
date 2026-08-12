@@ -4,9 +4,15 @@ import Conversation, { type ConversationDoc } from '../models/Conversation'
 import Message, { type MessageDoc } from '../models/Message'
 import User from '../models/User'
 import ProviderProfile from '../models/ProviderProfile'
+import Event from '../models/Event'
 import Report from '../models/Report'
 import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { upsertMessageNotification } from './notifications'
+import { notifyUserById, notifyAllAgents } from './emails/notify'
+import { reportReceivedAgainstAccountEmail, newReportToReviewEmail, newMessageDigestEmail } from './emails'
+import { sendPushToUser } from './push'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Port de src/utils/messaging.js vers un modèle Mongo un-document-par-message
 // (voir lib/models/Message.ts). Ferme l'audit C10 : le legacy stockait TOUS
@@ -550,7 +556,18 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
 // une conversation qu'il contrôle. Le serveur reconstruit donc lui-même le
 // payload depuis le VRAI catalogue Mongo du destinataire, à partir du seul
 // `catalogItemId` fourni.
-const SENDABLE_TYPES = ['text', 'image', 'voice', 'catalog_item'] as const
+// 'event' rejoint ce type sendable pour le MÊME motif que 'catalog_item'
+// ci-dessus : le bouton "Partager un événement" du composeur
+// (MessagesClient.tsx, attach menu) et le rendu `EventCard` existaient déjà,
+// mais il n'existait AUCUN chemin serveur pour produire un message de ce
+// type — seul 'event_poll' (lib/server/polls.ts, sondage "On y va ?") était
+// atteignable. Résultat côté client : "Partager un événement" ne faisait
+// jamais qu'ouvrir un sondage, jamais un partage direct — feedback client
+// "le partage d'événements ne marche pas". Comme pour 'catalog_item', le
+// CONTENU n'est jamais pris depuis `input.content` : le serveur recharge
+// l'Event réel depuis Mongo à partir du seul `eventId` fourni, jamais depuis
+// des champs (nom/prix/image) que le client pourrait forger.
+const SENDABLE_TYPES = ['text', 'image', 'voice', 'catalog_item', 'event'] as const
 type SendableType = (typeof SENDABLE_TYPES)[number]
 
 export interface SendMessageInput {
@@ -568,6 +585,9 @@ export interface SendMessageInput {
   // de la conversation directe (jamais un id arbitraire d'un autre
   // prestataire — voir sendMessage pour la vérification d'appartenance).
   catalogItemId?: string
+  // 'event' UNIQUEMENT : id d'un Event Mongo réel — voir sendMessage, le
+  // payload est reconstruit depuis ce seul id, jamais depuis `content`.
+  eventId?: string
 }
 
 export type SendMessageResult = ErrResult | { ok: true; message: MessageView }
@@ -660,6 +680,23 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
       category: item.category || '',
       image: media?.url ?? null,
     })
+  } else if (type === 'event') {
+    // Voir commentaire sur SENDABLE_TYPES : le client ne fournit qu'un id,
+    // le contenu affiché (`EventCard`, MessagesClient.tsx) est reconstruit
+    // ICI depuis le VRAI document Event, jamais depuis quoi que ce soit
+    // fourni par l'appelant.
+    const eventId = input.eventId?.trim()
+    if (!eventId) return { ok: false, status: 400, error: 'invalid_input' }
+    const event = await Event.findById(eventId).lean()
+    if (!event) return { ok: false, status: 404, error: 'event_not_found' }
+    const price = event.places && event.places.length > 0 ? Math.min(...event.places.map((p) => p.price ?? 0)) : 0
+    content = JSON.stringify({
+      id: String(event._id),
+      name: event.name,
+      date: event.dateDisplay || event.date || '',
+      price,
+      image: event.imageUrl ?? null,
+    })
   } else if (type !== 'text' && !content && input.mediaDataUri) {
     const uploaded = await uploadDataUri(input.mediaDataUri, `messages/${String(conversation._id)}`, {
       allowedMimeTypes: type === 'voice' ? AUDIO_MIME_TYPES : IMAGE_MIME_TYPES,
@@ -694,7 +731,8 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
 
   // Libellé dérivé du type pour image/voice, fidèle au legacy
   // (messaging.js:702-714) : la conversation liste un aperçu, pas une URL.
-  const lastMessageLabel = type === 'text' ? content : type === 'image' ? 'Photo' : 'Message vocal'
+  const lastMessageLabel =
+    type === 'text' ? content : type === 'image' ? 'Photo' : type === 'voice' ? 'Message vocal' : type === 'event' ? 'Événement' : type === 'catalog_item' ? 'Offre prestataire' : 'Message'
   await Conversation.updateOne(
     { _id: conversation._id },
     { $set: { lastMessage: lastMessageLabel, lastMessageAt: created.createdAt, lastSenderId: caller.id } }
@@ -709,6 +747,34 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
       upsertMessageNotification(recipientId, conversationIdStr, lastMessageLabel, `/messages?conversationId=${conversationIdStr}`)
     )
   )
+
+  // E20/E40 : pas de vraie agrégation par lot (aucun cron de digest n'existe,
+  // voir organizerFollowNotifications.ts pour le seul pattern de fan-out
+  // existant, non applicable ici) — on envoie un email "un message reçu hors
+  // ligne" seulement si le destinataire est hors ligne depuis plus de 30 min
+  // ou ne s'est jamais connecté, jamais si sa présence est fraîche (évite
+  // d'inonder un destinataire déjà en train de discuter dans l'app).
+  const OFFLINE_DIGEST_THRESHOLD_MS = 30 * 60 * 1000
+  if (recipientIds.length) {
+    const recipients = await User.find({ _id: { $in: recipientIds } }).select('lastSeenAt').lean()
+    const now = Date.now()
+    const conversationUrl = `${SITE}/messages?conversationId=${conversationIdStr}`
+    await Promise.all(
+      recipients
+        .filter((r) => !r.lastSeenAt || now - new Date(r.lastSeenAt).getTime() > OFFLINE_DIGEST_THRESHOLD_MS)
+        .map(async (r) => {
+          const recipientId = String(r._id)
+          await notifyUserById(recipientId, () => newMessageDigestEmail(senderName, lastMessageLabel, conversationUrl, SITE))
+          // Pas de champ `inApp` sur newMessageDigestEmail : la notification
+          // in-app existe déjà via upsertMessageNotification ci-dessus
+          // (anti-spam par conversation) — un second createNotification()
+          // dupliquerait l'entrée. Le push, lui, n'a pas cet anti-spam
+          // (une seule notif système par appareil de toute façon), appelé
+          // directement ici plutôt que via le mécanisme `inApp`.
+          await sendPushToUser(recipientId, { title: `${senderName} t'a envoyé un message`, body: lastMessageLabel, url: conversationUrl })
+        })
+    )
+  }
 
   const conversationSource = conversation.toObject({ flattenMaps: true }) as unknown as ConversationSource
   return {
@@ -1024,6 +1090,10 @@ export async function reportUser(caller: MessagingCaller, input: { targetUserId:
   const targetName = `${target.firstName ?? ''} ${target.lastName ?? ''}`.trim() || target.email
 
   await Report.create({ fromId: caller.id, fromName, targetId: targetUserId, targetName, reason })
+
+  await notifyUserById(targetUserId, () => reportReceivedAgainstAccountEmail(reason, `${SITE}/help`, SITE))
+  await notifyAllAgents(() => newReportToReviewEmail(`Utilisateur — ${targetName}`, `${SITE}/agent/signalements`, SITE))
+
   return { ok: true }
 }
 

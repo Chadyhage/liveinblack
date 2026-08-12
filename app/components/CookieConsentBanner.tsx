@@ -86,7 +86,7 @@ export default function CookieConsentBanner() {
         }
 
         .cc-inner {
-          max-width: 1480px;
+          max-width: 1800px;
           margin: 0 auto;
           display: flex;
           align-items: center;
@@ -206,8 +206,8 @@ export default function CookieConsentBanner() {
                 Cookies & vie privée
               </p>
               <p className="cc-desc">
-                Nécessaires au service : connexion, sécurité et billets. Tu peux aussi autoriser la mémorisation de tes préférences d’ambiance.{' '}
-                <strong>Aucun traçage publicitaire ni audience tierce.</strong>{' '}
+                Nécessaires au service : connexion, sécurité et billets. Tu peux aussi autoriser la mémorisation de tes préférences d’ambiance et la mesure d’audience (Google Analytics).{' '}
+                <strong>Aucun cookie publicitaire ni reciblage tiers.</strong>{' '}
                 <Link href="/cookies">En savoir plus</Link>
               </p>
             </div>

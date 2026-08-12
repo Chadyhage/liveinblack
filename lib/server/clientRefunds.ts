@@ -4,6 +4,21 @@ import Order from '../models/Order'
 import Ticket from '../models/Ticket'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
+import { notifyUserById } from './emails/notify'
+import { refundConfirmedEmail, refundFailedEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
+// Même formule que refundStripeOrder/recordFedapayRefund (montant HORS frais
+// de service, jamais remboursés) — dupliquée uniquement pour l'affichage
+// dans l'email, ces fonctions ne retournent pas le montant.
+function grossRefundMajor(order: { isTable: boolean; qty: number; unitPriceMinor: number; preorders: { price: number; qty: number }[]; currency: string }): number {
+  const seatCount = order.isTable ? 1 : order.qty
+  const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
+  const grossMinor = Math.max(0, order.unitPriceMinor * seatCount + preorderTotal)
+  return grossMinor / (order.currency === 'XOF' ? 1 : 100)
+}
 
 // Demande de remboursement déclenchée par le CLIENT (politique
 // d'annulation/remboursement §2 — "modification importante" non traitée ici,
@@ -68,11 +83,16 @@ export async function requestClientRefund(caller: RefundCaller, orderId: string)
   // Ne marque la demande comme traitée qu'en cas de succès — un échec (ex.
   // erreur Stripe transitoire) doit laisser le client réessayer, jamais le
   // bloquer derrière `already_requested` sans qu'aucun remboursement ait eu lieu.
-  if (!result.ok) return { ok: false, status: 502, error: 'refund_failed' }
+  if (!result.ok) {
+    await notifyUserById(caller.id, () => refundFailedEmail(event.name, null, `${SITE}/help`, SITE))
+    return { ok: false, status: 502, error: 'refund_failed' }
+  }
 
   order.clientRefundRequestedAt = new Date()
   order.clientRefundReason = coveredByProtection ? 'cancellation_protection' : 'postponed_declined'
   await order.save()
+
+  await notifyUserById(caller.id, () => refundConfirmedEmail(event.name, fmtMoney(grossRefundMajor(order), order.currency), 'quelques jours ouvrés', SITE))
 
   return { ok: true, refunded: true }
 }

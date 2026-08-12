@@ -89,21 +89,21 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           {upcoming.length === 0 ? (
             <p style={{ fontSize: 13.5, color: 'var(--text-faint)' }}>Aucun événement à venir pour le moment.</p>
           ) : (
-            <div className="lb-card-grid">
+            <div className="lb-card-grid-compact">
               {upcoming.map((e) => {
                 const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
                 const min = prices.length ? Math.min(...prices) : null
                 return (
-                  <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ aspectRatio: '4/3', position: 'relative', background: `linear-gradient(135deg, ${e.color || '#c8a96e'}33, var(--obsidian))` }}>
+                  <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                    <div style={{ aspectRatio: '4/3', position: 'relative', background: `linear-gradient(135deg, ${e.color || '#b8f34a'}33, var(--obsidian))` }}>
                       {e.imageUrl && (
-                        <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 200px" />
+                        <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 180px" />
                       )}
                     </div>
-                    <div style={{ padding: '10px 12px' }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 700, margin: 0 }}>{e.name}</p>
-                      <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '3px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</p>
-                      {min != null && <p style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 700, margin: '4px 0 0' }}>dès {fmtMoney(min, eventCurrency(e))}</p>}
+                    <div style={{ padding: '8px 9px' }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
+                      <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</p>
+                      {min != null && <p style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, margin: '3px 0 0' }}>dès {fmtMoney(min, eventCurrency(e))}</p>}
                     </div>
                   </Link>
                 )
@@ -114,11 +114,11 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         {past.length > 0 && (
           <Section title="Événements passés">
-            <div className="lb-card-grid">
+            <div className="lb-card-grid-compact">
               {past.map((e) => (
-                <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 12px', opacity: 0.75 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>{e.name}</p>
-                  <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '3px 0 0' }}>{e.dateDisplay}</p>
+                <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '9px 10px', opacity: 0.75 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</p>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '2px 0 0' }}>{e.dateDisplay}</p>
                 </Link>
               ))}
             </div>

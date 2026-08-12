@@ -11,6 +11,11 @@ import { registerPromoUse } from './promos'
 import { generateUniqueTicketCode } from './ticketCode'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
+import { notifyUserById } from './emails/notify'
+import { paymentFailedEmail, ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail, firstSaleEmail, salesMilestoneEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Cœur PARTAGÉ de la finalisation d'une commande payée — utilisé par le
 // webhook Stripe ET le webhook FedaPay (le legacy dupliquait cette logique
@@ -56,6 +61,8 @@ export async function fulfillOrder(
         { $set: { reason: 'amount_mismatch', eventId: order.eventId, details: { expected, paid: opts.paidAmountMinor } } },
         { upsert: true }
       )
+      const evName = (await Event.findById(order.eventId).select('name').lean())?.name || 'ton événement'
+      await notifyUserById(order.userId, () => paymentFailedEmail(evName, `${SITE}/profile/billets`, null, SITE))
       return { status: 'amount_mismatch' }
     }
   }
@@ -88,6 +95,10 @@ export async function fulfillOrder(
   // seulement un doublon d'affichage de `placePrice`.
   const preorderTotalMajor = order.preorders.reduce((s, p) => s + (p.price / (isXof ? 1 : 100)) * p.qty, 0)
   const hasTicketPreorders = (order.ticketPreorders?.length || 0) > 0
+
+  // Capturé AVANT insertMany pour détecter la 1ère vente / un jalon franchi
+  // par CETTE commande (E24/E25) — jamais bloquant, best-effort après coup.
+  const soldBefore = await Ticket.countDocuments({ eventId: order.eventId, revoked: { $ne: true } })
 
   const ticketCodes: string[] = []
   const ticketDocs = []
@@ -123,6 +134,29 @@ export async function fulfillOrder(
     })
   }
   await Ticket.insertMany(ticketDocs)
+
+  // E24/E25 (best-effort, jamais bloquant) — un seul email par commande, le
+  // jalon le plus significatif franchi par CETTE vente (complet > 80% > 50% >
+  // 1ère vente), pas un email par palier si une grosse commande groupe en
+  // franchit plusieurs d'un coup.
+  {
+    const soldAfter = soldBefore + seatCount
+    const capacity = (event.places || []).reduce((s, p) => s + (p.total || 0), 0)
+    const dashboardUrl = `${SITE}/spaces/organizer/${order.eventId}`
+    if (soldBefore === 0) {
+      await notifyUserById(event.organizerId, () => firstSaleEmail(event.name, dashboardUrl, SITE))
+    } else if (capacity > 0) {
+      const pctBefore = soldBefore / capacity
+      const pctAfter = soldAfter / capacity
+      if (pctBefore < 1 && pctAfter >= 1) {
+        await notifyUserById(event.organizerId, () => salesMilestoneEmail(event.name, 'Complet 🔥', dashboardUrl, SITE))
+      } else if (pctBefore < 0.8 && pctAfter >= 0.8) {
+        await notifyUserById(event.organizerId, () => salesMilestoneEmail(event.name, 'à 80% de ses places', dashboardUrl, SITE))
+      } else if (pctBefore < 0.5 && pctAfter >= 0.5) {
+        await notifyUserById(event.organizerId, () => salesMilestoneEmail(event.name, 'à 50% de ses places', dashboardUrl, SITE))
+      }
+    }
+  }
 
   // ── Table achetée : l'hôte obtient sa sentinelle de groupe (garde-fou
   // "1 place de groupe par compte et par événement", cf. GroupMembership.ts).
@@ -167,6 +201,30 @@ export async function fulfillOrder(
   // ── Crédit vendeur (mode ledger uniquement — Connect 'auto' est déjà réglé
   // par Stripe au moment du paiement) + marquage payé/réglé, une seule fois. ──
   await settleOrder(order)
+
+  // Email de confirmation — best-effort, ne bloque jamais la réponse au
+  // webhook (voir lib/server/emails/notify.ts). Distingue solo/groupe comme
+  // dans EMAIL_COVERAGE_PROPOSAL.md (E1/E2).
+  const eventWhen = event.dateDisplay || null
+  const eventWhere = [event.location, event.city].filter(Boolean).join(', ') || null
+  const ticketUrl = `${SITE}/profile/billets`
+  const totalMajor = seatCount * unitMajor + preorderTotalMajor
+  const totalLabel = fmtMoney(totalMajor, order.currency)
+  if (order.isTable) {
+    await notifyUserById(order.userId, () =>
+      groupPurchaseConfirmedEmail(
+        { eventId: order.eventId, eventName: event.name, eventWhen, eventWhere, placeLabel: order.placeType, totalLabel, ticketUrl, seatCount },
+        SITE
+      )
+    )
+  } else {
+    await notifyUserById(order.userId, () =>
+      ticketPurchaseConfirmedEmail(
+        { eventId: order.eventId, eventName: event.name, eventWhen, eventWhere, placeLabel: order.placeType, quantity: seatCount, totalLabel, ticketUrl },
+        SITE
+      )
+    )
+  }
 
   return { status: 'ok', ticketCodes }
 }

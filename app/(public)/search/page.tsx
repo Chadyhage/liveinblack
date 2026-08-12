@@ -8,7 +8,7 @@ import {
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import EventListCard from '../_components/EventListCard'
-import { Button, Input } from '@/app/components/ui'
+import { Button, EmptyState, Input } from '@/app/components/ui'
 
 export const metadata: Metadata = {
   title: 'Recherche — LIVEINBLACK',
@@ -60,7 +60,7 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
   const totalResults = matchedEvents.length + matchedOrganizers.length + matchedProviders.length
 
   return (
-    <main className="lb-page-shell" style={{ padding: '52px clamp(20px, 3vw, 48px) 88px', maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+    <main className="lb-page-shell" style={{ padding: '52px clamp(20px, 3vw, 48px) 88px', maxWidth: 1800, margin: '0 auto', width: '100%' }}>
       <section className="lb-directory-intro" style={{ marginBottom: 36 }}>
       <h1 className="font-display" style={{ fontSize: 'clamp(36px, 6vw, 64px)', letterSpacing: '.01em', margin: 0 }}>Tout LIVEINBLACK, en une recherche.</h1>
       <p style={{ color: 'var(--text-muted)', maxWidth: 680, margin: '12px 0 24px', fontSize: 15 }}>Retrouve en même temps les événements, les organisateurs et les prestataires.</p>
@@ -100,15 +100,18 @@ export default async function GlobalSearchPage({ searchParams }: { searchParams:
           </div>
         </div>
       ) : totalResults === 0 ? (
-        <div>
-          <p style={{ color: 'var(--text-muted)', margin: '0 0 14px' }}>Aucun résultat pour « {query} ».</p>
-          <Link
-            href="/events"
-            style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
-          >
-            Parcourir les événements
-          </Link>
-        </div>
+        <EmptyState
+          title={`Aucun résultat pour « ${query} »`}
+          description="Essaie un autre mot-clé, ou parcours les événements du moment."
+          action={
+            <Link
+              href="/events"
+              style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
+            >
+              Parcourir les événements
+            </Link>
+          }
+        />
       ) : (
         <>
           {matchedEvents.length > 0 && (

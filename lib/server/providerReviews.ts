@@ -4,6 +4,10 @@ import ReviewReport from '../models/ReviewReport'
 import ProviderProfile from '../models/ProviderProfile'
 import User from '../models/User'
 import { REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, type ReviewReportReason } from '../shared/reviews'
+import { notifyUserById } from './emails/notify'
+import { newReviewReceivedEmail } from './emails'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Remplace api/provider-reviews.js (actions 'create' | 'report' | 'reply' |
 // 'delete_own') — avis clients sur les pages prestataires. La modération
@@ -181,6 +185,9 @@ export async function createReview(caller: ReviewCaller, input: CreateReviewInpu
     edited: false,
   })
   await recomputeProviderRating(providerId)
+  await notifyUserById(providerId, () =>
+    newReviewReceivedEmail(provider.name || 'ton profil', rating, comment.slice(0, 140) || null, `${SITE}/offer-services`, SITE)
+  )
   return { ok: true, review: toReviewView(created.toObject()) }
 }
 

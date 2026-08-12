@@ -15,6 +15,7 @@ import { getBoostedEventIds } from './boosts'
 import { listPublicProviders } from './providers'
 import { listPublicOrganizers, listPublicOrganizersWithNextEvent } from './organizers'
 import { getPublicHomepageConfig } from './agentHomepageConfig'
+import { listPublishedPosts, getPostBySlug, listRelatedPosts, type ListPublishedPostsParams, type PublicBlogPost } from './blog'
 
 const REVALIDATE_SECONDS = 60
 
@@ -63,3 +64,23 @@ export const getCachedPublicHomepageConfig = unstable_cache(getPublicHomepageCon
   revalidate: REVALIDATE_SECONDS,
   tags: ['homepage-config'],
 })
+
+// listPublishedPosts prend un objet params (category/page/pageSize) : la clé
+// de cache par défaut d'unstable_cache utilise les arguments sérialisés, donc
+// chaque combinaison de filtres obtient sa propre entrée automatiquement.
+export const getCachedPublishedPosts = unstable_cache(
+  (params: ListPublishedPostsParams = {}) => listPublishedPosts(params),
+  ['public-blog-posts-list'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['public-blog'] }
+)
+
+export const getCachedPostBySlug = unstable_cache(getPostBySlug, ['public-blog-post-by-slug'], {
+  revalidate: REVALIDATE_SECONDS,
+  tags: ['public-blog'],
+})
+
+export const getCachedRelatedPosts = unstable_cache(
+  (post: PublicBlogPost, limit = 3) => listRelatedPosts(post, limit),
+  ['public-blog-related-posts'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['public-blog'] }
+)

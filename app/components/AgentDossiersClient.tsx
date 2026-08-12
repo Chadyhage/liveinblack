@@ -6,7 +6,7 @@ import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { X } from 'lucide-react'
-import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice } from '@/app/components/ui'
+import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
 
 const PAGE_SIZE = 15
 
@@ -590,17 +590,15 @@ export default function AgentDossiersClient() {
             ))}
           </div>
         ) : grouped.length === 0 ? (
-          <Card style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>{search ? 'Aucun résultat' : 'Aucun dossier'}</p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-              {search ? `Aucun dossier ne correspond à « ${search} » dans « ${activeSection.label} ».` : `Aucun dossier dans la section « ${activeSection.label} ».`}
-            </p>
-            {search && (
-              <Button variant="secondary" onClick={() => { setSearch(''); setPage(1) }} style={{ marginTop: 12, fontSize: 12.5 }}>
+          <EmptyState
+            title={search ? 'Aucun résultat' : 'Aucun dossier'}
+            description={search ? `Aucun dossier ne correspond à « ${search} » dans « ${activeSection.label} ».` : `Aucun dossier dans la section « ${activeSection.label} ».`}
+            action={search ? (
+              <Button variant="secondary" onClick={() => { setSearch(''); setPage(1) }} style={{ fontSize: 12.5 }}>
                 Effacer la recherche
               </Button>
-            )}
-          </Card>
+            ) : undefined}
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {pageItems.map((group) =>
@@ -633,7 +631,7 @@ export default function AgentDossiersClient() {
               variant="ghost"
               onClick={closeDetail}
               aria-label="Fermer le dossier"
-              style={{ position: 'absolute', top: 12, right: 14, width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', padding: 0 }}
+              style={{ position: 'absolute', top: 12, right: 14, width: 36, height: 36, minHeight: 36, minWidth: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', padding: 0 }}
             >
               <X size={18} />
             </Button>
@@ -1119,19 +1117,16 @@ function ActionForm({
 
 function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-      <Card style={{ position: 'relative', maxWidth: 360, width: '90%', textAlign: 'center' }}>
-        <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
-            Annuler
-          </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
-            Confirmer
-          </Button>
-        </div>
-      </Card>
-    </div>
+    <Modal onClose={onCancel} maxWidth={360} hideClose contentStyle={{ textAlign: 'center' }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
+          Annuler
+        </Button>
+        <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
+          Confirmer
+        </Button>
+      </div>
+    </Modal>
   )
 }

@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Providers } from "./providers";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 
 // Police variable déjà distribuée avec la version verrouillée de Next.js.
 // Elle est auto-hébergée au build : aucune requête à Google Fonts, aucun
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
         <CookieConsentBanner />
+        <GoogleAnalytics />
         <Analytics />
         <SpeedInsights />
       </body>

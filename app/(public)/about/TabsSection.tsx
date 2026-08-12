@@ -112,7 +112,7 @@ export default function TabsSection() {
               fontSize: 14,
               fontWeight: 700,
               textDecoration: 'none',
-              color: current.id === 'organizer' ? '#fff' : '#04120e',
+              color: current.id === 'organizer' ? '#fff' : 'var(--primary-ink)',
               background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color,
             }}
           >

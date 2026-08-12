@@ -48,9 +48,11 @@ Politique de confidentialité FedaPay : https://www.fedapay.com/privacy-policies
     {
       n: '05',
       title: "Cookies de mesure d'audience",
-      body: `Actuellement, nous n'utilisons aucun outil de mesure d'audience tiers (pas de Google Analytics, pas de Meta Pixel, etc.).
-
-Si nous décidons d'en intégrer à l'avenir, nous mettrons à jour cette politique et vous demanderons votre consentement explicite avant tout dépôt.`,
+      body: `Nous utilisons Google Analytics pour mesurer la fréquentation du site (pages consultées, provenance du trafic) et l'améliorer. Ces cookies ne sont déposés que si vous cliquez sur "Tout accepter" dans le bandeau — jamais avant, et jamais si vous refusez. Aucun autre outil de mesure d'audience ou pixel publicitaire (Meta Pixel, etc.) n'est utilisé.`,
+      list: [
+        { label: '_ga', value: "distingue les visiteurs uniques (Google Analytics, 13 mois)" },
+        { label: '_ga_<container-id>', value: 'maintient l’état de la session de mesure (Google Analytics, 13 mois)' },
+      ],
     },
     {
       n: '06',

@@ -63,7 +63,11 @@ export function isCountdownUrgent(event: EventLike | null | undefined, nowTs: nu
   return ts > 0 && ts - nowTs > 0 && ts - nowTs < 48 * 3600000
 }
 
-export type StockBadge = { label: string; color: string }
+// `ink` = couleur de texte lisible sur `color` — `--gold`/`--primary` est un
+// vert citron clair (#b8f34a) : du texte blanc dessus est illisible (retour
+// client), il faut `--primary-ink` (foncé). `--pink` reste assez sombre pour
+// du texte blanc.
+export type StockBadge = { label: string; color: string; ink: string }
 
 export function getStockBadge(event: EventLike | null | undefined): StockBadge | null {
   if (event?.cancelled) return null
@@ -71,9 +75,9 @@ export function getStockBadge(event: EventLike | null | undefined): StockBadge |
   const totalCap = places.reduce((s, p) => s + (Number(p.total) || 0), 0)
   const avail = places.reduce((s, p) => s + (Number(p.available) || 0), 0)
   if (totalCap === 0) return null
-  if (avail === 0) return { label: 'COMPLET', color: 'var(--pink)' }
-  if (avail <= 5) return { label: `${avail} PLACE${avail > 1 ? 'S' : ''}`, color: 'var(--pink)' }
+  if (avail === 0) return { label: 'COMPLET', color: 'var(--pink)', ink: '#fff' }
+  if (avail <= 5) return { label: `${avail} PLACE${avail > 1 ? 'S' : ''}`, color: 'var(--pink)', ink: '#fff' }
   const fill = Math.round(((totalCap - avail) / totalCap) * 100)
-  if (fill >= 80) return { label: 'BIENTÔT COMPLET', color: 'var(--gold)' }
+  if (fill >= 80) return { label: 'BIENTÔT COMPLET', color: 'var(--gold)', ink: 'var(--primary-ink)' }
   return null
 }

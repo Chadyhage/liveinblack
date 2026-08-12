@@ -8,7 +8,8 @@ import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoTex
 import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, EmptyState, IconButton, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Search } from 'lucide-react'
 
 const PAGE_SIZE = 24
 
@@ -68,13 +69,14 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
   return (
     <main className="provider-directory" style={{ padding: '56px clamp(20px, 3vw, 48px) 88px', width: '100%', minHeight: '100vh' }}>
       <style>{`
-        .provider-directory__filters{display:grid;grid-template-columns:minmax(320px,1.6fr) minmax(220px,.7fr) auto;gap:10px;margin:0 0 22px}
+        .provider-directory__filters{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px;margin:0 0 22px}
+        .provider-directory__search{position:relative;flex:1 1 320px;min-width:0;max-width:460px}
         .provider-directory__field{min-width:0;padding:11px 14px;border-radius:var(--radius-pill);border:1px solid var(--border-strong);background:#0b0c12;color:var(--text);font-size:13.5px}
         .provider-directory__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:clamp(18px,2vw,26px)}
         .provider-directory__grid:has(>.lb-card:only-child){grid-template-columns:minmax(min(100%,360px),560px)}
-        @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{grid-template-columns:1fr}.provider-directory__filters button{width:100%;min-height:44px}.provider-directory__grid{grid-template-columns:1fr}}
+        @media(max-width:620px){.provider-directory{padding:32px 14px 96px!important}.provider-directory__filters{flex-direction:column;align-items:stretch}.provider-directory__search{max-width:none;flex-basis:auto}.provider-directory__filters button{width:100%;min-height:44px}.provider-directory__grid{grid-template-columns:1fr}}
       `}</style>
-      <div style={{ maxWidth: 1480, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1800, margin: '0 auto' }}>
       <header className="lb-directory-hero">
         <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>L&apos;annuaire</p>
         <h1 className="font-display" style={{ fontSize: 'clamp(34px, 7.5vw, 58px)', lineHeight: 1, letterSpacing: '.01em', margin: '10px 0 0' }}>Les prestataires qui font<br /><span style={{ color: 'var(--gold)' }}>vivre la nuit.</span></h1>
@@ -83,13 +85,24 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
 
       <form action="/providers" method="get" className="provider-directory__filters lb-directory-filters">
         {category && <input type="hidden" name="categorie" value={category} />}
-        <Input
-          type="text"
-          name="q"
-          defaultValue={search}
-          placeholder="Rechercher un prestataire, une ville…"
-          style={{ minWidth: 0, borderRadius: 'var(--radius-pill)', background: '#0b0c12', fontSize: 13.5 }}
-        />
+        <div className="provider-directory__search">
+          <Input
+            type="text"
+            name="q"
+            defaultValue={search}
+            placeholder="Rechercher un prestataire, une ville…"
+            aria-label="Rechercher un prestataire"
+            style={{ width: '100%', minWidth: 0, minHeight: 48, borderRadius: 'var(--radius-pill)', background: '#0b0c12', fontSize: 13.5, paddingRight: 52 }}
+          />
+          <IconButton
+            type="submit"
+            label="Rechercher"
+            icon={<Search size={18} strokeWidth={2} aria-hidden="true" />}
+            tone="accent"
+            size={40}
+            style={{ position: 'absolute', top: '50%', right: 4, transform: 'translateY(-50%)', borderRadius: '50%' }}
+          />
+        </div>
         <FilterSelect
           name="region"
           defaultValue={region}
@@ -120,7 +133,10 @@ export default async function PublicPrestatairesPage({ searchParams }: { searchP
       </div>
 
       {filtered.length === 0 ? (
-        <p style={{ color: 'var(--text-muted)' }}>Aucun prestataire ne correspond à ta recherche.</p>
+        <EmptyState
+          title="Aucun prestataire ne correspond à ta recherche"
+          description="Essaie d'élargir ta recherche, de changer de région ou de catégorie."
+        />
       ) : (
         <div className="provider-directory__grid">
           {paged.map((p) => {

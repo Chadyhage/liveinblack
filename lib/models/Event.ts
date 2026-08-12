@@ -75,6 +75,12 @@ const eventSchema = new Schema(
     publishAt: { type: Date, default: null },
     publishedAt: { type: Date, default: null },
     closingDate: { type: Date, default: null },
+    // Anti-doublon du récap organisateur "c'est dans 2 jours" (voir
+    // lib/server/organizerEvents.ts::sendEventRecapReminders) — jamais
+    // réinitialisé, même en cas de report (un événement reporté aura une
+    // nouvelle date, donc une nouvelle fenêtre J-2 pertinente ; réinitialisé
+    // explicitement par postponeOrganizerEvent).
+    recapEmailSentAt: { type: Date, default: null },
     cancelled: { type: Boolean, default: false },
     // Message affiché aux détenteurs de billets sur leur billet/le mail
     // d'annulation (#7 phase organisateur, port de cancelEventWithMessage) —

@@ -25,7 +25,7 @@ const FONT = 'Inter, sans-serif'
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
 // hex locales pour permettre la composition alpha (`${color}24` etc.), ce que
 // `var(--teal)` ne permet pas en concaténation de chaîne.
-const C = { teal: '#4ee8c8', gold: '#c8a96e', violet: '#8b5cf6', pink: '#e05aaa' }
+const C = { teal: 'var(--teal)', gold: 'var(--gold)', violet: '#8b5cf6', pink: '#e05aaa' }
 
 type InviteRole = 'serveur' | 'scan' | 'dj' | 'vendeur'
 
@@ -447,7 +447,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             fontFamily: FONT,
                             fontSize: 12.5,
                             fontWeight: 700,
-                            background: '#3ed6b5',
+                            background: 'var(--teal-solid)',
                           }}
                         >
                           Ajouter
@@ -468,7 +468,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   fontFamily: FONT,
                   fontSize: 13,
                   textAlign: 'center',
-                  border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(78,232,200,0.5)',
+                  border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(184, 243, 74, 0.5)',
                   background: 'rgba(12,12,22,0.96)',
                   color: '#fff',
                 }}
@@ -519,6 +519,8 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                         flexShrink: 0,
                         width: 30,
                         height: 30,
+                        minHeight: 30,
+                        minWidth: 30,
                         padding: 0,
                         borderRadius: 9,
                         background: 'rgba(224,90,170,0.14)',

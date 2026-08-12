@@ -12,6 +12,11 @@ import { computeTicketFeeCents, computeTicketFeeXOF } from '../shared/fees'
 import { isEventEnded } from '../shared/event-time'
 import { generateUniqueTicketCode } from './ticketCode'
 import { createTransaction, createToken, sendPaymentToUser, type MobileMoneyMode } from './fedapayClient'
+import { notifyUserById } from './emails/notify'
+import { cashSalesBlockedEmail, cashSalePendingSettlementEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Vente hors-application via agent désigné (#C —
 // LIVE_IN_BLACK_Achat_Tickets_Hors_Application_Version_Finale.docx). Rôle
@@ -285,11 +290,18 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
   const pendingCount = await CashSaleSettlement.countDocuments({ agentUid: agentCaller.id, status: 'pending' })
   if (pendingCount >= MAX_PENDING_CASH_SETTLEMENTS_PER_AGENT) {
     await releaseAgentSaleOrder(String(order._id))
+    // Alerte déjà active pour cet agent ? Sert aussi à ne pas ré-envoyer un
+    // email à CHAQUE tentative de vente bloquée tant qu'il n'a rien réglé —
+    // un seul email au moment où le blocage démarre.
+    const alreadyAlerted = await PaymentAlert.exists({ key: `cash_sale_agent_blocked_${agentCaller.id}` })
     await PaymentAlert.updateOne(
       { key: `cash_sale_agent_blocked_${agentCaller.id}` },
       { $set: { reason: 'cash_sale_too_many_unpaid', eventId, sellerUid: agentCaller.id, details: { pendingCount } } },
       { upsert: true }
     )
+    if (!alreadyAlerted) {
+      await notifyUserById(agentCaller.id, () => cashSalesBlockedEmail(pendingCount, `${SITE}/agent`, SITE))
+    }
     return { ok: false, status: 409, error: 'too_many_unpaid_cash_sales' }
   }
 
@@ -504,4 +516,37 @@ export async function getAgentSalesDashboard(caller: AgentSaleCaller, eventId: s
       momoSales: orders.filter((o) => o.rail === 'fedapay' && o.status === 'paid').length,
     },
   }
+}
+
+// ─────────────────────── sendPendingCashSaleReminders ───────────────────────
+// Rappel agent "règlement en attente depuis Xj" — voir
+// app/api/cron/cash-sale-reminders/route.ts. `reminderSentAt` garantit un
+// seul rappel par vente en attente, jamais réinitialisé (une relance
+// répétée n'apporterait rien de plus qu'un seul rappel avant que le seuil de
+// blocage à 5 — cashSalesBlockedEmail, déjà câblé — ne prenne le relais).
+const PENDING_REMINDER_AFTER_MS = 2 * 24 * 60 * 60 * 1000 // 2 jours
+
+export async function sendPendingCashSaleReminders(): Promise<{ reminded: number }> {
+  await getDb()
+  const threshold = new Date(Date.now() - PENDING_REMINDER_AFTER_MS)
+  const pending = await CashSaleSettlement.find({ status: 'pending', reminderSentAt: null, createdAt: { $lte: threshold } }).lean()
+
+  let reminded = 0
+  for (const settlement of pending) {
+    const claimed = await CashSaleSettlement.updateOne({ _id: settlement._id, reminderSentAt: null }, { $set: { reminderSentAt: new Date() } })
+    if (claimed.modifiedCount !== 1) continue
+    const event = await Event.findById(settlement.eventId).select('name').lean()
+    const daysOverdue = Math.max(1, Math.round((Date.now() - settlement.createdAt!.getTime()) / (24 * 60 * 60 * 1000)))
+    await notifyUserById(settlement.agentUid, () =>
+      cashSalePendingSettlementEmail(
+        event?.name || 'cet événement',
+        fmtMoney(settlement.amountTotalMinor / (settlement.currency === 'XOF' ? 1 : 100), settlement.currency),
+        daysOverdue,
+        `${SITE}/agent`,
+        SITE
+      )
+    )
+    reminded += 1
+  }
+  return { reminded }
 }

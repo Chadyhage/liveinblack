@@ -10,6 +10,23 @@ import OrganizerProfile from '../models/OrganizerProfile'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyScheduleChange } from './organizerFollowNotifications'
+import { notifyUserById } from './emails/notify'
+import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from './emails'
+import { fmtMoney } from '../shared/money'
+import type { OrderDoc } from '../models/Order'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
+// Montant remboursé = prix du billet + précommandes, HORS frais de service
+// (jamais remboursés, cf. CGU §05) — même formule que refundStripeOrder/
+// recordFedapayRefund, dupliquée ici uniquement pour l'AFFICHAGE dans
+// l'email (ces fonctions ne retournent pas le montant, juste { ok }).
+function grossRefundMajor(order: Pick<OrderDoc, 'isTable' | 'qty' | 'unitPriceMinor' | 'preorders' | 'currency'>): number {
+  const seatCount = order.isTable ? 1 : order.qty
+  const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
+  const grossMinor = Math.max(0, order.unitPriceMinor * seatCount + preorderTotal)
+  return grossMinor / (order.currency === 'XOF' ? 1 : 100)
+}
 
 // Port des flux "annuler" / "reporter" / "supprimer" de
 // src/pages/MesEvenementsPage.jsx (#7 phase organisateur). Seul le
@@ -85,10 +102,38 @@ export async function cancelOrganizerEvent(
   const paidOrders = await Order.find({ eventId, status: 'paid' })
   let refundedCount = 0
   let refundFailedCount = 0
+  let totalRefundedMajor = 0
   for (const order of paidOrders) {
     const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
-    if (result.ok) refundedCount++
-    else refundFailedCount++
+    if (result.ok) {
+      refundedCount++
+      const amountMajor = grossRefundMajor(order)
+      totalRefundedMajor += amountMajor
+      // Email best-effort par acheteur remboursé — ne bloque jamais la boucle
+      // (voir lib/server/emails/notify.ts). Délai indicatif générique (le rail
+      // exact — Stripe carte vs FedaPay pending_manual — n'est pas exposé par
+      // refundStripeOrder/recordFedapayRefund, on reste volontairement vague).
+      await notifyUserById(order.userId, () =>
+        eventCancelledRefundEmail(event.name, fmtMoney(amountMajor, order.currency), 'quelques jours ouvrés', event.cancellationMessage || null, SITE)
+      )
+    } else {
+      refundFailedCount++
+    }
+  }
+
+  // Récap à l'organisateur — un seul email, même si aucun remboursement n'a
+  // eu lieu (event sans vente) : il sait que l'annulation a bien été traitée.
+  // Devise : toutes les commandes d'un même événement partagent la même
+  // devise (event.currency) — fmtMoney sur le total agrégé est donc valide.
+  if (paidOrders.length > 0) {
+    await notifyUserById(event.organizerId, () =>
+      cancellationFinancialImpactEmail(
+        event.name,
+        fmtMoney(totalRefundedMajor, paidOrders[0].currency),
+        refundFailedCount > 0 ? `${refundFailedCount} remboursement(s) ont échoué et nécessitent un suivi manuel.` : 'Tous les remboursements ont été traités avec succès.',
+        SITE
+      )
+    )
   }
 
   return { ok: true, refundedCount, refundFailedCount }
@@ -135,6 +180,8 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   event.date = input.date
   if (input.time?.trim()) event.time = input.time
   const newWhen = [event.date, event.time].filter(Boolean).join(' · ')
+  // Nouvelle date ⇒ nouvelle fenêtre J-2 pertinente pour le récap organisateur.
+  event.recapEmailSentAt = null
 
   await event.save()
 
@@ -144,6 +191,16 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   // Réactivation manuelle par le vendeur non gérée ici (limitation connue,
   // v1) : il devra recréer un listing après résolution du report.
   await ResaleListing.updateMany({ eventId: String(event._id), status: 'active' }, { $set: { status: 'suspended' } })
+
+  // Email aux détenteurs de billet PAYÉ (distinct de notifyScheduleChange
+  // ci-dessous, qui ne notifie que les ABONNÉS — voir en-tête de
+  // lib/server/emails/templates/followers.ts). Best-effort, jamais bloquant.
+  const paidOrders = await Order.find({ eventId: String(event._id), status: 'paid' })
+  for (const order of paidOrders) {
+    await notifyUserById(order.userId, () =>
+      eventPostponedTicketHolderEmail(event.name, previousWhen, newWhen, `${SITE}/profile/billets`, SITE)
+    )
+  }
 
   // Alerte `scheduleChanges` aux abonnés — un report se renotifie à CHAQUE
   // appel (jamais idempotent comme l'annulation) : un 2e report vers une

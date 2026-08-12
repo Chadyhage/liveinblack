@@ -18,6 +18,12 @@ const eventInterestSchema = new Schema(
     userId: { type: String, required: true },
     eventId: { type: String, required: true },
     status: { type: String, enum: ['active', 'removed'], default: 'active' },
+
+    // E22 (rappel J-1 "événement intéressé") : anti-doublon best-effort,
+    // même pattern updateOne+modifiedCount===1 que SeatHold.reminderSentAt /
+    // CashSaleSettlement.reminderSentAt — voir sendInterestedEventReminders
+    // dans lib/server/eventInterests.ts.
+    reminderSentAt: { type: Date, default: null },
   },
   { timestamps: true }
 )

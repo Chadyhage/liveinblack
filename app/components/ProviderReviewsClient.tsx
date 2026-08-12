@@ -228,11 +228,11 @@ export default function ProviderReviewsClient({
               </Button>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 8, alignItems: 'start' }}>
               {reviews.map((review) => {
                 const isMine = Boolean(myReview) && myReview!.id === review.id
                 return (
-                  <article key={review.id} style={{ padding: '16px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                  <article key={review.id} style={{ padding: 16, borderRadius: 14, border: '1px solid rgba(255,255,255,.07)', background: 'rgba(255,255,255,.02)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <Stars value={review.rating} size={14} />
                       <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>

@@ -8,6 +8,12 @@ import { regionToCurrency, eventCurrency } from '../shared/money'
 import { getRegionByName } from '../shared/regions'
 import { notifyNewEvent } from './organizerFollowNotifications'
 import { normalizeShowOptions, type ShowOption } from '../shared/showOptions'
+import { notifyUserById } from './emails/notify'
+import { eventPublishedEmail, eventRecapBeforeEventEmail } from './emails'
+import EventStaff from '../models/EventStaff'
+import { eventStartMs } from '../shared/event-time'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 // Port de la partie CRÉATION/ÉDITION de src/pages/MesEvenementsPage.jsx (#7
 // phase organisateur — wizard 5 étapes). Contrairement au legacy (verrouillage
@@ -232,7 +238,12 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     } catch (err) {
       console.error('[organizerEvents] notifyNewEvent failed:', err)
     }
+    await notifyUserById(caller.id, () => eventPublishedEmail(event.name, `${SITE}/events/${String(event._id)}`, SITE))
   }
+  // Publication différée (publishAt futur) : aucun cron ne bascule
+  // aujourd'hui le statut au moment venu (vérifié seulement à la LECTURE,
+  // voir orders.ts/organizers.ts) — E23 ne part donc que sur publication
+  // immédiate, limitation connue, signalée plutôt que devinée.
 
   return { ok: true, eventId: String(event._id) }
 }
@@ -527,3 +538,47 @@ export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, ev
 }
 
 export type { EventDoc }
+
+// ─────────────────────────── sendEventRecapReminders ────────────────────────
+// Récap organisateur "c'est dans 2 jours" — voir
+// app/api/cron/event-recap/route.ts. `recapEmailSentAt` garantit un seul
+// envoi par événement (réinitialisé par postponeOrganizerEvent si la date
+// change, voir lib/server/organizerEventLifecycle.ts). Fenêtre large (24h)
+// pour absorber un cron qui ne tournerait pas exactement toutes les heures.
+const RECAP_WINDOW_START_MS = 24 * 60 * 60 * 1000 // 1 jour
+const RECAP_WINDOW_END_MS = 48 * 60 * 60 * 1000 // 2 jours
+
+export async function sendEventRecapReminders(): Promise<{ reminded: number }> {
+  await getDb()
+  const now = Date.now()
+  // Pré-filtre grossier sur `date` (string 'YYYY-MM-DD') pour éviter de
+  // charger tous les événements à venir — la fenêtre exacte est ensuite
+  // vérifiée avec eventStartMs (fuseau horaire correct).
+  const from = new Date(now).toISOString().slice(0, 10)
+  const to = new Date(now + RECAP_WINDOW_END_MS + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const candidates = await Event.find({ date: { $gte: from, $lte: to }, cancelled: false, recapEmailSentAt: null })
+
+  let reminded = 0
+  for (const event of candidates) {
+    const startMs = eventStartMs(event)
+    if (startMs < now + RECAP_WINDOW_START_MS || startMs > now + RECAP_WINDOW_END_MS) continue
+
+    const claimed = await Event.updateOne({ _id: event._id, recapEmailSentAt: null }, { $set: { recapEmailSentAt: new Date() } })
+    if (claimed.modifiedCount !== 1) continue
+
+    const [ticketsSold, staffDoc] = await Promise.all([
+      Ticket.countDocuments({ eventId: String(event._id), revoked: { $ne: true } }),
+      EventStaff.findOne({ eventId: String(event._id) }).lean(),
+    ])
+    const staffCount = staffDoc?.roster ? Object.keys(staffDoc.roster instanceof Map ? Object.fromEntries(staffDoc.roster) : staffDoc.roster).length : 0
+
+    await notifyUserById(event.organizerId, () =>
+      eventRecapBeforeEventEmail(
+        { eventName: event.name, eventWhen: [event.dateDisplay || event.date, event.time].filter(Boolean).join(' · '), ticketsSold, staffCount, dashboardUrl: `${SITE}/spaces/organizer/${String(event._id)}` },
+        SITE
+      )
+    )
+    reminded += 1
+  }
+  return { reminded }
+}
