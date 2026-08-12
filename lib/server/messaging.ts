@@ -569,6 +569,48 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
   }
 }
 
+// ───────────────────────── getMessagesSince (live tail) ─────────────────────
+// Distinct de getMessages ci-dessus (pagination vers l'HISTORIQUE, `before`,
+// ordre décroissant) : celle-ci sert le flux LIVE (prototype SSE,
+// app/api/conversations/[conversationId]/stream/route.ts, audit du
+// 12/08/2026) — tous les messages STRICTEMENT postérieurs à un curseur
+// donné, en ordre croissant (prêts à ajouter en fin de fil). Réutilise
+// exactement la même garde de participation et le même toMessageView que
+// getMessages, aucune règle dupliquée.
+export interface GetMessagesSinceInput {
+  conversationId: string
+  afterId: string
+}
+
+export async function getMessagesSince(caller: MessagingCaller, input: GetMessagesSinceInput): Promise<MessagesResult> {
+  await getDb()
+
+  const conversationId = input.conversationId?.trim()
+  if (!conversationId) return { ok: false, status: 400, error: 'invalid_input' }
+  if (!mongoose.isValidObjectId(input.afterId)) return { ok: false, status: 400, error: 'invalid_cursor' }
+
+  const guard = await loadParticipantConversation(conversationId, caller.id)
+  if (!guard.ok) return guard
+
+  const docs = (await Message.find({
+    conversationId,
+    deletedForUserIds: { $ne: caller.id },
+    _id: { $gt: new mongoose.Types.ObjectId(input.afterId) },
+  })
+    .sort({ _id: 1 })
+    .limit(MAX_MESSAGES_LIMIT)
+    .lean()) as unknown as MessageSource[]
+
+  const conversationSource = guard.conversation.toObject({ flattenMaps: true }) as unknown as ConversationSource
+  const readReceiptsAllowed = await resolveReadReceiptsAllowed(conversationSource.participantIds ?? [])
+
+  return {
+    ok: true,
+    messages: docs.map((m) => toMessageView(m, { callerId: caller.id, conversation: conversationSource, readReceiptsAllowed })),
+    hasMore: false,
+  }
+}
+
 // ────────────────────────────── sendMessage ───────────────────────────────
 
 // 'catalog_item' rejoint enfin ce type sendable : fermait un intégration

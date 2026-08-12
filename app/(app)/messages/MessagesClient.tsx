@@ -268,6 +268,11 @@ function avatarColorFor(userId: string): string {
 // GetMessagesInput dans lib/server/messaging.ts) — `older` peut contenir des
 // messages déjà présents dans `existing` en cas de chevauchement de fenêtre,
 // jamais l'inverse ne doit produire de doublon visible dans le fil.
+// ObjectId "zéro" (24 zéros hex, timestamp 1970) — curseur de départ valide
+// pour getMessagesSince() quand une conversation n'a encore AUCUN message
+// affiché (le endpoint SSE exige un ObjectId syntaxiquement valide).
+const ZERO_OBJECT_ID_SENTINEL = '000000000000000000000000'
+
 function mergeMessagesById(older: MessageView[], existing: MessageView[]): MessageView[] {
   const byId = new Map<string, MessageView>()
   for (const m of older) byId.set(m.id, m)
@@ -512,11 +517,16 @@ export default function MessagesClient({
   // existe plus de 50 messages au total" — approximatif une fois de
   // l'historique déjà chargé plus loin, mais sans risque (loadOlderMessages
   // corrige avec son propre curseur `before` à l'appel suivant).
-  const fetchMessages = useCallback(async (conversationId: string) => {
+  // Retourne les messages reçus (ou undefined en cas d'échec/de conversation
+  // changée entre-temps) — le SEED du curseur SSE ci-dessous en a besoin
+  // pour démarrer le flux live juste après le dernier message déjà affiché,
+  // sans le redemander une seconde fois.
+  const fetchMessages = useCallback(async (conversationId: string): Promise<MessageView[] | undefined> => {
     const res = await apiFetch<{ messages: MessageView[]; hasMore: boolean }>(`/api/conversations/${conversationId}/messages?limit=50`)
-    if (!res.ok || activeIdRef.current !== conversationId) return
+    if (!res.ok || activeIdRef.current !== conversationId) return undefined
     setMessages((prev) => mergeMessagesById(prev, res.data.messages))
     setHasMoreOlder(res.data.hasMore)
+    return res.data.messages
   }, [])
 
   const loadOlderMessages = useCallback(async () => {
@@ -545,12 +555,104 @@ export default function MessagesClient({
     }
   }, [loadingOlder, hasMoreOlder, messages])
 
+  // Prototype SSE (audit de scalabilité du 12/08/2026, "polling messagerie") :
+  // le fil de la conversation active était le poll le plus agressif de
+  // l'app (toutes les 3s) — remplacé ici par une connexion persistante
+  // (app/api/conversations/[conversationId]/stream/route.ts) que le SERVEUR
+  // pousse vers le client, avec repli automatique sur l'ancien poll si SSE
+  // n'est pas disponible/échoue de façon répétée. Portée limitée à CET
+  // écran pour l'instant — les autres polls (liste de conversations,
+  // présence, badges) restent inchangés.
   useEffect(() => {
     if (!activeId) return
-    fetchMessages(activeId)
-    apiFetch(`/api/conversations/${activeId}/read`, { method: 'POST' }).then(() => refreshConversations())
-    const interval = setInterval(() => fetchMessages(activeId), 3000)
-    return () => clearInterval(interval)
+    // Capturé en `const` pour que les closures imbriquées ci-dessous (qui
+    // perdent le rétrécissement `!activeId` de TypeScript à travers une
+    // frontière de fonction) restent typées `string`, pas `string | null`.
+    const conversationId = activeId
+    let cancelled = false
+    let source: EventSource | null = null
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let lastMessageId = ZERO_OBJECT_ID_SENTINEL
+    let consecutiveErrors = 0
+
+    function startFallbackPolling() {
+      if (fallbackInterval || cancelled) return
+      source?.close()
+      source = null
+      fallbackInterval = setInterval(() => fetchMessages(conversationId), 3000)
+    }
+
+    function connectStream(afterId: string) {
+      if (cancelled) return
+      source?.close()
+      const es = new EventSource(`/api/conversations/${conversationId}/stream?afterId=${encodeURIComponent(afterId)}`)
+      source = es
+
+      es.addEventListener('messages', (evt) => {
+        if (cancelled) return
+        try {
+          const payload = JSON.parse((evt as MessageEvent).data) as { messages: MessageView[] }
+          if (payload.messages.length > 0) {
+            setMessages((prev) => mergeMessagesById(prev, payload.messages))
+            lastMessageId = payload.messages[payload.messages.length - 1].id
+            consecutiveErrors = 0
+          }
+        } catch {
+          // Événement malformé — ignoré, la connexion continue normalement.
+        }
+      })
+
+      // Le serveur ferme proprement toutes les ~50s (maxDuration Vercel) —
+      // reconnexion immédiate avec le curseur à jour, jamais un état
+      // d'erreur visible pour un renouvellement attendu.
+      es.addEventListener('reconnect', () => connectStream(lastMessageId))
+
+      // Erreur APPLICATIVE explicite du serveur (ex. conversation devenue
+      // inaccessible) — jamais retenter en boucle sur un état qui ne se
+      // résoudra pas seul.
+      es.addEventListener('app-error', () => startFallbackPolling())
+
+      es.onerror = () => {
+        // Erreur de TRANSPORT (réseau, session expirée...) — EventSource
+        // retenterait nativement sur la même URL (curseur figé au moment de
+        // la connexion) ; fermer nous-mêmes puis reconnecter avec le
+        // curseur à jour évite ce piège. Au-delà de quelques échecs
+        // consécutifs, on abandonne le flux live plutôt que de boucler
+        // indéfiniment et on retombe sur le poll classique, pour ne jamais
+        // laisser le fil silencieusement muet.
+        es.close()
+        if (source === es) source = null
+        if (cancelled) return
+        consecutiveErrors += 1
+        if (consecutiveErrors > 3) {
+          startFallbackPolling()
+          return
+        }
+        reconnectTimer = setTimeout(() => connectStream(lastMessageId), 2000)
+      }
+    }
+
+    async function start() {
+      const initial = await fetchMessages(conversationId)
+      if (cancelled) return
+      const seed = initial && initial.length > 0 ? initial[initial.length - 1].id : ZERO_OBJECT_ID_SENTINEL
+      if (typeof EventSource === 'undefined') {
+        startFallbackPolling()
+        return
+      }
+      connectStream(seed)
+    }
+    start()
+
+    apiFetch(`/api/conversations/${conversationId}/read`, { method: 'POST' }).then(() => refreshConversations())
+
+    return () => {
+      cancelled = true
+      source?.close()
+      if (fallbackInterval) clearInterval(fallbackInterval)
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+    }
   }, [activeId, fetchMessages, refreshConversations])
 
   useEffect(() => {
