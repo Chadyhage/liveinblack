@@ -34,6 +34,25 @@ type CloudinaryUploadResponse = {
   error?: { message?: string }
 }
 
+// Ajouté suite à l'audit de scalabilité du 12/08/2026 — plusieurs écrans
+// (avatar profil, affiche événement, avatar/couverture prestataire...)
+// produisent l'image finale via un canvas de recadrage (`canvas.toDataURL`),
+// jamais un vrai `File` — ce helper convertit ce data URI en `File` pour
+// pouvoir passer par uploadPublicMedia() (upload direct signé) au lieu du
+// transit base64 par le serveur Next. Généraliser progressivement ce
+// pattern aux autres écrans de recadrage est le prolongement naturel de
+// cette migration (non fait dans ce lot pour tous les écrans, voir
+// commentaires des fonctions serveur concernées).
+export function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(',')
+  const mimeMatch = /data:(.*?);base64/.exec(header)
+  const mime = mimeMatch?.[1] || 'image/jpeg'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i)
+  return new File([bytes], filename, { type: mime })
+}
+
 export async function uploadPublicMedia(file: File, purpose: PublicMediaPurpose): Promise<PublicMediaUploadReference> {
   if (!PUBLIC_MEDIA_MIME_TYPES.includes(file.type as (typeof PUBLIC_MEDIA_MIME_TYPES)[number])) {
     throw new Error('Format de média non accepté.')

@@ -4,6 +4,8 @@ import mongoose from 'mongoose'
 import { getDb } from '../db/mongoose'
 import User, { NAME_COOLDOWN_DAYS } from '../models/User'
 import { uploadDataUri } from './cloudinary'
+import { verifyPublicMediaUploadReference } from './publicMediaUpload'
+import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
 import {
   issueVerificationToken,
   consumeVerificationToken,
@@ -216,15 +218,36 @@ export async function updatePhone(caller: ProfileCaller, input: { dialCode: stri
 // ──────────────────────────────── updateAvatar ──────────────────────────────
 // Contrairement au legacy (recadrage en base64 stocké DIRECTEMENT dans le
 // document utilisateur — pas d'upload Storage), l'image (déjà recadrée/
-// compressée côté client, comme le legacy le fait) est envoyée ici en
-// data URI et uploadée vers Cloudinary — même point d'entrée que les autres
-// médias de ce port (messages, avatars de groupe). Ne stocke jamais un blob
-// dans MongoDB.
-
+// compressée côté client, comme le legacy le fait) est uploadée vers
+// Cloudinary — même point d'entrée que les autres médias de ce port
+// (messages, avatars de groupe). Ne stocke jamais un blob dans MongoDB.
+//
+// Double chemin (audit de scalabilité du 12/08/2026, "uploads majoritairement
+// en base64 via le serveur") — même pattern que organizerProfile.ts/
+// providerProfile.ts (catalogue) :
+//  - `upload` : référence d'un upload DIRECT déjà fait vers Cloudinary
+//    (lib/client/publicMediaUpload.ts, purpose 'avatar') — le fichier ne
+//    transite jamais par cette fonction/le serveur Next, seule la référence
+//    est revérifiée ici avant d'être approuvée. Chemin utilisé par le web
+//    (ProfilClient.tsx) depuis ce correctif.
+//  - `dataUri` : chemin LEGACY conservé — l'app mobile (LIB_Mobile,
+//    lib/settings.ts::uploadAvatar) appelle cette même route avec
+//    `{dataUri}` et n'a pas été migrée dans ce lot ; retirer ce chemin
+//    casserait l'upload d'avatar mobile.
 export type UpdateAvatarResult = ErrResult | { ok: true; avatarUrl: string }
 
-export async function updateAvatar(caller: ProfileCaller, input: { dataUri: string }): Promise<UpdateAvatarResult> {
+export async function updateAvatar(
+  caller: ProfileCaller,
+  input: { dataUri: string } | { upload: PublicMediaUploadReference }
+): Promise<UpdateAvatarResult> {
   await getDb()
+
+  if ('upload' in input) {
+    const verified = await verifyPublicMediaUploadReference(input.upload, caller.id, 'avatar')
+    if (!verified.ok) return { ok: false, status: 400, error: 'invalid_media_upload' }
+    await User.updateOne({ _id: caller.id }, { $set: { avatarUrl: verified.url } })
+    return { ok: true, avatarUrl: verified.url }
+  }
 
   const uploaded = await uploadDataUri(input.dataUri, `avatars/${caller.id}`)
   if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }

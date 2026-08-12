@@ -12,6 +12,7 @@ import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
 import { stripDiacritics } from '@/lib/shared/diacritics'
+import { uploadPublicMedia, dataUrlToFile } from '@/lib/client/publicMediaUpload'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -330,8 +331,28 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       ctx.restore()
 
       const dataUri = canvas.toDataURL('image/jpeg', 0.88)
+      // Aperçu optimiste immédiat (avant même la fin de l'upload) — inchangé.
       setUser({ ...user, avatarUrl: dataUri })
       setCropSrc(null)
+
+      // Upload DIRECT signé (audit du 12/08/2026) — le fichier recadré ne
+      // transite plus par le serveur Next, seule la référence Cloudinary est
+      // envoyée à /api/profil/avatar pour vérification. En cas d'échec de
+      // préparation/upload (ex. Cloudinary indisponible), on retombe sur
+      // l'ancien chemin base64 plutôt que de bloquer l'utilisateur — jamais
+      // un cul-de-sac silencieux sur un flux aussi fréquent que l'avatar.
+      try {
+        const file = dataUrlToFile(dataUri, `avatar-${user.id}.jpg`)
+        const upload = await uploadPublicMedia(file, 'avatar')
+        const res = await fetch('/api/profil/avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ upload }) })
+        const data = await res.json()
+        if (res.ok && data.ok) {
+          setUser({ ...user, avatarUrl: data.avatarUrl })
+          return
+        }
+      } catch {
+        // repli ci-dessous
+      }
 
       const res = await fetch('/api/profil/avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dataUri }) })
       const data = await res.json()

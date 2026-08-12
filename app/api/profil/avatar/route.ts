@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { updateAvatar } from '@/lib/server/profile'
+import { publicMediaUploadReferenceSchema } from '@/lib/shared/publicMediaUploads'
 
-const bodySchema = z.object({ dataUri: z.string().min(1) })
+// Union dataUri (legacy, encore utilisé par l'app mobile) / upload (direct
+// signé, voir lib/server/profile.ts::updateAvatar) — même convention que
+// app/api/organizer-events/media/route.ts.
+const bodySchema = z.union([
+  z.object({ dataUri: z.string().min(1) }),
+  z.object({ upload: publicMediaUploadReferenceSchema }),
+])
 
 export async function POST(req: Request) {
   const session = await auth()

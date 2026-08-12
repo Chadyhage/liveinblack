@@ -11,7 +11,14 @@ export const PUBLIC_MEDIA_MIME_TYPES = [
   'video/quicktime',
 ] as const
 export const PUBLIC_MEDIA_FORMATS = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm', 'mov'] as const
-export const PUBLIC_MEDIA_PURPOSES = ['event', 'organizer-gallery', 'provider-catalog'] as const
+// 'avatar' ajouté suite à l'audit de scalabilité du 12/08/2026 — premier pas
+// de la migration de app/api/profil/avatar/route.ts vers l'upload direct
+// signé (voir lib/server/profile.ts::updateAvatar) plutôt que le transit
+// base64 par le serveur Next. Réutilisable pour d'autres avatars/couvertures
+// (groupe, prestataire, organisateur) — ceux-ci restent en base64 pour
+// l'instant, migration future documentée dans les commentaires des fonctions
+// concernées.
+export const PUBLIC_MEDIA_PURPOSES = ['event', 'organizer-gallery', 'provider-catalog', 'avatar'] as const
 
 export const publicMediaUploadReferenceSchema = z.object({
   publicId: z.string().min(1).max(500),
