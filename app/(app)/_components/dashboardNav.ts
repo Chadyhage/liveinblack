@@ -19,6 +19,7 @@ import {
   BookOpen,
   Settings,
   LifeBuoy,
+  Bell,
 } from 'lucide-react'
 import type { Role } from '@/lib/server/permissions'
 
@@ -50,6 +51,10 @@ export interface DashboardNavItem {
 // conceptuel avec paramètres/billets/aide.
 export const COMMON_NAV: DashboardNavItem[] = [
   { label: 'Vue d’ensemble', href: '/profile', icon: LayoutDashboard },
+  // Remplace la cloche du header (AccountMenu.tsx) — une vraie entrée de
+  // sidebar plutôt qu'un dropdown dans un coin d'en-tête, sur toutes les
+  // pages, pas seulement sous (app) (confirmé en réunion live le 12/08/2026).
+  { label: 'Notifications', href: '/notifications', icon: Bell },
   { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
   {
     label: 'Mes favoris',

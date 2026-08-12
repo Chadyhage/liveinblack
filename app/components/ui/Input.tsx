@@ -49,11 +49,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           outline: 'none',
           fontFamily: 'inherit',
           transition: 'border-color 0.15s ease',
+          ...SIZE_STYLES[size],
           paddingLeft: leftIcon ? 36 : undefined,
           paddingRight: rightIcon ? 36 : undefined,
           opacity: disabled ? 0.55 : 1,
           cursor: disabled ? 'not-allowed' : 'text',
-          ...SIZE_STYLES[size],
           ...style,
         }}
         {...rest}

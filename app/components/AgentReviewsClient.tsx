@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { CheckCircle2, Eye, EyeOff, Flag, RefreshCw, Search, ShieldCheck, Star, StickyNote, Trash2 } from 'lucide-react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
+import { Button, Card, Input, Modal, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
+import styles from './AgentReviewsClient.module.css'
 
 const PAGE_SIZE = 15
 
@@ -54,10 +56,10 @@ interface AgentReviewView {
 
 const REASON_LABEL: Record<string, string> = Object.fromEntries(REVIEW_REPORT_REASONS.map((r) => [r.id, r.label]))
 
-const STATUS_META: Record<ReviewStatus, { label: string; color: string; bg: string; border: string }> = {
-  published: { label: 'Publié', color: 'var(--primary)', bg: 'rgba(184, 243, 74,.10)', border: 'rgba(184, 243, 74,.35)' },
-  hidden: { label: 'Masqué', color: '#ff8fb2', bg: 'rgba(194,52,127,.12)', border: 'rgba(194,52,127,.4)' },
-  deleted: { label: 'Supprimé', color: 'var(--text-faint)', bg: 'rgba(255,255,255,.06)', border: 'rgba(255,255,255,.16)' },
+const STATUS_META: Record<ReviewStatus, { label: string; className: string }> = {
+  published: { label: 'Publié', className: styles.statusPublished },
+  hidden: { label: 'Masqué', className: styles.statusHidden },
+  deleted: { label: 'Supprimé', className: styles.statusDeleted },
 }
 
 const TOAST_LABEL: Record<ModerationOp, string> = {
@@ -76,8 +78,6 @@ const MODERATE_ERROR_LABELS: Record<string, string> = {
   note_required: 'La note ne peut pas être vide.',
   review_not_found: 'Cet avis est introuvable (déjà traité ailleurs ?).',
 }
-
-const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(iso: string): string {
   try {
@@ -170,6 +170,12 @@ export default function AgentReviewsClient() {
   }, [])
 
   const reportedCount = useMemo(() => reviews.filter((r) => r.reportCount > 0 && r.status !== 'deleted').length, [reviews])
+  const publishedCount = useMemo(() => reviews.filter((r) => r.status === 'published').length, [reviews])
+  const averageRating = useMemo(() => {
+    const visibleReviews = reviews.filter((review) => review.status !== 'deleted')
+    if (!visibleReviews.length) return '—'
+    return (visibleReviews.reduce((sum, review) => sum + review.rating, 0) / visibleReviews.length).toFixed(1)
+  }, [reviews])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -192,6 +198,8 @@ export default function AgentReviewsClient() {
   }, [reviews, statusFilter, ratingFilter, search])
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(filtered, page, PAGE_SIZE), [filtered, page])
+  const deleteReview = reviews.find((review) => review.id === confirmDeleteId) ?? null
+  const noteReview = reviews.find((review) => review.id === noteForId) ?? null
 
   async function act(review: AgentReviewView, op: ModerationOp, note?: string) {
     if (busyId) return
@@ -220,121 +228,131 @@ export default function AgentReviewsClient() {
   }
 
   return (
-    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--reviews">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div><span className="lb-agent-kicker">Qualité de la communauté</span><h1 className="font-display lb-dashboard-title">Avis</h1><p className="lb-dashboard-description">Publiez, masquez ou supprimez les avis en conservant une trace interne.</p></div>
-          {reportedCount > 0 && (
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
-              {reportedCount} signalé{reportedCount > 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
+    <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--reviews ${styles.page}`}>
+      <div className={styles.stack}>
+        <section className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <span className={styles.kicker}><ShieldCheck size={15} aria-hidden="true" /> Qualité de la communauté</span>
+            <h1>Avis</h1>
+            <p>Contrôle les avis publiés et traite rapidement les contenus signalés.</p>
+          </div>
+          <Button variant="secondary" onClick={loadList} className={styles.refresh} icon={<RefreshCw size={16} aria-hidden="true" />}>
+            Actualiser
+          </Button>
+        </section>
 
         {listError && (
-          <Card accent="rgba(224,90,170,0.35)" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={loadList} style={btnBase}>
+          <Card accent="rgba(255,143,178,.35)" className={styles.error}>
+            <div><strong>Impossible de charger les avis</strong><p>Réessaie maintenant ou reconnecte-toi si le problème persiste.</p></div>
+            <Button variant="secondary" onClick={loadList}>
               Recharger
             </Button>
           </Card>
         )}
 
-        <Input
-          placeholder="Rechercher (prestataire, auteur, texte...)"
-          value={search}
-          onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })}
-        />
-
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {(
-            [
-              { key: 'all' as const, label: 'Tous statuts' },
-              { key: 'reported' as const, label: 'Signalés' },
-              { key: 'published' as const, label: 'Publiés' },
-              { key: 'hidden' as const, label: 'Masqués' },
-              { key: 'deleted' as const, label: 'Supprimés' },
-            ]
-          ).map((f) => (
-            <Button
-              key={f.key}
-              variant="ghost"
-              onClick={() => setQueryParams({ status: f.key === 'all' ? null : f.key, page: null })}
-              style={{
-                padding: '7px 12px',
-                borderRadius: 999,
-                fontSize: 10,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                border: statusFilter === f.key ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
-                background: statusFilter === f.key ? 'rgba(184, 243, 74,0.15)' : 'var(--surface)',
-                color: statusFilter === f.key ? 'var(--gold)' : 'var(--text-faint)',
-              }}
-            >
-              {f.label}
-            </Button>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {(['all', '5', '4', '3', '2', '1'] as const).map((n) => (
-            <Button
-              key={n}
-              variant="ghost"
-              onClick={() => setQueryParams({ rating: n === 'all' ? null : n, page: null })}
-              style={{
-                padding: '7px 12px',
-                borderRadius: 999,
-                fontSize: 10,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                border: ratingFilter === n ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
-                background: ratingFilter === n ? 'rgba(184, 243, 74,0.15)' : 'var(--surface)',
-                color: ratingFilter === n ? 'var(--gold)' : 'var(--text-faint)',
-              }}
-            >
-              {n === 'all' ? 'Toutes notes' : `${n} étoile${n !== '1' ? 's' : ''}`}
-            </Button>
-          ))}
-        </div>
-
-        {listLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonRow key={i} columns={2} />
-            ))}
+        <section className={styles.metrics} aria-label="Résumé des avis">
+          <button type="button" className={`${styles.metric}${statusFilter === 'all' ? ` ${styles.metricActive}` : ''}`} onClick={() => setQueryParams({ status: null, page: null })}>
+            <span className={styles.metricIcon}><Star size={18} aria-hidden="true" /></span><strong>{reviews.length}</strong><span>Tous les avis</span>
+          </button>
+          <button type="button" className={`${styles.metric}${statusFilter === 'reported' ? ` ${styles.metricActive} ${styles.metricUrgent}` : ''}`} onClick={() => setQueryParams({ status: 'reported', page: null })}>
+            <span className={`${styles.metricIcon} ${styles.urgentIcon}`}><Flag size={18} aria-hidden="true" /></span><strong>{reportedCount}</strong><span>À examiner</span>
+          </button>
+          <button type="button" className={`${styles.metric}${statusFilter === 'published' ? ` ${styles.metricActive}` : ''}`} onClick={() => setQueryParams({ status: 'published', page: null })}>
+            <span className={styles.metricIcon}><CheckCircle2 size={18} aria-hidden="true" /></span><strong>{publishedCount}</strong><span>Publiés</span>
+          </button>
+          <div className={styles.metric}>
+            <span className={styles.metricIcon}><Star size={18} aria-hidden="true" /></span><strong>{averageRating}</strong><span>Note moyenne</span>
           </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState title={reviews.length === 0 ? 'Aucun avis pour le moment' : 'Aucun avis ne correspond aux filtres'} />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {pageItems.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                busy={busyId === review.id}
-                confirmDelete={confirmDeleteId === review.id}
-                onOpenConfirmDelete={() => setConfirmDeleteId(review.id)}
-                onCancelConfirmDelete={() => setConfirmDeleteId(null)}
-                noteOpen={noteForId === review.id}
-                noteText={noteForId === review.id ? noteText : ''}
-                onOpenNote={() => {
-                  setNoteForId(review.id)
-                  setNoteText(review.adminNote || '')
-                }}
-                onCancelNote={() => {
-                  setNoteForId(null)
-                  setNoteText('')
-                }}
-                onChangeNote={setNoteText}
-                onAction={act}
-              />
-            ))}
-          </div>
-        )}
+        </section>
 
-        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
+        <section className={styles.workspace}>
+          <div className={styles.controls}>
+            <Input
+              aria-label="Rechercher dans les avis"
+              placeholder="Rechercher un prestataire, un auteur ou un avis"
+              leftIcon={<Search size={17} aria-hidden="true" />}
+              value={search}
+              onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })}
+              containerStyle={{ flex: '1 1 auto', minWidth: 0 }}
+              className={styles.search}
+            />
+            <span className={styles.resultCount}>{filtered.length} résultat{filtered.length > 1 ? 's' : ''}</span>
+          </div>
+
+          <div className={styles.filterBlock}>
+            <div className={styles.segmented} aria-label="Filtrer par statut">
+              {([
+                { key: 'all' as const, label: 'Tous' },
+                { key: 'reported' as const, label: 'Signalés' },
+                { key: 'published' as const, label: 'Publiés' },
+                { key: 'hidden' as const, label: 'Masqués' },
+                { key: 'deleted' as const, label: 'Supprimés' },
+              ]).map((filter) => (
+                <Button key={filter.key} variant="ghost" aria-pressed={statusFilter === filter.key} onClick={() => setQueryParams({ status: filter.key === 'all' ? null : filter.key, page: null })}>
+                  {filter.label}
+                </Button>
+              ))}
+            </div>
+            <div className={styles.ratingFilter} aria-label="Filtrer par note">
+              {(['all', '5', '4', '3', '2', '1'] as const).map((rating) => (
+                <Button key={rating} variant="ghost" aria-pressed={ratingFilter === rating} onClick={() => setQueryParams({ rating: rating === 'all' ? null : rating, page: null })}>
+                  {rating === 'all' ? 'Toutes les notes' : <><Star size={13} aria-hidden="true" /> {rating}</>}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {listLoading ? (
+            <div className={styles.loadingGrid}>{Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} columns={2} />)}</div>
+          ) : filtered.length === 0 ? (
+            <EmptyState title={reviews.length === 0 ? 'Aucun avis pour le moment' : 'Aucun avis ne correspond aux filtres'} />
+          ) : (
+            <div className={styles.grid}>
+              {pageItems.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  busy={busyId === review.id}
+                  onOpenConfirmDelete={() => setConfirmDeleteId(review.id)}
+                  onOpenNote={() => { setNoteForId(review.id); setNoteText(review.adminNote || '') }}
+                  onAction={act}
+                />
+              ))}
+            </div>
+          )}
+
+          <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
+        </section>
       </div>
+
+      {noteReview ? (
+        <Modal
+          onClose={() => { if (!busyId) { setNoteForId(null); setNoteText('') } }}
+          maxWidth={460}
+          dismissible={!busyId}
+          title="Note interne"
+          subtitle={noteReview.providerName ? `À propos de l’avis de ${noteReview.authorName} sur ${noteReview.providerName}.` : `À propos de l’avis de ${noteReview.authorName}.`}
+          actions={<><Button variant="secondary" onClick={() => { setNoteForId(null); setNoteText('') }} disabled={Boolean(busyId)}>Annuler</Button><Button variant="primary" onClick={() => act(noteReview, 'note', noteText.trim())} disabled={Boolean(busyId) || !noteText.trim()} loading={busyId === noteReview.id} loadingText="Enregistrement…">Enregistrer</Button></>}
+        >
+          <label className={styles.modalLabel} htmlFor="review-admin-note">Visible uniquement par les agents</label>
+          <Input id="review-admin-note" value={noteText} onChange={(event) => setNoteText(event.target.value.slice(0, 500))} placeholder="Ajouter un contexte de modération" autoFocus />
+          <p className={styles.characterCount}>{noteText.length}/500</p>
+        </Modal>
+      ) : null}
+
+      {deleteReview ? (
+        <Modal
+          onClose={() => { if (!busyId) setConfirmDeleteId(null) }}
+          maxWidth={420}
+          hideClose
+          dismissible={!busyId}
+          title="Supprimer cet avis ?"
+          subtitle="Cette action est définitive et retirera l’avis de la note du prestataire."
+          actions={<><Button variant="secondary" onClick={() => setConfirmDeleteId(null)} disabled={Boolean(busyId)}>Annuler</Button><Button variant="danger" onClick={() => act(deleteReview, 'delete')} disabled={Boolean(busyId)} loading={busyId === deleteReview.id} loadingText="Suppression…">Supprimer</Button></>}
+        >
+          <div className={styles.deletePreview}><Trash2 size={18} aria-hidden="true" /><p>« {deleteReview.comment} »</p></div>
+        </Modal>
+      ) : null}
 
       <ToastViewport items={toast ? [{ id: 'avis', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
@@ -344,84 +362,59 @@ export default function AgentReviewsClient() {
 function ReviewCard({
   review,
   busy,
-  confirmDelete,
   onOpenConfirmDelete,
-  onCancelConfirmDelete,
-  noteOpen,
-  noteText,
   onOpenNote,
-  onCancelNote,
-  onChangeNote,
   onAction,
 }: {
   review: AgentReviewView
   busy: boolean
-  confirmDelete: boolean
   onOpenConfirmDelete: () => void
-  onCancelConfirmDelete: () => void
-  noteOpen: boolean
-  noteText: string
   onOpenNote: () => void
-  onCancelNote: () => void
-  onChangeNote: (v: string) => void
   onAction: (review: AgentReviewView, op: ModerationOp, note?: string) => void
 }) {
   const meta = STATUS_META[review.status]
   const isReported = review.reportCount > 0 && review.status !== 'deleted'
 
   return (
-    <Card
-      accent={isReported ? 'rgba(224,90,170,.35)' : undefined}
-      style={{ padding: 16, ...(isReported ? { borderLeft: '3px solid rgba(224,90,170,.6)' } : null) }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-        <div style={{ minWidth: 0 }}>
-          <p style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>
-            {review.providerName}
-            <span style={{ fontWeight: 400, color: 'var(--text-faint)', fontSize: 12 }}> — avis de {review.authorName}</span>
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
-            <Stars value={review.rating} size={16} />
-            {review.verified && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)' }}>vérifié</span>}
-            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{fmtDate(review.createdAt)}</span>
+    <Card className={`${styles.reviewCard}${isReported ? ` ${styles.reviewReported}` : ''}`}>
+      <div className={styles.cardTop}>
+        <div className={styles.identity}>
+          <div className={styles.identityIcon}>{review.authorName.slice(0, 1).toUpperCase()}</div>
+          <div>
+            <strong>{review.providerName || 'Prestataire'}</strong>
+            <span>Avis de {review.authorName}</span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          {isReported && (
-            <span style={{ padding: '3px 9px', borderRadius: 999, background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', fontSize: 10.5, fontWeight: 700, color: '#e05aaa' }}>
-              {review.reportCount} signalement{review.reportCount > 1 ? 's' : ''}
-            </span>
-          )}
-          <span style={{ padding: '3px 9px', borderRadius: 999, background: meta.bg, border: `1px solid ${meta.border}`, fontSize: 10.5, fontWeight: 700, color: meta.color }}>
-            {meta.label}
-          </span>
-          {review.hiddenBy === 'auto' && (
-            <span style={{ padding: '3px 9px', borderRadius: 999, background: 'rgba(139,92,246,0.14)', border: '1px solid rgba(139,92,246,0.4)', fontSize: 10.5, fontWeight: 700, color: 'var(--violet)' }}>
-              auto
-            </span>
-          )}
+        <div className={styles.badges}>
+          {isReported ? <span className={styles.reportBadge}><Flag size={12} aria-hidden="true" /> {review.reportCount}</span> : null}
+          <span className={`${styles.status} ${meta.className}`}>{meta.label}</span>
+          {review.hiddenBy === 'auto' ? <span className={styles.autoBadge}>Auto</span> : null}
         </div>
       </div>
 
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: '10px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
+      <div className={styles.ratingLine}>
+            <Stars value={review.rating} size={16} />
+        {review.verified ? <span><ShieldCheck size={13} aria-hidden="true" /> Vérifié</span> : null}
+        <time dateTime={review.createdAt}>{fmtDate(review.createdAt)}</time>
+      </div>
+
+      <p className={styles.comment}>{review.comment}</p>
 
       {review.reply?.text && (
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.55, margin: '8px 0 0', paddingLeft: 12, borderLeft: '2px solid rgba(184, 243, 74,.35)' }}>
-          <strong style={{ color: 'var(--gold)' }}>Réponse presta :</strong> {review.reply.text}
-        </p>
+        <div className={styles.reply}><strong>Réponse du prestataire</strong><p>{review.reply.text}</p></div>
       )}
 
       {review.reports.length > 0 && (
-        <div style={{ marginTop: 10, padding: '9px 12px', borderRadius: 10, background: 'rgba(224,90,170,.06)', border: '1px solid rgba(224,90,170,.22)' }}>
-          <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#e05aaa', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Signalements</p>
+        <div className={styles.reports}>
+          <strong className={styles.reportsTitle}><Flag size={14} aria-hidden="true" /> Signalements</strong>
           {review.reports.map((rep) => (
-            <p key={rep.id} style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.5 }}>
+            <p key={rep.id}>
               <strong>{REASON_LABEL[rep.reason] || rep.reason}</strong> — {rep.reporterName || 'Membre'} · {fmtDate(rep.createdAt)}
-              {rep.status !== 'open' && <span style={{ color: 'var(--text-faint)' }}> · traité</span>}
+              {rep.status !== 'open' && <span> · traité</span>}
               {rep.details ? (
                 <>
                   <br />
-                  <span style={{ color: 'var(--text-faint)' }}>« {rep.details} »</span>
+                  <span>« {rep.details} »</span>
                 </>
               ) : null}
             </p>
@@ -429,59 +422,14 @@ function ReviewCard({
         </div>
       )}
 
-      {review.adminNote && <p style={{ fontSize: 11.5, color: 'var(--gold)', margin: '8px 0 0' }}>Note admin : {review.adminNote}</p>}
+      {review.adminNote ? <div className={styles.adminNote}><StickyNote size={14} aria-hidden="true" /><span>{review.adminNote}</span></div> : null}
 
-      {noteOpen ? (
-        <div style={{ marginTop: 10 }}>
-          <Input value={noteText} onChange={(e) => onChangeNote(e.target.value.slice(0, 500))} placeholder="Note interne (visible des agents uniquement)" />
-          <div style={{ display: 'flex', gap: 7, marginTop: 8 }}>
-            <Button variant="secondary" onClick={onCancelNote} disabled={busy} style={btnBase}>
-              Annuler
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => onAction(review, 'note', noteText.trim())}
-              disabled={busy || !noteText.trim()}
-              style={{ ...btnBase, background: 'var(--primary-strong)', color: '#04120e', opacity: busy || !noteText.trim() ? 0.5 : 1 }}
-            >
-              Enregistrer
-            </Button>
-          </div>
-        </div>
-      ) : confirmDelete ? (
-        <div style={{ marginTop: 10, padding: 12, borderRadius: 10, background: 'rgba(194,52,127,.08)', border: '1px solid rgba(194,52,127,.35)' }}>
-          <p style={{ fontSize: 12.5, color: '#fff', margin: '0 0 10px' }}>Supprimer définitivement cet avis ? Il ne comptera plus dans la note du prestataire.</p>
-          <div style={{ display: 'flex', gap: 7 }}>
-            <Button variant="secondary" onClick={onCancelConfirmDelete} disabled={busy} style={btnBase}>
-              Annuler
-            </Button>
-            <Button variant="danger" onClick={() => onAction(review, 'delete')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, background: '#c2347f' }}>
-              Confirmer la suppression
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
-          {review.status === 'published' && (
-            <Button variant="danger" onClick={() => onAction(review, 'hide')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.5)', background: 'rgba(224,90,170,.12)' }}>
-              Masquer
-            </Button>
-          )}
-          {review.status === 'hidden' && (
-            <Button variant="primary" onClick={() => onAction(review, 'publish')} disabled={busy} loading={busy} loadingText="…" style={{ ...btnBase, background: 'var(--primary-strong)', color: '#04120e' }}>
-              Republier
-            </Button>
-          )}
-          {review.status !== 'deleted' && (
-            <Button variant="danger" onClick={onOpenConfirmDelete} disabled={busy} style={{ ...btnBase, color: '#ff8fb2', border: '1px solid rgba(194,52,127,.5)', background: 'rgba(194,52,127,.12)' }}>
-              Supprimer
-            </Button>
-          )}
-          <Button variant="secondary" onClick={onOpenNote} disabled={busy} style={btnBase}>
-            Note admin
-          </Button>
-        </div>
-      )}
+      <div className={styles.cardActions}>
+        {review.status === 'published' ? <Button variant="secondary" icon={<EyeOff size={15} aria-hidden="true" />} onClick={() => onAction(review, 'hide')} disabled={busy} loading={busy} loadingText="Masquage…">Masquer</Button> : null}
+        {review.status === 'hidden' ? <Button variant="primary" icon={<Eye size={15} aria-hidden="true" />} onClick={() => onAction(review, 'publish')} disabled={busy} loading={busy} loadingText="Publication…">Republier</Button> : null}
+        <Button variant="ghost" icon={<StickyNote size={15} aria-hidden="true" />} onClick={onOpenNote} disabled={busy}>Note</Button>
+        {review.status !== 'deleted' ? <Button variant="ghost" className={styles.deleteAction} icon={<Trash2 size={15} aria-hidden="true" />} onClick={onOpenConfirmDelete} disabled={busy}>Supprimer</Button> : null}
+      </div>
     </Card>
   )
 }

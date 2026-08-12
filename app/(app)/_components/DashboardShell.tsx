@@ -104,6 +104,35 @@ function useAgentBadges(activeRole: Role): Partial<Record<string, number>> {
   }
 }
 
+// Badge non-lu sur l'item "Notifications" de la sidebar — remplace le
+// compteur qui vivait sur la cloche d'AccountMenu.tsx (header). Role-
+// agnostique (contrairement à useAgentBadges) : tous les rôles ont des
+// notifications. Même cadence de poll (30s) que l'ancien poll de la cloche.
+function useNotificationBadge(): number {
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    async function poll() {
+      try {
+        const res = await fetch('/api/notifications')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) setUnread(data.unreadCount)
+      } catch {
+        // Badge non-critique — reste à sa dernière valeur connue en cas d'échec.
+      }
+    }
+    poll()
+    const interval = setInterval(poll, 30000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [])
+
+  return unread
+}
+
 // "Mes soirées (équipe)" n'a de contenu que pour les comptes ajoutés à une
 // équipe d'événement (serveur/porte/DJ/vendeur) — un lien affiché à tout le
 // monde alors qu'il est vide pour la quasi-totalité des utilisateurs. Masqué
@@ -145,7 +174,9 @@ function useHasStaffedEvents(): boolean {
 // le layout ne monte simplement pas ce composant sur ces routes-là.
 export default function DashboardShell({ activeRole, children }: { activeRole: Role; children: React.ReactNode }) {
   const pathname = usePathname()
-  const badges = useAgentBadges(activeRole)
+  const agentBadges = useAgentBadges(activeRole)
+  const notificationUnread = useNotificationBadge()
+  const badges = { ...agentBadges, '/notifications': notificationUnread || undefined }
   const hasStaffedEvents = useHasStaffedEvents()
   const { data: session, status } = useSession()
   const [mobileOpen, setMobileOpen] = useState(false)

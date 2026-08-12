@@ -7,7 +7,7 @@
   overflow: clip;
   background:
     radial-gradient(circle at 77% 12%, rgba(184, 243, 74, .08), transparent 30%),
-    #09090c;
+    rgba(9, 9, 12, .72);
 }
 
 .visual {

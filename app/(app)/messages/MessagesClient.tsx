@@ -3138,31 +3138,28 @@ function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>, onClose: 
   controls[(current + offset + controls.length) % controls.length].focus()
 }
 
-function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
+function ModalShell({ title, subtitle, onClose, wide, children }: { title: string; subtitle?: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
   return (
-    <Modal onClose={onClose} maxWidth={wide ? 480 : 360} zIndex={200} ariaLabel={title}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, paddingRight: 42 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{title}</h3>
-        </div>
-        {children}
+    <Modal onClose={onClose} maxWidth={wide ? 520 : 390} zIndex={200} title={title} subtitle={subtitle}>
+      {children}
     </Modal>
   )
 }
 
 function ModalActions({ onCancel, onConfirm, confirmLabel, disabled }: { onCancel: () => void; onConfirm: () => void; confirmLabel: string; disabled?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-      <Button variant="secondary" onClick={onCancel} size="sm" style={{ borderRadius: 999 }}>
+    <div className={styles.modalActions}>
+      <Button variant="secondary" onClick={onCancel} size="md" style={{ borderRadius: 999 }}>
         Annuler
       </Button>
       <Button
         variant="primary"
         onClick={onConfirm}
         disabled={disabled}
-        size="sm"
+        size="md"
         style={{
-          borderRadius: 3,
-          fontWeight: 500,
+          borderRadius: 999,
+          fontWeight: 650,
           textTransform: 'none',
           letterSpacing: 'normal',
         }}
@@ -3209,29 +3206,47 @@ function NewDirectModal({
   const [email, setEmail] = useState('')
   const filtered = friends.filter((f) => f.name.toLowerCase().includes(query.trim().toLowerCase()))
   return (
-    <ModalShell title="Nouvelle discussion" onClose={onClose} wide>
-      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} autoFocus />
-      <div style={{ maxHeight: 220, overflowY: 'auto', marginBottom: 14 }}>
-        {filtered.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
+    <ModalShell title="Nouvelle discussion" subtitle="Choisis une personne ou démarre une conversation par e-mail." onClose={onClose} wide>
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Rechercher un ami"
+        aria-label="Rechercher un ami"
+        leftIcon={<Search size={17} aria-hidden="true" />}
+        containerStyle={{ marginBottom: 14 }}
+        style={inputStyle}
+        autoFocus
+      />
+      <p className={styles.modalSectionLabel}>Amis</p>
+      <div className={styles.modalPeopleList}>
+        {filtered.length === 0 && <p className={styles.modalEmpty}>Aucun ami trouvé.</p>}
         {filtered.map((f) => (
-          <Button key={f.userId} variant="ghost" onClick={() => onPick(f.userId)} style={{ ...rowButtonStyle, fontWeight: 400 }}>
-            <Avatar userId={f.userId} name={f.name} size={32} />
-            <span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span>
+          <Button key={f.userId} variant="ghost" onClick={() => onPick(f.userId)} className={styles.modalPersonRow}>
+            <Avatar userId={f.userId} name={f.name} size={40} />
+            <span className={styles.modalPersonName}>{f.name}</span>
+            <span className={styles.modalChevron} aria-hidden="true">›</span>
           </Button>
         ))}
       </div>
-      <p style={sectionLabelStyle}>Ou par email</p>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email du contact" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+      <div className={styles.modalDivider}><span>ou</span></div>
+      <form
+        className={styles.modalEmailForm}
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (email.trim()) onEmail(email.trim())
+        }}
+      >
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="Adresse e-mail" aria-label="Adresse e-mail du contact" style={{ ...inputStyle, marginBottom: 0 }} />
         <Button
+          type="submit"
           variant="primary"
-          onClick={() => email.trim() && onEmail(email.trim())}
-          size="sm"
-          style={{ borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
+          disabled={!email.trim()}
+          size="md"
+          style={{ borderRadius: 999, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal' }}
         >
-          Valider
+          Continuer
         </Button>
-      </div>
+      </form>
     </ModalShell>
   )
 }
@@ -3984,12 +3999,11 @@ function EventPickerModal({
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '10px 12px',
-  borderRadius: 8,
-  border: '1px solid var(--border-strong)',
-  background: 'var(--surface)',
+  borderRadius: 14,
+  border: '1px solid rgba(255,255,255,.12)',
+  background: 'rgba(118,118,128,.16)',
   color: 'var(--text)',
-  fontSize: 13,
+  fontSize: 14,
   marginBottom: 10,
   fontFamily: 'inherit',
 }
@@ -4028,11 +4042,10 @@ const rowButtonStyle: React.CSSProperties = {
 }
 
 const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 400,
-  color: 'var(--teal)',
-  textTransform: 'uppercase',
-  letterSpacing: '3.2px',
-  fontFamily: 'var(--font-display), sans-serif',
+  fontSize: 13,
+  fontWeight: 650,
+  color: 'var(--text-faint)',
+  letterSpacing: '-0.01em',
+  fontFamily: 'var(--font-interface), sans-serif',
   margin: '0 0 8px',
 }

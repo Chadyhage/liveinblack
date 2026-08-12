@@ -1,12 +1,159 @@
-.root { position: fixed; inset: 0; z-index: 3000; padding: 18px; display: grid; place-items: center; pointer-events: none; }
-.backdrop { position: absolute !important; inset: 0; width: 100%; height: 100%; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: rgba(3,4,8,.66) !important; opacity: 0; pointer-events: auto; backdrop-filter: blur(9px) saturate(85%); transition: opacity .2s ease; }
-.panel { --modal-width: 520px; position: relative; width: min(100%,var(--modal-width)); max-height: min(88dvh,900px); padding: 24px; overflow-y: auto; pointer-events: auto; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 24px !important; background: rgba(25,26,30,.97) !important; box-shadow: 0 30px 100px rgba(0,0,0,.52) !important; opacity: 0; transform: translateY(14px) scale(.975); transition: transform .24s cubic-bezier(.22,.9,.3,1),opacity .18s ease; overscroll-behavior: contain; }
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.backdrop {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: rgba(0, 0, 0, .64) !important;
+  opacity: 0;
+  pointer-events: auto;
+  backdrop-filter: blur(18px) saturate(115%);
+  transition: opacity .22s ease;
+}
+
+.panel {
+  --modal-width: 520px;
+  position: relative;
+  width: min(100%, var(--modal-width));
+  max-height: min(86dvh, 880px);
+  padding: 28px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  pointer-events: auto;
+  color: #f5f5f7;
+  border: 1px solid rgba(255, 255, 255, .13) !important;
+  border-radius: 28px !important;
+  background: #1c1c1e !important;
+  box-shadow: 0 36px 110px rgba(0, 0, 0, .58), 0 1px 0 rgba(255, 255, 255, .05) inset !important;
+  opacity: 0;
+  transform: translateY(16px) scale(.965);
+  transform-origin: 50% 70%;
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1), opacity .2s ease;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .18) transparent;
+}
+
+.panel h1,
+.panel h2,
+.panel h3 {
+  font-family: var(--font-interface), -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  text-transform: none;
+  letter-spacing: -.025em;
+}
+
 .visible .backdrop { opacity: 1; }
 .visible .panel { opacity: 1; transform: translateY(0) scale(1); }
 .closing .backdrop { opacity: 0; }
-.close { position: sticky !important; top: 0; z-index: 3; width: 38px; min-width: 38px; height: 38px; min-height: 38px !important; margin: 0 0 -38px auto; padding: 0 !important; display: grid !important; place-items: center; border: 1px solid rgba(255,255,255,.11) !important; border-radius: 50% !important; background: rgba(255,255,255,.06) !important; color: rgba(245,245,247,.7) !important; backdrop-filter: blur(16px); }
-.close:hover { border-color: rgba(255,255,255,.22) !important; background: rgba(255,255,255,.1) !important; color: #fff !important; }
-.close:focus-visible { outline: 2px solid #b8f34a; outline-offset: 3px; }
+
+.header {
+  min-width: 0;
+  padding: 2px 48px 22px 0;
+}
+
+.header h2 {
+  margin: 0;
+  color: #f5f5f7;
+  font-size: 24px;
+  font-weight: 720;
+  line-height: 1.16;
+}
+
+.header p {
+  margin: 7px 0 0;
+  max-width: 48ch;
+  color: rgba(245, 245, 247, .62);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.close {
+  position: sticky !important;
+  top: 0;
+  z-index: 4;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px !important;
+  margin: 0 0 -36px auto;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(118, 118, 128, .24) !important;
+  color: rgba(235, 235, 245, .68) !important;
+  backdrop-filter: blur(18px) saturate(130%);
+}
+
+.close:hover {
+  background: rgba(118, 118, 128, .38) !important;
+  color: #fff !important;
+}
+
+.close:focus-visible {
+  outline: 3px solid rgba(184, 243, 74, .5);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 24px -28px -28px;
+  padding: 16px 28px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, .09);
+  background: rgba(28, 28, 30, .94);
+}
+
 .grabber { display: none; }
-@media(max-width:620px){.root{padding:0;place-items:end center}.panel{width:100%;max-height:92dvh;padding:23px 18px calc(24px + env(safe-area-inset-bottom));border-right:0!important;border-bottom:0!important;border-left:0!important;border-radius:27px 27px 0 0!important;transform:translateY(100%) scale(1)}.visible .panel{transform:translateY(0)}.grabber{width:38px;height:4px;display:block;margin:-12px auto 12px;border-radius:999px;background:rgba(255,255,255,.19)}.close{position:absolute!important;top:14px;right:14px;margin:0}}
-@media(prefers-reduced-motion:reduce){.backdrop,.panel{transition:none}}
+
+@media (max-width: 620px) {
+  .root { padding: 0; place-items: end center; }
+  .panel {
+    width: 100%;
+    max-height: 94dvh;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+    border-left: 0 !important;
+    border-radius: 30px 30px 0 0 !important;
+    transform: translateY(100%) scale(1);
+  }
+  .visible .panel { transform: translateY(0); }
+  .grabber {
+    width: 36px;
+    height: 5px;
+    display: block;
+    margin: -12px auto 17px;
+    border-radius: 999px;
+    background: rgba(235, 235, 245, .26);
+  }
+  .close { position: absolute !important; top: 16px; right: 16px; margin: 0; }
+  .header { padding: 0 44px 20px 0; }
+  .header h2 { font-size: 22px; }
+  .actions {
+    position: sticky;
+    bottom: calc(-24px - env(safe-area-inset-bottom));
+    z-index: 3;
+    margin: 22px -20px calc(-24px - env(safe-area-inset-bottom));
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  }
+  .actions > * { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop, .panel { transition: none; }
+}

@@ -6,7 +6,7 @@
   overflow-x: clip;
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-  background: #09090c;
+  background: rgba(9, 9, 12, .34);
 }
 
 .root::before {
@@ -14,8 +14,8 @@
   position: fixed;
   inset: 0;
   z-index: -2;
-  background: url("https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=2200&q=82") center / cover no-repeat;
-  opacity: .2;
+  background: url('/media1.jpg') 58% center / cover no-repeat;
+  opacity: .36;
   transform: scale(1.02);
 }
 
@@ -26,7 +26,7 @@
   z-index: -1;
   background:
     radial-gradient(circle at 78% 8%, rgba(184, 243, 74, .08), transparent 32%),
-    linear-gradient(115deg, rgba(7, 7, 10, .9), rgba(9, 9, 13, .82) 58%, rgba(9, 9, 13, .9));
+    linear-gradient(115deg, rgba(7, 7, 10, .78), rgba(9, 9, 13, .68) 58%, rgba(9, 9, 13, .8));
 }
 
 .layout { min-height: 100dvh; display: flex; align-items: flex-start; }

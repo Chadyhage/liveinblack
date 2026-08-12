@@ -7,7 +7,7 @@
   background:
     radial-gradient(circle at 12% 4%, rgba(184, 243, 74, .07), transparent 28%),
     radial-gradient(circle at 88% 18%, rgba(124, 92, 255, .08), transparent 30%),
-    #0a0a0d;
+    rgba(10, 10, 13, .68);
 }
 
 .hero {
