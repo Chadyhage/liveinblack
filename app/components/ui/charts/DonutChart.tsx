@@ -1,6 +1,7 @@
 'use client'
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import styles from './DonutChart.module.css'
 
 // Wrapper fin autour de Recharts (seule dépendance de chart du projet, voir
 // CLAUDE.md — exception explicitement acceptée par le client pour ce module,
@@ -16,29 +17,33 @@ export function DonutChart({ data, size = 160 }: { data: DonutChartSlice[]; size
   const total = data.reduce((sum, d) => sum + d.value, 0)
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-      <div style={{ width: size, height: size, flexShrink: 0 }}>
+    <div className={styles.root}>
+      <div className={styles.chart} style={{ width: size, height: size }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} dataKey="value" nameKey="label" innerRadius="62%" outerRadius="100%" paddingAngle={data.length > 1 ? 2 : 0} stroke="none">
+            <Pie data={data} dataKey="value" nameKey="label" innerRadius="67%" outerRadius="96%" paddingAngle={data.length > 1 ? 5 : 0} cornerRadius={10} stroke="none">
               {data.map((slice) => (
                 <Cell key={slice.label} fill={slice.color} />
               ))}
             </Pie>
+            <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className={styles.total}>{total}</text>
+            <text x="50%" y="59%" textAnchor="middle" dominantBaseline="middle" className={styles.totalLabel}>comptes</text>
             <Tooltip
-              contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+              contentStyle={{ background: 'rgba(30,31,35,.96)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 14, boxShadow: '0 16px 42px rgba(0,0,0,.38)', fontSize: 12 }}
               itemStyle={{ color: 'var(--text)' }}
+              cursor={false}
               formatter={(value, name) => [`${value} (${total ? Math.round((Number(value) / total) * 100) : 0}%)`, name]}
             />
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 120 }}>
+      <div className={styles.legend}>
         {data.map((slice) => (
-          <div key={slice.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 99, background: slice.color, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{slice.label}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{slice.value}</span>
+          <div key={slice.label} className={styles.legendItem}>
+            <span className={styles.dot} style={{ background: slice.color }} />
+            <span className={styles.name}>{slice.label}</span>
+            <strong>{slice.value}</strong>
+            <small>{total ? Math.round((slice.value / total) * 100) : 0}%</small>
           </div>
         ))}
       </div>

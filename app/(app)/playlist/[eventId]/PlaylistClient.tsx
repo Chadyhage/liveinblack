@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Button, Card, Input } from '@/app/components/ui'
+import { Button, Card, Input, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 interface PlaylistSong {
@@ -1117,24 +1117,7 @@ export default function PlaylistClient({
         </>
       )}
 
-      <div style={{ position: 'fixed', bottom: 18, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 300 }}>
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            style={{
-              background: 'var(--surface-2)',
-              border: `1px solid ${t.kind === 'ok' ? `${HEX.teal}80` : 'rgba(234,88,12,0.45)'}`,
-              borderRadius: 10,
-              padding: '10px 16px',
-              fontSize: 13,
-              color: t.kind === 'ok' ? 'var(--teal)' : '#fb923c',
-              textAlign: 'center',
-            }}
-          >
-            {t.text}
-          </div>
-        ))}
-      </div>
+      <ToastViewport items={toasts.map((toast) => ({ id: toast.id, message: toast.text, kind: toast.kind === 'ok' ? 'success' : 'error' }))} />
     </main>
   )
 }

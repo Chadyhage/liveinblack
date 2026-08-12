@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
+import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -222,8 +222,8 @@ export default function AgentReviewsClient() {
   return (
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--reviews">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div><h1 className="font-display lb-dashboard-title">Avis</h1><p className="lb-dashboard-description">Publiez, masquez ou supprimez les avis en conservant une trace interne.</p></div>
+        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div><span className="lb-agent-kicker">Qualité de la communauté</span><h1 className="font-display lb-dashboard-title">Avis</h1><p className="lb-dashboard-description">Publiez, masquez ou supprimez les avis en conservant une trace interne.</p></div>
           {reportedCount > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {reportedCount} signalé{reportedCount > 1 ? 's' : ''}
@@ -336,25 +336,7 @@ export default function AgentReviewsClient() {
         <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'avis', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }

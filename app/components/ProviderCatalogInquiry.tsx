@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Card, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 
 // Port de src/pages/PublicPrestatairePage.jsx (openServiceInquiry /
 // sendServiceInquiry) — "Demander ce service" par item de catalogue, sur la
@@ -197,22 +197,7 @@ export default function ProviderCatalogInquiry({
       </Button>
 
       {open && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={closeSheet} />
-          <div
-            style={{
-              position: 'relative',
-              width: 'min(100%, 520px)',
-              maxHeight: '88vh',
-              overflowY: 'auto',
-              borderRadius: '20px 20px 0 0',
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              boxShadow: '0 -26px 80px rgba(0,0,0,.65)',
-              padding: '18px 18px 24px',
-            }}
-          >
-            <div style={{ width: 44, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
+        <Modal onClose={closeSheet} maxWidth={520} zIndex={3200} ariaLabel={`Demander ${item.name} à ${providerName}`}>
             <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 7px' }}>
               Demande au prestataire
             </p>
@@ -290,8 +275,7 @@ export default function ProviderCatalogInquiry({
                 Envoyer la demande
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

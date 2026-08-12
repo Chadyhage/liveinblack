@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Stars, StarInput } from './StarRating'
 import { computeReviewStats, REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Card, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 
 // Port de src/components/ProviderReviews.jsx — section "Avis clients" d'une
 // page publique prestataire. Contrairement au legacy (modale d'auth inline
@@ -30,15 +30,7 @@ function fmtDate(iso: string): string {
 }
 
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div style={{ position: 'relative', width: 'min(100%, 520px)', maxHeight: '88vh', overflowY: 'auto', borderRadius: '20px 20px 0 0', background: 'var(--surface-2)', border: '1px solid rgba(255,255,255,.10)', boxShadow: '0 -26px 80px rgba(0,0,0,.65)', padding: '18px 18px 24px' }}>
-        <div style={{ width: 44, height: 4, borderRadius: 999, background: 'rgba(255,255,255,.18)', margin: '0 auto 16px' }} />
-        {children}
-      </div>
-    </div>
-  )
+  return <Modal onClose={onClose} maxWidth={520} zIndex={3200} ariaLabel="Avis prestataire">{children}</Modal>
 }
 
 export interface PublicReviewView {

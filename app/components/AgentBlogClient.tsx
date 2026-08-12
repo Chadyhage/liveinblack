@@ -230,8 +230,8 @@ export default function AgentBlogClient() {
   return (
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--blog">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div><h1 className="font-display lb-dashboard-title">Blog</h1><p className="lb-dashboard-description">Créez, programmez et maintenez les contenus éditoriaux du site public.</p></div>
+        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div><span className="lb-agent-kicker">Studio éditorial</span><h1 className="font-display lb-dashboard-title">Blog</h1><p className="lb-dashboard-description">Créez, programmez et maintenez les contenus éditoriaux du site public.</p></div>
           <Button variant="primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}>
             <Plus size={16} /> Nouvel article
           </Button>
@@ -246,7 +246,7 @@ export default function AgentBlogClient() {
         {sorted.length === 0 ? (
           <EmptyState title="Aucun article" description="Crée le premier article du blog." />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="lb-agent-blog-grid" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {sorted.map((p) => {
               const scheduled = new Date(p.publishedAt).getTime() > renderedAt
               return (

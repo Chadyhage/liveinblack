@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Button, Slider } from '@/app/components/ui'
+import { Button, Modal, Slider } from '@/app/components/ui'
 
 export default function ImageCropperModal({ src, title, aspect, outputWidth, circular = false, onCancel, onConfirm }: { src: string; title: string; aspect: number; outputWidth: number; circular?: boolean; onCancel: () => void; onConfirm: (dataUri: string) => Promise<void> | void }) {
   const previewWidth = 280
@@ -46,8 +46,7 @@ export default function ImageCropperModal({ src, title, aspect, outputWidth, cir
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="image-crop-title" style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'grid', placeItems: 'center', padding: 16, background: 'rgba(3,4,8,.86)', backdropFilter: 'blur(8px)' }}>
-      <div style={{ width: '100%', maxWidth: 360, padding: 22, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', textAlign: 'center' }}>
+    <Modal onClose={onCancel} maxWidth={390} zIndex={3200} ariaLabel={title} contentStyle={{ textAlign: 'center' }}>
         <h2 id="image-crop-title" style={{ margin: 0, fontSize: 18 }}>{title}</h2>
         <p style={{ margin: '5px 0 16px', color: 'var(--text-faint)', fontSize: 11 }}>Glisse l&apos;image pour la repositionner</p>
         <div
@@ -68,8 +67,7 @@ export default function ImageCropperModal({ src, title, aspect, outputWidth, cir
           <Button type="button" variant="secondary" onClick={onCancel} disabled={saving} style={{ ...actionButton, background: 'transparent', color: '#fff', border: '1px solid var(--border-strong)' }}>Annuler</Button>
           <Button type="button" onClick={() => void confirm()} loading={saving} loadingText="Envoi…" style={{ ...actionButton, background: 'var(--gold)', color: '#181104', border: 0 }}>Valider</Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

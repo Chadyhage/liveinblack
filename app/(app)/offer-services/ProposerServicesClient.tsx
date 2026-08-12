@@ -13,7 +13,7 @@ import { Stars } from '@/app/components/StarRating'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-import { Button, Input, Textarea, Select, Label, Card } from '@/app/components/ui'
+import { Button, Input, Textarea, Select, Label, Card, Modal } from '@/app/components/ui'
 import SubscriptionPanel from './SubscriptionPanel'
 
 // Port de ProposerServicesPage.jsx + MyProviderReviews.jsx (#8 phase
@@ -1432,9 +1432,7 @@ export default function ProposerServicesClient({
       )}
 
       {confirmRemoveItem && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={() => !removingItem && setConfirmRemoveItem(null)} />
-          <Card style={{ position: 'relative', width: 'min(100%, 420px)', boxShadow: CARD_SHADOW, padding: 22 }}>
+        <Modal onClose={() => setConfirmRemoveItem(null)} maxWidth={420} dismissible={!removingItem} zIndex={3200} hideClose ariaLabel="Supprimer l’offre">
             <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer cette offre ?</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
               « {confirmRemoveItem.name} » sera retirée de ton catalogue. Cette action est définitive.
@@ -1447,8 +1445,7 @@ export default function ProposerServicesClient({
                 Supprimer
               </Button>
             </div>
-          </Card>
-        </div>
+        </Modal>
       )}
     </>
   )

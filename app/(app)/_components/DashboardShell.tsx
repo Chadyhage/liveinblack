@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -149,6 +149,35 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   const hasStaffedEvents = useHasStaffedEvents()
   const { data: session, status } = useSession()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
+  const mobileDrawerRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const raf = requestAnimationFrame(() => mobileDrawerRef.current?.querySelector<HTMLElement>('a[href],button:not([disabled])')?.focus())
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setMobileOpen(false)
+        requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
+        return
+      }
+      if (event.key !== 'Tab' || !mobileDrawerRef.current) return
+      const controls = Array.from(mobileDrawerRef.current.querySelectorAll<HTMLElement>('a[href],button:not([disabled])'))
+      if (!controls.length) return
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      cancelAnimationFrame(raf)
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [mobileOpen])
 
   // La sidebar desktop se masque entièrement sous 1100px (.lb-dashboard-sidebar,
   // voir plus bas) — avant, PublicNav.tsx fournissait un tiroir mobile de
@@ -160,6 +189,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   // un effet sur pathname (setState synchrone en effet = cascading-render).
   function closeMobile() {
     setMobileOpen(false)
+    requestAnimationFrame(() => mobileMenuButtonRef.current?.focus())
   }
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
@@ -207,8 +237,11 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
     <div className={styles.root}>
       <div className={styles.mobileBar}>
         <IconButton
+          ref={mobileMenuButtonRef}
           label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           onClick={() => setMobileOpen((v) => !v)}
+          aria-expanded={mobileOpen}
+          aria-controls="dashboard-mobile-navigation"
           icon={mobileOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
           style={{ border: '1px solid rgba(255,255,255,.13)', borderRadius: 12, background: 'rgba(255,255,255,.08)', color: '#f5f5f7' }}
         />
@@ -219,7 +252,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
       {mobileOpen && (
         <>
           <Button variant="ghost" className={styles.drawerBackdrop} onClick={closeMobile} aria-label="Fermer le menu" />
-          <nav className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
+          <nav ref={mobileDrawerRef} id="dashboard-mobile-navigation" className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} mobile onNavigate={closeMobile} />
             <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
           </nav>

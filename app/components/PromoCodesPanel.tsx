@@ -461,32 +461,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     </Modal>
     {/* Confirmation de suppression */}
       {confirmRemove && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => {
-            e.stopPropagation()
-            setConfirmRemove(null)
-          }}
-          style={{ position: 'fixed', inset: 0, zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 360,
-              background: '#12131c',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 16,
-              padding: 22,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-            }}
-          >
+        <Modal onClose={() => setConfirmRemove(null)} maxWidth={360} hideClose zIndex={3010} ariaLabel="Supprimer le code promo" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>Supprimer ce code promo ?</p>
             <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
               <strong style={{ color: '#fff' }}>{confirmRemove.code}</strong> sera définitivement supprimé, y compris son historique d&apos;utilisation ({Number(confirmRemove.usedCount) || 0}{' '}
@@ -508,8 +483,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                 Supprimer
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
+import { AlertTriangle, CheckCircle2, Clock3, Flag, MessageSquareWarning, RefreshCw, Search, ShieldAlert, UserRound } from 'lucide-react'
+import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
+import styles from './AgentReportsClient.module.css'
 
 const PAGE_SIZE = 15
 
@@ -174,80 +176,71 @@ export default function AgentReportsClient() {
     }
   }
 
-  const openCount = filter === 'open' ? reports.length : undefined
+  const openCount = counts?.open ?? (filter === 'open' ? reports.length : 0)
+  const totalCount = counts ? counts.open + counts.handled : reports.length
 
   return (
-    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--reports">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div><h1 className="font-display lb-dashboard-title">Signalements</h1><p className="lb-dashboard-description">Priorisez les alertes, documentez les décisions et sécurisez la communauté.</p></div>
-          {openCount ? (
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
-              {openCount} à traiter
-            </span>
-          ) : null}
-        </div>
+    <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--reports ${styles.page}`}>
+      <div className={styles.stack}>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}><ShieldAlert size={15} aria-hidden="true" /> Confiance et sécurité</p>
+            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Signalements</h1>
+            <p className={`lb-dashboard-description ${styles.description}`}>Examine les alertes de la communauté, documente les décisions prises et assure un suivi clair de chaque situation.</p>
+          </div>
+          <div className={styles.heroActions}>
+            {openCount > 0 && <span className={styles.urgentPill}><Flag size={16} aria-hidden="true" />{openCount} à traiter</span>}
+            <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={() => Promise.all([loadList(filter), loadCounts()])} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
+          </div>
+        </header>
 
         {listError && (
-          <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={() => loadList(filter)} style={{ fontSize: 12.5 }}>
-              Recharger
-            </Button>
+          <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
+            <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les signalements</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
+            <Button variant="secondary" onClick={() => loadList(filter)}>Réessayer</Button>
           </Card>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+        <div className={styles.metrics} aria-label="Filtrer les signalements">
+          <Card className={styles.metric} style={{ '--metric-color': '#c4a7ff' } as React.CSSProperties}>
+            <span className={styles.metricTop}><span className={styles.metricIcon}><MessageSquareWarning size={18} aria-hidden="true" /></span><strong className={styles.metricValue}>{totalCount}</strong></span>
+            <span className={styles.metricLabel}>Tous les signalements</span>
+          </Card>
           {(
             [
-              { key: 'open' as const, label: 'À traiter', color: '#e05aaa' },
-              { key: 'handled' as const, label: 'Traités', color: 'var(--teal)' },
+              { key: 'open' as const, label: 'À traiter', color: '#ff8fb2', count: counts?.open ?? (filter === 'open' ? reports.length : 0), icon: Clock3 },
+              { key: 'handled' as const, label: 'Traités', color: '#48c9b0', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
             ]
           ).map((f) => {
             const active = f.key === filter
+            const Icon = f.icon
             return (
               <Button
                 key={f.key}
                 variant="ghost"
+                className={`${styles.metric}${active ? ` ${styles.metricActive}` : ''}`}
                 onClick={() => setQueryParams({ filter: f.key === 'open' ? null : f.key, page: null })}
-                style={{
-                  padding: '12px 10px',
-                  borderRadius: 12,
-                  border: `1px solid ${active ? f.color : 'var(--border)'}`,
-                  background: active ? `${f.color}22` : 'var(--surface)',
-                  textAlign: 'left',
-                  display: 'block',
-                }}
+                aria-pressed={active}
+                style={{ '--metric-color': f.color } as React.CSSProperties}
               >
-                <div style={{ fontSize: 20, fontWeight: 800, color: active ? f.color : 'var(--text-faint)' }}>{counts ? counts[f.key] : '—'}</div>
-                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? f.color : 'var(--text-faint)' }}>{f.label}</div>
+                <span className={styles.metricTop}><span className={styles.metricIcon}><Icon size={18} aria-hidden="true" /></span><strong className={styles.metricValue}>{f.count}</strong></span>
+                <span className={styles.metricLabel}>{f.label}</span>
               </Button>
             )
           })}
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <Input
-            style={search ? { paddingRight: 34 } : undefined}
-            placeholder="Rechercher (signalé, signalant, motif…)"
-            value={search}
-            onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })}
-          />
-          {search && (
-            <Button
-              variant="ghost"
-              aria-label="Effacer la recherche"
-              onClick={() => setQueryParams({ q: null, page: null })}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, minHeight: 22, minWidth: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
-            >
-              ×
-            </Button>
-          )}
+        <div className={styles.controls}>
+          <div className={styles.search}><Search size={18} aria-hidden="true" /><Input type="search" aria-label="Rechercher un signalement" placeholder="Personne signalée, auteur ou motif…" value={search} onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })} /></div>
+          <span className={styles.resultCount}>{sorted.length} résultat{sorted.length === 1 ? '' : 's'}</span>
+          {search && <Button variant="ghost" onClick={() => setQueryParams({ q: null, page: null })}>Effacer</Button>}
         </div>
 
+        <div className={styles.listHeader}><div><h2>{filter === 'open' ? 'Signalements à traiter' : 'Signalements traités'}</h2><p>Les alertes les plus récentes apparaissent en premier.</p></div></div>
+
         {listLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className={styles.loadingGrid}>
+            {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />
             ))}
           </div>
@@ -257,61 +250,24 @@ export default function AgentReportsClient() {
             description={filter === 'open' ? 'Aucun signalement n’est en attente de traitement.' : 'Aucun signalement n’a encore été traité.'}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className={styles.grid}>
             {pageItems.map((r) => (
-              <Card
-                key={r.id}
-                style={{
-                  padding: 18,
-                  borderColor: r.handled ? 'var(--border)' : 'rgba(224,90,170,0.28)',
-                  borderLeft: r.handled ? '1px solid var(--border)' : '3px solid rgba(224,90,170,0.55)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                  <div>
-                    <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 2px' }}>
-                      {r.targetName} <span style={{ fontSize: 11, color: 'var(--text-faint)', fontWeight: 400 }}>signalé·e</span>
-                    </p>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>
-                      par {r.fromName} · {fmtDateTime(r.createdAt)}
-                    </p>
-                  </div>
-                  <span
-                    style={{
-                      padding: '3px 9px',
-                      borderRadius: 4,
-                      flexShrink: 0,
-                      background: r.handled ? 'rgba(184, 243, 74,0.12)' : 'rgba(224,90,170,0.12)',
-                      border: `1px solid ${r.handled ? 'rgba(184, 243, 74,0.35)' : 'rgba(224,90,170,0.35)'}`,
-                      fontSize: 10.5,
-                      color: r.handled ? 'var(--primary)' : '#e05aaa',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    {r.handled ? 'Traité' : 'À traiter'}
-                  </span>
+              <Card key={r.id} className={`${styles.reportCard}${r.handled ? '' : ` ${styles.reportOpen}`}`}>
+                <div className={styles.cardTop}>
+                  <div className={styles.people}><span className={styles.avatar}><UserRound size={20} aria-hidden="true" /></span><div className={styles.peopleCopy}><strong>{r.targetName}</strong><span>Personne signalée</span></div></div>
+                  <span className={`${styles.status} ${r.handled ? styles.statusHandled : styles.statusOpen}`}>{r.handled ? <CheckCircle2 size={13} aria-hidden="true" /> : <Clock3 size={13} aria-hidden="true" />}{r.handled ? 'Traité' : 'À traiter'}</span>
                 </div>
 
-                <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, marginBottom: r.handled ? 0 : 12 }}>
-                  <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>Motif</p>
-                  <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', margin: 0, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{r.reason || '—'}</p>
-                </div>
+                <div className={styles.meta}><div className={styles.metaItem}><UserRound size={16} aria-hidden="true" /><span>Signalé par {r.fromName}</span></div><div className={styles.metaItem}><Clock3 size={16} aria-hidden="true" /><span>{fmtDateTime(r.createdAt)}</span></div></div>
+
+                <div className={styles.reason}><p className={styles.reasonLabel}><MessageSquareWarning size={14} aria-hidden="true" /> Motif</p><p className={styles.reasonText}>{r.reason || 'Aucun motif renseigné.'}</p></div>
 
                 {r.handled ? (
-                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '10px 0 0' }}>
-                    Traité par {r.handledBy || '—'} · {r.handledAt ? fmtDateTime(r.handledAt) : ''}
-                    {r.handledNote ? <span style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>« {r.handledNote} »</span> : null}
-                  </p>
+                  <div className={styles.handledBox}><strong>Traité par {r.handledBy || '—'}{r.handledAt ? ` · ${fmtDateTime(r.handledAt)}` : ''}</strong>{r.handledNote ? <p>« {r.handledNote} »</p> : <p>Aucune note interne ajoutée.</p>}</div>
                 ) : activeId === r.id ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <Textarea
-                      style={{ minHeight: 60 }}
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="Note interne (optionnelle)…"
-                    />
-                    <div style={{ display: 'flex', gap: 8 }}>
+                  <div className={styles.reviewBox}>
+                    <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note interne sur la décision (optionnelle)…" />
+                    <div className={styles.reviewActions}>
                       <Button
                         variant="secondary"
                         onClick={() => {
@@ -319,7 +275,6 @@ export default function AgentReportsClient() {
                           setNote('')
                         }}
                         disabled={busyId === r.id}
-                        style={{ flex: 1, padding: '9px 12px', fontSize: 12.5 }}
                       >
                         Annuler
                       </Button>
@@ -329,21 +284,13 @@ export default function AgentReportsClient() {
                         disabled={busyId === r.id}
                         loading={busyId === r.id}
                         loadingText="…"
-                        style={{ flex: 1, padding: '9px 12px', borderRadius: 3, fontWeight: 500, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12.5, textTransform: 'none', letterSpacing: 'normal' }}
                       >
-                        Confirmer
+                        Confirmer le traitement
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setActiveId(r.id)
-                      setNote(r.handledNote || '')
-                    }}
-                    style={{ padding: '10px 16px', borderRadius: 3, fontWeight: 500, background: 'var(--teal-solid)', border: '1px solid rgba(255,255,255,0.14)', color: '#04120e', fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }}
-                  >
+                  <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.markButton} onClick={() => { setActiveId(r.id); setNote(r.handledNote || '') }}>
                     Marquer comme traité
                   </Button>
                 )}
@@ -355,25 +302,7 @@ export default function AgentReportsClient() {
         <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={sorted.length} pageSize={PAGE_SIZE} />
       </div>
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'signalements', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }

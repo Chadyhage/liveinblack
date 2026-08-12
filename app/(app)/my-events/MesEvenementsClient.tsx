@@ -15,7 +15,7 @@ import GuestlistModal from './GuestlistModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button, Card, EmptyState, Modal, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, Card, EmptyState, Modal, Pagination, pagedSlice, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAST_PAGE_SIZE = 15
@@ -357,7 +357,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         </section>
       )}
 
-      {duplicating && <p style={{ position: 'fixed', bottom: 20, right: 20, color: 'var(--text-muted)', fontSize: 12 }}>Duplication en cours…</p>}
+      <ToastViewport items={duplicating ? [{ id: 'duplication', message: 'Duplication de l’événement en cours…', kind: 'info' }] : []} />
 
       {modal.type === 'bookings' && <BookingsPanel event={{ id: modal.event.id, name: modal.event.name, currency: modal.event.currency }} onClose={() => setModal({ type: 'none' })} />}
       {modal.type === 'boost' && <BoostModal event={{ id: modal.event.id, name: modal.event.name, region: modal.event.region }} onClose={() => setModal({ type: 'none' })} />}

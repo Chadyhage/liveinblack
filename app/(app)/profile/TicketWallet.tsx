@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
-import { Button, Card, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Button, Card, DashboardPageHeader, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -116,7 +116,7 @@ function classify(group: TicketWalletGroupView): GroupBucket {
 }
 
 
-export default function TicketWalletPanel({ groups, currentUserId, onBack }: { groups: TicketWalletGroupView[]; currentUserId: string; onBack: () => void }) {
+export default function TicketWalletPanel({ groups, currentUserId }: { groups: TicketWalletGroupView[]; currentUserId: string }) {
   const buckets = useMemo(() => {
     const withBucket = groups.map((g) => ({ g, bucket: classify(g) }))
     const rank: Record<GroupBucket, number> = { upcoming: 0, past: 1, cancelled: 2 }
@@ -145,7 +145,14 @@ export default function TicketWalletPanel({ groups, currentUserId, onBack }: { g
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <BackHeader onBack={onBack} title="Mes billets" />
+        <DashboardPageHeader
+          backHref="/profile"
+          backLabel="Profil"
+          eyebrow="Portefeuille"
+          title="Mes billets"
+          description="Tous tes accès, QR codes et options de réservation dans un seul endroit."
+          actions={<ActionLink href="/events">Trouver une soirée</ActionLink>}
+        />
 
         <SeatHoldsPanel />
 
@@ -318,25 +325,6 @@ function Section({
         ))}
       </div>
       <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={groups.length} pageSize={GROUP_PAGE_SIZE} />
-    </div>
-  )
-}
-
-function BackHeader({ onBack, title }: { onBack: () => void; title: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-      {/* Cible tactile élargie (44x44 min, padding symétrique) — l'ancien
-          glyphe seul « ‹ » sans minWidth ni padding gauche laissait une zone
-          cliquable trop étroite sur mobile. */}
-      <Button
-        variant="ghost"
-        onClick={onBack}
-        style={{ minWidth: 44, padding: '10px', color: 'var(--text-muted)' }}
-        aria-label="Retour"
-      >
-        <ArrowLeft size={18} />
-      </Button>
-      <h1 className="font-display lb-dashboard-title">{title}</h1>
     </div>
   )
 }

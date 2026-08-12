@@ -316,6 +316,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
     <Modal
       onClose={onClose}
       maxWidth={480}
+      dismissible={!busy}
       contentStyle={{ background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 16 }}
     >
         {/* Header */}
@@ -539,27 +540,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
     </Modal>
     {/* Confirmation de retrait */}
       {confirmRemove && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => !busy && setConfirmRemove(null)}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 360,
-              background: 'var(--surface-2)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 16,
-              padding: 22,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-            }}
-          >
+        <Modal onClose={() => setConfirmRemove(null)} maxWidth={360} hideClose dismissible={!busy} zIndex={3010} ariaLabel="Retirer le membre de l’équipe" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span
                 style={{
@@ -618,8 +599,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                 Retirer
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

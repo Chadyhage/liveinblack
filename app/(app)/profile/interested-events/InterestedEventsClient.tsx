@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
-import { Card, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Card, DashboardPageHeader, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const PAGE_SIZE = 20
@@ -66,22 +66,14 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
   return (
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
-          ← Profil
-        </Link>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 850, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Ma liste</p>
-            <h1 className="font-display lb-dashboard-title">Événements intéressés</h1>
-          </div>
-          <Link
-            href="/events"
-            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 999, border: '1px solid var(--gold)', color: 'var(--gold)', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
-          >
-            Explorer
-          </Link>
-        </div>
+        <DashboardPageHeader
+          backHref="/profile"
+          backLabel="Profil"
+          eyebrow="Mes favoris"
+          title="Événements intéressés"
+          description="Retrouve les soirées enregistrées et garde un œil sur celles qui arrivent bientôt."
+          actions={<ActionLink href="/events">Explorer les événements</ActionLink>}
+        />
 
         {items.length === 0 ? (
           <EmptyState

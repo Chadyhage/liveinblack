@@ -1,10 +1,27 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import {
+  AlertTriangle,
+  Banknote,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  Landmark,
+  Megaphone,
+  ReceiptText,
+  RefreshCw,
+  RotateCcw,
+  ShieldCheck,
+  Smartphone,
+  UserRound,
+  WalletCards,
+} from 'lucide-react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
+import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport } from '@/app/components/ui'
 import AgentBoostsClient from '@/app/components/AgentBoostsClient'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import styles from './AgentPaymentsClient.module.css'
 
 const PAGE_SIZE = 15
 
@@ -132,17 +149,12 @@ type ConfirmAction =
 // une vue sans filtre ni action, à sa place naturelle à côté des autres
 // files financières plutôt que dans sa propre entrée de sidebar.
 const SECTIONS = [
-  { key: 'payouts', label: 'Reversements' },
-  { key: 'refunds', label: 'Remboursements' },
-  { key: 'alerts', label: 'Alertes paiement' },
-  { key: 'boosts', label: 'Boosts' },
+  { key: 'payouts', label: 'Reversements', helper: 'À verser', color: '#f5c96a', icon: Landmark },
+  { key: 'refunds', label: 'Remboursements', helper: 'À restituer', color: '#6dd7c8', icon: RotateCcw },
+  { key: 'alerts', label: 'Alertes paiement', helper: 'À vérifier', color: '#ff8fb2', icon: ShieldCheck },
+  { key: 'boosts', label: 'Boosts', helper: 'Suivi commercial', color: '#c4a7ff', icon: Megaphone },
 ] as const
 type SectionKey = (typeof SECTIONS)[number]['key']
-
-const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
-const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
-const tealBtn: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
-const ghostBtn: React.CSSProperties = { ...btnBase, background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'none', letterSpacing: 'normal' }
 
 export default function AgentPaymentsClient() {
   // Onglet reflété dans l'URL (?section=) — un lien vers "Alertes paiement"
@@ -312,97 +324,140 @@ export default function AgentPaymentsClient() {
   // 'boosts' n'a pas de compteur ici (AgentBoostsClient charge et affiche ses
   // propres totaux dans son panneau) — 0 fixe, jamais mis en avant en rose.
   const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length, boosts: 0 }
+  const actionCount = counts.payouts + counts.refunds + counts.alerts
+  const selectedSection = SECTIONS.find((item) => item.key === section) ?? SECTIONS[0]
+
+  function handleSectionKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
+    let nextIndex = index
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % SECTIONS.length
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + SECTIONS.length) % SECTIONS.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = SECTIONS.length - 1
+    else return
+
+    event.preventDefault()
+    const nextSection = SECTIONS[nextIndex]
+    setSection(nextSection.key)
+    requestAnimationFrame(() => document.getElementById(`payment-tab-${nextSection.key}`)?.focus())
+  }
 
   return (
-    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--payments">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div><h1 className="font-display lb-dashboard-title">Paiements</h1><p className="lb-dashboard-description">Suivez les reversements, remboursements, alertes financières et boosts.</p></div>
+    <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--payments ${styles.page}`}>
+      <div className={styles.stack}>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}><WalletCards size={16} aria-hidden="true" /> Opérations financières</p>
+            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Paiements</h1>
+            <p className={`lb-dashboard-description ${styles.description}`}>
+              Pilotez les mouvements d&apos;argent et les contrôles sensibles depuis un espace clair, traçable et sans mélange de devises.
+            </p>
+          </div>
+          <div className={styles.heroActions}>
+            <div className={styles.actionPill} role="status" aria-live="polite">
+              <ShieldCheck size={17} aria-hidden="true" />
+              <span><strong>{actionCount}</strong> opération{actionCount > 1 ? 's' : ''} à traiter</span>
+            </div>
+            <Button variant="secondary" icon={<RefreshCw size={16} aria-hidden="true" />} onClick={loadAll} disabled={loading} className={styles.refresh} aria-label="Actualiser les données financières">
+              Actualiser
+            </Button>
+          </div>
+        </header>
 
         {loadError && (
-          <Card accent="rgba(224,90,170,0.35)" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-              Lecture impossible d&apos;une obligation financière. Aucune action de règlement n&apos;est proposée tant que les montants réels ne sont pas connus — recharge la page.
-            </p>
-            <Button variant="secondary" onClick={loadAll} style={{ fontSize: 12.5, flexShrink: 0 }}>
+          <Card accent="rgba(255,143,178,0.35)" className={styles.error} role="alert">
+            <div className={styles.errorCopy}>
+              <AlertTriangle size={20} aria-hidden="true" />
+              <div>
+                <strong>Données financières indisponibles</strong>
+                <p>Aucune action n&apos;est proposée tant que les montants réels ne sont pas connus.</p>
+              </div>
+            </div>
+            <Button variant="secondary" icon={<RefreshCw size={15} aria-hidden="true" />} onClick={loadAll} aria-label="Réessayer de charger les données financières">
               Recharger
             </Button>
           </Card>
         )}
 
-        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-          {SECTIONS.map((s) => {
+        <div className={styles.metrics} role="tablist" aria-label="Espaces de paiement" aria-orientation="horizontal">
+          {SECTIONS.map((s, index) => {
             const active = s.key === section
             const count = counts[s.key]
+            const Icon = s.icon
             return (
               <Button
                 key={s.key}
                 variant="ghost"
                 onClick={() => setSection(s.key)}
-                style={{
-                  padding: '12px 10px',
-                  borderRadius: 12,
-                  border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
-                  background: active ? 'rgba(184, 243, 74,0.14)' : 'var(--surface)',
-                  textAlign: 'left',
-                  display: 'block',
-                }}
+                onKeyDown={(event) => handleSectionKeyDown(event, index)}
+                className={`${styles.metric} ${active ? styles.metricActive : ''}`}
+                style={{ '--metric-color': s.color } as React.CSSProperties}
+                id={`payment-tab-${s.key}`}
+                role="tab"
+                aria-selected={active}
+                aria-controls="payment-panel"
+                aria-label={s.key === 'boosts' ? `${s.label}, ${s.helper}` : `${s.label}, ${count} en attente, ${s.helper}`}
+                tabIndex={active ? 0 : -1}
               >
-                <div style={{ fontSize: 20, fontWeight: 800, color: count > 0 ? '#e05aaa' : 'var(--text-faint)' }}>{count}</div>
-                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? 'var(--gold)' : 'var(--text-faint)' }}>{s.label}</div>
+                <span className={styles.metricTop}>
+                  <span className={styles.metricIcon} aria-hidden="true"><Icon size={19} /></span>
+                  <span className={styles.metricValue} aria-hidden="true">{s.key === 'boosts' ? '↗' : count}</span>
+                </span>
+                <span className={styles.metricCopy}>
+                  <strong>{s.label}</strong>
+                  <small>{s.helper}</small>
+                </span>
               </Button>
             )
           })}
         </div>
 
-        {section === 'boosts' ? (
-          <AgentBoostsClient embedded />
-        ) : loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonRow key={i} columns={2} />
-            ))}
+        <section
+          className={styles.workspace}
+          id="payment-panel"
+          role="tabpanel"
+          aria-labelledby={`payment-tab-${section}`}
+          aria-busy={loading}
+          tabIndex={0}
+        >
+          <div className={styles.sectionHeader}>
+            <div>
+              <p>{selectedSection.helper}</p>
+              <h2 id="payment-section-title">{selectedSection.label}</h2>
+            </div>
+            {section !== 'boosts' && <span className={styles.sectionCount} aria-live="polite">{counts[section]} en attente</span>}
           </div>
-        ) : section === 'payouts' ? (
-          <PayoutsSection
-            failedPayouts={failedPayouts}
-            payoutRequests={payoutRequests}
-            balancesNoReq={balancesNoReq}
-            setConfirm={setConfirm}
-            failedPayoutsPage={failedPayoutsPage}
-            setFailedPayoutsPage={setFailedPayoutsPage}
-            payoutRequestsPage={payoutRequestsPage}
-            setPayoutRequestsPage={setPayoutRequestsPage}
-            balancesNoReqPage={balancesNoReqPage}
-            setBalancesNoReqPage={setBalancesNoReqPage}
-          />
-        ) : section === 'refunds' ? (
-          <RefundsSection refunds={refunds} setConfirm={setConfirm} page={refundsPage} setPage={setRefundsPage} />
-        ) : (
-          <AlertsSection alerts={alerts} setConfirm={setConfirm} page={alertsPage} setPage={setAlertsPage} />
-        )}
+
+          {section === 'boosts' ? (
+            <div className={styles.boosts}><AgentBoostsClient embedded /></div>
+          ) : loading ? (
+            <div className={styles.loadingGrid} role="status" aria-live="polite">
+              <span className={styles.srOnly}>Chargement des opérations financières…</span>
+              {Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} columns={2} />)}
+            </div>
+          ) : section === 'payouts' ? (
+            <PayoutsSection
+              failedPayouts={failedPayouts}
+              payoutRequests={payoutRequests}
+              balancesNoReq={balancesNoReq}
+              setConfirm={setConfirm}
+              failedPayoutsPage={failedPayoutsPage}
+              setFailedPayoutsPage={setFailedPayoutsPage}
+              payoutRequestsPage={payoutRequestsPage}
+              setPayoutRequestsPage={setPayoutRequestsPage}
+              balancesNoReqPage={balancesNoReqPage}
+              setBalancesNoReqPage={setBalancesNoReqPage}
+            />
+          ) : section === 'refunds' ? (
+            <RefundsSection refunds={refunds} setConfirm={setConfirm} page={refundsPage} setPage={setRefundsPage} />
+          ) : (
+            <AlertsSection alerts={alerts} setConfirm={setConfirm} page={alertsPage} setPage={setAlertsPage} />
+          )}
+        </section>
       </div>
 
       {confirm && <ConfirmModal action={confirm} busy={busy} onCancel={() => setConfirm(null)} onConfirm={runConfirm} />}
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'paiements', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }
@@ -454,52 +509,38 @@ function PayoutsSection({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <Card accent="rgba(184, 243, 74,0.3)" style={{ padding: 16, background: 'rgba(184, 243, 74,0.06)' }}>
-        <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
-          Filet de sécurité. Le flux normal est le versement automatique — EUR via Stripe Connect, XOF via Mobile Money à la fin de chaque événement. Ci-dessous : les échecs
-          de versement auto (XOF) et les soldes EUR/ledger hors Stripe Connect à régler à la main. Jamais d&apos;addition entre devises.
-        </p>
+    <div className={styles.sectionStack}>
+      <Card accent="rgba(245,201,106,0.3)" className={styles.guideCard} role="note">
+        <div className={styles.guideIcon} aria-hidden="true"><CircleDollarSign size={21} /></div>
+        <div>
+          <strong>Filet de sécurité des reversements</strong>
+          <p>Les EUR transitent par Stripe Connect et les XOF par Mobile Money. Les opérations manuelles ci-dessous restent séparées par devise et doivent être confirmées après le transfert externe.</p>
+        </div>
       </Card>
 
       {failedPayouts.length > 0 && (
-        <div>
-          <p style={sectionTitleStyle}>Versements auto en échec — XOF ({failedPayouts.length})</p>
-          <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
-            Envoie l&apos;argent à la main depuis le dashboard FedaPay, PUIS marque payé ici (ça solde aussi le ledger — le cron n&apos;y retouchera pas).
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className={styles.queue}>
+          <QueueHeader icon={<Smartphone size={18} aria-hidden="true" />} title="Versements Mobile Money en échec" description="À régler dans FedaPay avant de les marquer comme payés." count={failedPayouts.length} tone="danger" />
+          <div className={styles.cardGrid}>
             {failedPayoutsPageItems.map((p) => (
-              <Card key={p.eventId} accent="rgba(224,90,170,0.3)" style={{ padding: 16, borderLeft: '3px solid rgba(224,90,170,0.6)' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.eventName}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.sellerName}
-                      {p.sellerEmail ? ` · ${p.sellerEmail}` : ''}
-                    </p>
+              <Card key={p.eventId} accent="rgba(255,143,178,0.3)" className={`${styles.moneyCard} ${styles.dangerCard}`} role="article" aria-label={`Versement en échec pour ${p.eventName}, ${fmtXOF(p.amountDueXOF)}`}>
+                <div className={styles.cardTop}>
+                  <div className={styles.identity}>
+                    <span className={`${styles.identityIcon} ${styles.dangerIcon}`} aria-hidden="true"><AlertTriangle size={18} /></span>
+                    <div>
+                      <strong>{p.eventName}</strong>
+                      <span>{p.sellerName}{p.sellerEmail ? ` · ${p.sellerEmail}` : ''}</span>
+                    </div>
                   </div>
-                  <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', margin: 0, flexShrink: 0 }}>{fmtXOF(p.amountDueXOF)}</p>
+                  <span className={`${styles.status} ${styles.statusDanger}`}>Échec</span>
                 </div>
-                {p.failReason && <p style={{ fontSize: 11, color: '#f59e0b', margin: '8px 0 0', lineHeight: 1.5 }}>Raison : {p.failReason}</p>}
+                <div className={styles.amountRow}><span>Montant à verser</span><strong>{fmtXOF(p.amountDueXOF)}</strong></div>
+                {p.failReason && <div className={styles.note}><AlertTriangle size={15} aria-hidden="true" /><span><strong>Motif de l’échec : </strong>{p.failReason}</span></div>}
                 {p.eventCancelled ? (
-                  <p
-                    style={{
-                      marginTop: 12,
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      background: 'rgba(224,90,170,0.1)',
-                      border: '1px solid rgba(224,90,170,0.4)',
-                      color: 'rgba(224,90,170,0.95)',
-                      fontSize: 11,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Événement ANNULÉ (ou supprimé) — cette recette rembourse les acheteurs (section Remboursements). Ne rien verser à l&apos;organisateur.
-                  </p>
+                  <div className={`${styles.note} ${styles.blockingNote}`} role="alert"><ShieldCheck size={16} aria-hidden="true" /><span><strong>Opération bloquée. </strong>Événement annulé : ne rien verser à l&apos;organisateur. La recette doit rembourser les acheteurs.</span></div>
                 ) : (
-                  <Button variant="primary" style={{ ...tealBtn, marginTop: 12, background: 'rgba(184, 243, 74,0.16)', border: '1px solid rgba(184, 243, 74,0.5)', color: 'var(--primary)' }} onClick={() => setConfirm({ type: 'markPayoutPaid', eventId: p.eventId, label: fmtXOF(p.amountDueXOF), who: p.sellerName })}>
-                    Marquer payé ({fmtXOF(p.amountDueXOF)})
+                  <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.cardAction} aria-label={`Confirmer le versement de ${fmtXOF(p.amountDueXOF)} à ${p.sellerName}`} onClick={() => setConfirm({ type: 'markPayoutPaid', eventId: p.eventId, label: fmtXOF(p.amountDueXOF), who: p.sellerName })}>
+                    Confirmer le versement
                   </Button>
                 )}
               </Card>
@@ -510,9 +551,9 @@ function PayoutsSection({
       )}
 
       {payoutRequests.length > 0 && (
-        <div>
-          <p style={sectionTitleStyle}>Demandes de virement — EUR ({payoutRequests.length})</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className={styles.queue}>
+          <QueueHeader icon={<Landmark size={18} aria-hidden="true" />} title="Demandes de virement" description="Demandes EUR initiées par les organisateurs." count={payoutRequests.length} />
+          <div className={styles.cardGrid}>
             {payoutRequestsPageItems.map((r) => (
               <PayoutCard key={r.requestId} sellerUid={r.sellerUid} sellerName={r.sellerName} sellerEmail={r.sellerEmail} amountDueCents={r.amountDueCents} amountDueXOF={r.amountDueXOF} payCents={r.payCents} requestId={r.requestId} requestedAt={r.requestedAt} mismatch={r.mismatch} setConfirm={setConfirm} />
             ))}
@@ -522,9 +563,9 @@ function PayoutsSection({
       )}
 
       {balancesNoReq.length > 0 && (
-        <div>
-          <p style={sectionTitleStyle}>Soldes dus — sans demande ({balancesNoReq.length})</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className={styles.queue}>
+          <QueueHeader icon={<Banknote size={18} aria-hidden="true" />} title="Soldes dus sans demande" description="Soldes disponibles qui n’ont pas encore fait l’objet d’une demande." count={balancesNoReq.length} tone="muted" />
+          <div className={styles.cardGrid}>
             {balancesNoReqPageItems.map((b) => (
               <PayoutCard key={b.sellerUid} sellerUid={b.sellerUid} sellerName={b.sellerName} sellerEmail={b.sellerEmail} amountDueCents={b.amountDueCents} amountDueXOF={b.amountDueXOF} payCents={b.amountDueCents} requestId={null} requestedAt={null} mismatch={false} setConfirm={setConfirm} />
             ))}
@@ -532,6 +573,19 @@ function PayoutsSection({
           <Pagination page={balancesNoReqPage} pageCount={balancesNoReqPageCount} onPageChange={setBalancesNoReqPage} totalItems={balancesNoReq.length} pageSize={PAGE_SIZE} />
         </div>
       )}
+    </div>
+  )
+}
+
+function QueueHeader({ icon, title, description, count, tone = 'default' }: { icon: React.ReactNode; title: string; description: string; count: number; tone?: 'default' | 'danger' | 'muted' }) {
+  return (
+    <div className={styles.queueHeader}>
+      <div className={`${styles.queueIcon} ${tone === 'danger' ? styles.queueIconDanger : ''}`} aria-hidden="true">{icon}</div>
+      <div>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+      <span aria-label={`${count} élément${count > 1 ? 's' : ''}`}>{count}</span>
     </div>
   )
 }
@@ -560,50 +614,40 @@ function PayoutCard({
   setConfirm: (a: ConfirmAction) => void
 }) {
   return (
-    <Card accent={requestId ? 'rgba(184, 243, 74,0.3)' : undefined} style={{ padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ minWidth: 0 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 2px' }}>{sellerName}</p>
-          <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {sellerEmail || sellerUid}
-            {requestedAt ? ` · demandé le ${new Date(requestedAt).toLocaleDateString('fr-FR')}` : ''}
-          </p>
+    <Card accent={requestId ? 'rgba(245,201,106,0.3)' : undefined} className={styles.moneyCard} role="article" aria-label={`${requestId ? 'Demande de virement' : 'Solde disponible'} pour ${sellerName}`}>
+      <div className={styles.cardTop}>
+        <div className={styles.identity}>
+          <span className={styles.identityIcon} aria-hidden="true"><UserRound size={18} /></span>
+          <div>
+            <strong>{sellerName}</strong>
+            <span>{sellerEmail || sellerUid}</span>
+          </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          {amountDueCents > 0 && <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{fmtEUR(amountDueCents)}</p>}
-          {amountDueXOF > 0 && <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{fmtXOF(amountDueXOF)}</p>}
-          {amountDueCents <= 0 && amountDueXOF <= 0 && <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>Solde à zéro</p>}
-        </div>
+        <span className={`${styles.status} ${requestId ? styles.statusPending : styles.statusNeutral}`}>{requestId ? 'Demandé' : 'Disponible'}</span>
       </div>
 
-      {mismatch && <p style={{ fontSize: 11, color: '#f59e0b', margin: '8px 0 0', lineHeight: 1.5 }}>Le montant demandé dépasse le solde réel du ledger — seul le solde réel sera réglé.</p>}
+      {requestedAt && <div className={styles.dateLine}><Clock3 size={14} aria-hidden="true" /> Demandé le {new Date(requestedAt).toLocaleDateString('fr-FR')}</div>}
+      <div className={styles.amounts}>
+        {amountDueCents > 0 && <div><span>Solde EUR</span><strong>{fmtEUR(amountDueCents)}</strong></div>}
+        {amountDueXOF > 0 && <div><span>Solde XOF</span><strong>{fmtXOF(amountDueXOF)}</strong></div>}
+        {amountDueCents <= 0 && amountDueXOF <= 0 && <div><span>Solde disponible</span><strong>0</strong></div>}
+      </div>
+
+      {mismatch && <div className={styles.note} role="alert"><AlertTriangle size={15} aria-hidden="true" /><span><strong>Montant incohérent. </strong>La demande dépasse le solde réel. Seul le montant disponible sera réglé.</span></div>}
 
       {payCents > 0 && (
-        <Button variant="primary" style={{ ...tealBtn, marginTop: 12 }} onClick={() => setConfirm({ type: 'settle', sellerUid, requestId, amount: payCents, currency: 'EUR', label: fmtEUR(payCents), who: sellerName })}>
-          Marquer payé ({fmtEUR(payCents)})
+        <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.cardAction} aria-label={`Confirmer le versement de ${fmtEUR(payCents)} à ${sellerName}`} onClick={() => setConfirm({ type: 'settle', sellerUid, requestId, amount: payCents, currency: 'EUR', label: fmtEUR(payCents), who: sellerName })}>
+          Confirmer {fmtEUR(payCents)} versés
         </Button>
       )}
 
       {amountDueXOF > 0 && (
-        <p
-          style={{
-            marginTop: payCents > 0 ? 8 : 12,
-            padding: '9px 12px',
-            borderRadius: 10,
-            background: 'rgba(184, 243, 74,0.07)',
-            border: '1px solid rgba(184, 243, 74,0.2)',
-            color: 'rgba(184, 243, 74,0.85)',
-            fontSize: 10.5,
-            lineHeight: 1.5,
-          }}
-        >
-          {fmtXOF(amountDueXOF)} versés automatiquement sur le Mobile Money à la fin de l&apos;événement. En cas d&apos;échec, à régler dans « Versements auto en échec ».
-        </p>
+        <div className={`${styles.note} ${styles.infoNote}`}><Smartphone size={15} aria-hidden="true" /><span>{fmtXOF(amountDueXOF)} sont destinés au versement automatique Mobile Money.</span></div>
       )}
 
       {requestId && payCents <= 0 && amountDueXOF <= 0 && (
-        <Button variant="secondary" style={{ ...ghostBtn, marginTop: 12 }} onClick={() => setConfirm({ type: 'closeRequest', requestId, who: sellerName })}>
-          Solde à zéro — clore la demande
+        <Button variant="secondary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.secondaryAction} aria-label={`Clore la demande à zéro de ${sellerName}`} onClick={() => setConfirm({ type: 'closeRequest', requestId, who: sellerName })}>
+          Clore la demande à zéro
         </Button>
       )}
     </Card>
@@ -625,31 +669,35 @@ function RefundsSection({
 }) {
   const { pageItems, pageCount } = useMemo(() => pagedSlice(refunds, page, PAGE_SIZE), [refunds, page])
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.55 }}>
-        FedaPay ne rembourse pas par API. Pour chaque ligne : rembourse l&apos;acheteur dans le dashboard FedaPay (bouton « Refund » sur la transaction), puis marque-la comme
-        faite ici. L&apos;argent d&apos;un événement annulé n&apos;est jamais versé à l&apos;organisateur — il reste disponible pour rembourser. Les paiements par carte
-        (Stripe) sont, eux, remboursés automatiquement.
-      </p>
+    <div className={styles.sectionStack}>
+      <Card accent="rgba(109,215,200,0.3)" className={styles.guideCard} role="note">
+        <div className={`${styles.guideIcon} ${styles.refundGuideIcon}`} aria-hidden="true"><RotateCcw size={20} /></div>
+        <div><strong>Remboursements Mobile Money</strong><p>Exécutez d’abord le remboursement dans FedaPay, puis confirmez-le ici. Les paiements Stripe sont remboursés automatiquement.</p></div>
+      </Card>
       {refunds.length === 0 ? (
         <EmptyState title="Aucun remboursement mobile money en attente" description="Les remboursements FedaPay à traiter manuellement apparaîtront ici." />
       ) : (
-        pageItems.map((r) => (
-          <Card key={r.id} style={{ padding: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
-              <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>{fmtXOF(r.amountXOF)}</p>
-                <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>À : {r.buyerEmail || '— email inconnu —'}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>Transaction FedaPay : {r.paymentRef}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Événement : {r.eventName}</p>
-                <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{fmtDate(r.createdAt)}</p>
+        <div className={styles.cardGrid}>
+          {pageItems.map((r) => (
+            <Card key={r.id} className={styles.moneyCard} role="article" aria-label={`Remboursement de ${fmtXOF(r.amountXOF)} pour ${r.eventName}`}>
+              <div className={styles.cardTop}>
+                <div className={styles.identity}>
+                  <span className={`${styles.identityIcon} ${styles.refundIcon}`} aria-hidden="true"><ReceiptText size={18} /></span>
+                  <div><strong>{r.eventName}</strong><span>{r.buyerEmail || 'Acheteur non renseigné'}</span></div>
+                </div>
+                <span className={`${styles.status} ${styles.statusRefund}`}>À rembourser</span>
               </div>
-              <Button variant="primary" style={{ flexShrink: 0, width: 'auto', borderRadius: 3, fontWeight: 500, padding: '10px 14px', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
-                Marquer remboursé
+              <div className={styles.amountRow}><span>Montant à restituer</span><strong>{fmtXOF(r.amountXOF)}</strong></div>
+              <div className={styles.metaGrid}>
+                <div><ReceiptText size={14} aria-hidden="true" /><span><span className={styles.srOnly}>Référence FedaPay : </span>{r.paymentRef}</span></div>
+                <div><Clock3 size={14} aria-hidden="true" /><span><span className={styles.srOnly}>Créé le : </span>{fmtDate(r.createdAt)}</span></div>
+              </div>
+              <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.refundAction} aria-label={`Confirmer le remboursement de ${fmtXOF(r.amountXOF)} à ${r.buyerEmail || 'cet acheteur'}`} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
+                Confirmer le remboursement
               </Button>
-            </div>
-          </Card>
-        ))
+            </Card>
+          ))}
+        </div>
       )}
       {refunds.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={refunds.length} pageSize={PAGE_SIZE} />}
     </div>
@@ -671,43 +719,39 @@ function AlertsSection({
 }) {
   const { pageItems, pageCount } = useMemo(() => pagedSlice(alerts, page, PAGE_SIZE), [alerts, page])
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px', lineHeight: 1.55 }}>Vérifie le paiement dans Stripe ou FedaPay avant de rembourser ou de clôturer l&apos;alerte.</p>
+    <div className={styles.sectionStack}>
+      <Card accent="rgba(255,143,178,0.3)" className={styles.guideCard} role="note">
+        <div className={`${styles.guideIcon} ${styles.alertGuideIcon}`} aria-hidden="true"><ShieldCheck size={20} /></div>
+        <div><strong>Contrôle avant clôture</strong><p>Vérifiez la transaction dans Stripe ou FedaPay avant de rembourser, corriger ou clôturer une alerte.</p></div>
+      </Card>
       {alerts.length === 0 ? (
         <EmptyState title="Aucune anomalie à traiter" description="Les paiements signalés comme anormaux apparaîtront ici." />
       ) : (
-        pageItems.map((a) => (
-          <Card key={a.id} accent="rgba(224,90,170,0.32)" style={{ padding: 18, borderLeft: '3px solid rgba(224,90,170,0.55)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 750, color: '#fff', margin: '0 0 5px' }}>{ALERT_REASON_LABEL[a.reason] || a.reason}</p>
-                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0 }}>{fmtDate(a.createdAt)}</p>
-              </div>
-              <span style={{ fontSize: 10, color: '#e05aaa', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 999, padding: '4px 8px', flexShrink: 0 }}>À vérifier</span>
-            </div>
-            <div style={{ marginTop: 13, padding: '10px 12px', borderRadius: 9, background: 'rgba(255,255,255,0.035)' }}>
-              {a.eventName && <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '0 0 5px' }}>Événement : {a.eventName}</p>}
-              {a.sellerUid && (
-                <p style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: '0 0 5px' }}>
-                  Organisateur : {a.sellerName || a.sellerUid}
-                  {a.sellerEmail ? ` · ${a.sellerEmail}` : ''}
-                </p>
-              )}
-              {Object.keys(a.details).length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {Object.entries(a.details).map(([key, value]) => (
-                    <p key={key} style={{ fontSize: 10.5, color: 'var(--text-muted)', margin: 0, overflowWrap: 'anywhere' }}>
-                      {humanizeDetailKey(key)} : {fmtDetailValue(value)}
-                    </p>
-                  ))}
+        <div className={styles.cardGrid}>
+          {pageItems.map((a) => (
+            <Card key={a.id} accent="rgba(255,143,178,0.32)" className={`${styles.moneyCard} ${styles.dangerCard}`} role="article" aria-label={`Alerte financière : ${ALERT_REASON_LABEL[a.reason] || a.reason}`}>
+              <div className={styles.cardTop}>
+                <div className={styles.identity}>
+                  <span className={`${styles.identityIcon} ${styles.dangerIcon}`} aria-hidden="true"><AlertTriangle size={18} /></span>
+                  <div><strong>{ALERT_REASON_LABEL[a.reason] || a.reason}</strong><span>{fmtDate(a.createdAt)}</span></div>
                 </div>
-              )}
-            </div>
-            <Button variant="primary" style={{ marginTop: 13, width: 'auto', padding: '10px 16px', borderRadius: 3, fontWeight: 500, border: '1px solid rgba(255,255,255,0.14)', textTransform: 'none', letterSpacing: 'normal', fontSize: 12 }} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
-              Marquer comme examiné
-            </Button>
-          </Card>
-        ))
+                <span className={`${styles.status} ${styles.statusDanger}`}>À vérifier</span>
+              </div>
+              <div className={styles.alertContext}>
+                {a.eventName && <p><strong>Événement</strong><span>{a.eventName}</span></p>}
+                {a.sellerUid && <p><strong>Organisateur</strong><span>{a.sellerName || a.sellerUid}{a.sellerEmail ? ` · ${a.sellerEmail}` : ''}</span></p>}
+                {Object.keys(a.details).length > 0 && <div className={styles.details}>
+                  {Object.entries(a.details).map(([key, value]) => (
+                    <p key={key}><strong>{humanizeDetailKey(key)}</strong><span>{fmtDetailValue(value)}</span></p>
+                  ))}
+                </div>}
+              </div>
+              <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.cardAction} aria-label={`Clôturer l’alerte après vérification : ${ALERT_REASON_LABEL[a.reason] || a.reason}`} onClick={() => setConfirm({ type: 'resolveAlert', alertId: a.id, label: ALERT_REASON_LABEL[a.reason] || a.reason })}>
+                Clôturer après vérification
+              </Button>
+            </Card>
+          ))}
+        </div>
       )}
       {alerts.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={alerts.length} pageSize={PAGE_SIZE} />}
     </div>
@@ -737,14 +781,16 @@ function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAc
   }
 
   return (
-    <Modal onClose={busy ? () => {} : onCancel} maxWidth={400} hideClose contentStyle={{ textAlign: 'center' }}>
-      <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>{title}</p>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.5 }}>{helper}</p>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="secondary" onClick={onCancel} disabled={busy} style={ghostBtn}>
+    <Modal onClose={onCancel} maxWidth={440} hideClose dismissible={!busy} ariaLabel={title}>
+      <div className={styles.confirmIcon} aria-hidden="true"><ShieldCheck size={25} /></div>
+      <h2 className={styles.confirmTitle}>{title}</h2>
+      <p className={styles.confirmHelper}>{helper}</p>
+      <div className={styles.confirmWarning} role="note"><AlertTriangle size={16} aria-hidden="true" /><span>Cette confirmation modifie le suivi financier de façon immédiate.</span></div>
+      <div className={styles.confirmActions}>
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>
           Annuler
         </Button>
-        <Button variant="primary" onClick={onConfirm} disabled={busy} loading={busy} loadingText="…" style={tealBtn}>
+        <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} onClick={onConfirm} disabled={busy} loading={busy} loadingText="Confirmation…" aria-label={title}>
           Confirmer
         </Button>
       </div>

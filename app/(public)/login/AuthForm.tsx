@@ -7,7 +7,7 @@ import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
 import { dashboardHrefForRole } from '@/lib/shared/dashboardRoutes'
-import { Button, Card, Input, Label, Select, Tabs } from '@/app/components/ui'
+import { Button, Input, Label, Select, Tabs, Modal } from '@/app/components/ui'
 
 // Port de src/pages/LoginPage.jsx (#118). La distinction legacy
 // role==='user' vs role==='client' n'existe plus côté backend (un seul rôle
@@ -161,7 +161,6 @@ export default function AuthForm() {
   const [forgotSubmitted, setForgotSubmitted] = useState(false)
   const [forgotError, setForgotError] = useState('')
   const forgotEmailRef = useRef<HTMLInputElement>(null)
-  const forgotModalRef = useRef<HTMLDivElement>(null)
 
   // Register
   const [firstName, setFirstName] = useState('')
@@ -190,33 +189,6 @@ export default function AuthForm() {
     const id = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
     return () => clearTimeout(id)
   }, [resendCooldown])
-
-  // Focus + fermeture au clavier de la modale "Mot de passe oublié", à
-  // l'image de CookieConsentBanner.tsx (role="dialog"/aria-labelledby).
-  useEffect(() => {
-    if (!showForgotModal) return
-    forgotEmailRef.current?.focus()
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') closeForgotModal()
-      if (e.key !== 'Tab') return
-
-      const focusable = forgotModalRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-      )
-      if (!focusable?.length) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [showForgotModal])
 
   // Anti-énumération : POST /api/auth/resend-verification renvoie toujours
   // {ok:true}, qu'un compte existe, soit déjà vérifié, ou non — message de
@@ -782,18 +754,7 @@ export default function AuthForm() {
       </div>
 
       {showForgotModal && (
-        <div
-          onClick={closeForgotModal}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="forgot-modal-title"
-          style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-        >
-          <Card
-            ref={forgotModalRef}
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: 'var(--surface-2)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)', padding: '32px 28px', maxWidth: 400, width: '100%' }}
-          >
+        <Modal onClose={closeForgotModal} maxWidth={400} zIndex={100} ariaLabel="Mot de passe oublié" contentStyle={{ padding: '32px 28px' }}>
             {!forgotSubmitted ? (
               <>
                 <h2 id="forgot-modal-title" style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
@@ -847,8 +808,7 @@ export default function AuthForm() {
                 </Button>
               </div>
             )}
-          </Card>
-        </div>
+        </Modal>
       )}
     </div>
   )

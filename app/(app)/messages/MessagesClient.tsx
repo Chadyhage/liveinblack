@@ -25,12 +25,13 @@ import {
   Handshake,
   Send,
 } from 'lucide-react'
-import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice, Modal, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const CONV_PAGE_SIZE = 20
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
+import styles from './MessagesClient.module.css'
 
 // ─────────────────────────── types (miroir des DTO JSON) ────────────────────
 // Copies volontaires des formes renvoyées par les routes HTTP (pas des
@@ -1430,9 +1431,10 @@ export default function MessagesClient({
   const showThreadPane = isDesktop || mobileView === 'thread'
 
   return (
-    <main style={{ height: 'calc(100dvh - 61px)', display: 'flex', background: 'var(--obsidian)' }}>
+    <main className={styles.root}>
       {showListPane && (
         <aside
+          className={styles.listPane}
           style={{
             width: isDesktop && conversations.length > 0 ? 340 : '100%',
             flexShrink: 0,
@@ -1628,7 +1630,7 @@ export default function MessagesClient({
       )}
 
       {showThreadPane && conversations.length > 0 && (
-        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden' }}>
+        <section className={styles.threadPane} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden' }}>
           {!activeConversation ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MessagingEmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
@@ -2032,8 +2034,7 @@ export default function MessagesClient({
           if (!conv) return null
           return (
             <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 90 }} onClick={() => setConvContextMenu(null)} />
-              <div style={{ position: 'fixed', top: convContextMenu.y, left: convContextMenu.x, zIndex: 91 }}>
+              <div style={{ position: 'fixed', top: convContextMenu.y, left: convContextMenu.x, zIndex: 191 }}>
                 <DropdownMenu
                   onClose={() => setConvContextMenu(null)}
                   items={[
@@ -2221,37 +2222,19 @@ export default function MessagesClient({
       )}
 
       {showCamera && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <video ref={videoRef} autoPlay playsInline style={{ maxWidth: '92%', maxHeight: '70vh', borderRadius: 12 }} />
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Button variant="secondary" onClick={closeCamera} size="sm" style={{ borderRadius: 999 }}>
-              Annuler
-            </Button>
-            <Button variant="primary" onClick={capturePhoto} size="sm" style={{ borderRadius: 8 }}>
-              Capturer
-            </Button>
-          </div>
-        </div>
+        <ImmersiveDialog
+          title="Prendre une photo"
+          subtitle="Cadre ta photo avant de la partager"
+          onClose={closeCamera}
+          zIndex={500}
+          media
+          actions={<><Button variant="secondary" onClick={closeCamera}>Annuler</Button><Button variant="primary" onClick={capturePhoto}>Capturer</Button></>}
+        >
+          <video ref={videoRef} autoPlay playsInline aria-label="Aperçu de la caméra" style={{ width: 'min(100%, 1100px)', maxHeight: 'calc(100dvh - 170px)', objectFit: 'contain', borderRadius: 20, boxShadow: '0 28px 90px rgba(0,0,0,.5)' }} />
+        </ImmersiveDialog>
       )}
 
-      <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 400 }}>
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            style={{
-              background: 'var(--surface-2)',
-              border: '1px solid rgba(224,90,170,0.4)',
-              color: 'var(--text)',
-              borderRadius: 12,
-              padding: '10px 16px',
-              fontSize: 13,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            }}
-          >
-            {t.message}
-          </div>
-        ))}
-      </div>
+      <ToastViewport items={toasts.map((toast) => ({ id: toast.id, message: toast.message, kind: 'info' }))} />
 
       <style>{`
         @keyframes lib-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -2763,13 +2746,10 @@ function ImageBubble({ content, createdAt }: { content: string | null; createdAt
         </a>
       </div>
       {zoomed && (
-        <div
-          onClick={() => setZoomed(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}
-        >
+        <ImmersiveDialog title="Aperçu de la photo" onClose={() => setZoomed(false)} zIndex={600} media>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={content} alt="Photo" style={{ maxWidth: '92%', maxHeight: '92%', objectFit: 'contain' }} />
-        </div>
+          <img src={content} alt="Photo en plein écran" style={{ maxWidth: '100%', maxHeight: 'calc(100dvh - 40px)', objectFit: 'contain', borderRadius: 12 }} />
+        </ImmersiveDialog>
       )}
     </>
   )
@@ -3050,54 +3030,40 @@ function MessageContextMenu({
   }
 
   const maxX = typeof window !== 'undefined' ? window.innerWidth - 220 : x
-  const left = Math.min(x, maxX)
+  const left = Math.max(12, Math.min(x, maxX))
+  const maxY = typeof window !== 'undefined' ? window.innerHeight - Math.min(440, 52 + items.length * 48) - 12 : y
+  const top = Math.max(12, Math.min(y, maxY))
 
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 190 }} onClick={onClose} onContextMenu={(e) => e.preventDefault()} />
+      <Button className={styles.menuBackdrop} variant="ghost" onClick={onClose} onContextMenu={(e) => e.preventDefault()} aria-label="Fermer le menu" />
       <div
-        style={{
-          position: 'fixed',
-          top: y,
-          left,
-          zIndex: 191,
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-          minWidth: 200,
-          overflow: 'hidden',
-        }}
+        role="menu"
+        aria-label="Actions du message"
+        className={`${styles.menu} ${styles.fixedMenu}`}
+        style={{ top, left }}
+        onKeyDown={(event) => handleMenuKeyDown(event, onClose)}
       >
         {!message.deletedForAll && (
-          <div style={{ display: 'flex', gap: 4, padding: 8, borderBottom: '1px solid var(--border)' }}>
-            {QUICK_REACT.map((emoji) => (
-              <Button key={emoji} variant="ghost" onClick={() => onReact(emoji)} style={{ padding: 0, fontSize: 16 }}>
+          <div className={styles.quickReactions} aria-label="Réactions rapides">
+            {QUICK_REACT.map((emoji, index) => (
+              <Button key={emoji} variant="ghost" role="menuitem" autoFocus={index === 0} onClick={() => { onReact(emoji); onClose() }} aria-label={`Réagir avec ${emoji}`}>
                 {emoji}
               </Button>
             ))}
           </div>
         )}
-        {items.map((item) => (
+        {items.map((item, index) => (
           <Button
             key={item.label}
             variant="ghost"
+            role="menuitem"
+            autoFocus={message.deletedForAll && index === 0}
             onClick={() => {
               item.onClick()
               onClose()
             }}
-            style={{
-              display: 'block',
-              width: '100%',
-              textAlign: 'left',
-              padding: '9px 14px',
-              background: 'transparent',
-              border: 'none',
-              color: item.danger ? '#c2347f' : 'var(--text)',
-              fontSize: 13,
-              fontWeight: 400,
-              borderRadius: 0,
-            }}
+            className={`${styles.menuItem}${item.danger ? ` ${styles.dangerItem}` : ''}`}
           >
             {item.label}
           </Button>
@@ -3132,28 +3098,24 @@ function FullReactionPicker({ onPick, onClose }: { onPick: (emoji: string) => vo
 function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () => void }[]; onClose: () => void }) {
   return (
     <>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={onClose} />
+      <Button className={styles.menuBackdrop} variant="ghost" onClick={onClose} aria-label="Fermer le menu" style={{ zIndex: 49 }} />
       <div
-        style={{
-          position: 'relative',
-          zIndex: 50,
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-          minWidth: 200,
-          overflow: 'hidden',
-        }}
+        role="menu"
+        aria-label="Actions disponibles"
+        className={`${styles.menu} ${styles.relativeMenu}`}
+        onKeyDown={(event) => handleMenuKeyDown(event, onClose)}
       >
-        {items.map((item) => (
+        {items.map((item, index) => (
           <Button
             key={item.label}
             variant="ghost"
+            role="menuitem"
+            autoFocus={index === 0}
             onClick={() => {
               item.onClick()
               onClose()
             }}
-            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', color: 'var(--text)', fontSize: 13, fontWeight: 400, borderRadius: 0 }}
+            className={styles.menuItem}
           >
             {item.label}
           </Button>
@@ -3163,80 +3125,27 @@ function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () 
   )
 }
 
-function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
-  // Transition d'ouverture calquée sur la convention déjà posée par
-  // EventShareButton.tsx (opacity + scale, ~180ms, piloté par un état
-  // "visible" basculé au prochain frame après montage — pas de lib
-  // d'animation dans ce repo). ModalShell est le composant partagé par TOUS
-  // les modals de ce fichier (photo, sondage, événement, nouvelle
-  // discussion, groupe, etc.) : cette seule transition couvre donc "modale
-  // animée" pour l'ensemble d'entre eux d'un coup.
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true))
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
+function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>, onClose: () => void) {
+  if (event.key === 'Escape') { event.preventDefault(); onClose(); return }
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+  event.preventDefault()
+  const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+  if (!controls.length) return
+  const current = controls.indexOf(document.activeElement as HTMLElement)
+  if (event.key === 'Home') return controls[0].focus()
+  if (event.key === 'End') return controls[controls.length - 1].focus()
+  const offset = event.key === 'ArrowDown' ? 1 : -1
+  controls[(current + offset + controls.length) % controls.length].focus()
+}
 
+function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 200,
-        padding: 16,
-        opacity: visible ? 1 : 0,
-        transition: 'opacity .18s ease',
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 16,
-          padding: 22,
-          width: wide ? 480 : 360,
-          maxWidth: '100%',
-          maxHeight: '82vh',
-          overflowY: 'auto',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'scale(1)' : 'scale(0.96)',
-          transition: 'opacity .18s ease, transform .18s ease',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+    <Modal onClose={onClose} maxWidth={wide ? 480 : 360} zIndex={200} ariaLabel={title}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, paddingRight: 42 }}>
           <h3 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{title}</h3>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{
-              background: 'transparent',
-              color: 'var(--text-muted)',
-              fontSize: 20,
-              lineHeight: 1,
-              padding: 4,
-            }}
-          >
-            ×
-          </Button>
         </div>
         {children}
-      </div>
-    </div>
+    </Modal>
   )
 }
 

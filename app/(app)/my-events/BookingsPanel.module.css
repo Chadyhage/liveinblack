@@ -1,0 +1,23 @@
+.overview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:30px; }
+.metric { min-height:124px; padding:20px!important; border:1px solid rgba(255,255,255,.11)!important; border-radius:22px!important; background:rgba(255,255,255,.055)!important; box-shadow:0 18px 52px rgba(0,0,0,.16)!important; }
+.metric span { display:block; color:rgba(245,245,247,.55); font-size:13px; }
+.metric strong { display:block; margin-top:10px; color:#fff; font-size:clamp(25px,3vw,36px); letter-spacing:-.045em; }
+.section { margin-top:30px; }
+.sectionHeader { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:13px; }
+.sectionHeader h2 { margin:0; color:#fff; font-size:20px; letter-spacing:-.025em; }
+.sectionHeader p { margin:4px 0 0; color:rgba(245,245,247,.48); font-size:13px; }
+.summaryGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.summaryRow { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:62px; padding:13px 16px!important; border-radius:17px!important; background:rgba(255,255,255,.045)!important; }
+.summaryRow span { color:rgba(245,245,247,.78); font-size:14px; }
+.summaryRow strong { color:#b8f34a; font-size:16px; }
+.ticketList { display:grid; gap:11px; }
+.ticket { padding:17px 18px!important; border-radius:19px!important; background:rgba(255,255,255,.05)!important; }
+.ticketTop { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.ticketName { margin:0; color:#fff; font-size:15px; font-weight:700; }
+.ticketMeta { margin:5px 0 0; color:rgba(245,245,247,.48); font-size:12.5px; }
+.price { flex-shrink:0; color:#b8f34a; font-size:15px; font-weight:750; }
+.preorders { margin:13px 0 0; padding:12px 14px; display:grid; gap:7px; border-radius:13px; background:rgba(184,243,74,.065); color:rgba(245,245,247,.68); font-size:12.5px; list-style:none; }
+.show { display:block; margin-top:3px; color:#48c9b0; }
+.empty { min-height:45dvh; display:grid; place-items:center; text-align:center; color:rgba(245,245,247,.56); }
+.error { padding:16px 18px; border:1px solid rgba(224,90,170,.28); border-radius:16px; background:rgba(224,90,170,.08); color:#ff91c9; }
+@media(max-width:700px){.overview{grid-template-columns:1fr 1fr}.metric:first-child{grid-column:1/-1}.summaryGrid{grid-template-columns:1fr}.ticketTop{gap:10px}.sectionHeader{align-items:flex-start}.metric{min-height:104px}}

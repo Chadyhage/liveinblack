@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
+import { AlertTriangle, Ban, CalendarCheck2, CalendarDays, CalendarX2, ExternalLink, MapPin, RefreshCw, Search, ShieldAlert, UserRound } from 'lucide-react'
+import { Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
+import styles from './AgentEventsClient.module.css'
 
 const PAGE_SIZE = 15
 
@@ -41,21 +43,7 @@ interface AgentEvent {
 
 type FilterKey = 'all' | EventStatus
 
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'Tous' },
-  { key: 'upcoming', label: 'À venir' },
-  { key: 'past', label: 'Passés' },
-  { key: 'cancelled', label: 'Annulés' },
-]
-
 const STATUS_LABEL: Record<EventStatus, string> = { upcoming: 'À venir', past: 'Passé', cancelled: 'Annulé' }
-const STATUS_STYLE: Record<EventStatus, React.CSSProperties> = {
-  upcoming: { color: 'var(--primary)', borderColor: 'rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.08)' },
-  past: { color: 'var(--text-faint)', borderColor: 'var(--border)', background: 'var(--surface-2)' },
-  cancelled: { color: '#e05aaa', borderColor: 'rgba(224,90,170,0.35)', background: 'rgba(224,90,170,0.1)' },
-}
-
-
 interface ToastState {
   message: string
   kind: 'success' | 'error'
@@ -179,66 +167,52 @@ export default function AgentEventsClient() {
   }
 
   return (
-    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--events">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div><h1 className="font-display lb-dashboard-title">Événements</h1><p className="lb-dashboard-description">Supervisez la programmation publiée et intervenez sur les événements signalés.</p></div>
-        </div>
+    <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--events ${styles.page}`}>
+      <div className={styles.stack}>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}><ShieldAlert size={15} aria-hidden="true" /> Supervision de la programmation</p>
+            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Événements</h1>
+            <p className={`lb-dashboard-description ${styles.description}`}>Contrôle la programmation de la plateforme, retrouve rapidement un événement et déclenche une annulation exceptionnelle lorsque la situation l’exige.</p>
+          </div>
+          <div className={styles.heroActions}>
+            <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={loadList} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
+          </div>
+        </header>
 
         {listError && (
-          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
-              Recharger
-            </Button>
+          <Card accent="rgba(224,90,170,0.35)" className={styles.error} role="alert">
+            <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les événements</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
+            <Button variant="secondary" onClick={loadList}>Réessayer</Button>
           </Card>
         )}
 
-        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+        <div className={styles.metrics} aria-label="Filtrer par statut">
           {[
-            { label: 'Total', value: events.length, color: 'var(--gold)' },
-            { label: 'À venir', value: totalUpcoming, color: 'var(--teal)' },
-            { label: 'Passés', value: totalPast, color: 'var(--text-faint)' },
-            { label: 'Annulés', value: totalCancelled, color: '#e05aaa' },
-          ].map((s) => (
-            <Card key={s.label} style={{ padding: '10px 8px', textAlign: 'center' }}>
-              <p style={{ fontSize: 22, fontWeight: 700, color: s.color, margin: 0 }}>{s.value}</p>
-              <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '2px 0 0' }}>{s.label}</p>
-            </Card>
-          ))}
-        </div>
-
-        <Input type="text" placeholder="Rechercher par nom, organisateur, ville…" value={search} onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })} />
-
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {FILTERS.map((f) => {
-            const count = f.key === 'all' ? events.length : f.key === 'upcoming' ? totalUpcoming : f.key === 'past' ? totalPast : totalCancelled
-            const active = filter === f.key
-            return (
-              <Button
-                key={f.key}
-                variant="ghost"
-                onClick={() => setQueryParams({ filter: f.key === 'all' ? null : f.key, page: null })}
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: 999,
-                  fontSize: 10,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  border: active ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
-                  background: active ? 'rgba(184, 243, 74,0.15)' : 'var(--surface)',
-                  color: active ? 'var(--gold)' : 'var(--text-faint)',
-                }}
-              >
-                {f.label} <span style={{ marginLeft: 4, opacity: 0.7 }}>{count}</span>
-              </Button>
-            )
+            { key: 'all' as FilterKey, label: 'Tous les événements', value: events.length, icon: CalendarDays },
+            { key: 'upcoming' as FilterKey, label: 'À venir', value: totalUpcoming, icon: CalendarCheck2 },
+            { key: 'past' as FilterKey, label: 'Terminés', value: totalPast, icon: CalendarDays },
+            { key: 'cancelled' as FilterKey, label: 'Annulés', value: totalCancelled, icon: CalendarX2 },
+          ].map((s) => {
+            const Icon = s.icon
+            return <Button key={s.key} variant="ghost" className={`${styles.metric}${filter === s.key ? ` ${styles.metricActive}` : ''}`} onClick={() => setQueryParams({ filter: s.key === 'all' ? null : s.key, page: null })} aria-pressed={filter === s.key}>
+              <span className={styles.metricTop}><span className={styles.metricIcon}><Icon size={19} aria-hidden="true" /></span><strong className={styles.metricValue}>{s.value}</strong></span>
+              <span className={styles.metricLabel}>{s.label}</span>
+            </Button>
           })}
         </div>
 
+        <div className={styles.controls}>
+          <div className={styles.search}><Search size={18} aria-hidden="true" /><Input type="search" aria-label="Rechercher un événement" placeholder="Nom, organisateur ou ville…" value={search} onChange={(e) => setQueryParams({ q: e.target.value === '' ? null : e.target.value, page: null })} /></div>
+          <span className={styles.resultCount}>{filtered.length} résultat{filtered.length === 1 ? '' : 's'}</span>
+          {(search || filter !== 'all') && <Button variant="ghost" className={styles.clear} onClick={() => setQueryParams({ q: null, filter: null, page: null })}>Réinitialiser</Button>}
+        </div>
+
+        <div className={styles.listHeader}><div><h2>{filter === 'all' ? 'Tous les événements' : filter === 'upcoming' ? 'Événements à venir' : filter === 'past' ? 'Événements terminés' : 'Événements annulés'}</h2><p>Les événements sont classés par date, avec les annulations en fin de liste.</p></div></div>
+
         {listLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className={styles.loadingGrid}>
+            {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />
             ))}
           </div>
@@ -248,7 +222,7 @@ export default function AgentEventsClient() {
             description={events.length === 0 ? 'Aucun événement n’a encore été publié sur la plateforme.' : 'Aucun événement ne correspond aux filtres actuels.'}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className={styles.grid}>
             {pageItems.map((ev) => (
               <EventRow key={ev.id} event={ev} onCancel={() => { setAdminCancel({ id: ev.id, name: ev.name || 'cet événement' }); setAdminCancelMsg('') }} />
             ))}
@@ -269,113 +243,46 @@ export default function AgentEventsClient() {
         />
       )}
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'evenements', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }
 
 function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void }) {
-  const statusStyle = STATUS_STYLE[event.status]
   const [expanded, setExpanded] = useState(false)
   return (
-    <Card style={{ padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
-      <div
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 6,
-          overflow: 'hidden',
-          flexShrink: 0,
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+    <Card className={styles.eventCard}>
+      <div className={styles.visual}>
         {event.imageUrl ? (
-          <Image src={event.imageUrl} alt="" width={56} height={56} style={{ objectFit: 'cover' }} />
+          <Image src={event.imageUrl} alt="" fill className={styles.image} sizes="(max-width: 980px) 100vw, 50vw" />
         ) : (
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.5">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+          <span className={styles.placeholder}><CalendarDays size={42} strokeWidth={1.25} aria-hidden="true" /></span>
         )}
+        <span className={styles.scrim} aria-hidden="true" />
+        <span className={`${styles.status} ${styles[event.status]}`}>{event.status === 'cancelled' ? <Ban size={13} aria-hidden="true" /> : <CalendarDays size={13} aria-hidden="true" />}{STATUS_LABEL[event.status]}</span>
+        <span className={styles.dateChip}><CalendarDays size={13} aria-hidden="true" />{event.dateDisplay || event.date || 'Date à confirmer'}</span>
+        <div className={styles.visualTitle}><h3>{event.name}</h3><p>{event.city || 'Lieu à confirmer'}</p></div>
       </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.name}</p>
-          <span style={{ flexShrink: 0, padding: '2px 7px', borderRadius: 3, border: '1px solid', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', ...statusStyle }}>
-            {STATUS_LABEL[event.status]}
-          </span>
+      <div className={styles.body}>
+        <div className={styles.facts}>
+          <div className={styles.fact}><UserRound size={16} aria-hidden="true" /><span>{event.organizerName || event.organizer || 'Organisateur inconnu'}</span></div>
+          <div className={styles.fact}><MapPin size={16} aria-hidden="true" /><span>{event.city || 'Ville non renseignée'}</span></div>
         </div>
-        <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {event.dateDisplay || event.date} {event.city ? `· ${event.city}` : ''} · {event.organizerName || event.organizer || '—'}
-        </p>
         {event.cancelled && (
-          <>
-            <p
-              style={{
-                fontSize: 11,
-                color: 'rgba(255,140,140,0.85)',
-                margin: '4px 0 0',
-                lineHeight: 1.45,
-                ...(expanded ? null : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
-              }}
-            >
-              Annulé{event.cancelledAt ? ` le ${fmtCancelledAt(event.cancelledAt)}` : ''}
-              {event.cancellationMessage ? ` — « ${event.cancellationMessage} »` : ' — aucun message aux participants'}
-            </p>
+          <div className={styles.cancellation}>
+            <strong>Annulé{event.cancelledAt ? ` le ${fmtCancelledAt(event.cancelledAt)}` : ''}</strong>
+            <p className={expanded ? undefined : styles.clamped}>{event.cancellationMessage ? `« ${event.cancellationMessage} »` : 'Aucun message n’a été envoyé aux participants.'}</p>
             {event.cancellationMessage && (
-              <Button
-                variant="link"
-                onClick={() => setExpanded((v) => !v)}
-                style={{ marginTop: 2, color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 700 }}
-              >
-                {expanded ? 'Voir moins' : 'Voir plus'}
-              </Button>
+              <Button variant="link" className={styles.expand} onClick={() => setExpanded((v) => !v)}>{expanded ? 'Réduire' : 'Lire le message'}</Button>
             )}
-          </>
+          </div>
         )}
-      </div>
-
-      <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
+        <div className={styles.actions}>
         {event.status === 'upcoming' && (
-          <Button
-            variant="danger"
-            onClick={onCancel}
-            style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.5)', fontSize: 12, color: '#e05aaa' }}
-          >
-            Annuler
-          </Button>
+          <Button variant="danger" icon={<Ban size={16} aria-hidden="true" />} className={styles.cancelButton} onClick={onCancel}>Annuler</Button>
         )}
-        <Link
-          href={`/events/${event.id}`}
-          style={{ padding: '8px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)', textDecoration: 'none' }}
-        >
-          Voir
-        </Link>
+        <Link href={`/events/${event.id}`} className={styles.viewLink}>Voir la page <ExternalLink size={15} aria-hidden="true" /></Link>
+        </div>
       </div>
     </Card>
   )
@@ -397,28 +304,22 @@ function AdminCancelModal({
   onConfirm: () => void
 }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.75)', backdropFilter: 'blur(6px)' }} onClick={onCancel} />
-      <Card accent="rgba(224,90,170,0.4)" style={{ position: 'relative', width: 'min(460px, 100%)' }}>
-        <p style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Annuler « {name} » ?</p>
-        <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 14px', lineHeight: 1.6 }}>
-          Action irréversible : rembourse automatiquement les acheteurs (carte via Stripe, mobile money mis en liste de remboursement), annule les billets, libère le stock et bloque tout versement
-          à l&apos;organisateur. Les acheteurs sont prévenus par e-mail.
-        </p>
-        <Label style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 }}>Message aux acheteurs (optionnel)</Label>
+    <Modal onClose={onCancel} maxWidth={460} dismissible={!busy} ariaLabel={`Annuler ${name}`} contentStyle={{ borderColor: 'rgba(224,90,170,.3)' }}>
+        <div className={styles.modalHeader}><span className={styles.modalIcon}><AlertTriangle size={22} aria-hidden="true" /></span><h2>Annuler « {name} » ?</h2><p>Cette action est irréversible. Les billets seront annulés, le stock libéré, les versements bloqués et les remboursements déclenchés selon le moyen de paiement.</p></div>
+        <Label>Message aux acheteurs (optionnel)</Label>
         <Textarea
           rows={3}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Ex : soirée annulée pour raisons de sécurité…"
-          style={{ resize: 'vertical', lineHeight: 1.6, marginBottom: 14 }}
+          style={{ resize: 'vertical', lineHeight: 1.6, marginTop: 7 }}
         />
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className={styles.modalActions}>
           <Button
             variant="secondary"
             onClick={onCancel}
             disabled={busy}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 10, fontSize: 13 }}
+            fullWidth
           >
             Retour
           </Button>
@@ -428,12 +329,11 @@ function AdminCancelModal({
             disabled={busy}
             loading={busy}
             loadingText="Annulation…"
-            style={{ flex: 1, padding: '11px 0', borderRadius: 3, fontWeight: 500, background: '#c2347f', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+            fullWidth
           >
             Annuler l&apos;événement
           </Button>
         </div>
-      </Card>
-    </div>
+    </Modal>
   )
 }

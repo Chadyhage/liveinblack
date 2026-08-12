@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { Button } from '@/app/components/ui'
+import { Button, Modal } from '@/app/components/ui'
 
 // Modale de vérification d'âge partagée — utilisée à la fois par
 // AgeVerificationGate (visiteur anonyme, CTA "Se connecter pour réserver")
@@ -19,48 +18,8 @@ export default function AgeGateModal({
   onConfirm: () => void
   onCancel: () => void
 }) {
-  const confirmButtonRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    confirmButtonRef.current?.focus()
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onCancel()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onCancel])
-
   return (
-    <div
-      role="presentation"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 999,
-        background: 'rgba(3,4,8,0.72)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-      }}
-      onClick={onCancel}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="age-gate-title"
-        style={{
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border-strong)',
-          borderRadius: 20,
-          padding: '28px 24px',
-          width: '100%',
-          maxWidth: 380,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal onClose={onCancel} maxWidth={380} zIndex={999} ariaLabel={`Réservé aux ${minAge} ans et plus`}>
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ width: 28, height: 1, background: 'var(--gold)', flexShrink: 0 }} />
@@ -122,7 +81,6 @@ export default function AgeGateModal({
         </p>
 
         <Button
-          ref={confirmButtonRef}
           onClick={onConfirm}
           fullWidth
           style={{
@@ -155,7 +113,6 @@ export default function AgeGateModal({
         >
           Annuler
         </Button>
-      </div>
-    </div>
+    </Modal>
   )
 }

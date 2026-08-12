@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { ArrowUpRight, BarChart3, LockKeyhole, SlidersHorizontal } from 'lucide-react'
 import { getCookieConsent, saveCookieConsent, type CookieConsentValue } from '@/lib/shared/cookieConsent'
 import { Button } from '@/app/components/ui'
+import styles from './CookieConsentBanner.module.css'
 
 type Phase = 'entering' | 'visible' | 'leaving'
 
@@ -61,197 +63,35 @@ export default function CookieConsentBanner() {
   }
 
   return (
-    <>
-      <style>{`
-        .cc-root {
-          position: fixed;
-          left: 0; right: 0; bottom: 0;
-          transform: translateY(100%);
-          z-index: 999;
-          transition: transform 0.4s cubic-bezier(0.22,0.9,0.3,1);
-        }
-        .cc-root.cc-visible {
-          transform: translateY(0);
-        }
-        .cc-root.cc-leaving {
-          transform: translateY(100%);
-          transition-duration: 0.3s;
-        }
+    <div
+      ref={bannerRef}
+      role="region"
+      aria-labelledby="cookie-consent-title"
+      className={`${styles.root} ${phase === 'leaving' ? styles.leaving : phase === 'visible' ? styles.visible : ''}`}
+    >
+      <div className={styles.panel}>
+        <div className={styles.intro}>
+          <span className={styles.privacyIcon}><LockKeyhole size={21} aria-hidden="true" /></span>
+          <div>
+            <p id="cookie-consent-title" className={styles.title}>Votre vie privée, votre choix.</p>
+            <p className={styles.description}>Les cookies essentiels assurent la connexion, la sécurité et vos billets. Les autres restent désactivés sans votre accord.</p>
+          </div>
+        </div>
 
-        .cc-body {
-          background: #12131c;
-          border-top: 1px solid rgba(255,255,255,0.10);
-          box-shadow: 0 -16px 40px rgba(0,0,0,0.5);
-          padding: 14px 22px;
-        }
+        <div className={styles.categories} aria-label="Catégories de cookies">
+          <div className={styles.category}><LockKeyhole size={16} aria-hidden="true" /><span><strong>Essentiels</strong><small>Toujours actifs</small></span><i className={styles.required}>Requis</i></div>
+          <div className={styles.category}><SlidersHorizontal size={16} aria-hidden="true" /><span><strong>Préférences</strong><small>Ambiance et confort</small></span><i>Optionnel</i></div>
+          <div className={styles.category}><BarChart3 size={16} aria-hidden="true" /><span><strong>Audience</strong><small>Google Analytics</small></span><i>Optionnel</i></div>
+        </div>
 
-        .cc-inner {
-          max-width: 1800px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          flex-wrap: wrap;
-        }
-
-        .cc-text {
-          flex: 1 1 240px;
-          min-width: 240px;
-        }
-
-        .cc-title {
-          font-family: var(--font-open-sans);
-          font-size: 13px;
-          font-weight: 600;
-          color: rgba(255,255,255,0.92);
-          margin: 0 0 4px 0;
-          letter-spacing: 0.01em;
-        }
-
-        .cc-desc {
-          font-family: var(--font-open-sans);
-          font-size: 12.5px;
-          color: rgba(255,255,255,0.5);
-          margin: 0;
-          line-height: 1.5;
-        }
-        .cc-desc strong {
-          color: rgba(255,255,255,0.72);
-          font-weight: 600;
-        }
-        .cc-desc a {
-          color: rgba(255,255,255,0.52);
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-        .cc-desc a:hover {
-          color: rgba(255,255,255,0.85);
-        }
-
-        .cc-actions {
-          display: flex;
-          gap: 8px;
-          flex-shrink: 0;
-        }
-
-        .cc-btn {
-          min-height: 40px;
-          padding: 10px 18px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-family: var(--font-open-sans);
-          font-size: 12.5px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-          white-space: nowrap;
-          transition: all 0.2s ease;
-          outline: none;
-        }
-        .cc-btn:focus-visible {
-          outline: 2px solid var(--teal) !important;
-          outline-offset: 3px !important;
-          box-shadow: var(--focus-ring) !important;
-        }
-
-        .cc-btn-refuse {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.22);
-          color: rgba(255,255,255,0.88);
-        }
-        .cc-btn-refuse:hover {
-          background: rgba(255,255,255,0.14);
-          border-color: rgba(255,255,255,0.3);
-          color: rgba(255,255,255,0.98);
-        }
-        .cc-btn-refuse:active {
-          transform: scale(0.97);
-        }
-
-        .cc-btn-accept {
-          background: rgba(184, 243, 74,0.08);
-          border: 1px solid rgba(184, 243, 74,0.42);
-          color: rgba(255,255,255,0.88);
-        }
-        .cc-btn-accept:hover {
-          background: rgba(184, 243, 74,0.14);
-          border-color: rgba(184, 243, 74,0.65);
-          color: rgba(255,255,255,0.98);
-        }
-        .cc-btn-accept:active {
-          transform: scale(0.97);
-        }
-
-        @media (max-width: 640px) {
-          .cc-body { padding: 11px 14px calc(11px + env(safe-area-inset-bottom)); }
-          .cc-inner { gap: 10px; }
-          .cc-text { flex-basis: 100%; min-width: 0; }
-          .cc-title { margin-bottom: 2px; font-size: 12px; }
-          .cc-desc { font-size: 11.5px; line-height: 1.4; }
-          .cc-actions { width: 100%; }
-          .cc-actions > button { flex: 1 1 0; min-width: 0; min-height: 38px !important; padding: 8px 10px !important; }
-        }
-      `}</style>
-
-      <div
-        ref={bannerRef}
-        role="region"
-        aria-label="Choix de confidentialité et de cookies"
-        className={`cc-root ${phase === 'leaving' ? 'cc-leaving' : phase === 'visible' ? 'cc-visible' : ''}`}
-      >
-        <div className="cc-body">
-          <div className="cc-inner">
-            <div className="cc-text">
-              <p id="cookie-consent-title" className="cc-title">
-                Cookies & vie privée
-              </p>
-              <p className="cc-desc">
-                Nécessaires au service : connexion, sécurité et billets. Tu peux aussi autoriser la mémorisation de tes préférences d’ambiance et la mesure d’audience (Google Analytics).{' '}
-                <strong>Aucun cookie publicitaire ni reciblage tiers.</strong>{' '}
-                <Link href="/cookies">En savoir plus</Link>
-              </p>
-            </div>
-            <div className="cc-actions">
-              <Button
-                variant="secondary"
-                onClick={() => dismiss('refused')}
-                style={{
-                  minHeight: 40,
-                  padding: '10px 18px',
-                  borderRadius: 3,
-                  fontSize: 12.5,
-                  textTransform: 'none',
-                  letterSpacing: 'normal',
-                  whiteSpace: 'nowrap',
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.22)',
-                  color: 'rgba(255,255,255,0.88)',
-                }}
-              >
-                Tout refuser
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => dismiss('accepted')}
-                style={{
-                  minHeight: 40,
-                  padding: '10px 18px',
-                  borderRadius: 3,
-                  fontSize: 12.5,
-                  textTransform: 'none',
-                  letterSpacing: 'normal',
-                  whiteSpace: 'nowrap',
-                  background: 'rgba(184, 243, 74,0.08)',
-                  border: '1px solid rgba(184, 243, 74,0.42)',
-                  color: 'rgba(255,255,255,0.88)',
-                }}
-              >
-                Tout accepter
-              </Button>
-            </div>
+        <div className={styles.footer}>
+          <p>Aucune publicité ni aucun reciblage tiers. <Link href="/cookies">Voir la politique <ArrowUpRight size={13} aria-hidden="true" /></Link></p>
+          <div className={styles.actions}>
+            <Button className={styles.choiceButton} variant="secondary" onClick={() => dismiss('refused')}>Essentiels uniquement</Button>
+            <Button className={`${styles.choiceButton} ${styles.acceptButton}`} variant="secondary" onClick={() => dismiss('accepted')}>Tout autoriser</Button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
