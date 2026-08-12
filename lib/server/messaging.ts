@@ -441,19 +441,48 @@ export async function listMyConversations(caller: MessagingCaller): Promise<Conv
   )
   const directNames = await resolveDirectMemberNames(directParticipantIds)
 
+  // Seuil de lecture (par conversation, propre à l'appelant) — calculé
+  // AVANT la requête de comptage ci-dessous pour pouvoir la faire en un seul
+  // aller-retour plutôt qu'un countDocuments() par conversation (N+1
+  // identifié dans l'audit du 12/08/2026 : un utilisateur avec 200
+  // conversations déclenchait 200 requêtes DB à chaque rafraîchissement,
+  // certes parallélisées via Promise.all mais toujours N appels réseau/DB
+  // distincts). Aucune lecture connue pour l'appelant → tout message d'un
+  // AUTRE participant compte comme non lu (createdAt de la conversation
+  // comme plancher), jamais 0 par défaut.
+  const readCutoffByConv = new Map<string, number>()
+  for (const conv of sorted) {
+    const lastReadAt = conv.lastReadAt ?? {}
+    const lastReadForCaller = lastReadAt[caller.id] ?? conv.createdAt
+    readCutoffByConv.set(String(conv._id), new Date(lastReadForCaller).getTime())
+  }
+
+  // Un seul find() pour toutes les conversations : filtré par le seuil le
+  // PLUS ANCIEN (floor) pour rester sélectif côté Mongo, puis le seuil réel
+  // par conversation est réappliqué en mémoire — projection réduite
+  // (conversationId + createdAt seulement) pour garder ce résultat léger.
+  const unreadCountByConv = new Map<string, number>()
+  if (sorted.length > 0) {
+    const earliestCutoffMs = Math.min(...readCutoffByConv.values())
+    const unreadCandidates = (await Message.find({
+      conversationId: { $in: sorted.map((c) => String(c._id)) },
+      senderId: { $ne: caller.id },
+      createdAt: { $gt: new Date(earliestCutoffMs) },
+      deletedForUserIds: { $ne: caller.id },
+    })
+      .select('conversationId createdAt')
+      .lean()) as unknown as { conversationId: string; createdAt: Date }[]
+
+    for (const m of unreadCandidates) {
+      const cutoff = readCutoffByConv.get(m.conversationId)
+      if (cutoff === undefined || new Date(m.createdAt).getTime() <= cutoff) continue
+      unreadCountByConv.set(m.conversationId, (unreadCountByConv.get(m.conversationId) ?? 0) + 1)
+    }
+  }
+
   const views = await Promise.all(
     sorted.map(async (conv) => {
-      const lastReadAt = conv.lastReadAt ?? {}
-      // Aucune lecture connue pour l'appelant → tout message d'un AUTRE
-      // participant compte comme non lu (createdAt de la conversation comme
-      // plancher), jamais 0 par défaut.
-      const lastReadForCaller = lastReadAt[caller.id] ?? conv.createdAt
-      const unreadCount = await Message.countDocuments({
-        conversationId: String(conv._id),
-        senderId: { $ne: caller.id },
-        createdAt: { $gt: new Date(lastReadForCaller) },
-        deletedForUserIds: { $ne: caller.id },
-      })
+      const unreadCount = unreadCountByConv.get(String(conv._id)) ?? 0
       const view = toConversationView(conv)
       if (view.type === 'direct') {
         view.members = view.participantIds.map((id) => ({ userId: id, name: directNames.get(id) ?? '', role: 'member' as const }))
@@ -1269,6 +1298,8 @@ export async function unstarMessage(caller: MessagingCaller, input: MessageIdInp
 
 export type ListStarredResult = ErrResult | { ok: true; messages: MessageView[] }
 
+const STARRED_MESSAGES_CAP = 500
+
 // Traverse TOUTES les conversations de l'appelant (jamais une seule) — la
 // vue "Importants" du legacy est transversale à toute la messagerie.
 export async function listStarredMessages(caller: MessagingCaller): Promise<ListStarredResult> {
@@ -1278,12 +1309,18 @@ export async function listStarredMessages(caller: MessagingCaller): Promise<List
   if (conversations.length === 0) return { ok: true, messages: [] }
   const convById = new Map(conversations.map((c) => [String(c._id), c] as const))
 
+  // Plafond ajouté suite à l'audit du 12/08/2026 — aucune limite n'existait,
+  // un utilisateur très actif sur plusieurs années verrait cette liste
+  // grossir indéfiniment. Déjà triée par date décroissante, donc borner ne
+  // perd que les messages les plus anciens épinglés — comportement acceptable
+  // pour une vue "Importants".
   const docs = (await Message.find({
     conversationId: { $in: [...convById.keys()] },
     starredByUserIds: caller.id,
     deletedForUserIds: { $ne: caller.id },
   })
     .sort({ createdAt: -1 })
+    .limit(STARRED_MESSAGES_CAP)
     .lean()) as unknown as MessageSource[]
 
   const allParticipantIds = [...new Set(conversations.flatMap((c) => c.participantIds ?? []))]

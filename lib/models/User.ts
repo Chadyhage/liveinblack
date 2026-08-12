@@ -157,6 +157,16 @@ const userSchema = new Schema(
   { timestamps: true }
 )
 
+// Index ajoutés suite à l'audit du 12/08/2026 — seul `email` était indexé.
+// Le dashboard agent (lib/server/agentDashboard.ts) fait des countDocuments/
+// aggregate réguliers sur `activeRole`, `lastSeenAt` et `createdAt` : sans
+// ces index, chacun de ces appels scanne la collection entière — indolore
+// aujourd'hui avec peu d'utilisateurs, mais deviendra le principal goulot du
+// dashboard agent à mesure que la base de comptes grossit sur plusieurs années.
+userSchema.index({ activeRole: 1 })
+userSchema.index({ lastSeenAt: 1 })
+userSchema.index({ createdAt: 1 })
+
 export type UserDoc = InferSchemaType<typeof userSchema>
 export type UserModel = Model<UserDoc>
 

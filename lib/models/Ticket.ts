@@ -70,6 +70,16 @@ const ticketSchema = new Schema(
   { timestamps: true }
 )
 
+// Index composés ajoutés suite à l'audit de scalabilité du 12/08/2026 — la
+// quasi-totalité des requêtes métier filtrent eventId COMBINÉ à revoked ou
+// checkedInAt (listes de réservations, scan/check-in en masse le jour J,
+// guestlist), jamais eventId seul. Sans ces compounds, chaque consultation
+// scanne tous les billets de l'événement — bloquant pour les événements de
+// forte capacité (>2000 billets) où organisateurs/scanners consultent en
+// simultané.
+ticketSchema.index({ eventId: 1, revoked: 1 })
+ticketSchema.index({ eventId: 1, checkedInAt: 1 })
+
 export type TicketDoc = InferSchemaType<typeof ticketSchema>
 export type TicketModel = Model<TicketDoc>
 

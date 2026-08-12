@@ -57,6 +57,8 @@ export async function getTicketDisplay(token: string): Promise<TicketDisplay | n
   }
 }
 
+const MY_TICKETS_CAP = 500
+
 // ──────────────────────────────── listMyTickets ─────────────────────────────
 // Port du "portefeuille" de billets de ProfilePage.jsx (#6 phase profil).
 // Contrairement à getTicketDisplay ci-dessus (un seul billet, par jeton
@@ -212,10 +214,18 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
   // $or (jamais deux requêtes séparées) : un même billet peut satisfaire les
   // deux côtés (le propre siège de l'hôte, avant toute attribution) — une
   // union naïve de deux requêtes le dupliquerait dans le résultat.
+  // Plafond ajouté suite à l'audit du 12/08/2026 : cette requête n'avait
+  // aucune limite — un compte actif depuis plusieurs années verrait cette
+  // liste grossir indéfiniment. Bornée aux billets les plus récents, plafond
+  // généreux (aucun utilisateur légitime n'a réellement plus de billets que
+  // ça sur toute sa durée de vie).
   const tickets = await Ticket.find({
     $or: [{ userId: callerId }, { hostUid: callerId }],
     revoked: { $ne: true },
-  }).lean()
+  })
+    .sort({ createdAt: -1 })
+    .limit(MY_TICKETS_CAP)
+    .lean()
 
   if (tickets.length === 0) return { ok: true, groups: [] }
 

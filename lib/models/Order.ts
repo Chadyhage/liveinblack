@@ -121,6 +121,17 @@ const orderSchema = new Schema(
   { timestamps: true }
 )
 
+// Index composés ajoutés suite à l'audit de scalabilité du 12/08/2026 —
+// `eventId`/`status` étaient indexés seuls, mais les requêtes réelles les
+// filtrent toujours ENSEMBLE (ex. organizerEventLifecycle.ts::cancelOrganizerEvent
+// fait Order.find({eventId, status:'paid'})) : sans compound, Mongo scanne
+// l'index eventId puis filtre status en mémoire — un COLLSCAN partiel qui
+// grossit linéairement avec le nombre de commandes par événement.
+orderSchema.index({ eventId: 1, status: 1 })
+// agentSales.ts filtre {eventId, kind, agentUid} pour le tableau de bord
+// agent — aucun des 3 champs n'était indexé en combinaison.
+orderSchema.index({ eventId: 1, kind: 1, agentUid: 1 })
+
 // Purge automatique (RGPD — minimisation des données) des holds de checkout
 // EXPIRÉS ET JAMAIS PAYÉS uniquement : index TTL PARTIEL sur `expiresAt`,
 // filtré à `status: 'expired'`. Le filtre partiel est réévalué par le

@@ -43,21 +43,39 @@ export async function refundStripeOrder(order: OrderDoc & { _id: mongoose.Types.
       { idempotencyKey: `evcancel-${order.eventId}-${order.stripeSessionId}` }
     )
 
-    await EventRefund.updateOne(
-      { eventId: order.eventId, paymentRef: order.stripeSessionId },
-      { $set: { rail: 'stripe', status: 'refunded', amountMinor: refundAmountMinor, currency: order.currency } },
-      { upsert: true }
-    )
+    // Le remboursement Stripe lui-même (appel externe ci-dessus) ne peut pas
+    // être inclus dans une transaction Mongo — mais les DEUX écritures locales
+    // qui doivent rester cohérentes ENTRE ELLES (le ledger EventRefund et le
+    // solde vendeur SellerBalance) le sont désormais : avant ce correctif
+    // (audit du 12/08/2026), un crash/redeploy exactement entre les deux
+    // updateOne pouvait laisser EventRefund marqué "refunded" sans que le
+    // solde vendeur n'ait été repris, désynchronisant silencieusement l'argent
+    // dû — aucune requête de réconciliation n'existe pour détecter cet écart
+    // a posteriori, donc la seule protection réelle est de ne jamais laisser
+    // cet état intermédiaire exister.
+    const session = await mongoose.startSession()
+    try {
+      await session.withTransaction(async () => {
+        await EventRefund.updateOne(
+          { eventId: order.eventId, paymentRef: order.stripeSessionId },
+          { $set: { rail: 'stripe', status: 'refunded', amountMinor: refundAmountMinor, currency: order.currency } },
+          { upsert: true, session }
+        )
 
-    // Si le vendeur avait déjà été crédité (settled), on reprend le crédit —
-    // mais seulement dans ce cas, sinon le ledger deviendrait négatif à tort.
-    // (grossMinor - feeMinor) = exactement le montant crédité par settleOrder,
-    // précommandes incluses.
-    if (order.settled && order.sellerUid && order.connectMode === 'ledger') {
-      await SellerBalance.updateOne(
-        { sellerUid: order.sellerUid },
-        { $inc: { amountDueCents: -(grossMinor - order.feeMinor) } }
-      )
+        // Si le vendeur avait déjà été crédité (settled), on reprend le crédit —
+        // mais seulement dans ce cas, sinon le ledger deviendrait négatif à tort.
+        // (grossMinor - feeMinor) = exactement le montant crédité par settleOrder,
+        // précommandes incluses.
+        if (order.settled && order.sellerUid && order.connectMode === 'ledger') {
+          await SellerBalance.updateOne(
+            { sellerUid: order.sellerUid },
+            { $inc: { amountDueCents: -(grossMinor - order.feeMinor) } },
+            { session }
+          )
+        }
+      })
+    } finally {
+      await session.endSession()
     }
 
     return { ok: true }

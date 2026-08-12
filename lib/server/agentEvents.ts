@@ -45,10 +45,22 @@ function computeStatus(event: { date?: string; time?: string; endTime?: string; 
   return end > 0 && end < now ? 'past' : 'upcoming'
 }
 
+// Ajouté suite à l'audit de scalabilité du 12/08/2026 — cette fonction
+// chargeait TOUS les événements de la plateforme sans aucune limite
+// (Event.find({})), la requête la plus dangereuse identifiée dans tout
+// l'audit : à 10x/100x le nombre d'événements créés depuis le lancement,
+// le dashboard agent finirait par timeout/OOM. Le statut (upcoming/past/
+// cancelled) reste calculé côté serveur à partir de `date`/`endTime`, pas
+// stocké — un vrai filtre serveur nécessiterait de dénormaliser ce statut
+// en base (chantier à part). En attendant, on borne la fenêtre : les
+// événements les plus RÉCENTS d'abord, jusqu'à ce plafond — cohérent avec
+// l'usage réel (l'agent modère l'actualité, pas l'historique complet).
+const AGENT_EVENT_LIST_CAP = 2000
+
 export async function listEventsForAgent(filter: ListEventsFilter = {}): Promise<AgentEventView[]> {
   await getDb()
 
-  const events = await Event.find({}).lean()
+  const events = await Event.find({}).sort({ createdAt: -1 }).limit(AGENT_EVENT_LIST_CAP).lean()
   const now = Date.now()
 
   let views: AgentEventView[] = events.map((e) => {

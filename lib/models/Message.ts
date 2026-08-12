@@ -104,6 +104,11 @@ const messageSchema = new Schema(
 )
 
 messageSchema.index({ conversationId: 1, createdAt: -1 })
+// Ajouté suite à l'audit du 12/08/2026 — listStarredMessages filtre sur
+// `starredByUserIds: caller.id` à travers TOUTES les conversations de
+// l'utilisateur ; sans index, chaque consultation "Importants" scanne
+// l'intégralité des messages de ces conversations.
+messageSchema.index({ starredByUserIds: 1 })
 
 export type MessageDoc = InferSchemaType<typeof messageSchema>
 export type MessageModel = Model<MessageDoc>
