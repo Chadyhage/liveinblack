@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronDown } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { ChevronDown, Globe } from 'lucide-react'
 import { IconButton } from '@/app/components/ui'
+import AccountMenu from '@/app/(public)/_components/AccountMenu'
 import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL, HIDE_SIDEBAR_PREFIXES, FULL_BLEED_PREFIXES, type DashboardNavItem } from './dashboardNav'
 import { getRoleLabel, type Role } from '@/lib/server/permissions'
 
@@ -145,6 +147,20 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   const pathname = usePathname()
   const badges = useAgentBadges(activeRole)
   const hasStaffedEvents = useHasStaffedEvents()
+  const { data: session, status } = useSession()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // La sidebar desktop se masque entièrement sous 1100px (.lb-dashboard-sidebar,
+  // voir plus bas) — avant, PublicNav.tsx fournissait un tiroir mobile de
+  // secours pour ces mêmes liens. Retirer PublicNav du dashboard (demande
+  // client 2026-08-11) sans rien remettre à sa place aurait donc privé tout
+  // utilisateur mobile/tablette de navigation ET d'accès au compte — cette
+  // barre + ce tiroir sont l'équivalent mobile de la sidebar ci-dessous.
+  // Fermé au clic sur un lien du tiroir (closeMobile ci-dessous), jamais via
+  // un effet sur pathname (setState synchrone en effet = cascading-render).
+  function closeMobile() {
+    setMobileOpen(false)
+  }
 
   if (HIDE_SIDEBAR_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     return <>{children}</>
@@ -174,51 +190,117 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+    <>
+      <div
+        className="lb-dashboard-mobilebar"
+        style={{
+          display: 'none',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          padding: '10px 14px',
+          borderBottom: '1px solid rgba(184, 243, 74,.14)',
+          background: 'var(--surface-2)',
+        }}
+      >
+        <IconButton
+          label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+          onClick={() => setMobileOpen((v) => !v)}
+          icon={<ChevronDown size={18} style={{ transform: mobileOpen ? 'rotate(180deg)' : 'rotate(-90deg)', transition: 'transform .15s ease' }} />}
+          style={{ border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)' }}
+        />
+        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>
+          {activeRole === 'agent' ? 'Administration' : getRoleLabel(activeRole)}
+        </span>
+        {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} /> : <span style={{ width: 40 }} />}
+      </div>
+
+      {mobileOpen && (
+        <div
+          className="lb-dashboard-mobiledrawer"
+          onClick={closeMobile}
+          style={{ display: 'none', flexDirection: 'column', gap: 4, padding: '10px 12px 16px', borderBottom: '1px solid rgba(184, 243, 74,.14)', background: 'var(--surface-2)' }}
+        >
+          {roleItems.length > 0 && <SidebarSectionLabel>{activeRole === 'agent' ? 'Gestion' : 'Mon activité'}</SidebarSectionLabel>}
+          {roleItems.map((item) => (
+            <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
+          ))}
+          {roleItems.flatMap((item) => item.children || []).map((child) => (
+            <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
+          ))}
+          <SidebarSectionLabel separated={roleItems.length > 0}>Mon compte</SidebarSectionLabel>
+          {commonItems.map((item) => (
+            <SidebarLink key={item.href} item={item} active={isActive(item.href)} badge={badges[item.href]} />
+          ))}
+          {commonItems.flatMap((item) => item.children || []).map((child) => (
+            <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
+          ))}
+          {upsell.map((item) => (
+            <SidebarLink key={item.href} item={item} active={isActive(item.href)} muted />
+          ))}
+          <div style={{ height: 1, background: 'var(--border)', margin: '8px 4px' }} />
+          <Link href="/home" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+            <Globe size={17} strokeWidth={1.8} />
+            <span>Voir la page publique</span>
+          </Link>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
       <aside
         className="lb-dashboard-sidebar"
         style={{
           width: SIDEBAR_WIDTH,
           flexShrink: 0,
           position: 'sticky',
-          top: 61,
-          height: 'calc(100vh - 61px)',
-          overflowY: 'auto',
+          top: 0,
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
           borderRight: '1px solid rgba(184, 243, 74,.14)',
           background: 'var(--surface-2)',
         }}
       >
+        {/* En-tête HORS du conteneur défilant du <nav> ci-dessous, exprès :
+            AccountMenu ouvre des dropdowns en position:absolute qui seraient
+            rognés par un ancêtre overflow:auto au moindre scroll. */}
         <div
           style={{
-            padding: '18px 16px 14px',
+            padding: '14px 14px 12px',
             borderBottom: '1px solid rgba(184, 243, 74,.14)',
             display: 'flex',
-            alignItems: 'center',
-            gap: 8,
+            flexDirection: 'column',
+            gap: 10,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', letterSpacing: 0.2 }}>
-            {activeRole === 'agent' ? 'Administration' : getRoleLabel(activeRole)}
-          </span>
-          {activeRole === 'agent' && (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                lineHeight: 1.4,
-                color: 'var(--gold)',
-                background: 'rgba(184,243,74,.14)',
-                border: '1px solid rgba(184,243,74,.3)',
-                borderRadius: 999,
-                padding: '1px 8px',
-              }}
-            >
-              Agent
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', letterSpacing: 0.2 }}>
+              {activeRole === 'agent' ? 'Administration' : getRoleLabel(activeRole)}
             </span>
-          )}
+            {activeRole === 'agent' && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  lineHeight: 1.4,
+                  color: 'var(--gold)',
+                  background: 'rgba(184,243,74,.14)',
+                  border: '1px solid rgba(184,243,74,.3)',
+                  borderRadius: 999,
+                  padding: '1px 8px',
+                }}
+              >
+                Agent
+              </span>
+            )}
+          </div>
+          {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px 24px' }}>
+        <nav style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 12px 24px' }}>
           {roleItems.length > 0 && <SidebarSectionLabel>{activeRole === 'agent' ? 'Gestion' : 'Mon activité'}</SidebarSectionLabel>}
           {roleItems.map((item) => {
             const autoOpen = isActive(item.href) || hasActiveDescendant(item)
@@ -238,16 +320,43 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
             </>
           )}
         </nav>
+
+        {/* Seul point de sortie vers le site public depuis le dashboard —
+            demande client 2026-08-11 : plus aucun lien de nav publique
+            (Accueil/Événements/...) une fois connecté, juste ce bouton
+            explicite pour repartir consulter le site. */}
+        <div style={{ padding: '10px 12px 14px', borderTop: '1px solid var(--border)' }}>
+          <Link
+            href="/home"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 12px',
+              borderRadius: 8,
+              color: 'var(--text-muted)',
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            <Globe size={17} strokeWidth={1.8} />
+            <span>Voir la page publique</span>
+          </Link>
+        </div>
       </aside>
 
       <div className="lb-dashboard-main" style={{ flex: 1, minWidth: 0, ...(fullBleed ? {} : { padding: '36px clamp(20px, 3vw, 48px) 72px' }) }}>{children}</div>
+      </div>
 
       <style>{`
         @media (max-width: 1099px) {
-          .lb-dashboard-sidebar { display: none; }
+          .lb-dashboard-sidebar { display: none !important; }
+          .lb-dashboard-mobilebar { display: flex !important; }
+          .lb-dashboard-mobiledrawer { display: flex !important; }
         }
       `}</style>
-    </div>
+    </>
   )
 }
 

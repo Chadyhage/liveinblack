@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
-import { PublicNav } from '@/app/components/layout'
 import DashboardShell from './_components/DashboardShell'
-import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL } from './_components/dashboardNav'
 
 // Zone authentifiée. Le proxy (proxy.ts) fait déjà un premier filtre rapide
 // par rôle sur les chemins protégés ; ce layout revérifie côté serveur avant
@@ -11,33 +9,25 @@ import { COMMON_NAV, ROLE_NAV, CLIENT_UPSELL } from './_components/dashboardNav'
 // l'équivalent d'OnboardingGuard (statut de compte à jour en base) sera
 // ajouté quand les pages d'onboarding seront portées.
 //
-// PublicNav est réutilisée telle quelle : elle lit déjà sa propre session
-// (useSession) et affiche AccountMenu (dashboard par rôle, messages,
-// déconnexion) dès qu'un utilisateur est connecté. `dashboardLinks` alimente
-// le MÊME tiroir mobile que les liens publics (voir commentaire dans
-// PublicNav.tsx) — un seul hamburger, pas deux. DashboardShell ajoute la
-// sidebar par rôle en dessous (desktop uniquement) — elle se neutralise
-// elle-même (passthrough) sur les routes immersives (messages/scanner/
-// playlist/...), voir HIDE_SIDEBAR_PREFIXES dans _components/dashboardNav.ts.
+// Dissociation dashboard / site public (demande client 2026-08-11, transcrit
+// dans MEMORY.md) : un utilisateur connecté, quel que soit son rôle, ne doit
+// PLUS voir la nav publique (Accueil/Événements/Prestataires/Organisateurs)
+// une fois dans son espace — PublicNav (avec la recherche, les liens publics
+// et l'ancien AccountMenu en haut à droite) n'est donc plus montée ici du
+// tout. Tout ce qu'AccountMenu portait (avatar, messages, cloche de
+// notifications, switch de rôle, déconnexion) vit maintenant dans l'en-tête
+// de DashboardShell (sidebar), avec un lien "Voir la page publique" en pied
+// de sidebar pour repartir sur le site public sans jamais réintroduire la
+// nav publique dans le dashboard lui-même.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session) {
     redirect('/login')
   }
   const activeRole = session.user.activeRole
-  const dashboardItems = [
-    ...ROLE_NAV[activeRole],
-    ...COMMON_NAV,
-    ...(activeRole === 'client' ? CLIENT_UPSELL : []),
-  ]
-  const dashboardLinks = dashboardItems.flatMap((item) => [
-    { label: item.label, href: item.href },
-    ...(item.children || []).map((child) => ({ label: child.label, href: child.href })),
-  ]).filter((item, index, all) => all.findIndex((candidate) => candidate.href === item.href) === index)
 
   return (
     <>
-      <PublicNav dashboardLinks={dashboardLinks} />
       <DashboardShell activeRole={activeRole}>{children}</DashboardShell>
       <AmbientMusicPlayer />
     </>
