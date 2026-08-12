@@ -7,7 +7,7 @@ import { formatMoney } from './types'
 import { computePayoutGapLabel } from '@/lib/shared/organizerPayoutGaps'
 import EventDashboardCard from './EventDashboardCard'
 import OrganizerAnalytics from './OrganizerAnalytics'
-import EventWizard from './EventWizard'
+import EventWizard, { type ServerEventDetail } from './EventWizard'
 import BookingsPanel from './BookingsPanel'
 import PostponeModal from './PostponeModal'
 import CancelModal from './CancelModal'
@@ -52,6 +52,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [duplicating, setDuplicating] = useState<string | null>(null)
+  const [duplicatePrefill, setDuplicatePrefill] = useState<ServerEventDetail | null>(null)
   const [now] = useState(() => Date.now())
   const [pastPageParam, setPastPageParam] = useQueryParamState<string>('pastPage', '1')
   const pastPage = Number(pastPageParam) || 1
@@ -87,63 +88,32 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
   const { pageItems: pagedPastEvents, pageCount: pastPageCount } = useMemo(() => pagedSlice(pastEvents, pastPage, PAST_PAGE_SIZE), [pastEvents, pastPage])
 
   function startCreate() {
+    // Défensif : repart toujours d'un formulaire vraiment vide, même si un
+    // préremplissage "Dupliquer" traînait encore en state (ex. navigation
+    // arrière/avant du navigateur entre les deux vues).
+    setDuplicatePrefill(null)
     setEventParam('new')
   }
 
+  // "Dupliquer" ouvre désormais le wizard de création PRÉREMPLI à partir de
+  // l'événement source, sans jamais rien créer/publier tant que
+  // l'organisateur n'a pas lui-même soumis le formulaire — corrige le bug
+  // remonté en réunion client le 11/08/2026 : avant, ce bouton republiait
+  // immédiatement un doublon complet et déjà EN LIGNE de l'événement
+  // sélectionné (POST direct vers /api/organizer-events), sans aucune
+  // relecture possible. `EventWizard` gère lui-même la remise à zéro des
+  // champs propres à l'original (places/sold/locked/cancelled/dates de
+  // publication) via son option `asDuplicate` de `hydrate()`.
   async function duplicateEvent(event: OrganizerEventView) {
     setDuplicating(event.id)
     try {
       const detailRes = await fetch(`/api/organizer-events/${event.id}`)
       const detail = await detailRes.json()
       if (!detailRes.ok || !detail.ok) throw new Error()
-      const src = detail.event
-      const payload = {
-        name: `${src.name} (copie)`,
-        subtitle: src.subtitle,
-        description: src.description,
-        category: src.category,
-        tags: src.tags,
-        eventType: src.eventType,
-        musicStyles: src.musicStyles,
-        ambiances: src.ambiances,
-        date: src.date,
-        time: src.time,
-        endTime: src.endTime,
-        location: src.location,
-        city: src.city,
-        region: src.region,
-        imageUrl: src.imageUrl,
-        videoUrl: src.videoUrl,
-        color: src.color,
-        accentColor: src.accentColor,
-        places: src.places.map((p: { type: string; price: number; total: number; icon: string; maxPerAccount: number; groupType: string; groupMin: number; groupMax: number; photos: string[]; included: { name: string; qty: number }[] }) => ({
-          id: '',
-          type: p.type,
-          price: p.price,
-          total: p.total,
-          icon: p.icon,
-          maxPerAccount: p.maxPerAccount,
-          groupType: p.groupType,
-          groupMin: p.groupMin,
-          groupMax: p.groupMax,
-          photos: p.photos,
-          included: p.included,
-        })),
-        playlist: src.playlist,
-        preorder: src.preorder,
-        menu: src.menu,
-        artists: src.artists,
-        dj: src.dj,
-        performers: src.performers,
-        minAge: src.minAge,
-      }
-      const createRes = await fetch('/api/organizer-events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      const created = await createRes.json()
-      if (!createRes.ok || !created.ok) throw new Error()
-      setMessage({ type: 'success', text: 'Événement dupliqué.' })
-      await refreshEvents()
+      setDuplicatePrefill(detail.event)
+      setEventParam('new')
     } catch {
-      setMessage({ type: 'error', text: 'La duplication a échoué — réessaie.' })
+      setMessage({ type: 'error', text: 'Impossible de charger cet événement pour le dupliquer — réessaie.' })
     } finally {
       setDuplicating(null)
     }
@@ -192,9 +162,14 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
     return (
       <EventWizard
         eventId={editingEventId}
-        onClose={() => setEventParam('')}
+        prefill={duplicatePrefill}
+        onClose={() => {
+          setDuplicatePrefill(null)
+          setEventParam('')
+        }}
         onSaved={async () => {
           await refreshEvents()
+          setDuplicatePrefill(null)
           setEventParam('')
           setMessage({ type: 'success', text: editingEventId ? 'Événement mis à jour.' : 'Ta soirée est en ligne.' })
         }}
