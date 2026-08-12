@@ -47,7 +47,7 @@ interface ServerPlace {
   included: { name: string; qty: number }[]
 }
 
-interface ServerEventDetail {
+export interface ServerEventDetail {
   id: string
   name: string
   subtitle: string
@@ -388,9 +388,33 @@ const SAVE_ERROR_MESSAGES: Record<string, string> = {
 // Composant principal
 // ─────────────────────────────────────────────────────────────────────────
 
-export default function EventWizard({ eventId, onClose, onSaved }: { eventId: string | null; onClose: () => void; onSaved: () => void }) {
+export default function EventWizard({
+  eventId,
+  prefill,
+  onClose,
+  onSaved,
+}: {
+  eventId: string | null
+  // Préremplit le formulaire de CRÉATION à partir d'un événement existant
+  // (bouton "Dupliquer") sans jamais créer/publier quoi que ce soit tant que
+  // l'utilisateur n'a pas lui-même soumis le wizard — corrige le bug remonté
+  // en réunion client le 11/08/2026 : l'ancien "Dupliquer" republiait
+  // immédiatement un doublon complet de l'événement source (POST direct),
+  // sans jamais laisser l'organisateur relire/ajuster quoi que ce soit avant
+  // publication. `eventId` doit rester `null` avec `prefill` : c'est bien un
+  // NOUVEL événement, pas une édition de l'original.
+  prefill?: ServerEventDetail | null
+  onClose: () => void
+  onSaved: () => void
+}) {
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(!!eventId)
+  // `loading` ne bouge jamais en mode "Dupliquer" (eventId reste null) — sans
+  // ce second flag, la capture du snapshot de référence (détection de
+  // modifications non enregistrées, voir plus bas) se ferait AVANT que
+  // hydrate(prefill) n'ait appliqué ses setState, sur le formulaire encore
+  // vide, déclenchant un faux "quitter sans enregistrer ?" dès l'ouverture.
+  const [prefillReady, setPrefillReady] = useState(!prefill)
   const [loadError, setLoadError] = useState('')
   const [cancelled, setCancelled] = useState(false)
   const [locked, setLocked] = useState(false)
@@ -477,8 +501,13 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   }
   const baselineSnapshotRef = useRef<string | null>(null)
 
-  function hydrate(ev: ServerEventDetail) {
-    setName(ev.name || '')
+  // `asDuplicate` : préremplit un NOUVEL événement à partir d'un existant —
+  // jamais copier l'identité des places (l'id référence les vraies places de
+  // l'original, une place dupliquée doit être une place NEUVE), ni l'état de
+  // vente (sold/locked/cancelled/totalSold appartiennent à l'original, un
+  // doublon fraîchement créé n'a encore rien vendu).
+  function hydrate(ev: ServerEventDetail, opts: { asDuplicate?: boolean } = {}) {
+    setName(opts.asDuplicate ? `${ev.name || ''} (copie)` : ev.name || '')
     setSubtitle(ev.subtitle || '')
     setDescription(ev.description || '')
     setDateStr(ev.date || '')
@@ -509,12 +538,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     setPlaces(
       ev.places && ev.places.length > 0
         ? ev.places.map((p) => ({
-            key: p.id || makeLocalKey(),
-            id: p.id,
+            key: opts.asDuplicate ? makeLocalKey() : p.id || makeLocalKey(),
+            id: opts.asDuplicate ? '' : p.id,
             type: p.type,
             price: p.price,
             qty: p.total,
-            sold: p.sold || 0,
+            sold: opts.asDuplicate ? 0 : p.sold || 0,
             maxPerAccount: p.maxPerAccount || 0,
             groupType: p.groupType || 'solo',
             groupMin: p.groupMin || 0,
@@ -536,12 +565,31 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     setPlaylist(!!ev.playlist)
     setPreorder(!!ev.preorder)
     setMenuItems(ev.menu && ev.menu.length > 0 ? ev.menu.map((item) => ({ ...item, available: item.available !== false })) : [emptyMenuItem()])
-    setPublishAt(toDatetimeLocalValue(ev.publishAt))
-    setClosingDate(toDatetimeLocalValue(ev.closingDate))
-    setCancelled(!!ev.cancelled)
-    setLocked(!!ev.locked)
-    setTotalSold(ev.totalSold || 0)
+    // Un doublon n'a jamais de date de publication programmée/clôture ni
+    // d'état verrouillé/annulé hérités de l'original — l'organisateur choisit
+    // ces valeurs à nouveau (ou les laisse vides) pour CE nouvel événement.
+    setPublishAt(opts.asDuplicate ? '' : toDatetimeLocalValue(ev.publishAt))
+    setClosingDate(opts.asDuplicate ? '' : toDatetimeLocalValue(ev.closingDate))
+    setCancelled(opts.asDuplicate ? false : !!ev.cancelled)
+    setLocked(opts.asDuplicate ? false : !!ev.locked)
+    setTotalSold(opts.asDuplicate ? 0 : ev.totalSold || 0)
   }
+
+  // Préremplissage depuis "Dupliquer" (voir prop `prefill` ci-dessus) — se
+  // déclenche une seule fois au montage, jamais si `eventId` est fourni (les
+  // deux modes sont mutuellement exclusifs : édition d'un événement réel VS
+  // préremplissage d'un nouveau brouillon).
+  useEffect(() => {
+    if (eventId || !prefill) return
+    // Différé en microtask (même pattern que le .then() de l'effet
+    // d'édition juste en dessous) — un appel setState synchrone au corps de
+    // l'effet est signalé par le lint react-hooks/set-state-in-effect.
+    Promise.resolve().then(() => {
+      hydrate(prefill, { asDuplicate: true })
+      setPrefillReady(true)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Chargement (mode édition) — l'état initial de `loading` (!!eventId)
   // couvre déjà le cas création, donc pas de setState synchrone à faire ici
@@ -572,13 +620,13 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     }
   }, [eventId])
 
-  // Capture l'état de référence (création : formulaire vide ; édition : juste
-  // après hydrate()) pour pouvoir détecter des modifications non enregistrées
-  // avant de fermer le wizard sans confirmation.
+  // Capture l'état de référence (création : formulaire vide ; édition ou
+  // duplication : juste après hydrate()) pour pouvoir détecter des
+  // modifications non enregistrées avant de fermer le wizard sans confirmation.
   useEffect(() => {
-    if (!loading) baselineSnapshotRef.current = snapshotForm()
+    if (!loading && prefillReady) baselineSnapshotRef.current = snapshotForm()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading])
+  }, [loading, prefillReady])
 
   function isFormDirty() {
     return baselineSnapshotRef.current !== null && baselineSnapshotRef.current !== snapshotForm()
@@ -848,7 +896,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
   // ── Rendu ──
 
-  if (loading) {
+  if (loading || !prefillReady) {
     return (
       <main style={{ maxWidth: 1320, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
         <Spinner size={22} />
