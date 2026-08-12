@@ -1,6 +1,7 @@
 'use client'
 
 import Mascot from './components/ui/Mascot'
+import { Button } from './components/ui'
 
 // Error boundary global — jusqu'ici absent (aucun app/error.tsx), une erreur
 // d'exécution imprévue tombait sur l'écran d'erreur anglais par défaut de
@@ -26,24 +27,18 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
       <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, maxWidth: 420 }}>
         Quelque chose s&apos;est mal passé de notre côté. Réessaie, ou reviens un peu plus tard.
       </p>
-      <button
-        type="button"
+      <Button
         onClick={reset}
         style={{
-          minHeight: 44,
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,
-          border: 'none',
           background: 'var(--teal-solid)',
           color: '#04120e',
-          fontSize: 13.5,
-          fontWeight: 700,
-          cursor: 'pointer',
         }}
       >
         Réessayer
-      </button>
+      </Button>
     </main>
   )
 }

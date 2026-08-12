@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Activity, ArrowUpRight, CalendarCheck2, FileCheck2, ShieldAlert, TicketCheck, TrendingUp, UsersRound, WalletCards } from 'lucide-react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, SkeletonCard } from '@/app/components/ui'
+import { Button, Card, SkeletonCard } from '@/app/components/ui'
 import { DonutChart } from '@/app/components/ui/charts/DonutChart'
 import { LineChartCard } from '@/app/components/ui/charts/LineChartCard'
+import styles from './AgentDashboardClient.module.css'
 
 // Port de la section « Métriques business » + « Communauté » de l'onglet
 // Tableau de bord de src/pages/AgentPage.jsx (tab === 'dashboard', #101 phase
@@ -43,9 +46,6 @@ interface DashboardStats {
   roleBreakdown: { role: 'client' | 'organisateur' | 'prestataire'; count: number }[]
   updatedAt: string
 }
-
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<DashboardStats['roleBreakdown'][number]['role'], string> = {
   client: 'Client',
@@ -106,17 +106,24 @@ export default function AgentDashboardClient() {
   }, [])
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--overview">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h1 className="font-display lb-dashboard-title">Tableau de bord</h1>
+        <div className={styles.heading}>
+          <div>
+            <span className={styles.eyebrow}>Poste de commandement</span>
+            <h1 className="font-display lb-dashboard-title">Centre des opérations</h1>
+            <p className="lb-dashboard-description">Décidez, contrôlez et publiez depuis une seule file de travail.</p>
+          </div>
+          <span className={styles.live}><i aria-hidden="true" />Plateforme active</span>
+        </div>
 
         {error && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={load} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         {loading || !stats ? (
@@ -128,89 +135,98 @@ export default function AgentDashboardClient() {
           </div>
         ) : (
           <>
-            <section>
-              <p style={sectionTitleStyle}>Métriques business</p>
-
-              <div style={{ ...cardStyle, borderColor: 'rgba(184, 243, 74,0.30)', borderLeft: '3px solid rgba(184, 243, 74,0.6)', marginBottom: 10 }}>
-                <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(184, 243, 74,0.7)', margin: 0 }}>Revenus plateforme</p>
-                <p style={{ fontSize: 42, fontWeight: 300, color: 'var(--gold)', margin: '6px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.platformRevenueEUR, 'EUR')}</p>
-                {stats.revenue.ticketFeeRevenueXOF > 0 && (
-                  <p style={{ fontSize: 24, fontWeight: 300, color: 'var(--teal)', margin: '6px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.ticketFeeRevenueXOF, 'XOF')}</p>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
-                  <div>
-                    <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Frais billets</p>
-                    <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>
-                      {fmtMoney(stats.revenue.ticketFeeRevenueEUR, 'EUR')}
-                      {stats.revenue.ticketFeeRevenueXOF > 0 ? ` · ${fmtMoney(stats.revenue.ticketFeeRevenueXOF, 'XOF')}` : ''}
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Boosts (100%)</p>
-                    <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.78)', margin: '2px 0 0' }}>{fmtMoney(stats.revenue.gmvBoosts, 'EUR')}</p>
-                  </div>
-                </div>
+            <section className={styles.prioritySection} aria-labelledby="priority-title">
+              <div className={styles.sectionHeading}>
+                <div><span className={styles.sectionIndex}>01</span><h2 id="priority-title">À traiter maintenant</h2></div>
+                <p>Les accès les plus utiles pour votre prochain geste.</p>
               </div>
-
-              <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                <div style={{ ...cardStyle, padding: 12 }}>
-                  <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Volume encaissé</p>
-                  <p style={{ fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{fmtMoney(stats.revenue.gmvTicketsEUR + stats.revenue.gmvBoosts, 'EUR')}</p>
-                  {stats.revenue.gmvTicketsXOF > 0 && (
-                    <p style={{ fontSize: 15, fontWeight: 300, color: 'var(--teal)', margin: '3px 0 0', lineHeight: 1 }}>+ {fmtMoney(stats.revenue.gmvTicketsXOF, 'XOF')}</p>
-                  )}
-                  <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '3px 0 0' }}>Ventes en ligne (webhooks)</p>
-                </div>
-                <div style={{ ...cardStyle, padding: 12 }}>
-                  <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Billets payés</p>
-                  <p style={{ fontSize: 22, fontWeight: 300, color: 'var(--teal)', margin: '3px 0 0', lineHeight: 1 }}>{stats.tickets.totalSold}</p>
-                  <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '3px 0 0' }}>
-                    {stats.tickets.recentSold30d} vente{stats.tickets.recentSold30d !== 1 ? 's' : ''} ces 30j
-                  </p>
-                </div>
-                <div style={{ ...cardStyle, padding: 12 }}>
-                  <p style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Events publiés</p>
-                  <p style={{ fontSize: 22, fontWeight: 300, color: '#fff', margin: '3px 0 0', lineHeight: 1 }}>{stats.events.totalPublished}</p>
-                  <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '3px 0 0' }}>{stats.events.upcoming} à venir</p>
-                </div>
+              <div className={styles.actionGrid}>
+                <Link href="/agent/dossiers" className={`${styles.action} ${styles.actionPrimary}`}>
+                  <span className={styles.actionIcon}><FileCheck2 size={22} aria-hidden="true" /></span>
+                  <span className={styles.actionBody}><strong>{stats.community.pendingDossiers}</strong><span>Dossiers en attente</span><small>Vérifier les profils et statuer</small></span>
+                  <ArrowUpRight size={19} aria-hidden="true" />
+                </Link>
+                <Link href="/agent/signalements" className={styles.action}>
+                  <span className={styles.actionIcon}><ShieldAlert size={22} aria-hidden="true" /></span>
+                  <span className={styles.actionBody}><strong>Confiance</strong><span>File de modération</span><small>Qualifier les alertes ouvertes</small></span>
+                  <ArrowUpRight size={19} aria-hidden="true" />
+                </Link>
+                <Link href="/agent/paiements" className={styles.action}>
+                  <span className={styles.actionIcon}><WalletCards size={22} aria-hidden="true" /></span>
+                  <span className={styles.actionBody}><strong>{fmtMoney(stats.revenue.platformRevenueEUR, 'EUR')}</strong><span>Contrôle financier</span><small>Suivre les flux et les commissions</small></span>
+                  <ArrowUpRight size={19} aria-hidden="true" />
+                </Link>
+                <Link href="/agent/evenements" className={styles.action}>
+                  <span className={styles.actionIcon}><CalendarCheck2 size={22} aria-hidden="true" /></span>
+                  <span className={styles.actionBody}><strong>{stats.events.upcoming}</strong><span>Événements à venir</span><small>Superviser le catalogue publié</small></span>
+                  <ArrowUpRight size={19} aria-hidden="true" />
+                </Link>
               </div>
             </section>
 
-            <section>
-              <p style={sectionTitleStyle}>Communauté</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {[
-                  { label: `Comptes total${stats.community.newAccountsThisMonth > 0 ? ` · +${stats.community.newAccountsThisMonth} ce mois` : ''}`, value: stats.community.totalUsers, color: 'var(--teal)' },
-                  { label: 'Connectés', value: stats.community.totalOnline, color: 'var(--teal)' },
-                  { label: 'Prestataires', value: stats.community.totalPrestataires, color: 'var(--gold)' },
-                  {
-                    label: 'En attente',
-                    value: stats.community.pendingDossiers,
-                    color: stats.community.pendingDossiers > 0 ? '#e05aaa' : 'var(--text-muted)',
-                    alert: stats.community.pendingDossiers > 0,
-                  },
-                ].map((s) => (
-                  <div key={s.label} style={{ ...cardStyle, padding: 16, borderColor: s.alert ? '#e05aaa55' : 'var(--border)' }}>
-                    <p style={{ fontSize: 10, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>{s.label}</p>
-                    <p style={{ fontSize: 38, fontWeight: 300, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+            <section className={styles.pulseSection} aria-labelledby="pulse-title">
+              <div className={styles.sectionHeading}>
+                <div><span className={styles.sectionIndex}>02</span><h2 id="pulse-title">Pouls du jour</h2></div>
+                <p>Les signaux essentiels, sans bruit.</p>
+              </div>
+              <div className={styles.pulseRail}>
+                <div className={styles.pulseItem}><span className={styles.pulseIcon}><Activity size={19} /></span><div><strong>{stats.community.totalOnline}</strong><span>en ligne maintenant</span></div></div>
+                <div className={styles.pulseItem}><span className={styles.pulseIcon}><TicketCheck size={19} /></span><div><strong>{stats.tickets.recentSold30d}</strong><span>billets sur 30 jours</span></div></div>
+                <div className={styles.pulseItem}><span className={styles.pulseIcon}><CalendarCheck2 size={19} /></span><div><strong>{stats.events.upcoming}</strong><span>événements à venir</span></div></div>
+                <div className={styles.pulseItem}><span className={styles.pulseIcon}><UsersRound size={19} /></span><div><strong>+{stats.community.newAccountsThisMonth}</strong><span>nouveaux comptes</span></div></div>
+              </div>
+            </section>
+
+            <section className={styles.overviewSection} aria-labelledby="overview-title">
+              <div className={styles.sectionHeading}>
+                <div><span className={styles.sectionIndex}>03</span><h2 id="overview-title">Vue stratégique</h2></div>
+                <p>Revenus, activité et composition de l’écosystème.</p>
+              </div>
+              <div className={styles.bentoGrid}>
+                <Card className={styles.revenueCard}>
+                  <div className={styles.cardTop}><span>Revenu plateforme</span><TrendingUp size={20} /></div>
+                  <strong className={styles.heroValue}>{fmtMoney(stats.revenue.platformRevenueEUR, 'EUR')}</strong>
+                  {stats.revenue.ticketFeeRevenueXOF > 0 ? <span className={styles.secondaryValue}>+ {fmtMoney(stats.revenue.ticketFeeRevenueXOF, 'XOF')}</span> : null}
+                  <div className={styles.revenueBreakdown}>
+                    <div><span>Frais de billetterie</span><strong>{fmtMoney(stats.revenue.ticketFeeRevenueEUR, 'EUR')}</strong></div>
+                    <div><span>Boosts</span><strong>{fmtMoney(stats.revenue.gmvBoosts, 'EUR')}</strong></div>
                   </div>
-                ))}
+                </Card>
+
+                <Card className={styles.volumeCard}>
+                  <div className={styles.cardTop}><span>Volume commercial</span><WalletCards size={20} /></div>
+                  <strong className={styles.largeValue}>{fmtMoney(stats.revenue.gmvTicketsEUR + stats.revenue.gmvBoosts, 'EUR')}</strong>
+                  {stats.revenue.gmvTicketsXOF > 0 ? <span className={styles.secondaryValue}>+ {fmtMoney(stats.revenue.gmvTicketsXOF, 'XOF')}</span> : null}
+                  <div className={styles.compactStat}><span>Billets payés</span><strong>{stats.tickets.totalSold}</strong></div>
+                </Card>
+
+                <Card className={styles.ecosystemCard}>
+                  <div className={styles.cardTop}><span>Écosystème</span><UsersRound size={20} /></div>
+                  <div className={styles.ecosystemTotal}><strong>{stats.community.totalUsers}</strong><span>comptes actifs dans la plateforme</span></div>
+                  <div className={styles.roleRows}>
+                    <div><span>Prestataires</span><strong>{stats.community.totalPrestataires}</strong></div>
+                    <div><span>Organisateurs</span><strong>{stats.community.totalOrganisateurs}</strong></div>
+                    <div><span>Événements publiés</span><strong>{stats.events.totalPublished}</strong></div>
+                  </div>
+                </Card>
               </div>
             </section>
 
-            <section style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-                <p style={{ ...sectionTitleStyle, margin: 0 }}>Nouveaux comptes — 30 derniers jours</p>
-                <p style={{ fontSize: 10, color: 'var(--teal)', margin: 0 }}>+{stats.community.newAccountsThisMonth}</p>
+            <section className={styles.insightsSection} aria-labelledby="insights-title">
+              <div className={styles.sectionHeading}>
+                <div><span className={styles.sectionIndex}>04</span><h2 id="insights-title">Tendances</h2></div>
+                <p>Comprendre la progression et l’équilibre de la communauté.</p>
               </div>
-              <LineChartCard data={stats.signupsLast30Days.map((d) => ({ date: d.date, value: d.count }))} formatDate={fmtDay} />
-            </section>
-
-            <section style={cardStyle}>
-              <p style={{ ...sectionTitleStyle, marginBottom: 14 }}>Répartition par rôle</p>
-              <DonutChart
-                data={stats.roleBreakdown.map((r) => ({ label: ROLE_LABEL[r.role], value: r.count, color: ROLE_COLOR[r.role] }))}
-              />
+              <div className={styles.insightsGrid}>
+                <Card className={styles.chartCard}>
+                  <div className={styles.chartHeading}><div><span>Acquisition</span><strong>Nouveaux comptes</strong></div><span className={styles.delta}>+{stats.community.newAccountsThisMonth} ce mois</span></div>
+                  <LineChartCard data={stats.signupsLast30Days.map((d) => ({ date: d.date, value: d.count }))} formatDate={fmtDay} height={220} />
+                </Card>
+                <Card className={styles.chartCard}>
+                  <div className={styles.chartHeading}><div><span>Répartition</span><strong>Profils de la communauté</strong></div><span className={styles.totalPill}>{stats.community.totalUsers} total</span></div>
+                  <DonutChart data={stats.roleBreakdown.map((r) => ({ label: ROLE_LABEL[r.role], value: r.count, color: ROLE_COLOR[r.role] }))} size={190} />
+                </Card>
+              </div>
             </section>
           </>
         )}

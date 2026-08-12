@@ -4,11 +4,10 @@
 // jamais déduite de sa région (voir commentaire d'origine : des events Togo/Bénin
 // créés avant le multi-devise ont des prix saisis en euros).
 import { regions } from './regions'
+import { stripDiacritics } from './diacritics'
 
 function normKey(s: unknown): string {
-  return String(s || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(String(s || ''))
     .replace(/[’']/g, '')
     .replace(/[\s_]+/g, '-')
     .trim()

@@ -50,3 +50,12 @@ next-env.d.ts
 
 .node_modules_*
 .next-broken-*
+
+# design-sync (claude.ai/design) — staged converter + build output + campaign state.
+# .design-sync/config.json, NOTES.md, conventions.md, previews/, stubs/,
+# entry.ts, tsconfig.json, globals-ds.css stay committed (the durable set).
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules

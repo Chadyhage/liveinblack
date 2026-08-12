@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-import { X } from 'lucide-react'
-import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
+import { Building2, ChevronRight, CircleUserRound, Search, ShieldCheck, SlidersHorizontal, UserRoundCheck, UsersRound, X } from 'lucide-react'
+import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
+import styles from './AgentUsersClient.module.css'
 
 const PAGE_SIZE = 15
 
@@ -95,9 +96,6 @@ function fmtDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
-const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
-
 function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
   return (
     <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${border}`, background: bg, color, letterSpacing: '0.04em' }}>
@@ -108,9 +106,9 @@ function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
 
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
-      <span style={{ color: 'var(--text-faint)' }}>{label}</span>
-      <span style={{ color: '#fff', textAlign: 'right', fontFamily: mono ? 'monospace' : undefined, wordBreak: 'break-all' }}>{value || '—'}</span>
+    <div className={styles.infoRow}>
+      <span>{label}</span>
+      <strong style={{ fontFamily: mono ? 'monospace' : undefined }}>{value || '—'}</strong>
     </div>
   )
 }
@@ -154,6 +152,12 @@ export default function AgentUsersClient() {
   }
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(users, page, PAGE_SIZE), [users, page])
+  const visibleStats = useMemo(() => ({
+    total: users.length,
+    online: users.filter((user) => user.online).length,
+    professionals: users.filter((user) => user.role === 'prestataire' || user.role === 'organisateur').length,
+    attention: users.filter((user) => user.disabled || user.status === 'pending' || user.status === 'rejected').length,
+  }), [users])
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams()
@@ -355,10 +359,11 @@ export default function AgentUsersClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Comptes</h1>
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--users">
+      <div className={styles.pageStack}>
+        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div><span className={styles.eyebrow}>Répertoire plateforme</span><h1 className="font-display lb-dashboard-title">Comptes</h1><p className="lb-dashboard-description">Retrouvez une identité, vérifiez son accès et intervenez sans perdre le contexte.</p></div>
+          <span className={styles.directoryStatus}><i aria-hidden="true" />Synchronisé</span>
         </div>
 
         {listError && (
@@ -370,92 +375,33 @@ export default function AgentUsersClient() {
           </Card>
         )}
 
-        <div style={{ position: 'relative' }}>
-          <Input style={search ? { paddingRight: 34 } : undefined} placeholder="Nom, email, téléphone…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
-          {search && (
-            <Button
-              variant="ghost"
-              aria-label="Effacer la recherche"
-              onClick={() => { setSearch(''); setPage(1) }}
-              style={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)', width: 22, height: 22, minHeight: 22, minWidth: 22, borderRadius: '50%', padding: 0, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: 13 }}
-            >
-              <X size={12} />
-            </Button>
-          )}
-        </div>
+        <section className={styles.statGrid} aria-label="Aperçu des résultats">
+          <Card className={styles.statCard}><span className={styles.statIcon}><UsersRound size={19} /></span><div><strong>{visibleStats.total}</strong><span>Résultats visibles</span></div></Card>
+          <Card className={styles.statCard}><span className={`${styles.statIcon} ${styles.onlineIcon}`}><UserRoundCheck size={19} /></span><div><strong>{visibleStats.online}</strong><span>En ligne</span></div></Card>
+          <Card className={styles.statCard}><span className={styles.statIcon}><Building2 size={19} /></span><div><strong>{visibleStats.professionals}</strong><span>Profils professionnels</span></div></Card>
+          <Card className={`${styles.statCard} ${visibleStats.attention ? styles.attentionCard : ''}`}><span className={styles.statIcon}><ShieldCheck size={19} /></span><div><strong>{visibleStats.attention}</strong><span>À examiner</span></div></Card>
+        </section>
 
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-          {ROLE_FILTERS.map((f) => (
-            <Button
-              key={f.key}
-              variant="ghost"
-              onClick={() => { setRoleFilter(f.key); setPage(1) }}
-              style={{
-                flexShrink: 0,
-                padding: '4px 10px',
-                borderRadius: 999,
-                fontSize: 10.5,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                background: roleFilter === f.key ? 'rgba(184, 243, 74,0.18)' : 'transparent',
-                border: roleFilter === f.key ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid var(--border)',
-                color: roleFilter === f.key ? 'var(--gold)' : 'var(--text-faint)',
-              }}
-            >
-              {f.label}
-            </Button>
-          ))}
-        </div>
+        <Card className={styles.controlPanel}>
+          <div className={styles.searchBox}>
+            <Search size={20} aria-hidden="true" />
+            <Input className={styles.searchInput} placeholder="Rechercher un nom, une adresse email ou un téléphone" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+            {search ? <Button className={styles.clearSearch} variant="ghost" aria-label="Effacer la recherche" onClick={() => { setSearch(''); setPage(1) }}><X size={14} /></Button> : null}
+          </div>
+          <div className={styles.filterRow}>
+            <span className={styles.filterLabel}><CircleUserRound size={15} />Type de compte</span>
+            <div className={styles.segmented}>{ROLE_FILTERS.map((f) => <Button key={f.key} variant="ghost" className={roleFilter === f.key ? styles.segmentActive : styles.segment} onClick={() => { setRoleFilter(f.key); setPage(1) }}>{f.label}</Button>)}</div>
+          </div>
+          <div className={styles.filterRow}>
+            <span className={styles.filterLabel}><SlidersHorizontal size={15} />État</span>
+            <div className={styles.segmented}>{STATUS_FILTERS.map((s) => <Button key={s.key} variant="ghost" className={statusFilter === s.key ? styles.segmentActive : styles.segment} onClick={() => { setStatusFilter(s.key); setPage(1) }}>{s.label}</Button>)}<Button variant="ghost" className={onlineOnly ? styles.segmentOnline : styles.segment} onClick={() => { setOnlineOnly((value) => !value); setPage(1) }}><i aria-hidden="true" />En ligne</Button></div>
+          </div>
+        </Card>
 
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {STATUS_FILTERS.map((s) => (
-            <Button
-              key={s.key}
-              variant="ghost"
-              onClick={() => { setStatusFilter(s.key); setPage(1) }}
-              style={{
-                flexShrink: 0,
-                padding: '3px 8px',
-                borderRadius: 999,
-                fontSize: 10.5,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                background: statusFilter === s.key ? 'rgba(255,255,255,0.08)' : 'transparent',
-                border: statusFilter === s.key ? '1px solid var(--border-strong)' : '1px solid var(--border)',
-                color: statusFilter === s.key ? '#fff' : 'var(--text-faint)',
-              }}
-            >
-              {s.label}
-            </Button>
-          ))}
-          <Button
-            variant="ghost"
-            onClick={() => { setOnlineOnly((value) => !value); setPage(1) }}
-            style={{
-              flexShrink: 0,
-              padding: '3px 8px',
-              borderRadius: 999,
-              fontSize: 10.5,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              gap: 5,
-              background: onlineOnly ? 'rgba(184, 243, 74,0.14)' : 'transparent',
-              border: onlineOnly ? '1px solid rgba(184, 243, 74,0.5)' : '1px solid var(--border)',
-              color: onlineOnly ? 'var(--teal)' : 'var(--text-faint)',
-            }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: onlineOnly ? 'var(--teal)' : 'rgba(255,255,255,0.25)' }} />
-            En ligne
-            {onlineOnly && <span style={{ marginLeft: 2, opacity: 0.75, display: 'inline-flex', alignItems: 'center' }}><X size={11} /></span>}
-          </Button>
-        </div>
-
-        <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>
-          {users.length} compte{users.length !== 1 ? 's' : ''}
-        </p>
+        <div className={styles.resultsHeader}><div><h2>Répertoire</h2><span>{users.length} compte{users.length !== 1 ? 's' : ''}</span></div><small>Sélectionnez une ligne pour ouvrir l’inspecteur</small></div>
 
         {listLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className={styles.userList}>
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />
             ))}
@@ -470,41 +416,28 @@ export default function AgentUsersClient() {
                 <Button
                   key={u.id}
                   variant="ghost"
+                  className={styles.userRow}
                   onClick={() => setSelectedId(u.id)}
-                  style={{ ...cardStyle, padding: 12, display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left' }}
                 >
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '50%',
-                        background: u.role === 'agent' ? 'rgba(184, 243, 74,0.12)' : 'rgba(255,255,255,0.05)',
-                        border: u.role === 'agent' ? '1px solid rgba(184, 243, 74,0.35)' : '1px solid var(--border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: u.role === 'agent' ? 'var(--gold)' : '#fff',
-                      }}
-                    >
+                  <div className={styles.avatarWrap}>
+                    <div className={`${styles.avatar} ${u.role === 'agent' ? styles.agentAvatar : ''}`}>
                       {(u.displayName || '?').charAt(0).toUpperCase()}
                     </div>
-                    {u.online && <span style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: 'var(--teal)', border: '2px solid var(--obsidian)' }} />}
+                    {u.online && <span className={styles.onlineDot} />}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 15, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.displayName}</p>
-                    <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className={styles.identity}>
+                    <p>{u.displayName}</p>
+                    <span>
                       {(u.role === 'organisateur' || u.role === 'prestataire') && u.displayName !== u.personalName ? `${u.personalName} · ` : ''}
                       {u.email}
-                      {u.phone ? ` · ${u.phone}` : ''}
-                    </p>
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                  <div className={styles.joined}><span>Inscrit le</span><strong>{fmtDate(u.createdAt)}</strong></div>
+                  <div className={styles.rowBadges}>
                     <Badge label={ROLE_LABEL[u.role]} {...ROLE_BADGE[u.role]} />
                     <Badge label={st.label} color={st.color} border={st.border} bg={st.bg} />
                   </div>
+                  <ChevronRight className={styles.chevron} size={18} aria-hidden="true" />
                 </Button>
               )
             })}
@@ -515,10 +448,8 @@ export default function AgentUsersClient() {
       </div>
 
       {selectedId && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-          <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
-            <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
+        <SlideOverModal onClose={closeDetail} maxWidth={540} ariaLabel="Détail du compte">
+          <div className={styles.inspectorBody}>
             {detailError ? (
               <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le compte n’existe peut-être plus, ou une erreur serveur est survenue.</p>
@@ -550,28 +481,10 @@ export default function AgentUsersClient() {
               />
             )}
           </div>
-        </div>
+        </SlideOverModal>
       )}
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : 'var(--pink)'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'comptes', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }
@@ -612,8 +525,8 @@ function DetailPanel({
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className={styles.detailContent}>
+      <div className={styles.profileHeader}>
         <div
           style={{
             width: 48,
@@ -645,17 +558,17 @@ function DetailPanel({
         </div>
       </div>
 
-      <div>
-        <p style={sectionTitleStyle}>Informations</p>
+      <section className={styles.inspectorSection}>
+        <p className={styles.inspectorTitle}>Informations</p>
         <InfoRow label="ID" value={detail.id} mono />
         <InfoRow label="Email" value={detail.email} />
         <InfoRow label="Téléphone" value={detail.phone} />
         <InfoRow label="Inscrit le" value={fmtDate(detail.createdAt)} />
         {detail.prestataireTypes.length > 0 && <InfoRow label="Activités" value={detail.prestataireTypes.join(' · ')} />}
-      </div>
+      </section>
 
-      <div>
-        <p style={sectionTitleStyle}>Connexion</p>
+      <section className={styles.inspectorSection}>
+        <p className={styles.inspectorTitle}>Connexion et sécurité</p>
         <InfoRow label="Email vérifié" value={detail.emailVerified ? 'Oui' : 'Non — confirmation requise pour un compte client'} />
         <InfoRow label="Connexion" value={detail.disabled ? 'DÉSACTIVÉE (suspendu)' : 'Autorisée'} />
         <InfoRow label="Dernière activité" value={detail.lastSeenAt ? fmtDate(detail.lastSeenAt) : 'Jamais'} />
@@ -718,10 +631,10 @@ function DetailPanel({
             Envoyer un lien de réinitialisation du mot de passe
           </Button>
         </div>
-      </div>
+      </section>
 
-      <div>
-        <p style={sectionTitleStyle}>Modifier</p>
+      <section className={styles.inspectorSection}>
+        <p className={styles.inspectorTitle}>Coordonnées</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {editableFields.map((f) => (
             <div key={f.field}>
@@ -768,10 +681,10 @@ function DetailPanel({
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div>
-        <p style={sectionTitleStyle}>Actions compte</p>
+      <section className={`${styles.inspectorSection} ${styles.dangerSection}`}>
+        <p className={styles.inspectorTitle}>Contrôle du compte</p>
         {detail.superAdmin ? (
           <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Ce compte super-admin est protégé — aucune action de suspension possible.</p>
         ) : detail.disabled ? (
@@ -804,7 +717,7 @@ function DetailPanel({
             )}
           </>
         )}
-      </div>
+      </section>
     </div>
   )
 }

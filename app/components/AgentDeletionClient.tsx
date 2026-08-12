@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
+import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
 
 const PAGE_SIZE = 15
 
@@ -46,7 +46,6 @@ interface ToastState {
   kind: 'success' | 'error'
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<string, string> = { organisateur: 'Organisateur', prestataire: 'Prestataire', client: 'Client', agent: 'Agent' }
@@ -215,10 +214,10 @@ export default function AgentDeletionClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--deletions">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Suppressions</h1>
+        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div><span className="lb-agent-kicker">Données et conformité</span><h1 className="font-display lb-dashboard-title">Suppressions</h1><p className="lb-dashboard-description">Traitez les demandes de suppression avec leur contexte et leur historique.</p></div>
           {requests.length > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>{requests.length} en attente</span>
           )}
@@ -258,10 +257,8 @@ export default function AgentDeletionClient() {
       </div>
 
       {selectedId && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-          <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
-            <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
+        <SlideOverModal onClose={closeDetail} maxWidth={600} ariaLabel="Détail de la demande de suppression">
+          <div style={{ minHeight: '100%', padding: '26px 26px 40px' }}>
             {detailError ? (
               <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. La demande n’existe peut-être plus, ou une erreur serveur est survenue.</p>
@@ -290,28 +287,10 @@ export default function AgentDeletionClient() {
               />
             )}
           </div>
-        </div>
+        </SlideOverModal>
       )}
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'suppressions', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }
@@ -321,7 +300,7 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
     <Button
       variant="ghost"
       onClick={onClick}
-      style={{ ...cardStyle, padding: 16, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 16, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%', borderLeft: '3px solid var(--pink)' }}
     >
       <Avatar src={null} name={request.userName || request.userEmail || '?'} size="md" />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -447,7 +426,7 @@ function DetailPanel({
       </div>
 
       {confirmApprove && (
-        <Modal onClose={() => !actionBusy && setConfirmApprove(false)} maxWidth={380} hideClose contentStyle={{ textAlign: 'center' }}>
+        <Modal onClose={() => setConfirmApprove(false)} maxWidth={380} hideClose dismissible={!actionBusy} contentStyle={{ textAlign: 'center' }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</p>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
             Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.

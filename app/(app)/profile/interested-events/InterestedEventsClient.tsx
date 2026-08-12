@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
-import { EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Card, DashboardPageHeader, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const PAGE_SIZE = 20
@@ -35,8 +35,6 @@ export interface EventInterestItemView {
   createdAt: string
   event: InterestedEventView | null
 }
-
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }
 
 export default function InterestedEventsClient({ initialItems }: { initialItems: EventInterestItemView[] }) {
   const [items, setItems] = useState(initialItems)
@@ -68,22 +66,14 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
   return (
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'none' }}>
-          ← Profil
-        </Link>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 850, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Ma liste</p>
-            <h1 className="font-display lb-dashboard-title">Événements intéressés</h1>
-          </div>
-          <Link
-            href="/events"
-            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 20px', borderRadius: 999, border: '1px solid var(--gold)', color: 'var(--gold)', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
-          >
-            Explorer
-          </Link>
-        </div>
+        <DashboardPageHeader
+          backHref="/profile"
+          backLabel="Profil"
+          eyebrow="Mes favoris"
+          title="Événements intéressés"
+          description="Retrouve les soirées enregistrées et garde un œil sur celles qui arrivent bientôt."
+          actions={<ActionLink href="/events">Explorer les événements</ActionLink>}
+        />
 
         {items.length === 0 ? (
           <EmptyState
@@ -150,7 +140,10 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         : `dès ${fmtMoney(ev.minPrice, ev.currency)}`
 
   const card = (
-    <div className={ev ? 'lb-card' : undefined} style={{ ...cardStyle, opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}>
+    <Card
+      className={ev ? 'lb-card' : undefined}
+      style={{ padding: 0, overflow: 'hidden', opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}
+    >
       <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'rgba(184, 243, 74, 0.2)'}, var(--obsidian))` }}>
         {ev && (
           <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 400, 158)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
@@ -176,7 +169,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Ajouté le {addedDate}</span>
         {priceLabel && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>{priceLabel}</span>}
       </div>
-    </div>
+    </Card>
   )
 
   return ev ? (

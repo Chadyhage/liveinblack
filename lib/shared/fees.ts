@@ -8,9 +8,14 @@
 //   - BOOSTS = 100% plateforme (déjà le cas, aucun reversement).
 export const FEES = {
   TICKET: { pct: 0.05, fixedCents: 49, capCents: 250, paidBy: 'buyer' as const },
-  // Zone FCFA (FedaPay — UEMOA) : 5% + 300 FCFA, plafonné 1 500 FCFA/billet.
-  // Montants en FCFA ENTIERS (le XOF n'a pas de centimes — zéro décimale).
-  TICKET_XOF: { pct: 0.05, fixed: 300, cap: 1500, paidBy: 'buyer' as const },
+  // Zone FCFA (FedaPay — UEMOA) : 5% du prix, avec un PLANCHER de 200 FCFA
+  // et un PLAFOND de 1 500 FCFA par admission (LIVE_IN_BLACK_Modele_
+  // Economique_CORRIGE.docx §1-2, doc de référence corrigée du 12/08/2026) —
+  // PAS un montant fixe additionné au pourcentage (erreur précédente : 5% +
+  // 300 FCFA plafonné, qui ne matchait pas la table d'exemples officielle :
+  // 1000 FCFA → 200 attendu, l'ancienne formule donnait 350). Montants en
+  // FCFA ENTIERS (le XOF n'a pas de centimes — zéro décimale).
+  TICKET_XOF: { pct: 0.05, min: 200, cap: 1500, paidBy: 'buyer' as const },
   // Revente officielle (LIVE_IN_BLACK_Systeme_de_revente.docx §1/§4) : mêmes
   // 5% qu'un billet neuf, mais prélevés sur le prix de REVENTE (choisi par le
   // vendeur, jamais > prix initial) et à la charge du VENDEUR (déduits du
@@ -71,7 +76,7 @@ export function computeTicketFeeXOF(unitPrice: number, qty: number): number {
   const u = Math.round(Number(unitPrice) || 0)
   const n = Math.max(0, Math.floor(Number(qty) || 0))
   if (u <= 0 || n <= 0) return 0
-  const perTicket = Math.min(Math.round(u * FEES.TICKET_XOF.pct) + FEES.TICKET_XOF.fixed, FEES.TICKET_XOF.cap)
+  const perTicket = Math.min(Math.max(Math.round(u * FEES.TICKET_XOF.pct), FEES.TICKET_XOF.min), FEES.TICKET_XOF.cap)
   return perTicket * n
 }
 

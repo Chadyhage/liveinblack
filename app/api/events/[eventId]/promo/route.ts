@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ eventId
   const place = event.places?.find((item) => item.id === parsed.data.placeId)
   if (!place) return NextResponse.json({ error: 'place_not_found' }, { status: 404 })
   const requestedUses = place.groupType === 'group' ? 1 : parsed.data.qty
-  const result = await resolvePromo(PromoCode, eventId, parsed.data.code, requestedUses)
+  const result = await resolvePromo(PromoCode, eventId, parsed.data.code, requestedUses, parsed.data.placeId)
   if (!result.ok) return NextResponse.json({ error: 'invalid_promo', message: result.message }, { status: 400 })
 
   const currency = event.currency === 'XOF' ? 'XOF' : 'EUR'

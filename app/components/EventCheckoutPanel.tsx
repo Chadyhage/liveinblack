@@ -8,7 +8,7 @@ import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtecti
 import type { ShowOption } from '@/lib/shared/showOptions'
 import AgeGateModal from './AgeGateModal'
 import { Check, X } from 'lucide-react'
-import { Button, Input, Textarea, Checkbox } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Checkbox, Modal } from '@/app/components/ui'
 
 // Port INTERACTIF de la section « Réservation » de src/pages/EventDetailPage.jsx
 // (sélecteur de place + table/groupe, stepper de quantité, précommande, code
@@ -464,7 +464,7 @@ export default function EventCheckoutPanel({
           const soldOut = place.available <= 0
           const placeDisabled = soldOut || Boolean(blockedReason)
           return (
-            <div
+            <Card
               key={place.id}
               onClick={() => !placeDisabled && selectPlace(place.id)}
               onKeyDown={(event) => {
@@ -477,12 +477,10 @@ export default function EventCheckoutPanel({
               tabIndex={placeDisabled ? -1 : 0}
               aria-disabled={placeDisabled}
               aria-pressed={isSelected}
+              accent={isSelected ? 'var(--gold)' : undefined}
               style={{
                 textAlign: 'left',
                 cursor: placeDisabled ? 'not-allowed' : 'pointer',
-                background: 'var(--surface)',
-                border: `1px solid ${isSelected ? 'var(--gold)' : 'var(--border)'}`,
-                borderRadius: 12,
                 padding: 16,
                 opacity: placeDisabled ? 0.55 : 1,
               }}
@@ -553,14 +551,14 @@ export default function EventCheckoutPanel({
               <span style={{ display: 'inline-block', marginTop: 10, fontSize: 10.5, fontWeight: 700, color: isSelected ? 'var(--gold)' : 'var(--text-faint)' }}>
                 {isSelected ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={12} /> Choisi</span> : soldOut ? 'Complet' : 'Choisir'}
               </span>
-            </div>
+            </Card>
           )
         })}
       </div>
 
       {selectedPlace && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Place sélectionnée</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selectedPlace.type}</span>
@@ -710,10 +708,10 @@ export default function EventCheckoutPanel({
                 {grandTotal > 0 ? (currency === 'XOF' ? 'Sécurisé · Mobile Money (FedaPay)' : 'Sécurisé · Stripe') : 'Gratuit'}
               </span>
             </div>
-          </div>
+          </Card>
 
           {preorderEnabled && activeMenu.length > 0 && (
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Card style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
                 <p style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Précommande de consommations</p>
                 <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Optionnel · choisis les consommations de chaque billet.</p>
@@ -776,7 +774,7 @@ export default function EventCheckoutPanel({
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(preorderTotal, currency)}</span>
                 </div>
               )}
-            </div>
+            </Card>
           )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px' }}>
@@ -874,9 +872,7 @@ export default function EventCheckoutPanel({
       )}
 
       {photoGallery && (
-        <div role="dialog" aria-modal="true" aria-label={`Photos de la place ${photoGallery.type}`} onClick={() => setPhotoGallery(null)} style={modalBackdrop}>
-          <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 760, position: 'relative' }}>
-            <Button type="button" variant="ghost" onClick={() => setPhotoGallery(null)} aria-label="Fermer la galerie" style={{ ...modalClose, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button>
+        <Modal onClose={() => setPhotoGallery(null)} maxWidth={800} ariaLabel={`Photos de la place ${photoGallery.type}`} contentStyle={{ padding: 18 }}>
             <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: '#090a10', border: '1px solid var(--border-strong)' }}>
               <Image src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type}, photo ${photoGallery.index + 1}`} fill style={{ objectFit: 'contain' }} sizes="(max-width: 768px) 100vw, 760px" />
             </div>
@@ -885,16 +881,13 @@ export default function EventCheckoutPanel({
               <p style={{ margin: 0, color: '#fff', fontSize: 13, fontWeight: 700 }}>{photoGallery.type} · {photoGallery.index + 1}/{photoGallery.photos.length}</p>
               <Button type="button" variant="secondary" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index + 1) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Suivante</Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {includedModal && (
-        <div role="dialog" aria-modal="true" aria-labelledby="included-modal-title" onClick={() => setIncludedModal(null)} style={modalBackdrop}>
-          <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 22, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
+        <Modal onClose={() => setIncludedModal(null)} maxWidth={430} ariaLabel={`Inclus dans ${includedModal.type}`}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
-              <Button type="button" variant="ghost" onClick={() => setIncludedModal(null)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button>
             </div>
             <div style={{ display: 'grid', gap: 8, marginTop: 18 }}>
               <IncludedRow label="1 entrée à la soirée" />
@@ -904,13 +897,11 @@ export default function EventCheckoutPanel({
               })}
             </div>
             <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 12, lineHeight: 1.55 }}>Ces options seront servies sur place et validées par le staff depuis ton billet.</p>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showInfoModal && (
-        <div role="dialog" aria-modal="true" aria-labelledby="show-info-title" onClick={() => setShowInfoModal(null)} style={modalBackdrop}>
-          <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 24, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
+        <Modal onClose={() => setShowInfoModal(null)} maxWidth={430} ariaLabel={`Personnaliser ${showInfoModal.option.label}`}>
             <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Personnaliser le show</p>
             <h3 id="show-info-title" style={{ margin: '5px 0 4px', fontSize: 20 }}>{showInfoModal.option.label}</h3>
             <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 12 }}>Pour {showInfoModal.itemName} · billet {showInfoModal.ticketIndex + 1}</p>
@@ -918,14 +909,12 @@ export default function EventCheckoutPanel({
             <Textarea id="show-info-input" autoFocus rows={3} maxLength={240} value={showInfoInput} onChange={(event) => setShowInfoInput(event.target.value)} style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', borderRadius: 11, background: 'var(--surface)', color: 'var(--text)', padding: '11px 12px', font: 'inherit' }} />
             <p style={{ margin: '5px 0 0', color: 'var(--text-faint)', textAlign: 'right', fontSize: 10 }}>{showInfoInput.length}/240</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setShowInfoModal(null)} style={{ ...secondaryAction, flex: 1 }}>Annuler</Button><Button type="button" onClick={confirmShowInfo} disabled={!showInfoInput.trim()} style={{ ...primaryAction, flex: 1, opacity: showInfoInput.trim() ? 1 : .45 }}>Valider</Button></div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showConfirmation && selectedPlace && (
-        <div role="dialog" aria-modal="true" aria-labelledby="checkout-confirm-title" onClick={() => !submitting && setShowConfirmation(false)} style={modalBackdrop}>
-          <div onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 470, padding: 24, borderRadius: 20, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 24px 64px rgba(0,0,0,.55)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div><Button type="button" variant="ghost" onClick={() => setShowConfirmation(false)} aria-label="Fermer" style={{ ...modalClose, position: 'static', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></Button></div>
+        <Modal onClose={() => setShowConfirmation(false)} maxWidth={470} dismissible={!submitting} ariaLabel="Récapitulatif de la commande">
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />
               <SummaryRow label="Quantité" value={String(lineQty)} />
@@ -941,8 +930,7 @@ export default function EventCheckoutPanel({
             </div>
             <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 11.5, lineHeight: 1.5 }}>{grandTotal > 0 ? `Paiement sécurisé par ${currency === 'XOF' ? 'FedaPay' : 'Stripe'}.` : 'Aucun moyen de paiement ne sera demandé.'}</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}><Button type="button" variant="secondary" onClick={() => setShowConfirmation(false)} disabled={submitting} style={{ ...secondaryAction, flex: 1 }}>Modifier</Button><Button type="button" onClick={() => void doCheckout()} loading={submitting} loadingText="Redirection…" style={{ ...primaryAction, flex: 1 }}>{grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, currency)}` : 'Confirmer'}</Button></div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {showAgeModal && <AgeGateModal minAge={eventMinAge} onConfirm={confirmAge} onCancel={() => setShowAgeModal(false)} />}
@@ -959,8 +947,6 @@ function SummaryRow({ label, value, accent, strong }: { label: string; value: st
 }
 
 const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,.32)', background: 'rgba(184, 243, 74,.08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
-const modalBackdrop: React.CSSProperties = { position: 'fixed', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(8px)' }
-const modalClose: React.CSSProperties = { position: 'absolute', zIndex: 2, top: 12, right: 12, width: 36, height: 36, minWidth: 36, minHeight: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(4,4,11,.78)', color: '#fff', fontSize: 21, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
 const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
 const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }

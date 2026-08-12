@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getProviderByUserId } from '@/lib/server/providers'
+import { listPastEventsForProvider } from '@/lib/server/providerBookingHistory'
 import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { REGION_OPTIONS } from '@/lib/shared/locations'
@@ -12,6 +13,7 @@ import { ProviderReviewsClient, PublicProfileActions } from '@/app/components/fe
 import ProviderCatalogInquiry from '@/app/components/ProviderCatalogInquiry'
 import { socialUrl } from '@/lib/shared/social'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { Card } from '@/app/components/ui'
 
 const SOCIAL_LABELS: Record<string, string> = {
   instagram: 'Instagram',
@@ -41,7 +43,11 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
   // avant) ; connecté : seul un rôle actif prestataire ne peut pas commander
   // de service à un autre prestataire (canOrderServices).
   const canOrderCatalog = !session?.user || canOrderServices(session.user)
-  const [reviews, myReview] = await Promise.all([getPublishedReviews(id), session?.user ? getMyReviewFor({ id: session.user.id }, id) : Promise.resolve(null)])
+  const [reviews, myReview, pastEvents] = await Promise.all([
+    getPublishedReviews(id),
+    session?.user ? getMyReviewFor({ id: session.user.id }, id) : Promise.resolve(null),
+    listPastEventsForProvider(id),
+  ])
 
   const categories = getProviderCategories(provider)
   const visibleCatalog = (provider.catalog || []).filter((item) => item.available !== false)
@@ -132,7 +138,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                 // une vidéo, avec repli sur le premier média quel qu'il soit.
                 const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
                 return (
-                  <div key={item.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden' }}>
                     {item.media?.[0]?.url && (
                       <div style={{ aspectRatio: '4/3', position: 'relative' }}>
                         {item.media[0].type === 'video' ? (
@@ -174,9 +180,36 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </Card>
                 )
               })}
+            </div>
+          </Section>
+        )}
+
+        {pastEvents.length > 0 && (
+          <Section title="Événements passés">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {pastEvents.map((ev) => (
+                <Link
+                  key={ev.id}
+                  href={`/events/${ev.id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}
+                >
+                  {ev.imageUrl && (
+                    <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                      <Image src={ev.imageUrl} alt="" fill sizes="44px" style={{ objectFit: 'cover' }} />
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-faint)' }}>
+                      {ev.dateDisplay}
+                      {ev.city ? ` · ${ev.city}` : ''}
+                    </p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </Section>
         )}

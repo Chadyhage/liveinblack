@@ -205,9 +205,9 @@ export default function AgentHomepageConfigClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <h1 className="font-display lb-dashboard-title">Actualité</h1>
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--homepage">
+      <div className="lb-agent-homepage-stack" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="lb-agent-page-header"><span className="lb-agent-kicker">Studio d’accueil</span><h1 className="font-display lb-dashboard-title">Actualité</h1><p className="lb-dashboard-description">Composez les temps forts visibles sur l’accueil public de LIVEINBLACK.</p></div>
 
         {loadError && (
           <Card style={{ border: '1px solid rgba(224,90,170,0.35)' }}>

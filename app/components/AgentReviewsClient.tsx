@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Stars } from '@/app/components/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Input, Pagination, SkeletonRow, pagedSlice, EmptyState } from '@/app/components/ui'
+import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 15
@@ -77,7 +77,6 @@ const MODERATE_ERROR_LABELS: Record<string, string> = {
   review_not_found: 'Cet avis est introuvable (déjà traité ailleurs ?).',
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }
 const btnBase: React.CSSProperties = { minHeight: 36, padding: '8px 13px', borderRadius: 'var(--radius-md)', fontWeight: 700, fontSize: 12, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(iso: string): string {
@@ -221,10 +220,10 @@ export default function AgentReviewsClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--reviews">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 className="font-display lb-dashboard-title">Modération des avis</h1>
+        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div><span className="lb-agent-kicker">Qualité de la communauté</span><h1 className="font-display lb-dashboard-title">Avis</h1><p className="lb-dashboard-description">Publiez, masquez ou supprimez les avis en conservant une trace interne.</p></div>
           {reportedCount > 0 && (
             <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
               {reportedCount} signalé{reportedCount > 1 ? 's' : ''}
@@ -233,12 +232,12 @@ export default function AgentReviewsClient() {
         </div>
 
         {listError && (
-          <div style={{ ...cardStyle, border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={loadList} style={btnBase}>
               Recharger
             </Button>
-          </div>
+          </Card>
         )}
 
         <Input
@@ -337,25 +336,7 @@ export default function AgentReviewsClient() {
         <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'avis', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }
@@ -389,11 +370,9 @@ function ReviewCard({
   const isReported = review.reportCount > 0 && review.status !== 'deleted'
 
   return (
-    <article
-      style={{
-        ...cardStyle,
-        ...(isReported ? { border: '1px solid rgba(224,90,170,.35)', borderLeft: '3px solid rgba(224,90,170,.6)' } : null),
-      }}
+    <Card
+      accent={isReported ? 'rgba(224,90,170,.35)' : undefined}
+      style={{ padding: 16, ...(isReported ? { borderLeft: '3px solid rgba(224,90,170,.6)' } : null) }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
@@ -503,6 +482,6 @@ function ReviewCard({
           </Button>
         </div>
       )}
-    </article>
+    </Card>
   )
 }

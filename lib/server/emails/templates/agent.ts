@@ -1,8 +1,10 @@
 // Emails destinés aux agents (équipe plateforme LIVEINBLACK) — alertes de
-// modération/back-office, jusqu'ici uniquement consultées en pull dans
-// l'espace agent (aucun email sortant vers les agents n'existe à ce jour).
-// ⚠️ Pas encore branchés — voir lib/server/applications.ts (soumission),
-// lib/server/reports.ts, lib/server/agentDeletion.ts, lib/server/agentSales.ts.
+// modération/back-office, envoyées via notifyAllAgents()/notifyUserById()
+// (voir lib/server/emails/notify.ts) en plus de la notif in-app.
+// Branchés depuis lib/server/applications.ts (soumission de candidature),
+// lib/server/messaging.ts (signalement), lib/server/agentDeletion.ts
+// (demande de suppression), lib/server/agentSales.ts (ventes cash en retard
+// / bloquées).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
 import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'

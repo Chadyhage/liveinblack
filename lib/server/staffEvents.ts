@@ -65,6 +65,13 @@ export async function listMyStaffedEvents(caller: StaffCaller): Promise<StaffedE
     if (!entry) continue
 
     const event = eventsById.get(doc.eventId)
+    // Défense en profondeur : un roster EventStaff orphelin (event supprimé
+    // sans nettoyage complet, ou race condition) ne doit jamais apparaître
+    // comme une entrée fantôme (nom/ville vides) dans "Mes soirées" — voir
+    // deleteOrganizerEvent, qui doit normalement supprimer EventStaff en même
+    // temps que l'event, mais ce garde reste nécessaire même si ce nettoyage
+    // est un jour incomplet ailleurs.
+    if (!event) continue
     seenEventIds.add(doc.eventId)
 
     results.push({

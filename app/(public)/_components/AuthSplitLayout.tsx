@@ -1,49 +1,43 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import styles from './AuthSplitLayout.module.css'
 
-// Coquille "split-screen" partagée par tous les écrans d'authentification
-// publics (login, organizer-signup, provider-signup, reset-password,
-// verify-email, confirmer-email) : visuel plein cadre sur la moitié gauche,
-// contenu sans carte conteneur sur la moitié droite (décision produit
-// 2026-07). Le visuel disparaît sous 900px, le contenu repasse alors pleine
-// largeur — un seul endroit à maintenir pour ce comportement responsive.
 const HERO_IMG = 'https://images.unsplash.com/photo-1496337589254-7e19d01cec44?auto=format&fit=crop&w=1400&q=80'
 
-export default function AuthSplitLayout({ children, tagline, heroImage }: { children: ReactNode; tagline?: ReactNode; heroImage?: string }) {
+export default function AuthSplitLayout({ children, tagline, heroImage, wide = false }: { children: ReactNode; tagline?: ReactNode; heroImage?: string; wide?: boolean }) {
   return (
-    <main className="lb-auth-split" style={{ flex: 1, display: 'flex', minHeight: 'calc(100dvh - 64px)' }}>
-      <style>{`
-        @media (max-width: 900px) {
-          .lb-auth-split__visual { display: none !important; }
-          .lb-auth-split__form { flex: 1 1 100% !important; }
-        }
-      `}</style>
-      <div className="lb-auth-split__visual" style={{ flex: '1 1 46%', position: 'relative', overflow: 'hidden' }}>
-        <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="50vw" style={{ objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(4,4,11,0.15) 0%, rgba(4,4,11,0.55) 75%, rgba(4,4,11,0.85) 100%)' }} />
-        {tagline && (
-          <div style={{ position: 'absolute', left: 44, bottom: 48, right: 44 }}>
-            <p className="font-display" style={{ margin: 0, fontSize: 30, color: '#fff', lineHeight: 1.15 }}>
-              {tagline}
-            </p>
+    <main className={`lb-auth-split ${styles.shell}${wide ? ` lb-auth-split--wide ${styles.wide}` : ''}`}>
+      <aside className={`lb-auth-split__visual ${styles.visual}`} aria-label="Live in Black">
+        <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="(max-width: 900px) 0px, 42vw" className={styles.image} />
+        <div className={styles.overlay} />
+        <Link href="/home" className={styles.brand} aria-label="Live in Black — accueil">
+          LIVE<span>IN</span>BLACK
+        </Link>
+        <div className={styles.story}>
+          <span className={styles.eyebrow}>LIVE IN BLACK</span>
+          <p className="font-display">{tagline || <>Toute la scène.<br /><span>Une seule expérience.</span></>}</p>
+          <div className={styles.trust}>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>
+            <span>Accès sécurisé et données protégées</span>
           </div>
-        )}
-      </div>
-      {/* flexDirection:'column' plutôt que la row par défaut : dans un flex
-          row, un enfant bloc sans flex-grow explicite se contente de sa
-          largeur de contenu "shrink-to-fit" (justifyContent:'center' le
-          centre sans jamais l'étirer) — c'était la cause racine de l'espace
-          vide constaté à droite des formulaires (organizer-signup,
-          provider-signup...) sur grand écran, quel que soit le maxWidth
-          déclaré côté enfant. En colonne, l'axe principal devient vertical
-          (justifyContent:'center' centre donc verticalement, comme avant)
-          et align-items:'stretch' (valeur par défaut, volontairement non
-          surchargée) étire l'enfant sur tout l'axe transversal — chaque page
-          garde le contrôle de sa propre largeur via son maxWidth +
-          margin:'0 auto' habituel (login, reset-password, wizards...). */}
-      <div className="lb-auth-split__form" style={{ flex: '1 1 54%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px clamp(10px, 2vw, 32px)', overflowY: 'auto' }}>
-        {children}
-      </div>
+        </div>
+      </aside>
+
+      <section className={`lb-auth-split__form ${styles.form}`}>
+        <div className={styles.topbar}>
+          <Link href="/home" className={styles.back}>
+            <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+            Retour au site
+          </Link>
+          <span className={styles.secure}>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+            Sécurisé
+          </span>
+        </div>
+        <div className={styles.content}>{children}</div>
+        <p className={styles.privacy}>LIVE IN BLACK protège tes informations et ne les partage jamais sans ton accord.</p>
+      </section>
     </main>
   )
 }

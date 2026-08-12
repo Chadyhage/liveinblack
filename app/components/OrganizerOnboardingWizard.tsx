@@ -8,7 +8,7 @@ import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { validateOrganizerStep0, validateOrganizerStep1, type OrganizerFormData } from '@/lib/shared/applicationValidation'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
-import { Button, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
 // Port de src/pages/OnboardingOrganisateur.jsx (#7 phase organisateur) — 4
 // étapes (Établissement/Activité/Revenus/Documents), utilisé À LA FOIS par
@@ -44,7 +44,6 @@ const EMPTY_FORM: OrganizerFormData = {
   description: '',
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 14, outline: 'none' }
 const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
@@ -219,7 +218,7 @@ export default function OrganizerOnboardingWizard({
   if (submitted) {
     return (
       <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ ...cardStyle, maxWidth: 420, textAlign: 'center' }}>
+        <Card style={{ padding: 24, maxWidth: 420, textAlign: 'center' }}>
           <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
@@ -229,7 +228,7 @@ export default function OrganizerOnboardingWizard({
           <Link href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
             Retour à l&apos;accueil
           </Link>
-        </div>
+        </Card>
       </Shell>
     )
   }
@@ -237,7 +236,7 @@ export default function OrganizerOnboardingWizard({
   const progress = Math.round(((step + 1) / STEPS.length) * 100)
 
   return (
-    <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
+    <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 1080, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
@@ -257,7 +256,7 @@ export default function OrganizerOnboardingWizard({
           </div>
         </div>
 
-        <div style={cardStyle}>
+        <Card style={{ padding: 24 }}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
@@ -268,15 +267,16 @@ export default function OrganizerOnboardingWizard({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <Label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</Label>
-                  <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
+                  <Input aria-label="Nom de l’établissement ou nom commercial" style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
-                  <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
+                  <Input aria-label="Numéro SIRET ou SIREN" style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
                   <Input
+                    aria-label="Email professionnel"
                     style={inputStyle}
                     type="email"
                     value={form.emailPro}
@@ -288,11 +288,12 @@ export default function OrganizerOnboardingWizard({
                   <Label style={labelStyle}>Téléphone professionnel {requiredMark}</Label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Select
+                      aria-label="Indicatif téléphonique professionnel"
                       value={form.telephoneProCode}
                       onChange={(value) => set('telephoneProCode', value)}
                       options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.country} ${r.dial}` }))}
                     />
-                    <Input style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
+                    <Input aria-label="Téléphone professionnel" style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
                   </div>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -305,12 +306,12 @@ export default function OrganizerOnboardingWizard({
                 {!form.noFixedAddress && (
                   <div>
                     <Label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</Label>
-                    <Input style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
+                    <Input aria-label="Adresse de l’établissement" style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
                   </div>
                 )}
                 <div>
                   <Label style={labelStyle}>Site web / Instagram</Label>
-                  <Input style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
+                  <Input aria-label="Site web ou compte Instagram" style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
                 </div>
               </div>
 
@@ -321,12 +322,13 @@ export default function OrganizerOnboardingWizard({
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
-                      <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                      <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                     </div>
                     <div>
                       <Label style={labelStyle}>Mot de passe {requiredMark}</Label>
                       <div style={{ position: 'relative' }}>
                         <Input
+                          aria-label="Mot de passe"
                           style={{ ...inputStyle, paddingRight: 56 }}
                           type={showRegPassword ? 'text' : 'password'}
                           value={regPassword}
@@ -348,7 +350,7 @@ export default function OrganizerOnboardingWizard({
                     </div>
                     <div>
                       <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
-                      <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                      <Input aria-label="Confirmation du mot de passe" style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                     </div>
                   </div>
                   <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>
@@ -540,7 +542,7 @@ export default function OrganizerOnboardingWizard({
               </Button>
             )}
           </div>
-        </div>
+        </Card>
 
         <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
           {mode === 'anonymous'

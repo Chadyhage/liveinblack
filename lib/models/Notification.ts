@@ -26,6 +26,11 @@ export const NOTIFICATION_TYPES = [
   'agent_queue',
   'reminder',
   'review',
+  // Retrait d'un titre proposé par un client de la playlist d'un événement
+  // (#E10, confirmé en réunion live le 11/08/2026) — le DJ ne "valide" plus,
+  // il retire seulement ; l'auteur doit être notifié pour en reproposer un
+  // autre.
+  'playlist',
 ] as const
 
 const notificationSchema = new Schema(

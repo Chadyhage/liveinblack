@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Input, Select, Checkbox, Label } from '@/app/components/ui'
+import { Button, Input, Select, Checkbox, Label, Card } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 export interface PlaceView {
@@ -22,7 +22,7 @@ export interface AgentSalesDashboardView {
   momoSales: number
 }
 
-const cardStyle: React.CSSProperties = { padding: '16px 18px', borderRadius: 14, background: 'var(--surface-2)', border: '1px solid var(--border)' }
+const CARD_STYLE: React.CSSProperties = { padding: '16px 18px', background: 'var(--surface-2)' }
 
 export default function AgentSalesClient({
   eventId,
@@ -122,22 +122,22 @@ export default function AgentSalesClient({
       <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '0 0 20px' }}>{eventName}</p>
 
       <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
-        <div style={cardStyle}>
+        <Card style={CARD_STYLE}>
           <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
-        </div>
-        <div style={cardStyle}>
+        </Card>
+        <Card style={CARD_STYLE}>
           <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash en attente</p>
-        </div>
-        <div style={cardStyle}>
+        </Card>
+        <Card style={CARD_STYLE}>
           <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash réglé</p>
-        </div>
-        <div style={cardStyle}>
+        </Card>
+        <Card style={CARD_STYLE}>
           <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Mobile Money</p>
-        </div>
+        </Card>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -159,7 +159,7 @@ export default function AgentSalesClient({
         </Button>
       </div>
 
-      <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <Card style={{ ...CARD_STYLE, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
           <Label>Type de place</Label>
           <Select
@@ -276,7 +276,7 @@ export default function AgentSalesClient({
         </Button>
 
         {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
-      </div>
+      </Card>
     </main>
   )
 }

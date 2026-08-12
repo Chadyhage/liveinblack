@@ -18,7 +18,12 @@ export async function resolvePromo(
   PromoCode: PromoCodeModel,
   eventId: string,
   rawCode: unknown,
-  requestedUses = 1
+  requestedUses = 1,
+  // Place effectivement achetée — vérifiée contre `promo.placeIds` si ce
+  // champ est renseigné (code restreint à certains types de place, confirmé
+  // en réunion live le 11/08/2026). Optionnel pour ne pas casser un appelant
+  // qui prévisualiderait un code sans place déjà choisie.
+  placeId?: string
 ): Promise<ResolvePromoResult> {
   const code = normalizePromoCode(rawCode)
   if (!code) return { ok: false, reason: 'empty', message: 'Saisis un code promo.' }
@@ -28,6 +33,10 @@ export async function resolvePromo(
   if (promo.active === false) return { ok: false, reason: 'inactive', message: "Ce code promo n'est plus actif." }
   if (promo.expiresAt && new Date(promo.expiresAt).getTime() < Date.now()) {
     return { ok: false, reason: 'expired', message: 'Ce code promo a expiré.' }
+  }
+  const scopedPlaceIds = (promo.placeIds as string[] | undefined) || []
+  if (scopedPlaceIds.length > 0 && (!placeId || !scopedPlaceIds.includes(placeId))) {
+    return { ok: false, reason: 'wrong_place', message: "Ce code promo ne s'applique pas à ce type de place." }
   }
 
   const maxUses = Math.max(0, Number(promo.maxUses) || 0)

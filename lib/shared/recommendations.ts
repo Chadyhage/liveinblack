@@ -8,6 +8,7 @@
 // résolu côté serveur puis passé ici en `interestHistory`. Suivre/réserver ne
 // sont pas encore des signaux câblés dans ce port (aucune régression : ils
 // n'existaient nulle part avant ce fichier).
+import { stripDiacritics } from './diacritics'
 //
 // Barème et règles de sélection (seuil, exigence d'au moins une raison
 // personnelle) copiés à l'identique du legacy — voir WEIGHTS ci-dessous et
@@ -135,9 +136,7 @@ export interface ScoredRecommendation<T extends RecommendationEvent = Recommenda
 
 // ── Normalisation (accents/casse) pour comparer villes et artistes ─────────
 function norm(v: unknown): string {
-  return String(v || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(String(v || ''))
     .toLowerCase()
     .trim()
 }

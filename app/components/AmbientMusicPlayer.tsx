@@ -1,11 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronDown, Music4, Pause, Play, Shuffle, SkipForward, Volume1, Volume2, VolumeX, X } from 'lucide-react'
 import { DISCS, subscribe, getState, getServerSnapshot, play, toggle, playRandom, setVolume, playTrack, stop } from '@/lib/client/musicEngine'
-import { Button, IconButton, Input } from '@/app/components/ui'
+import { Button, IconButton, Input, Card, Slider } from '@/app/components/ui'
 
 // useSyncExternalStore (pas useState+useEffect) : lit le moteur audio, un
 // store externe au sens React, sans jamais déclencher de setState synchrone
@@ -91,83 +91,6 @@ function DiscArt({ size, imgSrc, bgPosition, filter, spinning, ring }: { size: n
   )
 }
 
-// Slider de volume "sur mesure" — remplace le <input type="range"> brut par
-// une piste + curseur en SVG inline, même famille visuelle que DiscArt/EqBars
-// ci-dessus (traits fins, couleur --primary). Glisser-déposer géré via
-// Pointer Events (drag continu, y compris hors de la piste) + clic direct sur
-// la piste pour sauter à une valeur ; clavier flèches gauche/droite pour
-// rester accessible sans souris.
-function CustomVolumeSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const draggingRef = useRef(false)
-  const clamped = Math.max(0, Math.min(1, value))
-
-  const setFromClientX = useCallback(
-    (clientX: number) => {
-      const el = trackRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const ratio = rect.width > 0 ? (clientX - rect.left) / rect.width : 0
-      onChange(Math.max(0, Math.min(1, ratio)))
-    },
-    [onChange]
-  )
-
-  useEffect(() => {
-    function onMove(e: PointerEvent) {
-      if (!draggingRef.current) return
-      setFromClientX(e.clientX)
-    }
-    function onUp() {
-      draggingRef.current = false
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-    }
-  }, [setFromClientX])
-
-  return (
-    <div
-      ref={trackRef}
-      role="slider"
-      tabIndex={0}
-      aria-label="Volume"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(clamped * 100)}
-      onPointerDown={(e) => {
-        draggingRef.current = true
-        setFromClientX(e.clientX)
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') onChange(Math.max(0, clamped - 0.05))
-        else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') onChange(Math.min(1, clamped + 0.05))
-      }}
-      style={{ position: 'relative', flex: 1, height: 20, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none' }}
-    >
-      <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
-        <line x1="2" y1="10" x2="98" y2="10" stroke="rgba(255,255,255,0.16)" strokeWidth="3" strokeLinecap="round" />
-        <line x1="2" y1="10" x2={2 + clamped * 96} y2="10" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" />
-      </svg>
-      <span
-        style={{
-          position: 'absolute',
-          left: `calc(${clamped * 100}% - 7px)`,
-          width: 14,
-          height: 14,
-          borderRadius: '50%',
-          background: 'var(--primary)',
-          boxShadow: '0 0 0 3px rgba(184, 243, 74,0.22), 0 2px 6px rgba(0,0,0,0.5)',
-          transition: draggingRef.current ? 'none' : 'left 0.08s ease',
-        }}
-      />
-    </div>
-  )
-}
-
 // Le lecteur d'ambiance flotte sur toutes les pages authentifiées, sauf celles
 // qui prennent tout l'écran (chat plein écran, scanner caméra) — même logique
 // que HIDE_ON dans le legacy MusicPlayer.jsx / MusicPlayerGate d'App.jsx.
@@ -186,12 +109,6 @@ const HIDE_ON = ['/messages', '/scanner']
 const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup']
 
 const SEEN_KEY = 'lib_ambiance_seen'
-// Durée de la transition d'ouverture/fermeture du panneau — utilisée à la
-// fois dans le CSS et pour retarder le démontage après fermeture (même
-// convention que SlideOverModal.tsx : état "monté" piloté par
-// requestAnimationFrame, transform/opacity en CSS, pas de lib d'animation).
-const PANEL_TRANSITION_MS = 220
-
 interface SearchResult {
   title: string
   artist: string
@@ -199,7 +116,7 @@ interface SearchResult {
   previewUrl: string | null
 }
 
-export default function AmbientMusicPlayer() {
+export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?: boolean }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   // Fermeture complète (distincte de la réduction) : coupe la lecture et
@@ -209,11 +126,6 @@ export default function AmbientMusicPlayer() {
   // fermer". Volontairement en mémoire (pas de localStorage) : une fermeture
   // ne doit pas suivre l'utilisateur d'une visite à l'autre.
   const [dismissed, setDismissed] = useState(false)
-  // Le panneau reste monté un court instant après la fermeture logique pour
-  // laisser la transition de sortie se jouer (translateY + opacity), au lieu
-  // de disparaître brutalement comme avant.
-  const [panelMounted, setPanelMounted] = useState(false)
-  const [panelVisible, setPanelVisible] = useState(false)
   const st = useSyncExternalStore(subscribeToMusicEngine, getState, getServerSnapshot)
   // Chip « Ambiance » : visible à l'arrivée tant que le lecteur n'a jamais été
   // ouvert (flag localStorage), puis se replie tout seul après ~5 s. Lecture
@@ -238,7 +150,6 @@ export default function AmbientMusicPlayer() {
   const btnRef = useRef<HTMLDivElement>(null)
   const searchDebRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const searchReqRef = useRef(0)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Fade d'apparition du chip (simple fade, compatible prefers-reduced-motion)
   useEffect(() => {
@@ -255,22 +166,6 @@ export default function AmbientMusicPlayer() {
 
   // Nettoyage du debounce de recherche
   useEffect(() => () => clearTimeout(searchDebRef.current), [])
-
-  // Montage/démontage du panneau piloté par `open`, avec un aller-retour par
-  // requestAnimationFrame pour déclencher la transition d'entrée (même
-  // convention que SlideOverModal.tsx) et un délai avant démontage pour
-  // laisser la transition de sortie se jouer.
-  useEffect(() => {
-    clearTimeout(closeTimerRef.current)
-    if (open) {
-      setPanelMounted(true)
-      const raf = requestAnimationFrame(() => setPanelVisible(true))
-      return () => cancelAnimationFrame(raf)
-    }
-    setPanelVisible(false)
-    closeTimerRef.current = setTimeout(() => setPanelMounted(false), PANEL_TRANSITION_MS)
-    return () => clearTimeout(closeTimerRef.current)
-  }, [open])
 
   // Fermer le panneau au clic extérieur
   useEffect(() => {
@@ -293,6 +188,7 @@ export default function AmbientMusicPlayer() {
   }, [open])
 
   if (HIDE_ON.some((p) => pathname?.startsWith(p))) return null
+  if (publicMode) return null
   if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
@@ -389,7 +285,7 @@ export default function AmbientMusicPlayer() {
   }
 
   return (
-    <div className="amp-root" style={{ position: 'fixed', right: 14, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 86px)', zIndex: 45, fontFamily: 'Inter, sans-serif' }}>
+    <div className="amp-root" style={{ position: 'fixed', right: 14, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 86px)', zIndex: 45, }}>
       <style>{`
         @keyframes amp-spin { to { transform: rotate(360deg); } }
         .amp-disc-spin { animation: amp-spin 3.2s linear infinite; }
@@ -430,57 +326,43 @@ export default function AmbientMusicPlayer() {
         // lecteur "fermé" (lecture arrêtée). Volontairement plus petite et
         // discrète que le déclencheur normal : signale "le lecteur existe
         // toujours, en un clic" sans reproduire l'emprise visuelle habituelle.
-        <button
-          type="button"
+        <IconButton
+          label="Rouvrir l'ambiance musicale"
+          icon={<Music4 size={16} strokeWidth={1.8} color="rgba(255,255,255,0.7)" aria-hidden="true" />}
           onClick={reopenPlayer}
-          title="Rouvrir l'ambiance musicale"
-          aria-label="Rouvrir l'ambiance musicale"
-          className="amp-press"
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--surface-2)',
-            border: '1px solid var(--border-strong)',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          <Music4 size={16} strokeWidth={1.8} color="rgba(255,255,255,0.7)" aria-hidden="true" />
-        </button>
+          size={38}
+          style={{ borderRadius: '50%', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 8px 20px rgba(0,0,0,0.5)', transition: 'transform 0.15s cubic-bezier(0.3,0.9,0.3,1), background .16s ease, border-color .16s ease' }}
+          onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.94)' }}
+          onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+        />
       ) : (
         <>
-      {panelMounted && (
-        <div
+      {open && (
+        <Card
           ref={panelRef}
           role="dialog"
           aria-modal="false"
           aria-label="Ambiance musicale"
           className="amp-panel"
+          accent="var(--border-strong)"
           style={{
             position: 'absolute',
             bottom: 74,
             right: 0,
             width: 348,
             background: 'var(--surface-2)',
-            border: '1px solid var(--border-strong)',
             borderRadius: 'var(--radius-xl)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
-            padding: 20,
             maxHeight: 'calc(100vh - 200px)',
             overflowY: 'auto',
-            opacity: panelVisible ? 1 : 0,
-            transform: panelVisible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.98)',
+            opacity: 1,
+            transform: 'translateY(0) scale(1)',
             transformOrigin: 'bottom right',
-            transition: `opacity ${PANEL_TRANSITION_MS}ms ease, transform ${PANEL_TRANSITION_MS}ms cubic-bezier(0.22,0.9,0.3,1)`,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 2px' }}>
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Ambiance</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Ambiance</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <IconButton label="Un disque au hasard" icon={<Shuffle size={14} strokeWidth={2.4} aria-hidden="true" />} tone="accent" size={32} onClick={() => playRandom()} />
               <IconButton label="Réduire" icon={<ChevronDown size={16} strokeWidth={2.2} aria-hidden="true" />} size={32} onClick={collapsePanel} />
@@ -524,12 +406,12 @@ export default function AmbientMusicPlayer() {
               <DiscArt size={56} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning={st.playing} ring />
               <div style={{ flex: 1, minWidth: 0, lineHeight: 1.2 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {track ? track.title : current.name}
                   </p>
                   {st.playing && <EqBars active color={accent} />}
                 </div>
-                <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.62)', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {track ? track.artist || 'Extrait 30 s' : st.playing ? 'En lecture…' : current.desc}
                 </p>
               </div>
@@ -568,7 +450,6 @@ export default function AmbientMusicPlayer() {
                 border: '1px solid var(--border-strong)',
                 borderRadius: 'var(--radius-pill)',
                 padding: '11px 36px 11px 12px',
-                fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
                 fontWeight: 500,
                 color: 'rgba(255,255,255,0.92)',
@@ -595,16 +476,9 @@ export default function AmbientMusicPlayer() {
           </div>
 
           {results.length > 0 && (
-            <div
-              style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--border-strong)',
-                borderRadius: 'var(--radius-lg)',
-                marginBottom: 10,
-                maxHeight: 230,
-                overflowY: 'auto',
-                overflowX: 'hidden',
-              }}
+            <Card
+              accent="var(--border-strong)"
+              style={{ padding: 0, marginBottom: 10, maxHeight: 230, overflowY: 'auto', overflowX: 'hidden' }}
             >
               {results.map((r, i) => (
                 <Button
@@ -631,16 +505,16 @@ export default function AmbientMusicPlayer() {
                     <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
                   )}
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</span>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{r.artist}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{r.artist}</span>
                   </span>
                 </Button>
               ))}
-            </div>
+            </Card>
           )}
 
           {query.trim().length >= 2 && !searching && results.length === 0 && (
-            <p style={{ margin: '0 0 10px', padding: '0 2px', fontFamily: 'Inter, sans-serif', fontSize: 11.5, color: 'var(--text-faint)' }}>Aucun résultat pour cette recherche.</p>
+            <p style={{ margin: '0 0 10px', padding: '0 2px', fontSize: 11.5, color: 'var(--text-faint)' }}>Aucun résultat pour cette recherche.</p>
           )}
 
           {/* Liste des ambiances — rangée compacte type "file d'attente" plutôt
@@ -671,10 +545,9 @@ export default function AmbientMusicPlayer() {
                 >
                   <DiscArt size={28} imgSrc={asset.img} bgPosition={asset.bgPosition} filter={asset.filter} spinning={isCur && st.playing} />
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.1, flex: 1 }}>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12.5, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
                     <span
                       style={{
-                        fontFamily: 'Inter, sans-serif',
                         fontSize: 10.5,
                         color: isCur ? 'rgba(255,255,255,0.6)' : 'var(--text-faint)',
                         letterSpacing: '0.01em',
@@ -695,9 +568,16 @@ export default function AmbientMusicPlayer() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 2px 0' }}>
             <span style={{ color: 'rgba(255,255,255,0.52)', display: 'inline-flex' }}>{volumeIcon}</span>
-            <CustomVolumeSlider value={st.volume} onChange={setVolume} />
+            <Slider
+              accent="teal"
+              min={0}
+              max={100}
+              value={Math.round(st.volume * 100)}
+              onChange={(e) => setVolume(Number(e.target.value) / 100)}
+              aria-label="Volume"
+            />
           </div>
-        </div>
+        </Card>
       )}
 
       <div ref={btnRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
@@ -721,40 +601,36 @@ export default function AmbientMusicPlayer() {
             }}
           >
             {st.playing && <EqBars active color={accent} />}
-            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chipLabel}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chipLabel}</span>
           </Button>
         </span>
-        <span className="amp-trigger amp-press" style={{ display: 'inline-flex' }}>
-          <button
-            onClick={togglePanel}
-            title="Ambiance musicale"
+        <span className="amp-trigger amp-press" style={{ display: 'inline-flex', position: 'relative' }}>
+          <IconButton
+            label="Ambiance musicale"
             aria-expanded={open}
-            aria-label="Ambiance musicale"
-            type="button"
+            icon={
+              st.playing ? (
+                <DiscArt size={38} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning ring={false} />
+              ) : (
+                <Music4 size={24} strokeWidth={1.8} color="rgba(255,255,255,0.8)" aria-hidden="true" />
+              )
+            }
+            onClick={togglePanel}
+            size={60}
             style={{
-              position: 'relative',
-              width: 60,
-              height: 60,
               borderRadius: '50%',
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               background: 'var(--surface-2)',
               border: `2px solid ${st.playing ? accent : 'var(--border-strong)'}`,
               boxShadow: st.playing ? `0 0 0 4px rgba(184, 243, 74,0.14), 0 10px 28px rgba(0,0,0,0.55)` : '0 10px 28px rgba(0,0,0,0.55)',
               transition: 'border-color 0.3s, box-shadow 0.3s',
-              cursor: 'pointer',
-              padding: 0,
             }}
-          >
-            {st.playing ? (
-              <DiscArt size={38} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning ring={false} />
-            ) : (
-              <Music4 size={24} strokeWidth={1.8} color="rgba(255,255,255,0.8)" aria-hidden="true" />
-            )}
-            {st.playing && <span style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)' }} />}
-          </button>
+          />
+          {st.playing && (
+            <span
+              aria-hidden="true"
+              style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)', pointerEvents: 'none' }}
+            />
+          )}
         </span>
       </div>
         </>

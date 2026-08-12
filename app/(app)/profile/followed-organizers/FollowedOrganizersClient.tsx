@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
-import { Avatar, Button, Card, Checkbox, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Avatar, Button, Card, Checkbox, DashboardPageHeader, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAGE_SIZE = 20
@@ -97,13 +97,14 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
   return (
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-        <div>
-          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
-            ← Retour au profil
-          </Link>
-          <h1 className="font-display lb-dashboard-title" style={{ marginTop: 10 }}>Organisateurs suivis</h1>
-          <p className="lb-dashboard-description">Gère tes abonnements et choisis précisément les alertes que tu veux recevoir.</p>
-        </div>
+        <DashboardPageHeader
+          backHref="/profile"
+          backLabel="Profil"
+          eyebrow="Mes favoris"
+          title="Organisateurs suivis"
+          description="Gère tes abonnements et choisis précisément les alertes que tu veux recevoir."
+          actions={<ActionLink href="/organizers">Découvrir</ActionLink>}
+        />
 
         {follows.length === 0 ? (
           <EmptyState

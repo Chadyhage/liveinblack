@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   MessageCircle,
-  User,
   Ticket,
   Heart,
   Users2,
@@ -50,22 +49,8 @@ export interface DashboardNavItem {
 // compte — les mélanger sous "Mon profil" les enterrait sans rapport
 // conceptuel avec paramètres/billets/aide.
 export const COMMON_NAV: DashboardNavItem[] = [
-  { label: 'Messages', href: '/messages', icon: MessageCircle },
-  {
-    // Renommé de "Mon profil" → "Mon compte" (retour client) : "Mes billets"
-    // ne doit pas donner l'impression de vivre dans un espace "profil
-    // public" — ce groupe est en réalité la gestion de compte (paramètres +
-    // billets), le label doit le dire plutôt que suggérer une vitrine
-    // publique. La route reste /profile (page d'accueil du groupe, cartes
-    // de raccourci), seul le libellé de nav change.
-    label: 'Mon compte',
-    href: '/profile',
-    icon: User,
-    children: [
-      { label: 'Paramètres du compte', href: '/profile/parametres', icon: Settings },
-      { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
-    ],
-  },
+  { label: 'Vue d’ensemble', href: '/profile', icon: LayoutDashboard },
+  { label: 'Mes billets', href: '/profile/billets', icon: Ticket },
   {
     label: 'Mes favoris',
     href: '/profile/interested-events',
@@ -76,6 +61,8 @@ export const COMMON_NAV: DashboardNavItem[] = [
     ],
   },
   { label: 'Mes soirées (équipe)', href: '/my-shifts', icon: Users2 },
+  { label: 'Messages', href: '/messages', icon: MessageCircle },
+  { label: 'Paramètres', href: '/profile/parametres', icon: Settings },
   { label: 'Aide & FAQ', href: '/help', icon: LifeBuoy },
 ]
 

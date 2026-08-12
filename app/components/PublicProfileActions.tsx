@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Button, Select, Textarea, Label } from '@/app/components/ui'
+import { Button, Select, Textarea, Label, Modal } from '@/app/components/ui'
 
 export default function PublicProfileActions({ targetUserId, displayName, isAuthenticated, isSelf }: { targetUserId: string; displayName: string; isAuthenticated: boolean; isSelf: boolean }) {
   const router = useRouter()
@@ -76,8 +76,8 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
       {status && !reportOpen && <p role="status" style={{ color: 'var(--text-muted)', fontSize: 12, margin: '8px 0 0' }}>{status}</p>}
 
       {reportOpen && (
-        <div role="dialog" aria-modal="true" aria-labelledby="profile-report-title" style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(3,4,8,.78)', display: 'grid', placeItems: 'center', padding: 20 }} onClick={() => setReportOpen(false)}>
-          <form onSubmit={submitReport} onClick={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: 430, padding: 24, borderRadius: 18, background: 'var(--surface-2)', border: '1px solid var(--border-strong)' }}>
+        <Modal onClose={() => setReportOpen(false)} maxWidth={430} ariaLabel={`Signaler ${displayName}`}>
+          <form onSubmit={submitReport}>
             <h2 id="profile-report-title" style={{ margin: '0 0 16px', fontSize: 21 }}>Signaler {displayName}</h2>
             <Label htmlFor="profile-report-reason" style={label}>Motif</Label>
             <Select
@@ -98,7 +98,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
             {status && <p role="status" style={{ color: status.startsWith('Merci') ? 'var(--teal)' : 'var(--pink)', fontSize: 12 }}>{status}</p>}
             <div style={{ display: 'flex', gap: 9, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setReportOpen(false)} style={{ ...secondary, flex: 1 }}>Fermer</Button><Button type="submit" disabled={busy} style={{ ...primary, flex: 1 }}>{busy ? 'Envoi…' : 'Envoyer'}</Button></div>
           </form>
-        </div>
+        </Modal>
       )}
     </>
   )

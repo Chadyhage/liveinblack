@@ -74,9 +74,24 @@ export async function listTicketForResale(caller: ResaleCaller, ticketCode: stri
   if (ticket.revoked) return { ok: false, status: 409, error: 'ticket_revoked' }
   if (ticket.checkedInAt) return { ok: false, status: 409, error: 'ticket_already_checked_in' }
   if (ticket.resaleListingId) return { ok: false, status: 409, error: 'already_listed' }
-  if (ticket.source !== 'paid' && !ticket.source?.startsWith('stripe') && !ticket.source?.startsWith('fedapay')) {
-    // Exclut explicitement 'guestlist'/'agent_*'/'free' — jamais revendables.
-    return { ok: false, status: 409, error: 'not_resellable_source' }
+  const paidNormally = ticket.source === 'paid' || Boolean(ticket.source?.startsWith('stripe')) || Boolean(ticket.source?.startsWith('fedapay'))
+  if (!paidNormally) {
+    // 'guestlist'/'free' restent exclus (aucun paiement à l'origine, la
+    // politique de revente ne s'applique qu'à un billet réellement acheté).
+    // 'agent_cash'/'agent_momo' : le document de revente précise qu'un
+    // billet vendu hors application par un agent devient revendable dès
+    // qu'il est rattaché au VRAI compte de son détenteur (#H3a, corrigé le
+    // 12/08/2026 — l'exclusion précédente était catégorique, sans cette
+    // distinction). `ticket.userId === caller.id` est déjà garanti par le
+    // garde ci-dessus ; ce qu'il faut encore vérifier, c'est que ce userId
+    // n'est PAS resté celui de l'agent (billet jamais résolu à un compte
+    // réel — voir lib/server/agentSales.ts::mintAgentSaleTickets).
+    const isAgentSale = ticket.source === 'agent_cash' || ticket.source === 'agent_momo'
+    const order = isAgentSale && ticket.orderId ? await Order.findById(ticket.orderId).select('agentUid').lean() : null
+    const linkedToRealAccount = Boolean(order?.agentUid) && order!.agentUid !== ticket.userId
+    if (!isAgentSale || !linkedToRealAccount) {
+      return { ok: false, status: 409, error: 'not_resellable_source' }
+    }
   }
   if ((ticket.resaleCount ?? 0) >= MAX_RESALES_PER_ADMISSION) return { ok: false, status: 409, error: 'resale_limit_reached' }
 

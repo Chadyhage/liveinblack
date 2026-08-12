@@ -6,6 +6,7 @@ import EventStaff from '../models/EventStaff'
 import EventPlaylist, { type EventPlaylistDoc, type PlaylistSong } from '../models/EventPlaylist'
 import Ticket from '../models/Ticket'
 import User from '../models/User'
+import { createNotification } from './notifications'
 
 // Port de src/components/PlaylistSystem.jsx + PlaylistDJPanel.jsx vers un
 // modèle serveur-only. Ferme l'audit H16 (firestore.rules:367-385 laissait
@@ -465,6 +466,11 @@ export async function removeSong(caller: PlaylistCaller, input: { eventId: strin
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }
   if (!canModeratePlaylist(caller.id, caller.roles, event, roster)) return { ok: false, status: 403, error: 'staff_only' }
 
+  // Lu AVANT le $pull — le document est perdu dès la suppression, or on a
+  // besoin de `addedBy`/`title` juste après pour notifier l'auteur (#E10).
+  const before = await EventPlaylist.findOne({ eventId, 'songs.id': songId }, { 'songs.$': 1 }).lean()
+  const removedSong = before?.songs?.[0] as PlaylistSong | undefined
+
   // `modifiedCount` (pas `matchedCount`) : le filtre top-level `{ eventId }`
   // matche dès que le document playlist existe, que `songId` y soit ou non —
   // seul `modifiedCount === 0` prouve qu'aucun élément du tableau `songs` n'a
@@ -479,6 +485,23 @@ export async function removeSong(caller: PlaylistCaller, input: { eventId: strin
   // cours retire aussi la bannière "En ce moment" — pas de bannière fantôme
   // pointant vers un son qui n'existe plus.
   await EventPlaylist.updateOne({ eventId, 'nowPlaying.id': songId }, { $set: { nowPlaying: null } })
+
+  // Notifie l'auteur pour qu'il en reproposer un autre (#E10, confirmé en
+  // réunion live le 11/08/2026) — jamais pour son propre retrait (le DJ peut
+  // aussi être client sur le même événement), jamais bloquant si ça échoue.
+  if (removedSong?.addedBy && removedSong.addedBy !== caller.id) {
+    try {
+      await createNotification({
+        userId: removedSong.addedBy,
+        type: 'playlist',
+        title: 'Ton titre a été retiré de la playlist',
+        body: `« ${removedSong.title} » a été retiré par l'équipe de ${event.name} — tu peux en reproposer un autre.`,
+        link: `/playlist/${eventId}`,
+      })
+    } catch (err) {
+      console.error('[playlist] notification retrait titre échouée:', err)
+    }
+  }
 
   return { ok: true }
 }

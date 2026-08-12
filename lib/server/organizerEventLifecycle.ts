@@ -7,6 +7,13 @@ import ResaleListing from '../models/ResaleListing'
 import Boost from '../models/Boost'
 import BoostSlot from '../models/BoostSlot'
 import OrganizerProfile from '../models/OrganizerProfile'
+import Ticket from '../models/Ticket'
+import GroupMembership from '../models/GroupMembership'
+import EventOrder from '../models/EventOrder'
+import EventOrderLog from '../models/EventOrderLog'
+import EventPlaylist from '../models/EventPlaylist'
+import SeatHold from '../models/SeatHold'
+import EventInterest from '../models/EventInterest'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyScheduleChange } from './organizerFollowNotifications'
@@ -261,6 +268,21 @@ export async function deleteOrganizerEvent(caller: LifecycleCaller, eventId: str
     // supprimé (StudioClient) — le média lui-même reste (photo/vidéo réelle),
     // seule la référence orpheline vers l'événement disparu est effacée.
     OrganizerProfile.updateMany({ 'media.eventId': eventId }, { $set: { 'media.$[m].eventId': null } }, { arrayFilters: [{ 'm.eventId': eventId }] }),
+    // Collections restantes pouvant exister même quand bookingCount===0 (ex.
+    // billets guestlist sans Order payé, intérêt/playlist sans aucune vente) —
+    // sans ce nettoyage elles restent orphelines, référençant un eventId qui
+    // n'existe plus (bug confirmé le 11/08/2026 : un event supprimé restait
+    // visible via une entrée fantôme ailleurs dans l'app). Aucune de ces
+    // collections n'a de valeur comptable propre une fois l'event supprimé
+    // (contrairement à Boost/EventPayout/EventRefund, jamais touchés ici).
+    Ticket.deleteMany({ eventId }),
+    GroupMembership.deleteMany({ eventId }),
+    EventOrder.deleteOne({ eventId }),
+    EventOrderLog.deleteOne({ eventId }),
+    EventPlaylist.deleteOne({ eventId }),
+    SeatHold.deleteMany({ eventId }),
+    EventInterest.deleteMany({ eventId }),
+    ResaleListing.deleteMany({ eventId }),
   ])
 
   return { ok: true, deleted: true }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SettingsPanel, type ProfilUser } from '../ProfilClient'
+import styles from './ParametresClient.module.css'
 
 // SettingsPanel reste défini dans ProfilClient.tsx (pas déplacé — trop de
 // sous-composants privés partagés, IdentityCard/EmailCard/PasswordCard etc.,
@@ -12,5 +13,5 @@ import { SettingsPanel, type ProfilUser } from '../ProfilClient'
 export default function ParametresClient({ initialUser }: { initialUser: ProfilUser }) {
   const router = useRouter()
   const [user, setUser] = useState<ProfilUser>(initialUser)
-  return <SettingsPanel user={user} setUser={setUser} onBack={() => router.push('/profile')} />
+  return <div className={styles.root}><SettingsPanel user={user} setUser={setUser} onBack={() => router.push('/profile')} /></div>
 }

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { formatMoney } from './types'
-import { Button, SkeletonList } from '@/app/components/ui'
+import { Card, EmptyState, ImmersiveDialog, SkeletonList } from '@/app/components/ui'
+import styles from './BookingsPanel.module.css'
 
 // Port de BookingsPanel (MesEvenementsPage.jsx lignes 3727-3884) — panneau
 // plein écran (pas une petite modale) de détail des réservations d'un
@@ -49,97 +50,76 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
   }, [event.id])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'var(--obsidian)', overflowY: 'auto' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '20px 22px', borderBottom: '1px solid var(--border)' }}>
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Retour"
-          style={{ padding: 0, color: '#fff', fontSize: 20 }}
-        >
-          ←
-        </Button>
-        <div>
-          <h1 className="font-display" style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }}>{event.name}</h1>
-          <p style={{ font: '500 12px Inter, sans-serif', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-            Réservations · {data?.ticketCount ?? 0} billet(s)
-          </p>
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '20px 22px 60px' }}>
-        {error && <p style={{ color: 'var(--pink)', fontSize: 13 }}>{error}</p>}
+    <ImmersiveDialog
+      title={event.name}
+      subtitle={`Réservations · ${data?.ticketCount ?? 0} billet${data?.ticketCount === 1 ? '' : 's'}`}
+      onClose={onClose}
+      maxWidth={920}
+    >
+        {error && <p className={styles.error}>{error}</p>}
         {!data && !error && <SkeletonList rows={3} columns={2} />}
 
         {data && data.ticketCount === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: 13, margin: 0 }}>Aucune réservation pour l&rsquo;instant.</p>
-          </div>
+          <div className={styles.empty}><EmptyState title="Aucune réservation" description="Les billets apparaîtront ici dès la première commande." /></div>
         )}
 
         {data && data.ticketCount > 0 && (
           <>
-            <section style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
-                Résumé par type de place
-              </h2>
-              <div style={{ display: 'grid', gap: 8 }}>
+            <div className={styles.overview}>
+              <Card className={styles.metric}><span>Billets vendus</span><strong>{data.ticketCount}</strong></Card>
+              <Card className={styles.metric}><span>Types de place</span><strong>{data.summaryByPlace.length}</strong></Card>
+              <Card className={styles.metric}><span>Précommandes</span><strong>{data.preorderSummary.reduce((sum, row) => sum + row.qty, 0)}</strong></Card>
+            </div>
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}><div><h2>Répartition des places</h2><p>Volume de billets par catégorie</p></div></div>
+              <div className={styles.summaryGrid}>
                 {data.summaryByPlace.map((row) => (
-                  <div key={row.place} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
-                    <span style={{ color: '#fff', fontSize: 13 }}>{row.place}</span>
-                    <span style={{ color: 'var(--gold)', fontSize: 13, fontWeight: 700 }}>{row.count}</span>
-                  </div>
+                  <Card key={row.place} className={styles.summaryRow}>
+                    <span>{row.place}</span><strong>{row.count}</strong>
+                  </Card>
                 ))}
               </div>
             </section>
 
             {data.preorderSummary.length > 0 && (
-              <section style={{ marginBottom: 20 }}>
-                <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
-                  Précommandes (stock à prévoir)
-                </h2>
-                <div style={{ display: 'grid', gap: 8 }}>
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}><div><h2>Stock à prévoir</h2><p>Précommandes confirmées pour l’événement</p></div></div>
+                <div className={styles.summaryGrid}>
                   {data.preorderSummary.map((row) => (
-                    <div key={row.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
-                      <span style={{ color: '#fff', fontSize: 13 }}>{row.name}</span>
-                      <span style={{ color: 'var(--gold)', fontSize: 13, fontWeight: 700 }}>× {row.qty}</span>
-                    </div>
+                    <Card key={row.name} className={styles.summaryRow}>
+                      <span>{row.name}</span><strong>× {row.qty}</strong>
+                    </Card>
                   ))}
                 </div>
               </section>
             )}
 
-            <section>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
-                Détail par billet
-              </h2>
-              <div style={{ display: 'grid', gap: 8 }}>
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}><div><h2>Détail des billets</h2><p>Acheteurs, places et options associées</p></div></div>
+              <div className={styles.ticketList}>
                 {data.tickets.map((t) => (
-                  <div key={t.ticketCode} style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                      <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>
-                        {t.place} · {t.ticketCode}
-                      </span>
-                      <span style={{ color: 'var(--gold)', fontSize: 13, fontWeight: 700 }}>{formatMoney(t.totalPrice, event.currency)}</span>
+                  <Card key={t.ticketCode} className={styles.ticket}>
+                    <div className={styles.ticketTop}>
+                      <div><p className={styles.ticketName}>{t.place}</p><p className={styles.ticketMeta}>{t.buyerName || 'Acheteur non renseigné'} · {t.ticketCode}</p></div>
+                      <span className={styles.price}>{formatMoney(t.totalPrice, event.currency)}</span>
                     </div>
-                    {t.buyerName && <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '4px 0 0' }}>{t.buyerName}</p>}
                     {t.preorders.length > 0 && (
-                      <ul style={{ margin: '8px 0 0', padding: '0 0 0 16px', color: 'var(--text-faint)', fontSize: 11.5 }}>
+                      <ul className={styles.preorders}>
                         {t.preorders.map((p, i) => (
                           <li key={i}>
                             {p.qty}× {p.name} — {formatMoney(p.price * p.qty, event.currency)}
-                            {p.showLabel && <span style={{ display: 'block', color: 'var(--teal)' }}>Show : {p.showLabel}{p.showInfo ? ` · ${p.showInfo}` : ''}</span>}
+                            {p.showLabel && <span className={styles.show}>Show : {p.showLabel}{p.showInfo ? ` · ${p.showInfo}` : ''}</span>}
                           </li>
                         ))}
                       </ul>
                     )}
-                  </div>
+                  </Card>
                 ))}
               </div>
             </section>
           </>
         )}
-      </div>
-    </div>
+    </ImmersiveDialog>
   )
 }

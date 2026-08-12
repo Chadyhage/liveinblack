@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 
 // Port de src/pages/PublicPrestatairePage.jsx (openServiceInquiry /
 // sendServiceInquiry) — "Demander ce service" par item de catalogue, sur la
@@ -22,9 +22,6 @@ import { Button, Textarea, Label } from '@/app/components/ui'
 // VRAI catalogue Mongo du prestataire (voir sendMessage) — impossible de
 // forger un nom/prix arbitraire ou de référencer l'item d'un AUTRE
 // prestataire depuis le client.
-
-const FONT = 'Inter, system-ui, sans-serif'
-
 const inquiryBtn: React.CSSProperties = {
   flex: '1 1 160px',
   minHeight: 40,
@@ -37,7 +34,6 @@ const inquiryBtn: React.CSSProperties = {
   border: '1px solid var(--border-strong)',
   background: 'var(--violet-cta)',
   color: 'var(--primary-ink)',
-  fontFamily: FONT,
   fontSize: 12,
   fontWeight: 500,
   textTransform: 'none',
@@ -56,7 +52,6 @@ const primaryBtn: React.CSSProperties = {
   cursor: 'pointer',
   background: 'var(--violet-cta)',
   color: 'var(--primary-ink)',
-  fontFamily: FONT,
   fontSize: 13,
   fontWeight: 500,
   textTransform: 'none',
@@ -69,7 +64,6 @@ const ghostBtn: React.CSSProperties = {
   border: '1px solid var(--border-strong)',
   background: 'var(--surface)',
   color: 'var(--text)',
-  fontFamily: FONT,
   fontSize: 13,
   fontWeight: 600,
   cursor: 'pointer',
@@ -203,38 +197,20 @@ export default function ProviderCatalogInquiry({
       </Button>
 
       {open && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={closeSheet} />
-          <div
-            style={{
-              position: 'relative',
-              width: 'min(100%, 520px)',
-              maxHeight: '88vh',
-              overflowY: 'auto',
-              borderRadius: '20px 20px 0 0',
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              boxShadow: '0 -26px 80px rgba(0,0,0,.65)',
-              padding: '18px 18px 24px',
-            }}
-          >
-            <div style={{ width: 44, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
+        <Modal onClose={closeSheet} maxWidth={520} zIndex={3200} ariaLabel={`Demander ${item.name} à ${providerName}`}>
             <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 7px' }}>
               Demande au prestataire
             </p>
-            <h3 style={{ fontFamily: FONT, fontSize: 22, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: 'var(--text)' }}>
+            <h3 style={{ fontSize: 22, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: 'var(--text)' }}>
               Envoyer ce service à {providerName}
             </h3>
 
-            <div
+            <Card
               style={{
                 display: 'grid',
                 gridTemplateColumns: item.image ? '70px 1fr' : '1fr',
                 gap: 13,
                 padding: 12,
-                borderRadius: 16,
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
                 marginBottom: 14,
               }}
             >
@@ -245,18 +221,18 @@ export default function ProviderCatalogInquiry({
               )}
               <div style={{ minWidth: 0 }}>
                 {item.category && (
-                  <p style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 5px' }}>
                     {item.category}
                   </p>
                 )}
-                <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>{item.name}</p>
-                <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 800, color: 'var(--gold)', margin: '8px 0 0' }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>{item.name}</p>
+                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold)', margin: '8px 0 0' }}>
                   {Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                 </p>
               </div>
-            </div>
+            </Card>
 
-            <Label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
+            <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
               Message
             </Label>
             <Textarea
@@ -271,17 +247,16 @@ export default function ProviderCatalogInquiry({
                 background: 'var(--obsidian)',
                 color: 'var(--text)',
                 padding: 14,
-                fontFamily: FONT,
                 fontSize: 14,
                 lineHeight: 1.55,
               }}
             />
-            <p style={{ fontFamily: FONT, fontSize: 11, lineHeight: 1.55, color: 'var(--text-faint)', margin: '9px 0 16px' }}>
+            <p style={{ fontSize: 11, lineHeight: 1.55, color: 'var(--text-faint)', margin: '9px 0 16px' }}>
               Le prestataire recevra la fiche du service dans la conversation, puis ton message. Vous gérez ensuite les conditions et le paiement entre vous.
             </p>
 
             {error && (
-              <p role="alert" style={{ fontFamily: FONT, fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
+              <p role="alert" style={{ fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
                 {error}
               </p>
             )}
@@ -300,8 +275,7 @@ export default function ProviderCatalogInquiry({
                 Envoyer la demande
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

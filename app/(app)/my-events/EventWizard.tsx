@@ -7,8 +7,8 @@ import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/mon
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
-import { Button, Input, Textarea, Select, Spinner } from '@/app/components/ui'
-import { IconClose, InputField, LockIcon, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
+import { Button, Card, Input, Textarea, Select, Spinner } from '@/app/components/ui'
+import { IconClose, InputField, LockIcon, NumberInputField, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
 
 // Port du wizard de création/édition d'événement en 5 étapes
 // (src/pages/MesEvenementsPage.jsx, vue 'create' — lignes ~2140-3274 pour le
@@ -73,7 +73,7 @@ interface ServerEventDetail {
   playlist: boolean
   preorder: boolean
   menu: MenuItemRow[] | null
-  artists: { name: string; role: string }[]
+  artists: { name: string; role: string; providerId?: string | null }[]
   dj: string
   performers: string[]
   minAge: number
@@ -120,7 +120,7 @@ interface EventFormInput {
   playlist?: boolean
   preorder?: boolean
   menu?: MenuItemRow[] | null
-  artists?: { name: string; role?: string }[]
+  artists?: { name: string; role?: string; providerId?: string | null }[]
   dj?: string
   performers?: string[]
   minAge?: number
@@ -131,6 +131,9 @@ interface EventFormInput {
 interface ArtistRow {
   name: string
   role: string
+  // Lien optionnel vers un vrai profil prestataire (#E7) — voir
+  // lib/models/Event.ts::artistSchema.providerId.
+  providerId?: string | null
 }
 
 interface PlaceRow {
@@ -174,17 +177,10 @@ const MAX_PLACE_PHOTOS = 6
 // ─────────────────────────────────────────────────────────────────────────
 
 const S = {
-  card: {
-    background: 'var(--surface)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 12,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-  } as React.CSSProperties,
   inputBase: {
     background: '#0b0c12',
     border: '1px solid rgba(255,255,255,0.12)',
     borderRadius: 10,
-    fontFamily: 'Inter, sans-serif',
     fontSize: 14,
     fontWeight: 500,
     color: 'rgba(255,255,255,0.92)',
@@ -194,7 +190,6 @@ const S = {
     boxSizing: 'border-box',
   } as React.CSSProperties,
   label: {
-    fontFamily: 'Inter, sans-serif',
     fontSize: 12,
     fontWeight: 600,
     color: 'rgba(255,255,255,0.6)',
@@ -206,7 +201,6 @@ const S = {
     background: 'var(--violet-cta)',
     border: '1px solid rgba(255,255,255,0.14)',
     borderRadius: 3,
-    fontFamily: 'Inter, sans-serif',
     fontSize: 14,
     fontWeight: 500,
     textTransform: 'none',
@@ -221,7 +215,6 @@ const S = {
     background: 'rgba(255,255,255,0.08)',
     border: '1px solid rgba(255,255,255,0.14)',
     borderRadius: 12,
-    fontFamily: 'Inter, sans-serif',
     fontSize: 13,
     fontWeight: 600,
     color: 'rgba(255,255,255,0.9)',
@@ -419,6 +412,40 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   const [timeEnd, setTimeEnd] = useState('')
   const [showArtistSection, setShowArtistSection] = useState(false)
   const [artists, setArtists] = useState<ArtistRow[]>([])
+  // Recherche de prestataire à associer à une ligne du line-up (#E7,
+  // confirmé en réunion live le 11/08/2026) — index de la ligne ouverte,
+  // requête, résultats. Même seuil (2 caractères, 350ms) que la recherche
+  // staff d'EventStaffModal.tsx.
+  const [providerSearchFor, setProviderSearchFor] = useState<number | null>(null)
+  const [providerQuery, setProviderQuery] = useState('')
+  const [providerResults, setProviderResults] = useState<{ userId: string; name: string; headline?: string }[]>([])
+  const [providerSearching, setProviderSearching] = useState(false)
+
+  useEffect(() => {
+    // Résultats trop courts/absents : dérivés directement au rendu via
+    // `providerQuery.trim().length < 2` plus bas (aucun rendu de résultat
+    // sous 2 caractères), donc pas besoin de reset ici — évite un setState
+    // synchrone dans le corps de l'effet (même pattern qu'EventStaffModal.tsx).
+    const q = providerQuery.trim()
+    if (providerSearchFor === null || q.length < 2) return
+    let cancelled = false
+    const t = setTimeout(async () => {
+      setProviderSearching(true)
+      try {
+        const res = await fetch(`/api/providers?q=${encodeURIComponent(q)}`)
+        const data = await res.json().catch(() => null)
+        if (!cancelled) setProviderResults(res.ok && data?.ok ? data.providers.slice(0, 6) : [])
+      } catch {
+        if (!cancelled) setProviderResults([])
+      } finally {
+        if (!cancelled) setProviderSearching(false)
+      }
+    }, 350)
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [providerQuery, providerSearchFor])
   const [category, setCategory] = useState('')
   const [customGenre, setCustomGenre] = useState('')
   const [partyType, setPartyType] = useState('')
@@ -495,7 +522,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     setTimeStart(ev.time || '')
     setTimeEnd(ev.endTime || '')
     const filteredArtists = (ev.artists || []).filter((a) => a.name?.trim())
-    setArtists(filteredArtists.map((a) => ({ name: a.name, role: a.role || 'DJ' })))
+    setArtists(filteredArtists.map((a) => ({ name: a.name, role: a.role || 'DJ', providerId: a.providerId || null })))
     setShowArtistSection(filteredArtists.length > 0)
     if (ev.category && GENRES.includes(ev.category)) {
       setCategory(ev.category)
@@ -752,7 +779,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   function buildPayload(): EventFormInput {
     const finalCategory = category === 'Autre' ? customGenre.trim() || 'Autre' : category
     const tags = [partyType, ...musicStyles, ...ambiances].filter(Boolean).slice(0, 6)
-    const filteredArtists = artists.filter((a) => a.name.trim()).map((a) => ({ name: a.name.trim(), role: a.role }))
+    const filteredArtists = artists.filter((a) => a.name.trim()).map((a) => ({ name: a.name.trim(), role: a.role, providerId: a.providerId || null }))
     const dj = filteredArtists.length > 0 ? filteredArtists.map((a) => a.name).join(', ') : ''
     const validMenuItems = menuItems
       .filter((i) => i.name.trim() && i.price > 0)
@@ -768,10 +795,15 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
     const menuNameSet = new Set(validMenuItems.map((i) => i.name.trim()))
     const anyIncluded = places.some((p) => p.included.length > 0)
 
+    // Un "avantage inclus" n'est plus obligatoirement un article réel du
+    // menu (#E6, confirmé en réunion live le 11/08/2026 — "Vestiaire offert"
+    // n'a jamais de raison d'être un item de précommande facturable) : seul
+    // un nom non vide est requis désormais. `menuNameSet` ne sert plus qu'à
+    // l'affichage (badge "correspond à un article de précommande" côté UI),
+    // jamais à filtrer/perdre silencieusement une saisie organisateur.
     function sanitizeIncluded(list: { name: string; qty: number }[]) {
-      return list
-        .map((inc) => ({ name: inc.name.trim(), qty: Math.max(1, Number(inc.qty) || 1) }))
-        .filter((inc) => inc.name && menuNameSet.has(inc.name))
+      void menuNameSet
+      return list.map((inc) => ({ name: inc.name.trim(), qty: Math.max(1, Number(inc.qty) || 1) })).filter((inc) => inc.name)
     }
 
     const locationValue = [venueName.trim(), address.trim()].filter(Boolean).join(', ')
@@ -903,10 +935,10 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)" />
           </svg>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: '0 0 4px' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: '0 0 4px' }}>
               Événement annulé
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
               Cet événement a été annulé. Les modifications sont désactivées. Pour relancer un événement similaire, crée-en un nouveau depuis ton tableau de bord.
             </p>
           </div>
@@ -938,7 +970,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           <p className="font-display" style={{ fontSize: 22, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
             {eventId ? "Modifier l'événement" : 'Créer un événement'}
           </p>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+          <p style={{ fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
             Étape {step + 1}/{STEP_NAMES.length} — {STEP_NAMES[step]}
           </p>
         </div>
@@ -970,10 +1002,10 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             <path d="M8 11 V7 a4 4 0 0 1 8 0 V11" />
           </svg>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 4px' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 4px' }}>
               {totalSold} billet{totalSold > 1 ? 's' : ''} déjà vendu{totalSold > 1 ? 's' : ''}
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d&apos;événement, âge minimum, options, date de publication). Tu peux toujours modifier la description, l&apos;affiche, les artistes et la date de clôture.
             </p>
           </div>
@@ -983,7 +1015,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
       {/* Erreur de sauvegarde — visible quelle que soit l'étape courante,
           car une erreur de validation serveur peut ramener l'utilisateur à
           une étape antérieure à celle du récapitulatif (étape 4). */}
-      {saveError && <p style={{ fontFamily: 'Inter, sans-serif', color: 'var(--pink)', fontSize: 12.5, margin: 0 }}>{saveError}</p>}
+      {saveError && <p style={{ color: 'var(--pink)', fontSize: 12.5, margin: 0 }}>{saveError}</p>}
 
       {/* ── Step 0 : Bases ── */}
       {step === 0 && (
@@ -1016,9 +1048,9 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Clique pour ajouter l&apos;affiche</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Format recommandé : 1200 × 630 px</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.38)' }}>JPG, PNG ou WEBP — 5 Mo maximum</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Clique pour ajouter l&apos;affiche</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Format recommandé : 1200 × 630 px</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)' }}>JPG, PNG ou WEBP — 5 Mo maximum</p>
                 </div>
               )}
               {posterUploading && (
@@ -1028,7 +1060,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               )}
             </Button>
             <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePoster} />
-            {errors.image && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
+            {errors.image && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
           </div>
 
           {/* Vidéo d'aperçu */}
@@ -1051,13 +1083,13 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   <video src={videoPreview} controls muted playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'cover', background: '#05060b' }} />
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'var(--teal)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
                     </div>
                     <Button
                       variant="danger"
                       onClick={clearVideo}
-                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontFamily: 'Inter, sans-serif', fontSize: 12 }}
+                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontSize: 12 }}
                     >
                       Retirer
                     </Button>
@@ -1076,8 +1108,8 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     </svg>
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
-                    <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 30 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
+                    <span style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 30 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
                   </span>
                 </Button>
               )}
@@ -1088,7 +1120,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               )}
             </div>
             <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" style={{ display: 'none' }} onChange={handleVideo} />
-            {errors.video && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.video}</p>}
+            {errors.video && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.video}</p>}
           </div>
 
           {/* Champs de base */}
@@ -1103,7 +1135,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 <InputField label="Heure début" type="time" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} locked={locked} />
                 <InputField label="Heure fin" type="time" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} locked={locked} />
               </div>
-              {errors.timeEnd && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
+              {errors.timeEnd && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
@@ -1117,50 +1149,119 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             </div>
 
             {/* DJs / Artistes */}
-            <div style={{ ...S.card, padding: 12, gridColumn: '1 / -1' }}>
+            <Card style={{ padding: 12, gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                 <div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>DJs / Artistes</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>DJs / Artistes</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
                 </div>
                 <Toggle value={showArtistSection} onChange={() => setShowArtistSection((v) => !v)} />
               </div>
               {showArtistSection && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {artists.map((a, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 130, flexShrink: 0 }}>
-                        <Select
-                          value={a.role}
-                          onChange={(value) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, role: value } : x)))}
-                          options={ARTIST_ROLES.map((r) => ({ value: r, label: r }))}
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 130, flexShrink: 0 }}>
+                          <Select
+                            value={a.role}
+                            onChange={(value) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, role: value } : x)))}
+                            options={ARTIST_ROLES.map((r) => ({ value: r, label: r }))}
+                          />
+                        </div>
+                        <Input
+                          style={{ ...S.inputBase, flex: 1 }}
+                          placeholder="Nom de l'artiste"
+                          value={a.name}
+                          onChange={(e) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: e.target.value, providerId: null } : x)))}
                         />
+                        <Button
+                          variant="ghost"
+                          title={a.providerId ? 'Prestataire associé — cliquer pour changer' : 'Associer un profil prestataire existant'}
+                          onClick={() => {
+                            setProviderSearchFor(providerSearchFor === i ? null : i)
+                            setProviderQuery('')
+                          }}
+                          style={{
+                            flexShrink: 0,
+                            width: 30,
+                            height: 30,
+                            minHeight: 30,
+                            minWidth: 30,
+                            borderRadius: 8,
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: a.providerId ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid rgba(255,255,255,0.14)',
+                            background: a.providerId ? 'rgba(184, 243, 74,0.14)' : 'rgba(255,255,255,0.06)',
+                            color: a.providerId ? 'var(--teal)' : 'rgba(255,255,255,0.7)',
+                            fontSize: 15,
+                            fontWeight: 800,
+                          }}
+                        >
+                          +
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))}
+                          style={{ background: 'none', border: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
+                        >
+                          <IconClose size={13} color="rgba(220,100,100,0.9)" />
+                        </Button>
                       </div>
-                      <Input
-                        style={{ ...S.inputBase, flex: 1 }}
-                        placeholder="Nom de l'artiste"
-                        value={a.name}
-                        onChange={(e) => setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: e.target.value } : x)))}
-                      />
-                      <Button
-                        variant="ghost"
-                        onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))}
-                        style={{ background: 'none', border: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
-                      >
-                        <IconClose size={13} color="rgba(220,100,100,0.9)" />
-                      </Button>
+                      {a.providerId && (
+                        <p style={{ fontSize: 11, color: 'var(--teal)', margin: '0 0 0 138px' }}>
+                          Lié à un profil prestataire — alimentera son historique d&apos;événements.
+                        </p>
+                      )}
+                      {providerSearchFor === i && (
+                        <div style={{ margin: '0 0 4px 138px', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <Input
+                            style={{ ...S.inputBase }}
+                            placeholder="Rechercher un prestataire par nom…"
+                            value={providerQuery}
+                            onChange={(e) => setProviderQuery(e.target.value)}
+                            autoFocus
+                          />
+                          {providerQuery.trim().length > 0 && providerQuery.trim().length < 2 ? (
+                            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Tape au moins 2 caractères.</p>
+                          ) : providerQuery.trim().length >= 2 ? (
+                            providerSearching ? (
+                              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Recherche…</p>
+                            ) : providerResults.length === 0 ? (
+                              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Aucun prestataire trouvé.</p>
+                            ) : (
+                              providerResults.map((p) => (
+                                <button
+                                  key={p.userId}
+                                  type="button"
+                                  onClick={() => {
+                                    setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: p.name, providerId: p.userId } : x)))
+                                    setProviderSearchFor(null)
+                                  }}
+                                  style={{ textAlign: 'left', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}
+                                >
+                                  {p.name}
+                                  {p.headline && <span style={{ color: 'rgba(255,255,255,0.45)' }}> · {p.headline}</span>}
+                                </button>
+                              ))
+                            )
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   ))}
                   <Button
                     variant="secondary"
                     onClick={() => setArtists((prev) => [...prev, { name: '', role: 'DJ' }])}
-                    style={{ padding: '10px', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(255,255,255,0.08)' }}
+                    style={{ padding: '10px', fontSize: 13, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(255,255,255,0.08)' }}
                   >
                     + Ajouter un DJ / artiste
                   </Button>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
 
           {/* Genre musical */}
@@ -1181,7 +1282,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     display: 'block',
                     border: category === g ? '1px solid rgba(184, 243, 74,0.55)' : '1px solid rgba(255,255,255,0.10)',
                     background: category === g ? 'rgba(184, 243, 74,0.10)' : 'var(--surface)',
-                    fontFamily: 'Inter, sans-serif',
                     fontSize: 12,
                     fontWeight: 600,
                     color: category === g ? 'var(--gold)' : 'rgba(255,255,255,0.6)',
@@ -1210,18 +1310,18 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           {/* Ciblage & recommandations */}
           <div>
             <label style={{ ...S.label, marginBottom: 4 }}>Ciblage & recommandations</label>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
               Optionnel mais recommandé : ta soirée sera proposée en priorité aux clients dont les goûts correspondent.
             </p>
 
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Type de soirée</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Type de soirée</p>
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
               {EVENT_TYPES.map((t) => (
                 <Pill key={t} label={t} active={partyType === t} onClick={() => setPartyType((cur) => (cur === t ? '' : t))} accent="var(--violet)" />
               ))}
             </div>
 
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Styles musicaux joués</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Styles musicaux joués</p>
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
               {MUSIC_STYLES.map((mstyle) => (
                 <Pill
@@ -1234,7 +1334,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               ))}
             </div>
 
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
               {AMBIANCES.map((a) => {
                 const active = ambiances.includes(a)
@@ -1272,7 +1372,6 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     border: minAge === value ? '1px solid rgba(184, 243, 74,0.55)' : '1px solid rgba(255,255,255,0.10)',
                     background: minAge === value ? 'rgba(184, 243, 74,0.12)' : 'var(--surface)',
                     color: minAge === value ? 'var(--teal)' : 'rgba(255,255,255,0.6)',
-                    fontFamily: 'Inter, sans-serif',
                     fontSize: 12,
                     fontWeight: 600,
                     letterSpacing: '0.04em',
@@ -1301,7 +1400,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 }}
                 style={{ ...S.inputBase, width: 130, padding: '8px 14px', opacity: locked ? 0.55 : 1, cursor: locked ? 'not-allowed' : 'text' }}
               />
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{minAge === 0 ? 'Tout public' : `${minAge} ans minimum`}</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{minAge === 0 ? 'Tout public' : `${minAge} ans minimum`}</span>
             </div>
           </div>
 
@@ -1316,7 +1415,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Places &amp; Prix</p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Configure chaque type de place que tu veux proposer.</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Configure chaque type de place que tu veux proposer.</p>
           </div>
 
           {(() => {
@@ -1334,7 +1433,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     <line x1="2" y1="10" x2="22" y2="10" />
                   </svg>
                 )}
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4 }}>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4 }}>
                   Tu fixes tes prix en <strong style={{ color: isXof ? 'var(--teal)' : 'var(--gold)' }}>{currencySymbol(currency)}</strong> — paiement par {payRailLabel(currency)}.
                 </p>
               </div>
@@ -1345,12 +1444,12 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
             const placeHasSales = place.sold > 0
             const menuChoices = menuItems.filter((m) => m.name.trim() && m.price > 0)
             return (
-              <div key={place.key} style={{ ...S.card, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, ...(placeHasSales ? { borderColor: 'rgba(184, 243, 74,0.25)' } : {}) }}>
+              <Card key={place.key} accent={placeHasSales ? 'rgba(184, 243, 74,0.25)' : undefined} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
                     {placeHasSales && (
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 8, padding: '4px 10px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 8, padding: '4px 10px' }}>
                         {place.sold} vendu{place.sold > 1 ? 's' : ''}
                       </span>
                     )}
@@ -1364,7 +1463,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                       }}
                       disabled={placeHasSales}
                       title={placeHasSales ? 'Impossible — cette place a déjà été vendue' : undefined}
-                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', opacity: placeHasSales ? 0.4 : 1, fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#ff9ed2' }}
+                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', opacity: placeHasSales ? 0.4 : 1, fontSize: 12, color: '#ff9ed2' }}
                     >
                       Supprimer
                     </Button>
@@ -1380,55 +1479,50 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                     error={errors[`place_${place.key}`]}
                     locked={placeHasSales}
                   />
-                  <InputField
+                  <NumberInputField
                     label={`Prix (${currencySymbol(currency)})`}
-                    type="number"
                     placeholder="0 = gratuit"
                     value={place.price}
-                    onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, price: Number(e.target.value) || 0 } : p)))}
+                    min={0}
+                    onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, price: v } : p)))}
                     locked={placeHasSales}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div>
-                    <InputField
+                    <NumberInputField
                       label="Quantité disponible"
-                      type="number"
                       placeholder="Ex: 100"
                       value={place.qty}
                       min={placeHasSales ? place.sold : 0}
-                      onChange={(e) => {
-                        const newQty = parseInt(e.target.value, 10) || 0
-                        if (placeHasSales && newQty < place.sold) return
-                        setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, qty: newQty } : p)))
-                      }}
+                      onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, qty: v } : p)))}
                     />
                     {placeHasSales && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>
+                      <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>
                         Minimum : {place.sold} (déjà vendu{place.sold > 1 ? 's' : ''})
                       </p>
                     )}
                   </div>
                   <div>
-                    <InputField
+                    <NumberInputField
                       label={place.groupType === 'group' ? 'Réservations de groupe/compte' : 'Max/compte'}
-                      type="number"
                       placeholder="0 = illimité"
                       value={place.groupType === 'group' ? 1 : place.maxPerAccount}
-                      onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, maxPerAccount: Number(e.target.value) || 0 } : p)))}
+                      min={0}
+                      onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, maxPerAccount: v } : p)))}
                       locked={placeHasSales || place.groupType === 'group'}
                     />
                     {place.groupType === 'group' && (
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
+                      <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
                     )}
                   </div>
                 </div>
 
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Place de groupe</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Place de groupe</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
                   </div>
                   <Toggle
                     value={place.groupType === 'group'}
@@ -1448,24 +1542,27 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <p style={{ ...S.label, color: 'var(--teal)' }}>Capacité du groupe</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <InputField
+                      <NumberInputField
                         label="Min personnes"
-                        type="number"
                         placeholder="Ex: 8"
-                        value={place.groupMin || ''}
-                        onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMin: Number(e.target.value) || 0 } : p)))}
+                        value={place.groupMin || 0}
+                        min={0}
+                        onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMin: v } : p)))}
                         locked={placeHasSales}
                       />
-                      <InputField
+                      <NumberInputField
                         label="Max personnes"
-                        type="number"
                         placeholder="Ex: 12"
-                        value={place.groupMax || ''}
-                        onChange={(e) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMax: Number(e.target.value) || 0 } : p)))}
+                        value={place.groupMax || 0}
+                        // Jamais en dessous du min déjà saisi — évite de
+                        // pouvoir enregistrer un groupMax < groupMin (bug
+                        // confirmé, validé aussi côté serveur ci-dessous).
+                        min={place.groupMin || 0}
+                        onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, groupMax: v } : p)))}
                         locked={placeHasSales}
                       />
                     </div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>La réservation est validée dès le minimum atteint, jusqu&apos;au maximum indiqué.</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>La réservation est validée dès le minimum atteint, jusqu&apos;au maximum indiqué.</p>
                   </div>
                 )}
 
@@ -1509,94 +1606,107 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                               <circle cx="8.5" cy="8.5" r="1.5" />
                               <polyline points="21 15 16 10 5 21" />
                             </svg>
-                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 700 }}>Ajouter</span>
+                            <span style={{ fontSize: 10, fontWeight: 700 }}>Ajouter</span>
                           </>
                         )}
                       </label>
                     )}
                   </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
                     Montre le carré, la table, la vue… Le client les verra avant de réserver. 6 photos maximum.
                   </p>
                 </div>
 
-                {/* Options incluses */}
+                {/* Options incluses — deux façons de les renseigner : un texte
+                    libre ("avantage inclus", ex. "Vestiaire offert",
+                    demandé en réunion live le 11/08/2026, auparavant
+                    impossible à saisir sans passer par le menu) OU un
+                    article réel du menu/précommande (rattache un item
+                    facturable existant, offert gratuitement sur ce billet).
+                    Le champ modèle `included[].name` reste un simple texte
+                    dans les deux cas — la distinction est purement une
+                    facilité de saisie côté UI. */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
                   <p style={S.label}>
                     Options incluses dans ce billet <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
                   </p>
-                  {menuChoices.length === 0 && place.included.length === 0 ? (
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
-                      Tu pourras inclure des articles ici une fois que tu en auras ajouté dans Options avancées → Précommandes (étape suivante). Reviens sur cette étape après pour les rattacher à ce billet.
+                  {place.included.length === 0 && (
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
+                      Ex. « Vestiaire offert », « Accès zone VIP »… ou rattache un article de ta précommande (Options avancées → Précommandes) pour l&apos;offrir gratuitement sur ce billet.
                     </p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                      {place.included.map((inc, k) => {
-                        const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
-                        return (
-                          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(184, 243, 74,0.22)' : 'rgba(220,100,100,0.35)'}`, background: 'rgba(255,255,255,0.04)' }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <Select
-                                value={inc.name}
-                                onChange={(value) =>
-                                  setPlaces((prev) =>
-                                    prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: value } : x)) } : p))
-                                  )
-                                }
-                                size="sm"
-                                options={[
-                                  ...(!stillInMenu ? [{ value: inc.name, label: `${inc.name} (retiré du menu)` }] : []),
-                                  ...menuChoices.map((m) => ({
-                                    value: m.name.trim(),
-                                    label: `${m.emoji ? `${m.emoji} ` : ''}${m.name.trim()} · ${m.price} ${currencySymbol(currency)}`,
-                                  })),
-                                ]}
-                              />
-                            </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                    {place.included.map((inc, k) => {
+                      const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
+                      return (
+                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(184, 243, 74,0.22)' : 'rgba(255,255,255,0.10)'}`, background: 'rgba(255,255,255,0.04)' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <Input
-                              type="number"
-                              min={1}
-                              value={inc.qty || 1}
+                              value={inc.name}
+                              placeholder="Ex: Vestiaire offert"
                               onChange={(e) =>
                                 setPlaces((prev) =>
-                                  prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, qty: Math.max(1, parseInt(e.target.value, 10) || 1) } : x)) } : p))
+                                  prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: e.target.value } : x)) } : p))
                                 )
                               }
-                              title="Quantité incluse"
-                              style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontFamily: 'Inter, sans-serif', fontSize: 12, padding: '8px 6px', textAlign: 'center' }}
+                              style={{ background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12.5, padding: '8px 10px' }}
                             />
-                            <span
-                              title="Inclus gratuitement dans le billet"
-                              style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.14)', color: 'var(--teal)' }}
-                            >
-                              Offert
-                            </span>
-                            <Button
-                              variant="ghost"
-                              onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
-                              title="Retirer cette option"
-                              style={{ flexShrink: 0, width: 24, height: 24, minHeight: 24, minWidth: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
-                            >
-                              ×
-                            </Button>
+                            {stillInMenu && (
+                              <p style={{ fontSize: 10.5, color: 'var(--teal)', margin: '4px 0 0' }}>Correspond à un article de ta précommande.</p>
+                            )}
                           </div>
-                        )
-                      })}
+                          <Input
+                            type="number"
+                            min={1}
+                            value={inc.qty || 1}
+                            onChange={(e) =>
+                              setPlaces((prev) =>
+                                prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, qty: Math.max(1, parseInt(e.target.value, 10) || 1) } : x)) } : p))
+                              )
+                            }
+                            title="Quantité incluse"
+                            style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12, padding: '8px 6px', textAlign: 'center' }}
+                          />
+                          <span
+                            title="Inclus gratuitement dans le billet"
+                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.14)', color: 'var(--teal)' }}
+                          >
+                            Offert
+                          </span>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
+                            title="Retirer cette option"
+                            style={{ flexShrink: 0, width: 24, height: 24, minHeight: 24, minWidth: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      )
+                    })}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: '', qty: 1 }] } : p)))}
+                        style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.85)', fontSize: 12 }}
+                      >
+                        + Ajouter un avantage
+                      </Button>
                       {menuChoices.length > 0 && (
                         <Button
                           variant="secondary"
                           onClick={() =>
                             setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: menuChoices[0].name.trim(), qty: 1 }] } : p)))
                           }
-                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', color: 'var(--teal)', fontFamily: 'Inter, sans-serif', fontSize: 12 }}
+                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', color: 'var(--teal)', fontSize: 12 }}
                         >
                           + Inclure un article du menu
                         </Button>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              </Card>
             )
           })}
 
@@ -1614,7 +1724,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             <InputField label="Nom du lieu" placeholder="Ex: Club Le Baroque, Salle des Fêtes..." value={venueName} onChange={(e) => setVenueName(e.target.value)} locked={locked} />
@@ -1623,13 +1733,13 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
 
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {regions.map((r) => (
                   <Pill key={r.id} label={`${r.flag} ${r.name}`} active={region === r.name} disabled={locked} onClick={() => setRegion(r.name)} accent="var(--teal)" />
                 ))}
               </div>
-              {errors.region && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+              {errors.region && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
             </div>
           </div>
 
@@ -1644,44 +1754,44 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, borderColor: 'rgba(184, 243, 74,0.15)' }}>
+          <Card accent="rgba(184, 243, 74,0.15)" style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
             </div>
-          </div>
+          </Card>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(184, 243, 74,0.18)' } : {}) }}>
+          <Card accent={locked ? 'rgba(184, 243, 74,0.18)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Playlist interactive</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
-              {locked && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Playlist interactive</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
+              {locked && <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
             </div>
             <Toggle value={playlist} onChange={() => setPlaylist((v) => !v)} disabled={locked} />
-          </div>
+          </Card>
 
-          <div style={{ ...S.card, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, ...(locked ? { borderColor: 'rgba(184, 243, 74,0.18)' } : {}) }}>
+          <Card accent={locked ? 'rgba(184, 243, 74,0.18)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Précommande de consommations</p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
-              {locked && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Précommande de consommations</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
+              {locked && <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
             </div>
             <Toggle value={preorder} onChange={() => setPreorder((v) => !v)} disabled={locked} />
-          </div>
+          </Card>
 
           {preorder && (
             <div style={{ borderTop: '1px solid rgba(184, 243, 74,0.15)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
               <p style={{ ...S.label, color: 'var(--gold)', marginBottom: 4 }}>Définir ta carte / menu</p>
               {locked ? (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(184, 243, 74,0.85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
+                <p style={{ fontSize: 12, color: 'rgba(184, 243, 74,0.85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
               ) : (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
               )}
               {menuItems.map((item, i) => (
                 <MenuItemEditor
@@ -1708,13 +1818,13 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           )}
 
           {preorder && validMenuItemsForGate.length === 0 && (
-            <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(224,90,170,0.5)', borderRadius: 12, fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(224,90,170,0.5)', borderRadius: 12, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
               La précommande est activée mais aucun article n&apos;a été renseigné. Ajoute au moins un article avec un nom et un prix, ou désactive la précommande.
             </div>
           )}
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Planification</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Planification</p>
             <div>
               <label style={S.label}>
                 Date de publication <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel — vide = maintenant)</span>
@@ -1726,7 +1836,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 disabled={locked}
                 style={{ ...S.inputBase, colorScheme: 'dark', ...(locked ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
               />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: locked ? 'rgba(184, 243, 74,0.85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 12, color: locked ? 'rgba(184, 243, 74,0.85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
                 {locked ? "Verrouillé — l'événement est déjà publié." : 'L’événement apparaîtra sur le site à cette date et heure. Laisse vide pour publier immédiatement.'}
               </p>
             </div>
@@ -1735,7 +1845,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                 Date de clôture des réservations <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
               </label>
               <Input type="datetime-local" value={closingDate} onChange={(e) => setClosingDate(e.target.value)} min={dateStr || undefined} style={{ ...S.inputBase, colorScheme: 'dark' }} />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>Laisse vide pour fermer automatiquement à la date de l&apos;événement.</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>Laisse vide pour fermer automatiquement à la date de l&apos;événement.</p>
             </div>
           </div>
 
@@ -1783,10 +1893,10 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
               { label: 'Précommande conso', val: preorder ? `Activée (${menuItems.filter((i) => i.name.trim()).length} articles)` : 'Désactivée' },
               { label: 'QR Code billet', val: 'Activé — obligatoire' },
             ].map((r) => (
-              <div key={r.label} style={{ ...S.card, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{r.label}</span>
-                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)', textAlign: 'right' }}>{r.val}</span>
-              </div>
+              <Card key={r.label} style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{r.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)', textAlign: 'right' }}>{r.val}</span>
+              </Card>
             ))}
           </div>
 

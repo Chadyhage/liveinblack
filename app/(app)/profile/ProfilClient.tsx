@@ -10,7 +10,10 @@ import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { Eye, EyeOff } from 'lucide-react'
-import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
+import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion, DashboardPageHeader } from '@/app/components/ui'
+import { stripDiacritics } from '@/lib/shared/diacritics'
+import overviewStyles from './ProfileOverview.module.css'
+import helpStyles from './HelpPanel.module.css'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -115,58 +118,43 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
   }
 
   return (
-    <main className="profile-main lb-dashboard-page">
-      <style>{`
-        @media (max-width: 480px) {
-          .profile-main { padding-bottom: 120px; }
-        }
-        @media (max-width: 780px) {
-          .profile-main-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-      <header className="lb-dashboard-page-header">
-        <div>
-          <p style={{ margin: 0, color: 'var(--primary)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>Mon compte</p>
-          <h1 className="font-display lb-dashboard-title" style={{ marginTop: 6 }}>Mon profil</h1>
-          <p className="lb-dashboard-description">Retrouve tes informations, tes billets et tes préférences au même endroit.</p>
-        </div>
-      </header>
-      <div className="profile-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 340px) 1fr', gap: 20, alignItems: 'start' }}>
-        <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+    <main className={`profile-main lb-dashboard-page ${overviewStyles.root}`}>
+      <DashboardPageHeader eyebrow="Mon compte" title="Bonjour, bienvenue dans ton espace" description="Retrouve tes informations, tes billets et tes préférences au même endroit." />
+      <div className={overviewStyles.grid}>
+        <Card className={overviewStyles.identity}>
           <AvatarUpload user={user} setUser={setUser} />
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: 0, textAlign: 'center' }}>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{user.email}</p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <h2>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
+          <p className={overviewStyles.email}>{user.email}</p>
+          <div className={overviewStyles.badges}>
             {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
             {!isOrganizer && <Badge tone="gold">{user.points || 0} pts</Badge>}
           </div>
           {/* Le nom/téléphone/année de naissance s'éditent sur Paramètres du
               compte (formulaires plus lourds) — lien direct ici pour ne pas
               faire deviner où se trouve "modifier mes infos". */}
-          <Link href="/profile/parametres" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>
+          <Link href="/profile/parametres" className={overviewStyles.editLink}>
             Modifier mes informations →
           </Link>
           <Button
             onClick={() => setShowLogoutConfirm(true)}
             variant="secondary"
             fullWidth
-            style={{ marginTop: 8, padding: '13px 0', borderRadius: 7, border: '1px solid rgba(255,107,0,0.4)', background: 'transparent', color: 'var(--pink)', fontSize: 14 }}
+            className={overviewStyles.logout}
           >
             Se déconnecter
           </Button>
         </Card>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className={overviewStyles.content}>
           {!isOrganizer && (
-            <Card>
-              <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Système de points</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                Tu gagnes <strong style={{ color: '#fff' }}>1 point</strong> pour chaque ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs.
-              </p>
+            <Card className={overviewStyles.points}>
+              <p className={overviewStyles.pointsLabel}>Tes points fidélité</p>
+              <strong className={overviewStyles.pointsValue}>{user.points || 0} point{user.points === 1 ? '' : 's'}</strong>
+              <p className={overviewStyles.pointsText}>Tu gagnes un point pour chaque ticket ou carré acheté. Ils seront bientôt échangeables contre des avantages exclusifs.</p>
             </Card>
           )}
 
-          <div className="lb-dashboard-card-grid">
+          <div className={overviewStyles.quickGrid}>
             <QuickAccessCard href="/profile/parametres" icon={<Settings size={18} />} label="Paramètres du compte" />
             <QuickAccessCard href="/profile/billets" icon={<Ticket size={18} />} label="Mes billets" />
             <QuickAccessCard href="/profile/interested-events" icon={<Heart size={18} />} label="Mes favoris" />
@@ -196,23 +184,10 @@ function QuickAccessCard({ href, icon, label }: { href: string; icon: React.Reac
   return (
     <Link
       href={href}
-      className="lb-card"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 8,
-        padding: '18px 12px',
-        borderRadius: 14,
-        border: '1px solid var(--border)',
-        background: 'var(--surface)',
-        color: 'var(--text)',
-        textDecoration: 'none',
-        textAlign: 'center',
-      }}
+      className={overviewStyles.quickLink}
     >
-      <span style={{ color: 'var(--teal)' }}>{icon}</span>
-      <span style={{ fontSize: 12.5, fontWeight: 600 }}>{label}</span>
+      <span className={overviewStyles.quickIcon}>{icon}</span>
+      <span className={overviewStyles.quickLabel}>{label}</span>
     </Link>
   )
 }
@@ -241,6 +216,7 @@ function ConfirmModal({
       onClose={onCancel}
       maxWidth={380}
       hideClose
+      dismissible={!confirmDisabled}
       contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 24, maxHeight: 'none', overflowY: 'visible' }}
     >
         <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{title}</h3>
@@ -448,9 +424,7 @@ interface SettingEntry {
 }
 
 function normalizeQuery(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(s)
     .toLowerCase()
     .trim()
 }
@@ -1195,7 +1169,7 @@ const FAQ = [
   { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]
 
-export function SupportPanel({ onBack }: { onBack?: () => void }) {
+export function SupportPanel() {
   const [copied, setCopied] = useState(false)
 
   async function copyEmail() {
@@ -1220,38 +1194,24 @@ export function SupportPanel({ onBack }: { onBack?: () => void }) {
 
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
-      <style>{`
-        @media (max-width: 780px) {
-          .support-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {onBack && (
-            <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
-              ‹
-            </Button>
-          )}
-          <div>
-            <p style={{ margin: 0, color: 'var(--primary)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>Centre d&apos;aide</p>
-            <h1 className="font-display lb-dashboard-title" style={{ marginTop: 4 }}>Aide & FAQ</h1>
-          </div>
-        </div>
+        <DashboardPageHeader backHref="/profile" backLabel="Profil" eyebrow="Centre d’aide" title="Comment pouvons-nous t’aider ?" description="Consulte les réponses rapides ou contacte directement notre équipe." />
 
-        <div className="support-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, alignItems: 'start' }}>
-          <Card>
-            <EyebrowLabel>Questions fréquentes</EyebrowLabel>
+        <div className={helpStyles.grid}>
+          <Card className={helpStyles.faq}>
+            <h2 className={helpStyles.faqTitle}>Questions fréquentes</h2>
             <Accordion items={FAQ.map((f) => ({ question: f.q, answer: f.a }))} />
           </Card>
 
-          <Card style={{border: '1px solid rgba(184, 243, 74,0.25)'}}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>Tu n&apos;as pas trouvé de réponse ? Écris-nous, on répond sous 24h.</p>
-            <Button onClick={copyEmail} variant="primary" style={{ ...goldButtonStyle, marginBottom: 10 }}>
+          <Card className={helpStyles.contact}>
+            <h2>Besoin d’une réponse humaine ?</h2>
+            <p>Écris-nous et notre équipe te répondra généralement sous 24 heures.</p>
+            <Button onClick={copyEmail} variant="primary" fullWidth>
               {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}
             </Button>
-            <p style={{ fontSize: 12.5, color: '#fff', margin: '0 0 10px' }}>{SUPPORT_EMAIL}</p>
-            <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>
-              ou ouvrir mon application mail →
+            <span className={helpStyles.email}>{SUPPORT_EMAIL}</span>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} className={helpStyles.mailLink}>
+              Ouvrir mon application mail →
             </a>
           </Card>
         </div>

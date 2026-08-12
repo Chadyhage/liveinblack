@@ -63,6 +63,9 @@ export interface MenuItemInput {
 export interface ArtistInput {
   name: string
   role?: string
+  // Lien optionnel vers un vrai profil prestataire (#E7) — voir
+  // lib/models/Event.ts::artistSchema.providerId.
+  providerId?: string | null
 }
 
 export interface EventFormInput {
@@ -143,6 +146,38 @@ function placeConsumed(place: { total?: number | null; available?: number | null
   return Math.max(0, (place.total ?? 0) - (place.available ?? 0))
 }
 
+// Plafond défensif — un organisateur ne configure jamais réellement plus de
+// quelques dizaines de types de place ; borne surtout contre un payload
+// malformé/scripté plutôt qu'un cas d'usage réel.
+const MAX_PLACE_TYPES = 40
+
+// Validation serveur des places — jusqu'ici absente (Gap confirmé le
+// 11/08/2026) : seul `groupType==='group' → price>0` était revérifié
+// serveur, tout le reste (qty/maxPerAccount/price négatifs, groupMax <
+// groupMin) était persisté tel quel depuis le client. Miroir des bornes déjà
+// imposées côté UI par NumberField/NumberInputField — jamais faire confiance
+// au client seul pour des valeurs qui déterminent stock et prix réels.
+function validatePlaces(places: PlaceInput[]): string | null {
+  if (places.length > MAX_PLACE_TYPES) return 'too_many_place_types'
+  for (const place of places) {
+    if (!place.type?.trim()) return 'place_type_required'
+    if (!Number.isFinite(place.price) || place.price < 0) return 'invalid_place_price'
+    if (!Number.isFinite(place.total) || place.total < 0 || !Number.isInteger(place.total)) return 'invalid_place_qty'
+    if (place.maxPerAccount !== undefined && (!Number.isFinite(place.maxPerAccount) || place.maxPerAccount < 0)) {
+      return 'invalid_place_max_per_account'
+    }
+    if (place.groupType === 'group' && !(place.price > 0)) return 'group_place_requires_price'
+    if (place.groupType === 'group') {
+      const min = place.groupMin ?? 0
+      const max = place.groupMax ?? 0
+      if (!Number.isFinite(min) || min < 0) return 'invalid_group_min'
+      if (!Number.isFinite(max) || max < 0) return 'invalid_group_max'
+      if (min > 0 && max > 0 && max < min) return 'group_max_below_min'
+    }
+  }
+  return null
+}
+
 function normalizeMenuItems(menu: MenuItemInput[] | null | undefined): MenuItemInput[] {
   return (menu || []).map((item) => ({
     ...item,
@@ -173,10 +208,9 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
   const region = getRegionByName(input.region)
   const currency = regionToCurrency(region.name)
 
+  const placesError = validatePlaces(input.places || [])
+  if (placesError) return { ok: false, status: 400, error: placesError }
   const places = assignStablePlaceIds(input.places || [])
-  for (const place of places) {
-    if (place.groupType === 'group' && !(place.price > 0)) return { ok: false, status: 400, error: 'group_place_requires_price' }
-  }
 
   const event = await Event.create({
     name: input.name.trim(),
@@ -323,6 +357,8 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
   // supprimée côté client mais ayant des ventes est CONSERVÉE (jamais perdue)
   // — l'historique de vente doit toujours pouvoir se rattacher à une place.
   if (input.places) {
+    const placesError = validatePlaces(input.places)
+    if (placesError) return { ok: false, status: 400, error: placesError }
     const incomingById = new Map(assignStablePlaceIds(input.places).map((p) => [p.id, p]))
     const nextPlaces = event.places.map((existing) => {
       const sold = placeConsumed(existing)

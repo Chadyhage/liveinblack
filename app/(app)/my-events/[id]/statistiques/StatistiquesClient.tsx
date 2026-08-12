@@ -7,8 +7,9 @@ import { Star, Check, AlertTriangle, ArrowLeft } from 'lucide-react'
 import type { EventStatsView } from '@/lib/server/eventStats'
 import { eventStatsCsvRows } from '@/lib/shared/eventStats'
 import { formatMoney } from '../../types'
-import { Button, Select } from '@/app/components/ui'
+import { Button, Card, Select } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
+import { stripDiacritics } from '@/lib/shared/diacritics'
 
 const TONE_COLOR: Record<string, string> = {
   gold: 'var(--gold)',
@@ -32,9 +33,7 @@ function slugifyEventName(name: string): string {
   // Normalise les accents (é, è, à…) avant de retirer les caractères non
   // alphanumériques, pour éviter un nom de fichier réduit à des tirets
   // (ex. "Café XL" → "cafe-xl" au lieu de "caf--xl").
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(name)
     .replace(/[^a-z0-9]+/gi, '-')
 }
 
@@ -99,8 +98,8 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 style={{ font: '600 22px Inter, sans-serif', color: '#fff', margin: 0 }}>{view.event.name}</h1>
-          <p style={{ font: '500 12px Inter, sans-serif', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+          <h1 style={{ font: '600 22px var(--font-open-sans)', color: '#fff', margin: 0 }}>{view.event.name}</h1>
+          <p style={{ font: '500 12px var(--font-open-sans)', color: 'var(--text-muted)', margin: '2px 0 0' }}>
             Statistiques · {view.event.dateDisplay || view.event.date} · {view.event.city}
           </p>
         </div>
@@ -163,7 +162,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
 
       <div style={{ opacity: isPending ? 0.5 : 1, transition: 'opacity 0.15s' }}>
         {stats.assignedTickets === 0 ? (
-          <div style={{ padding: '50px 20px', textAlign: 'center', border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)' }}>
+          <Card style={{ padding: '50px 20px', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 16px' }}>Aucune réservation enregistrée.</p>
             <Link
               href={`/events/${view.event.id}`}
@@ -171,17 +170,17 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
             >
               Voir ma page événement
             </Link>
-          </div>
+          </Card>
         ) : (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 18 }}>
-              <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface)' }}>
-                <p style={{ font: '600 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billets vendus</p>
-                <p style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }}>{stats.assignedTickets}</p>
-              </div>
-              <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface)' }}>
-                <p style={{ font: '600 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Revenus totaux</p>
-                <p style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: '0 0 8px' }}>{formatMoney(stats.totalEstimatedRevenue, view.event.currency)}</p>
+              <Card style={{ padding: '14px 16px' }}>
+                <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billets vendus</p>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }}>{stats.assignedTickets}</p>
+              </Card>
+              <Card style={{ padding: '14px 16px' }}>
+                <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Revenus totaux</p>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: '0 0 8px' }}>{formatMoney(stats.totalEstimatedRevenue, view.event.currency)}</p>
                 <div style={{ display: 'grid', gap: 4, paddingLeft: 10, borderLeft: '2px solid var(--border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
                     <span style={{ color: 'var(--text-faint)' }}>Dont billetterie</span>
@@ -192,19 +191,19 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                     <span style={{ color: 'var(--text-muted)' }}>{formatMoney(stats.preorderRevenue, view.event.currency)}</span>
                   </div>
                 </div>
-              </div>
-              <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface)' }}>
-                <p style={{ font: '600 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de remplissage</p>
-                <p style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }} title={stats.fillRate == null ? 'Pas encore de capacité renseignée pour ce calcul.' : undefined}>
+              </Card>
+              <Card style={{ padding: '14px 16px' }}>
+                <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de remplissage</p>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }} title={stats.fillRate == null ? 'Pas encore de capacité renseignée pour ce calcul.' : undefined}>
                   {pct(stats.fillRate)}
                 </p>
-              </div>
-              <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 14, background: 'var(--surface)' }}>
-                <p style={{ font: '600 10.5px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de présence</p>
-                <p style={{ font: '600 20px Inter, sans-serif', color: '#fff', margin: 0 }} title={stats.attendanceRate == null ? "Disponible une fois l'événement passé et les entrées scannées." : undefined}>
+              </Card>
+              <Card style={{ padding: '14px 16px' }}>
+                <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de présence</p>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }} title={stats.attendanceRate == null ? "Disponible une fois l'événement passé et les entrées scannées." : undefined}>
                   {pct(stats.attendanceRate)}
                 </p>
-              </div>
+              </Card>
             </div>
 
             <div style={{ display: 'grid', gap: 8, marginBottom: 20 }}>
@@ -216,10 +215,10 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
             </div>
 
             <section style={{ marginBottom: 20 }}>
-              <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Répartition par place</h2>
+              <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Répartition par place</h2>
               <div style={{ display: 'grid', gap: 8 }}>
                 {stats.byPlace.map((p) => (
-                  <div key={p.name} style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)' }}>
+                  <Card key={p.name} style={{ padding: '10px 14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: stats.byPlace.length > 1 ? 6 : 0 }}>
                       <span style={{ color: '#fff' }}>{p.name}</span>
                       <span style={{ color: 'var(--gold)' }}>
@@ -231,45 +230,45 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                         <div style={{ height: '100%', width: `${maxPlaceCount ? (p.count / maxPlaceCount) * 100 : 0}%`, background: 'var(--teal)' }} />
                       </div>
                     )}
-                  </div>
+                  </Card>
                 ))}
               </div>
             </section>
 
             {(view.resaleStats.active + view.resaleStats.sold + view.resaleStats.suspended) > 0 && (
               <section style={{ marginBottom: 20 }}>
-                <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Revente officielle</h2>
+                <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Revente officielle</h2>
                 <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
                   Vue d&apos;ensemble uniquement — l&apos;identité des vendeurs/acheteurs n&apos;est jamais communiquée à l&apos;organisateur.
                 </p>
                 <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                  <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
+                  <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
                     <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>
-                  </div>
-                  <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
+                  </Card>
+                  <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
                     <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Terminées</p>
-                  </div>
-                  <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', textAlign: 'center' }}>
+                  </Card>
+                  <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
                     <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{view.resaleStats.suspended}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Suspendues</p>
-                  </div>
+                  </Card>
                 </div>
               </section>
             )}
 
             {stats.preorderItems.length > 0 && (
               <section style={{ marginBottom: 20 }}>
-                <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Précommandes consommées</h2>
+                <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Précommandes consommées</h2>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {stats.preorderItems.map((item) => (
-                    <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface)', fontSize: 12.5 }}>
+                    <Card key={item.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', fontSize: 12.5 }}>
                       <span style={{ color: '#fff' }}>
                         {item.quantity}× {item.name}
                       </span>
                       <span style={{ color: 'var(--gold)', fontWeight: 600 }}>{formatMoney(item.revenue, view.event.currency)}</span>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </section>
@@ -277,7 +276,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
 
             {demographics.ageKnown + demographics.genderKnown > 0 && (
               <section>
-                <h2 style={{ font: '600 11px Inter, sans-serif', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Démographie</h2>
+                <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Démographie</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
                     <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Âge ({demographics.ageKnown} connu(s), {demographics.noAccount} sans compte)</p>

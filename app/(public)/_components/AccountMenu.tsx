@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell, BellRing, ChevronDown } from 'lucide-react'
+import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, Bell, BellRing, ChevronDown, Globe } from 'lucide-react'
 import { Avatar, Button, Skeleton } from '@/app/components/ui'
 import { isPushSupported, getPushPermissionState, subscribeToPush } from '@/lib/client/push'
+import { DASHBOARD_BY_ROLE } from '@/lib/shared/dashboardRoutes'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
 // session existe — avant ce composant, un utilisateur connecté voyait
@@ -35,11 +36,7 @@ interface NotificationItem {
   createdAt: string
 }
 
-const DASHBOARD_BY_ROLE: Record<string, { href: string; label: string }> = {
-  organisateur: { href: '/organizer-studio', label: 'Espace organisateur' },
-  prestataire: { href: '/offer-services', label: 'Espace prestataire' },
-  agent: { href: '/agent', label: "Espace agent" },
-}
+// DASHBOARD_BY_ROLE importé en haut du fichier — voir lib/shared/dashboardRoutes.ts.
 
 // Les conversations directes n'ont pas de `name`/`avatar` au niveau
 // conversation (réservé aux groupes) — le nom affiché vient toujours de
@@ -405,7 +402,8 @@ export default function AccountMenu({
             <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Notifications</span>
               {notifUnread > 0 && (
-                <button
+                <Button
+                  variant="link"
                   onClick={() => {
                     setNotifUnread(0)
                     setNotifications((list) => list?.map((n) => ({ ...n, read: true })) ?? null)
@@ -414,13 +412,14 @@ export default function AccountMenu({
                   style={{ minHeight: 44, background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 12.5, cursor: 'pointer', padding: '8px 0 8px 12px' }}
                 >
                   Tout marquer lu
-                </button>
+                </Button>
               )}
             </div>
             {pushPermission === 'default' && (
               <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Recevoir les alertes urgentes même hors de l&apos;app</span>
-                <button
+                <Button
+                  variant="secondary"
                   onClick={handleEnablePush}
                   disabled={pushSubscribing}
                   style={{
@@ -442,7 +441,7 @@ export default function AccountMenu({
                 >
                   <BellRing size={14} />
                   Activer
-                </button>
+                </Button>
               </div>
             )}
             <div style={{ maxHeight: 340, overflowY: 'auto' }}>
@@ -451,7 +450,8 @@ export default function AccountMenu({
                 <p style={{ padding: 16, fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Aucune notification pour l&apos;instant.</p>
               )}
               {notifications?.map((n) => (
-                <button
+                <Button
+                  variant="ghost"
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
                   className="lb-menu-row"
@@ -472,7 +472,7 @@ export default function AccountMenu({
                     <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.body}</p>
                   )}
                   <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>{timeAgo(n.createdAt)}</span>
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -563,6 +563,12 @@ export default function AccountMenu({
                 {d.role === user.activeRole && <Check size={14} color="var(--teal)" />}
               </Button>
             ))}
+            {/* Point de sortie explicite vers le site public — la nav
+                publique (Accueil/Événements/Prestataires/Organisateurs) est
+                masquée dans le header une fois connecté (PublicNav.tsx),
+                confirmé en réunion live le 11/08/2026. */}
+            <div style={{ height: 1, background: 'var(--border)', margin: '6px 4px' }} />
+            <MenuLink href="/events" onClick={() => setAccountOpen(false)} icon={<Globe size={15} />} label="Voir le site public" />
             <Button
               variant="ghost"
               onClick={() => signOut({ callbackUrl: '/home' })}

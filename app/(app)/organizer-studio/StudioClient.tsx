@@ -13,7 +13,7 @@ import { fmtMoney } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import type { PublicMediaUploadReference } from '@/lib/shared/publicMediaUploads'
-import { Button, Input, Textarea, Checkbox, Radio, Select, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Checkbox, Radio, Select, Label } from '@/app/components/ui'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
 // (#7 phase organisateur, tâche #81). Avatar et bannière passent par le
@@ -340,18 +340,18 @@ export default function StudioClient({
 
       {tab === 'page' && (
       <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', marginBottom: 16, overflow: 'hidden' }}>
+      <Card style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, padding: 0, marginBottom: 16, overflow: 'hidden' }}>
         <div style={{ padding: 18, borderRight: '1px solid var(--border)' }}>
-          <p style={{ font: '600 28px Inter, sans-serif', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
+          <p style={{ font: '600 28px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Abonnés</p>
         </div>
         <div style={{ padding: 18 }}>
-          <p style={{ font: '600 28px Inter, sans-serif', color: '#fff', margin: 0 }}>{profile.viewsCount}</p>
+          <p style={{ font: '600 28px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.viewsCount}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Vues de la page</p>
         </div>
-      </div>
+      </Card>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)', marginBottom: 16, flexWrap: 'wrap' }}>
+      <Card style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', marginBottom: 16, flexWrap: 'wrap' }}>
         <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
         <Button
           variant="secondary"
@@ -370,11 +370,11 @@ export default function StudioClient({
             Voir ma page
           </Link>
         )}
-      </div>
+      </Card>
 
       <div className="studio-profile-grid">
         {/* Informations publiques */}
-        <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
+        <Card>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Informations publiques</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 14, marginBottom: 18 }}>
@@ -428,20 +428,20 @@ export default function StudioClient({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             <div>
-              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Nom public</Label>
+              <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Nom public</Label>
               <Input value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} />
             </div>
             <div>
-              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Slug public</Label>
+              <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Slug public</Label>
               <Input value={profile.slug} onChange={(e) => update({ slug: e.target.value })} />
             </div>
             <div>
-              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 6 }}>Ville d&rsquo;intervention</Label>
+              <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Ville d&rsquo;intervention</Label>
               <Input value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Ta ville de base" />
             </div>
             <div />
             <div style={{ gridColumn: '1 / -1' }}>
-              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Pays / régions d&rsquo;intervention</Label>
+              <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Pays / régions d&rsquo;intervention</Label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                 {ZONE_OPTIONS.map((r) => {
                   const sel = zones.includes(r.id)
@@ -473,17 +473,17 @@ export default function StudioClient({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(184,243,74,0.28)', background: 'rgba(184,243,74,0.06)' }}>
                 <span aria-hidden="true" style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={18} /> : <CreditCard size={18} />}</span>
                 <div>
-                  <p style={{ font: '700 12.5px Inter, sans-serif', color: 'var(--gold)', margin: 0 }}>
+                  <p style={{ font: '700 12.5px var(--font-open-sans)', color: 'var(--gold)', margin: 0 }}>
                     {getRegionName(profile.regionId) || profile.country || '—'} · {regionCurrency === 'XOF' ? 'FCFA (XOF)' : 'Euro (€)'}
                   </p>
-                  <p style={{ font: '500 11px Inter, sans-serif', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                  <p style={{ font: '500 11px var(--font-open-sans)', color: 'var(--text-muted)', margin: '2px 0 0' }}>
                     Fixée à ton inscription. Tes prix et versements sont TOUJOURS dans cette devise, indépendamment des pays d&rsquo;intervention ci-dessus.
                   </p>
                 </div>
               </div>
             </div>
             <div style={{ display: 'grid', gap: 6, gridColumn: '1 / -1' }}>
-              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Description</Label>
+              <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Description</Label>
               <Textarea
                 rows={4}
                 maxLength={500}
@@ -494,11 +494,11 @@ export default function StudioClient({
               <span style={{ fontSize: 10.5, color: 'var(--text-faint)', justifySelf: 'end' }}>{profile.shortDescription.length}/500</span>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <Label style={{ font: '600 11px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>Réseaux sociaux</Label>
+              <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Réseaux sociaux</Label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 8 }}>
                 {SOCIAL_NETWORKS.map((net) => (
                   <div key={net.key} style={{ display: 'grid', gap: 5 }}>
-                    <Label style={{ font: '600 10.5px Inter, sans-serif', textTransform: 'uppercase', marginBottom: 0 }}>{net.label}</Label>
+                    <Label style={{ font: '600 10.5px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>{net.label}</Label>
                     <Input
                       value={profile.socialLinks[net.key] || ''}
                       onChange={(e) => update({ socialLinks: { ...profile.socialLinks, [net.key]: e.target.value } })}
@@ -513,10 +513,10 @@ export default function StudioClient({
           <Button onClick={save} loading={saving} loadingText="Enregistrement…" fullWidth style={{ ...saveButtonStyle(saving), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)' }}>
             Enregistrer
           </Button>
-        </section>
+        </Card>
 
         {/* Aperçu + statut */}
-        <aside style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20 }}>
+        <Card>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
             <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
@@ -528,13 +528,13 @@ export default function StudioClient({
                   <span style={{ fontSize: 26, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <h3 style={{ font: '600 22px Inter, sans-serif', color: '#fff', margin: '10px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
-              <p style={{ font: '600 11px Inter, sans-serif', color: 'var(--gold)', margin: '4px 0 0' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Ville · Pays'}</p>
+              <h3 style={{ font: '600 22px var(--font-open-sans)', color: '#fff', margin: '10px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
+              <p style={{ font: '600 11px var(--font-open-sans)', color: 'var(--gold)', margin: '4px 0 0' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Ville · Pays'}</p>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, margin: '8px 0 0' }}>{profile.shortDescription || 'Ta description apparaîtra ici.'}</p>
             </div>
           </div>
           <div style={{ marginTop: 16 }}>
-            <p style={{ font: '600 11px Inter, sans-serif', color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 8px' }}>Statut de la page</p>
+            <p style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 8px' }}>Statut de la page</p>
             {(['draft', 'public'] as const).map((status) => (
               <Radio
                 key={status}
@@ -549,11 +549,11 @@ export default function StudioClient({
             Enregistrer
           </Button>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textAlign: 'center', margin: '6px 0 0' }}>Enregistre l&rsquo;ensemble de ton profil, y compris les informations publiques.</p>
-        </aside>
+        </Card>
       </div>
 
       {/* Galerie */}
-      <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
             <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
@@ -628,7 +628,7 @@ export default function StudioClient({
             ))}
           </div>
         )}
-      </section>
+      </Card>
       </>
       )}
 
@@ -790,7 +790,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
   }
 
   return (
-    <section style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--surface)', padding: 20, display: 'grid', gap: 16 }} id="encaissement">
+    <Card style={{ display: 'grid', gap: 16 }} id="encaissement">
       <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
 
       <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
@@ -840,7 +840,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
       </div>
 
       <div>
-        <p style={{ font: '600 12px Inter, sans-serif', color: '#fff', margin: '0 0 4px' }}>Mobile Money — un numéro par pays</p>
+        <p style={{ font: '600 12px var(--font-open-sans)', color: '#fff', margin: '0 0 4px' }}>Mobile Money — un numéro par pays</p>
         <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 12px' }}>
           Chaque événement est payé automatiquement sur le numéro du <strong style={{ color: 'var(--gold)' }}>pays de l&rsquo;événement</strong>. Ajoute un numéro pour chaque pays où tu organises.
         </p>
@@ -904,6 +904,6 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           Enregistrer mes numéros
         </Button>
       </div>
-    </section>
+    </Card>
   )
 }

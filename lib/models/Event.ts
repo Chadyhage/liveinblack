@@ -52,6 +52,13 @@ const artistSchema = new Schema(
   {
     name: { type: String, required: true },
     role: { type: String, default: 'DJ' },
+    // Lien optionnel vers un vrai profil prestataire (ProviderProfile.userId
+    // — id applicatif, jamais un ObjectId ref, cohérent avec le reste du
+    // projet) — #E7, confirmé en réunion live le 11/08/2026. `name` reste la
+    // source d'affichage même si lié (pré-rempli depuis le profil au moment
+    // de l'association, jamais recalculé après coup si le prestataire
+    // renomme son profil), pour ne jamais casser un line-up déjà publié.
+    providerId: { type: String, default: null },
   },
   { _id: false }
 )

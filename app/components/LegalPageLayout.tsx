@@ -1,4 +1,5 @@
 import LegalBackButton from './LegalBackButton'
+import { Card } from '@/app/components/ui'
 
 // Port de src/components/LegalPageLayout.jsx — layout réutilisable pour
 // toutes les pages légales (mentions légales, politique de confidentialité,
@@ -9,11 +10,6 @@ const CARD: React.CSSProperties = {
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-lg)',
   boxShadow: '0 18px 46px rgba(0,0,0,0.22)',
-}
-
-const FONTS = {
-  display: 'Inter, sans-serif',
-  body: 'Inter, sans-serif',
 }
 
 const COLORS = {
@@ -42,7 +38,8 @@ export interface LegalPageLayoutProps {
 
 export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sections, footerNotice }: LegalPageLayoutProps) {
   return (
-    <div
+    <main
+      className="lb-legal-page"
       style={{
         minHeight: '100vh',
         position: 'relative',
@@ -69,17 +66,16 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
             >
               {title}
             </h1>
-            <p style={{ fontFamily: FONTS.body, fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
               Dernière mise à jour : {lastUpdate}
             </p>
           </div>
         </div>
 
         {/* Sommaire */}
-        <details open style={{ ...CARD, padding: '14px 20px', marginBottom: 16 }}>
+        <details className="lb-legal-toc" style={{ ...CARD, padding: '10px 20px', marginBottom: 16 }}>
           <summary
             style={{
-              fontFamily: FONTS.body,
               fontSize: 13,
               fontWeight: 700,
               color: 'rgba(255,255,255,0.55)',
@@ -108,7 +104,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 <a
                   href={`#legal-section-${s.n}`}
                   style={{
-                    fontFamily: FONTS.body,
                     fontSize: 13,
                     color: COLORS.muted,
                     textDecoration: 'none',
@@ -131,11 +126,10 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         {/* Sections */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sections.map((s) => (
-            <div key={s.n} id={`legal-section-${s.n}`} style={{ ...CARD, padding: '20px 20px', scrollMarginTop: 24 }}>
+            <Card key={s.n} id={`legal-section-${s.n}`} style={{ boxShadow: CARD.boxShadow, padding: '20px 20px', scrollMarginTop: 24 }}>
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                 <span
                   style={{
-                    fontFamily: FONTS.body,
                     fontSize: 12,
                     fontWeight: 700,
                     color: COLORS.gold,
@@ -150,7 +144,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 <div style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
                   <h2
                     style={{
-                      fontFamily: FONTS.display,
                       fontWeight: 700,
                       fontSize: 17,
                       color: 'rgba(255,255,255,0.93)',
@@ -163,7 +156,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.body && (
                     <p
                       style={{
-                        fontFamily: FONTS.body,
                         fontSize: 14,
                         color: COLORS.muted,
                         margin: 0,
@@ -180,7 +172,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                         <li
                           key={i}
                           style={{
-                            fontFamily: FONTS.body,
                             fontSize: 14,
                             color: COLORS.muted,
                             lineHeight: 1.6,
@@ -204,7 +195,6 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.contact && (
                     <p
                       style={{
-                        fontFamily: FONTS.body,
                         fontSize: 14,
                         color: COLORS.muted,
                         margin: '8px 0 0',
@@ -218,23 +208,22 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   )}
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
 
         {/* Footer notice */}
         {footerNotice && (
-          <div
+          <Card
+            accent="rgba(255,255,255,0.06)"
             style={{
-              ...CARD,
-              borderColor: 'rgba(255,255,255,0.06)',
+              boxShadow: CARD.boxShadow,
               padding: '14px 18px',
               marginTop: 16,
             }}
           >
             <p
               style={{
-                fontFamily: FONTS.body,
                 fontSize: 12,
                 color: COLORS.dim,
                 textAlign: 'center',
@@ -244,10 +233,10 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
             >
               {footerNotice}
             </p>
-          </div>
+          </Card>
         )}
       </div>
-    </div>
+    </main>
   )
 }
 
@@ -257,10 +246,10 @@ const FILIGRANE_TEXT = Array(8).fill('LIVE IN BLACK').join(' · ') // couvre ≥
 // voir la note de perf dans le composant légataire src/components/FiligraneRoseBg.jsx).
 const FILIGRANE_LINES: { color: string; offsetD: number; offsetM: number; mobileOnly?: boolean }[] = [
   { color: 'rgba(184,243,74,0.025)', offsetD: -60, offsetM: -40 },
-  { color: 'rgba(139,92,246,0.03)', offsetD: -420, offsetM: -260 },
+  { color: 'rgba(184,243,74,0.02)', offsetD: -420, offsetM: -260 },
   { color: 'rgba(255,255,255,0.018)', offsetD: -220, offsetM: -140 },
-  { color: 'rgba(224,90,170,0.025)', offsetD: -560, offsetM: -340 },
-  { color: 'rgba(139,92,246,0.025)', offsetD: -80, offsetM: -80, mobileOnly: true },
+  { color: 'rgba(184,243,74,0.018)', offsetD: -560, offsetM: -340 },
+  { color: 'rgba(255,255,255,0.015)', offsetD: -80, offsetM: -80, mobileOnly: true },
 ]
 
 function FiligraneRoseBg() {
@@ -274,13 +263,13 @@ function FiligraneRoseBg() {
         pointerEvents: 'none',
         overflow: 'hidden',
         background:
-          'radial-gradient(circle at 80% 0%, rgba(139,92,246,0.09), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+          'radial-gradient(circle at 80% 0%, rgba(184,243,74,0.07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <style>{`
         .flg-line {
           white-space: nowrap; margin: 0; line-height: 0.9;
-          font-family: Inter, system-ui, sans-serif; font-weight: 900;
+          font-family: var(--font-open-sans); font-weight: 900;
           font-size: 88px; letter-spacing: -3px;
           margin-left: var(--off-d);
           user-select: none; -webkit-user-select: none;

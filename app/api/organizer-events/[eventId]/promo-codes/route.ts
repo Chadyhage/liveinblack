@@ -9,6 +9,7 @@ const createSchema = z.object({
   value: z.number(),
   maxUses: z.number().min(0).optional(),
   expiresAt: z.string().nullable().optional(),
+  placeIds: z.array(z.string().trim().min(1)).max(40).optional(),
 })
 const codeSchema = z.object({ code: z.string().trim().min(1) })
 

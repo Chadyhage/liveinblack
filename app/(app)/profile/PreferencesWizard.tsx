@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Modal, Avatar } from '@/app/components/ui'
+import { stripDiacritics } from '@/lib/shared/diacritics'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
 // profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
@@ -132,9 +133,7 @@ const STEPS: StepDef[] = [
 ]
 
 function norm(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(s)
     .toLowerCase()
     .trim()
 }

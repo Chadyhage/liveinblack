@@ -15,6 +15,7 @@ import { EventCheckoutPanel, EventInterestButtonClient, ResaleListingsSection } 
 import AgeVerificationGate from '@/app/components/AgeVerificationGate'
 import EventShareButton from './EventShareButton'
 import EventVenueMap from './EventVenueMap'
+import { Card } from '@/app/components/ui'
 
 // Contenu partagé entre la page dédiée (app/(public)/events/[id]/page.tsx) et
 // la route interceptée qui l'affiche en modal glissante depuis les listes
@@ -85,7 +86,7 @@ export default async function EventDetailContent({
   return (
     <>
       <div style={{ padding: '18px 0 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
-        <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>
+        <Link href="/events" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
           Événements
         </Link>
         {event.city && <span> · {event.city}</span>}
@@ -225,7 +226,7 @@ export default async function EventDetailContent({
                   href={`https://www.google.com/maps/search/${encodeURIComponent([event.location, event.city].filter(Boolean).join(', '))}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
+                  style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}
                 >
                   Ouvrir dans Google Maps →
                 </a>
@@ -247,7 +248,7 @@ export default async function EventDetailContent({
             {event.places.map((place) => {
               const fillPct = place.total > 0 ? Math.round(((place.total - place.available) / place.total) * 100) : 0
               return (
-                <div key={place.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+                <Card key={place.id} style={{ padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span style={{ fontSize: 14, fontWeight: 700 }}>{place.type}</span>
                     <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(place.price, currency)}</span>
@@ -263,7 +264,7 @@ export default async function EventDetailContent({
                   <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,.08)', marginTop: 6, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${fillPct}%`, background: 'var(--gold)' }} />
                   </div>
-                </div>
+                </Card>
               )
             })}
           </div>
@@ -277,7 +278,7 @@ export default async function EventDetailContent({
         <Section title="Carte / précommande">
           <div className="lb-card-grid">
             {event.menu.filter((item) => item.available !== false).map((item) => (
-              <div key={item.name} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px' }}>
+              <Card key={item.name} style={{ padding: '10px 12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, fontSize: 13, fontWeight: 700 }}>
                     {item.imageUrl ? <Image src={item.imageUrl} alt="" width={34} height={34} style={{ borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} /> : item.emoji ? <span aria-hidden="true">{item.emoji}</span> : null}
@@ -286,7 +287,7 @@ export default async function EventDetailContent({
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.price, currency)}</span>
                 </div>
                 {item.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '4px 0 0' }}>{item.description}</p>}
-              </div>
+              </Card>
             ))}
           </div>
         </Section>

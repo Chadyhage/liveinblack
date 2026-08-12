@@ -84,7 +84,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
   return (
     <>
       <style>{`@keyframes lib-verify-spin { to { transform: rotate(360deg) } }`}</style>
-      <div role="status" aria-live="polite" style={{ width: '100%', maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
+      <div className="lb-auth-state" role="status" aria-live="polite" style={{ width: '100%', maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-verify-spin 0.9s linear infinite' }} />

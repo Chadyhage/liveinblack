@@ -12,7 +12,7 @@ import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
 import { Globe } from 'lucide-react'
-import { Button, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
 // Port de src/pages/OnboardingPrestataire.jsx (#8 phase prestataire) — 6
 // étapes (Compte/Activités/Détails/Fonctionnement/Documents/Finaliser),
@@ -73,7 +73,6 @@ const EMPTY_FORM: PrestataireFormData = {
   tarifDevis: false,
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 14, outline: 'none' }
 const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
@@ -269,7 +268,7 @@ export default function PrestataireOnboardingWizard({
   if (submitted) {
     return (
       <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ ...cardStyle, maxWidth: 420, textAlign: 'center' }}>
+        <Card style={{ padding: 24, maxWidth: 420, textAlign: 'center' }}>
           <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
@@ -279,7 +278,7 @@ export default function PrestataireOnboardingWizard({
           <a href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
             Retour à l&apos;accueil
           </a>
-        </div>
+        </Card>
       </Shell>
     )
   }
@@ -288,7 +287,7 @@ export default function PrestataireOnboardingWizard({
   const types = form.prestataireTypes
 
   return (
-    <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
+    <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 1080, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
@@ -307,36 +306,38 @@ export default function PrestataireOnboardingWizard({
           </div>
         </div>
 
-        <div style={cardStyle}>
+        <Card style={{ padding: 24 }}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes informations</h2>
               <div style={{ display: 'flex', gap: 10 }}>
                 <div style={{ flex: 1 }}>
                   <Label style={labelStyle}>Prénom</Label>
-                  <Input style={inputStyle} value={form.prenom} onChange={(e) => set('prenom', e.target.value)} />
+                  <Input aria-label="Prénom" style={inputStyle} value={form.prenom} onChange={(e) => set('prenom', e.target.value)} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <Label style={labelStyle}>Nom</Label>
-                  <Input style={inputStyle} value={form.nom} onChange={(e) => set('nom', e.target.value)} />
+                  <Input aria-label="Nom" style={inputStyle} value={form.nom} onChange={(e) => set('nom', e.target.value)} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Select
+                  aria-label="Indicatif téléphonique"
                   value={form.telephoneCode}
                   onChange={(value) => set('telephoneCode', value)}
                   options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
                 />
-                <Input style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
+                <Input aria-label="Téléphone" style={inputStyle} value={form.telephone} onChange={(e) => set('telephone', e.target.value)} placeholder="Téléphone" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                 <div>
                   <Label style={labelStyle}>Ville</Label>
-                  <Input style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
+                  <Input aria-label="Ville" style={inputStyle} value={form.ville} onChange={(e) => set('ville', e.target.value)} placeholder="Paris, Lomé, Cotonou…" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Pays</Label>
                   <Select
+                    aria-label="Pays"
                     value={form.pays}
                     onChange={(value) => set('pays', value)}
                     options={regions.map((r) => ({ value: r.country, label: `${r.flag} ${r.country}` }))}
@@ -350,12 +351,13 @@ export default function PrestataireOnboardingWizard({
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <Label style={labelStyle}>Adresse e-mail (identifiant de connexion)</Label>
-                      <Input style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                      <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
                     </div>
                     <div>
                       <Label style={labelStyle}>Mot de passe</Label>
                       <div style={{ position: 'relative' }}>
                         <Input
+                          aria-label="Mot de passe"
                           style={{ ...inputStyle, paddingRight: 56 }}
                           type={showRegPwd ? 'text' : 'password'}
                           value={regPassword}
@@ -365,6 +367,7 @@ export default function PrestataireOnboardingWizard({
                         <Button
                           variant="link"
                           type="button"
+                          aria-label={showRegPwd ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
                           onClick={() => setShowRegPwd((v) => !v)}
                           style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textDecoration: 'none' }}
                         >
@@ -374,7 +377,7 @@ export default function PrestataireOnboardingWizard({
                     </div>
                     <div>
                       <Label style={labelStyle}>Confirmer le mot de passe</Label>
-                      <Input style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
+                      <Input aria-label="Confirmation du mot de passe" style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                     </div>
                   </div>
                 </>
@@ -691,7 +694,7 @@ export default function PrestataireOnboardingWizard({
               </Button>
             )}
           </div>
-        </div>
+        </Card>
 
         <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
           {mode === 'anonymous'

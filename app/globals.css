@@ -132,6 +132,85 @@ textarea::placeholder {
   transform: translateY(-2px);
 }
 
+/* Socle UX partagé par toutes les pages publiques. */
+.lb-public-nav__inner > a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.lb-footer-link {
+  min-height: 44px !important;
+}
+
+.lb-blog-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.lb-legal-toc > summary {
+  list-style: none;
+}
+
+.lb-legal-toc > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lb-legal-toc > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--primary);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.lb-legal-toc[open] > summary::after {
+  content: '−';
+}
+
+.lb-detail-section a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 620px) {
+  .lb-directory-hero h1 {
+    font-size: clamp(30px, 9vw, 38px) !important;
+    text-wrap: balance;
+  }
+
+  .lb-blog-page {
+    padding: 32px 14px 72px !important;
+  }
+
+  .lb-blog-filters {
+    margin-inline: -14px;
+    padding: 2px 14px 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .lb-blog-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lb-blog-filters > a {
+    flex: 0 0 auto;
+    min-height: 44px !important;
+    scroll-snap-align: start;
+  }
+
+  .lb-legal-page,
+  .lb-contact-page {
+    padding: 24px 14px 64px !important;
+  }
+}
+
 /* Fondation des pages publiques : mêmes largeurs, rythmes et surfaces de
    recherche sur tous les annuaires. Les pages gardent leur identité, mais ne
    redéfinissent plus chacune un petit conteneur centré différent. */
@@ -490,6 +569,66 @@ input[type='radio'] {
 :where(input[type='checkbox'], input[type='radio']):focus-visible ~ * {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* Slider du design system (app/components/ui/Slider.tsx) — piste fine +
+   curseur lumineux avec halo, même famille visuelle que le focus ring
+   global. `accent-color` seul (précédemment le seul style appliqué) ne
+   permet pas de contrôler l'épaisseur de piste ni le halo du curseur —
+   pseudo-éléments nécessaires, donc globaux ici plutôt que dupliqués en
+   <style> par instance (même raisonnement que lb-spin/lb-skeleton-shimmer
+   ci-dessus). Remplace CustomVolumeSlider (AmbientMusicPlayer.tsx, ~70
+   lignes de SVG+Pointer Events maison) : ce composant "isolé" portait un
+   style plus abouti que le Slider partagé — promu ici au lieu d'être laissé
+   hors du design system. */
+.lb-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+.lb-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 1.5px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.lb-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 1.5px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.lb-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--lb-slider-accent, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lb-slider-accent, var(--primary)) 22%, transparent), 0 2px 6px rgba(0, 0, 0, 0.5);
+  margin-top: -5.5px;
+  transition: transform 0.1s ease;
+}
+.lb-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--lb-slider-accent, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lb-slider-accent, var(--primary)) 22%, transparent), 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s ease;
+}
+.lb-slider:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+.lb-slider:active::-moz-range-thumb {
+  transform: scale(1.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lb-slider::-webkit-slider-thumb,
+  .lb-slider::-moz-range-thumb {
+    transition: none;
+  }
 }
 
 /* Grain texture discret (cf. CLAUDE.md — opacity 0.035) */

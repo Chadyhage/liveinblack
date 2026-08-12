@@ -35,6 +35,8 @@ export interface PromoCodeView {
   active: boolean
   expiresAt: string | null
   createdAt: string
+  // Absent/vide = s'applique à toutes les places (comportement historique).
+  placeIds?: string[]
 }
 
 function toView(p: PromoCodeDoc): PromoCodeView {
@@ -47,6 +49,7 @@ function toView(p: PromoCodeDoc): PromoCodeView {
     active: p.active ?? true,
     expiresAt: p.expiresAt ? new Date(p.expiresAt).toISOString() : null,
     createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : '',
+    placeIds: p.placeIds && p.placeIds.length > 0 ? (p.placeIds as string[]) : undefined,
   }
 }
 
@@ -56,6 +59,7 @@ export interface CreatePromoInput {
   value: number
   maxUses?: number
   expiresAt?: string | null
+  placeIds?: string[]
 }
 
 export type CreatePromoResult = ErrResult | { ok: true; promo: PromoCodeView }
@@ -72,12 +76,29 @@ export async function createPromoCode(caller: PromoCaller, eventId: string, inpu
   const value = Number(input.value)
   if (!Number.isFinite(value) || value <= 0) return { ok: false, status: 400, error: 'invalid_value' }
 
+  // placeIds : si fourni, doit référencer des places qui existent réellement
+  // sur cet événement — jamais un id inventé/périmé qui ne matcherait jamais
+  // rien à l'achat (resolvePromo se contenterait de refuser silencieusement).
+  const eventPlaceIds = new Set((guard.event.places || []).map((p) => p.id))
+  const placeIds = (input.placeIds || []).map((id) => id.trim()).filter(Boolean)
+  if (placeIds.length > 0 && !placeIds.every((id) => eventPlaceIds.has(id))) {
+    return { ok: false, status: 400, error: 'invalid_place_ids' }
+  }
+
+  // Le prix le plus bas à considérer pour la borne "fixed_covers_cheapest_
+  // ticket" dépend du périmètre du code : uniquement les places ciblées si
+  // `placeIds` est renseigné (confirmé en réunion live le 11/08/2026 — un
+  // code fixe restreint à une place chère ne doit pas être bloqué par le
+  // prix d'une AUTRE place moins chère qu'il ne concerne pas), sinon toutes
+  // les places de l'événement comme avant.
+  const scopedPlaces = placeIds.length > 0 ? (guard.event.places || []).filter((p) => placeIds.includes(p.id)) : guard.event.places || []
+
   if (input.type === 'percent') {
     // Max 99 % — un code à 100% reviendrait à offrir la place, ce qui doit
     // passer par la guestlist (billets gratuits), jamais par un code promo.
     if (value >= 100) return { ok: false, status: 400, error: 'percent_too_high' }
   } else {
-    const prices = (guard.event.places || []).map((p) => Number(p.price)).filter((n) => Number.isFinite(n) && n > 0)
+    const prices = scopedPlaces.map((p) => Number(p.price)).filter((n) => Number.isFinite(n) && n > 0)
     const minPrice = prices.length ? Math.min(...prices) : 0
     if (minPrice > 0 && value >= minPrice) return { ok: false, status: 400, error: 'fixed_covers_cheapest_ticket' }
   }
@@ -86,7 +107,17 @@ export async function createPromoCode(caller: PromoCaller, eventId: string, inpu
   const expiresAt = input.expiresAt ? new Date(`${input.expiresAt}T23:59:59`) : null
 
   try {
-    const promo = await PromoCode.create({ eventId, code, type: input.type, value, maxUses, active: true, expiresAt, createdBy: caller.id })
+    const promo = await PromoCode.create({
+      eventId,
+      code,
+      type: input.type,
+      value,
+      maxUses,
+      active: true,
+      expiresAt,
+      createdBy: caller.id,
+      placeIds: placeIds.length > 0 ? placeIds : undefined,
+    })
     return { ok: true, promo: toView(promo.toObject()) }
   } catch (err) {
     if (typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000) {

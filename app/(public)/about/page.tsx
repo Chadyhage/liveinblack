@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import TabsSection from './TabsSection'
 import { PageShell } from '@/app/components/layout'
-import { SectionHeader } from '@/app/components/ui'
+import { Accordion, ActionLink, EditorialImageCard, SectionHeader } from '@/app/components/ui'
+import styles from './about.module.css'
 
 export const metadata: Metadata = {
   title: "C'est quoi LIVEINBLACK ? — LIVEINBLACK",
@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 export default function PublicAboutPage() {
   return (
     <PageShell style={{ maxWidth: 'none', padding: 0 }}>
-      <section style={{ maxWidth: 820, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
+      <div className={styles.page}>
+      <section className={styles.hero} style={{ maxWidth: 820, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
         <p style={{ fontSize: 24, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
           L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
         </p>
@@ -52,58 +53,46 @@ export default function PublicAboutPage() {
       <Section eyebrow="En 3 temps" title="De l'envie à la piste">
         <div className="lb-card-grid">
           {[
-            ['1', 'Découvre', 'Parcours les soirées et les prestataires, filtre par ville et par style.'],
-            ['2', 'Réserve', 'Paiement sécurisé, billet QR immédiat, tout reste dans ton compte.'],
-            ['3', 'Profite', "Scan à l'entrée, commande sur place, et vis chaque nuit à fond."],
-          ].map(([n, t, d]) => (
-            <div key={n} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 18px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: 12, right: 16, fontSize: 40, fontWeight: 800, color: 'rgba(184, 243, 74,.14)' }}>{n}</span>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{t}</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.5 }}>{d}</p>
-            </div>
+            ['01', 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1100&q=82', 'Une scène et son public pendant un festival', 'Découvre', 'Parcours les soirées et les prestataires, puis filtre simplement par ville et par style.'],
+            ['02', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1100&q=82', 'Des personnes réunies pendant un concert', 'Réserve', 'Paiement sécurisé, billet QR immédiat : chaque information reste accessible dans ton compte.'],
+            ['03', 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1100&q=82', 'Une grande scène de concert éclairée', 'Profite', "Présente ton QR à l’entrée, retrouve les services disponibles et vis pleinement l’événement."],
+          ].map(([number, src, alt, title, description]) => (
+            <EditorialImageCard key={number} src={src} alt={alt} badge={number} title={title} description={description} />
           ))}
         </div>
       </Section>
 
       <Section eyebrow="La confiance" title="Tout est protégé et sécurisé">
-        <div className="lb-card-grid">
-          {[
-            ['Paiements sécurisés', 'Transactions protégées, billets authentiques avec QR unique — impossible à falsifier.'],
-            ['Profils sélectionnés', 'Chaque organisateur et prestataire visible sur la plateforme a été validé par notre équipe.'],
-            ['Tes données te protègent', "On ne partage jamais ton contact sans ton accord. Confidentialité réelle, pas cosmétique."],
-            ['Un vrai support', 'Une question, un souci ? On répond. La nuit mérite du soin.'],
-          ].map(([t, d], index) => (
-            <details key={t} open={index === 0} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '0 18px' }}>
-              <summary style={{ minHeight: 56, display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: 15.5, fontWeight: 800 }}>{t}</summary>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.55 }}>{d}</p>
-            </details>
-          ))}
+        <div style={{ maxWidth: 880, margin: '0 auto', padding: '10px 24px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 24, background: 'rgba(255,255,255,.055)' }}>
+          <Accordion items={[
+            { question: 'Paiements sécurisés', answer: 'Transactions protégées, billets authentiques avec QR unique — impossible à falsifier.' },
+            { question: 'Profils sélectionnés', answer: 'Chaque organisateur et prestataire visible sur la plateforme a été validé par notre équipe.' },
+            { question: 'Tes données restent privées', answer: "On ne partage jamais ton contact sans ton accord. La confidentialité est intégrée au parcours." },
+            { question: 'Un vrai support', answer: 'Une question ou un souci ? Notre équipe reste disponible pour t’accompagner.' },
+          ]} />
         </div>
       </Section>
 
-      <section style={{ padding: '20px 22px 0' }}>
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
+      <section className={styles.ctaWrap} style={{ padding: '20px 22px 0' }}>
+          <div className={styles.cta} style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,40px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href="/login?mode=register" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '11px 26px', borderRadius: 999, fontSize: 15, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none' }}>
-              Créer mon compte
-            </Link>
-            <Link href="/events" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 24px', borderRadius: 999, fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: '#fff', background: 'rgba(255,255,255,.08)', border: '1px solid var(--border-strong)', textDecoration: 'none' }}>
-              Voir les événements
-            </Link>
+            <ActionLink href="/login?mode=register">Créer mon compte</ActionLink>
+            <ActionLink href="/events" tone="secondary">Voir les événements</ActionLink>
           </div>
         </div>
       </section>
+      </div>
     </PageShell>
   )
 }
 
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
-    <section style={{ padding: 'clamp(42px, 5vw, 56px) clamp(20px, 3vw, 48px)', maxWidth: 1400, margin: '0 auto' }}>
+    <section className={styles.section} style={{ padding: 'clamp(42px, 5vw, 56px) clamp(20px, 3vw, 48px)', maxWidth: 1400, margin: '0 auto' }}>
       <SectionHeader eyebrow={eyebrow} title={title} align="center" level={2} />
       {children}
     </section>

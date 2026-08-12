@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button } from '@/app/components/ui'
+import { Button, Card } from '@/app/components/ui'
 
 // Bourse de revente officielle — affichée sur la page événement, séparément
 // du panneau de réservation classique (EventCheckoutPanel) : une revente n'a
@@ -76,9 +76,10 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {listings.map((listing) => (
-          <div
+          <Card
             key={listing.id}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--surface)', border: '1px solid rgba(139,92,246,0.25)' }}
+            accent="rgba(139,92,246,0.25)"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 14px' }}
           >
             <div style={{ minWidth: 0 }}>
               <p style={{ fontSize: 13.5, fontWeight: 700, margin: 0 }}>
@@ -103,7 +104,7 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
                 </a>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
       {error && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}

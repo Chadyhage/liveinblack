@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/app/components/ui": ["../app/components/ui/index"],
+      "@/*": ["../*"],
+      "next/link": ["./stubs/next-link.tsx"],
+      "next/image": ["./stubs/next-image.tsx"],
+      "next/navigation": ["./stubs/next-navigation.tsx"]
+    }
+  }
+}

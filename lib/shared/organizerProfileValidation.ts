@@ -3,6 +3,7 @@
 // lib/server/) pour un retour immédiat côté formulaire client ET pour être
 // la même règle appliquée côté serveur dans lib/server/organizerProfile.ts —
 // la vérification d'UNICITÉ, elle, a besoin de la base et reste côté serveur.
+import { stripDiacritics } from './diacritics'
 
 export const RESERVED_ORGANIZER_SLUGS = new Set([
   'admin',
@@ -19,9 +20,7 @@ export const RESERVED_ORGANIZER_SLUGS = new Set([
 ])
 
 export function slugifyOrganizer(value: string | null | undefined = ''): string {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+  return stripDiacritics(String(value || ''))
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, '-')

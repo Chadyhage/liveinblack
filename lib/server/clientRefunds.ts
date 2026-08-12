@@ -1,12 +1,16 @@
+import type { HydratedDocument } from 'mongoose'
 import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
-import Order from '../models/Order'
+import Order, { type OrderDoc } from '../models/Order'
 import Ticket from '../models/Ticket'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyUserById } from './emails/notify'
+import { sendEmail } from './email'
 import { refundConfirmedEmail, refundFailedEmail } from './emails'
+import type { Email } from './emails/types'
 import { fmtMoney } from '../shared/money'
+import { extractTicketCode, verifyTicketToken } from './ticketToken'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -38,13 +42,12 @@ export type RefundRequestResult =
   | { ok: false; status: number; error: string }
   | { ok: true; refunded: boolean }
 
-export async function requestClientRefund(caller: RefundCaller, orderId: string): Promise<RefundRequestResult> {
-  await getDb()
-
-  const order = await Order.findById(orderId)
-  if (!order) return { ok: false, status: 404, error: 'order_not_found' }
-  if (order.userId !== caller.id) return { ok: false, status: 403, error: 'forbidden' }
-
+// Cœur partagé des deux points d'entrée ci-dessous (compte authentifié / lien
+// sécurisé sans compte) — l'AUTORISATION (qui a le droit d'appeler ceci pour
+// CET order) est vérifiée par l'appelant AVANT, jamais ici : cette fonction
+// suppose déjà l'identité établie et n'applique que les règles métier de la
+// politique de remboursement elle-même.
+async function processOrderRefund(order: HydratedDocument<OrderDoc>, notifyEmail: (email: Email) => Promise<void>): Promise<RefundRequestResult> {
   if (order.status !== 'paid') return { ok: false, status: 409, error: 'order_not_paid' }
   if (order.clientRefundRequestedAt) return { ok: false, status: 409, error: 'already_requested' }
   // Un billet gratuit (rail 'free') n'a aucun paiement Stripe/FedaPay à
@@ -84,7 +87,7 @@ export async function requestClientRefund(caller: RefundCaller, orderId: string)
   // erreur Stripe transitoire) doit laisser le client réessayer, jamais le
   // bloquer derrière `already_requested` sans qu'aucun remboursement ait eu lieu.
   if (!result.ok) {
-    await notifyUserById(caller.id, () => refundFailedEmail(event.name, null, `${SITE}/help`, SITE))
+    await notifyEmail(refundFailedEmail(event.name, null, `${SITE}/help`, SITE))
     return { ok: false, status: 502, error: 'refund_failed' }
   }
 
@@ -92,7 +95,50 @@ export async function requestClientRefund(caller: RefundCaller, orderId: string)
   order.clientRefundReason = coveredByProtection ? 'cancellation_protection' : 'postponed_declined'
   await order.save()
 
-  await notifyUserById(caller.id, () => refundConfirmedEmail(event.name, fmtMoney(grossRefundMajor(order), order.currency), 'quelques jours ouvrés', SITE))
+  await notifyEmail(refundConfirmedEmail(event.name, fmtMoney(grossRefundMajor(order), order.currency), 'quelques jours ouvrés', SITE))
 
   return { ok: true, refunded: true }
+}
+
+export async function requestClientRefund(caller: RefundCaller, orderId: string): Promise<RefundRequestResult> {
+  await getDb()
+
+  const order = await Order.findById(orderId)
+  if (!order) return { ok: false, status: 404, error: 'order_not_found' }
+  if (order.userId !== caller.id) return { ok: false, status: 403, error: 'forbidden' }
+
+  return processOrderRefund(order, (email) => notifyUserById(caller.id, () => email))
+}
+
+// Demande sans compte, via le "lien sécurisé reçu avec son billet"
+// (LIVE_IN_BLACK_Politique_Annulation_Remboursement.docx §2 — utilisé par
+// les billets émis par un agent quand l'email saisi ne correspond à aucun
+// compte, voir lib/server/agentSales.ts::mintAgentSaleTickets ; un billet
+// guestlist n'a de toute façon aucun paiement à rembourser, `rail:'free'`
+// l'exclut déjà plus haut). Le lien EST déjà l'équivalent d'un mot de passe
+// ici : la même signature HMAC serveur qui protège le QR d'entrée
+// (lib/server/ticketToken.ts) sert de preuve de possession — pas besoin
+// d'un système de jeton séparé.
+export async function requestClientRefundByTicketToken(token: string): Promise<RefundRequestResult> {
+  await getDb()
+
+  const ticketCode = extractTicketCode(token)
+  if (!ticketCode) return { ok: false, status: 400, error: 'invalid_token' }
+
+  const ticket = await Ticket.findOne({ ticketCode })
+  if (!ticket) return { ok: false, status: 404, error: 'ticket_not_found' }
+  if (ticket.revoked) return { ok: false, status: 409, error: 'revoked' }
+  if (!verifyTicketToken(token, { ticketCode: ticket.ticketCode, seatVersion: ticket.seatVersion, entryNonce: ticket.entryNonce ?? null })) {
+    return { ok: false, status: 403, error: 'invalid_token' }
+  }
+  if (!ticket.orderId) return { ok: false, status: 409, error: 'no_order' }
+
+  const order = await Order.findById(ticket.orderId)
+  if (!order) return { ok: false, status: 404, error: 'order_not_found' }
+
+  const contactEmail = order.contactEmail
+  return processOrderRefund(order, async (email) => {
+    if (!contactEmail) return
+    await sendEmail(contactEmail, email)
+  })
 }

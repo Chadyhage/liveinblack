@@ -15,7 +15,7 @@ import GuestlistModal from './GuestlistModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button, EmptyState, Modal, Pagination, pagedSlice } from '@/app/components/ui'
+import { Button, Card, EmptyState, Modal, Pagination, pagedSlice, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const PAST_PAGE_SIZE = 15
@@ -231,7 +231,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {payoutGapLabel && (
         <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid rgba(184,243,74,0.35)', background: 'rgba(184,243,74,0.08)' }}>
-          <p style={{ font: '700 14px Inter, sans-serif', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
+          <p style={{ font: '700 14px var(--font-open-sans)', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 12px' }}>
             Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l&rsquo;argent n&rsquo;est pas versé automatiquement.
           </p>
@@ -298,7 +298,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
-              <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
+              <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(60%)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
@@ -315,7 +315,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                 >
                   Retirer de ma liste
                 </Button>
-              </div>
+              </Card>
             ))}
           </div>
           <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 10, lineHeight: 1.6 }}>
@@ -329,7 +329,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {pagedPastEvents.map((event) => (
-              <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
+              <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
                 <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(30%)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
@@ -350,14 +350,14 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 20V10m8 10V4m8 16v-7" />
                   </svg>
                 </Link>
-              </div>
+              </Card>
             ))}
           </div>
           <Pagination page={pastPage} pageCount={pastPageCount} onPageChange={setPastPage} totalItems={pastEvents.length} pageSize={PAST_PAGE_SIZE} />
         </section>
       )}
 
-      {duplicating && <p style={{ position: 'fixed', bottom: 20, right: 20, color: 'var(--text-muted)', fontSize: 12 }}>Duplication en cours…</p>}
+      <ToastViewport items={duplicating ? [{ id: 'duplication', message: 'Duplication de l’événement en cours…', kind: 'info' }] : []} />
 
       {modal.type === 'bookings' && <BookingsPanel event={{ id: modal.event.id, name: modal.event.name, currency: modal.event.currency }} onClose={() => setModal({ type: 'none' })} />}
       {modal.type === 'boost' && <BoostModal event={{ id: modal.event.id, name: modal.event.name, region: modal.event.region }} onClose={() => setModal({ type: 'none' })} />}
@@ -365,7 +365,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <GuestlistModalWithPlaces event={modal.event} onClose={() => setModal({ type: 'none' })} />
       )}
       {modal.type === 'staff' && <EventStaffModal event={{ id: modal.event.id, name: modal.event.name }} onClose={() => setModal({ type: 'none' })} />}
-      {modal.type === 'promo' && <PromoCodesPanel event={{ id: modal.event.id, name: modal.event.name, currency: modal.event.currency }} onClose={() => setModal({ type: 'none' })} />}
+      {modal.type === 'promo' && <PromoCodesPanelWithPlaces event={modal.event} onClose={() => setModal({ type: 'none' })} />}
       {modal.type === 'postpone' && (
         <PostponeModal
           event={{ id: modal.event.id, name: modal.event.name, date: modal.event.date, dateDisplay: modal.event.dateDisplay, time: modal.event.time }}
@@ -431,4 +431,45 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
     )
   }
   return <GuestlistModal event={{ id: event.id, name: event.name, places, currency: event.currency }} onClose={onClose} />
+}
+
+// Même besoin/pattern que GuestlistModalWithPlaces ci-dessus — les codes
+// promo peuvent maintenant être restreints à certains types de place (#E5,
+// confirmé en réunion live le 11/08/2026), le sélecteur a donc besoin du
+// catalogue de places, absent d'OrganizerEventView.
+function PromoCodesPanelWithPlaces({ event, onClose }: { event: OrganizerEventView; onClose: () => void }) {
+  const [places, setPlaces] = useState<{ id: string; type: string; price: number }[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/organizer-events/${event.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return
+        if (data.ok) setPlaces(data.event.places.map((p: { id: string; type: string; price: number }) => ({ id: p.id, type: p.type, price: p.price })))
+        else setPlaces([])
+      })
+      .catch(() => {
+        if (!cancelled) setPlaces([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [event.id])
+
+  if (!places) {
+    return (
+      <Modal onClose={onClose} hideClose contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
+        <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement des codes promo">
+          <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+            <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
+            </path>
+          </svg>
+        </div>
+      </Modal>
+    )
+  }
+  return <PromoCodesPanel event={{ id: event.id, name: event.name, currency: event.currency, places }} onClose={onClose} />
 }

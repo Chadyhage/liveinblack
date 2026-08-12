@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Stars, StarInput } from './StarRating'
 import { computeReviewStats, REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 
 // Port de src/components/ProviderReviews.jsx — section "Avis clients" d'une
 // page publique prestataire. Contrairement au legacy (modale d'auth inline
@@ -14,14 +14,11 @@ import { Button, Textarea, Label } from '@/app/components/ui'
 // directement depuis la réponse de l'API plutôt que de tout re-fetcher (pas
 // de route GET publique dédiée — la lecture initiale vient du Server
 // Component, voir app/(public)/prestataires/[id]/page.tsx).
-
-const FONT = 'Inter, system-ui, sans-serif'
 const GOLD = 'var(--primary)'
 const TEAL = 'var(--primary)'
 
-const card: React.CSSProperties = { padding: 20, borderRadius: 16, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontFamily: FONT, fontSize: 12.5, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
-const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontFamily: FONT, fontSize: 13, fontWeight: 600 }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12.5, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
+const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontSize: 13, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
 
 function fmtDate(iso: string): string {
@@ -33,15 +30,7 @@ function fmtDate(iso: string): string {
 }
 
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,.72)', backdropFilter: 'blur(8px)' }} onClick={onClose} />
-      <div style={{ position: 'relative', width: 'min(100%, 520px)', maxHeight: '88vh', overflowY: 'auto', borderRadius: '20px 20px 0 0', background: 'var(--surface-2)', border: '1px solid rgba(255,255,255,.10)', boxShadow: '0 -26px 80px rgba(0,0,0,.65)', padding: '18px 18px 24px' }}>
-        <div style={{ width: 44, height: 4, borderRadius: 999, background: 'rgba(255,255,255,.18)', margin: '0 auto 16px' }} />
-        {children}
-      </div>
-    </div>
-  )
+  return <Modal onClose={onClose} maxWidth={520} zIndex={3200} ariaLabel="Avis prestataire">{children}</Modal>
 }
 
 export interface PublicReviewView {
@@ -177,14 +166,14 @@ export default function ProviderReviewsClient({
   return (
     <section style={{ marginTop: 28 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-        <h2 style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
-        {count > 0 && <span style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{count} avis</span>}
+        <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
+        {count > 0 && <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{count} avis</span>}
       </div>
 
-      <div style={card}>
+      <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
         {count === 0 ? (
           <div>
-            <p style={{ fontFamily: FONT, fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: 0 }}>
               {`${providerName || 'Ce prestataire'} n’a pas encore reçu d’avis.${!isSelf ? ' Tu as travaillé avec ce prestataire ? Ton retour aidera les prochains clients.' : ''}`}
             </p>
             {!isSelf && (
@@ -197,26 +186,26 @@ export default function ProviderReviewsClient({
           <>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ textAlign: 'center', minWidth: 110 }}>
-                <p style={{ fontFamily: FONT, fontSize: 40, fontWeight: 800, letterSpacing: '-1.5px', color: '#fff', margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: 40, fontWeight: 800, letterSpacing: '-1.5px', color: '#fff', margin: 0, lineHeight: 1 }}>
                   {String(avg).replace('.', ',')}
                   <span style={{ fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,.4)' }}> / 5</span>
                 </p>
                 <div style={{ marginTop: 7 }}>
                   <Stars value={avg} size={17} />
                 </div>
-                <p style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.45)', margin: '6px 0 0' }}>Basée sur {count} avis</p>
+                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.45)', margin: '6px 0 0' }}>Basée sur {count} avis</p>
               </div>
               <div style={{ flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 5 }}>
                 {([5, 4, 3, 2, 1] as const).map((n) => (
                   <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,.55)', width: 10, textAlign: 'right' }}>{n}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,.55)', width: 10, textAlign: 'right' }}>{n}</span>
                     <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.44 6.2 20.5l1.1-6.47L2.6 9.45l6.5-.95z" fill={GOLD} />
                     </svg>
                     <div style={{ flex: 1, height: 7, borderRadius: 999, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
                       <div style={{ width: `${count ? Math.round((dist[n] / count) * 100) : 0}%`, height: '100%', borderRadius: 999, background: GOLD }} />
                     </div>
-                    <span style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.4)', width: 22 }}>{dist[n]}</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', width: 22 }}>{dist[n]}</span>
                   </div>
                 ))}
               </div>
@@ -235,38 +224,38 @@ export default function ProviderReviewsClient({
                   <article key={review.id} style={{ padding: 16, borderRadius: 14, border: '1px solid rgba(255,255,255,.07)', background: 'rgba(255,255,255,.02)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <Stars value={review.rating} size={14} />
-                      <span style={{ fontFamily: FONT, fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
                       {review.verified && (
-                        <span style={{ fontFamily: FONT, fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.35)', borderRadius: 999, padding: '2px 8px' }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.35)', borderRadius: 999, padding: '2px 8px' }}>
                           Avis vérifié
                         </span>
                       )}
-                      <span style={{ fontFamily: FONT, fontSize: 11.5, color: 'rgba(255,255,255,.38)' }}>
+                      <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.38)' }}>
                         {fmtDate(review.createdAt)}
                         {review.edited ? ' · modifié' : ''}
                       </span>
                     </div>
-                    <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: '9px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
+                    <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: '9px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
 
                     {review.reply?.text && (
                       <div style={{ marginTop: 11, padding: '10px 13px', borderRadius: 12, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)' }}>
-                        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: GOLD, margin: '0 0 5px' }}>Réponse de {providerName || 'du prestataire'}</p>
-                        <p style={{ fontFamily: FONT, fontSize: 13, color: 'rgba(255,255,255,.66)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
+                        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: GOLD, margin: '0 0 5px' }}>Réponse de {providerName || 'du prestataire'}</p>
+                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,.66)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
                       </div>
                     )}
 
                     <div style={{ display: 'flex', gap: 14, marginTop: 9 }}>
                       {isMine ? (
                         <>
-                          <Button variant="link" onClick={openForm} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 700, color: TEAL, textDecoration: 'none' }}>
+                          <Button variant="link" onClick={openForm} style={{ fontSize: 11.5, fontWeight: 700, color: TEAL, textDecoration: 'none' }}>
                             Modifier
                           </Button>
-                          <Button variant="link" onClick={() => setConfirmRemove(true)} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
+                          <Button variant="link" onClick={() => setConfirmRemove(true)} style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
                             Retirer
                           </Button>
                         </>
                       ) : (
-                        <Button variant="link" onClick={() => openReport(review)} style={{ fontFamily: FONT, fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
+                        <Button variant="link" onClick={() => openReport(review)} style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
                           Signaler
                         </Button>
                       )}
@@ -277,34 +266,34 @@ export default function ProviderReviewsClient({
             </div>
           </>
         )}
-      </div>
+      </Card>
 
       {showForm && (
         <Sheet onClose={() => !formBusy && setShowForm(false)}>
           <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: GOLD, margin: '0 0 7px' }}>Avis client</p>
-          <h3 style={{ fontFamily: FONT, fontSize: 25, lineHeight: 1.08, letterSpacing: '-.7px', margin: '0 0 16px', color: '#fff' }}>{myReview && myReview.status === 'published' ? 'Modifier mon avis' : `Noter ${providerName || 'ce prestataire'}`}</h3>
+          <h3 style={{ fontSize: 25, lineHeight: 1.08, letterSpacing: '-.7px', margin: '0 0 16px', color: '#fff' }}>{myReview && myReview.status === 'published' ? 'Modifier mon avis' : `Noter ${providerName || 'ce prestataire'}`}</h3>
 
           <div style={{ textAlign: 'center', padding: '6px 0 2px' }}>
-            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Note (obligatoire)</p>
+            <p style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Note (obligatoire)</p>
             <StarInput value={formRating} onChange={setFormRating} />
-            <p style={{ fontFamily: FONT, fontSize: 12, color: 'rgba(255,255,255,.45)', margin: '6px 0 0', minHeight: 16 }}>{['', 'Décevant', 'Moyen', 'Bien', 'Très bien', 'Excellent'][formRating] || 'Touche les étoiles pour noter'}</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', margin: '6px 0 0', minHeight: 16 }}>{['', 'Décevant', 'Moyen', 'Bien', 'Très bien', 'Excellent'][formRating] || 'Touche les étoiles pour noter'}</p>
           </div>
 
-          <Label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '14px 0 8px' }}>Ton avis</Label>
+          <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '14px 0 8px' }}>Ton avis</Label>
           <Textarea
             value={formComment}
             onChange={(e) => setFormComment(e.target.value.slice(0, REVIEW_COMMENT_MAX))}
             rows={5}
             placeholder="Raconte ton expérience : qualité de la prestation, ponctualité, communication…"
-            style={{ minHeight: 120, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 14, fontFamily: FONT, fontSize: 14, lineHeight: 1.55 }}
+            style={{ minHeight: 120, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 14, fontSize: 14, lineHeight: 1.55 }}
           />
-          <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 0', textAlign: 'right' }}>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 0', textAlign: 'right' }}>
             {formComment.trim().length} / {REVIEW_COMMENT_MAX}
           </p>
-          <p style={{ fontFamily: FONT, fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,.42)', margin: '6px 0 14px' }}>Ton avis est publié avec ton nom d&rsquo;affichage. Les avis contraires aux règles peuvent être retirés par la modération.</p>
+          <p style={{ fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,.42)', margin: '6px 0 14px' }}>Ton avis est publié avec ton nom d&rsquo;affichage. Les avis contraires aux règles peuvent être retirés par la modération.</p>
 
           {formErr && (
-            <p role="alert" style={{ fontFamily: FONT, fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
+            <p role="alert" style={{ fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
               {formErr}
             </p>
           )}
@@ -329,8 +318,8 @@ export default function ProviderReviewsClient({
         <Sheet onClose={() => !reportBusy && setReportTarget(null)}>
           {reportDone ? (
             <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
-              <h3 style={{ fontFamily: FONT, fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Merci</h3>
-              <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>{typeof reportDone === 'string' ? reportDone : 'Ton signalement a été transmis. Notre équipe va examiner cet avis.'}</p>
+              <h3 style={{ fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Merci</h3>
+              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>{typeof reportDone === 'string' ? reportDone : 'Ton signalement a été transmis. Notre équipe va examiner cet avis.'}</p>
               <Button onClick={() => setReportTarget(null)} style={{ ...primaryBtn, minWidth: 160 }}>
                 Fermer
               </Button>
@@ -338,7 +327,7 @@ export default function ProviderReviewsClient({
           ) : (
             <>
               <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8fb2', margin: '0 0 7px' }}>Signalement</p>
-              <h3 style={{ fontFamily: FONT, fontSize: 24, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: '#fff' }}>Signaler cet avis</h3>
+              <h3 style={{ fontSize: 24, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: '#fff' }}>Signaler cet avis</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
                 {REVIEW_REPORT_REASONS.map((reason) => (
                   <Button
@@ -352,7 +341,6 @@ export default function ProviderReviewsClient({
                       minHeight: 44,
                       padding: '11px 14px',
                       borderRadius: 12,
-                      fontFamily: FONT,
                       fontSize: 13.5,
                       fontWeight: 600,
                       background: reportReason === reason.id ? 'rgba(143,86,255,.16)' : 'rgba(255,255,255,.05)',
@@ -364,15 +352,15 @@ export default function ProviderReviewsClient({
                   </Button>
                 ))}
               </div>
-              <Label style={{ display: 'block', fontFamily: FONT, fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 8 }}>Ajouter une précision (facultatif)</Label>
+              <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 8 }}>Ajouter une précision (facultatif)</Label>
               <Textarea
                 value={reportDetails}
                 onChange={(e) => setReportDetails(e.target.value.slice(0, 500))}
                 rows={3}
                 placeholder="Explique en quelques mots ce qui pose problème…"
-                style={{ minHeight: 76, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 12, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5 }}
+                style={{ minHeight: 76, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 12, fontSize: 13.5, lineHeight: 1.5 }}
               />
-              <p style={{ fontFamily: FONT, fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 16px', textAlign: 'right' }}>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 16px', textAlign: 'right' }}>
                 {reportDetails.length} / 500
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -396,8 +384,8 @@ export default function ProviderReviewsClient({
 
       {confirmRemove && (
         <Sheet onClose={() => !removeBusy && setConfirmRemove(false)}>
-          <h3 style={{ fontFamily: FONT, fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Retirer ton avis ?</h3>
-          <p style={{ fontFamily: FONT, fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
+          <h3 style={{ fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Retirer ton avis ?</h3>
+          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={removeBusy} style={{ ...ghostBtn, flex: 1 }}>
               Annuler

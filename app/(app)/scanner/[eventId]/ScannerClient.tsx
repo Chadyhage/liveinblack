@@ -198,6 +198,22 @@ function resolveScanInput(raw: string): { token: string } | { ticketCode: string
   return { ticketCode: trimmed.toUpperCase() }
 }
 
+// Extrait le ticketCode d'une valeur scannée/saisie SANS passer par
+// /api/tickets/checkin — utilisé par le rôle 'serveur' (rang 2) pour ouvrir
+// directement la commande d'un billet, jamais pour valider une entrée (voir
+// séparation des interfaces, #P0 D4 du 11/08/2026). Un token de billet a la
+// forme `${ticketCode}.${signature}` (lib/server/ticketToken.ts) — extraire
+// le code n'exige aucune vérification de signature ici, on ne fait qu'ouvrir
+// un écran de lecture, jamais une action d'entrée.
+function resolveTicketCodeForLookup(raw: string): string {
+  const trimmed = raw.trim()
+  const match = trimmed.match(TICKET_URL_TOKEN_RE)
+  const token = match ? match[1] : trimmed
+  const dot = token.lastIndexOf('.')
+  const code = dot > 0 && dot < token.length - 1 ? token.slice(0, dot) : token
+  return code.toUpperCase()
+}
+
 function groupByCategory(menu: MenuItemView[]): Array<[string, MenuItemView[]]> {
   const map = new Map<string, MenuItemView[]>()
   for (const item of menu) {
@@ -305,14 +321,16 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
   // Polling toutes les 4s UNIQUEMENT en mode service, nettoyé au retour en
   // mode scan / démontage / changement de billet (même convention que
-  // CommanderClient.tsx).
+  // CommanderClient.tsx). Jamais pour le rang 1 (contrôle entrée pur) : ce
+  // rôle ne voit jamais la carte commande, inutile de faire tourner le
+  // polling en tâche de fond pour lui (voir séparation des interfaces, D4).
   useEffect(() => {
-    if (mode !== 'service' || !ticketCode) return
+    if (mode !== 'service' || !ticketCode || rank < 2) return
     const interval = setInterval(() => {
       void fetchOrders(ticketCode)
     }, 4000)
     return () => clearInterval(interval)
-  }, [mode, ticketCode, fetchOrders])
+  }, [mode, ticketCode, fetchOrders, rank])
 
   const enterServiceMode = useCallback(
     async (code: string) => {
@@ -390,9 +408,17 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       // afficherait encore "Désactiver la caméra" alors que la caméra réelle
       // est déjà coupée.
       setScanning(false)
+      // Rôle 'serveur' (rang 2) : ouvre directement la commande du billet,
+      // ne valide JAMAIS une entrée (voir resolveTicketCodeForLookup et le
+      // garde serveur dans ticketCheckin.ts — un serveur n'est de toute façon
+      // plus autorisé à appeler /api/tickets/checkin).
+      if (rank === 2) {
+        void enterServiceMode(resolveTicketCodeForLookup(value))
+        return
+      }
       void performCheckin(value)
     },
-    [performCheckin]
+    [performCheckin, enterServiceMode, rank]
   )
 
   function resetToScan() {
@@ -643,10 +669,13 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               ← Événements
             </Link>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
-              {mode === 'service' ? 'Service sur place' : 'Contrôle des entrées'}
+              {/* Rang 1 (contrôle entrée pur) : jamais "Service sur place",
+                  même une fois un billet scanné — il n'a accès qu'au contrôle
+                  d'accès, jamais aux commandes (voir D4). */}
+              {mode === 'service' && rank >= 2 ? 'Service sur place' : 'Contrôle des entrées'}
             </p>
             <h1 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>
-              {mode === 'service' ? `Billet ${ticketCode}` : 'Scanner'}
+              {mode === 'service' && rank >= 2 ? `Billet ${ticketCode}` : mode === 'service' ? 'Billet scanné' : 'Scanner'}
             </h1>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{eventName}</p>
           </div>
@@ -691,6 +720,12 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
+                  // Rôle 'serveur' (rang 2) : ouvre la commande, ne valide
+                  // jamais d'entrée — voir handleScanValue.
+                  if (rank === 2) {
+                    void enterServiceMode(resolveTicketCodeForLookup(manualCode))
+                    return
+                  }
                   void performCheckin(manualCode)
                 }}
                 style={{ display: 'flex', gap: 8 }}
@@ -708,7 +743,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   autoCapitalize="characters"
                 />
                 <Button type="submit" variant="primary" size="sm" disabled={checkinBusy || !manualCode.trim()} loading={checkinBusy} loadingText="…">
-                  Valider
+                  {rank === 2 ? 'Ouvrir' : 'Valider'}
                 </Button>
               </form>
             </Card>
@@ -789,6 +824,12 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               </Card>
             )}
 
+            {/* Jamais pour le rang 1 (contrôle entrée pur) — un contrôleur
+                d'entrée ne doit ni voir ni gérer les commandes/précommandes,
+                c'est le rôle du serveur (rang 2+) uniquement. Voir D4,
+                confirmé en réunion live le 11/08/2026. */}
+            {rank >= 2 && (
+            <>
             <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <h2 style={sectionTitleStyle}>Commande de ce billet</h2>
               {items.length === 0 ? (
@@ -964,11 +1005,13 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 </div>
               )}
             </section>
+            </>
+            )}
           </>
         )}
       </div>
 
-      {mode === 'service' && items.length > 0 && (
+      {mode === 'service' && rank >= 2 && items.length > 0 && (
         <div
           style={{
             position: 'fixed',

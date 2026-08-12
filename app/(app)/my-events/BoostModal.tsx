@@ -58,7 +58,7 @@ function RankIcon({ position, size = 20 }: { position: number; size?: number }) 
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={color} />
-      <text x="12" y="15" textAnchor="middle" fontSize={8} fill="#090a10" fontFamily="Inter, sans-serif" fontWeight="bold">
+      <text x="12" y="15" textAnchor="middle" fontSize={8} fill="#090a10" fontFamily="var(--font-open-sans)" fontWeight="bold">
         {position}
       </text>
     </svg>
@@ -163,7 +163,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
           <p
             style={{
-              fontFamily: 'Inter, sans-serif',
               fontWeight: 600,
               fontSize: 11,
               letterSpacing: '0.06em',
@@ -181,14 +180,13 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
 
         {step === 'error' ? (
           <div style={{ textAlign: 'center', padding: '28px 0' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#ee9bb7', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
+            <p style={{ fontSize: 13, color: '#ee9bb7', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
             <Button
               variant="secondary"
               onClick={() => setStep('pick')}
               style={{
                 padding: '14px 22px',
                 borderRadius: 12,
-                fontFamily: 'Inter, sans-serif',
                 fontSize: 13,
                 fontWeight: 600,
               }}
@@ -202,14 +200,14 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
                 <span>Position</span>
                 <strong style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#fff', fontWeight: 600 }}>
                   <RankIcon position={chosen.position} size={17} />
                   {chosen.label}
                 </strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
                 <span>Durée</span>
                 <strong style={{ color: '#fff', fontWeight: 600 }}>{chosenTier.label}</strong>
               </div>
@@ -220,7 +218,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   alignItems: 'center',
                   gap: 12,
                   padding: '14px 0 8px',
-                  fontFamily: 'Inter, sans-serif',
                   fontSize: 13,
                   color: 'rgba(255,255,255,0.55)',
                   borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -228,10 +225,10 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 }}
               >
                 <span>Total</span>
-                <strong style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 25, color: 'var(--gold)' }}>{formatPrice(chosenTier.price)}</strong>
+                <strong style={{ fontWeight: 700, fontSize: 25, color: 'var(--gold)' }}>{formatPrice(chosenTier.price)}</strong>
               </div>
             </div>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0 }}>
               Paiement sécurisé via Stripe. Le créneau est confirmé uniquement après validation du paiement.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 9 }}>
@@ -241,7 +238,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 style={{
                   minHeight: 50,
                   borderRadius: 12,
-                  fontFamily: 'Inter, sans-serif',
                   fontSize: 13,
                   fontWeight: 600,
                 }}
@@ -260,7 +256,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   borderRadius: 3,
                   background: paying ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                   color: paying ? 'rgba(255,255,255,0.35)' : '#181206',
-                  fontFamily: 'Inter, sans-serif',
                   fontSize: 14,
                   fontWeight: 500,
                   textTransform: 'none',
@@ -303,14 +298,13 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         opacity: blocked ? 0.78 : 1,
                       }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 13 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 13 }}>
                         <RankIcon position={plan.position} />
                         {plan.label}
                       </span>
                       <span
                         style={{
                           display: 'block',
-                          fontFamily: 'Inter, sans-serif',
                           fontWeight: 700,
                           fontSize: 11,
                           letterSpacing: '0.05em',
@@ -333,12 +327,11 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
                     2. Choisis la durée
                   </p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{activePlan.description}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{activePlan.description}</p>
                 </div>
                 {positionBlocked(activePosition) && (
                   <span
                     style={{
-                      fontFamily: 'Inter, sans-serif',
                       fontWeight: 700,
                       fontSize: 11,
                       textTransform: 'uppercase',
@@ -374,10 +367,10 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         opacity: disabled ? 0.38 : 1,
                       }}
                     >
-                      <span style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--teal)' : 'rgba(255,255,255,0.48)' }}>
+                      <span style={{ display: 'block', fontWeight: 600, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--teal)' : 'rgba(255,255,255,0.48)' }}>
                         {tier.label}
                       </span>
-                      <strong style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 22, marginTop: 10, whiteSpace: 'nowrap', color: selected ? '#fff' : activePlan.color }}>
+                      <strong style={{ display: 'block', fontWeight: 700, fontSize: 22, marginTop: 10, whiteSpace: 'nowrap', color: selected ? '#fff' : activePlan.color }}>
                         {formatPrice(tier.price)}
                       </strong>
                     </Button>
@@ -385,7 +378,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 })}
               </div>
               {positionBlocked(activePosition) && (
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', margin: '10px 0 0' }}>
+                <p style={{ fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', margin: '10px 0 0' }}>
                   Cette place est déjà prise ou en cours de paiement dans cette région. Choisis une autre position.
                 </p>
               )}
@@ -399,7 +392,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               style={{
                 minHeight: 52,
                 borderRadius: 3,
-                fontFamily: 'Inter, sans-serif',
                 fontWeight: 500,
                 textTransform: 'none',
                 letterSpacing: 'normal',

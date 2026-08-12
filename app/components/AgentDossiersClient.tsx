@@ -5,8 +5,9 @@ import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
-import { X } from 'lucide-react'
-import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal } from '@/app/components/ui'
+import { AlertTriangle, BriefcaseBusiness, CheckCircle2, ChevronRight, Clock3, FileCheck2, FilePenLine, RefreshCw, RotateCcw, Search, ShieldCheck, UserRound, XCircle } from 'lucide-react'
+import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
+import styles from './AgentDossiersClient.module.css'
 
 const PAGE_SIZE = 15
 
@@ -186,7 +187,6 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
   personne: 'Par personne',
 }
 
-const cardStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
 const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 // Les couleurs `var(--*)` ne supportent pas la concaténation d'un canal alpha
@@ -447,15 +447,6 @@ export default function AgentDossiersClient() {
     }
   }, [selectedId, detailRetry])
 
-  useEffect(() => {
-    if (!selectedId) return
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') closeDetail()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedId, closeDetail])
-
   const activeSection = SECTIONS.find((s) => s.key === section) || SECTIONS[0]
 
   const filteredBySection = useMemo(() => applications.filter((a) => activeSection.statuses.includes(a.status)), [applications, activeSection])
@@ -526,66 +517,63 @@ export default function AgentDossiersClient() {
   }
 
   return (
-    <main className="lb-dashboard-page">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 className="font-display lb-dashboard-title">Dossiers</h1>
-          {totalAllPending > 0 && (
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: '#e05aaa', fontSize: 12, fontWeight: 700 }}>
-              {totalAllPending} en attente
-            </span>
-          )}
-        </div>
+    <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--applications ${styles.page}`}>
+      <div className={styles.stack}>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}><ShieldCheck size={15} aria-hidden="true" /> Validation des partenaires</p>
+            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Dossiers</h1>
+            <p className={`lb-dashboard-description ${styles.description}`}>Examine les candidatures des organisateurs et prestataires, demande les corrections nécessaires et conserve une trace claire de chaque décision.</p>
+          </div>
+          <div className={styles.heroActions}>
+            {totalAllPending > 0 && <span className={styles.pendingPill}><Clock3 size={16} aria-hidden="true" />{totalAllPending} à traiter</span>}
+            <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={loadList} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
+          </div>
+        </header>
 
         {listError && (
-          <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
-              Recharger
-            </Button>
+          <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
+            <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les dossiers</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
+            <Button variant="secondary" onClick={loadList}>Réessayer</Button>
           </Card>
         )}
 
-        <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div className={styles.metrics} aria-label="Filtrer les dossiers par statut">
           {SECTIONS.map((s) => {
             const count = applications.filter((a) => s.statuses.includes(a.status)).length
             const active = s.key === section
+            const Icon = s.key === 'pending' ? Clock3 : s.key === 'review' ? FilePenLine : s.key === 'correction' ? RotateCcw : s.key === 'resubmitted' ? FileCheck2 : s.key === 'validated' ? CheckCircle2 : XCircle
             return (
               <Button
                 key={s.key}
                 variant="ghost"
+                className={`${styles.metric}${active ? ` ${styles.metricActive}` : ''}`}
                 onClick={() => {
                   setSection(s.key)
                   setSearch('')
                   setPage(1)
                 }}
-                style={{
-                  padding: '12px 10px',
-                  borderRadius: 12,
-                  border: `1px solid ${active ? s.color : 'var(--border)'}`,
-                  background: active ? alphaBg(s.color) : 'var(--surface)',
-                  textAlign: 'left',
-                  display: 'block',
-                }}
+                aria-pressed={active}
+                style={{ '--metric-color': s.color } as React.CSSProperties}
               >
-                <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{count}</div>
-                <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: active ? s.color : 'var(--text-faint)' }}>{s.label}</div>
+                <span className={styles.metricTop}><span className={styles.metricIcon}><Icon size={18} aria-hidden="true" /></span><strong className={styles.metricValue}>{count}</strong></span>
+                <span className={styles.metricLabel}>{s.label}</span>
               </Button>
             )
           })}
         </div>
 
-        {filteredBySection.length > 0 && (
-          <Input
-            placeholder={`Rechercher dans « ${activeSection.label} »…`}
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-          />
-        )}
+        <div className={styles.controls}>
+          <div className={styles.search}><Search size={18} aria-hidden="true" /><Input type="search" aria-label="Rechercher un dossier" placeholder="Nom, adresse e-mail ou candidat…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} /></div>
+          <span className={styles.resultCount}>{grouped.length} résultat{grouped.length === 1 ? '' : 's'}</span>
+          {search && <Button variant="ghost" onClick={() => { setSearch(''); setPage(1) }}>Effacer</Button>}
+        </div>
+
+        <div className={styles.listHeader}><div><h2>{activeSection.label}</h2><p>Les dossiers les plus récemment mis à jour apparaissent en premier.</p></div></div>
 
         {listLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className={styles.loadingGrid}>
+            {Array.from({ length: 4 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />
             ))}
           </div>
@@ -600,19 +588,14 @@ export default function AgentDossiersClient() {
             ) : undefined}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className={styles.grid}>
             {pageItems.map((group) =>
               group.length === 1 ? (
                 <AppCard key={group[0].id} app={group[0]} onClick={() => setSelectedId(group[0].id)} />
               ) : (
-                <Card key={group[0].userEmail || group[0].userId} style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Même compte · plusieurs activités</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{group.length} dossiers</span>
-                  </div>
-                  {group.map((app) => (
-                    <AppCard key={app.id} app={app} compact onClick={() => setSelectedId(app.id)} />
-                  ))}
+                <Card key={group[0].userEmail || group[0].userId} className={styles.groupCard}>
+                  <div className={styles.groupHeader}><strong>Même compte · plusieurs activités</strong><span>{group.length} dossiers</span></div>
+                  <div className={styles.groupGrid}>{group.map((app) => <AppCard key={app.id} app={app} compact onClick={() => setSelectedId(app.id)} />)}</div>
                 </Card>
               )
             )}
@@ -623,20 +606,16 @@ export default function AgentDossiersClient() {
       </div>
 
       {selectedId && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div onClick={closeDetail} style={{ position: 'absolute', inset: 0, background: 'rgba(3,4,8,0.72)', backdropFilter: 'blur(8px)' }} />
-          <div style={{ position: 'relative', width: '100%', maxWidth: 560, maxHeight: '88vh', overflowY: 'auto', background: 'var(--surface-2)', borderRadius: '16px 16px 0 0', padding: '18px 20px 32px' }}>
-            <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--border-strong)', margin: '0 auto 16px' }} />
-            <Button
-              variant="ghost"
-              onClick={closeDetail}
-              aria-label="Fermer le dossier"
-              style={{ position: 'absolute', top: 12, right: 14, width: 36, height: 36, minHeight: 36, minWidth: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', padding: 0 }}
-            >
-              <X size={18} />
-            </Button>
+        // Tiroir glissant depuis la droite (desktop web) — remplace l'ancien
+        // bottom-sheet mobile pour les détails d'éléments du dashboard agent
+        // (confirmé en réunion live le 12/08/2026). `onClose` custom : ce
+        // panneau est piloté par le paramètre d'URL `dossier`
+        // (useQueryParamState), pas par une route interceptée, donc jamais
+        // router.back() par défaut.
+        <SlideOverModal onClose={closeDetail} maxWidth={620} ariaLabel="Détail du dossier">
+          <div className={styles.drawerContent}>
             {detailError ? (
-              <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+              <Card accent="rgba(224,90,170,.35)" className={styles.drawerError}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le dossier n’existe peut-être plus, ou une erreur serveur est survenue.</p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
@@ -667,28 +646,10 @@ export default function AgentDossiersClient() {
               />
             )}
           </div>
-        </div>
+        </SlideOverModal>
       )}
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 80,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'var(--surface-2)',
-            border: `1px solid ${toast.kind === 'success' ? 'var(--teal)' : '#e05aaa'}`,
-            color: '#fff',
-            fontSize: 13,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastViewport items={toast ? [{ id: 'dossiers', message: toast.message, kind: toast.kind === 'success' ? 'success' : 'error' }] : []} />
     </main>
   )
 }
@@ -696,35 +657,25 @@ export default function AgentDossiersClient() {
 function AppCard({ app, compact, onClick }: { app: ApplicationSummary; compact?: boolean; onClick: () => void }) {
   const typeLabel = app.type === 'organisateur' ? 'Organisateur' : 'Prestataire'
   const dateLabel = app.submittedAt ? `Soumis le ${fmtDate(app.submittedAt)}` : `Mis à jour le ${fmtDate(app.updatedAt)}`
+  const TypeIcon = app.type === 'organisateur' ? BriefcaseBusiness : UserRound
 
   return (
     <Button
       variant="ghost"
       onClick={onClick}
-      style={{
-        ...cardStyle,
-        padding: compact ? '10px 12px' : 16,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        textAlign: 'left',
-        width: '100%',
-        border: compact ? '1px solid var(--border)' : cardStyle.border,
-      }}
+      className={`${styles.appCard}${compact ? ` ${styles.compact}` : ''}`}
     >
-      <Avatar src={null} name={app.displayName || '?'} size={compact ? 'sm' : 'md'} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ flex: 1, minWidth: 0, fontSize: compact ? 13 : 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.displayName}</span>
-          <span style={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: alphaBg(STATUS_COLOR[app.status]), color: STATUS_COLOR[app.status] }}>{STATUS_LABEL[app.status]}</span>
-        </div>
-        <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>
-          {typeLabel} · {app.userEmail} · {dateLabel}
-        </p>
-        {app.status === 'needs_changes' && app.requestedChanges && (
-          <p style={{ fontSize: 11.5, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', borderRadius: 6, padding: '4px 8px', margin: '6px 0 0' }}>{app.requestedChanges}</p>
-        )}
+      <div className={styles.appTop}>
+        <Avatar src={null} name={app.displayName || '?'} size={compact ? 'sm' : 'md'} />
+        <div className={styles.identity}><strong>{app.displayName}</strong><span>{app.userEmail}</span></div>
+        <span className={`${styles.status} ${styles[app.status]}`}>{STATUS_LABEL[app.status]}</span>
       </div>
+      <div className={styles.meta}>
+        <div className={styles.metaItem}><TypeIcon size={16} aria-hidden="true" /><span>{typeLabel}</span></div>
+        <div className={styles.metaItem}><Clock3 size={16} aria-hidden="true" /><span>{dateLabel}</span></div>
+      </div>
+      {app.status === 'needs_changes' && app.requestedChanges && <p className={styles.changes}>{app.requestedChanges}</p>}
+      <span className={styles.open}>Examiner le dossier <ChevronRight size={16} aria-hidden="true" /></span>
     </Button>
   )
 }
@@ -1117,7 +1068,7 @@ function ActionForm({
 
 function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <Modal onClose={onCancel} maxWidth={360} hideClose contentStyle={{ textAlign: 'center' }}>
+    <Modal onClose={onCancel} maxWidth={360} hideClose dismissible={!busy} contentStyle={{ textAlign: 'center' }}>
       <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
       <div style={{ display: 'flex', gap: 8 }}>
         <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
