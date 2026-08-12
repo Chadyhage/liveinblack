@@ -28,6 +28,7 @@ import {
 import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { mergeMessagesById } from './mergeMessages'
 
 const CONV_PAGE_SIZE = 20
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
@@ -272,13 +273,6 @@ function avatarColorFor(userId: string): string {
 // pour getMessagesSince() quand une conversation n'a encore AUCUN message
 // affiché (le endpoint SSE exige un ObjectId syntaxiquement valide).
 const ZERO_OBJECT_ID_SENTINEL = '000000000000000000000000'
-
-function mergeMessagesById(older: MessageView[], existing: MessageView[]): MessageView[] {
-  const byId = new Map<string, MessageView>()
-  for (const m of older) byId.set(m.id, m)
-  for (const m of existing) byId.set(m.id, m)
-  return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-}
 
 function conversationLabel(conv: ConversationView, currentUserId: string): string {
   if (conv.type === 'group') return conv.name || 'Groupe'
