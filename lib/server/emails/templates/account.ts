@@ -1,6 +1,5 @@
 // Emails transverses liés au compte multi-rôles.
-// ⚠️ Pas encore branché — voir app/api/account/active-role/route.ts (à créer,
-// cf. plan "Dashboard unifié par rôle").
+// Branché depuis app/api/account/active-role/route.ts.
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
 import { wrap, heading, paragraph, button, escapeHtml } from '../layout'
@@ -14,6 +13,6 @@ export function roleActivatedEmail(roleLabel: string, dashboardUrl: string, site
   return {
     subject: `Ton espace ${roleLabel} est prêt`,
     html: wrap(inner, { site, preheader: `Accès activé à ton espace ${roleLabel}.` }),
-    inApp: { type: 'account', title: `Ton espace ${roleLabel} est prêt`, link: dashboardUrl },
+    inApp: { type: 'account', title: `Ton espace ${roleLabel} est prêt`, link: dashboardUrl, push: true },
   }
 }

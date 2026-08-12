@@ -94,6 +94,6 @@ export function accountDeletionRequestedEmail(cancelUrl: string, delayLabel: str
   return {
     subject: 'Ta demande de suppression de compte est prise en compte',
     html: wrap(inner, { site, preheader: 'Ta demande de suppression sera traitée bientôt.' }),
-    inApp: { type: 'account', title: 'Demande de suppression prise en compte', body: `Traitée sous ${delayLabel}.`, link: cancelUrl },
+    inApp: { type: 'account', title: 'Demande de suppression prise en compte', body: `Traitée sous ${delayLabel}.`, link: cancelUrl, push: true },
   }
 }

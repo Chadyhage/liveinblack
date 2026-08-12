@@ -1,5 +1,5 @@
 // Emails de versement (payout) — organisateurs et prestataires.
-// ⚠️ Pas encore branchés — voir lib/server/eventPayouts.ts.
+// Branchés depuis lib/server/eventPayouts.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
 import { wrap, heading, paragraph, note, escapeHtml } from '../layout'
@@ -13,7 +13,7 @@ export function payoutInitiatedEmail(context: string, amountLabel: string, delay
   return {
     subject: `Ton versement pour ${context} est en cours`,
     html: wrap(inner, { site, preheader: `Versement de ${amountLabel} initié.` }),
-    inApp: { type: 'payout', title: 'Versement en cours', body: `${amountLabel} pour ${context}.` },
+    inApp: { type: 'payout', title: 'Versement en cours', body: `${amountLabel} pour ${context}.`, link: `${site}/organizer-studio`, push: true },
   }
 }
 

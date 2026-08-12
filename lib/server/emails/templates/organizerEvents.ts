@@ -1,7 +1,7 @@
 // Emails côté organisateur — cycle de vie de son propre événement (publié,
 // première vente, jalon, récap J-2, boost, impact d'une annulation).
-// ⚠️ Pas encore branchés — voir lib/server/organizerEvents.ts,
-// lib/server/finalizeBoost.ts, lib/server/organizerEventLifecycle.ts.
+// Branchés depuis lib/server/organizerEvents.ts, lib/server/finalizeBoost.ts,
+// lib/server/organizerEventLifecycle.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
 import { wrap, heading, paragraph, note, button, infoCard, infoRow, escapeHtml } from '../layout'
@@ -17,7 +17,7 @@ export function eventPublishedEmail(eventName: string, publicUrl: string, site: 
   return {
     subject: `${eventName} est en ligne 🎉`,
     html: wrap(inner, { site, preheader: 'Ton événement est publié.' }),
-    inApp: { type: 'organizer_activity', title: 'Ton événement est en ligne 🎉', body: eventName, link: publicUrl },
+    inApp: { type: 'organizer_activity', title: 'Ton événement est en ligne 🎉', body: eventName, link: publicUrl, push: true },
   }
 }
 
@@ -31,7 +31,7 @@ export function firstSaleEmail(eventName: string, dashboardUrl: string, site: st
   return {
     subject: `Première vente pour ${eventName} !`,
     html: wrap(inner, { site, preheader: 'Ta billetterie a commencé.' }),
-    inApp: { type: 'organizer_activity', title: 'Première vente ! 🎟️', body: eventName, link: dashboardUrl },
+    inApp: { type: 'organizer_activity', title: 'Première vente ! 🎟️', body: eventName, link: dashboardUrl, push: true },
   }
 }
 
@@ -45,7 +45,7 @@ export function salesMilestoneEmail(eventName: string, milestoneLabel: string, d
   return {
     subject: `${evName} — ${milestoneLabel}`,
     html: wrap(inner, { site, preheader: milestoneLabel }),
-    inApp: { type: 'organizer_activity', title: milestoneLabel, body: eventName, link: dashboardUrl },
+    inApp: { type: 'organizer_activity', title: milestoneLabel, body: eventName, link: dashboardUrl, push: true },
   }
 }
 
@@ -86,7 +86,7 @@ export function boostActivatedEmail(eventName: string, durationLabel: string, da
   return {
     subject: `Ton boost pour ${eventName} est actif`,
     html: wrap(inner, { site, preheader: `Boost actif pour ${durationLabel}.` }),
-    inApp: { type: 'boost', title: 'Ton boost est actif', body: `${eventName} — ${durationLabel}.`, link: dashboardUrl },
+    inApp: { type: 'boost', title: 'Ton boost est actif', body: `${eventName} — ${durationLabel}.`, link: dashboardUrl, push: true },
   }
 }
 
@@ -104,7 +104,7 @@ export function boostConflictEmail(eventName: string, reason: string, alternativ
   }
 }
 
-export function cancellationFinancialImpactEmail(eventName: string, totalRefundedLabel: string, payoutImpactLabel: string, site: string = DEFAULT_SITE): Email {
+export function cancellationFinancialImpactEmail(eventName: string, totalRefundedLabel: string, payoutImpactLabel: string, site: string = DEFAULT_SITE, dashboardUrl?: string): Email {
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Impact financier de l’annulation')}
@@ -114,6 +114,6 @@ export function cancellationFinancialImpactEmail(eventName: string, totalRefunde
   return {
     subject: `Impact financier de l'annulation de ${eventName}`,
     html: wrap(inner, { site, preheader: `${totalRefundedLabel} remboursés.` }),
-    inApp: { type: 'refund', title: "Impact financier de l'annulation", body: `${eventName} — ${totalRefundedLabel} remboursés.` },
+    inApp: { type: 'refund', title: "Impact financier de l'annulation", body: `${eventName} — ${totalRefundedLabel} remboursés.`, link: dashboardUrl ?? `${site}/my-events`, push: true },
   }
 }

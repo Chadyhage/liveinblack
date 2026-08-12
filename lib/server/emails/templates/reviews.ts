@@ -1,5 +1,5 @@
 // Emails d'avis — organisateur et prestataire notifiés d'un nouvel avis.
-// ⚠️ Pas encore branchés — voir lib/server/reviews.ts.
+// Branché depuis lib/server/providerReviews.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
 import { wrap, heading, paragraph, button, escapeHtml } from '../layout'
@@ -18,6 +18,6 @@ export function newReviewReceivedEmail(context: string, rating: number, excerpt:
   return {
     subject: `Nouvel avis sur ${context}`,
     html: wrap(inner, { site, preheader: starsLabel(rating) }),
-    inApp: { type: 'review', title: 'Nouvel avis reçu', body: `${context} — ${starsLabel(rating)}`, link: replyUrl },
+    inApp: { type: 'review', title: 'Nouvel avis reçu', body: `${context} — ${starsLabel(rating)}`, link: replyUrl, push: true },
   }
 }

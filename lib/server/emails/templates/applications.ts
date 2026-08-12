@@ -15,7 +15,11 @@ export function applicationReceivedEmail(email: string, site: string = DEFAULT_S
     ${paragraph(`Ton dossier de candidature ${TYPE_LABEL[type]} a bien été transmis à l'équipe LIVEINBLACK. Tu seras contacté à <strong style="color:#fff;">${email}</strong> une fois ton compte validé.`)}
     ${note('La validation prend généralement moins de 24 h.')}
   `
-  return { subject: 'Ton dossier LIVEINBLACK a bien été reçu', html: wrap(inner, { site, preheader: 'Ton dossier est en cours de traitement.' }) }
+  return {
+    subject: 'Ton dossier LIVEINBLACK a bien été reçu',
+    html: wrap(inner, { site, preheader: 'Ton dossier est en cours de traitement.' }),
+    inApp: { type: 'application_status', title: 'Dossier reçu', body: `Ton dossier ${TYPE_LABEL[type]} est en cours de traitement.`, link: '/my-application', push: true },
+  }
 }
 
 export function applicationApprovedEmail(type: ApplicationType, site: string = DEFAULT_SITE): Email {

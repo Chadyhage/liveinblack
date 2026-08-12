@@ -16,6 +16,6 @@ export function interestedEventReminderEmail(eventName: string, eventWhen: strin
   return {
     subject: `${eventName} c'est demain !`,
     html: wrap(inner, { site, preheader: eventWhen }),
-    inApp: { type: 'reminder', title: `${eventName} c'est demain !`, body: eventWhen, link: eventUrl },
+    inApp: { type: 'reminder', title: `${eventName} c'est demain !`, body: eventWhen, link: eventUrl, push: true },
   }
 }

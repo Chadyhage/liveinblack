@@ -76,6 +76,6 @@ export function ticketInvalidatedByResaleEmail(eventName: string, site: string =
   return {
     subject: `Ton billet pour ${eventName} a été transféré`,
     html: wrap(inner, { site, preheader: 'Confirmation de vente de ton billet.' }),
-    inApp: { type: 'resale', title: 'Ton billet a été transféré', body: eventName },
+    inApp: { type: 'resale', title: 'Ton billet a été transféré', body: eventName, link: `${site}/profile/billets`, push: true },
   }
 }

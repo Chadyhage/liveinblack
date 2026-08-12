@@ -110,7 +110,7 @@ export function seatHoldExpiredEmail(eventName: string, retryUrl: string, site: 
   return {
     subject: `Ta place pour ${eventName} a été libérée`,
     html: wrap(inner, { site, preheader: 'Le blocage de ta place a expiré.' }),
-    inApp: { type: 'payment', title: 'Ta place a été libérée', body: eventName, link: retryUrl },
+    inApp: { type: 'payment', title: 'Ta place a été libérée', body: eventName, link: retryUrl, push: true },
   }
 }
 

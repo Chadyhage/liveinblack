@@ -5,7 +5,8 @@ import Application, { type ApplicationDoc } from '../models/Application'
 import { DOCUMENT_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { applicationReceivedEmail, newApplicationToReviewEmail } from './emails'
 import { sendEmail } from './email'
-import { notifyAllAgents } from './emails/notify'
+import { notifyAllAgents, notifyUserById } from './emails/notify'
+import { sendPushToUser } from './push'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 import { validateOrganizerFormData, type OrganizerFormData, validatePrestataireFormData, type PrestataireFormData, getRequiredDocs } from '../shared/applicationValidation'
@@ -250,8 +251,7 @@ export async function submitOrganizerApplication(caller: ApplicationCaller, inpu
   user.orgStatus = 'pending'
   await user.save()
 
-  const emailResult = await sendEmail(user.email, applicationReceivedEmail(user.email, undefined, 'organisateur'))
-  if (!emailResult.ok) console.error('[submitOrganizerApplication] email failed for', user.email, emailResult.error)
+  await notifyUserById(String(user._id), () => applicationReceivedEmail(user.email, undefined, 'organisateur'))
   await notifyAllAgents(() => newApplicationToReviewEmail([user.firstName, user.lastName].filter(Boolean).join(' ') || user.email, 'organisateur', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()) }
@@ -314,8 +314,7 @@ export async function registerAndSubmitOrganizerApplication(input: RegisterAndSu
   app.auditLog.push({ action: 'submitted', by: String(user._id), byName: input.formData.nomCommercial || '', at: new Date(), note: input.candidateNote ?? '' })
   await app.save()
 
-  const emailResult = await sendEmail(email, applicationReceivedEmail(email, undefined, 'organisateur'))
-  if (!emailResult.ok) console.error('[registerAndSubmitOrganizerApplication] email failed for', email, emailResult.error)
+  await notifyUserById(String(user._id), () => applicationReceivedEmail(email, undefined, 'organisateur'))
   await notifyAllAgents(() => newApplicationToReviewEmail(input.formData.nomCommercial || email, 'organisateur', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()), userId: String(user._id) }
@@ -378,8 +377,7 @@ export async function submitPrestataireApplication(caller: ApplicationCaller, in
   user.prestStatus = 'pending'
   await user.save()
 
-  const emailResult = await sendEmail(user.email, applicationReceivedEmail(user.email, undefined, 'prestataire'))
-  if (!emailResult.ok) console.error('[submitPrestataireApplication] email failed for', user.email, emailResult.error)
+  await notifyUserById(String(user._id), () => applicationReceivedEmail(user.email, undefined, 'prestataire'))
   await notifyAllAgents(() => newApplicationToReviewEmail([user.firstName, user.lastName].filter(Boolean).join(' ') || user.email, 'prestataire', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()) }
@@ -438,8 +436,7 @@ export async function registerAndSubmitPrestataireApplication(input: RegisterAnd
   app.auditLog.push({ action: 'submitted', by: String(user._id), byName: [input.formData.prenom, input.formData.nom].filter(Boolean).join(' '), at: new Date(), note: input.candidateNote ?? '' })
   await app.save()
 
-  const emailResult = await sendEmail(email, applicationReceivedEmail(email, undefined, 'prestataire'))
-  if (!emailResult.ok) console.error('[registerAndSubmitPrestataireApplication] email failed for', email, emailResult.error)
+  await notifyUserById(String(user._id), () => applicationReceivedEmail(email, undefined, 'prestataire'))
   await notifyAllAgents(() => newApplicationToReviewEmail([input.formData.prenom, input.formData.nom].filter(Boolean).join(' ') || email, 'prestataire', `${SITE}/agent/dossiers`, SITE))
 
   return { ok: true, application: toApplicationView(app.toObject()), userId: String(user._id) }
@@ -684,6 +681,7 @@ export async function moderateApplication(
         body: 'Ton dossier a été validé — ton espace est maintenant actif.',
         link: '/my-application',
       })
+      await sendPushToUser(String(user._id), { title: `Dossier ${isOrganisateur ? 'organisateur' : 'prestataire'} approuvé`, body: 'Ton dossier a été validé — ton espace est maintenant actif.', url: '/my-application' })
       break
     case 'request_changes':
       app.status = 'needs_changes'
@@ -697,6 +695,7 @@ export async function moderateApplication(
         body: trimmedNote,
         link: '/my-application',
       })
+      await sendPushToUser(String(user._id), { title: 'Modifications demandées sur ton dossier', body: trimmedNote, url: '/my-application' })
       break
     case 'reject':
       app.status = 'rejected'
@@ -718,6 +717,7 @@ export async function moderateApplication(
         body: trimmedNote,
         link: '/my-application',
       })
+      await sendPushToUser(String(user._id), { title: 'Dossier refusé', body: trimmedNote, url: '/my-application' })
       break
     case 'suspend':
       app.status = 'suspended'

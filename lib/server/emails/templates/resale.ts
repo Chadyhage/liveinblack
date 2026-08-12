@@ -1,6 +1,5 @@
 // Emails de la bourse de revente officielle de billets.
-// ⚠️ Pas encore branchés — voir lib/server/resale.ts (à créer, cf. plan de
-// migration LIVEINBLACK — Bourse de revente officielle).
+// Branchés depuis lib/server/resale.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
 import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'
@@ -15,7 +14,7 @@ export function resaleListingCreatedEmail(eventName: string, priceLabel: string,
   return {
     subject: `Ton billet pour ${eventName} est en vente`,
     html: wrap(inner, { site, preheader: `Annonce active à ${priceLabel}.` }),
-    inApp: { type: 'resale', title: 'Ton billet est en vente', body: `${eventName} — ${priceLabel}.`, link: manageUrl },
+    inApp: { type: 'resale', title: 'Ton billet est en vente', body: `${eventName} — ${priceLabel}.`, link: manageUrl, push: true },
   }
 }
 
@@ -42,6 +41,6 @@ export function resaleListingExpiredEmail(eventName: string, site: string = DEFA
   return {
     subject: `Ton annonce pour ${eventName} a expiré`,
     html: wrap(inner, { site, preheader: 'La fenêtre de revente est fermée pour cet événement.' }),
-    inApp: { type: 'resale', title: 'Ton annonce a expiré', body: eventName },
+    inApp: { type: 'resale', title: 'Ton annonce a expiré', body: eventName, link: `${site}/profile/billets`, push: true },
   }
 }

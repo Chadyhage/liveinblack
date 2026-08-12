@@ -4,16 +4,19 @@ import User from '../models/User'
 import { sendEmail } from './email'
 import { organizerNewEventEmail, organizerScheduleChangeEmail, type FollowedEventSummary } from './emails'
 import { createNotification } from './notifications'
+import { sendPushToUser } from './push'
 
-// LIVRAISON email des alertes d'abonnement organisateur — précédemment hors
-// périmètre (voir l'ancien en-tête de lib/server/organizerFollows.ts, qui
-// documentait explicitement ce manque). Le legacy (src/utils/organizers.js:
-// startOrganizerNotificationBridge) ne déclenchait que des notifications
-// IN-APP côté client à partir d'un listener temps réel Firestore + Firebase
-// Cloud Messaging pour le push ; ni l'un ni l'autre n'existe dans cette
-// migration (temps réel = polling only, jamais de push/WebSocket, cf.
-// AGENTS.md/CLAUDE.md). Email est donc ici le SEUL canal de livraison — comme
-// pour les rappels d'abonnement prestataire (lib/server/providerSubscriptions.ts).
+// LIVRAISON email + in-app + push des alertes d'abonnement organisateur —
+// précédemment hors périmètre (voir l'ancien en-tête de
+// lib/server/organizerFollows.ts, qui documentait explicitement ce manque).
+// Le legacy (src/utils/organizers.js:startOrganizerNotificationBridge) ne
+// déclenchait que des notifications IN-APP côté client à partir d'un
+// listener temps réel Firestore + Firebase Cloud Messaging pour le push ;
+// aucun des deux n'existait encore dans cette migration au moment où ce
+// fichier a été écrit — ce n'est plus vrai depuis que lib/server/push.ts a
+// été construit, d'où l'ajout du canal push ici (#notif-channels,
+// 12/08/2026), sur le même modèle "3 canaux, un seul point d'appel" que
+// notifyUserById (lib/server/emails/notify.ts).
 //
 // Portée de CE module : le fan-out « abonnés d'un organisateur qui ont
 // l'alerte X activée → un email chacun », rien d'autre. Les points de
@@ -87,8 +90,11 @@ async function fanOutToFollowers(
   let sent = 0
   for (const user of users) {
     // In-app d'abord, indépendamment de l'email (un compte sans email valide
-    // doit quand même voir la notification dans l'app).
+    // doit quand même voir la notification dans l'app). Push best-effort en
+    // plus (no-op silencieux si l'utilisateur n'a aucun abonnement Web Push,
+    // voir lib/server/push.ts) — 3 canaux, comme partout ailleurs.
     await createNotification({ userId: String(user._id), type: 'organizer_activity', ...inAppNotification })
+    await sendPushToUser(String(user._id), { title: inAppNotification.title, body: inAppNotification.body, url: inAppNotification.link })
     if (!user.email) continue
     const result = await sendEmail(user.email, email)
     if (result.ok) sent++
