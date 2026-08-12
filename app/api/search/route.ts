@@ -6,6 +6,7 @@ import {
 } from '@/lib/server/publicCache'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 const RESULTS_CAP = 8
 
@@ -16,7 +17,17 @@ const RESULTS_CAP = 8
 // filtrage substring de la page pour les événements ; organisateurs/
 // prestataires reprennent la logique de filtrage exacte de la page (pas de
 // fonction serveur dédiée à dupliquer).
+// Ajouté suite à l'audit de scalabilité du 12/08/2026 : même route publique
+// que search/quick/route.ts (voir son commentaire), aucune limite jusqu'ici
+// — utilisée aussi par l'app mobile, donc plafond légèrement plus généreux
+// que le champ inline (recherche explicite, moins fréquente qu'une frappe
+// au clavier).
 export async function GET(req: Request) {
+  const rateLimit = await checkRateLimit({ scope: 'search-ip', identifier: getRequestIp(req), limit: 30, windowMs: 60 * 1000 })
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
+  }
+
   const query = (new URL(req.url).searchParams.get('q') || '').trim()
   const normalized = normalizeGeoText(query)
 

@@ -6,6 +6,7 @@ import {
 } from '@/lib/server/publicCache'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 // Résultats "top N" pour le champ de recherche inline du header
 // (PublicNav.tsx:HeaderSearch) — miroir léger de GET /api/search (qui reste
@@ -17,7 +18,17 @@ import { getProviderCategories } from '@/lib/shared/providerCategories'
 // répertoire public — l'exposer ici publierait des comptes hors de ce cadre.
 const QUICK_CAP = 3
 
+// Ajouté suite à l'audit de scalabilité du 12/08/2026 : route PUBLIQUE (pas
+// de session) sans aucune limite jusqu'ici — exposée à l'abus par bot à
+// volume élevé (chaque frappe du champ de recherche header peut déclencher
+// un appel). Par IP (pas d'utilisateur authentifié disponible ici), plafond
+// généreux pour ne jamais gêner une frappe rapide légitime.
 export async function GET(req: Request) {
+  const rateLimit = await checkRateLimit({ scope: 'search-quick-ip', identifier: getRequestIp(req), limit: 60, windowMs: 60 * 1000 })
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
+  }
+
   const query = (new URL(req.url).searchParams.get('q') || '').trim()
   const normalized = normalizeGeoText(query)
 

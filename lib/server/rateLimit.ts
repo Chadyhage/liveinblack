@@ -40,3 +40,19 @@ export async function checkRateLimit(options: RateLimitOptions): Promise<RateLim
     retryAfterSeconds: Math.max(1, Math.ceil((expiresAt.getTime() - now) / 1000)),
   }
 }
+
+// Ajouté suite à l'audit de scalabilité du 12/08/2026 : contrairement à
+// l'authentification/l'inscription/le contact, aucune route de checkout
+// (POST /api/checkout, .../fedapay, .../free, .../boost, .../resale,
+// .../seat-hold, et leurs variantes fedapay) n'avait de rate limiting —
+// exposées à l'abus par bot à volume élevé (spam de tentatives d'achat,
+// génération artificielle de sessions Stripe/FedaPay). Un seul helper
+// partagé plutôt que dupliquer scope/limit/window dans 8 fichiers (l'audit
+// lui-même signale ce risque de divergence de copies). Par UTILISATEUR
+// (jamais par IP) : ces routes sont toutes authentifiées, et une limite par
+// IP pénaliserait à tort plusieurs comptes légitimes derrière la même IP
+// (NAT, réseau d'entreprise/campus). Plafond généreux — un utilisateur peut
+// légitimement retenter plusieurs fois si un paiement échoue.
+export async function checkCheckoutRateLimit(callerId: string): Promise<RateLimitResult> {
+  return checkRateLimit({ scope: 'checkout-user', identifier: callerId, limit: 30, windowMs: 10 * 60 * 1000 })
+}

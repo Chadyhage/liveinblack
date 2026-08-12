@@ -10,6 +10,7 @@ import { getEventEndTimestamp } from '@/lib/shared/eventUrgency'
 import { reserveBoostSlot, releaseBoostSlotIfPending } from '@/lib/server/boostSlots'
 import { boostSlotId, normalizeBoostRegion } from '@/lib/shared/boosts'
 import stripe from '@/lib/server/stripeClient'
+import { checkCheckoutRateLimit } from '@/lib/server/rateLimit'
 
 // Remplace api/checkout-boost.js — achat d'un créneau Top 1/2/3. Le prix
 // vient TOUJOURS de lib/shared/boosts.ts (BOOST_PLANS), jamais du client.
@@ -25,6 +26,11 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const rateLimit = await checkCheckoutRateLimit(session.user.id)
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
+  }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body' }, { status: 400 })

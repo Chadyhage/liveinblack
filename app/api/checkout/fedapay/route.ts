@@ -7,6 +7,7 @@ import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
 import { createTransaction, createToken, getTransaction } from '@/lib/server/fedapayClient'
+import { checkCheckoutRateLimit } from '@/lib/server/rateLimit'
 
 // Remplace la branche `action:'checkout'` de api/fedapay.js (rail XOF, mobile
 // money). Miroir de /api/checkout (Stripe) — mêmes corrections (C07 : les
@@ -36,6 +37,11 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const rateLimit = await checkCheckoutRateLimit(session.user.id)
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
+  }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })

@@ -5,6 +5,7 @@ import { completeSeatHoldOrder } from '@/lib/server/seatHolds'
 import { releaseOrder } from '@/lib/server/orders'
 import Order from '@/lib/models/Order'
 import stripe from '@/lib/server/stripeClient'
+import { checkCheckoutRateLimit } from '@/lib/server/rateLimit'
 
 // Paiement du SOLDE d'un blocage de place actif — rail Stripe/EUR. Miroir de
 // /api/checkout/resale : lib/server/seatHolds.ts::completeSeatHoldOrder gère
@@ -17,6 +18,11 @@ const bodySchema = z.object({ seatHoldId: z.string().min(1) })
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+
+  const rateLimit = await checkCheckoutRateLimit(session.user.id)
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } })
+  }
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
