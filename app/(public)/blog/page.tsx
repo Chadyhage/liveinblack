@@ -16,7 +16,15 @@ export const metadata: Metadata = {
   description: "Actualités, guides et conseils pour organiser et vivre les meilleures expériences culturelles d'Afrique de l'Ouest.",
 }
 
-export const dynamic = 'force-dynamic'
+// Aucune personnalisation par session sur cette page (contrairement à
+// /events, /providers/[id], /organizers/[slug], /home qui embarquent tous
+// de l'état lié à l'utilisateur connecté dans le HTML rendu et ne peuvent
+// donc pas être mis en cache page-entière sans fuite entre visiteurs) — les
+// données sont déjà cachées 60s (lib/server/publicCache.ts), mais la page
+// elle-même était forcée en rendu dynamique à chaque requête sans raison.
+// ISR : Vercel sert le HTML depuis son cache CDN au lieu de ré-exécuter la
+// fonction à chaque visite (#perf, 12/08/2026).
+export const revalidate = 60
 
 const CATEGORY_LABELS: Record<BlogCategoryId, string> = {
   ...(Object.fromEntries(regions.map((region) => [region.id, `${region.flag} ${region.name}`])) as Record<string, string>),

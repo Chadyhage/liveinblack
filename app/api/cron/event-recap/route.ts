@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { sendEventRecapReminders } from '@/lib/server/organizerEvents'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // Récap organisateur "c'est dans 2 jours" — même garde secret que les
 // autres crons (échec fermé si absent).
 export async function GET(req: Request) {

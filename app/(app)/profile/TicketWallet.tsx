@@ -3,11 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { X } from 'lucide-react'
-import { QRCodeCanvas } from 'qrcode.react'
+import dynamic from 'next/dynamic'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
 import { ActionLink, Button, Card, DashboardPageHeader, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
+
+// qrcode.react chargé uniquement sur cette page (portefeuille de billets),
+// jamais bundlé dans le JS global de l'app — voir même raisonnement que
+// CameraScanner/DonutChart/LineChartCard.
+const QRCodeCanvas = dynamic(() => import('qrcode.react').then((m) => m.QRCodeCanvas), { ssr: false })
 
 const GROUP_PAGE_SIZE = 12
 

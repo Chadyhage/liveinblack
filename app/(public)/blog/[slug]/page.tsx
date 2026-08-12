@@ -6,7 +6,9 @@ import { getCachedPostBySlug as getPostBySlug, getCachedRelatedPosts as listRela
 import { regions } from '@/lib/shared/regions'
 import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 
-export const dynamic = 'force-dynamic'
+// Aucune personnalisation par session — voir le commentaire équivalent sur
+// app/(public)/blog/page.tsx (#perf, 12/08/2026).
+export const revalidate = 60
 
 const CATEGORY_LABELS: Record<string, string> = {
   ...(Object.fromEntries(regions.map((r) => [r.id, `${r.flag} ${r.name}`])) as Record<string, string>),

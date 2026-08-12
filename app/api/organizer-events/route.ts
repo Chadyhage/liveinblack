@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { createOrganizerEvent, listMyOrganizerEvents } from '@/lib/server/organizerEvents'
@@ -103,5 +104,9 @@ export async function POST(req: Request) {
 
   const result = await createOrganizerEvent({ id: session.user.id }, session.user.name || '', parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  // Invalide immédiatement le cache public (lib/server/publicCache.ts,
+  // TTL 60s) — sans quoi un événement publié n'apparaît sur /events qu'à
+  // la prochaine expiration du cache, jusqu'à 60s plus tard (#perf, 12/08/2026).
+  revalidateTag('public-events', 'max')
   return NextResponse.json({ ok: true, eventId: result.eventId }, { status: 201 })
 }

@@ -1,108 +1,143 @@
-// Système de composants email LIVEINBLACK — les "briques" HTML partagées par
-// TOUS les templates du dossier ../templates/*.ts. C'est le pendant email de
-// app/components/ui/ côté web : changer le design d'un coup de tous les
-// emails passe par CE fichier (+ theme.ts pour les couleurs/polices), jamais
-// par les templates individuels qui ne font qu'assembler ces briques.
-//
-// Contraintes propres au HTML email (Outlook/Gmail/Apple Mail...) : tout en
-// tables, styles inline uniquement, pas de flexbox/grid, pas de custom
-// properties CSS — d'où la duplication de style inline qu'on ne ferait pas
-// côté web.
+// Shared, email-client-safe UI primitives. Layout remains table based and all
+// critical styling is inline for Gmail, Outlook and Apple Mail compatibility.
 import { EMAIL_COLORS as C, EMAIL_FONTS as F, DEFAULT_SITE } from './theme'
 
-export function escapeHtml(s: unknown): string {
-  return String(s ?? '')
+export function escapeHtml(value: unknown): string {
+  return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
-// Titre principal d'un email (H1 visuel). `tone` pilote la couleur pour les
-// contextes positifs/négatifs/neutres sans que chaque template ne resaisisse
-// un code couleur.
+function safeHref(href: string): string {
+  return escapeHtml(href)
+}
+
 export function heading(title: string, tone: 'default' | 'accent' | 'danger' = 'default'): string {
-  const color = tone === 'accent' ? C.primary : tone === 'danger' ? C.pink : C.text
-  return `<h1 style="font-family:${F.display};font-weight:normal;font-size:26px;color:${color};margin:0 0 16px;line-height:1.25;">${title}</h1>`
+  const color = tone === 'accent' ? C.success : tone === 'danger' ? C.danger : C.text
+  return `<h1 class="email-heading" style="font-family:${F.display};font-weight:700;font-size:32px;letter-spacing:-0.025em;color:${color};margin:0 0 18px;line-height:1.12;">${escapeHtml(title)}</h1>`
 }
 
 export function paragraph(html: string): string {
-  return `<p style="font-family:${F.body};font-size:14px;color:${C.textMuted};line-height:1.7;margin:0 0 14px;">${html}</p>`
+  return `<p class="email-paragraph" style="font-family:${F.body};font-size:17px;color:${C.textMuted};letter-spacing:-0.01em;line-height:1.55;margin:0 0 16px;">${html}</p>`
 }
 
-// Petite note en pied de bloc (mentions légales, "si tu n'es pas à l'origine
-// de cette action...", désabonnement) — toujours plus discrète qu'un
-// paragraphe normal.
 export function note(html: string): string {
-  return `<p style="font-family:${F.body};font-size:12px;color:${C.textFaint};line-height:1.6;margin:0 0 4px;">${html}</p>`
+  return `<p class="email-note" style="font-family:${F.body};font-size:13px;color:${C.textFaint};line-height:1.5;margin:12px 0 0;">${html}</p>`
+}
+
+export function emphasis(html: string): string {
+  return `<strong style="color:${C.text};font-weight:600;">${html}</strong>`
+}
+
+export function accentText(html: string): string {
+  return `<strong style="color:${C.primary};font-weight:600;">${html}</strong>`
+}
+
+export function subtleText(html: string): string {
+  return `<span style="color:${C.textFaint};">${html}</span>`
+}
+
+export function struckText(html: string): string {
+  return `<span style="color:${C.textFaint};text-decoration:line-through;">${html}</span>`
+}
+
+export function inlineLink(href: string, label: string): string {
+  return `<a href="${safeHref(href)}" style="color:${C.primary};font-weight:500;text-decoration:none;">${label}</a>`
+}
+
+export function quote(html: string): string {
+  return `<span style="display:block;margin-top:10px;padding:14px 16px;background:${C.surfaceSecondary};border-radius:12px;color:${C.textMuted};font-style:italic;">“${html}”</span>`
 }
 
 export type ButtonTone = 'primary' | 'outline' | 'danger'
 
-// CTA principal. `primary` = pastille lime pleine (action qu'on veut pousser,
-// ex. "Voir mon billet"). `outline` = contour lime (action secondaire).
-// `danger` = contour rose (action liée à un problème, ex. "Réessayer le
-// paiement").
 export function button(href: string, label: string, tone: ButtonTone = 'primary'): string {
   const styles: Record<ButtonTone, { bg: string; border: string; color: string }> = {
-    primary: { bg: C.primary, border: C.primary, color: C.primaryInk },
-    outline: { bg: 'rgba(184,243,74,0.10)', border: C.primary, color: C.primary },
-    danger: { bg: 'rgba(255,123,123,0.10)', border: C.pink, color: C.pink },
+    primary: { bg: C.primary, border: C.primary, color: C.white },
+    outline: { bg: C.surface, border: C.border, color: C.primary },
+    danger: { bg: C.danger, border: C.danger, color: C.white },
   }
-  const s = styles[tone]
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 6px;"><tr><td style="border-radius:8px;background:${s.bg};border:1px solid ${s.border};">
-    <a href="${href}" style="display:inline-block;padding:13px 30px;font-family:${F.mono};font-size:12px;font-weight:bold;letter-spacing:0.12em;text-transform:uppercase;color:${s.color};text-decoration:none;">${label}</a>
+  const style = styles[tone]
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 8px;"><tr><td style="border-radius:980px;background:${style.bg};border:1px solid ${style.border};">
+    <a href="${safeHref(href)}" style="display:inline-block;min-width:152px;padding:13px 24px;font-family:${F.body};font-size:15px;font-weight:600;line-height:18px;text-align:center;color:${style.color};text-decoration:none;">${escapeHtml(label)}</a>
   </td></tr></table>`
 }
 
-// Petit badge/pilule inline (ex. "ANNULÉ", "EN ATTENTE") — équivalent email
-// du composant StatusBadge web/mobile.
 export function badge(label: string, tone: 'default' | 'accent' | 'danger' = 'default'): string {
-  const color = tone === 'accent' ? C.primary : tone === 'danger' ? C.pink : C.textMuted
-  return `<span style="display:inline-block;padding:3px 10px;border-radius:999px;background:${color}22;border:1px solid ${color}66;font-family:${F.body};font-size:11px;font-weight:bold;color:${color};text-transform:uppercase;letter-spacing:0.04em;">${label}</span>`
+  const style = tone === 'accent'
+    ? { bg: C.successTint, color: C.success }
+    : tone === 'danger'
+      ? { bg: C.dangerTint, color: C.danger }
+      : { bg: C.surfaceSecondary, color: C.textMuted }
+  return `<span style="display:inline-block;padding:5px 10px;border-radius:980px;background:${style.bg};font-family:${F.body};font-size:12px;font-weight:600;color:${style.color};letter-spacing:0.01em;">${escapeHtml(label)}</span>`
 }
 
-// Ligne "Label : valeur" — pour les récaps (date, lieu, montant...).
 export function infoRow(label: string, value: string): string {
   return `<tr>
-    <td style="padding:7px 0;font-family:${F.body};font-size:13px;color:${C.textFaint};width:38%;vertical-align:top;">${label}</td>
-    <td style="padding:7px 0;font-family:${F.body};font-size:13px;color:${C.text};font-weight:bold;vertical-align:top;">${value}</td>
+    <td class="info-label" style="padding:11px 12px 11px 0;border-bottom:1px solid ${C.borderSoft};font-family:${F.body};font-size:14px;color:${C.textFaint};width:38%;vertical-align:top;">${escapeHtml(label)}</td>
+    <td class="info-value" style="padding:11px 0;border-bottom:1px solid ${C.borderSoft};font-family:${F.body};font-size:14px;color:${C.text};font-weight:600;text-align:right;vertical-align:top;">${value}</td>
   </tr>`
 }
 
-// Bloc récap (table de infoRow) dans un encart légèrement détaché du fond.
 export function infoCard(rows: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;background:${C.surface2};border:1px solid ${C.border};border-radius:10px;padding:14px 16px;">${rows}</table>`
+  return `<table class="info-card" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;background:${C.surfaceSecondary};border-radius:16px;padding:8px 18px;">${rows}</table>`
 }
 
 export function divider(): string {
-  return `<div style="height:1px;background:${C.border};margin:20px 0;"></div>`
+  return `<div style="height:1px;background:${C.borderSoft};margin:24px 0;"></div>`
 }
 
-// Enveloppe commune à TOUS les emails — logo + carte principale + footer
-// légal. `preheader` = texte caché affiché en aperçu par le client mail
-// (Gmail/Outlook), utile pour donner du contexte avant l'ouverture.
 export function wrap(innerHtml: string, opts: { site?: string; preheader?: string } = {}): string {
   const site = opts.site || DEFAULT_SITE
   const preheader = opts.preheader
-    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(opts.preheader)}</div>`
+    ? `<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(opts.preheader)}&#847;&zwnj;&nbsp;</div>`
     : ''
-  return `<!doctype html><html><body style="margin:0;background:${C.obsidian};padding:32px 0;font-family:${F.body};">
+
+  return `<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+    <title>LIVEINBLACK</title>
+    <style>
+      html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+      table { border-collapse: separate; }
+      a { color: ${C.primary}; }
+      .info-card tr:last-child td { border-bottom: 0 !important; }
+      @media only screen and (max-width: 620px) {
+        .email-shell { width: 100% !important; }
+        .email-gutter { padding-left: 16px !important; padding-right: 16px !important; }
+        .email-card { padding: 32px 24px !important; border-radius: 20px !important; }
+        .email-heading { font-size: 29px !important; }
+        .email-paragraph { font-size: 16px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;background:${C.page};padding:0;font-family:${F.body};-webkit-font-smoothing:antialiased;word-spacing:normal;">
     ${preheader}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;">
-        <tr><td style="padding:0 8px 24px;text-align:center;">
-          <span style="font-family:${F.display};font-size:20px;letter-spacing:0.14em;color:${C.text};">L<span style="color:${C.primary};">|</span>VE IN <span style="font-style:italic;">BLACK</span></span>
-        </td></tr>
-        <tr><td style="background:${C.surface};border:1px solid ${C.border};border-radius:16px;padding:32px 28px;">
-          ${innerHtml}
-        </td></tr>
-        <tr><td style="padding:20px 8px 0;text-align:center;">
-          <p style="font-family:${F.mono};font-size:10px;color:rgba(255,255,255,0.30);letter-spacing:0.06em;line-height:1.7;margin:0;">
-            LIVEINBLACK — Marketplace événementielle<br/>
-            Cet email t'a été envoyé suite à ton activité sur <a href="${site}" style="color:${C.primary};text-decoration:none;">liveinblack.com</a>
-          </p>
-        </td></tr>
-      </table>
-    </td></tr></table>
-  </body></html>`
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background:${C.page};">
+      <tr><td class="email-gutter" align="center" style="padding:42px 20px;">
+        <table class="email-shell" role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;">
+          <tr><td style="padding:0 4px 22px;text-align:left;">
+            <a href="${safeHref(site)}" aria-label="LIVEINBLACK" style="display:inline-block;font-family:${F.display};font-size:18px;font-weight:700;letter-spacing:-0.025em;color:${C.text};text-decoration:none;">LIVEINBLACK<span style="color:${C.primary};">●</span></a>
+          </td></tr>
+          <tr><td class="email-card" style="background:${C.surface};border:1px solid ${C.borderSoft};border-radius:24px;padding:48px 44px;box-shadow:0 10px 40px rgba(0,0,0,0.06);">
+            ${innerHtml}
+          </td></tr>
+          <tr><td style="padding:24px 16px 0;text-align:left;">
+            <p style="font-family:${F.body};font-size:12px;color:${C.textFaint};line-height:1.5;margin:0;">
+              LIVEINBLACK · La marketplace de l’événementiel<br>
+              Cet e-mail fait suite à ton activité sur ${inlineLink(site, 'liveinblack.com')}.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`
 }

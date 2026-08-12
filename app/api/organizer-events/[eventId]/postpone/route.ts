@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { postponeOrganizerEvent } from '@/lib/server/organizerEventLifecycle'
@@ -15,5 +16,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ eventId
   const { eventId } = await params
   const result = await postponeOrganizerEvent({ id: session.user.id }, eventId, parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  revalidateTag('public-events', 'max')
   return NextResponse.json({ ok: true })
 }

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { sendInterestedEventReminders } from '@/lib/server/eventInterests'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // E22 : rappel J-1/J-2 pour chaque événement marqué "intéressé" par un
 // utilisateur. Même garde secret que les autres crons (fail-closed si
 // CRON_SECRET absent).

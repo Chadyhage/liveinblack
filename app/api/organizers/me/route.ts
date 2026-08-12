@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { getOrCreateMyOrganizerProfile, updateOrganizerProfile } from '@/lib/server/organizerProfile'
@@ -42,5 +43,6 @@ export async function PATCH(req: Request) {
 
   const result = await updateOrganizerProfile({ id: session.user.id }, parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  revalidateTag('public-organizers', 'max')
   return NextResponse.json({ ok: true, profile: result.profile })
 }

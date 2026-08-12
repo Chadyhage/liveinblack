@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agentGuard'
@@ -16,5 +17,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params
   const result = await adminCancelEvent({ id: session!.user!.id }, id, parsed.data.message)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  revalidateTag('public-events', 'max')
   return NextResponse.json({ ok: true, refundedCount: result.refundedCount, refundFailedCount: result.refundFailedCount })
 }

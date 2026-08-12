@@ -38,7 +38,9 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
         </Link>
       </div>
       <div style={{ position: 'relative', height: 220, margin: '14px 0 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(139,92,246,.22))' }}>
-        <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
+        {/* `priority` (pas juste `loading="eager"`) — voir le même correctif
+            sur EventDetailContent.tsx (#perf, 12/08/2026). */}
+        <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 1200, 500)} alt="" fill priority style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
       </div>
 
       <div style={{ padding: '0 22px', marginTop: -32, position: 'relative' }}>

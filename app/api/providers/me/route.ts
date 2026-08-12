@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
@@ -42,5 +43,6 @@ export async function PATCH(req: Request) {
 
   const result = await updateProviderProfile({ id: session.user.id }, parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  revalidateTag('public-providers', 'max')
   return NextResponse.json({ ok: true, profile: result.profile })
 }

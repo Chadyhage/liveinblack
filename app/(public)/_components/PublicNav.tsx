@@ -330,13 +330,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         LIVE<span style={{ color: 'rgba(255,255,255,.52)', fontWeight: 500 }}>IN</span>BLACK
       </Link>
       <nav aria-label="Navigation principale" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Nav publique (Accueil/Événements/Prestataires/Organisateurs)
-            masquée une fois connecté — remplacée par la sidebar de dashboard
-            (DashboardShell.tsx) sur les routes privées (confirmé en réunion
-            live le 11/08/2026). Un lien "Voir le site public" reste
-            disponible dans le menu profil (AccountMenu.tsx) pour y revenir. */}
-        {status !== 'authenticated' &&
-          NAV_LINKS.map((link) => {
+        {/* La navigation du site reste toujours visible sur les pages
+            publiques, avec ou sans session. Seules les actions d'authentification
+            sont remplacées par le menu du compte une fois connecté. */}
+        {NAV_LINKS.map((link) => {
             const active = isCurrentPath(pathname, link.href)
             return (
               <Link

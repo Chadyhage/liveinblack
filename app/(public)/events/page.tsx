@@ -171,7 +171,7 @@ export default async function EventsPage({
         {pageItems.length > 0 ? (
           <div className={styles.grid}>
             {pageItems.map((event, index) => (
-              <EventListCard key={event.id} event={event} reason={reasons[event.id]} eager={index < 3} />
+              <EventListCard key={event.id} event={event} reason={reasons[event.id]} eager={index < 3} priority={index === 0} />
             ))}
           </div>
         ) : (

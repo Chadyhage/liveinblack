@@ -4,6 +4,11 @@ import { releaseExpiredSeatHolds } from '@/lib/server/seatHolds'
 import { releaseOrder } from '@/lib/server/orders'
 import Order from '@/lib/models/Order'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // Sweep des blocages de place ('active') dont le solde n'a jamais été payé
 // avant expiresAt — relâche la place, acompte non remboursé (décision
 // produit). Même garde secret que les autres crons (échec fermé si absent).

@@ -15,7 +15,7 @@ function firstCatalogImage(catalog: PublicProvider['catalog']): string | null {
   return null
 }
 
-export default function ProviderDirectoryCard({ provider, eager = false }: { provider: PublicProvider; eager?: boolean }) {
+export default function ProviderDirectoryCard({ provider, eager = false, priority = false }: { provider: PublicProvider; eager?: boolean; priority?: boolean }) {
   const categories = getProviderCategories(provider)
   const primaryCategory = categories[0] || getProviderCategory(provider.prestataireType)
   const availableOffers = (provider.catalog || []).filter((item) => item.available !== false)
@@ -30,6 +30,7 @@ export default function ProviderDirectoryCard({ provider, eager = false }: { pro
           alt=""
           fill
           loading={eager ? 'eager' : undefined}
+          priority={priority}
           className={styles.cover}
           sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1020px) 46vw, 30vw"
         />

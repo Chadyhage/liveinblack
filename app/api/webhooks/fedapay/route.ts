@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db/mongoose'
+
+// Défaut Vercel Pro insuffisant pour un webhook de paiement sous charge
+// (émission de billets + emails synchrones dans le même appel) — configuré
+// explicitement plutôt que de compter sur le défaut de la plateforme
+// (#perf, 12/08/2026).
+export const maxDuration = 30
 import { verifyWebhookSignature, isApprovedTransactionEvent } from '@/lib/server/fedapayClient'
 import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'

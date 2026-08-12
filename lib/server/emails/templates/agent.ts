@@ -6,13 +6,13 @@
 // (demande de suppression), lib/server/agentSales.ts (ventes cash en retard
 // / bloquées).
 import type { Email } from '../types'
-import { DEFAULT_SITE } from '../theme'
+import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
 import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'
 
 export function newApplicationToReviewEmail(candidateName: string, type: 'organisateur' | 'prestataire', backofficeUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading('Nouvelle candidature à examiner')}
-    ${paragraph(`<strong style="color:#fff;">${escapeHtml(candidateName)}</strong> a soumis un dossier de candidature ${type}.`)}
+    ${paragraph(`<strong style="color:${C.text};">${escapeHtml(candidateName)}</strong> a soumis un dossier de candidature ${type}.`)}
     ${button(backofficeUrl, 'Examiner le dossier', 'outline')}
   `
   return {
@@ -25,7 +25,7 @@ export function newApplicationToReviewEmail(candidateName: string, type: 'organi
 export function newReportToReviewEmail(contentTypeLabel: string, backofficeUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading('Nouveau signalement à modérer')}
-    ${paragraph(`Un signalement a été déposé concernant : <strong style="color:#fff;">${escapeHtml(contentTypeLabel)}</strong>.`)}
+    ${paragraph(`Un signalement a été déposé concernant : <strong style="color:${C.text};">${escapeHtml(contentTypeLabel)}</strong>.`)}
     ${button(backofficeUrl, 'Voir le signalement', 'outline')}
   `
   return {
@@ -38,7 +38,7 @@ export function newReportToReviewEmail(contentTypeLabel: string, backofficeUrl: 
 export function deletionRequestToReviewEmail(userLabel: string, legalDelayLabel: string, backofficeUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading('Demande de suppression à traiter')}
-    ${paragraph(`<strong style="color:#fff;">${escapeHtml(userLabel)}</strong> a demandé la suppression de son compte.`)}
+    ${paragraph(`<strong style="color:${C.text};">${escapeHtml(userLabel)}</strong> a demandé la suppression de son compte.`)}
     ${note(`Délai légal de traitement : ${legalDelayLabel}.`)}
     ${button(backofficeUrl, 'Traiter la demande', 'outline')}
   `
@@ -52,7 +52,7 @@ export function deletionRequestToReviewEmail(userLabel: string, legalDelayLabel:
 export function cashSalePendingSettlementEmail(eventName: string, amountLabel: string, daysOverdue: number, backofficeUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading('Règlement en attente')}
-    ${paragraph(`Une vente cash de <strong style="color:#fff;">${amountLabel}</strong> pour <strong style="color:#fff;">${escapeHtml(eventName)}</strong> est en attente de règlement depuis ${daysOverdue} jour(s).`)}
+    ${paragraph(`Une vente cash de <strong style="color:${C.text};">${amountLabel}</strong> pour <strong style="color:${C.text};">${escapeHtml(eventName)}</strong> est en attente de règlement depuis ${daysOverdue} jour(s).`)}
     ${button(backofficeUrl, 'Voir le règlement', 'outline')}
   `
   return {

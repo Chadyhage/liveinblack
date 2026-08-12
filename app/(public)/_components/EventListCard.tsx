@@ -7,7 +7,7 @@ import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/share
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './EventListCard.module.css'
 
-export default function EventListCard({ event, reason, eager = false }: { event: PublicEvent; reason?: string; eager?: boolean }) {
+export default function EventListCard({ event, reason, eager = false, priority = false }: { event: PublicEvent; reason?: string; eager?: boolean; priority?: boolean }) {
   const prices = (event.places || []).map((place) => Number(place.price) || 0).filter(Boolean)
   const minimumPrice = prices.length ? Math.min(...prices) : null
   const countdown = getEventCountdown(event)
@@ -22,6 +22,12 @@ export default function EventListCard({ event, reason, eager = false }: { event:
           alt=""
           fill
           loading={eager ? 'eager' : undefined}
+          // Seule la toute première carte reçoit `priority` (préchargement
+          // réel via <link rel="preload">) — les 2 suivantes restent en
+          // simple `eager` (pas de lazy-load, mais pas de préchargement non
+          // plus) : un `priority` sur plusieurs images à la fois dilue le
+          // signal LCP au lieu de l'accélérer (#perf, 12/08/2026).
+          priority={priority}
           className={styles.image}
           sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 980px) 46vw, 30vw"
         />

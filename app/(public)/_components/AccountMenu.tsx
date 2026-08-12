@@ -563,10 +563,8 @@ export default function AccountMenu({
                 {d.role === user.activeRole && <Check size={14} color="var(--teal)" />}
               </Button>
             ))}
-            {/* Point de sortie explicite vers le site public — la nav
-                publique (Accueil/Événements/Prestataires/Organisateurs) est
-                masquée dans le header une fois connecté (PublicNav.tsx),
-                confirmé en réunion live le 11/08/2026. */}
+            {/* Accès direct à l'exploration depuis le menu du compte. Les
+                liens publics restent également visibles dans le header. */}
             <div style={{ height: 1, background: 'var(--border)', margin: '6px 4px' }} />
             <MenuLink href="/events" onClick={() => setAccountOpen(false)} icon={<Globe size={15} />} label="Voir le site public" />
             <Button

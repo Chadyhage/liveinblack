@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { updateOrganizerEvent, getMyOrganizerEventDetail } from '@/lib/server/organizerEvents'
@@ -100,6 +101,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ eventI
   const { eventId } = await params
   const result = await updateOrganizerEvent({ id: session.user.id }, eventId, parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
+  revalidateTag('public-events', 'max')
   return NextResponse.json({ ok: true })
 }
 
@@ -116,5 +118,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ even
     if ('bookingCount' in result) return NextResponse.json({ error: 'has_bookings', bookingCount: result.bookingCount }, { status: 409 })
     return NextResponse.json({ error: result.error }, { status: result.status })
   }
+  revalidateTag('public-events', 'max')
   return NextResponse.json({ ok: true })
 }

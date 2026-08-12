@@ -65,7 +65,9 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
         </Link>
       </div>
       <div style={{ position: 'relative', height: 230, margin: '18px 0 0', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(184,243,74,.18))' }}>
-        <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
+        {/* `priority` (pas juste `loading="eager"`) — voir le même correctif
+            sur EventDetailContent.tsx (#perf, 12/08/2026). */}
+        <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill priority style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
       </div>
 
       <div style={{ padding: '0 22px', marginTop: -32, position: 'relative' }}>

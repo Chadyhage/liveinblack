@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db/mongoose'
 import { processEventPayouts } from '@/lib/server/eventPayouts'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // Remplace la partie "versements" de api/cron-subscriptions.js. FERME L'AUDIT
 // C09 : contrairement au legacy (qui continuait sans secret si la variable
 // d'env était absente), ici l'absence de CRON_SECRET fait échouer FERMÉ —

@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { runSubscriptionReminderCron } from '@/lib/server/providerSubscriptions'
 import { cleanupAbandonedApplicationUploads } from '@/lib/server/applicationUploadCleanup'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // Remplace la partie "abonnements" de api/cron-subscriptions.js (rappels
 // J-7/J-3/J-1/J0/grâce/masquage, rail XOF uniquement). Même garde-fou que
 // /api/cron/payouts : CRON_SECRET absent → échec fermé (audit C09), jamais

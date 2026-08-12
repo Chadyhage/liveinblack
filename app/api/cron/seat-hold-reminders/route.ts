@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { sendSeatHoldExpiryReminders } from '@/lib/server/seatHolds'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // Rappel "ta place expire bientôt" (fenêtre J-2h/J-1h) — tourne plus souvent
 // que /api/cron/seat-holds (sweep quotidien d'expiration réelle) puisqu'une
 // fenêtre de 1h est trop étroite pour un cron une fois par jour. Même garde

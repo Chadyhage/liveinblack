@@ -6,7 +6,7 @@
 // lib/server/seatHolds.ts). Le contenu/design est prêt, l'appel sendEmail()
 // reste à ajouter au bon endroit.
 import type { Email } from '../types'
-import { DEFAULT_SITE } from '../theme'
+import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
 import { wrap, heading, paragraph, note, button, infoCard, infoRow, escapeHtml } from '../layout'
 
 export interface TicketPurchaseSummary {
@@ -32,7 +32,7 @@ export function ticketPurchaseConfirmedEmail(t: TicketPurchaseSummary, site: str
   ].join('')
   const inner = `
     ${heading('Ton billet est prêt 🎟️', 'accent')}
-    ${paragraph(`Ton paiement pour <strong style="color:#fff;">${evName}</strong> a bien été confirmé.`)}
+    ${paragraph(`Ton paiement pour <strong style="color:${C.text};">${evName}</strong> a bien été confirmé.`)}
     ${infoCard(rows)}
     ${button(t.ticketUrl, 'Voir mon billet et mon QR code')}
     ${note("Garde ce billet à portée de main le jour J — présente le QR code à l'entrée.")}
@@ -59,7 +59,7 @@ export function groupPurchaseConfirmedEmail(t: GroupPurchaseSummary, site: strin
   ].join('')
   const inner = `
     ${heading(`Vos ${t.seatCount} billets sont prêts`, 'accent')}
-    ${paragraph(`Ta réservation groupe pour <strong style="color:#fff;">${evName}</strong> est confirmée.`)}
+    ${paragraph(`Ta réservation groupe pour <strong style="color:${C.text};">${evName}</strong> est confirmée.`)}
     ${infoCard(rows)}
     ${button(t.ticketUrl, 'Voir les billets du groupe')}
     ${note("En tant qu'hôte du groupe, c'est à toi de redistribuer les billets à tes invités depuis l'app.")}
@@ -75,7 +75,7 @@ export function paymentFailedEmail(eventName: string, retryUrl: string, reason: 
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton paiement n’a pas abouti', 'danger')}
-    ${paragraph(`Ton paiement pour <strong style="color:#fff;">${evName}</strong> n'a pas pu être finalisé${reason ? ` (${escapeHtml(reason)})` : ''}.`)}
+    ${paragraph(`Ton paiement pour <strong style="color:${C.text};">${evName}</strong> n'a pas pu être finalisé${reason ? ` (${escapeHtml(reason)})` : ''}.`)}
     ${paragraph('Ta place n\'est pas garantie tant que le paiement n\'est pas confirmé.')}
     ${button(retryUrl, 'Réessayer le paiement', 'danger')}
   `
@@ -90,7 +90,7 @@ export function seatHoldExpiringEmail(eventName: string, completeUrl: string, ex
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ta place expire bientôt')}
-    ${paragraph(`Ta place bloquée pour <strong style="color:#fff;">${evName}</strong> expire dans ${escapeHtml(expiresInLabel)}.`)}
+    ${paragraph(`Ta place bloquée pour <strong style="color:${C.text};">${evName}</strong> expire dans ${escapeHtml(expiresInLabel)}.`)}
     ${button(completeUrl, 'Finaliser mon paiement')}
   `
   return {
@@ -104,7 +104,7 @@ export function seatHoldExpiredEmail(eventName: string, retryUrl: string, site: 
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ta place a été libérée')}
-    ${paragraph(`Le blocage de ta place pour <strong style="color:#fff;">${evName}</strong> a expiré sans paiement — elle a été remise en vente.`)}
+    ${paragraph(`Le blocage de ta place pour <strong style="color:${C.text};">${evName}</strong> a expiré sans paiement — elle a été remise en vente.`)}
     ${button(retryUrl, 'Retenter ma réservation', 'outline')}
   `
   return {

@@ -152,7 +152,7 @@ export default async function PublicPrestatairesPage({
         {pageItems.length > 0 ? (
           <div className={styles.grid}>
             {pageItems.map((provider, index) => (
-              <ProviderDirectoryCard key={provider.userId} provider={provider} eager={index < 3} />
+              <ProviderDirectoryCard key={provider.userId} provider={provider} eager={index < 3} priority={index === 0} />
             ))}
           </div>
         ) : (

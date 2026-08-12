@@ -103,7 +103,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                 <article key={organizer.userId} className={styles.card}>
                   <Link href={`/organizers/${organizer.slug}`} className={styles.cardLink} aria-label={`Découvrir ${organizer.publicName}`}>
                     <div className={styles.visual}>
-                      <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 900, 600)} alt="" fill loading={index < 3 ? 'eager' : undefined} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, 30vw" />
+                      <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 900, 600)} alt="" fill loading={index < 3 ? 'eager' : undefined} priority={index === 0} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, 30vw" />
                       <div className={styles.scrim} />
                       <div className={styles.avatar}>{organizer.avatarUrl ? <Image src={organizer.avatarUrl} alt="" fill sizes="72px" /> : organizer.publicName?.[0]?.toUpperCase()}</div>
                     </div>

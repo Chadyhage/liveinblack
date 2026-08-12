@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { sendPendingCashSaleReminders } from '@/lib/server/agentSales'
 
+// Batch qui peut grandir avec le volume de données (organisateurs, blocages,
+// reventes...) — maxDuration configuré explicitement plutôt que de compter
+// sur le défaut de la plateforme (#perf, 12/08/2026).
+export const maxDuration = 60
+
 // Rappel agent "règlement en attente depuis 2 jours" — même garde secret que
 // les autres crons (échec fermé si absent).
 export async function GET(req: Request) {

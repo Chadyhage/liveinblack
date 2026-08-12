@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Activity, ArrowUpRight, CalendarCheck2, FileCheck2, ShieldAlert, TicketCheck, TrendingUp, UsersRound, WalletCards } from 'lucide-react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Card, SkeletonCard } from '@/app/components/ui'
-import { DonutChart } from '@/app/components/ui/charts/DonutChart'
-import { LineChartCard } from '@/app/components/ui/charts/LineChartCard'
+
+// recharts (~100KB+) chargé uniquement quand ce tableau de bord agent est
+// visité — auparavant importé statiquement, donc bundlé dans TOUT le JS
+// applicatif (téléchargé même par un client qui ne visite jamais /agent).
+// `ssr: false` : recharts calcule des dimensions SVG à partir du DOM
+// (ResponsiveContainer), rien à gagner à le faire tourner côté serveur.
+const DonutChart = dynamic(() => import('@/app/components/ui/charts/DonutChart').then((m) => m.DonutChart), { ssr: false })
+const LineChartCard = dynamic(() => import('@/app/components/ui/charts/LineChartCard').then((m) => m.LineChartCard), { ssr: false })
 import styles from './AgentDashboardClient.module.css'
 
 // Port de la section « Métriques business » + « Communauté » de l'onglet

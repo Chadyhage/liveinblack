@@ -102,7 +102,11 @@ export default async function EventDetailContent({
           src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
           alt={event.name}
           fill
-          loading="eager"
+          // `priority` (pas juste `loading="eager"`) : c'est ce qui déclenche
+          // un <link rel="preload"> dans le <head> pour ce candidat LCP quasi
+          // certain de la page (#perf, 12/08/2026) — `eager` seul évite
+          // seulement le lazy-load par IntersectionObserver, sans préchargement.
+          priority
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 100vw, 880px"
         />

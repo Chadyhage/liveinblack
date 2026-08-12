@@ -6,6 +6,7 @@ import {
   Camera,
   Plus,
   MessageCircle,
+  MoreHorizontal,
   Search,
   Pin,
   BellOff,
@@ -25,7 +26,7 @@ import {
   Handshake,
   Send,
 } from 'lucide-react'
-import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice, Modal, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
+import { Button, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice, Modal, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
@@ -1429,6 +1430,7 @@ export default function MessagesClient({
 
   const showListPane = isDesktop || mobileView === 'list'
   const showThreadPane = isDesktop || mobileView === 'thread'
+  const unreadTotal = conversations.reduce((total, conversation) => total + conversation.unreadCount, 0)
 
   return (
     <main className={styles.root}>
@@ -1446,10 +1448,16 @@ export default function MessagesClient({
             position: 'relative',
           }}
         >
-          <div style={{ padding: '18px 16px 12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text)' }}>Messages</h1>
-              <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
+          <div className={styles.inboxHeader}>
+            <div className={styles.inboxTopline}>
+              <div>
+                <div className={styles.inboxTitleRow}>
+                  <h1>Messages</h1>
+                  {unreadTotal > 0 && <span className={styles.totalUnread} aria-label={`${unreadTotal} messages non lus`}>{unreadTotal}</span>}
+                </div>
+                <p>{conversations.length} conversation{conversations.length !== 1 ? 's' : ''}</p>
+              </div>
+              <div className={styles.listActions}>
                 <input
                   ref={cameraFileInputRef}
                   type="file"
@@ -1459,13 +1467,13 @@ export default function MessagesClient({
                   onChange={(e) => handlePhotoFileChange(e, activeId)}
                 />
                 <IconButton title="Envoyer une photo" onClick={() => cameraFileInputRef.current?.click()}>
-                  <Camera size={16} />
+                  <Camera size={18} aria-hidden="true" />
                 </IconButton>
-                <IconButton title="Menu" onClick={() => setShowListMenu((v) => !v)}>
-                  ⋮
+                <IconButton title="Options de messagerie" onClick={() => setShowListMenu((v) => !v)}>
+                  <MoreHorizontal size={19} aria-hidden="true" />
                 </IconButton>
                 {showListMenu && (
-                  <div style={{ position: 'absolute', top: 36, right: 0, zIndex: 50 }}>
+                  <div className={styles.listMenu}>
                     <DropdownMenu
                       onClose={() => setShowListMenu(false)}
                       items={[
@@ -1479,17 +1487,24 @@ export default function MessagesClient({
                 )}
               </div>
             </div>
-            <Input
-              value={convSearch}
-              onChange={(e) => {
-                setConvSearch(e.target.value)
-                setConvPage(1)
-              }}
-              placeholder="Rechercher une conversation…"
-              style={{ ...inputStyle, marginBottom: 0 }}
-            />
+            <div className={styles.conversationSearch}>
+              <Search size={18} aria-hidden="true" />
+              <Input
+                value={convSearch}
+                onChange={(e) => {
+                  setConvSearch(e.target.value)
+                  setConvPage(1)
+                }}
+                placeholder="Rechercher une conversation…"
+                aria-label="Rechercher une conversation"
+              />
+            </div>
+            <div className={styles.quickActions}>
+              <Button variant="secondary" icon={<Plus size={16} aria-hidden="true" />} onClick={() => setPanel('newDirect')}>Nouveau message</Button>
+              <Button variant="ghost" onClick={() => setPanel('friends')}>Contacts{received.length > 0 ? ` · ${received.length}` : ''}</Button>
+            </div>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px 16px' }}>
+          <nav className={styles.conversationList} aria-label="Conversations">
             {conversations.length === 0 && <MessagingEmptyState icon={<MessageCircle size={32} />} title="Aucune conversation" subtitle="Ajoute un contact et commence à discuter" />}
             {conversations.length > 0 && filteredConversations.length === 0 && (
               <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
@@ -1507,6 +1522,8 @@ export default function MessagesClient({
                     setConvContextMenu({ conversationId: conv.id, x: e.clientX, y: e.clientY })
                   }}
                   aria-label={`Ouvrir la conversation avec ${label}`}
+                  aria-current={conv.id === activeId ? 'true' : undefined}
+                  className={`${styles.conversationItem} ${conv.id === activeId ? styles.conversationItemActive : ''}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1527,56 +1544,25 @@ export default function MessagesClient({
                   ) : (
                     <Avatar userId={other?.userId ?? ''} name={label} size={42} online={other ? presence[other.userId]?.online : false} showOnline />
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                      <span
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: 'var(--text)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        {conv.pinned && <span title="Épinglée"><Pin size={12} /></span>}
+                  <div className={styles.conversationCopy}>
+                    <div className={styles.conversationTitleRow}>
+                      <span className={styles.conversationName}>
+                        {conv.pinned && <span title="Épinglée"><Pin size={13} aria-hidden="true" /></span>}
                         {label}
                       </span>
-                      <span style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>{conv.lastMessageAt ? formatTime(conv.lastMessageAt) : ''}</span>
+                      <time className={styles.conversationTime} dateTime={conv.lastMessageAt ?? undefined}>{conv.lastMessageAt ? formatTime(conv.lastMessageAt) : ''}</time>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: conv.unreadCount > 0 && !conv.mutedForMe ? 'var(--text)' : 'var(--text-faint)',
-                          fontWeight: conv.unreadCount > 0 && !conv.mutedForMe ? 600 : 400,
-                          margin: '2px 0 0',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                    <div className={styles.conversationPreviewRow}>
+                      <p className={conv.unreadCount > 0 && !conv.mutedForMe ? styles.unreadPreview : ''}>
                         {conv.lastMessage || 'Aucun message'}
                       </p>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                        {conv.mutedForMe && <span style={{ fontSize: 11, opacity: 0.6, display: 'inline-flex', alignItems: 'center' }}><BellOff size={12} /></span>}
+                      <span className={styles.conversationIndicators}>
+                        {conv.mutedForMe && <span aria-label="Notifications coupées"><BellOff size={13} aria-hidden="true" /></span>}
                         {conv.unreadCount > 0 &&
                           (conv.mutedForMe ? (
-                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--teal-solid)', display: 'inline-block' }} />
+                            <span className={styles.mutedUnread} aria-label="Message non lu" />
                           ) : (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color: '#04120e',
-                                background: 'var(--teal-solid)',
-                                borderRadius: 999,
-                                padding: '1px 6px',
-                              }}
-                            >
+                            <span className={styles.unreadBadge} aria-label={`${conv.unreadCount} message${conv.unreadCount > 1 ? 's' : ''} non lu${conv.unreadCount > 1 ? 's' : ''}`}>
                               {conv.unreadCount}
                             </span>
                           ))}
@@ -1590,50 +1576,27 @@ export default function MessagesClient({
                 sous la liste (surtout mobile plein écran) — un indice discret
                 comble l'espace au lieu d'un fond nu. */}
             {conversations.length > 0 && conversations.length <= 2 && filteredConversations.length === conversations.length && (
-              <div style={{ marginTop: 18, padding: '18px 14px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 12.5, lineHeight: 1.6 }}>
+              <div className={styles.listHint}>
                 <p style={{ margin: 0 }}>Envoie un message à un organisateur ou un prestataire pour démarrer une nouvelle discussion.</p>
               </div>
             )}
-          </div>
+          </nav>
           {convPageCount > 1 && (
             <div style={{ padding: '4px 12px 10px' }}>
               <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={filteredConversations.length} pageSize={CONV_PAGE_SIZE} />
             </div>
           )}
-          {/* Bouton flottant "+" (convention WhatsApp Web) — remplace l'ancienne
-              icône crayon "Nouvelle discussion" jugée peu lisible par le
-              client. Ouvre le même NewDirectModal (liste d'amis + recherche
-              par nom/email), inchangé sur le fond. */}
-          <UiIconButton
-            label="Nouvelle discussion"
-            onClick={() => setPanel('newDirect')}
-            size={52}
-            style={{
-              position: 'absolute',
-              bottom: 20,
-              right: 20,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'var(--teal-solid)',
-              color: '#04120e',
-              boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
-              zIndex: 20,
-            }}
-            icon={
-              <>
-                {received.length > 0 && <Badge count={received.length} />}
-                <Plus size={24} strokeWidth={2.4} />
-              </>
-            }
-          />
         </aside>
       )}
 
       {showThreadPane && conversations.length > 0 && (
-        <section className={styles.threadPane} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden' }}>
+        <section className={styles.threadPane} aria-label={activeConversation ? `Conversation avec ${conversationLabel(activeConversation, currentUserId)}` : 'Conversation'}>
           {!activeConversation ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MessagingEmptyState icon={<MessageCircle size={32} />} title="Choisis une conversation" subtitle="Sélectionne un contact ou un groupe pour commencer à discuter" />
+            <div className={styles.threadEmpty}>
+              <div className={styles.threadEmptyIcon}><MessageCircle size={30} aria-hidden="true" /></div>
+              <h2>Vos échanges, au même endroit</h2>
+              <p>Sélectionnez une conversation pour retrouver les messages, photos, vocaux et sondages partagés.</p>
+              <Button variant="primary" icon={<Plus size={17} aria-hidden="true" />} onClick={() => setPanel('newDirect')}>Démarrer une discussion</Button>
             </div>
           ) : (
             <>
@@ -1653,37 +1616,33 @@ export default function MessagesClient({
               />
 
               {inThreadSearchOpen && (
-                <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)' }}>
+                <div className={styles.threadSearch}>
+                  <Search size={17} aria-hidden="true" />
                   <Input
                     autoFocus
                     value={inThreadSearchQuery}
                     onChange={(e) => setInThreadSearchQuery(e.target.value)}
                     placeholder="Rechercher dans la conversation…"
-                    style={{ ...inputStyle, marginBottom: 4 }}
+                    aria-label="Rechercher dans la conversation"
                   />
-                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>
+                  <span aria-live="polite">
                     {inThreadSearchQuery.trim() ? `${visibleMessages.length} résultat${visibleMessages.length !== 1 ? 's' : ''}` : 'Tape pour rechercher'}
-                  </p>
+                  </span>
+                  <IconButton title="Fermer la recherche" onClick={() => { setInThreadSearchOpen(false); setInThreadSearchQuery('') }}><X size={17} aria-hidden="true" /></IconButton>
                 </div>
               )}
 
               {activeConversation.pinnedMessageId && pinnedMessage && (
                 <div
-                  style={{
-                    padding: '8px 20px',
-                    borderBottom: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                    background: 'var(--surface)',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.pinnedBanner}
                   onClick={() => scrollToMessage(pinnedMessage.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') scrollToMessage(pinnedMessage.id) }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <span><Pin size={14} /></span>
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div>
+                    <span className={styles.pinnedIcon}><Pin size={15} aria-hidden="true" /></span>
+                    <p><strong>Message épinglé</strong>
                       {pinnedMessage.deletedForAll ? 'Message supprimé' : pinnedMessage.content || messageTypeLabel(pinnedMessage.type)}
                     </p>
                   </div>
@@ -1702,7 +1661,7 @@ export default function MessagesClient({
                 </div>
               )}
 
-              <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative' }}>
+              <div ref={chatScrollRef} onScroll={handleChatScroll} className={styles.messageStream} aria-live="polite" aria-relevant="additions text">
                 {loadingOlder && (
                   <div style={{ textAlign: 'center', padding: '4px 0 10px' }}>
                     <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Chargement des messages précédents…</span>
@@ -1711,7 +1670,7 @@ export default function MessagesClient({
                 {visibleMessages.length === 0 && inThreadSearchOpen && inThreadSearchQuery.trim() && (
                   <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Aucun message ne correspond à ta recherche" />
                 )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div className={styles.messageStack}>
                   {visibleMessages.map((msg, idx) => {
                     const prevMsg = visibleMessages[idx - 1]
                     const showDateSep = !prevMsg || !isSameDay(msg.createdAt, prevMsg.createdAt)
@@ -1720,16 +1679,8 @@ export default function MessagesClient({
                     return (
                       <div key={msg.id} data-msg-id={msg.id}>
                         {showDateSep && (
-                          <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
-                            <span
-                              style={{
-                                fontSize: 10.5,
-                                fontWeight: 600,
-                                color: 'var(--text-faint)',
-                                letterSpacing: '0.06em',
-                                textTransform: 'uppercase',
-                              }}
-                            >
+                          <div className={styles.dateSeparator}>
+                            <span>
                               {formatDateSeparator(msg.createdAt)}
                             </span>
                           </div>
@@ -1756,7 +1707,7 @@ export default function MessagesClient({
                   })}
                 </div>
                 {typingUsers.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 4px' }}>
+                  <div className={styles.typingIndicator} role="status">
                     <TypingDots />
                     <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                       {typingUsers.map((u) => u.name).join(', ')} écri{typingUsers.length > 1 ? 'vent' : 't'}…
@@ -1788,13 +1739,13 @@ export default function MessagesClient({
               )}
 
               {myGroupMute ? (
-                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+                <div className={`${styles.composerNotice} ${styles.composerNoticeDanger}`} role="status">
                   <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0 }}>
                     Un administrateur t&apos;a mis en sourdine {formatMuteUntil(myGroupMute.untilAt)}.
                   </p>
                 </div>
               ) : isBlockedByMe ? (
-                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+                <div className={styles.composerNotice} role="status">
                   <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>
                     Tu as bloqué ce contact —{' '}
                     <Button
@@ -1807,9 +1758,9 @@ export default function MessagesClient({
                   </p>
                 </div>
               ) : (
-                <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--border)' }}>
+                <div className={styles.composerArea}>
                   {mentionMatches.length > 0 && (
-                    <div style={{ marginBottom: 8, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: 10, overflow: 'hidden' }}>
+                    <div className={styles.mentionMenu} role="listbox" aria-label="Suggestions de personnes">
                       {mentionMatches.map((m) => (
                         <Button
                           key={m.userId}
@@ -1832,19 +1783,8 @@ export default function MessagesClient({
                   )}
 
                   {editingMessageId && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'var(--surface-2)',
-                        borderRadius: 10,
-                        padding: '6px 10px',
-                        marginBottom: 8,
-                        borderLeft: '3px solid var(--gold)',
-                      }}
-                    >
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
+                    <div className={`${styles.composerContext} ${styles.editContext}`}>
+                      <div><strong>Modifier le message</strong><span>Enregistrez vos changements avec le bouton de validation.</span></div>
                       <Button variant="ghost" aria-label="Annuler la modification" onClick={handleEditCancel} style={{ padding: 0 }}>
                         <X size={14} />
                       </Button>
@@ -1852,23 +1792,10 @@ export default function MessagesClient({
                   )}
 
                   {replyTo && !editingMessageId && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'var(--surface-2)',
-                        borderRadius: 10,
-                        padding: '6px 10px',
-                        marginBottom: 8,
-                        borderLeft: '3px solid var(--violet)',
-                      }}
-                    >
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--teal)', margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {replyTo.preview}
-                        </p>
+                    <div className={styles.composerContext}>
+                      <div>
+                        <strong>Répondre à {replyTo.senderName}</strong>
+                        <span>{replyTo.preview}</span>
                       </div>
                       <Button variant="ghost" onClick={() => setReplyTo(null)} style={{ padding: 0 }}>
                         <X size={14} />
@@ -1877,17 +1804,7 @@ export default function MessagesClient({
                   )}
 
                   {isRecording ? (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        padding: '10px 14px',
-                        background: 'var(--surface)',
-                        borderRadius: 999,
-                        border: '1px solid var(--border-strong)',
-                      }}
-                    >
+                    <div className={styles.recordingBar} role="status">
                       <Button
                         variant="ghost"
                         onClick={() => stopRecording(false)}
@@ -1910,13 +1827,13 @@ export default function MessagesClient({
                       </Button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', position: 'relative' }}>
-                      <div style={{ position: 'relative' }}>
+                    <div className={styles.composerRow}>
+                      <div className={styles.attachRoot}>
                         <IconButton title="Joindre" onClick={openAttachMenu}>
                           +
                         </IconButton>
                         {showAttachMenu && (
-                          <div style={{ position: 'absolute', bottom: 44, left: 0, zIndex: 50 }}>
+                          <div className={styles.attachMenu}>
                             <DropdownMenu
                               onClose={() => setShowAttachMenu(false)}
                               items={[
@@ -1940,6 +1857,7 @@ export default function MessagesClient({
                           }
                         }}
                         placeholder="Écris un message…"
+                        aria-label="Écrire un message"
                         rows={1}
                         style={{
                           ...inputStyle,
@@ -2296,29 +2214,6 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
   )
 }
 
-function Badge({ count }: { count: number }) {
-  return (
-    <span
-      style={{
-        position: 'absolute',
-        top: -3,
-        right: -3,
-        fontSize: 9,
-        fontWeight: 700,
-        color: '#fff',
-        background: 'var(--pink)',
-        borderRadius: 999,
-        padding: '1px 4px',
-        minWidth: 14,
-        textAlign: 'center',
-      }}
-    >
-      {count}
-    </span>
-  )
-}
-
-
 function Avatar({
   userId,
   name,
@@ -2439,40 +2334,31 @@ function ThreadHeader({
   const other = conversation.type === 'direct' ? conversation.members.find((m) => m.userId !== currentUserId) : null
   const otherOnline = other ? presence[other.userId]?.online : false
   return (
-    <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+    <header className={styles.threadHeader}>
+      {!isDesktop && <IconButton title="Retour aux conversations" onClick={onBack}><ArrowLeft size={19} aria-hidden="true" /></IconButton>}
       <Button
         variant="ghost"
         onClick={conversation.type === 'group' ? onOpenGroupSettings : onOpenContactPanel}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', minWidth: 0, fontWeight: 400, padding: 0 }}
+        className={styles.threadIdentity}
+        aria-label={`${conversation.type === 'group' ? 'Ouvrir les paramètres du groupe' : 'Ouvrir les informations du contact'} ${label}`}
       >
-        {!isDesktop && (
-          <span
-            onClick={(e) => {
-              e.stopPropagation()
-              onBack()
-            }}
-            style={{ color: 'var(--text-faint)', fontSize: 18, marginRight: 4, display: 'inline-flex', alignItems: 'center' }}
-          >
-            <ArrowLeft size={18} />
-          </span>
-        )}
-        {conversation.type === 'group' ? <GroupAvatar conv={conversation} size={36} /> : <Avatar userId={other?.userId ?? ''} name={label} size={36} />}
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</h2>
-          <p style={{ fontSize: 11, color: otherOnline ? '#22c55e' : 'var(--text-faint)', margin: 0 }}>
+        {conversation.type === 'group' ? <GroupAvatar conv={conversation} size={44} /> : <Avatar userId={other?.userId ?? ''} name={label} size={44} online={otherOnline} showOnline />}
+        <div>
+          <h2>{label}</h2>
+          <p className={otherOnline ? styles.online : ''}>
             {conversation.type === 'group' ? `${conversation.members.length} membres` : otherOnline ? 'En ligne' : 'Hors ligne'}
           </p>
         </div>
       </Button>
-      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-        <IconButton title="Rechercher" onClick={onOpenSearch}>
-          <Search size={16} />
+      <div className={styles.threadActions}>
+        <IconButton title="Rechercher dans la conversation" onClick={onOpenSearch}>
+          <Search size={18} aria-hidden="true" />
         </IconButton>
-        <IconButton title="Sondage" onClick={onOpenPoll}>
-          <BarChart2 size={16} />
+        <IconButton title="Créer un sondage" onClick={onOpenPoll}>
+          <BarChart2 size={18} aria-hidden="true" />
         </IconButton>
       </div>
-    </div>
+    </header>
   )
 }
 
@@ -2514,8 +2400,8 @@ function MessageRow({
 
   if (message.type === 'system') {
     return (
-      <div style={{ textAlign: 'center', padding: '4px 0' }}>
-        <span style={{ fontSize: 11.5, color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 20, padding: '4px 12px' }}>
+      <div className={styles.systemMessage}>
+        <span>
           {systemMessageLabel(message.content, currentUserId)}
         </span>
       </div>
@@ -2538,14 +2424,15 @@ function MessageRow({
 
   return (
     <div
+      className={`${styles.messageRow} ${isMine ? styles.messageRowMine : styles.messageRowOther}`}
       style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6, marginBottom: 6, touchAction: 'pan-y' }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
       <div style={{ width: 26, flexShrink: 0 }}>{showAvatar && <Avatar userId={message.senderId} name={message.senderName} size={26} online={onlineForAvatar} showOnline />}</div>
-      <div style={{ maxWidth: '74%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', gap: 2, transform: `translateX(${swipeX}px)` }}>
-        {showSenderName && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>{message.senderName}</span>}
+      <div className={styles.messageColumn} style={{ alignItems: isMine ? 'flex-end' : 'flex-start', transform: `translateX(${swipeX}px)` }}>
+        {showSenderName && <span className={styles.senderName}>{message.senderName}</span>}
         {message.forwardedFrom && (
           <span style={{ fontSize: 10.5, color: 'var(--text-faint)', paddingLeft: isMine ? 0 : 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}><CornerUpRight size={11} /> Transféré de {message.forwardedFrom.senderName}</span>
         )}
@@ -2568,6 +2455,7 @@ function MessageRow({
           </div>
         )}
         <div
+          className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther} ${highlighted ? styles.bubbleHighlighted : ''}`}
           onContextMenu={(e) => {
             e.preventDefault()
             onOpenContextMenu(e.clientX, e.clientY)
@@ -2623,9 +2511,9 @@ function MessageRow({
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div className={styles.messageMeta}>
           {message.starredByMe && <span style={{ fontSize: 10, color: 'var(--gold)', display: 'inline-flex', alignItems: 'center' }}><Star size={10} /></span>}
-          <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{formatTime(message.createdAt)}</span>
+          <time dateTime={message.createdAt}>{formatTime(message.createdAt)}</time>
           {isMine && message.readStatus && (
             <span style={{ fontSize: 9, color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
               {message.readStatus === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
@@ -3140,32 +3028,27 @@ function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>, onClose: 
 
 function ModalShell({ title, onClose, wide, children }: { title: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
   return (
-    <Modal onClose={onClose} maxWidth={wide ? 480 : 360} zIndex={200} ariaLabel={title}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, paddingRight: 42 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{title}</h3>
+    <Modal onClose={onClose} maxWidth={wide ? 580 : 460} zIndex={200} ariaLabel={title}>
+        <div className={styles.modalHeading}>
+          <span aria-hidden="true"><MessageCircle size={20} /></span>
+          <div><small>Messagerie</small><h3>{title}</h3></div>
         </div>
-        {children}
+        <div className={styles.modalBody}>{children}</div>
     </Modal>
   )
 }
 
 function ModalActions({ onCancel, onConfirm, confirmLabel, disabled }: { onCancel: () => void; onConfirm: () => void; confirmLabel: string; disabled?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-      <Button variant="secondary" onClick={onCancel} size="sm" style={{ borderRadius: 999 }}>
+    <div className={styles.modalActions}>
+      <Button variant="secondary" onClick={onCancel}>
         Annuler
       </Button>
       <Button
         variant="primary"
         onClick={onConfirm}
         disabled={disabled}
-        size="sm"
-        style={{
-          borderRadius: 3,
-          fontWeight: 500,
-          textTransform: 'none',
-          letterSpacing: 'normal',
-        }}
+        size="md"
       >
         {confirmLabel}
       </Button>

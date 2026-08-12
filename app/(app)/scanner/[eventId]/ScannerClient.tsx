@@ -3,9 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { fmtMoney } from '@/lib/shared/money'
-import CameraScanner from './CameraScanner'
 import { Button, Card, Input, Label } from '@/app/components/ui'
+
+// jsqr (décodage QR) + l'accès caméra ne sont utiles que sur cet outil staff
+// — auparavant bundlés dans le JS principal de toute page utilisant ce
+// composant. `ssr:false` : getUserMedia n'existe pas côté serveur.
+const CameraScanner = dynamic(() => import('./CameraScanner'), { ssr: false })
 
 // Port de src/pages/ScannerPage.jsx (outil staff : porte + bar). Ce composant
 // ne parle QU'aux routes HTTP déjà construites (/api/tickets/checkin et les

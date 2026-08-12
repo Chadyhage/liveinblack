@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import stripe from '@/lib/server/stripeClient'
+
+// Même raisonnement que le webhook FedaPay — voir son commentaire.
+export const maxDuration = 30
 import { getDb } from '@/lib/db/mongoose'
 import { fulfillOrder } from '@/lib/server/fulfillOrder'
 import { releaseOrder } from '@/lib/server/orders'
@@ -40,6 +44,9 @@ export async function POST(req: Request) {
         if (session.payment_status !== 'paid') break
         if (session.metadata?.intent === 'boost') {
           await finalizeBoost(session)
+          // Le rail "À la une" (getCachedBoostedEventIds) ne doit pas
+          // attendre jusqu'à 60s pour refléter un boost tout juste payé.
+          revalidateTag('boosts', 'max')
           break
         }
         if (session.mode === 'subscription' && session.metadata?.type === 'prestataire_subscription') {
