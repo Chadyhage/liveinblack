@@ -17,9 +17,9 @@ export default async function InterceptedEventModal({
   const { paiement } = await searchParams
 
   return (
-    <SlideOverModal>
-      <div style={{ padding: '0 clamp(14px, 3vw, 32px) 60px', width: '100%' }}>
-        <EventDetailContent id={id} paiement={paiement} />
+    <SlideOverModal variant="event" maxWidth={1180} ariaLabel="Détails de l’événement">
+      <div style={{ width: '100%' }}>
+        <EventDetailContent id={id} paiement={paiement} presentation="modal" />
       </div>
     </SlideOverModal>
   )

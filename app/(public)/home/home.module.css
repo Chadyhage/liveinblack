@@ -38,7 +38,7 @@
   z-index: -3;
   object-fit: cover;
   object-position: 58% 42%;
-  filter: saturate(.72) contrast(1.04) brightness(.86);
+  filter: saturate(.9) contrast(1.04) brightness(.98);
 }
 
 .heroOverlay {
@@ -46,7 +46,7 @@
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(90deg, rgba(5, 5, 7, .98) 0%, rgba(5, 5, 7, .9) 38%, rgba(5, 5, 7, .36) 72%, rgba(5, 5, 7, .76) 100%),
+    linear-gradient(90deg, rgba(5, 5, 7, .96) 0%, rgba(5, 5, 7, .84) 38%, rgba(5, 5, 7, .24) 72%, rgba(5, 5, 7, .52) 100%),
     linear-gradient(0deg, #050506 0%, transparent 34%, rgba(5, 5, 7, .2) 100%);
 }
 

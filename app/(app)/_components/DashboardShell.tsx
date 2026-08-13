@@ -1,5 +1,6 @@
 'use client'
 
+import type { CSSProperties } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -13,6 +14,12 @@ import { getRoleLabel, type Role } from '@/lib/server/permissions'
 import styles from './DashboardShell.module.css'
 
 const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
+
+const ROLE_BACKGROUNDS: Record<Exclude<Role, 'agent'>, string> = {
+  client: '/images/live-in-black/auth-community.jpg',
+  organisateur: '/images/live-in-black/auth-organizer.jpg',
+  prestataire: '/images/live-in-black/auth-provider.jpg',
+}
 
 // Compteurs "en attente" affichés sur les liens Dossiers/Signalements/
 // Suppressions de la sidebar agent — vivaient auparavant dans la barre
@@ -231,6 +238,10 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
     return <AgentWorkspaceShell badges={badges}>{children}</AgentWorkspaceShell>
   }
 
+  const dashboardStyle = {
+    '--dashboard-background-image': `url('${ROLE_BACKGROUNDS[activeRole]}')`,
+  } as CSSProperties
+
   const fullBleed = FULL_BLEED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
   const roleItems: DashboardNavItem[] = ROLE_NAV[activeRole].filter(
@@ -265,7 +276,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   }
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} style={dashboardStyle}>
       <div className={styles.mobileBar}>
         <IconButton
           ref={mobileMenuButtonRef}

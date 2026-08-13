@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from './AuthSplitLayout.module.css'
 
-const HERO_IMG = 'https://images.unsplash.com/photo-1496337589254-7e19d01cec44?auto=format&fit=crop&w=1400&q=80'
+const HERO_IMG = '/images/live-in-black/auth-community.jpg'
 
 export default function AuthSplitLayout({ children, tagline, heroImage, wide = false }: { children: ReactNode; tagline?: ReactNode; heroImage?: string; wide?: boolean }) {
   return (

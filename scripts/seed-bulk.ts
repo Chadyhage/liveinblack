@@ -57,21 +57,21 @@ const PROVIDER_TYPE_NAMES: Record<string, string> = {
   transport: 'Navette & logistique', staff: 'Staff événementiel', communication: 'Communication', bien_etre: 'Beauté & bien-être',
 }
 
-// Domaine whitelisté par next.config.ts (images.remotePatterns + CSP img-src)
-// — jamais un générateur externe non listé (picsum.photos, etc.), sinon les
-// images sont bloquées côté client sans erreur serveur visible.
-// Chaque id vérifié visuellement (nightlife/concert/DJ réel) — deux ids
-// initiaux (livreur à vélo, galerie d'art) ont été remplacés après contrôle.
-const UNSPLASH_PHOTO_IDS = [
-  '1470229722913-7c0e2dbbafd3', '1493676304819-0d7a8d026dcf', '1514525253161-7a46d19cd819',
-  '1470225620780-dba8ba36b745', '1478147427282-58a87a120781',
-  '1522158637959-30385a09e0da', '1516280440614-37939bbacd81', '1516450360452-9312f5e86fc7',
-  '1477281765962-ef34e8bb0967', '1496337589254-7e19d01cec44', '1429962714451-bb934ecdc4ec',
+// Bibliothèque éditoriale locale créée pour LIVE IN BLACK. Les seeds restent
+// déterministes et ne réintroduisent plus de photographies de stock externes.
+const CUSTOM_PHOTOS = [
+  '/images/live-in-black/hero-nightlife.jpg',
+  '/images/live-in-black/journey-discover.jpg',
+  '/images/live-in-black/journey-reserve.jpg',
+  '/images/live-in-black/journey-enter.jpg',
+  '/images/live-in-black/auth-organizer.jpg',
+  '/images/live-in-black/auth-provider.jpg',
 ]
 
-function unsplashUrl(seed: number, w = 1200, h = 800): string {
-  const id = UNSPLASH_PHOTO_IDS[seed % UNSPLASH_PHOTO_IDS.length]
-  return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`
+function customPhotoUrl(seed: number, w = 1200, h = 800): string {
+  void w
+  void h
+  return CUSTOM_PHOTOS[seed % CUSTOM_PHOTOS.length]
 }
 
 const MENU_ITEMS = [
@@ -163,9 +163,9 @@ async function main() {
       zonesIntervention: [region.id],
       followersCount: randInt(10, 900),
       totalEventsCount: 0,
-      avatarUrl: unsplashUrl(i + 20, 200, 200),
-      bannerUrl: unsplashUrl(i, 1200, 500),
-      media: [{ id: `m${i}`, url: unsplashUrl(i, 800, 600), type: 'image', visibility: 'public', displayOrder: 0 }],
+      avatarUrl: customPhotoUrl(i + 20, 200, 200),
+      bannerUrl: customPhotoUrl(i, 1200, 500),
+      media: [{ id: `m${i}`, url: customPhotoUrl(i, 800, 600), type: 'image', visibility: 'public', displayOrder: 0 }],
       proPhone: `+228 9${randInt(0, 9)} ${randInt(10, 99)} ${randInt(10, 99)} ${randInt(10, 99)}`,
     })
     organizers.push({ userId: String(user._id), profile })
@@ -208,14 +208,14 @@ async function main() {
       phone: `+228 9${randInt(0, 9)} ${randInt(10, 99)} ${randInt(10, 99)} ${randInt(10, 99)}`,
       catalogCurrency: region.currency,
       subscriptionActive: true,
-      photoUrl: unsplashUrl(i + 40, 200, 200),
-      coverUrl: unsplashUrl(i + 60, 1200, 500),
+      photoUrl: customPhotoUrl(i + 40, 200, 200),
+      coverUrl: customPhotoUrl(i + 60, 1200, 500),
       catalog: [
         {
           id: 'c1',
           name: `Prestation ${PROVIDER_TYPE_NAMES[category]}`,
           description: 'Prestation standard, matériel/équipe inclus.',
-          media: [{ url: unsplashUrl(i + 60, 800, 600), type: 'image' }],
+          media: [{ url: customPhotoUrl(i + 60, 800, 600), type: 'image' }],
           price: randInt(20, 300) * 1000,
           currency: region.currency,
           unit: 'soirée',
@@ -310,7 +310,7 @@ async function main() {
       city,
       region: region.name,
       currency,
-      imageUrl: unsplashUrl(i),
+      imageUrl: customPhotoUrl(i),
       color: pick(['#c8a96e', '#4ee8c8', '#e05aaa', '#8b5cf6']),
       places,
       preorder: hasMenu,

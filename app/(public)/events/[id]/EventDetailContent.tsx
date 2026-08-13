@@ -16,6 +16,7 @@ import AgeVerificationGate from '@/app/components/AgeVerificationGate'
 import EventShareButton from './EventShareButton'
 import EventVenueMap from './EventVenueMap'
 import { Card } from '@/app/components/ui'
+import styles from './EventDetailContent.module.css'
 
 // Contenu partagé entre la page dédiée (app/(public)/events/[id]/page.tsx) et
 // la route interceptée qui l'affiche en modal glissante depuis les listes
@@ -30,9 +31,11 @@ export async function resolveEvent(id: string) {
 export default async function EventDetailContent({
   id,
   paiement,
+  presentation = 'page',
 }: {
   id: string
   paiement?: string
+  presentation?: 'page' | 'modal'
 }) {
   const result = await resolveEvent(id)
 
@@ -83,45 +86,55 @@ export default async function EventDetailContent({
     excludedPlaces: m.excludedPlaces ?? [],
   }))
 
+  const isModal = presentation === 'modal'
+
   return (
-    <>
-      <div style={{ padding: '18px 0 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
+    <div className={isModal ? styles.modalRoot : styles.pageRoot}>
+      {isModal ? (
+        <div className={styles.modalToolbar}>
+          <div>
+            <small>Détails de l’événement</small>
+            <strong>{[event.city, event.category].filter(Boolean).join(' · ') || 'LIVEINBLACK'}</strong>
+          </div>
+        </div>
+      ) : <div className={styles.breadcrumb} style={{ padding: '18px 0 0', fontSize: 12.5, color: 'var(--text-faint)' }}>
         <Link href="/events" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
           Événements
         </Link>
         {event.city && <span> · {event.city}</span>}
         <span> · {event.name}</span>
-      </div>
+      </div>}
 
       {/* HERO */}
       {/* Hauteur fixe (~1/3 de l'ancien aspectRatio 16/9, retour client) au
           lieu d'un aspectRatio qui poussait description/line-up/organisateur/
           lieu trop bas sur desktop comme mobile. */}
-      <div style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', height: 130, background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
+      <div className={styles.hero} style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', height: 130, background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
           alt={event.name}
           fill
           loading="eager"
+          className={styles.heroImage}
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 100vw, 880px"
         />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
-        <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.heroOverlay} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
+        <div className={styles.heroActions} style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
           <EventShareButton eventName={event.name} />
           <EventInterestButtonClient eventId={event.id} initialInterested={interestState.interested} isAuthenticated={Boolean(session?.user)} floating />
         </div>
-        <div style={{ position: 'absolute', left: 20, right: 20, bottom: 16 }}>
+        <div className={styles.heroCopy} style={{ position: 'absolute', left: 20, right: 20, bottom: 16 }}>
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 11, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '4px 10px', borderRadius: 999 }}>ANNULÉ</span>
           )}
           {/* Ombre resserrée (6px vs 12px) : un flou large sur une police
               condensée à traits fins, posée sur une photo, se lisait comme un
               double contour fantôme plutôt qu'une vraie ombre portée. */}
-          <h1 className="font-display" style={{ fontSize: 'clamp(26px, 6vw, 44px)', margin: 0, letterSpacing: '.01em', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{event.name}</h1>
-          {event.subtitle && <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '6px 0 0' }}>{event.subtitle}</p>}
+          <h1 className={`font-display ${styles.title}`} style={{ fontSize: 'clamp(26px, 6vw, 44px)', margin: 0, letterSpacing: '.01em', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{event.name}</h1>
+          {event.subtitle && <p className={styles.subtitle} style={{ fontSize: 14, color: 'var(--text-muted)', margin: '6px 0 0' }}>{event.subtitle}</p>}
           {event.tags?.length ? (
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+            <div className={styles.tags} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
               {event.tags.map((tag) => (
                 <span key={tag} style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text)', background: 'rgba(255,255,255,.1)', padding: '3px 9px', borderRadius: 999 }}>
                   {tag}
@@ -133,7 +146,7 @@ export default async function EventDetailContent({
       </div>
 
       {/* QUICK INFO STRIP */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 22px 0' }}>
+      <div className={styles.quickInfo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 22px 0' }}>
         {countdown && <Chip label={countdown} tone={urgent ? 'urgent' : 'default'} />}
         {stock && <Chip label={stock.label} color={stock.color} ink={stock.ink} />}
         <Chip label={[event.dateDisplay, event.time].filter(Boolean).join(' · ')} />
@@ -159,7 +172,7 @@ export default async function EventDetailContent({
           (voir app/globals.css et ex. app/(app)/profile/ProfilClient.tsx). */}
       {/* L'Organisateur est toujours rendu (fallback texte), donc cette
           grille est toujours affichée — pas de condition supplémentaire ici. */}
-      <div style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 8, alignItems: 'start' }}>
+      <div className={styles.contentGrid} style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 8, alignItems: 'start' }}>
           {/* DESCRIPTION */}
           {event.description && (
             <Section title="Description">
@@ -335,7 +348,7 @@ export default async function EventDetailContent({
           <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>La billetterie n&apos;est pas encore disponible pour cet événement.</p>
         </div>
       ) : null}
-    </>
+    </div>
   )
 }
 

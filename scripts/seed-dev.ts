@@ -123,7 +123,7 @@ async function main() {
     followersCount: 342,
     totalEventsCount: 2,
     media: [
-      { id: 'm1', url: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=800&q=80', type: 'image', visibility: 'public', displayOrder: 0 },
+      { id: 'm1', url: '/images/live-in-black/auth-organizer.jpg', type: 'image', visibility: 'public', displayOrder: 0 },
     ],
     proPhone: '+228 90 00 00 00',
   })
@@ -172,7 +172,7 @@ async function main() {
     city: 'Lomé',
     region: 'Togo',
     currency: 'XOF',
-    imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1200&q=80',
+    imageUrl: '/images/live-in-black/hero-nightlife.jpg',
     color: '#c8a96e',
     places: [
       { id: 'p1', type: 'Entrée standard', price: 5000, available: 119, total: 200, maxPerAccount: 4 },
@@ -234,7 +234,7 @@ async function main() {
     city: 'Paris',
     region: 'France',
     currency: 'EUR',
-    imageUrl: 'https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?auto=format&fit=crop&w=1200&q=80',
+    imageUrl: '/images/live-in-black/journey-enter.jpg',
     places: [{ id: 'p1', type: 'Entrée', price: 20, available: 0, total: 80 }],
     minAge: 18,
     userCreated: true,

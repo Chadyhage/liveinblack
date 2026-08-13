@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { Settings, Ticket, LifeBuoy, Heart } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Database, Heart, KeyRound, LifeBuoy, Search, Settings, ShieldCheck, Ticket, UserRound } from 'lucide-react'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
@@ -429,8 +429,16 @@ function normalizeQuery(s: string): string {
     .trim()
 }
 
+function settingsInitials(value: string): string {
+  const parts = value.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+}
+
 export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (u: ProfilUser) => void; onBack: () => void }) {
   const [query, setQuery] = useState('')
+  const [activeGroup, setActiveGroup] = useState('profil')
 
   const entries: SettingEntry[] = useMemo(
     () => [
@@ -450,62 +458,89 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
   const tokens = q.split(/\s+/).filter(Boolean)
   const filtered = tokens.length === 0 ? entries : entries.filter((e) => tokens.every((t) => e.keywords.some((k) => normalizeQuery(k).includes(t)) || normalizeQuery(e.id).includes(t)))
   const settingGroups = [
-    { title: 'Profil et préférences', ids: ['identite', 'goûts'] },
-    { title: 'Confidentialité et données', ids: ['visibilite', 'confidentialite', 'mes donnees'] },
-    { title: 'Connexion et sécurité', ids: ['email', 'mot de passe', 'danger'] },
+    { id: 'profil', title: 'Profil et préférences', shortTitle: 'Profil', description: 'Identité, téléphone et goûts', ids: ['identite', 'goûts'], icon: UserRound, color: '#70b7ff' },
+    { id: 'privacy', title: 'Confidentialité et données', shortTitle: 'Confidentialité', description: 'Visibilité, recommandations et export', ids: ['visibilite', 'confidentialite', 'mes donnees'], icon: ShieldCheck, color: '#70dac4' },
+    { id: 'security', title: 'Connexion et sécurité', shortTitle: 'Sécurité', description: 'E-mail, mot de passe et compte', ids: ['email', 'mot de passe', 'danger'], icon: KeyRound, color: '#c4a7ff' },
   ]
+  const visibleGroups = tokens.length > 0 ? settingGroups : settingGroups.filter((group) => group.id === activeGroup)
+  const activeGroupInfo = settingGroups.find((group) => group.id === activeGroup) ?? settingGroups[0]
+  const ActiveGroupIcon = activeGroupInfo.icon
 
   return (
-    <main className="profile-settings lb-dashboard-page lb-dashboard-page--medium">
+    <main className="profile-settings lb-dashboard-page">
       <style>{`
         @media (max-width: 480px) {
           .profile-settings { padding-bottom: 120px; }
           .profile-demo-row { flex-direction: column; }
         }
       `}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Button onClick={onBack} variant="ghost" style={{ fontSize: 22, padding: '4px 8px 4px 0' }} aria-label="Retour">
-            ‹
-          </Button>
-          <h1 className="font-display lb-dashboard-title">Paramètres du compte</h1>
+      <div className="settings-page-stack">
+        <header className="settings-hero">
+          <div className="settings-hero-copy">
+            <Button onClick={onBack} variant="ghost" className="settings-back" icon={<ArrowLeft size={17} aria-hidden="true" />}>
+              Mon profil
+            </Button>
+            <p className="settings-kicker"><Settings size={16} aria-hidden="true" /> Centre du compte</p>
+            <h1>Paramètres</h1>
+            <p>Gère ton identité, tes préférences, ta confidentialité et la sécurité de ton compte depuis un seul endroit.</p>
+          </div>
+          <div className="settings-account-summary">
+            <span className="settings-account-avatar" aria-hidden="true">{settingsInitials([user.firstName, user.lastName].filter(Boolean).join(' ') || user.email)}</span>
+            <div><strong>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Mon compte'}</strong><span>{user.email}</span></div>
+            <Badge tone="teal">Actif</Badge>
+          </div>
+        </header>
+
+        <div className="settings-search">
+          <Search size={19} aria-hidden="true" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher un réglage"
+            aria-label="Rechercher dans les paramètres"
+          />
+          {query && <Button onClick={() => setQuery('')} variant="ghost" aria-label="Effacer la recherche">Effacer</Button>}
         </div>
 
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher un réglage — nom, e-mail, mot de passe…"
-          style={{ maxWidth: 480, textOverflow: 'ellipsis' }}
-        />
-
-        {filtered.length === 0 ? (
-          <Card style={{ maxWidth: 480, textAlign: 'center' }}>
-            <p style={{ fontSize: 14, color: '#fff', margin: '0 0 6px' }}>Aucun réglage ne correspond à « {query} »</p>
-            <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 12px' }}>Essaie « nom », « e-mail », « mot de passe », « confidentialité »…</p>
-            <Button onClick={() => setQuery('')} variant="link" style={{ fontSize: 12.5, textDecoration: 'none' }}>
-              Effacer la recherche
-            </Button>
-          </Card>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {settingGroups.map((group, groupIndex) => {
-              const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
-              if (groupEntries.length === 0) return null
-              return (
-                <details key={group.title} open={tokens.length > 0 || groupIndex === 0} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', background: 'var(--surface-2)', padding: '0 14px 14px' }}>
-                  <summary style={{ minHeight: 52, display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--text)', fontSize: 15, fontWeight: 800 }}>
-                    {group.title}
-                  </summary>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 14, alignItems: 'start' }}>
-                    {groupEntries.map((entry) => (
-                      <div key={entry.id}>{entry.render({ user, setUser })}</div>
-                    ))}
-                  </div>
-                </details>
-              )
+        <div className="settings-layout">
+          <nav className="settings-sidebar" aria-label="Catégories de paramètres">
+            <p>Réglages</p>
+            {settingGroups.map((group) => {
+              const Icon = group.icon
+              const active = group.id === activeGroup && tokens.length === 0
+              return <Button key={group.id} variant="ghost" onClick={() => { setActiveGroup(group.id); setQuery('') }} className={active ? 'settings-nav-item settings-nav-item--active' : 'settings-nav-item'} aria-current={active ? 'page' : undefined} style={{ '--setting-color': group.color } as React.CSSProperties}>
+                <span className="settings-nav-icon"><Icon size={18} aria-hidden="true" /></span>
+                <span><strong>{group.shortTitle}</strong><small>{group.description}</small></span>
+                <ChevronRight size={16} aria-hidden="true" />
+              </Button>
             })}
-          </div>
-        )}
+            <div className="settings-sidebar-note"><Database size={17} aria-hidden="true" /><p><strong>Tes données restent sous ton contrôle.</strong><span>Exporte-les ou modifie tes choix à tout moment.</span></p></div>
+          </nav>
+
+          <section className="settings-content" aria-live="polite">
+            {filtered.length === 0 ? (
+              <div className="settings-empty">
+                <Search size={25} aria-hidden="true" />
+                <h2>Aucun résultat</h2>
+                <p>Aucun réglage ne correspond à « {query} ». Essaie « e-mail », « téléphone » ou « confidentialité ».</p>
+                <Button onClick={() => setQuery('')} variant="secondary">Effacer la recherche</Button>
+              </div>
+            ) : (
+              <div className="settings-groups">
+                {!tokens.length && <div className="settings-content-heading" style={{ '--setting-color': activeGroupInfo.color } as React.CSSProperties}><span><ActiveGroupIcon size={22} aria-hidden="true" /></span><div><p>{activeGroupInfo.shortTitle}</p><h2>{activeGroupInfo.title}</h2><small>{activeGroupInfo.description}</small></div></div>}
+                {tokens.length > 0 && <div className="settings-results-heading"><p>Résultats de recherche</p><h2>{filtered.length} réglage{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}</h2></div>}
+                {visibleGroups.map((group) => {
+                  const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
+                  if (groupEntries.length === 0) return null
+                  return <section key={group.id} className="settings-group" aria-labelledby={`settings-group-${group.id}`}>
+                    {tokens.length > 0 && <h3 id={`settings-group-${group.id}`}>{group.title}</h3>}
+                    <div className="settings-card-grid">{groupEntries.map((entry) => <div key={entry.id} id={`setting-${entry.id}`}>{entry.render({ user, setUser })}</div>)}</div>
+                  </section>
+                })}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </main>
   )

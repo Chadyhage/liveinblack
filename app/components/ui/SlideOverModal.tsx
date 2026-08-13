@@ -17,6 +17,7 @@ export interface SlideOverModalProps {
   // l'historique au lieu de simplement retirer le paramètre.
   onClose?: () => void
   ariaLabel?: string
+  variant?: 'default' | 'event'
 }
 
 // Coquille de modal "tiroir" glissant depuis la droite, utilisée par les
@@ -29,28 +30,29 @@ export interface SlideOverModalProps {
 // plein-hauteur ancré à droite — pas de lib d'animation dans ce repo, donc
 // transition CSS pure pilotée par un état "monté" pour déclencher le
 // slide-in au prochain frame.
-export default function SlideOverModal({ children, maxWidth = 820, onClose, ariaLabel = 'Panneau de détails' }: SlideOverModalProps) {
+export default function SlideOverModal({ children, maxWidth = 820, onClose, ariaLabel = 'Panneau de détails', variant = 'default' }: SlideOverModalProps) {
   const router = useRouter()
+  const eventSheet = variant === 'event'
 
   return (
     <BaseModal
       onClose={() => (onClose ? onClose() : router.back())}
-      rootClassName={styles.root}
+      rootClassName={`${styles.root}${eventSheet ? ` ${styles.eventRoot}` : ''}`}
       visibleClassName={styles.visible}
       closingClassName={styles.closing}
-      backdropClassName={styles.backdrop}
+      backdropClassName={`${styles.backdrop}${eventSheet ? ` ${styles.eventBackdrop}` : ''}`}
       backdropLabel="Fermer le panneau"
-      panelClassName={styles.panel}
+      panelClassName={`${styles.panel}${eventSheet ? ` ${styles.eventPanel}` : ''}`}
       panelStyle={{ '--slide-over-width': `${maxWidth}px` } as CSSProperties}
       ariaLabel={ariaLabel}
     >
       {({ close }) => (
         <>
-          <div className={styles.grabber} aria-hidden="true" />
-          <Button variant="ghost" className={styles.close} onClick={close} aria-label="Fermer">
+          <div className={`${styles.grabber}${eventSheet ? ` ${styles.eventGrabber}` : ''}`} aria-hidden="true" />
+          <Button variant="ghost" className={`${styles.close}${eventSheet ? ` ${styles.eventClose}` : ''}`} onClick={close} aria-label="Fermer">
             <X size={18} strokeWidth={1.8} aria-hidden="true" />
           </Button>
-          <div className={styles.content}>{children}</div>
+          <div className={`${styles.content}${eventSheet ? ` ${styles.eventContent}` : ''}`}>{children}</div>
         </>
       )}
     </BaseModal>

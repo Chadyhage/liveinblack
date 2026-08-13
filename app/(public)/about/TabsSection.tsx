@@ -21,8 +21,8 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
       'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.',
     cta: 'Créer mon compte',
     href: '/login?mode=register',
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=82',
-    imageAlt: 'Un public profitant d’un concert',
+    image: '/images/live-in-black/hero-nightlife.jpg',
+    imageAlt: 'Un public profite d’une soirée Live in Black',
   },
   {
     id: 'organizer',
@@ -33,8 +33,8 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
       'Crée et publie ton événement, vends tes billets en ligne, gère ta guestlist, scanne les entrées et suis tes ventes en temps réel — POS sur place inclus.',
     cta: 'Devenir organisateur',
     href: '/organizer-signup',
-    image: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1200&q=82',
-    imageAlt: 'Une scène de concert vue depuis le public',
+    image: '/images/live-in-black/auth-organizer.jpg',
+    imageAlt: 'Une organisatrice supervise son événement en coulisses',
   },
   {
     id: 'provider',
@@ -44,8 +44,8 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
     description: 'DJ, salle, sono, traiteur… Crée ta vitrine publique, sois visible des organisateurs et reçois des demandes de devis directement.',
     cta: 'Devenir prestataire',
     href: '/provider-signup',
-    image: 'https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?auto=format&fit=crop&w=1200&q=82',
-    imageAlt: 'Un artiste en prestation sur scène',
+    image: '/images/live-in-black/auth-provider.jpg',
+    imageAlt: 'Un photographe professionnel intervient pendant un événement',
   },
 ]
 

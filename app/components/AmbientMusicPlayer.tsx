@@ -19,27 +19,27 @@ function subscribeToMusicEngine(onStoreChange: () => void) {
 // Mapping des images d'ambiance avec des filtres lumineux ajustés pour une meilleure visibilité
 const DISC_ASSETS: Record<string, { img: string; bgPosition: string; filter: string }> = {
   house: {
-    img: '/media1.jpg',
+    img: '/images/live-in-black/hero-nightlife.jpg',
     bgPosition: 'center 40%',
     filter: 'brightness(0.7) saturate(1.4) contrast(1.1) hue-rotate(-20deg)',
   },
   afro: {
-    img: '/media1.jpg',
+    img: '/images/live-in-black/journey-enter.jpg',
     bgPosition: 'center 40%',
     filter: 'brightness(0.7) saturate(1.6) contrast(1.1) hue-rotate(50deg)',
   },
   techno: {
-    img: '/media1.jpg',
+    img: '/images/live-in-black/auth-provider.jpg',
     bgPosition: 'center 40%',
     filter: 'brightness(0.7) saturate(1.8) contrast(1.15) hue-rotate(150deg)',
   },
   lofi: {
-    img: '/media3.jpg',
+    img: '/images/live-in-black/auth-community.jpg',
     bgPosition: 'center 35%',
     filter: 'brightness(0.75) sepia(0.2) contrast(1.1)',
   },
   nuit: {
-    img: '/media2.jpg',
+    img: '/images/live-in-black/journey-discover.jpg',
     bgPosition: 'center 50%',
     filter: 'brightness(0.7) saturate(1.3) contrast(1.1)',
   },

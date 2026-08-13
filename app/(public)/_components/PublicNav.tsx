@@ -133,7 +133,8 @@ function HeaderSearch() {
 
       {showDropdown && (
         <div
-          role="listbox"
+          role="region"
+          aria-label="Résultats de recherche"
           style={{
             position: 'absolute',
             top: 'calc(100% + 10px)',
@@ -308,28 +309,20 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         position: 'sticky',
         top: 0,
         zIndex: 40,
-        background: 'rgba(8,8,10,.74)',
-        backdropFilter: 'blur(24px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-        borderBottom: '1px solid rgba(255,255,255,.09)',
+        padding: '10px clamp(10px, 2vw, 24px) 0',
+        background: 'linear-gradient(180deg, rgba(5,5,7,.42), transparent)',
       }}
     >
       <div className="lb-public-nav__inner">
       <Link
         href="/home"
-        style={{
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
-          fontSize: 16,
-          letterSpacing: '-0.025em',
-          color: '#f5f5f7',
-          textDecoration: 'none',
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
+        className="lb-public-nav__brand"
+        aria-label="LIVEINBLACK — Accueil"
       >
-        LIVE<span style={{ color: 'rgba(255,255,255,.52)', fontWeight: 500 }}>IN</span>BLACK
+        <span aria-hidden="true" className="lb-public-nav__brand-mark">LB</span>
+        <span>LIVE<span className="lb-public-nav__brand-muted">IN</span>BLACK</span>
       </Link>
-      <nav aria-label="Navigation principale" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <nav aria-label="Navigation principale" className="lb-public-nav__links">
         {/* Nav publique (Accueil/Événements/Prestataires/Organisateurs) —
             visible que l'utilisateur soit connecté ou non (revenu sur la
             décision du 11/08/2026 après retour client du 13/08/2026 : le
@@ -344,7 +337,6 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 href={link.href}
                 className={`lb-navlink ${['/home', '/events', '/providers', '/organizers'].includes(link.href) ? 'lb-navlink-primary' : 'lb-navlink-secondary'}${active ? ' lb-navlink-active' : ''}`}
                 aria-current={active ? 'page' : undefined}
-                style={{ position: 'relative', color: active ? '#f5f5f7' : 'rgba(255,255,255,.68)', textDecoration: 'none', fontSize: 13.5, fontWeight: active ? 650 : 500, letterSpacing: '-.01em', padding: '10px 11px', borderRadius: 10, background: active ? 'rgba(255,255,255,.1)' : 'transparent' }}
               >
                 {link.label}
               </Link>
@@ -358,35 +350,14 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           <>
             <Link
               href="/login"
-              className="lb-navlink lb-nav-auth"
-              style={{
-                minHeight: 44,
-                padding: '10px 17px',
-                borderRadius: 12,
-                background: 'var(--primary)',
-                color: 'var(--primary-ink)',
-                fontSize: 14,
-                fontWeight: 650,
-                textDecoration: 'none',
-              }}
+              className="lb-navlink lb-nav-auth lb-nav-auth--secondary"
             >
               <LogIn size={16} strokeWidth={2} aria-hidden="true" />
               <span>Connexion</span>
             </Link>
             <Link
               href="/login?mode=register"
-              className="lb-navlink lb-nav-auth"
-              style={{
-                minHeight: 44,
-                padding: '10px 17px',
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,.18)',
-                background: 'rgba(255,255,255,.06)',
-                color: '#f5f5f7',
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
+              className="lb-navlink lb-nav-auth lb-nav-auth--primary"
             >
               <UserPlus size={16} strokeWidth={2} aria-hidden="true" />
               <span>Créer un compte</span>
@@ -410,7 +381,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             </Link>
           </>
         )}
-        <span className="lb-navlink-mobile lb-burger">
+        <span className={`lb-navlink-mobile lb-burger${dashboardLinks?.length ? '' : ' lb-burger--public-only'}`}>
           <IconButton
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
@@ -533,42 +504,104 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
       <style>{`
         .lb-public-nav__inner {
           width: 100%;
-          max-width: 1440px;
-          min-height: 64px;
+          max-width: 1380px;
+          min-height: 58px;
           margin: 0 auto;
-          padding: 0 32px;
+          padding: 6px 8px 6px 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 42px;
+          gap: clamp(16px, 2vw, 30px);
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 22px;
+          background: rgba(22,22,25,.7);
+          -webkit-backdrop-filter: blur(30px) saturate(170%);
+          backdrop-filter: blur(30px) saturate(170%);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 40px rgba(0,0,0,.22);
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
+        .lb-public-nav__brand {
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+          color: #f5f5f7;
+          text-decoration: none;
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: -.025em;
+          border-radius: 14px;
+        }
+        .lb-public-nav__brand-mark {
+          width: 34px;
+          height: 34px;
+          display: grid;
+          place-items: center;
+          border-radius: 11px;
+          background: rgba(184,243,74,.94);
+          color: #101500;
+          font-size: 12px;
+          font-weight: 820;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+        }
+        .lb-public-nav__brand-muted { color: rgba(245,245,247,.48); font-weight: 520; }
+        .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
         .lb-navlink { display: none }
         .lb-navlink-mobile { display: inline-flex; align-items: center; justify-content: center; }
         .lb-mobile-login { gap: 7px; white-space: nowrap; }
-        .lb-nav-auth { align-items: center; justify-content: center; gap: 8px; line-height: 1; white-space: nowrap; }
-        .lb-nav-auth:first-of-type { margin-left: 10px; }
+        .lb-navlink-primary {
+          position: relative;
+          min-height: 44px;
+          align-items: center;
+          padding: 0 13px;
+          border-radius: 14px;
+          color: rgba(245,245,247,.68);
+          text-decoration: none;
+          font-size: 13.5px;
+          font-weight: 520;
+          letter-spacing: -.01em;
+        }
+        .lb-navlink-active { color: #f5f5f7; background: rgba(255,255,255,.11); box-shadow: inset 0 0 0 1px rgba(255,255,255,.055); }
+        .lb-nav-auth {
+          min-height: 44px;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          padding: 0 15px;
+          border-radius: 14px;
+          line-height: 1;
+          white-space: nowrap;
+          text-decoration: none;
+          font-size: 13.5px;
+          font-weight: 650;
+        }
+        .lb-nav-auth--secondary { margin-left: 5px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.065); }
+        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(209,255,118,.72); background: linear-gradient(180deg, #c8fa68, #b8f34a); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 7px 18px rgba(126,181,27,.18); }
         @media (min-width: 1100px) and (max-width: 1399px) {
-          .lb-navlink-primary { display: inline-block }
+          .lb-navlink-primary, .lb-nav-search { display: inline-flex }
           .lb-nav-auth { display: inline-flex }
           .lb-mobile-login { display: none !important }
           .lb-burger { display: inline-flex }
+          .lb-burger--public-only { display: none !important }
         }
         @media (min-width: 1400px) {
-          .lb-navlink { display: inline-block }
+          .lb-navlink { display: inline-flex }
           .lb-nav-auth { display: inline-flex !important }
           .lb-navlink-mobile { display: none !important }
         }
-        .lb-navlink { transition: color 160ms ease, background 160ms ease, opacity 160ms ease; }
-        .lb-navlink:not(.lb-nav-search):hover { color: #fff !important; background: rgba(255,255,255,.075) !important; }
+        .lb-navlink { transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 120ms ease; }
+        .lb-navlink:not(.lb-nav-search):hover { color: #fff; background: rgba(255,255,255,.1); }
+        .lb-navlink:not(.lb-nav-search):active { transform: scale(.97); }
         .lb-header-search__form {
+          width: clamp(190px, 16vw, 244px);
           display: flex;
           align-items: center;
-          min-height: 46px;
-          padding: 1px 3px 1px 1px;
+          min-height: 44px;
+          padding: 1px 2px 1px 1px;
           border: 1px solid rgba(255,255,255,.14);
-          border-radius: 14px;
-          background: rgba(255,255,255,.07);
+          border-radius: 15px;
+          background: rgba(255,255,255,.065);
           transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
         }
         .lb-header-search__form:focus-within {
@@ -576,17 +609,18 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           background: rgba(255,255,255,.1);
           box-shadow: 0 0 0 4px rgba(184,243,74,.11);
         }
-        .lb-header-search__input { min-width: 0; outline: none; }
+        .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
         .lb-header-search__button {
-          width: 40px;
-          height: 40px;
-          flex: 0 0 40px;
+          width: 44px;
+          height: 44px;
+          flex: 0 0 44px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          padding: 0 !important;
           border: 0;
-          border-radius: 11px;
-          background: rgba(255,255,255,.1);
+          border-radius: 13px;
+          background: rgba(255,255,255,.085);
           color: #f5f5f7;
           cursor: pointer;
           transition: color 160ms ease, background 160ms ease;
@@ -594,7 +628,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-header-search__button:hover { color: var(--primary); background: rgba(255,255,255,.15); }
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
-          .lb-public-nav__inner { min-height: 60px; padding: 0 14px; gap: 10px; }
+          .lb-public-nav { padding: 8px 8px 0 !important; }
+          .lb-public-nav__inner { min-height: 56px; padding: 5px 6px 5px 12px; gap: 8px; border-radius: 19px; }
+          .lb-public-nav__brand-mark { display: none; }
+          .lb-public-nav__brand { font-size: 14px; }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }
@@ -606,6 +643,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-menu-row:hover, .lb-menu-row:focus-visible { background: rgba(255,255,255,.07); }
         @media (prefers-reduced-motion: reduce) {
           .lb-navlink, .lb-header-search__form, .lb-header-search__button, .lb-menu-row { transition: none; }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+          .lb-public-nav__inner { background: rgba(22,22,25,.97); backdrop-filter: none; -webkit-backdrop-filter: none; }
         }
       `}</style>
     </header>

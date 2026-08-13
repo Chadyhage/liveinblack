@@ -111,10 +111,11 @@ export default async function AccueilPage() {
       <main className={styles.home}>
       <section id="home-hero" className={styles.hero}>
         <Image
-          src="/media1.jpg"
+          src="/images/live-in-black/hero-nightlife.jpg"
           alt=""
           fill
           priority
+          unoptimized
           sizes="100vw"
           className={styles.heroImage}
         />
@@ -324,9 +325,9 @@ export default async function AccueilPage() {
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 22 }}>
           {[
-            ['01', 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1100&q=82', 'Une foule devant une scène de festival', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
-            ['02', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1100&q=82', 'Un public profitant d’un concert', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
-            ['03', 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1100&q=82', 'Une scène de concert illuminée', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
+            ['01', '/images/live-in-black/journey-discover.jpg', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
+            ['02', '/images/live-in-black/journey-reserve.jpg', 'Deux amies réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
+            ['03', '/images/live-in-black/journey-enter.jpg', 'Un billet numérique est contrôlé à l’entrée d’un concert', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
           ].map(([n, src, alt, title, description]) => (
             <EditorialImageCard key={n} src={src} alt={alt} badge={n} title={title} description={description} />
           ))}
