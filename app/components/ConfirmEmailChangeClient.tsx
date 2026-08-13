@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/app/components/ui'
+import { Button, Mascot } from '@/app/components/ui'
 
 // Cible du verifyLink construit par lib/server/profile.ts:requestEmailChange
 // (?email=&token=), consommé par POST /api/profil/confirmer-email. Régression
@@ -56,7 +56,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
       <div className="lb-auth-state" role="status" aria-live="polite" style={{ width: '100%', maxWidth: 520, margin: '0 auto', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-confirm-email-spin 0.9s linear infinite' }} />
+            <Mascot mood="sleeping" size={148} />
             <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
               Confirmation de ta nouvelle adresse…
             </h1>
@@ -65,9 +65,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
 
         {state === 'success' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(184, 243, 74,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-            </div>
+            <Mascot mood="success" size={156} />
             <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
               Adresse e-mail mise à jour
             </h1>
@@ -82,9 +80,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
 
         {state === 'error' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
-            </div>
+            <Mascot mood="error" size={148} />
             <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Lien invalide ou expiré
             </h1>

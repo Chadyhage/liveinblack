@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { listMyStaffedEvents } from '@/lib/server/staffEvents'
-import { Card } from '@/app/components/ui'
+import { Card, Mascot } from '@/app/components/ui'
 
 // Port de src/pages/MesSoireesPage.jsx — point d'entrée du MEMBRE STAFF
 // (serveur / contrôle entrée / DJ) invité sur la soirée d'un autre
@@ -85,24 +85,7 @@ export default async function MesSoireesPage() {
 
         {events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-            <div
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.6">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </div>
+            <Mascot mood="sleeping" size={154} />
             <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
             <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.55 }}>
               Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), ou dès que tu crées toi-même un événement, elle apparaît ici.

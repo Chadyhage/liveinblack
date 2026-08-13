@@ -19,7 +19,7 @@ import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shar
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import HomeGreeting from './HomeGreeting'
 import HeroScrollIndicator from './HeroScrollIndicator'
-import { ActionLink, Card, EditorialImageCard } from '@/app/components/ui'
+import { ActionLink, Card, EditorialImageCard, Mascot } from '@/app/components/ui'
 import styles from './home.module.css'
 
 export const metadata: Metadata = {
@@ -444,6 +444,7 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
 function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
   return (
     <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 30, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
+      <Mascot mood="sleeping" size={142} />
       <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
       <Link href={ctaHref} style={{ ...btnGhost, marginTop: 16, display: 'inline-block' }}>{ctaLabel}</Link>
     </Card>

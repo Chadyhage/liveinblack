@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card } from '@/app/components/ui'
+import { Button, Card, Mascot } from '@/app/components/ui'
 
 // Port de src/pages/PaiementReussiPage.jsx + src/pages/PaiementAnnulePage.jsx.
 // Architecture différente du legacy : ici l'émission des billets est
@@ -199,9 +199,7 @@ export default function PaymentSuccessClient({
 
         {state === 'success' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(184, 243, 74,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-            </div>
+            <Mascot mood="success" size={156} />
             <h1 className="font-display" style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>
               Paiement confirmé
             </h1>
@@ -215,9 +213,7 @@ export default function PaymentSuccessClient({
 
         {state === 'pending' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(139,92,246,0.12)', border: `2px solid ${COLORS.violet}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.violet} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-            </div>
+            <Mascot mood="sleeping" size={148} />
             <h1 className="font-display" style={{ fontSize: 27, fontWeight: 800, letterSpacing: '-0.7px', color: '#fff', margin: '0 0 10px' }}>
               Paiement bien reçu
             </h1>
@@ -236,13 +232,7 @@ export default function PaymentSuccessClient({
 
         {state === 'cancelled' && (
           <>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px', background: 'rgba(184, 243, 74,0.08)', border: '2px solid rgba(184, 243, 74,0.40)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke={COLORS.gold} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="15" y1="9" x2="9" y2="15" />
-                <line x1="9" y1="9" x2="15" y2="15" />
-              </svg>
-            </div>
+            <Mascot mood="confused" size={148} />
             <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
               Paiement annulé
             </h1>
@@ -262,9 +252,7 @@ export default function PaymentSuccessClient({
 
         {state === 'error' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
-            </div>
+            <Mascot mood="error" size={148} />
             <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Une erreur est survenue
             </h1>

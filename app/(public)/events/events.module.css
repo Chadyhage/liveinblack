@@ -212,8 +212,7 @@
   text-align: center;
 }
 
-.emptyState > span { width: 58px; height: 58px; display: inline-flex; align-items: center; justify-content: center; border-radius: 18px; background: rgba(184, 243, 74, .13); color: #b8f34a; }
-.emptyState h3 { margin: 22px 0 0; font: 700 28px/1.15 var(--events-font); letter-spacing: -.03em; text-transform: none; }
+.emptyState h3 { margin: 8px 0 0; font: 700 28px/1.15 var(--events-font); letter-spacing: -.03em; text-transform: none; }
 .emptyState p { max-width: 500px; margin: 14px auto 0; color: rgba(245, 245, 247, .62); font-size: 17px; line-height: 1.55; }
 .emptyState a { min-height: 48px; display: inline-flex; align-items: center; margin-top: 24px; padding: 0 20px; border-radius: 14px; background: #b8f34a; color: #142000; font-size: 16px; font-weight: 700; text-decoration: none; }
 

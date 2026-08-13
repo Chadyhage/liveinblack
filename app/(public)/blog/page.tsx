@@ -5,7 +5,7 @@ import { ArrowUpRight, BookOpen, Clock } from 'lucide-react'
 import { getCachedPublishedPosts as listPublishedPosts } from '@/lib/server/publicCache'
 import { regions } from '@/lib/shared/regions'
 import { BLOG_CATEGORY_IDS, type BlogCategoryId } from '@/lib/models/BlogPost'
-import { PageLinks } from '@/app/components/ui'
+import { Mascot, PageLinks } from '@/app/components/ui'
 import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './blog.module.css'
 
@@ -76,7 +76,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             ))}
           </div>
         ) : (
-          <div className={styles.empty}><BookOpen size={30} aria-hidden="true" /><h3>Aucun article pour le moment</h3><p>De nouveaux contenus arrivent régulièrement.</p></div>
+          <div className={styles.empty}><Mascot mood="sleeping" size={164} /><h3>Aucun article pour le moment</h3><p>De nouveaux contenus arrivent régulièrement.</p></div>
         )}
 
         <PageLinks page={page} pageCount={pageCount} makeHref={makeHref} totalItems={totalCount} pageSize={PAGE_SIZE} />

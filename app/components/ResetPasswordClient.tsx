@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
-import { Button, Input, Label } from '@/app/components/ui'
+import { Button, Input, Label, Mascot } from '@/app/components/ui'
 
 // Cible du resetLink construit par app/api/auth/request-password-reset/route.ts
 // (?email=&token=), consommé par POST /api/auth/reset-password. Mise en page
@@ -132,9 +132,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
 
         {state === 'success' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(184, 243, 74,0.12)', border: `2px solid ${COLORS.teal}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-            </div>
+            <Mascot mood="success" size={156} />
             <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>Mot de passe changé</h1>
             <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
               Le mot de passe de {email} a été changé. Tu peux maintenant te connecter avec ton nouveau mot de passe.
@@ -147,9 +145,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
 
         {state === 'invalid' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
-            </div>
+            <Mascot mood="error" size={148} />
             <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien invalide ou expiré</h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Ce lien de réinitialisation n&apos;est plus valable. Redemande-en un nouveau depuis la page de connexion.
@@ -162,9 +158,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
 
         {state === 'missing' && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto 26px', background: 'rgba(224,90,170,0.10)', border: '2px solid rgba(224,90,170,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} /></svg>
-            </div>
+            <Mascot mood="confused" size={148} />
             <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien de réinitialisation introuvable</h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
               Cette page s&apos;utilise uniquement depuis le lien reçu par email. Demande un nouveau lien depuis la page de connexion.

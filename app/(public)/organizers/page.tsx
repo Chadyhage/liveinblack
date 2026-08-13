@@ -10,7 +10,7 @@ import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Checkbox, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, Checkbox, Input, Mascot, PageLinks, pageSlice } from '@/app/components/ui'
 import styles from './organizers.module.css'
 
 const PAGE_SIZE = 20
@@ -122,7 +122,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             })}
           </div>
         ) : (
-          <div className={styles.empty}><Search size={28} aria-hidden="true" /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
+          <div className={styles.empty}><Mascot mood="search" size={164} /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
         )}
 
         <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />

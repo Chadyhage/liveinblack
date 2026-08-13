@@ -5,7 +5,7 @@ import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/pu
 import { getProviderCategories, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
-import { Button, HiddenField, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, HiddenField, Input, Mascot, PageLinks, pageSlice } from '@/app/components/ui'
 import FilterSelect from '../_components/FilterSelect'
 import ProviderDirectoryCard from '../_components/ProviderDirectoryCard'
 import styles from './providers.module.css'
@@ -157,7 +157,7 @@ export default async function PublicPrestatairesPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <span aria-hidden="true"><Search size={28} /></span>
+            <Mascot mood="search" size={164} />
             <h3>Aucun prestataire trouvé</h3>
             <p>Élargissez la zone, changez de métier ou essayez une autre recherche.</p>
             <Link href="/providers">Voir tous les prestataires</Link>

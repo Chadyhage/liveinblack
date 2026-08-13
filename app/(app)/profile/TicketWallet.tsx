@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
-import { ActionLink, Button, Card, DashboardPageHeader, Input, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Button, Card, DashboardPageHeader, Input, Mascot, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -353,9 +353,7 @@ function TicketGlyph() {
 function EmptyWallet() {
   return (
     <Card style={{ padding: '48px 24px', textAlign: 'center' }}>
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-        <TicketGlyph />
-      </div>
+      <Mascot mood="sleeping" size={148} />
       <p style={{ fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Aucun billet pour l&apos;instant</p>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px' }}>Tes billets achetés apparaîtront ici, avec leur QR code.</p>
       <Link

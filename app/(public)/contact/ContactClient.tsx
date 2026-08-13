@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import LegalBackButton from '@/app/components/LegalBackButton'
-import { Button, Card, Input, Textarea, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Label, Mascot } from '@/app/components/ui'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -102,6 +102,7 @@ export default function ContactClient() {
         <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', maxWidth: 640 }}>
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '24px 8px' }}>
+              <Mascot mood="message" size={148} />
               <h2 style={{ fontSize: 17, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.

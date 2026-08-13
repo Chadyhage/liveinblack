@@ -24,10 +24,10 @@
 
 .hero {
   position: relative;
-  min-height: calc(100svh - 64px);
+  min-height: min(760px, calc(100svh - 64px));
   display: grid;
   align-items: center;
-  padding: clamp(76px, 11vh, 118px) max(var(--page-gutter), calc((100vw - 1200px) / 2)) 92px;
+  padding: clamp(54px, 8vh, 82px) max(var(--page-gutter), calc((100vw - 1200px) / 2)) 58px;
   overflow: hidden;
   isolation: isolate;
   text-align: left;
@@ -176,17 +176,17 @@
 .newsSection {
   width: min(100%, 1200px);
   margin: 0 auto;
-  padding: clamp(68px, 8vw, 108px) var(--page-gutter);
+  padding: clamp(42px, 5vw, 64px) var(--page-gutter);
 }
 
 .newsSection {
-  padding-top: 30px;
-  padding-bottom: 54px;
+  padding-top: 24px;
+  padding-bottom: 38px;
 }
 
 .sectionHeader {
   max-width: 720px;
-  margin-bottom: 34px;
+  margin-bottom: 24px;
 }
 
 .sectionEyebrow {
@@ -239,13 +239,13 @@
 }
 
 .finalSection {
-  padding: 34px var(--page-gutter) clamp(76px, 9vw, 116px);
+  padding: 26px var(--page-gutter) clamp(52px, 6vw, 76px);
 }
 
 .finalCard {
   max-width: 920px;
   margin: 0 auto;
-  padding: clamp(34px, 5vw, 58px) clamp(22px, 5vw, 54px);
+  padding: clamp(28px, 4vw, 44px) clamp(22px, 4vw, 44px);
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 32px;
   text-align: center;

@@ -8,7 +8,7 @@ import { getMyProfile } from '@/lib/server/profile'
 import { listActiveInterestSignals } from '@/lib/server/eventInterests'
 import { normalizeGeoText } from '@/lib/shared/locations'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
-import { Button, HiddenField, Input, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, HiddenField, Input, Mascot, PageLinks, pageSlice } from '@/app/components/ui'
 import EventListCard from '../_components/EventListCard'
 import styles from './events.module.css'
 
@@ -176,7 +176,7 @@ export default async function EventsPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <span aria-hidden="true"><Search size={28} /></span>
+            <Mascot mood="search" size={164} />
             <h3>Aucun événement trouvé</h3>
             <p>Essayez une autre ville, un autre artiste ou affichez toute la programmation.</p>
             <Link href="/events">Voir tous les événements</Link>

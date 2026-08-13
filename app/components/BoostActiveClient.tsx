@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Card } from '@/app/components/ui'
+import { Button, Card, Mascot } from '@/app/components/ui'
 
 // Port de src/pages/BoostActivePage.jsx. Différence d'architecture vs
 // legacy : l'activation (création du doc Boost) est intégralement côté
@@ -95,7 +95,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
       <Card style={{ ...CARD, padding: 32, maxWidth: 460, width: '100%', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 24px', border: `2px solid ${COLORS.dim}`, borderTopColor: COLORS.pink, animation: 'lib-boost-spin 0.9s linear infinite' }} />
+            <Mascot mood="sleeping" size={148} />
             <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
               Activation du boost…
             </h1>
@@ -104,11 +104,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
 
         {state === 'success' && (
           <>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px', background: 'rgba(224,90,170,0.12)', border: `2px solid ${COLORS.pink}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2} strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-            </div>
+            <Mascot mood="success" size={156} />
             <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
               Boost activé
             </h1>
@@ -137,13 +133,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
 
         {state === 'error' && (
           <>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 24px', background: 'rgba(224,90,170,0.08)', border: '2px solid rgba(224,90,170,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={COLORS.pink} strokeWidth={2.2}>
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="13" strokeLinecap="round" />
-                <circle cx="12" cy="16.5" r="0.6" fill={COLORS.pink} />
-              </svg>
-            </div>
+            <Mascot mood="error" size={148} />
             <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
               Erreur d&apos;activation
             </h1>

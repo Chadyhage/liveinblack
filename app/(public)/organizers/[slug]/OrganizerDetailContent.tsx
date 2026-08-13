@@ -9,6 +9,7 @@ import { isFollowing } from '@/lib/server/organizerFollows'
 import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { Mascot } from '@/app/components/ui'
 
 // Contenu partagé entre la page dédiée
 // (app/(public)/organizers/[slug]/page.tsx) et la route interceptée qui
@@ -87,7 +88,10 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         <Section title="Événements à venir">
           {upcoming.length === 0 ? (
-            <p style={{ fontSize: 13.5, color: 'var(--text-faint)' }}>Aucun événement à venir pour le moment.</p>
+            <div style={{ padding: '12px 0', textAlign: 'center' }}>
+              <Mascot mood="sleeping" size={118} />
+              <p style={{ fontSize: 13.5, color: 'var(--text-faint)', margin: 0 }}>Aucun événement à venir pour le moment.</p>
+            </div>
           ) : (
             <div className="lb-card-grid-compact">
               {upcoming.map((e) => {
