@@ -46,7 +46,7 @@
 @media (max-width: 900px) {
   .shell { display: block; padding: 0; min-height: calc(100dvh - 64px); }
   .visual { display: none; }
-  .form { min-height: calc(100dvh - 64px); padding: 16px clamp(20px, 6vw, 52px) 26px; }
+  .form { min-height: calc(100dvh - 64px); padding: 16px clamp(10px, 3vw, 26px) 26px; }
   .content { max-width: 560px; padding: 48px 0 64px; }
   .wide .content { max-width: 760px; }
 }

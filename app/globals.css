@@ -35,7 +35,7 @@
   --space-6: 24px;
   --content-max: 1480px;
   --content-wide: 1560px;
-  --page-gutter: clamp(20px, 3vw, 48px);
+  --page-gutter: clamp(10px, 1.5vw, 24px);
   --z-nav: 40;
   --z-floating: 45;
   --z-sheet: 200;

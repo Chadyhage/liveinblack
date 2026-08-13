@@ -13,7 +13,7 @@
 .hero {
   max-width: 1240px;
   margin: 0 auto;
-  padding: clamp(72px, 9vw, 132px) clamp(20px, 5vw, 64px) clamp(58px, 7vw, 92px);
+  padding: clamp(72px, 9vw, 132px) clamp(10px, 2.5vw, 32px) clamp(58px, 7vw, 92px);
   text-align: center;
 }
 
@@ -116,7 +116,7 @@
 .catalogue {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 clamp(20px, 4vw, 56px) clamp(96px, 10vw, 144px);
+  padding: 0 clamp(10px, 2vw, 28px) clamp(96px, 10vw, 144px);
 }
 
 .filterHeader {

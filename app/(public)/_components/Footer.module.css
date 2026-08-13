@@ -8,7 +8,7 @@
 .inner {
   max-width: 1320px;
   margin: 0 auto;
-  padding: clamp(64px, 8vw, 104px) clamp(20px, 5vw, 64px) 34px;
+  padding: clamp(64px, 8vw, 104px) clamp(10px, 2.5vw, 32px) 34px;
 }
 
 .top {
