@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, ChevronDown, Globe } from 'lucide-react'
+import { MessageCircle, Ticket, User, LayoutDashboard, LogOut, Check, ChevronDown, Globe, Bell } from 'lucide-react'
 import { Avatar, Button, Skeleton } from '@/app/components/ui'
 import { DASHBOARD_BY_ROLE } from '@/lib/shared/dashboardRoutes'
 
@@ -58,7 +58,34 @@ export default function AccountMenu({
   const [accountOpen, setAccountOpen] = useState(false)
   const [switchingRole, setSwitchingRole] = useState(false)
   const [conversations, setConversations] = useState<ConversationPreview[] | null>(null)
+  const [notifUnread, setNotifUnread] = useState(0)
   const rootRef = useRef<HTMLDivElement>(null)
+
+  // Compteur non-lu pour le lien "Notifications" du menu compte — la cloche
+  // dédiée a été retirée du header (elle vit maintenant dans la sidebar de
+  // DashboardShell.tsx, réservée aux pages (app)), mais ce composant est
+  // AUSSI monté sur les pages publiques ((public)/, jamais de sidebar
+  // là-bas) : sans ce lien + badge, un utilisateur connecté naviguant sur
+  // /home, /events, etc. n'aurait plus aucun moyen d'atteindre ses
+  // notifications depuis ces pages (régression confirmée le 13/08/2026).
+  useEffect(() => {
+    let cancelled = false
+    async function poll() {
+      try {
+        const res = await fetch('/api/notifications')
+        const data = await res.json()
+        if (!cancelled && res.ok && data.ok) setNotifUnread(data.unreadCount)
+      } catch {
+        // Badge non-critique — reste à sa dernière valeur connue.
+      }
+    }
+    poll()
+    const interval = setInterval(poll, 30000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [])
 
   // Un compte peut porter plusieurs rôles à la fois (voir lib/models/User.ts)
   // — bascule activeRole côté serveur (POST /api/account/active-role, seule
@@ -307,6 +334,7 @@ export default function AccountMenu({
                 {user.name}
               </p>
             )}
+            <MenuLink href="/notifications" onClick={() => setAccountOpen(false)} icon={<Bell size={15} />} label="Notifications" badge={notifUnread} />
             <MenuLink href="/profile" onClick={() => setAccountOpen(false)} icon={<User size={15} />} label="Mon profil" />
             <MenuLink href="/profile/billets" onClick={() => setAccountOpen(false)} icon={<Ticket size={15} />} label="Mes billets" />
             {dashboards.length > 0 && <div style={{ height: 1, background: 'var(--border)', margin: '6px 4px' }} />}
@@ -368,7 +396,7 @@ export default function AccountMenu({
   )
 }
 
-function MenuLink({ href, onClick, icon, label }: { href: string; onClick: () => void; icon: React.ReactNode; label: string }) {
+function MenuLink({ href, onClick, icon, label, badge }: { href: string; onClick: () => void; icon: React.ReactNode; label: string; badge?: number }) {
   return (
     <Link
       href={href}
@@ -386,6 +414,27 @@ function MenuLink({ href, onClick, icon, label }: { href: string; onClick: () =>
       }}
     >
       {icon} {label}
+      {!!badge && (
+        <span
+          style={{
+            marginLeft: 'auto',
+            minWidth: 18,
+            height: 18,
+            padding: '0 5px',
+            borderRadius: 999,
+            background: 'var(--pink)',
+            color: '#fff',
+            fontSize: 10.5,
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: 1,
+          }}
+        >
+          {badge > 9 ? '9+' : badge}
+        </span>
+      )}
     </Link>
   )
 }
