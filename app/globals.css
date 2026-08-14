@@ -77,14 +77,14 @@ body {
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -12px;
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 78% 10%, rgba(184, 243, 74, .08), transparent 34%),
-    linear-gradient(180deg, rgba(7, 7, 10, .7) 0%, rgba(7, 7, 10, .82) 52%, rgba(7, 7, 10, .9) 100%),
+    radial-gradient(circle at 78% 10%, rgba(184, 243, 74, .06), transparent 34%),
+    linear-gradient(180deg, rgba(7, 7, 10, .8) 0%, rgba(7, 7, 10, .89) 52%, rgba(7, 7, 10, .95) 100%),
     url('/media1.jpg') 58% center / cover no-repeat;
-  filter: saturate(.78) contrast(1.04);
+  filter: saturate(.7) contrast(1.02) blur(3px);
 }
 
 h1, h2, h3, .heading {

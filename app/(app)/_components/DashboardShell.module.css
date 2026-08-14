@@ -12,11 +12,12 @@
 .root::before {
   content: "";
   position: fixed;
-  inset: 0;
+  inset: -12px;
   z-index: -2;
   background: url('/media1.jpg') 58% center / cover no-repeat;
-  opacity: .36;
-  transform: scale(1.02);
+  opacity: .26;
+  filter: blur(3px);
+  transform: scale(1.04);
 }
 
 .root::after {
@@ -25,8 +26,8 @@
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(circle at 78% 8%, rgba(184, 243, 74, .08), transparent 32%),
-    linear-gradient(115deg, rgba(7, 7, 10, .78), rgba(9, 9, 13, .68) 58%, rgba(9, 9, 13, .8));
+    radial-gradient(circle at 78% 8%, rgba(184, 243, 74, .06), transparent 32%),
+    linear-gradient(115deg, rgba(7, 7, 10, .86), rgba(9, 9, 13, .78) 58%, rgba(9, 9, 13, .88));
 }
 
 .layout { min-height: 100dvh; display: flex; align-items: flex-start; }
