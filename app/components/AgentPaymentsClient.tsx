@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   Smartphone,
   UserRound,
-  WalletCards,
 } from 'lucide-react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport } from '@/app/components/ui'
@@ -324,7 +323,6 @@ export default function AgentPaymentsClient() {
   // 'boosts' n'a pas de compteur ici (AgentBoostsClient charge et affiche ses
   // propres totaux dans son panneau) — 0 fixe, jamais mis en avant en rose.
   const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length, boosts: 0 }
-  const actionCount = counts.payouts + counts.refunds + counts.alerts
   const selectedSection = SECTIONS.find((item) => item.key === section) ?? SECTIONS[0]
 
   function handleSectionKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -344,24 +342,11 @@ export default function AgentPaymentsClient() {
   return (
     <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--payments ${styles.page}`}>
       <div className={styles.stack}>
-        <header className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.kicker}><WalletCards size={16} aria-hidden="true" /> Opérations financières</p>
-            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Paiements</h1>
-            <p className={`lb-dashboard-description ${styles.description}`}>
-              Pilotez les mouvements d&apos;argent et les contrôles sensibles depuis un espace clair, traçable et sans mélange de devises.
-            </p>
-          </div>
-          <div className={styles.heroActions}>
-            <div className={styles.actionPill} role="status" aria-live="polite">
-              <ShieldCheck size={17} aria-hidden="true" />
-              <span><strong>{actionCount}</strong> opération{actionCount > 1 ? 's' : ''} à traiter</span>
-            </div>
-            <Button variant="secondary" icon={<RefreshCw size={16} aria-hidden="true" />} onClick={loadAll} disabled={loading} className={styles.refresh} aria-label="Actualiser les données financières">
-              Actualiser
-            </Button>
-          </div>
-        </header>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="secondary" icon={<RefreshCw size={16} aria-hidden="true" />} onClick={loadAll} disabled={loading} className={styles.refresh} aria-label="Actualiser les données financières">
+            Actualiser
+          </Button>
+        </div>
 
         {loadError && (
           <Card accent="rgba(255,143,178,0.35)" className={styles.error} role="alert">

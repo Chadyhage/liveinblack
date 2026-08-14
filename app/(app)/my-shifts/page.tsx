@@ -75,14 +75,6 @@ export default async function MesSoireesPage() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div>
-        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>
-          Équipe
-        </p>
-        <h1 className="font-display lb-dashboard-title" style={{ marginTop: 6 }}>Mes soirées</h1>
-        <p className="lb-dashboard-description" style={{ marginBottom: 24 }}>
-          Les événements où tu fais partie de l&apos;équipe, plus ceux que tu organises toi-même. Ouvre le POS le jour J pour servir, scanner ou vendre.
-        </p>
-
         {events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
             <Mascot mood="sleeping" size={154} />

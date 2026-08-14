@@ -5,7 +5,7 @@ import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
-import { AlertTriangle, BriefcaseBusiness, CheckCircle2, ChevronRight, Clock3, FileCheck2, FilePenLine, RefreshCw, RotateCcw, Search, ShieldCheck, UserRound, XCircle } from 'lucide-react'
+import { AlertTriangle, BriefcaseBusiness, CheckCircle2, ChevronRight, Clock3, FileCheck2, FilePenLine, RefreshCw, RotateCcw, Search, UserRound, XCircle } from 'lucide-react'
 import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
 import styles from './AgentDossiersClient.module.css'
 
@@ -470,8 +470,6 @@ export default function AgentDossiersClient() {
 
   const { pageItems, pageCount } = useMemo(() => pagedSlice(grouped, page, PAGE_SIZE), [grouped, page])
 
-  const totalAllPending = applications.filter((a) => a.status === 'submitted' || a.status === 'under_review' || a.status === 'resubmitted').length
-
   async function runAction(action: ModerateAction, note?: string) {
     if (!detail) return
     setActionBusy(true)
@@ -519,17 +517,9 @@ export default function AgentDossiersClient() {
   return (
     <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--applications ${styles.page}`}>
       <div className={styles.stack}>
-        <header className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.kicker}><ShieldCheck size={15} aria-hidden="true" /> Validation des partenaires</p>
-            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Dossiers</h1>
-            <p className={`lb-dashboard-description ${styles.description}`}>Examine les candidatures des organisateurs et prestataires, demande les corrections nécessaires et conserve une trace claire de chaque décision.</p>
-          </div>
-          <div className={styles.heroActions}>
-            {totalAllPending > 0 && <span className={styles.pendingPill}><Clock3 size={16} aria-hidden="true" />{totalAllPending} à traiter</span>}
-            <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={loadList} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
-          </div>
-        </header>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={loadList} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
+        </div>
 
         {listError && (
           <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">

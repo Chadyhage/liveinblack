@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { AlertTriangle, Ban, CalendarCheck2, CalendarDays, CalendarX2, ExternalLink, MapPin, RefreshCw, Search, ShieldAlert, UserRound } from 'lucide-react'
+import { AlertTriangle, Ban, CalendarCheck2, CalendarDays, CalendarX2, ExternalLink, MapPin, RefreshCw, Search, UserRound } from 'lucide-react'
 import { Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 import styles from './AgentEventsClient.module.css'
@@ -169,16 +169,9 @@ export default function AgentEventsClient() {
   return (
     <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--events ${styles.page}`}>
       <div className={styles.stack}>
-        <header className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.kicker}><ShieldAlert size={15} aria-hidden="true" /> Supervision de la programmation</p>
-            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Événements</h1>
-            <p className={`lb-dashboard-description ${styles.description}`}>Contrôle la programmation de la plateforme, retrouve rapidement un événement et déclenche une annulation exceptionnelle lorsque la situation l’exige.</p>
-          </div>
-          <div className={styles.heroActions}>
-            <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={loadList} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
-          </div>
-        </header>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={loadList} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
+        </div>
 
         {listError && (
           <Card accent="rgba(224,90,170,0.35)" className={styles.error} role="alert">

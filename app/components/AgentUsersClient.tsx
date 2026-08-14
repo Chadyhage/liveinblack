@@ -361,11 +361,6 @@ export default function AgentUsersClient() {
   return (
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--users">
       <div className={styles.pageStack}>
-        <div className="lb-agent-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div><span className={styles.eyebrow}>Répertoire plateforme</span><h1 className="font-display lb-dashboard-title">Comptes</h1><p className="lb-dashboard-description">Retrouvez une identité, vérifiez son accès et intervenez sans perdre le contexte.</p></div>
-          <span className={styles.directoryStatus}><i aria-hidden="true" />Synchronisé</span>
-        </div>
-
         {listError && (
           <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>

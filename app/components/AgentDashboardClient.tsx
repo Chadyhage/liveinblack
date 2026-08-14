@@ -108,15 +108,6 @@ export default function AgentDashboardClient() {
   return (
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--overview">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div className={styles.heading}>
-          <div>
-            <span className={styles.eyebrow}>Poste de commandement</span>
-            <h1 className="font-display lb-dashboard-title">Centre des opérations</h1>
-            <p className="lb-dashboard-description">Décidez, contrôlez et publiez depuis une seule file de travail.</p>
-          </div>
-          <span className={styles.live}><i aria-hidden="true" />Plateforme active</span>
-        </div>
-
         {error && (
           <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>

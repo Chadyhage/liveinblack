@@ -253,7 +253,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   const upsell = activeRole === 'client' ? CLIENT_UPSELL : []
   const personalItems = commonItems.filter((item) => ['/profile', '/profile/billets', '/profile/interested-events', '/my-shifts'].includes(item.href))
   const communicationItems = commonItems.filter((item) => item.href === '/messages')
-  const accountItems = commonItems.filter((item) => ['/profile/parametres', '/help'].includes(item.href))
+  const accountItems = commonItems.filter((item) => ['/notifications', '/profile/parametres', '/help'].includes(item.href))
   const memberGroups = [
     { label: 'Mon activité', items: roleItems },
     { label: activeRole === 'client' ? 'Mon espace' : 'Personnel', items: personalItems },
@@ -287,14 +287,13 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           icon={mobileOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
           style={{ border: '1px solid rgba(255,255,255,.13)', borderRadius: 12, background: 'rgba(255,255,255,.08)', color: '#f5f5f7' }}
         />
-        <span className={styles.mobileTitle}>{`Espace ${getRoleLabel(activeRole)}`}</span>
-        {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} /> : <span style={{ width: 40 }} />}
       </div>
 
       {mobileOpen && (
         <>
           <Button variant="ghost" className={styles.drawerBackdrop} onClick={closeMobile} aria-label="Fermer le menu" />
           <nav ref={mobileDrawerRef} id="dashboard-mobile-navigation" className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
+            {status === 'authenticated' && session?.user ? <div className={styles.mobileAccount}><AccountMenu user={session.user} /></div> : null}
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} mobile onNavigate={closeMobile} />
             <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
           </nav>

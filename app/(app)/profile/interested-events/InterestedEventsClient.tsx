@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { fmtMoney } from '@/lib/shared/money'
 import EventInterestButtonClient from '@/app/components/EventInterestButtonClient'
-import { ActionLink, Card, DashboardPageHeader, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
+import { ArrowLeft } from 'lucide-react'
+import { ActionLink, Card, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
 const PAGE_SIZE = 20
@@ -66,14 +67,13 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
   return (
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <DashboardPageHeader
-          backHref="/profile"
-          backLabel="Profil"
-          eyebrow="Mes favoris"
-          title="Événements intéressés"
-          description="Retrouve les soirées enregistrées et garde un œil sur celles qui arrivent bientôt."
-          actions={<ActionLink href="/events">Explorer les événements</ActionLink>}
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            <ArrowLeft size={17} aria-hidden="true" />
+            Profil
+          </Link>
+          <ActionLink href="/events">Explorer les événements</ActionLink>
+        </div>
 
         {items.length === 0 ? (
           <EmptyState

@@ -780,18 +780,11 @@ export default function ProposerServicesClient({
         }
       `}</style>
       <main className="provider-workspace lb-dashboard-page">
-        <header className="provider-workspace-header lb-dashboard-page-header">
-          <div style={{ width: 52, height: 52, borderRadius: 15, display: 'grid', placeItems: 'center', background: `${category.color}16`, border: `1px solid ${category.color}44`, color: category.color }}>
-            <CategoryIcon icon={category.icon} />
-          </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <h1 className="font-display lb-dashboard-title">Mon espace prestataire</h1>
-            <p className="lb-dashboard-description" style={{ }}>{category.singular} · Ta page publique, tes offres et ton catalogue.</p>
-          </div>
+        <div className="provider-workspace-header" style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant="secondary" onClick={() => router.push(`/providers/${encodeURIComponent(profile.userId)}`)} style={secondaryButton}>
             Voir ma page publique
           </Button>
-        </header>
+        </div>
 
         {message && (
           // position:'sticky' — un message déclenché depuis un onglet

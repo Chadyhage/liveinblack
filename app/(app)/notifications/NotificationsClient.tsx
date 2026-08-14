@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BellRing } from 'lucide-react'
-import { Button, Card, DashboardPageHeader, EmptyState } from '@/app/components/ui'
+import { Button, Card, EmptyState } from '@/app/components/ui'
 import { isPushSupported, getPushPermissionState, subscribeToPush } from '@/lib/client/push'
 
 export interface NotificationItemView {
@@ -67,17 +67,13 @@ export default function NotificationsClient({ initialNotifications }: { initialN
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <DashboardPageHeader
-        title="Notifications"
-        description="Tout ce qui te concerne — candidatures, messages, paiements, activité suivie."
-        actions={
-          unreadCount > 0 ? (
-            <Button variant="secondary" onClick={markAllRead} style={{ fontSize: 13 }}>
-              Tout marquer lu
-            </Button>
-          ) : undefined
-        }
-      />
+      {unreadCount > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <Button variant="secondary" onClick={markAllRead} style={{ fontSize: 13 }}>
+            Tout marquer lu
+          </Button>
+        </div>
+      )}
 
       {pushPermission === 'default' && (
         <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>

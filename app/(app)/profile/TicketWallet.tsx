@@ -6,7 +6,8 @@ import { X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
-import { ActionLink, Button, Card, DashboardPageHeader, Input, Mascot, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
+import { ArrowLeft } from 'lucide-react'
+import { ActionLink, Button, Card, Input, Mascot, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -145,14 +146,13 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <DashboardPageHeader
-          backHref="/profile"
-          backLabel="Profil"
-          eyebrow="Portefeuille"
-          title="Mes billets"
-          description="Tous tes accès, QR codes et options de réservation dans un seul endroit."
-          actions={<ActionLink href="/events">Trouver une soirée</ActionLink>}
-        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            <ArrowLeft size={17} aria-hidden="true" />
+            Profil
+          </Link>
+          <ActionLink href="/events">Trouver une soirée</ActionLink>
+        </div>
 
         <SeatHoldsPanel />
 

@@ -198,12 +198,9 @@ export default async function MonDossierPage() {
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <div>
-          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
-            ← Mon profil
-          </Link>
-          <h1 className="font-display lb-dashboard-title" style={{ marginTop: 8 }}>Mon inscription</h1>
-        </div>
+        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          ← Mon profil
+        </Link>
         <nav style={{ display: 'flex', gap: 16 }}>
           <a href="#organisateur" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier organisateur

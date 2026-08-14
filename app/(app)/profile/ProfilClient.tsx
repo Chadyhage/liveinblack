@@ -10,7 +10,7 @@ import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { Eye, EyeOff } from 'lucide-react'
-import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion, DashboardPageHeader } from '@/app/components/ui'
+import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
 import { stripDiacritics } from '@/lib/shared/diacritics'
 import overviewStyles from './ProfileOverview.module.css'
 import helpStyles from './HelpPanel.module.css'
@@ -119,7 +119,6 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
 
   return (
     <main className={`profile-main lb-dashboard-page ${overviewStyles.root}`}>
-      <DashboardPageHeader eyebrow="Mon compte" title="Bonjour, bienvenue dans ton espace" description="Retrouve tes informations, tes billets et tes préférences au même endroit." />
       <div className={overviewStyles.grid}>
         <Card className={overviewStyles.identity}>
           <AvatarUpload user={user} setUser={setUser} />
@@ -1230,7 +1229,10 @@ export function SupportPanel() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <DashboardPageHeader backHref="/profile" backLabel="Profil" eyebrow="Centre d’aide" title="Comment pouvons-nous t’aider ?" description="Consulte les réponses rapides ou contacte directement notre équipe." />
+        <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <ArrowLeft size={17} aria-hidden="true" />
+          Profil
+        </Link>
 
         <div className={helpStyles.grid}>
           <Card className={helpStyles.faq}>

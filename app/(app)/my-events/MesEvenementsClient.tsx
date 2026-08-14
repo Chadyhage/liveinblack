@@ -204,15 +204,6 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
   return (
     <main className="lb-dashboard-page">
-      <header className="lb-dashboard-page-header">
-        <div>
-          <h1 className="font-display lb-dashboard-title">
-            Mes <span style={{ color: 'var(--teal)' }}>Événements</span>
-          </h1>
-          <p className="lb-dashboard-description">Crée, publie et pilote toutes tes soirées depuis un seul espace.</p>
-        </div>
-      </header>
-
       {message && (
         <div
           style={{

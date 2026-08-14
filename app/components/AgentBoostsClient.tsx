@@ -99,8 +99,6 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
   return (
     <Wrapper className={embedded ? undefined : 'lb-dashboard-page'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {!embedded && <h1 className="font-display lb-dashboard-title">Boosts</h1>}
-
         {error && (
           <Card accent="rgba(224,90,170,0.35)" style={{ padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>

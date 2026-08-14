@@ -1,29 +1,35 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronUp, ChevronDown, X } from 'lucide-react'
+import {
+  AlertCircle,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  MapPin,
+  Plus,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react'
 import { Button, Card, Input, Switch, Skeleton } from '@/app/components/ui'
-
-// Port de src/components/ActualiteAdminPanel.jsx (#9 phase agent/admin, tab
-// 'actualite') — édition du carrousel « Actualité » de l'accueil : actif
-// on/off, titre, sous-titre, accent (teal/or/rose), sélection ORDONNÉE
-// d'événements à mettre en avant. Voir lib/server/agentHomepageConfig.ts pour
-// le state serveur (config SINGLETON) et lib/models/HomepageConfig.ts.
-//
-// Différence assumée avec le legacy : pas d'écoute temps réel (onSnapshot)
-// puisqu'il n'y a plus de Firestore ici — un simple GET au montage, comme
-// tous les autres panneaux agent de ce port (AgentDossiersClient etc.), donc
-// pas de `dirtyRef` anti-réécriture : le formulaire ne s'affiche qu'une fois
-// le premier (et seul) chargement terminé, jamais avant.
+import styles from './AgentHomepageConfigClient.module.css'
 
 const MAX_EVENTS = 12
 
-type Accent = 'gold'
+type Accent = 'teal' | 'gold' | 'pink'
 
 const ACCENTS: { key: Accent; label: string; dot: string; soft: string; border: string }[] = [
-  { key: 'gold', label: 'Jaune primaire', dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
+  { key: 'teal', label: 'Menthe', dot: '#67e8d3', soft: 'rgba(103,232,211,.12)', border: 'rgba(103,232,211,.34)' },
+  { key: 'gold', label: 'Citron', dot: '#b8f34a', soft: 'rgba(184,243,74,.12)', border: 'rgba(184,243,74,.34)' },
+  { key: 'pink', label: 'Rose', dot: '#ff78b9', soft: 'rgba(255,120,185,.12)', border: 'rgba(255,120,185,.34)' },
 ]
-const ACCENT_BY_KEY = Object.fromEntries(ACCENTS.map((a) => [a.key, a])) as Record<Accent, (typeof ACCENTS)[number]>
+const ACCENT_BY_KEY = Object.fromEntries(ACCENTS.map((accent) => [accent.key, accent])) as Record<Accent, (typeof ACCENTS)[number]>
 
 const DEFAULT_TITLE = "L'actu du moment"
 const DEFAULT_SUBTITLE = 'Les temps forts à ne pas manquer'
@@ -46,390 +52,322 @@ interface EventOption {
 }
 
 function defaultDraft(): Draft {
-  return { active: false, title: DEFAULT_TITLE, subtitle: DEFAULT_SUBTITLE, accent: 'gold', eventIds: [] }
+  return { active: false, title: DEFAULT_TITLE, subtitle: DEFAULT_SUBTITLE, accent: 'teal', eventIds: [] }
 }
 
-// Aperçu = ce qui sera RÉELLEMENT enregistré (le serveur normalise aussi,
-// voir agentHomepageConfig.ts) — jamais appliqué au brouillon pendant la
-// frappe, sinon impossible de taper un espace ou de vider un champ.
-function normalizeForPreview(d: Draft): Draft {
+function normalizeForPreview(draft: Draft): Draft {
   return {
-    active: d.active === true,
-    title: d.title.trim() ? d.title.trim().slice(0, 80) : DEFAULT_TITLE,
-    subtitle: d.subtitle.slice(0, 140),
-    accent: ACCENT_BY_KEY[d.accent] ? d.accent : 'gold',
-    eventIds: [...new Set(d.eventIds.filter(Boolean).map(String))].slice(0, MAX_EVENTS),
+    active: draft.active === true,
+    title: draft.title.trim() ? draft.title.trim().slice(0, 80) : DEFAULT_TITLE,
+    subtitle: draft.subtitle.slice(0, 140),
+    accent: ACCENT_BY_KEY[draft.accent] ? draft.accent : 'teal',
+    eventIds: [...new Set(draft.eventIds.filter(Boolean).map(String))].slice(0, MAX_EVENTS),
   }
 }
 
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', marginBottom: 8 }
+function EventMeta({ event }: { event: EventOption }) {
+  return (
+    <span className={styles.eventMeta}>
+      <span><CalendarDays size={14} aria-hidden="true" />{event.dateDisplay || event.date}</span>
+      {event.city && <span><MapPin size={14} aria-hidden="true" />{event.city}</span>}
+    </span>
+  )
+}
 
 export default function AgentHomepageConfigClient() {
   const [draft, setDraft] = useState<Draft>(defaultDraft())
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
-
   const [candidateEvents, setCandidateEvents] = useState<EventOption[]>([])
   const [selectedLabels, setSelectedLabels] = useState<Record<string, EventOption>>({})
   const [search, setSearch] = useState('')
-
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
-
-  // Dernier brouillon connu du serveur (chargement ou enregistrement réussi)
-  // — sert uniquement à détecter les modifications non enregistrées (bandeau
-  // d'avertissement ci-dessous), jamais affiché tel quel.
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const [savedDraft, setSavedDraft] = useState<Draft | null>(null)
+
   const dirty = loaded && savedDraft !== null && JSON.stringify(draft) !== JSON.stringify(savedDraft)
 
   useEffect(() => {
     let cancelled = false
-    async function run() {
+    async function load() {
       setLoaded(false)
       setLoadError(false)
       try {
-        const res = await fetch('/api/agent/homepage-config')
-        const data = await res.json()
-        if (!res.ok || !data.ok) throw new Error('load_failed')
-        if (!cancelled) {
-          const loadedDraft: Draft = {
-            active: Boolean(data.config.active),
-            title: data.config.title ?? DEFAULT_TITLE,
-            subtitle: data.config.subtitle ?? DEFAULT_SUBTITLE,
-            accent: ACCENT_BY_KEY[data.config.accent as Accent] ? data.config.accent : 'gold',
-            eventIds: Array.isArray(data.config.eventIds) ? data.config.eventIds.map(String) : [],
-          }
-          setDraft(loadedDraft)
-          setSavedDraft(loadedDraft)
-          setCandidateEvents(data.candidateEvents ?? [])
-          setSelectedLabels(data.selectedEventLabels ?? {})
+        const response = await fetch('/api/agent/homepage-config')
+        const data = await response.json()
+        if (!response.ok || !data.ok) throw new Error('load_failed')
+        if (cancelled) return
+        const loadedDraft: Draft = {
+          active: Boolean(data.config.active),
+          title: data.config.title ?? DEFAULT_TITLE,
+          subtitle: data.config.subtitle ?? DEFAULT_SUBTITLE,
+          accent: ACCENT_BY_KEY[data.config.accent as Accent] ? data.config.accent : 'teal',
+          eventIds: Array.isArray(data.config.eventIds) ? data.config.eventIds.map(String) : [],
         }
+        setDraft(loadedDraft)
+        setSavedDraft(loadedDraft)
+        setCandidateEvents(data.candidateEvents ?? [])
+        setSelectedLabels(data.selectedEventLabels ?? {})
       } catch {
         if (!cancelled) setLoadError(true)
       } finally {
         if (!cancelled) setLoaded(true)
       }
     }
-    run()
-    return () => {
-      cancelled = true
-    }
+    load()
+    return () => { cancelled = true }
   }, [])
 
-  function patch(p: Partial<Draft>) {
-    setDraft((d) => ({ ...d, ...p }))
-    setMsg(null)
+  function patchDraft(patch: Partial<Draft>) {
+    setDraft((current) => ({ ...current, ...patch }))
+    setMessage(null)
   }
 
   const eventIds = draft.eventIds
   const selectedSet = useMemo(() => new Set(eventIds), [eventIds])
-  const atMax = eventIds.length >= MAX_EVENTS
-
-  const byId = useMemo(() => {
+  const eventById = useMemo(() => {
     const map = new Map<string, EventOption>()
-    for (const e of candidateEvents) map.set(e.id, e)
-    for (const id of Object.keys(selectedLabels)) if (!map.has(id)) map.set(id, selectedLabels[id])
+    for (const event of candidateEvents) map.set(event.id, event)
+    for (const [id, event] of Object.entries(selectedLabels)) if (!map.has(id)) map.set(id, event)
     return map
   }, [candidateEvents, selectedLabels])
 
-  const q = search.trim().toLowerCase()
+  const query = search.trim().toLowerCase()
   const candidates = useMemo(
-    () =>
-      candidateEvents
-        .filter((e) => !selectedSet.has(e.id))
-        .filter((e) => !q || `${e.name} ${e.city} ${e.region}`.toLowerCase().includes(q))
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, 30),
-    [candidateEvents, selectedSet, q]
+    () => candidateEvents
+      .filter((event) => !selectedSet.has(event.id))
+      .filter((event) => !query || `${event.name} ${event.city} ${event.region}`.toLowerCase().includes(query))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 30),
+    [candidateEvents, selectedSet, query]
   )
+
+  const preview = normalizeForPreview(draft)
+  const previewAccent = ACCENT_BY_KEY[preview.accent]
+  const visibleEvents = preview.eventIds.map((id) => eventById.get(id)).filter((event): event is EventOption => Boolean(event))
+  const canAppear = preview.active && visibleEvents.length > 0
 
   function addEvent(id: string) {
     if (eventIds.length >= MAX_EVENTS || selectedSet.has(id)) return
-    patch({ eventIds: [...eventIds, id] })
-  }
-  function removeEvent(id: string) {
-    patch({ eventIds: eventIds.filter((x) => x !== id) })
-  }
-  function move(id: string, dir: -1 | 1) {
-    const i = eventIds.indexOf(id)
-    const j = i + dir
-    if (i < 0 || j < 0 || j >= eventIds.length) return
-    const next = [...eventIds]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    patch({ eventIds: next })
+    patchDraft({ eventIds: [...eventIds, id] })
   }
 
-  async function onSave() {
+  function removeEvent(id: string) {
+    patchDraft({ eventIds: eventIds.filter((eventId) => eventId !== id) })
+  }
+
+  function moveEvent(id: string, direction: -1 | 1) {
+    const from = eventIds.indexOf(id)
+    const to = from + direction
+    if (from < 0 || to < 0 || to >= eventIds.length) return
+    const next = [...eventIds]
+    ;[next[from], next[to]] = [next[to], next[from]]
+    patchDraft({ eventIds: next })
+  }
+
+  async function save() {
     setSaving(true)
-    setMsg(null)
+    setMessage(null)
     try {
       const clean = normalizeForPreview(draft)
-      const res = await fetch('/api/agent/homepage-config', {
+      const response = await fetch('/api/agent/homepage-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(clean),
       })
-      const data = await res.json()
-      if (!res.ok || !data.ok) {
-        setMsg({ ok: false, text: "Échec de l'enregistrement : réessaie." })
-        return
-      }
+      const data = await response.json()
+      if (!response.ok || !data.ok) throw new Error('save_failed')
       setSavedDraft(clean)
       setDraft(clean)
-      setMsg({ ok: true, text: "Enregistré. Le carrousel est à jour sur l'accueil." })
+      setMessage({ ok: true, text: 'La sélection est à jour sur l’accueil.' })
     } catch {
-      setMsg({ ok: false, text: "Échec de l'enregistrement : réessaie." })
+      setMessage({ ok: false, text: 'Enregistrement impossible. Réessayez.' })
     } finally {
       setSaving(false)
     }
   }
 
-  const preview = normalizeForPreview(draft)
-  const previewAccent = ACCENT_BY_KEY[preview.accent]
-  const candidateIds = useMemo(() => new Set(candidateEvents.map((e) => e.id)), [candidateEvents])
-  const willShowCount = preview.eventIds.filter((id) => candidateIds.has(id)).length
-
   if (!loaded) {
     return (
       <main className="lb-dashboard-page">
-        <div>
-          <Card style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Skeleton width="35%" height={16} />
-            <Skeleton width="100%" height={44} radius={10} />
-            <Skeleton width="100%" height={44} radius={10} />
-            <Skeleton width="60%" height={12} />
-          </Card>
+        <div className={styles.loadingGrid}>
+          <Card className={styles.loadingCard}><Skeleton width="32%" height={18} /><Skeleton width="82%" height={44} /><Skeleton width="100%" height={120} radius={18} /></Card>
+          <Card className={styles.loadingCard}><Skeleton width="46%" height={18} /><Skeleton width="100%" height={300} radius={18} /></Card>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--homepage">
-      <div className="lb-agent-homepage-stack" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="lb-agent-page-header"><span className="lb-agent-kicker">Studio d’accueil</span><h1 className="font-display lb-dashboard-title">Actualité</h1><p className="lb-dashboard-description">Composez les temps forts visibles sur l’accueil public de LIVEINBLACK.</p></div>
+    <main className="lb-dashboard-page lb-agent-screen">
+      <div className={styles.page}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Link className={styles.publicLink} href="/home" target="_blank">
+            Voir l’accueil public <ExternalLink size={16} aria-hidden="true" />
+          </Link>
+        </div>
 
         {loadError && (
-          <Card style={{ border: '1px solid rgba(224,90,170,0.35)' }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
-              Lecture impossible — la configuration ci-dessous peut être incomplète. Recharge la page pour réessayer.
-            </p>
-          </Card>
-        )}
-
-        {dirty && (
-          <Card style={{ border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.06)', padding: '10px 14px' }}>
-            <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0, fontWeight: 700 }}>Modifications non enregistrées — pense à cliquer sur « Enregistrer ».</p>
-          </Card>
-        )}
-
-      <Card style={{ padding: '16px 18px' }}>
-        <h3 style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Carrousel « Actualité »</h3>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-          Un bandeau éditorial en haut de l&apos;accueil pour mettre en avant une sélection d&apos;événements (le gros
-          événement du week-end, les nouveautés, une saison…). Il n&apos;apparaît que s&apos;il est activé et qu&apos;au
-          moins un événement choisi est encore à venir.
-        </p>
-      </Card>
-
-      <Card style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <span>
-            <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#fff' }}>Afficher sur l&apos;accueil</span>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-faint)', marginTop: 2 }}>
-              {draft.active ? 'Le carrousel est visible par les visiteurs.' : 'Masqué — personne ne le voit.'}
-            </span>
-          </span>
-          <Switch checked={draft.active} onChange={() => patch({ active: !draft.active })} style={{ flexShrink: 0 }} />
-        </div>
-
-        <div>
-          <span style={labelStyle}>Accent</span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {ACCENTS.map((a) => (
-              <Button
-                key={a.key}
-                variant="ghost"
-                onClick={() => patch({ accent: a.key })}
-                style={{
-                  flex: 1,
-                  padding: '8px 10px',
-                  borderRadius: 10,
-                  background: draft.accent === a.key ? a.soft : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${draft.accent === a.key ? a.border : 'rgba(255,255,255,0.08)'}`,
-                  gap: 7,
-                  fontSize: 12,
-                  color: draft.accent === a.key ? a.dot : 'var(--text-muted)',
-                }}
-              >
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: a.dot }} />
-                {a.label}
-              </Button>
-            ))}
+          <div className={`${styles.notice} ${styles.noticeError}`} role="alert">
+            <AlertCircle size={18} aria-hidden="true" />
+            <span><strong>La configuration n’a pas pu être chargée.</strong> Rechargez la page avant de modifier la sélection.</span>
           </div>
-        </div>
-      </Card>
+        )}
 
-      <Card style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div>
-          <span style={labelStyle}>Titre</span>
-          <Input value={draft.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} placeholder="L'actu du moment" />
-          <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.title.length}/80</span>
-        </div>
-        <div>
-          <span style={labelStyle}>Sous-titre</span>
-          <Input value={draft.subtitle} maxLength={140} onChange={(e) => patch({ subtitle: e.target.value })} placeholder="Les temps forts à ne pas manquer" />
-          <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)', marginTop: 4, textAlign: 'right' }}>{draft.subtitle.length}/140</span>
-        </div>
-      </Card>
+        <div className={styles.workspace}>
+          <div className={styles.editorColumn}>
+            <Card className={styles.panel}>
+              <div className={styles.panelHeading}>
+                <span className={styles.step}>1</span>
+                <div><h2>Visibilité et identité</h2><p>Définissez le message affiché au-dessus de la sélection.</p></div>
+              </div>
 
-      <Card style={{ padding: '16px 18px' }}>
-        <span style={{ ...labelStyle, marginBottom: 10 }}>
-          À la une ({eventIds.length}/{MAX_EVENTS})
-        </span>
-        {eventIds.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-faint)' }}>Aucun événement choisi. Ajoute-en depuis la liste ci-dessous.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {eventIds.map((id, i) => {
-              const ev = byId.get(id)
-              return (
-                <div
-                  key={id}
-                  style={
-                    ev
-                      ? { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }
-                      : { background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }
-                  }
-                >
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-faint)', width: 18, textAlign: 'center' }}>{i + 1}</span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    {ev ? (
-                      <>
-                        <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</span>
-                        <span style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--text-faint)' }}>{[ev.dateDisplay || ev.date, ev.city].filter(Boolean).join(' · ')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#ff9ed2' }}>Événement introuvable</span>
-                        <span style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--text-faint)' }}>Supprimé ou indisponible — retire-le</span>
-                      </>
-                    )}
+              <div className={styles.visibilityRow}>
+                <span className={`${styles.visibilityIcon} ${draft.active ? styles.visibilityIconActive : ''}`}>
+                  {draft.active ? <Eye size={21} aria-hidden="true" /> : <EyeOff size={21} aria-hidden="true" />}
+                </span>
+                <span className={styles.visibilityCopy}>
+                  <strong>Afficher sur l’accueil</strong>
+                  <small>{draft.active ? 'La rubrique sera visible après l’enregistrement.' : 'La rubrique reste masquée pour les visiteurs.'}</small>
+                </span>
+                <Switch checked={draft.active} onChange={() => patchDraft({ active: !draft.active })} aria-label="Afficher la rubrique Actualité sur l’accueil" />
+              </div>
+
+              <div className={styles.formGrid}>
+                <label className={styles.field}>
+                  <span>Titre <small>{draft.title.length}/80</small></span>
+                  <Input value={draft.title} maxLength={80} onChange={(event) => patchDraft({ title: event.target.value })} placeholder={DEFAULT_TITLE} />
+                </label>
+                <label className={styles.field}>
+                  <span>Sous-titre <small>{draft.subtitle.length}/140</small></span>
+                  <Input value={draft.subtitle} maxLength={140} onChange={(event) => patchDraft({ subtitle: event.target.value })} placeholder={DEFAULT_SUBTITLE} />
+                </label>
+              </div>
+
+              <fieldset className={styles.accentFieldset}>
+                <legend>Couleur d’accent</legend>
+                <div className={styles.accentPicker}>
+                  {ACCENTS.map((accent) => (
+                    <Button
+                      key={accent.key}
+                      variant="ghost"
+                      aria-pressed={draft.accent === accent.key}
+                      onClick={() => patchDraft({ accent: accent.key })}
+                      className={styles.accentButton}
+                      style={{ '--accent-dot': accent.dot, '--accent-soft': accent.soft, '--accent-border': accent.border } as React.CSSProperties}
+                    >
+                      <span className={styles.accentDot} />{accent.label}
+                      {draft.accent === accent.key && <Check size={16} aria-hidden="true" />}
+                    </Button>
+                  ))}
+                </div>
+              </fieldset>
+            </Card>
+
+            <Card className={styles.panel}>
+              <div className={styles.panelHeading}>
+                <span className={styles.step}>2</span>
+                <div><h2>Sélection à la une</h2><p>Le premier événement sera présenté en priorité.</p></div>
+                <span className={styles.counter}>{eventIds.length}/{MAX_EVENTS}</span>
+              </div>
+
+              {eventIds.length === 0 ? (
+                <div className={styles.emptySelection}>
+                  <Sparkles size={23} aria-hidden="true" />
+                  <strong>Votre sélection est vide</strong>
+                  <span>Ajoutez un événement depuis la bibliothèque ci-dessous.</span>
+                </div>
+              ) : (
+                <ol className={styles.selectedList} aria-label="Ordre des événements à la une">
+                  {eventIds.map((id, index) => {
+                    const event = eventById.get(id)
+                    return (
+                      <li key={id} className={`${styles.selectedItem} ${!event ? styles.missingItem : ''}`}>
+                        <span className={styles.position}>{index + 1}</span>
+                        <span className={styles.eventCopy}>
+                          <strong>{event?.name ?? 'Événement indisponible'}</strong>
+                          {event ? <EventMeta event={event} /> : <small>Retirez cet élément de la sélection.</small>}
+                        </span>
+                        <span className={styles.rowActions}>
+                          <Button variant="ghost" aria-label={`Monter ${event?.name ?? 'cet événement'}`} disabled={index === 0} onClick={() => moveEvent(id, -1)}><ChevronUp size={18} /></Button>
+                          <Button variant="ghost" aria-label={`Descendre ${event?.name ?? 'cet événement'}`} disabled={index === eventIds.length - 1} onClick={() => moveEvent(id, 1)}><ChevronDown size={18} /></Button>
+                          <Button variant="ghost" aria-label={`Retirer ${event?.name ?? 'cet événement'}`} className={styles.removeButton} onClick={() => removeEvent(id)}><X size={18} /></Button>
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
+            </Card>
+
+            <Card className={styles.panel}>
+              <div className={styles.panelHeading}>
+                <span className={styles.step}>3</span>
+                <div><h2>Bibliothèque d’événements</h2><p>Recherchez puis ajoutez les prochains rendez-vous.</p></div>
+              </div>
+              <label className={styles.searchField}>
+                <Search size={18} aria-hidden="true" />
+                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par nom, ville ou région" />
+              </label>
+              {eventIds.length >= MAX_EVENTS && <p className={styles.limitMessage}>La sélection contient déjà le maximum de {MAX_EVENTS} événements.</p>}
+              <div className={styles.libraryList}>
+                {candidates.length === 0 ? (
+                  <p className={styles.noResult}>{query ? 'Aucun événement ne correspond à cette recherche.' : 'Aucun autre événement à venir.'}</p>
+                ) : candidates.map((event) => (
+                  <div className={styles.libraryItem} key={event.id}>
+                    <span className={styles.calendarTile}><strong>{new Date(event.date).toLocaleDateString('fr-FR', { day: '2-digit' })}</strong><small>{new Date(event.date).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')}</small></span>
+                    <span className={styles.eventCopy}><strong>{event.name}</strong><EventMeta event={event} /></span>
+                    <Button variant="secondary" disabled={eventIds.length >= MAX_EVENTS} onClick={() => addEvent(event.id)}><Plus size={17} aria-hidden="true" /> Ajouter</Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <aside className={styles.previewColumn} aria-label="Aperçu avant publication">
+            <Card className={styles.previewPanel}>
+              <div className={styles.previewHeader}>
+                <div><span>Aperçu en direct</span><small>Accueil public</small></div>
+                <span className={`${styles.statusPill} ${canAppear ? styles.statusLive : ''}`}>
+                  <span />{canAppear ? 'Visible' : 'Masqué'}
+                </span>
+              </div>
+              <div className={styles.browserPreview}>
+                <div className={styles.browserBar}><span /><span /><span /></div>
+                <div className={styles.previewCanvas}>
+                  <span className={styles.previewBadge} style={{ color: previewAccent.dot, background: previewAccent.soft, borderColor: previewAccent.border }}>
+                    <span style={{ background: previewAccent.dot }} /> À la une
                   </span>
-                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                    <IconBtn label="Monter" disabled={i === 0} onClick={() => move(id, -1)}>
-                      <ChevronUp size={14} />
-                    </IconBtn>
-                    <IconBtn label="Descendre" disabled={i === eventIds.length - 1} onClick={() => move(id, 1)}>
-                      <ChevronDown size={14} />
-                    </IconBtn>
-                    <IconBtn label="Retirer" danger onClick={() => removeEvent(id)}>
-                      <X size={14} />
-                    </IconBtn>
+                  <h3>{preview.title}</h3>
+                  {preview.subtitle && <p>{preview.subtitle}</p>}
+                  <div className={styles.previewEvents}>
+                    {(visibleEvents.length ? visibleEvents.slice(0, 3) : [null, null]).map((event, index) => (
+                      <div className={styles.previewEvent} key={event?.id ?? index}>
+                        <span className={styles.previewArtwork} style={{ '--preview-accent': previewAccent.dot } as React.CSSProperties} />
+                        <span><strong>{event?.name ?? 'Votre événement apparaîtra ici'}</strong><small>{event ? [event.dateDisplay || event.date, event.city].filter(Boolean).join(' · ') : 'Ajoutez un rendez-vous à la sélection'}</small></span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </Card>
+              </div>
+              <p className={styles.previewNote}>
+                {canAppear ? `${visibleEvents.length} événement${visibleEvents.length > 1 ? 's' : ''} prêt${visibleEvents.length > 1 ? 's' : ''} à être affiché${visibleEvents.length > 1 ? 's' : ''}.` : preview.active ? 'Ajoutez au moins un événement disponible pour rendre la rubrique visible.' : 'Activez la rubrique pour la rendre visible sur l’accueil.'}
+              </p>
+            </Card>
 
-      <Card style={{ padding: '16px 18px' }}>
-        <span style={{ ...labelStyle, marginBottom: 10 }}>Ajouter un événement</span>
-        {atMax && (
-          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>Maximum atteint ({MAX_EVENTS} événements). Retire-en un pour en ajouter un autre.</p>
-        )}
-        <Input style={{ marginBottom: 10 }} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, ville…" />
-        {candidates.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-faint)' }}>{q ? 'Aucun événement à venir ne correspond.' : 'Aucun autre événement à venir.'}</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
-            {candidates.map((ev) => (
-              <Button
-                key={ev.id}
-                variant="ghost"
-                onClick={() => addEvent(ev.id)}
-                disabled={atMax}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  textAlign: 'left',
-                  opacity: atMax ? 0.5 : 1,
-                  padding: '8px 10px',
-                  borderRadius: 10,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                }}
-              >
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.name}</span>
-                  <span style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--text-faint)' }}>{[ev.dateDisplay || ev.date, ev.city].filter(Boolean).join(' · ')}</span>
-                </span>
-                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: 'var(--teal)' }}>+ Ajouter</span>
+            <Card className={styles.publishPanel}>
+              <div className={styles.publishState}>
+                <span className={dirty ? styles.unsavedDot : styles.savedDot} />
+                <span><strong>{dirty ? 'Modifications non enregistrées' : 'Tout est à jour'}</strong><small>{dirty ? 'Publiez pour appliquer cette version.' : 'La version affichée est enregistrée.'}</small></span>
+              </div>
+              <Button variant="primary" className={styles.saveButton} onClick={save} disabled={saving || !dirty || loadError} loading={saving} loadingText="Publication…">
+                Publier les modifications
               </Button>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card style={{ padding: '16px 18px' }}>
-        <span style={{ ...labelStyle, marginBottom: 10 }}>Aperçu</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 8, background: previewAccent.soft, border: `1px solid ${previewAccent.border}` }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: previewAccent.dot }} />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: previewAccent.dot }}>{preview.title}</span>
-          </span>
-          {preview.subtitle && <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-muted)' }}>{preview.subtitle}</span>}
+              {message && <p className={message.ok ? styles.successMessage : styles.errorMessage} role="status">{message.ok && <Check size={16} aria-hidden="true" />}{message.text}</p>}
+            </Card>
+          </aside>
         </div>
-        <p style={{ margin: '10px 0 0', fontSize: 12, fontWeight: 500, color: 'var(--text-faint)' }}>
-          {draft.active
-            ? willShowCount > 0
-              ? `Visible sur l'accueil avec ${willShowCount} événement${willShowCount > 1 ? 's' : ''}.`
-              : "Activé, mais aucun événement à venir → rien ne s'affichera."
-            : "Désactivé → masqué sur l'accueil."}
-        </p>
-      </Card>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <Button
-          variant="primary"
-          onClick={onSave}
-          disabled={saving}
-          loading={saving}
-          loadingText="Enregistrement…"
-          style={{ padding: '12px 22px', borderRadius: 3, fontWeight: 500, fontSize: 14, textTransform: 'none', letterSpacing: 'normal' }}
-        >
-          Enregistrer
-        </Button>
-        {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.ok ? 'var(--teal)' : '#ff9ed2' }}>{msg.text}</span>}
-      </div>
       </div>
     </main>
-  )
-}
-
-function IconBtn({ children, label, onClick, disabled, danger }: { children: React.ReactNode; label: string; onClick: () => void; disabled?: boolean; danger?: boolean }) {
-  return (
-    <Button
-      variant="ghost"
-      aria-label={label}
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        width: 30,
-        height: 30,
-        minHeight: 30,
-        minWidth: 30,
-        borderRadius: 8,
-        padding: 0,
-        background: danger ? 'rgba(224,90,170,0.14)' : 'rgba(255,255,255,0.06)',
-        border: `1px solid ${danger ? 'rgba(224,90,170,0.4)' : 'rgba(255,255,255,0.1)'}`,
-        color: disabled ? 'rgba(255,255,255,0.25)' : danger ? '#ff9ed2' : 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-      }}
-    >
-      {children}
-    </Button>
   )
 }

@@ -277,26 +277,6 @@ export default function StudioClient({
         }
       `}</style>
       <main className="lb-dashboard-page">
-      <header className="lb-dashboard-page-header">
-        <div>
-          <h1 className="font-display lb-dashboard-title">Ma page & paiements</h1>
-          <p className="lb-dashboard-description">Présente ton univers, développe ton audience et configure tes encaissements.</p>
-        </div>
-        <span
-          style={{
-            padding: '10px 14px',
-            borderRadius: 10,
-            border: profile.status === 'public' ? '1px solid rgba(184,243,74,0.35)' : '1px solid var(--border-strong)',
-            background: profile.status === 'public' ? 'rgba(184,243,74,0.1)' : 'rgba(255,255,255,0.05)',
-            color: profile.status === 'public' ? 'var(--teal)' : 'var(--text-muted)',
-            fontSize: 11.5,
-            fontWeight: 700,
-          }}
-        >
-          {profile.status === 'public' ? '● Page publique activée' : '○ Page privée — visible par toi seulement'}
-        </span>
-      </header>
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
         {(['page', 'paiements'] as const).map((t) => (
           <Button

@@ -230,16 +230,11 @@ export default function AgentReviewsClient() {
   return (
     <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--reviews ${styles.page}`}>
       <div className={styles.stack}>
-        <section className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <span className={styles.kicker}><ShieldCheck size={15} aria-hidden="true" /> Qualité de la communauté</span>
-            <h1>Avis</h1>
-            <p>Contrôle les avis publiés et traite rapidement les contenus signalés.</p>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant="secondary" onClick={loadList} className={styles.refresh} icon={<RefreshCw size={16} aria-hidden="true" />}>
             Actualiser
           </Button>
-        </section>
+        </div>
 
         {listError && (
           <Card accent="rgba(255,143,178,.35)" className={styles.error}>

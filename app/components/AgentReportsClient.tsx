@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Clock3, Flag, MessageSquareWarning, RefreshCw, Search, ShieldAlert, UserRound } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock3, MessageSquareWarning, RefreshCw, Search, UserRound } from 'lucide-react'
 import { Button, Card, Input, Textarea, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'
 import styles from './AgentReportsClient.module.css'
@@ -176,23 +176,14 @@ export default function AgentReportsClient() {
     }
   }
 
-  const openCount = counts?.open ?? (filter === 'open' ? reports.length : 0)
   const totalCount = counts ? counts.open + counts.handled : reports.length
 
   return (
     <main className={`lb-dashboard-page lb-agent-screen lb-agent-screen--reports ${styles.page}`}>
       <div className={styles.stack}>
-        <header className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.kicker}><ShieldAlert size={15} aria-hidden="true" /> Confiance et sécurité</p>
-            <h1 className={`font-display lb-dashboard-title ${styles.title}`}>Signalements</h1>
-            <p className={`lb-dashboard-description ${styles.description}`}>Examine les alertes de la communauté, documente les décisions prises et assure un suivi clair de chaque situation.</p>
-          </div>
-          <div className={styles.heroActions}>
-            {openCount > 0 && <span className={styles.urgentPill}><Flag size={16} aria-hidden="true" />{openCount} à traiter</span>}
-            <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={() => Promise.all([loadList(filter), loadCounts()])} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
-          </div>
-        </header>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={() => Promise.all([loadList(filter), loadCounts()])} loading={listLoading} loadingText="Actualisation…" className={styles.refresh}>Actualiser</Button>
+        </div>
 
         {listError && (
           <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
