@@ -5,7 +5,7 @@ export default function Label({ style, children, ...rest }: LabelHTMLAttributes<
     <label
       style={{
         display: 'block',
-        fontSize: 12.5,
+        fontSize: 14,
         fontWeight: 700,
         color: 'var(--text-muted)',
         marginBottom: 6,

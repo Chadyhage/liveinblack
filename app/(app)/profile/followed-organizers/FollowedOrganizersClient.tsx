@@ -99,12 +99,17 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
           <ActionLink href="/organizers">Découvrir</ActionLink>
         </div>
+
+        <header>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
+          <p style={{ maxWidth: 620, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
+        </header>
 
         {follows.length === 0 ? (
           <EmptyState
@@ -113,7 +118,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
             action={
               <Link
                 href="/organizers"
-                style={{ display: 'inline-block', padding: '11px 22px', borderRadius: 10, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
+                style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '11px 22px', borderRadius: 12, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
               >
                 Découvrir les organisateurs
               </Link>
@@ -139,7 +144,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
                 .map((s) => (
                   <Card key={s.organizerId} style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div>
-                      <Link href={`/organizers/${s.slug}`} style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                      <Link href={`/organizers/${s.slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 15, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
                         {s.name}
                       </Link>
                       {(s.city || s.country) && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
@@ -204,7 +209,7 @@ function FollowCard({
         </div>
         <Link
           href={`/organizers/${follow.organizerSlug}`}
-          style={{ padding: '9px 16px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}
+          style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}
         >
           Voir la page
         </Link>

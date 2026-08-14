@@ -697,7 +697,7 @@ export default function MessagesClient({
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
     } else {
-      setMessages((prev) => [...prev, res.data.message])
+      setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
       setComposerText('')
       setReplyTo(null)
       refreshConversations()
@@ -791,7 +791,7 @@ export default function MessagesClient({
       pushToast(errorMessageFor(res.error))
       return
     }
-    setMessages((prev) => [...prev, res.data.message])
+    setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
     setPollDraft(null)
     refreshConversations()
   }
@@ -807,7 +807,7 @@ export default function MessagesClient({
       pushToast(errorMessageFor(res.error))
       return
     }
-    setMessages((prev) => [...prev, res.data.message])
+    setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
     setShowEventPicker(false)
     refreshConversations()
   }
@@ -829,7 +829,7 @@ export default function MessagesClient({
       pushToast(errorMessageFor(res.error))
       return
     }
-    setMessages((prev) => [...prev, res.data.message])
+    setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
     setReplyTo(null)
     setShowEventPicker(false)
     refreshConversations()
@@ -973,24 +973,30 @@ export default function MessagesClient({
     const targetId = photoPreview?.conversationId ?? photoPreviewPickedConv
     if (!photoPreview || !targetId) return
     setBusy(true)
-    const compressed = await compressImage(photoPreview.dataUrl)
-    setPhotoPreview(null)
-    const res = await apiFetch<{ message: MessageView }>(`/api/conversations/${targetId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'image', content: '', mediaDataUri: compressed, replyToMessageId: targetId === activeId ? (replyTo?.id ?? undefined) : undefined }),
-    })
-    if (!res.ok) pushToast(errorMessageFor(res.error))
-    else {
-      if (targetId === activeId) {
-        setMessages((prev) => [...prev, res.data.message])
-        setReplyTo(null)
+    try {
+      const compressed = await compressImage(photoPreview.dataUrl)
+      const res = await apiFetch<{ message: MessageView }>(`/api/conversations/${targetId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'image', content: '', mediaDataUri: compressed, replyToMessageId: targetId === activeId ? (replyTo?.id ?? undefined) : undefined }),
+      })
+      if (!res.ok) {
+        // Conserver l'aperçu : l'utilisateur peut relancer l'envoi sans avoir
+        // à retrouver puis sélectionner à nouveau son fichier.
+        pushToast(errorMessageFor(res.error))
       } else {
-        openConversation(targetId)
+        setPhotoPreview(null)
+        if (targetId === activeId) {
+          setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
+          setReplyTo(null)
+        } else {
+          openConversation(targetId)
+        }
+        refreshConversations()
       }
-      refreshConversations()
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
   }
 
   // ─── Notes vocales : tap-to-record ou press-and-hold, durée, annuler/envoyer ───
@@ -1035,7 +1041,7 @@ export default function MessagesClient({
           })
           if (!res.ok) pushToast(errorMessageFor(res.error))
           else {
-            setMessages((prev) => [...prev, res.data.message])
+            setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
             setReplyTo(null)
             refreshConversations()
           }
@@ -1480,6 +1486,7 @@ export default function MessagesClient({
               </div>
             </div>
             <Input
+              aria-label="Rechercher une conversation"
               value={convSearch}
               onChange={(e) => {
                 setConvSearch(e.target.value)
@@ -1774,10 +1781,10 @@ export default function MessagesClient({
                     position: 'absolute',
                     right: isDesktop ? 32 : 16,
                     bottom: 96,
-                    width: 38,
-                    height: 38,
-                    minWidth: 38,
-                    minHeight: 38,
+                    width: 44,
+                    height: 44,
+                    minWidth: 44,
+                    minHeight: 44,
                     padding: 0,
                     borderRadius: '50%',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
@@ -1903,7 +1910,7 @@ export default function MessagesClient({
                       <Button
                         variant="primary"
                         onClick={() => stopRecording(true)}
-                        style={{ borderRadius: '50%', width: 34, height: 34, minHeight: 34, minWidth: 34, padding: 0 }}
+                        style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0 }}
                         aria-label="Envoyer"
                       >
                         <Check size={18} />
@@ -1959,10 +1966,10 @@ export default function MessagesClient({
                           aria-label={editingMessageId ? 'Modifier' : 'Envoyer'}
                           title={editingMessageId ? 'Modifier' : 'Envoyer'}
                           style={{
-                            width: 42,
-                            height: 42,
-                            minWidth: 42,
-                            minHeight: 42,
+                            width: 44,
+                            height: 44,
+                            minWidth: 44,
+                            minHeight: 44,
                             padding: 0,
                             borderRadius: '50%',
                             display: 'flex',
@@ -1982,10 +1989,10 @@ export default function MessagesClient({
                           onPointerDown={handleMicPointerDown}
                           onPointerUp={handleMicPointerUp}
                           style={{
-                            width: 42,
-                            height: 42,
-                            minWidth: 42,
-                            minHeight: 42,
+                            width: 44,
+                            height: 44,
+                            minWidth: 44,
+                            minHeight: 44,
                             padding: 0,
                             borderRadius: '50%',
                             background: 'var(--teal-solid)',
@@ -2282,10 +2289,10 @@ function IconButton({ title, onClick, children }: { title: string; onClick: () =
       onClick={onClick}
       style={{
         position: 'relative',
-        width: 32,
-        height: 32,
-        minWidth: 32,
-        minHeight: 32,
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
         padding: 0,
         borderRadius: '50%',
         fontSize: 14,
@@ -2824,7 +2831,7 @@ function VoiceBubble({ content }: { content: string | null }) {
       <Button
         variant="ghost"
         onClick={handlePlay}
-        style={{ width: 30, height: 30, minHeight: 30, minWidth: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
+        style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
       >
         {playing ? <Pause size={14} /> : <Play size={14} />}
       </Button>

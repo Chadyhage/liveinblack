@@ -7,6 +7,8 @@ import { computeSeatHoldDepositMinor, computeTicketFeeCents, computeTicketFeeXOF
 import { isEventEnded } from '../shared/event-time'
 import { notifyUserById } from './emails/notify'
 import { seatHoldExpiredEmail, seatHoldExpiringEmail } from './emails'
+import { settleOrder } from './fulfillOrder'
+import { resolveSellerSettlementMode } from './sellerSettlementMode'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -57,6 +59,11 @@ export async function createSeatHold(
   const minorPerMajor = currency === 'XOF' ? 1 : 100
   const unitPriceMinor = Math.round(Number(place.price) * minorPerMajor)
   const depositMinor = computeSeatHoldDepositMinor(unitPriceMinor, currency, input.tier)
+  const { sellerUid, connectMode } = await resolveSellerSettlementMode({
+    sellerUid: event.organizerId || event.createdBy,
+    buyerUid: caller.id,
+    rail,
+  })
 
   const session = await mongoose.startSession()
   try {
@@ -102,6 +109,8 @@ export async function createSeatHold(
             unitPriceMinor: depositMinor,
             currency,
             feeMinor: 0,
+            sellerUid,
+            connectMode,
             rail,
             status: 'pending',
             kind: 'seat_hold_deposit',
@@ -152,7 +161,7 @@ export async function activateSeatHold(orderId: string): Promise<{ ok: boolean; 
   await getDb()
   const order = await Order.findById(orderId)
   if (!order || order.kind !== 'seat_hold_deposit') return { ok: false, error: 'not_a_deposit_order' }
-  if (order.status === 'paid') return { ok: true } // idempotent (retry webhook)
+  if (order.status === 'paid' && order.settled) return { ok: true } // idempotent (retry webhook)
 
   const hold = order.seatHoldId ? await SeatHold.findById(order.seatHoldId) : null
   if (!hold) return { ok: false, error: 'hold_not_found' }
@@ -167,6 +176,10 @@ export async function activateSeatHold(orderId: string): Promise<{ ok: boolean; 
     hold.expiresAt = new Date(Date.now() + seatHoldDurationMs(hold.tier as SeatHoldTier))
     await hold.save()
   }
+
+  // L'acompte est une partie du prix acquise à l'organisateur. Il doit donc
+  // être réglé comme toute commande payée, sans billet à émettre à ce stade.
+  await settleOrder(order as OrderDoc & { _id: mongoose.Types.ObjectId })
 
   return { ok: true }
 }
@@ -188,13 +201,10 @@ export async function completeSeatHold(seatHoldId: string, completingOrderId: st
 // néanmoins entièrement réutilisé pour le paiement/mint du billet — seul le
 // point d'ENTRÉE (création de l'Order) est spécifique.
 //
-// unitPriceMinor de l'Order de complétion = PRIX PLEIN figé au moment du
-// hold, jamais prix - acompte : l'acompte et le solde sont deux paiements
-// pleins et distincts (comme un acompte d'agence de voyage), l'acompte
-// servant uniquement à réserver la place et restant définitivement acquis
-// (non remboursable) — il n'est jamais déduit du solde à payer. Décision
-// produit confirmée le 11/08/2026 (le calcul précédent déduisait à tort
-// l'acompte du solde).
+// unitPriceMinor de l'Order de complétion = prix figé - acompte déjà payé.
+// L'acompte reste non remboursable si le client laisse expirer la réservation,
+// mais il fait bien partie du prix du billet lorsqu'il finalise son achat.
+// C'est la définition du « solde » documentée dans docs/QA_TEST_PLAN.md.
 export type CompleteSeatHoldResult = ErrResult | { ok: true; order: OrderDoc & { _id: mongoose.Types.ObjectId } }
 
 export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: string, rail: 'stripe' | 'fedapay'): Promise<CompleteSeatHoldResult> {
@@ -208,8 +218,21 @@ export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: 
   if (rail === 'stripe' && hold.currency !== 'EUR') return { ok: false, status: 400, error: 'wrong_rail_for_currency' }
   if (rail === 'fedapay' && hold.currency !== 'XOF') return { ok: false, status: 400, error: 'wrong_rail_for_currency' }
 
-  const balanceMinor = hold.unitPriceMinor
+  const balanceMinor = Math.max(0, hold.unitPriceMinor - hold.depositMinor)
   const feeMinor = hold.currency === 'XOF' ? computeTicketFeeXOF(hold.unitPriceMinor, 1) : computeTicketFeeCents(hold.unitPriceMinor, 1)
+  const depositOrder = hold.depositOrderId
+    ? await Order.findById(hold.depositOrderId).select('sellerUid connectMode').lean()
+    : null
+  const settlement = depositOrder?.sellerUid
+    ? { sellerUid: depositOrder.sellerUid, connectMode: depositOrder.connectMode as 'auto' | 'ledger' | 'none' }
+    : await (async () => {
+        const event = await Event.findById(hold.eventId).select('organizerId createdBy').lean()
+        return resolveSellerSettlementMode({
+          sellerUid: event?.organizerId || event?.createdBy,
+          buyerUid: caller.id,
+          rail,
+        })
+      })()
 
   const session = await mongoose.startSession()
   try {
@@ -230,6 +253,8 @@ export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: 
             unitPriceMinor: balanceMinor,
             currency: hold.currency,
             feeMinor,
+            sellerUid: settlement.sellerUid,
+            connectMode: settlement.connectMode,
             rail,
             status: 'pending',
             kind: 'seat_hold_completion',
@@ -279,9 +304,7 @@ function toSeatHoldView(hold: SeatHoldDoc & { _id: mongoose.Types.ObjectId }): S
     currency: hold.currency,
     unitPriceMinor: hold.unitPriceMinor,
     depositMinor: hold.depositMinor,
-    // Prix plein, pas prix - acompte : l'acompte est un paiement séparé déjà
-    // acquis, jamais déduit du solde (voir completeSeatHoldOrder ci-dessus).
-    balanceDueMinor: hold.unitPriceMinor,
+    balanceDueMinor: Math.max(0, hold.unitPriceMinor - hold.depositMinor),
     status: hold.status,
     createdAt: hold.createdAt.toISOString(),
     activatedAt: hold.activatedAt ? hold.activatedAt.toISOString() : null,

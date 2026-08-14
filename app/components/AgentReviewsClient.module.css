@@ -26,7 +26,7 @@ button.metric:hover { border-color:rgba(184,243,74,.3); background:#222225; tran
 .resultCount { flex-shrink:0; color:rgba(245,245,247,.48); font-size:13px; font-weight:600; white-space:nowrap; }
 .filterBlock { display:flex; align-items:center; justify-content:space-between; gap:14px; }
 .segmented,.ratingFilter { display:inline-flex; align-items:center; gap:3px; padding:4px; border:1px solid rgba(255,255,255,.08); border-radius:14px; background:rgba(118,118,128,.13); }
-.segmented button,.ratingFilter button { min-height:36px!important; padding:7px 12px!important; border:0!important; border-radius:10px!important; background:transparent!important; color:rgba(245,245,247,.58)!important; font-size:12px!important; font-weight:650!important; white-space:nowrap; }
+.segmented button,.ratingFilter button { min-height:44px!important; padding:9px 13px!important; border:0!important; border-radius:11px!important; background:transparent!important; color:rgba(245,245,247,.68)!important; font-size:14px!important; font-weight:650!important; white-space:nowrap; }
 .segmented button[aria-pressed="true"],.ratingFilter button[aria-pressed="true"] { background:rgba(99,99,102,.52)!important; color:#fff!important; box-shadow:0 1px 4px rgba(0,0,0,.28); }
 .ratingFilter button { gap:4px!important; }
 .ratingFilter button svg { color:var(--primary); fill:currentColor; }
@@ -62,7 +62,7 @@ button.metric:hover { border-color:rgba(184,243,74,.3); background:#222225; tran
 .adminNote { display:flex; align-items:flex-start; gap:7px; padding:10px 11px; border-radius:12px; background:rgba(255,255,255,.045); color:rgba(245,245,247,.62); font-size:12px; line-height:1.45; }
 .adminNote svg { flex:0 0 auto; margin-top:1px; color:var(--primary); }
 .cardActions { display:flex; align-items:center; gap:7px; margin-top:auto; padding-top:2px; }
-.cardActions button { min-height:38px!important; padding:7px 11px!important; border-radius:11px!important; font-size:12px!important; }
+.cardActions button { min-height:44px!important; padding:9px 12px!important; border-radius:12px!important; font-size:14px!important; }
 .cardActions button:first-child { margin-right:auto; }
 .deleteAction { color:#ff8fb2!important; }
 .modalLabel { display:block; margin:0 0 8px; color:rgba(245,245,247,.58); font-size:12px; font-weight:650; }

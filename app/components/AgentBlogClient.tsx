@@ -263,7 +263,7 @@ export default function AgentBlogClient() {
                       {CATEGORY_LABELS[p.category]} · {new Date(p.publishedAt).toLocaleDateString('fr-FR')} · /blog/{p.slug}
                     </span>
                   </span>
-                  <Button variant="ghost" aria-label="Modifier" onClick={() => openEdit(p)} style={{ padding: 8, minHeight: 34, minWidth: 34 }}>
+                  <Button variant="ghost" aria-label="Modifier" onClick={() => openEdit(p)} style={{ padding: 8, minHeight: 44, minWidth: 44 }}>
                     <Pencil size={15} />
                   </Button>
                   <Button
@@ -271,7 +271,7 @@ export default function AgentBlogClient() {
                     aria-label="Supprimer"
                     onClick={() => onDelete(p.id)}
                     disabled={deletingId === p.id}
-                    style={{ padding: 8, minHeight: 34, minWidth: 34, color: '#ff9ed2' }}
+                    style={{ padding: 8, minHeight: 44, minWidth: 44, color: '#ff9ed2' }}
                   >
                     <Trash2 size={15} />
                   </Button>
@@ -283,7 +283,7 @@ export default function AgentBlogClient() {
       </div>
 
       {modalOpen && (
-      <Modal onClose={() => setModalOpen(false)} maxWidth={640}>
+      <Modal onClose={() => setModalOpen(false)} maxWidth={640} ariaLabel={editingId ? "Modifier l’article" : "Créer un article"}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#fff' }}>{editingId ? "Modifier l'article" : 'Nouvel article'}</h3>
           <div>

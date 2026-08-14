@@ -17,8 +17,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { minHeight: 44, padding: '8px 14px', fontSize: 12.5, borderRadius: 10, gap: 6 },
-  md: { minHeight: 44, padding: '11px 18px', fontSize: 13.5, borderRadius: 12, gap: 8 },
+  sm: { minHeight: 44, padding: '8px 14px', fontSize: 14, borderRadius: 12, gap: 7 },
+  md: { minHeight: 44, padding: '11px 18px', fontSize: 15, borderRadius: 14, gap: 8 },
   lg: { minHeight: 48, padding: '14px 22px', fontSize: 15, borderRadius: 14, gap: 8 },
 }
 
@@ -80,10 +80,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       ref={ref}
       type={type}
       disabled={isDisabled}
+      {...rest}
       onMouseEnter={(e) => { setHovered(true); rest.onMouseEnter?.(e) }}
       onMouseLeave={(e) => { setHovered(false); setPressed(false); rest.onMouseLeave?.(e) }}
       onMouseDown={(e) => { setPressed(true); rest.onMouseDown?.(e) }}
       onMouseUp={(e) => { setPressed(false); rest.onMouseUp?.(e) }}
+      aria-busy={loading || undefined}
       style={{
         minHeight: 44,
         display: 'inline-flex',
@@ -101,7 +103,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         ...variantStyle(variant, isDisabled),
         ...style,
       }}
-      {...rest}
     >
       {loading ? <Spinner text={loadingText} /> : (
         <>

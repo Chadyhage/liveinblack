@@ -1,7 +1,7 @@
 .root { width:100%; }
 .grid { display:grid; grid-template-columns:minmax(260px,340px) minmax(0,1fr); gap:22px; align-items:start; }
 .identity { position:sticky; top:28px; display:flex; flex-direction:column; align-items:center; gap:10px; padding:28px 24px!important; border-radius:25px!important; background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.028))!important; }
-.identity h2 { margin:3px 0 0; color:#fff; font-size:24px; font-weight:750; letter-spacing:-.035em; text-align:center; }
+.identity h1 { margin:3px 0 0; color:#fff; font-size:24px; font-weight:750; letter-spacing:-.035em; text-align:center; }
 .email { max-width:100%; margin:0; overflow:hidden; color:rgba(245,245,247,.48); font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
 .badges { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:3px; }
 .editLink { min-height:44px; display:inline-flex; align-items:center; color:#b8f34a; font-size:13.5px; font-weight:650; text-decoration:none; }

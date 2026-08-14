@@ -68,12 +68,17 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
           <ActionLink href="/events">Explorer les événements</ActionLink>
         </div>
+
+        <header>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes favoris</h1>
+          <p style={{ maxWidth: 620, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les événements sauvegardés et prépare ta prochaine sortie.</p>
+        </header>
 
         {items.length === 0 ? (
           <EmptyState
@@ -117,7 +122,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>{label}</p>
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '-.01em', margin: '0 0 12px' }}>{label}</h2>
       {children}
     </div>
   )

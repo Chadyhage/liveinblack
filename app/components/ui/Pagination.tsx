@@ -27,7 +27,7 @@ export default function Pagination({ page, pageCount, onPageChange, totalItems, 
 
   return (
     <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
-      {rangeLabel && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{rangeLabel}</span>}
+      {rangeLabel && <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>{rangeLabel}</span>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
         <Button
           variant="ghost"
@@ -35,7 +35,7 @@ export default function Pagination({ page, pageCount, onPageChange, totalItems, 
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           aria-label="Page précédente"
-          style={{ padding: '6px 8px' }}
+          style={{ width: 44, minWidth: 44, padding: '6px 8px' }}
         >
           <ChevronLeft size={16} />
         </Button>
@@ -51,7 +51,7 @@ export default function Pagination({ page, pageCount, onPageChange, totalItems, 
               size="sm"
               onClick={() => onPageChange(p)}
               aria-current={p === page ? 'page' : undefined}
-              style={{ minWidth: 30, padding: '6px 8px' }}
+              style={{ width: 44, minWidth: 44, padding: '6px 8px' }}
             >
               {p}
             </Button>
@@ -63,7 +63,7 @@ export default function Pagination({ page, pageCount, onPageChange, totalItems, 
           disabled={page >= pageCount}
           onClick={() => onPageChange(page + 1)}
           aria-label="Page suivante"
-          style={{ padding: '6px 8px' }}
+          style={{ width: 44, minWidth: 44, padding: '6px 8px' }}
         >
           <ChevronRight size={16} />
         </Button>

@@ -198,14 +198,18 @@ export default async function MonDossierPage() {
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
           ← Mon profil
         </Link>
+        <header>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes dossiers</h1>
+          <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Suis l’avancement de tes candidatures organisateur et prestataire.</p>
+        </header>
         <nav style={{ display: 'flex', gap: 16 }}>
-          <a href="#organisateur" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <a href="#organisateur" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier organisateur
           </a>
-          <a href="#prestataire" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <a href="#prestataire" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier prestataire
           </a>
         </nav>

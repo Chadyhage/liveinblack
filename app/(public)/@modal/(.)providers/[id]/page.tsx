@@ -9,7 +9,7 @@ export default async function InterceptedProviderModal({ params }: { params: Pro
   const { id } = await params
 
   return (
-    <SlideOverModal>
+    <SlideOverModal ariaLabel="Détails du prestataire">
       <div style={{ padding: '0 0 60px', width: '100%' }}>
         <ProviderDetailContent id={id} />
       </div>

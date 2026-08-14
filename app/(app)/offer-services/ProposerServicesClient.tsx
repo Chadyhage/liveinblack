@@ -780,7 +780,11 @@ export default function ProposerServicesClient({
         }
       `}</style>
       <main className="provider-workspace lb-dashboard-page">
-        <div className="provider-workspace-header" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="provider-workspace-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
+          <header>
+            <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mon espace prestataire</h1>
+            <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Présente tes services, gère ton catalogue et suis les avis reçus.</p>
+          </header>
           <Button variant="secondary" onClick={() => router.push(`/providers/${encodeURIComponent(profile.userId)}`)} style={secondaryButton}>
             Voir ma page publique
           </Button>
@@ -796,7 +800,7 @@ export default function ProposerServicesClient({
           </Card>
         )}
 
-        <div style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+        <div role="tablist" aria-label="Sections de l’espace prestataire" style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
           {[
             { id: 'profil' as const, label: 'Ma page publique', shortLabel: 'Ma page' },
             { id: 'catalogue' as const, label: `Catalogue (${profile.catalog.length})`, shortLabel: `Catalogue (${profile.catalog.length})` },
@@ -806,8 +810,10 @@ export default function ProposerServicesClient({
             <Button
               key={item.id}
               variant="ghost"
+              role="tab"
+              aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
-              style={{ flex: 1, minHeight: 42, borderRadius: 10, border: '1px solid transparent', background: tab === item.id ? 'rgba(255,255,255,.10)' : 'transparent', color: tab === item.id ? '#fff' : 'rgba(255,255,255,.5)', fontSize: 13, fontWeight: 700 }}
+              style={{ flex: 1, minHeight: 44, borderRadius: 12, border: '1px solid transparent', background: tab === item.id ? 'rgba(255,255,255,.10)' : 'transparent', color: tab === item.id ? '#fff' : 'rgba(255,255,255,.68)', fontSize: 14, fontWeight: 700 }}
             >
               <span className="provider-tab-full">{item.label}</span>
               <span className="provider-tab-short">{item.shortLabel}</span>
@@ -1025,7 +1031,7 @@ export default function ProposerServicesClient({
                             ) : (
                               <NextImage src={f.url} alt="" fill unoptimized style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                             )}
-                            <Button variant="ghost" onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, minHeight: 32, minWidth: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
+                            <Button variant="ghost" aria-label={`Retirer ${f.file.name}`} onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 20, padding: 0 }}>
                               ×
                             </Button>
                           </div>
@@ -1115,7 +1121,7 @@ export default function ProposerServicesClient({
                                   ) : (
                                     <NextImage src={m.url} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                                   )}
-                                  <Button variant="ghost" onClick={() => void removeOfferMedia(item.id, i)} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 32, height: 32, minHeight: 32, minWidth: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
+                                  <Button variant="ghost" aria-label={`Retirer le média ${i + 1}`} onClick={() => void removeOfferMedia(item.id, i)} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 20, padding: 0 }}>
                                     ×
                                   </Button>
                                 </div>

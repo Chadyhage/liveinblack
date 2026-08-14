@@ -9,7 +9,7 @@ export default async function InterceptedOrganizerModal({ params }: { params: Pr
   const { slug } = await params
 
   return (
-    <SlideOverModal>
+    <SlideOverModal ariaLabel="Détails de l’organisateur">
       <div style={{ padding: '0 0 60px', width: '100%' }}>
         <OrganizerDetailContent slug={slug} />
       </div>

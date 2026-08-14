@@ -1,10 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import Button from './Button'
 
 let bodyLockCount = 0
 let bodyOverflowBeforeLock = ''
+const modalStack: HTMLElement[] = []
+const subscribeToHydration = () => () => undefined
 
 function lockBodyScroll() {
   if (bodyLockCount === 0) {
@@ -62,6 +65,7 @@ export default function BaseModal({
   dismissible = true,
   closeDelay = 220,
 }: BaseModalProps) {
+  const canUseDOM = useSyncExternalStore(subscribeToHydration, () => true, () => false)
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
   const [closeTimer, setCloseTimer] = useState<number | null>(null)
@@ -70,13 +74,20 @@ export default function BaseModal({
 
   const close = useCallback(() => {
     if (!dismissible || closing) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onClose()
+      return
+    }
     setClosing(true)
     setVisible(false)
     setCloseTimer(window.setTimeout(onClose, closeDelay))
   }, [closeDelay, closing, dismissible, onClose])
 
   useEffect(() => {
+    if (!canUseDOM) return
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const root = rootRef.current
+    if (root) modalStack.push(root)
     lockBodyScroll()
     const raf = requestAnimationFrame(() => {
       setVisible(true)
@@ -84,14 +95,18 @@ export default function BaseModal({
       const activeElement = document.activeElement
       if (activeElement instanceof HTMLElement && scope?.contains(activeElement)) return
       const firstControl = scope?.querySelector<HTMLElement>('[data-autofocus],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')
-      firstControl?.focus()
+      ;(firstControl || panelRef.current || rootRef.current)?.focus()
     })
     return () => {
       cancelAnimationFrame(raf)
       unlockBodyScroll()
+      if (root) {
+        const index = modalStack.lastIndexOf(root)
+        if (index >= 0) modalStack.splice(index, 1)
+      }
       previouslyFocused?.focus()
     }
-  }, [])
+  }, [canUseDOM])
 
   useEffect(() => () => {
     if (closeTimer !== null) window.clearTimeout(closeTimer)
@@ -99,6 +114,7 @@ export default function BaseModal({
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (modalStack.at(-1) !== rootRef.current) return
       if (event.key === 'Escape') return close()
       if (event.key !== 'Tab') return
       const scope = panelRef.current || rootRef.current
@@ -107,7 +123,10 @@ export default function BaseModal({
       if (!controls.length) return
       const first = controls[0]
       const last = controls[controls.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
+      if (!scope.contains(document.activeElement)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+      } else if (event.shiftKey && document.activeElement === first) {
         event.preventDefault()
         last.focus()
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -129,16 +148,22 @@ export default function BaseModal({
     'aria-describedby': ariaDescribedBy,
   }
 
-  return (
+  const modal = (
     <div ref={rootRef} className={stateClassName} style={rootStyle} {...(!panelClassName ? dialogProps : {})}>
       {backdropClassName ? (
         <Button variant="ghost" className={backdropClassName} onClick={close} disabled={!dismissible} aria-label={backdropLabel} />
       ) : null}
       {panelClassName ? (
-        <div ref={panelRef} className={panelClassName} style={panelStyle} {...dialogProps}>
+        <div ref={panelRef} className={panelClassName} style={panelStyle} tabIndex={-1} {...dialogProps}>
           {content}
         </div>
       ) : content}
     </div>
   )
+
+  // Les modales peuvent être déclenchées depuis des cartes utilisant
+  // backdrop-filter. Ce filtre crée un nouveau repère pour position: fixed et
+  // réduisait alors la fenêtre à la taille de la carte. Le portail garantit
+  // un vrai overlay viewport, commun à tous les écrans et toutes les couches.
+  return canUseDOM ? createPortal(modal, document.body) : null
 }

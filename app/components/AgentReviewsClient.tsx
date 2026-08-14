@@ -246,15 +246,36 @@ export default function AgentReviewsClient() {
         )}
 
         <section className={styles.metrics} aria-label="Résumé des avis">
-          <button type="button" className={`${styles.metric}${statusFilter === 'all' ? ` ${styles.metricActive}` : ''}`} onClick={() => setQueryParams({ status: null, page: null })}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-pressed={statusFilter === 'all'}
+            className={`${styles.metric}${statusFilter === 'all' ? ` ${styles.metricActive}` : ''}`}
+            style={{ display: 'grid', ...(statusFilter === 'all' ? { borderColor: 'rgba(184,243,74,.42)', background: 'linear-gradient(145deg,rgba(184,243,74,.1),rgba(255,255,255,.045))' } : {}) }}
+            onClick={() => setQueryParams({ status: null, page: null })}
+          >
             <span className={styles.metricIcon}><Star size={18} aria-hidden="true" /></span><strong>{reviews.length}</strong><span>Tous les avis</span>
-          </button>
-          <button type="button" className={`${styles.metric}${statusFilter === 'reported' ? ` ${styles.metricActive} ${styles.metricUrgent}` : ''}`} onClick={() => setQueryParams({ status: 'reported', page: null })}>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-pressed={statusFilter === 'reported'}
+            className={`${styles.metric}${statusFilter === 'reported' ? ` ${styles.metricActive} ${styles.metricUrgent}` : ''}`}
+            style={{ display: 'grid', ...(statusFilter === 'reported' ? { borderColor: 'rgba(255,143,178,.38)', background: 'linear-gradient(145deg,rgba(255,143,178,.1),rgba(255,255,255,.045))' } : {}) }}
+            onClick={() => setQueryParams({ status: 'reported', page: null })}
+          >
             <span className={`${styles.metricIcon} ${styles.urgentIcon}`}><Flag size={18} aria-hidden="true" /></span><strong>{reportedCount}</strong><span>À examiner</span>
-          </button>
-          <button type="button" className={`${styles.metric}${statusFilter === 'published' ? ` ${styles.metricActive}` : ''}`} onClick={() => setQueryParams({ status: 'published', page: null })}>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-pressed={statusFilter === 'published'}
+            className={`${styles.metric}${statusFilter === 'published' ? ` ${styles.metricActive}` : ''}`}
+            style={{ display: 'grid', ...(statusFilter === 'published' ? { borderColor: 'rgba(184,243,74,.42)', background: 'linear-gradient(145deg,rgba(184,243,74,.1),rgba(255,255,255,.045))' } : {}) }}
+            onClick={() => setQueryParams({ status: 'published', page: null })}
+          >
             <span className={styles.metricIcon}><CheckCircle2 size={18} aria-hidden="true" /></span><strong>{publishedCount}</strong><span>Publiés</span>
-          </button>
+          </Button>
           <div className={styles.metric}>
             <span className={styles.metricIcon}><Star size={18} aria-hidden="true" /></span><strong>{averageRating}</strong><span>Note moyenne</span>
           </div>

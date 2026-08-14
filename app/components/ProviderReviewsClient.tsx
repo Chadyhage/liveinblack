@@ -29,8 +29,8 @@ function fmtDate(iso: string): string {
   }
 }
 
-function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
-  return <Modal onClose={onClose} maxWidth={520} zIndex={3200} ariaLabel="Avis prestataire">{children}</Modal>
+function Sheet({ onClose, title, subtitle, children }: { onClose: () => void; title: string; subtitle?: string; children: React.ReactNode }) {
+  return <Modal onClose={onClose} maxWidth={520} zIndex={3200} title={title} subtitle={subtitle}>{children}</Modal>
 }
 
 export interface PublicReviewView {
@@ -269,9 +269,11 @@ export default function ProviderReviewsClient({
       </Card>
 
       {showForm && (
-        <Sheet onClose={() => !formBusy && setShowForm(false)}>
-          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: GOLD, margin: '0 0 7px' }}>Avis client</p>
-          <h3 style={{ fontSize: 25, lineHeight: 1.08, letterSpacing: '-.7px', margin: '0 0 16px', color: '#fff' }}>{myReview && myReview.status === 'published' ? 'Modifier mon avis' : `Noter ${providerName || 'ce prestataire'}`}</h3>
+        <Sheet
+          onClose={() => !formBusy && setShowForm(false)}
+          title={myReview && myReview.status === 'published' ? 'Modifier mon avis' : `Noter ${providerName || 'ce prestataire'}`}
+          subtitle="Partagez une expérience utile, précise et respectueuse."
+        >
 
           <div style={{ textAlign: 'center', padding: '6px 0 2px' }}>
             <p style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Note (obligatoire)</p>
@@ -315,10 +317,13 @@ export default function ProviderReviewsClient({
       )}
 
       {reportTarget && (
-        <Sheet onClose={() => !reportBusy && setReportTarget(null)}>
+        <Sheet
+          onClose={() => !reportBusy && setReportTarget(null)}
+          title={reportDone ? 'Signalement transmis' : 'Signaler cet avis'}
+          subtitle={reportDone ? undefined : 'Choisissez le motif qui décrit le mieux le problème.'}
+        >
           {reportDone ? (
             <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
-              <h3 style={{ fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Merci</h3>
               <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>{typeof reportDone === 'string' ? reportDone : 'Ton signalement a été transmis. Notre équipe va examiner cet avis.'}</p>
               <Button onClick={() => setReportTarget(null)} style={{ ...primaryBtn, minWidth: 160 }}>
                 Fermer
@@ -326,8 +331,6 @@ export default function ProviderReviewsClient({
             </div>
           ) : (
             <>
-              <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8fb2', margin: '0 0 7px' }}>Signalement</p>
-              <h3 style={{ fontSize: 24, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: '#fff' }}>Signaler cet avis</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
                 {REVIEW_REPORT_REASONS.map((reason) => (
                   <Button
@@ -383,8 +386,7 @@ export default function ProviderReviewsClient({
       )}
 
       {confirmRemove && (
-        <Sheet onClose={() => !removeBusy && setConfirmRemove(false)}>
-          <h3 style={{ fontSize: 22, letterSpacing: '-.5px', margin: '0 0 8px', color: '#fff' }}>Retirer ton avis ?</h3>
+        <Sheet onClose={() => !removeBusy && setConfirmRemove(false)} title="Retirer votre avis ?">
           <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={removeBusy} style={{ ...ghostBtn, flex: 1 }}>

@@ -4,6 +4,7 @@
   z-index: 3000;
   padding: 24px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   pointer-events: none;
 }
@@ -54,6 +55,11 @@
   letter-spacing: -.025em;
 }
 
+.panel :where(button, [role='button']) { min-height: 44px; }
+.panel :where(input, textarea, select) { font-size: 16px !important; }
+.panel :where(p, li, label) { font-size: max(13.5px, 1em) !important; }
+.panel :where(button) { font-size: max(14px, 1em) !important; }
+
 .visible .backdrop { opacity: 1; }
 .visible .panel { opacity: 1; transform: translateY(0) scale(1); }
 .closing .backdrop { opacity: 0; }
@@ -83,11 +89,11 @@
   position: sticky !important;
   top: 0;
   z-index: 4;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  min-height: 36px !important;
-  margin: 0 0 -36px auto;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px !important;
+  margin: 0 0 -44px auto;
   padding: 0 !important;
   display: grid !important;
   place-items: center;

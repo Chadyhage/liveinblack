@@ -233,7 +233,7 @@ export async function reportReview(caller: ReviewCaller, input: ReportReviewInpu
   // au pire comptent tous les deux (jamais perdus, l'index unique empêche
   // déjà le doublon d'UNE même personne) — au pire un masquage déclenché un
   // cran plus tard qu'idéal, jamais un avis qui reste visible à tort.
-  const updated = await Review.findByIdAndUpdate(reviewId, { $inc: { reportCount: 1 } }, { new: true })
+  const updated = await Review.findByIdAndUpdate(reviewId, { $inc: { reportCount: 1 } }, { returnDocument: 'after' })
   if (updated && updated.reportCount >= AUTO_HIDE_REPORTS && updated.status === 'published') {
     updated.status = 'hidden'
     updated.hiddenAt = new Date()

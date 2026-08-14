@@ -158,7 +158,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
               variant="ghost"
               onClick={() => set('imageUrl', null)}
               aria-label="Retirer la photo"
-              style={{ position: 'absolute', top: -7, right: -7, width: 21, height: 21, minHeight: 21, minWidth: 21, borderRadius: '50%', border: 0, background: 'var(--pink)', color: '#fff', padding: 0 }}
+              style={{ position: 'absolute', top: -12, right: -12, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', border: '8px solid var(--surface)', background: 'var(--pink)', color: '#fff', padding: 0, fontSize: 18 }}
             >
               ×
             </Button>

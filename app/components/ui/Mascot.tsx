@@ -34,6 +34,7 @@ export default function Mascot({ mood = 'happy', size = 140 }: { mood?: MascotMo
         src={MASCOT_IMAGES[mood]}
         width={720}
         height={720}
+        loading="eager"
         sizes={`${size}px`}
         alt=""
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}

@@ -3,13 +3,13 @@ import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
 import Order, { type OrderDoc } from '../models/Order'
 import Ticket from '../models/Ticket'
-import User from '../models/User'
 import PromoCode from '../models/PromoCode'
 import { resolvePromo, promoUnitDiscount } from './promos'
 import { findGroupTieForEvent, groupTieBuyMessage } from './groupTicketGuard'
-import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF, isStripeConnectCountry } from '../shared/fees'
+import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '../shared/fees'
 import { isEventEnded } from '../shared/event-time'
 import { normalizeShowOptions } from '../shared/showOptions'
+import { resolveSellerSettlementMode } from './sellerSettlementMode'
 
 // Réservation de stock SERVEUR-AUTORITAIRE (ferme l'audit C03). Contrairement
 // au legacy `api/event-stock.js` (mutation directe de `available`, sans lien
@@ -158,17 +158,11 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   // Vendeur / mode de répartition (Stripe Connect vs ledger interne). Le
   // rail FedaPay est toujours 'ledger' (Connect ne couvre pas la zone XOF).
-  const sellerUid = event.organizerId || event.createdBy || null
-  let connectMode: 'auto' | 'ledger' | 'none' = 'none'
-  if (sellerUid && sellerUid !== input.userId) {
-    if (input.rail === 'stripe') {
-      const seller = await User.findById(sellerUid).select('stripeAccountId stripeChargesEnabled stripeCountry').lean().catch(() => null)
-      const eligible = Boolean(seller?.stripeAccountId) && seller?.stripeChargesEnabled === true && isStripeConnectCountry(seller?.stripeCountry)
-      connectMode = eligible ? 'auto' : 'ledger'
-    } else {
-      connectMode = 'ledger'
-    }
-  }
+  const { sellerUid, connectMode } = await resolveSellerSettlementMode({
+    sellerUid: event.organizerId || event.createdBy,
+    buyerUid: input.userId,
+    rail: input.rail,
+  })
 
   const totalRequestedStock = isTable ? 1 : qty
 

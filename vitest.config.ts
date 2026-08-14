@@ -12,6 +12,10 @@ if (integrationTestsEnabled) {
   // Les fichiers historiques lisent MONGODB_URI. On ne leur transmet que la
   // base explicitement réservée aux tests, jamais la connexion applicative.
   process.env.MONGODB_URI = integrationTestUri
+  // Clé strictement locale à la suite de tests. Les jetons QR doivent être
+  // réellement signés pendant les tests d'intégration, sans dépendre du
+  // secret de développement ou de production.
+  process.env.AUTH_SECRET ||= 'liveinblack-integration-test-secret-not-for-production'
 }
 
 export default defineConfig({

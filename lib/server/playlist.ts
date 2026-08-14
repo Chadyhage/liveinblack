@@ -121,7 +121,7 @@ async function getOrCreatePlaylist(eventId: string, session: mongoose.ClientSess
   const playlist = await EventPlaylist.findOneAndUpdate(
     { eventId },
     { $setOnInsert: { eventId, songs: [], nowPlaying: null } },
-    { upsert: true, new: true, session }
+    { upsert: true, returnDocument: 'after', session }
   )
   return playlist as HydratedDocument<EventPlaylistDoc>
 }

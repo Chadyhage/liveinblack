@@ -960,11 +960,11 @@ function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onCli
       onClick={onClick}
       disabled={disabled}
       style={{
-        width: 28,
-        height: 28,
-        minWidth: 28,
-        minHeight: 28,
-        borderRadius: 8,
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
+        borderRadius: 12,
         fontSize: 15,
         fontWeight: 700,
         opacity: disabled ? 0.4 : 1,

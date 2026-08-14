@@ -55,7 +55,7 @@
 .cancellation strong { display:block; color:#ff91c5; font-size:12.5px; }
 .cancellation p { margin:5px 0 0; color:rgba(245,245,247,.56); font-size:12.5px; line-height:1.5; }
 .clamped { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
-.expand { min-height:32px!important; margin-top:3px!important; padding:0!important; color:rgba(245,245,247,.52)!important; font-size:12px!important; }
+.expand { min-height:44px!important; margin-top:3px!important; padding:8px 0!important; color:rgba(245,245,247,.68)!important; font-size:14px!important; }
 .actions { display:flex; align-items:center; justify-content:flex-end; gap:9px; padding-top:2px; }
 .viewLink { min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 15px; border:1px solid rgba(255,255,255,.13); border-radius:13px; background:rgba(255,255,255,.055); color:#fff; font-size:13px; font-weight:680; text-decoration:none; }
 .cancelButton { margin-right:auto!important; border-color:rgba(255,105,180,.24)!important; background:rgba(255,105,180,.075)!important; color:#ff78b8!important; }

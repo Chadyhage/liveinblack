@@ -66,7 +66,14 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   }
 
   return (
-    <div style={{ maxWidth: 720 }}>
+    <main style={{ width: '100%', maxWidth: 760, marginInline: 'auto' }}>
+      <header style={{ marginBottom: 24 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#b8f34a', fontSize: 13, fontWeight: 750, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+          <BellRing size={17} aria-hidden="true" /> Centre d’alertes
+        </span>
+        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Notifications</h1>
+        <p style={{ maxWidth: 560, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
+      </header>
       {unreadCount > 0 && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
           <Button variant="secondary" onClick={markAllRead} style={{ fontSize: 13 }}>
@@ -77,14 +84,14 @@ export default function NotificationsClient({ initialNotifications }: { initialN
 
       {pushPermission === 'default' && (
         <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Recevoir les alertes urgentes même hors de l&apos;app</span>
+          <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>Recevoir les alertes urgentes même hors de l&apos;app</span>
           <Button
             variant="secondary"
             onClick={handleEnablePush}
             disabled={pushSubscribing}
             loading={pushSubscribing}
             loadingText="…"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700 }}
           >
             <BellRing size={14} />
             Activer les notifications push
@@ -97,23 +104,28 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {notifications.map((n) => (
-            <Card
+            <Button
               key={n.id}
+              variant="ghost"
+              fullWidth
               onClick={() => handleClick(n)}
               style={{
-                cursor: 'pointer',
+                minHeight: 76,
+                display: 'block',
                 background: n.read ? 'var(--surface)' : 'rgba(184, 243, 74,0.06)',
                 border: n.read ? '1px solid var(--border)' : '1px solid rgba(184, 243, 74,0.28)',
-                padding: '14px 16px',
+                borderRadius: 18,
+                padding: '15px 17px',
+                textAlign: 'left',
               }}
             >
-              <p style={{ margin: 0, fontSize: 14, fontWeight: n.read ? 600 : 800, color: 'var(--text)' }}>{n.title}</p>
-              {n.body && <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{n.body}</p>}
-              <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{timeAgo(n.createdAt)}</span>
-            </Card>
+              <span style={{ display: 'block', fontSize: 15, fontWeight: n.read ? 620 : 760, color: 'var(--text)' }}>{n.title}</span>
+              {n.body && <span style={{ display: 'block', marginTop: 5, fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.45 }}>{n.body}</span>}
+              <span style={{ display: 'block', marginTop: 7, fontSize: 13, fontWeight: 550, color: 'var(--text-faint)' }}>{timeAgo(n.createdAt)}</span>
+            </Button>
           ))}
         </div>
       )}
-    </div>
+    </main>
   )
 }

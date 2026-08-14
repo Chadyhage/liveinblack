@@ -34,6 +34,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Le navigateur de prévisualisation local utilise 127.0.0.1 alors que
+  // Next démarre sur localhost. Autoriser explicitement cette origine évite
+  // le blocage des assets de développement et garantit que les navigations
+  // clientes (notamment les routes modales interceptées) sont testables.
+  allowedDevOrigins: ['127.0.0.1'],
   turbopack: {
     root: path.join(__dirname),
   },

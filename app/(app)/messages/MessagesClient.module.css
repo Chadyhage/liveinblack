@@ -13,7 +13,7 @@
 .fixedMenu { position:fixed; z-index:191; }
 .relativeMenu { position:relative; z-index:50; }
 .quickReactions { display:grid; grid-template-columns:repeat(6,1fr); gap:3px; padding:7px; border-bottom:1px solid rgba(255,255,255,.09); }
-.quickReactions button { width:36px!important; min-width:36px; height:36px; min-height:36px!important; padding:0!important; border-radius:10px!important; font-size:18px!important; }
+.quickReactions button { width:44px!important; min-width:44px; height:44px; min-height:44px!important; padding:0!important; border-radius:12px!important; font-size:20px!important; }
 .menuItem { width:calc(100% - 8px)!important; min-height:44px!important; justify-content:flex-start!important; margin:4px!important; padding:9px 12px!important; border:0!important; border-radius:11px!important; background:transparent!important; color:rgba(245,245,247,.88)!important; font-size:13.5px!important; font-weight:550!important; text-align:left!important; }
 .menuItem:hover,.menuItem:focus-visible { background:rgba(255,255,255,.075)!important; color:#fff!important; }
 .dangerItem { color:#ff78b8!important; }

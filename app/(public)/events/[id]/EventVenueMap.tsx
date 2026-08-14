@@ -29,7 +29,7 @@ export default function EventVenueMap({ address }: { address: string }) {
       </Button>
 
       {open && (
-        <Modal onClose={() => setOpen(false)} maxWidth={560} hideClose contentStyle={{ padding: 0, overflow: 'hidden' }}>
+        <Modal onClose={() => setOpen(false)} maxWidth={560} hideClose ariaLabel="Localisation de l’événement" contentStyle={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{address}</p>
           </div>

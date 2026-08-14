@@ -70,7 +70,7 @@ const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
           />
         </span>
       </span>
-      {label && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{label}</span>}
+      {label && <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{label}</span>}
     </label>
   )
 })

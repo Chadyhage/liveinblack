@@ -99,9 +99,9 @@ function GateScreen({
             </svg>
           )}
         </div>
-        <p style={{ fontWeight: 800, fontSize: 22, color: accent, margin: '0 0 10px' }}>{title}</p>
+        <h1 style={{ fontWeight: 800, fontSize: 28, color: accent, margin: '0 0 10px', letterSpacing: '-.03em' }}>{title}</h1>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href={backHref} style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+        <Link href={backHref} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
           ← {backLabel}
         </Link>
       </div>

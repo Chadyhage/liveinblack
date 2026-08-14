@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import Script from 'next/script'
 import { allowsAnalytics } from '@/lib/shared/cookieConsent'
 
@@ -13,19 +13,16 @@ import { allowsAnalytics } from '@/lib/shared/cookieConsent'
 // lib/shared/cookieConsent.ts ; un rechargement de page ne rechargera plus
 // gtag.js tant que le refus tient).
 export default function GoogleAnalytics() {
-  const [enabled, setEnabled] = useState(false)
   const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-
-  useEffect(() => {
-    if (!measurementId) return
-    setEnabled(allowsAnalytics())
-
-    function onConsentChange() {
-      setEnabled(allowsAnalytics())
-    }
-    window.addEventListener('lib:cookie-consent', onConsentChange)
-    return () => window.removeEventListener('lib:cookie-consent', onConsentChange)
-  }, [measurementId])
+  const enabled = useSyncExternalStore(
+    (onStoreChange) => {
+      if (!measurementId) return () => undefined
+      window.addEventListener('lib:cookie-consent', onStoreChange)
+      return () => window.removeEventListener('lib:cookie-consent', onStoreChange)
+    },
+    () => Boolean(measurementId) && allowsAnalytics(),
+    () => false,
+  )
 
   if (!measurementId || !enabled) return null
 

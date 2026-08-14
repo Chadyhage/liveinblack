@@ -32,7 +32,7 @@ export async function checkRateLimit(options: RateLimitOptions): Promise<RateLim
   const entry = await RateLimit.findOneAndUpdate(
     { key },
     { $inc: { count: 1 }, $setOnInsert: { expiresAt } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
   ).lean()
 
   return {

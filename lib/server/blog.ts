@@ -150,7 +150,7 @@ export async function createPostForAgent(input: BlogPostInput): Promise<PublicBl
 
 export async function updatePostForAgent(id: string, input: BlogPostInput): Promise<PublicBlogPost | null> {
   await getDb()
-  const doc = await BlogPost.findByIdAndUpdate(id, input, { new: true }).lean()
+  const doc = await BlogPost.findByIdAndUpdate(id, input, { returnDocument: 'after' }).lean()
   if (!doc) return null
   return { ...doc, id: String(doc._id) } as PublicBlogPost
 }

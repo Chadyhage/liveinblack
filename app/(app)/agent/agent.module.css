@@ -101,7 +101,7 @@
   background: rgba(20,21,24,.76);
 }
 .workspace :global(.lb-agent-screen) > div > div[style*="flex-wrap: wrap"]:has(button) button,
-.workspace :global(.lb-agent-screen) > div > div[style*="overflow-x: auto"] button { min-height: 38px; padding-inline: 13px !important; }
+.workspace :global(.lb-agent-screen) > div > div[style*="overflow-x: auto"] button { min-height: 44px; padding-inline: 13px !important; }
 
 /* Les rangées de résultats se lisent comme une liste groupée macOS : larges
    zones tactiles, séparation calme et survol discret. */

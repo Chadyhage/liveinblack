@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { padding: '9px 12px', fontSize: 12.5 } : { padding: '12px 14px', fontSize: 13.5 }
+  const sizeStyle = size === 'sm' ? { padding: '9px 12px', fontSize: 15 } : { padding: '12px 14px', fontSize: 16 }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
@@ -152,7 +152,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
             boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
           }}
         >
-          {options.length === 0 && <li style={{ padding: '10px 12px', fontSize: 12.5, color: 'var(--text-faint)' }}>Aucune option</li>}
+          {options.length === 0 && <li style={{ padding: '12px', fontSize: 14, color: 'var(--text-faint)' }}>Aucune option</li>}
           {options.map((opt, i) => {
             const isSelected = opt.value === value
             const isActive = i === activeIndex
@@ -166,9 +166,12 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() => commit(i)}
                 style={{
-                  padding: '9px 12px',
+                  minHeight: 44,
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '10px 12px',
                   borderRadius: 'var(--radius-md)',
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: isSelected ? 700 : 500,
                   color: opt.disabled ? 'var(--text-faint)' : isSelected ? 'var(--teal)' : 'var(--text)',
                   background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',

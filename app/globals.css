@@ -22,10 +22,10 @@
   --text-muted: rgba(255, 255, 255, 0.76);
   --text-faint: rgba(255, 255, 255, 0.62);
 
-  --radius-sm: 4px;
-  --radius-md: 7px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --radius-pill: 999px;
   --space-1: 4px;
   --space-2: 8px;
@@ -55,6 +55,8 @@
 html {
   scroll-padding-top: 84px;
   background: #07070a;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @theme inline {
@@ -72,6 +74,11 @@ body {
   color: var(--foreground);
   font-family: var(--font-open-sans), "Open Sans", Arial, sans-serif;
   line-height: 1.5;
+}
+
+:where(button, a, input, textarea, select, summary, [role='button'], [role='tab'], [role='option']):focus-visible {
+  outline: 3px solid rgba(184, 243, 74, .52);
+  outline-offset: 3px;
 }
 
 body::before {
@@ -124,7 +131,9 @@ textarea::placeholder {
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
-.lb-card:hover {
+.lb-card:is([role='button'], [tabindex='0']):hover,
+a:hover > .lb-card,
+button:hover > .lb-card {
   transform: translateY(-3px);
   border-color: rgba(255, 229, 0, 0.42) !important;
   background: var(--surface-2) !important;

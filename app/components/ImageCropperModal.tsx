@@ -72,4 +72,4 @@ export default function ImageCropperModal({ src, title, aspect, outputWidth, cir
 }
 
 const controlButton: React.CSSProperties = { width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: '#fff', cursor: 'pointer', fontSize: 17 }
-const actionButton: React.CSSProperties = { flex: 1, minHeight: 43, borderRadius: 10, fontWeight: 800, cursor: 'pointer' }
+const actionButton: React.CSSProperties = { flex: 1, minHeight: 44, borderRadius: 12, fontWeight: 800, cursor: 'pointer' }

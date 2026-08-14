@@ -147,12 +147,17 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
           <ActionLink href="/events">Trouver une soirée</ActionLink>
         </div>
+
+        <header style={{ marginBottom: 8 }}>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
+          <p style={{ maxWidth: 600, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
+        </header>
 
         <SeatHoldsPanel />
 
@@ -1110,17 +1115,19 @@ function PremiumTicketCard({
 
             {resellOpen && !activeListing && (
               <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0, lineHeight: 1.5 }}>
+                <p id={`resell-help-${ticket.ticketCode}`} style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
                   Prix maximum : {fmtMoney(ticket.placePrice, ticket.currency)} (prix initial, majoration interdite). Le montant de revente n&apos;est jamais garanti tant que personne n&apos;a acheté ; les frais payés à l&apos;achat initial ne sont pas récupérés.
                 </p>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <Input
+                    aria-label="Prix de revente du billet"
+                    aria-describedby={`resell-help-${ticket.ticketCode}`}
                     type="number"
                     inputMode="decimal"
                     placeholder={`Prix (max ${ticket.placePrice})`}
                     value={resellPrice}
                     onChange={(e) => setResellPrice(e.target.value)}
-                    style={{ flex: 1, borderRadius: 8, background: 'var(--obsidian)', fontSize: 13 }}
+                    style={{ flex: 1, borderRadius: 12, background: 'var(--obsidian)', fontSize: 16 }}
                   />
                   <Button
                     variant="primary"
@@ -1133,7 +1140,7 @@ function PremiumTicketCard({
                     Confirmer
                   </Button>
                 </div>
-                {resellState === 'err' && resellErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{resellErr}</p>}
+                {resellState === 'err' && resellErr && <p role="alert" style={{ fontSize: 13.5, color: '#ff8fc7', margin: 0 }}>{resellErr}</p>}
               </div>
             )}
           </>
@@ -1146,8 +1153,8 @@ function PremiumTicketCard({
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p style={{ fontSize: 9.5, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 3px' }}>{label}</p>
-      <p style={{ fontSize: 12.5, color: '#fff', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
+      <p style={{ fontSize: 12.5, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px' }}>{label}</p>
+      <p style={{ fontSize: 14, color: '#fff', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
     </div>
   )
 }

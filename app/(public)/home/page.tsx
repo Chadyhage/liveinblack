@@ -63,7 +63,7 @@ function DateBadge({ dateISO }: { dateISO: string }) {
   if (Number.isNaN(d.getTime())) return null
   return (
     <div style={{ position: 'absolute', top: 12, left: 12, minWidth: 44, background: 'rgba(18,18,20,.82)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 12, padding: '6px 9px', textAlign: 'center', lineHeight: 1.1 }}>
-      <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.72)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
+      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.72)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
       <p style={{ margin: '2px 0 0', fontSize: 17, fontWeight: 700, color: '#fff' }}>{d.getDate()}</p>
     </div>
   )

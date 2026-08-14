@@ -94,7 +94,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <Link href="/my-events" aria-label="Retour" style={{ color: '#fff', fontSize: 20, textDecoration: 'none', padding: 10, margin: -10, lineHeight: 1, display: 'inline-flex', alignItems: 'center' }}>
+        <Link href="/my-events" aria-label="Retour" style={{ width: 44, height: 44, color: '#fff', fontSize: 20, textDecoration: 'none', padding: 0, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: 'rgba(255,255,255,.06)' }}>
           <ArrowLeft size={20} />
         </Link>
         <div>

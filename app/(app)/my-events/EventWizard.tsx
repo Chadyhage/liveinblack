@@ -960,7 +960,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
           variant="ghost"
           aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
-          style={{ width: 36, height: 36, minHeight: 36, minWidth: 36, padding: 0, borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
+          style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
@@ -1184,11 +1184,11 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                           }}
                           style={{
                             flexShrink: 0,
-                            width: 30,
-                            height: 30,
-                            minHeight: 30,
-                            minWidth: 30,
-                            borderRadius: 8,
+                            width: 44,
+                            height: 44,
+                            minHeight: 44,
+                            minWidth: 44,
+                            borderRadius: 12,
                             padding: 0,
                             display: 'flex',
                             alignItems: 'center',
@@ -1233,18 +1233,20 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                               <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Aucun prestataire trouvé.</p>
                             ) : (
                               providerResults.map((p) => (
-                                <button
+                                <Button
                                   key={p.userId}
-                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  fullWidth
                                   onClick={() => {
                                     setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: p.name, providerId: p.userId } : x)))
                                     setProviderSearchFor(null)
                                   }}
-                                  style={{ textAlign: 'left', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}
+                                  style={{ justifyContent: 'flex-start', textAlign: 'left', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: 14 }}
                                 >
                                   {p.name}
                                   {p.headline && <span style={{ color: 'rgba(255,255,255,0.45)' }}> · {p.headline}</span>}
-                                </button>
+                                </Button>
                               ))
                             )
                           ) : null}
@@ -1677,7 +1679,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
                             variant="ghost"
                             onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
                             title="Retirer cette option"
-                            style={{ flexShrink: 0, width: 24, height: 24, minHeight: 24, minWidth: 24, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 13, lineHeight: '20px', padding: 0 }}
+                            style={{ flexShrink: 0, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 18, lineHeight: 1, padding: 0 }}
                           >
                             ×
                           </Button>

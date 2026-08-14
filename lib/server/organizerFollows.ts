@@ -223,7 +223,7 @@ export async function updateFollowAlerts(caller: FollowCaller, input: UpdateFoll
     return { ok: true, notificationsEnabled: follow.notificationsEnabled ?? true, alerts: toAlertSettings(follow.alerts) }
   }
 
-  const updated = await OrganizerFollow.findOneAndUpdate({ _id: follow._id }, { $set: setFields }, { new: true })
+  const updated = await OrganizerFollow.findOneAndUpdate({ _id: follow._id }, { $set: setFields }, { returnDocument: 'after' })
   if (!updated) return { ok: false, status: 404, error: 'not_following' }
 
   return { ok: true, notificationsEnabled: updated.notificationsEnabled ?? true, alerts: toAlertSettings(updated.alerts) }

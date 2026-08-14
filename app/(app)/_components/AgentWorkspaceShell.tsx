@@ -17,6 +17,19 @@ const GROUPS = [
   { title: 'Personnel', links: [{ href: '/notifications', label: 'Notifications', icon: Bell }, { href: '/messages', label: 'Messages', icon: MessageCircle }, { href: '/profile', label: 'Mon profil', icon: UserRound }, { href: '/profile/parametres', label: 'Paramètres', icon: Settings }] },
 ]
 
+const AGENT_PAGE_TITLES: Record<string, string> = {
+  '/agent': 'Centre de contrôle',
+  '/agent/comptes': 'Comptes',
+  '/agent/evenements': 'Événements',
+  '/agent/dossiers': 'Dossiers',
+  '/agent/paiements': 'Finance',
+  '/agent/signalements': 'Signalements',
+  '/agent/avis': 'Avis',
+  '/agent/suppressions': 'Suppressions',
+  '/agent/actualite': 'Accueil public',
+  '/agent/blog': 'Blog',
+}
+
 export default function AgentWorkspaceShell({ children, badges }: { children: React.ReactNode; badges: Partial<Record<string, number>> }) {
   const pathname = usePathname()
   const { data: session } = useSession()
@@ -58,6 +71,9 @@ export default function AgentWorkspaceShell({ children, badges }: { children: Re
     <aside className={styles.sidebar}><Link href="/agent" className={styles.brand}><span className={styles.mark}>LB</span><span className={styles.brandText}><strong>LIVEINBLACK</strong><span>Console d’opérations</span></span></Link><nav className={styles.nav} aria-label="Administration">{navigation}</nav><div className={styles.sidebarFoot}>{session?.user ? <div className={styles.sidebarAccount}><AccountMenu user={session.user}/></div> : null}<Link href="/home" className={styles.publicLink}><Globe size={17}/><span>Voir le site public</span></Link></div></aside>
     <div className={styles.mobileTrigger}><IconButton ref={menuButtonRef} label={open?'Fermer le menu':'Ouvrir le menu'} icon={open?<X size={19}/>:<Menu size={19}/>} onClick={()=>setOpen(v=>!v)} aria-expanded={open} aria-controls="agent-mobile-navigation" style={{border:'1px solid rgba(255,255,255,.13)',background:'rgba(22,23,27,.92)',color:'#fff'}}/></div>
     {open ? <><Button className={styles.backdrop} variant="ghost" aria-label="Fermer le menu" onClick={closeDrawer}/><nav ref={drawerRef} id="agent-mobile-navigation" className={styles.drawer} aria-label="Administration mobile">{session?.user ? <div className={styles.drawerAccount}><AccountMenu user={session.user}/></div> : null}{navigation}<Link href="/home" className={styles.publicLink}><Globe size={17}/><span>Voir le site public</span></Link></nav></>:null}
-    <div className={`${styles.workspace}${fullBleed ? ` ${styles.workspaceFull}` : ''}`}>{children}</div>
+    <div className={`${styles.workspace}${fullBleed ? ` ${styles.workspaceFull}` : ''}`}>
+      {AGENT_PAGE_TITLES[pathname] ? <h1 className={styles.screenReaderTitle}>{AGENT_PAGE_TITLES[pathname]}</h1> : null}
+      {children}
+    </div>
   </div>
 }

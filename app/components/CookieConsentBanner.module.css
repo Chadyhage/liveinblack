@@ -19,7 +19,7 @@
 .footer a { display: inline-flex; align-items: center; gap: 3px; color: rgba(245,245,247,.68); text-decoration: none; }
 .footer a:hover { color: #fff; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 0 0 auto; }
-.choiceButton { min-width: 168px; min-height: 42px !important; padding: 0 15px !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 13px !important; background: rgba(255,255,255,.055) !important; color: rgba(245,245,247,.82) !important; font-size: 11px !important; font-weight: 650 !important; text-transform: none !important; letter-spacing: 0 !important; }
+.choiceButton { min-width: 168px; min-height: 44px !important; padding: 0 15px !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 13px !important; background: rgba(255,255,255,.055) !important; color: rgba(245,245,247,.82) !important; font-size: 14px !important; font-weight: 650 !important; text-transform: none !important; letter-spacing: 0 !important; }
 .choiceButton:hover { border-color: rgba(255,255,255,.25) !important; background: rgba(255,255,255,.09) !important; }
 .acceptButton { border-color: rgba(184,243,74,.22) !important; background: rgba(184,243,74,.075) !important; }
 .acceptButton:hover { border-color: rgba(184,243,74,.38) !important; background: rgba(184,243,74,.11) !important; }

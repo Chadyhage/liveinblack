@@ -124,7 +124,7 @@ async function tryMutualAutoAccept(callerId: string, toUserId: string, a: string
   const claimed = await FriendRequest.findOneAndUpdate(
     { _id: reverse._id, status: 'pending' },
     { $set: { status: 'accepted', respondedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   )
   // Perdu la course (la cible a annulé/décliné entre-temps) : chemin normal.
   if (!claimed) return null
@@ -200,7 +200,7 @@ export async function acceptFriendRequest(caller: FriendCaller, input: RequestId
   const claimed = await FriendRequest.findOneAndUpdate(
     { _id: request._id, status: 'pending' },
     { $set: { status: 'accepted', respondedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   )
   if (!claimed) return { ok: false, status: 409, error: 'request_not_pending' }
 
@@ -225,7 +225,7 @@ export async function declineFriendRequest(caller: FriendCaller, input: RequestI
   const updated = await FriendRequest.findOneAndUpdate(
     { _id: request._id, status: 'pending' },
     { $set: { status: 'declined', respondedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   )
   if (!updated) return { ok: false, status: 409, error: 'request_not_pending' }
   return { ok: true }
@@ -248,7 +248,7 @@ export async function cancelFriendRequest(caller: FriendCaller, input: RequestId
   const updated = await FriendRequest.findOneAndUpdate(
     { _id: request._id, status: 'pending' },
     { $set: { status: 'cancelled', respondedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   )
   if (!updated) return { ok: false, status: 409, error: 'request_not_pending' }
   return { ok: true }

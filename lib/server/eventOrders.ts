@@ -188,7 +188,7 @@ async function getOrCreateOrder(eventId: string, session: mongoose.ClientSession
   const order = await EventOrder.findOneAndUpdate(
     { eventId },
     { $setOnInsert: { eventId, items: [] } },
-    { upsert: true, new: true, session }
+    { upsert: true, returnDocument: 'after', session }
   )
   return order as HydratedDocument<EventOrderDoc>
 }

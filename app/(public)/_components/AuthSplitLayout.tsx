@@ -9,7 +9,9 @@ export default function AuthSplitLayout({ children, tagline, heroImage, wide = f
   return (
     <main className={`lb-auth-split ${styles.shell}${wide ? ` lb-auth-split--wide ${styles.wide}` : ''}`}>
       <aside className={`lb-auth-split__visual ${styles.visual}`} aria-label="Live in Black">
-        <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="(max-width: 900px) 0px, 42vw" className={styles.image} />
+        <div className={styles.imageFrame} aria-hidden="true">
+          <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="(max-width: 900px) 0px, 42vw" className={styles.image} />
+        </div>
         <div className={styles.overlay} />
         <Link href="/home" className={styles.brand} aria-label="Live in Black — accueil">
           LIVE<span>IN</span>BLACK

@@ -665,7 +665,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
-            <Link href="/my-shifts" style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+            <Link href="/my-shifts" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
               ← Événements
             </Link>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
@@ -1094,10 +1094,10 @@ function StepButton({ label, disabled, onClick }: { label: string; disabled: boo
       disabled={disabled}
       onClick={onClick}
       style={{
-        width: 30,
-        height: 30,
-        minWidth: 30,
-        minHeight: 30,
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
         padding: 0,
         borderRadius: '50%',
         fontSize: 16,

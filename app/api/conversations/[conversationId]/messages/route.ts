@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { getMessages, sendMessage } from '@/lib/server/messaging'
@@ -57,7 +57,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ convers
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
-  const result = await sendMessage({ id: session.user.id }, { conversationId, ...parsed.data })
+  const result = await sendMessage(
+    { id: session.user.id },
+    { conversationId, ...parsed.data },
+    {
+      deferSideEffects: (work) => {
+        try {
+          after(work)
+        } catch (error) {
+          // Les tests d'intégration appellent directement le Route Handler,
+          // sans le contexte de requête que Next fournit en production. Dans
+          // ce seul cas, exécuter le travail normalement garde le handler
+          // testable sans masquer une autre erreur de `after()`.
+          if (error instanceof Error && error.message.includes('outside a request scope')) return work()
+          throw error
+        }
+      },
+    }
+  )
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
   return NextResponse.json({ ok: true, message: result.message })
 }

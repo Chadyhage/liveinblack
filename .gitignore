@@ -51,6 +51,9 @@ next-env.d.ts
 .node_modules_*
 .next-broken-*
 
+# Médias de secours générés uniquement par le serveur de développement.
+/public/uploads-dev/
+
 # design-sync (claude.ai/design) — staged converter + build output + campaign state.
 # .design-sync/config.json, NOTES.md, conventions.md, previews/, stubs/,
 # entry.ts, tsconfig.json, globals-ds.css stay committed (the durable set).

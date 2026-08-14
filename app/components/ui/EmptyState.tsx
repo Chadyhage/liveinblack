@@ -5,8 +5,8 @@ export default function EmptyState({ title, description, action }: { title: stri
   return (
     <div style={{ display: 'grid', justifyItems: 'center', gap: 6, padding: '32px 24px', border: '1px dashed rgba(184, 243, 74,.24)', borderRadius: 'var(--radius-lg)', background: 'rgba(17,19,27,.72)', textAlign: 'center' }}>
       <Mascot mood="search" size={118} />
-      <h2 style={{ margin: '6px 0 0', fontSize: 16, fontWeight: 800 }}>{title}</h2>
-      {description && <p style={{ maxWidth: 420, margin: 0, color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.55 }}>{description}</p>}
+      <h2 style={{ margin: '6px 0 0', fontSize: 22, fontWeight: 750, textTransform: 'none', letterSpacing: '-.02em' }}>{title}</h2>
+      {description && <p style={{ maxWidth: 460, margin: 0, color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6 }}>{description}</p>}
       {action && <div style={{ marginTop: 6 }}>{action}</div>}
     </div>
   )

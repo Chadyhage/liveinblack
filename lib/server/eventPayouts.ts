@@ -293,7 +293,7 @@ export async function processEventPayouts(now: number = Date.now()): Promise<Pro
       const claim = await EventPayout.findOneAndUpdate(
         { _id: ep._id, status: 'accumulating' },
         { $set: { status: 'paying', claimedAmount: ep.amountDueXOF } },
-        { new: true }
+        { returnDocument: 'after' }
       )
       if (!claim) continue
 

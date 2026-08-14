@@ -13,6 +13,7 @@ import Event from '../../models/Event'
 import Order from '../../models/Order'
 import Ticket from '../../models/Ticket'
 import SeatHold from '../../models/SeatHold'
+import SellerBalance from '../../models/SellerBalance'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -35,6 +36,7 @@ beforeEach(async () => {
   await Order.deleteMany({})
   await Ticket.deleteMany({})
   await SeatHold.deleteMany({})
+  await SellerBalance.deleteMany({})
 })
 
 async function seedEvent(overrides: Partial<Record<string, unknown>> = {}) {
@@ -62,6 +64,8 @@ describeIntegration('createSeatHold (intégration, transaction réelle)', () => 
     expect(result.hold.unitPriceMinor).toBe(2000)
     expect(result.order.unitPriceMinor).toBe(200)
     expect(result.order.kind).toBe('seat_hold_deposit')
+    expect(result.order.sellerUid).toBe('org-1')
+    expect(result.order.connectMode).toBe('ledger')
 
     const fresh = await Event.findById(event.id).lean()
     expect(fresh?.places.find((p) => p.id === 'p1')?.available).toBe(2) // 3 - 1
@@ -113,6 +117,8 @@ describeIntegration('activateSeatHold (intégration — chemin heureux webhook a
 
     const order = await Order.findById(created.order._id).lean()
     expect(order?.status).toBe('paid')
+    expect(order?.settled).toBe(true)
+    expect((await SellerBalance.findOne({ sellerUid: 'org-1' }).lean())?.amountDueCents).toBe(200)
   })
 
   it('est idempotent (rejouer le webhook ne réinitialise pas expiresAt)', async () => {
@@ -148,6 +154,10 @@ describeIntegration('completeSeatHoldOrder + fulfillOrder (paiement du solde)', 
     expect(fulfillment.status).toBe('ok')
     if (fulfillment.status !== 'ok') return
     expect(fulfillment.ticketCodes).toHaveLength(1)
+    const mintedTicket = await Ticket.findOne({ ticketCode: fulfillment.ticketCodes[0] }).lean()
+    expect(mintedTicket?.placePrice).toBe(20)
+    expect(mintedTicket?.totalPrice).toBe(20)
+    expect((await SellerBalance.findOne({ sellerUid: 'org-1' }).lean())?.amountDueCents).toBe(2000)
 
     // Le stock n'a PAS été redécrémenté par cet Order (déjà réservé par le hold).
     const fresh = await Event.findById(event.id).lean()

@@ -187,10 +187,10 @@ export default function AccountMenu({
           aria-label="Messages"
           aria-expanded={messagesOpen}
           style={{
-            width: 40,
-            height: 40,
-            minWidth: 40,
-            minHeight: 40,
+            width: 44,
+            height: 44,
+            minWidth: 44,
+            minHeight: 44,
             padding: 0,
             borderRadius: '50%',
             border: '1px solid var(--border-strong)',
@@ -294,9 +294,9 @@ export default function AccountMenu({
             alignItems: 'center',
             gap: 8,
             width: 'auto',
-            height: 36,
-            minWidth: 36,
-            minHeight: 36,
+            height: 44,
+            minWidth: 44,
+            minHeight: 44,
             padding: '0 10px 0 3px',
             borderRadius: 999,
             border: '1px solid var(--border-strong)',

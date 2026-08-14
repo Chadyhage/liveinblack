@@ -380,7 +380,7 @@ export default function AgentUsersClient() {
         <Card className={styles.controlPanel}>
           <div className={styles.searchBox}>
             <Search size={20} aria-hidden="true" />
-            <Input className={styles.searchInput} placeholder="Rechercher un nom, une adresse email ou un téléphone" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+            <Input aria-label="Rechercher un compte" className={styles.searchInput} placeholder="Rechercher un nom, une adresse email ou un téléphone" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
             {search ? <Button className={styles.clearSearch} variant="ghost" aria-label="Effacer la recherche" onClick={() => { setSearch(''); setPage(1) }}><X size={14} /></Button> : null}
           </div>
           <div className={styles.filterRow}>
@@ -541,11 +541,11 @@ function DetailPanel({
           {(detail.displayName || '?').charAt(0).toUpperCase()}
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: 0 }}>{detail.displayName}</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>{detail.displayName}</h2>
           {(detail.role === 'organisateur' || detail.role === 'prestataire') && detail.displayName !== detail.personalName && (
-            <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '1px 0 0' }}>{detail.personalName}</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '3px 0 0' }}>{detail.personalName}</p>
           )}
-          <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '2px 0 0' }}>{detail.email}</p>
+          <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '3px 0 0', overflowWrap: 'anywhere' }}>{detail.email}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
           <Badge label={ROLE_LABEL[detail.role]} {...ROLE_BADGE[detail.role]} />
@@ -581,7 +581,7 @@ function DetailPanel({
                 background: 'rgba(184, 243, 74,0.12)',
                 border: '1px solid rgba(184, 243, 74,0.4)',
                 color: 'var(--teal)',
-                fontSize: 12,
+                fontSize: 14,
                 textTransform: 'none',
                 letterSpacing: 'normal',
               }}
@@ -600,7 +600,7 @@ function DetailPanel({
                 borderRadius: 3,
                 fontWeight: 500,
                 border: '1px solid var(--border-strong)',
-                fontSize: 12,
+                fontSize: 14,
                 textTransform: 'none',
                 letterSpacing: 'normal',
               }}
@@ -618,7 +618,7 @@ function DetailPanel({
               borderRadius: 3,
               fontWeight: 500,
               background: 'transparent',
-              fontSize: 12,
+              fontSize: 14,
               textTransform: 'none',
               letterSpacing: 'normal',
             }}
@@ -669,8 +669,8 @@ function DetailPanel({
                     textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{f.label}</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{f.current || '—'}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>{f.label}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)', overflowWrap: 'anywhere' }}>{f.current || '—'}</span>
                 </Button>
               )}
             </div>
@@ -719,8 +719,8 @@ function DetailPanel({
 
 function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <Modal onClose={onCancel} maxWidth={360} hideClose contentStyle={{ textAlign: 'center' }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
+    <Modal onClose={onCancel} maxWidth={360} hideClose ariaLabel={title} contentStyle={{ textAlign: 'center' }}>
+      <h2 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</h2>
       <div style={{ display: 'flex', gap: 8 }}>
         <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
           Annuler

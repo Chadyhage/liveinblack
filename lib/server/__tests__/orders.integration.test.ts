@@ -371,7 +371,9 @@ describeIntegration('fulfillOrder (intégration — chemin heureux sans appel r�
     await fulfillOrder(result.order._id.toString(), { rail: 'stripe' })
     const balance = await SellerBalance.findOne({ sellerUid: 'organizer-1' }).lean()
     expect(balance?.amountDueCents).toBeGreaterThan(0)
-    const expectedOwed = result.order.unitPriceMinor - result.order.feeMinor
+    // Le frais est payé EN PLUS par l'acheteur ; l'organisateur reçoit le
+    // prix brut du billet, comme en mode Stripe Connect automatique.
+    const expectedOwed = result.order.unitPriceMinor
     expect(balance?.amountDueCents).toBe(expectedOwed)
   })
 

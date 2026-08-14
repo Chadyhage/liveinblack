@@ -49,7 +49,7 @@
 .eventMeta { display:flex; align-items:center; gap:12px; overflow:hidden; color:rgba(245,245,247,.43); font-size:11.5px; }
 .eventMeta > span { display:flex; align-items:center; gap:4px; min-width:0; white-space:nowrap; }
 .rowActions { display:flex; flex-shrink:0; gap:4px; }
-.rowActions button { width:38px !important; min-width:38px !important; min-height:38px !important; padding:0 !important; color:rgba(245,245,247,.64) !important; }
+.rowActions button { width:44px !important; min-width:44px !important; min-height:44px !important; padding:0 !important; color:rgba(245,245,247,.72) !important; }
 .rowActions button:disabled { opacity:.28; }
 .removeButton { color:#ff8e88 !important; }
 .searchField { position:relative; display:block; margin-bottom:12px; }

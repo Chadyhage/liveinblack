@@ -24,18 +24,18 @@ import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 // prestataire depuis le client.
 const inquiryBtn: React.CSSProperties = {
   flex: '1 1 160px',
-  minHeight: 40,
+  minHeight: 44,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   gap: 7,
   padding: '9px 12px',
-  borderRadius: 3,
+  borderRadius: 14,
   border: '1px solid var(--border-strong)',
   background: 'var(--violet-cta)',
   color: 'var(--primary-ink)',
-  fontSize: 12,
-  fontWeight: 500,
+  fontSize: 14,
+  fontWeight: 650,
   textTransform: 'none',
   letterSpacing: 'normal',
   cursor: 'pointer',
@@ -197,13 +197,7 @@ export default function ProviderCatalogInquiry({
       </Button>
 
       {open && (
-        <Modal onClose={closeSheet} maxWidth={520} zIndex={3200} ariaLabel={`Demander ${item.name} à ${providerName}`}>
-            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 7px' }}>
-              Demande au prestataire
-            </p>
-            <h3 style={{ fontSize: 22, lineHeight: 1.1, letterSpacing: '-.6px', margin: '0 0 14px', color: 'var(--text)' }}>
-              Envoyer ce service à {providerName}
-            </h3>
+        <Modal onClose={closeSheet} maxWidth={520} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
 
             <Card
               style={{

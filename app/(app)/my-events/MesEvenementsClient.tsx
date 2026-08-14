@@ -204,6 +204,10 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
   return (
     <main className="lb-dashboard-page">
+      <header style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes événements</h1>
+        <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Crée, publie et pilote toutes tes soirées depuis un même espace.</p>
+      </header>
       {message && (
         <div
           style={{
@@ -409,7 +413,7 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
 
   if (!places) {
     return (
-      <Modal onClose={onClose} hideClose contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
+      <Modal onClose={onClose} hideClose ariaLabel="Chargement de la liste des invités" contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
         <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement de la guestlist">
           <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
             <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
@@ -450,7 +454,7 @@ function PromoCodesPanelWithPlaces({ event, onClose }: { event: OrganizerEventVi
 
   if (!places) {
     return (
-      <Modal onClose={onClose} hideClose contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
+      <Modal onClose={onClose} hideClose ariaLabel="Chargement des codes promo" contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
         <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement des codes promo">
           <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
             <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />

@@ -113,7 +113,7 @@
 .lb-auth-form .lb-role-card button { min-height: 104px !important; padding: 20px !important; }
 .lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(184, 243, 74, .48) !important; background: rgba(184, 243, 74, .065) !important; }
 .lb-auth-form [role="tablist"] { min-height: 48px; padding: 4px !important; border-radius: 13px !important; background: rgba(255, 255, 255, .075) !important; }
-.lb-auth-form [role="tab"] { min-height: 40px; border-radius: 10px !important; }
+.lb-auth-form [role="tab"] { min-height: 44px; border-radius: 11px !important; }
 .lb-auth-state {
   padding: clamp(28px, 5vw, 48px) !important;
   border: 1px solid rgba(255, 255, 255, .11);

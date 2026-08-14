@@ -163,6 +163,7 @@ export default function AgentSalesClient({
         <div>
           <Label>Type de place</Label>
           <Select
+            aria-label="Type de place"
             value={placeId}
             onChange={(v) => setPlaceId(v)}
             options={places.map((p) => ({
@@ -184,22 +185,22 @@ export default function AgentSalesClient({
         {mode === 'onsite' && !isTable && (
           <div>
             <Label>Nombre de billets</Label>
-            <Input type="number" min={1} max={20} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} />
+            <Input aria-label="Nombre de billets" type="number" min={1} max={20} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} />
           </div>
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
           <div>
             <Label>Nom (optionnel)</Label>
-            <Input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nom du client" />
+            <Input aria-label="Nom du client" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nom du client" />
           </div>
           <div>
             <Label>Email</Label>
-            <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="ton@email.com" />
+            <Input aria-label="Email du client" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="ton@email.com" />
           </div>
           <div>
             <Label>Téléphone {!contactEmail.trim() ? '(email ou téléphone requis)' : '(optionnel)'}</Label>
-            <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+228 90 00 00 00" />
+            <Input aria-label="Téléphone du client" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+228 90 00 00 00" />
           </div>
         </div>
 
@@ -229,6 +230,7 @@ export default function AgentSalesClient({
           <div>
             <Label>Règlement de la part LIVE IN BLACK</Label>
             <Select
+              aria-label="Mode de règlement"
               value={settlementMode}
               onChange={(v) => setSettlementMode(v as typeof settlementMode)}
               options={[
@@ -244,6 +246,7 @@ export default function AgentSalesClient({
             <div>
               <Label>Opérateur</Label>
               <Select
+                aria-label="Opérateur Mobile Money"
                 value={momoMode}
                 onChange={(v) => setMomoMode(v as typeof momoMode)}
                 options={[
@@ -256,11 +259,11 @@ export default function AgentSalesClient({
             </div>
             <div>
               <Label>Pays</Label>
-              <Input value={momoCountry} onChange={(e) => setMomoCountry(e.target.value.toUpperCase())} placeholder="TG" maxLength={2} />
+              <Input aria-label="Pays Mobile Money" value={momoCountry} onChange={(e) => setMomoCountry(e.target.value.toUpperCase())} placeholder="TG" maxLength={2} />
             </div>
             <div>
               <Label>Numéro Momo</Label>
-              <Input value={momoNumber} onChange={(e) => setMomoNumber(e.target.value)} placeholder="90000000" />
+              <Input aria-label="Numéro Mobile Money" value={momoNumber} onChange={(e) => setMomoNumber(e.target.value)} placeholder="90000000" />
             </div>
           </div>
         )}

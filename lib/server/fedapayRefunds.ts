@@ -29,7 +29,7 @@ export async function recordFedapayRefund(order: OrderDoc & { _id: mongoose.Type
   })
 
   if (order.settled && order.sellerUid) {
-    const owedMinor = amountMinor - order.feeMinor
+    const owedMinor = amountMinor
     // Clampé à 0 : si le solde avait déjà été versé par le cron de paiement
     // avant l'annulation, un décrément aveugle créerait une dette fantôme.
     const balance = await SellerBalance.findOne({ sellerUid: order.sellerUid }).lean()

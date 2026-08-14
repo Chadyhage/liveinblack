@@ -160,7 +160,7 @@ export async function updateDemographics(
   if (input.birthYear !== undefined) setFields.birthYear = input.birthYear
   if (input.gender !== undefined) setFields.gender = input.gender
 
-  const updated = await User.findByIdAndUpdate(caller.id, { $set: setFields }, { new: true })
+  const updated = await User.findByIdAndUpdate(caller.id, { $set: setFields }, { returnDocument: 'after' })
   if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
 
   return { ok: true, birthYear: updated.birthYear ?? null, gender: updated.gender ?? null }
@@ -207,7 +207,7 @@ export async function updatePhone(caller: ProfileCaller, input: { dialCode: stri
     if (phoneTaken) return { ok: false, status: 409, error: 'phone_taken' }
   }
 
-  const updated = await User.findByIdAndUpdate(caller.id, { $set: { phone: normalizedPhone } }, { new: true })
+  const updated = await User.findByIdAndUpdate(caller.id, { $set: { phone: normalizedPhone } }, { returnDocument: 'after' })
   if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
 
   return { ok: true, phone: updated.phone ?? '' }
@@ -255,7 +255,7 @@ export async function updatePrivacy(caller: ProfileCaller, input: Partial<Privac
 
   const updated =
     Object.keys(setFields).length > 0
-      ? await User.findByIdAndUpdate(caller.id, { $set: setFields }, { new: true })
+      ? await User.findByIdAndUpdate(caller.id, { $set: setFields }, { returnDocument: 'after' })
       : await User.findById(caller.id)
   if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
 
@@ -284,7 +284,7 @@ export async function updatePreferences(caller: ProfileCaller, input: Record<str
 
   if (JSON.stringify(input ?? {}).length > 20_000) return { ok: false, status: 400, error: 'preferences_too_large' }
 
-  const updated = await User.findByIdAndUpdate(caller.id, { $set: { preferences: input } }, { new: true })
+  const updated = await User.findByIdAndUpdate(caller.id, { $set: { preferences: input } }, { returnDocument: 'after' })
   if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
 
   return { ok: true, preferences: (updated.preferences as Record<string, unknown>) ?? {} }

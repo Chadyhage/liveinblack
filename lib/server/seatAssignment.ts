@@ -192,7 +192,7 @@ export async function cancelSeatInvitation(caller: SeatCaller, input: TicketCode
   const updated = await SeatInvitation.findOneAndUpdate(
     { _id: invitation._id, status: 'pending' },
     { $set: { status: 'cancelled', respondedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   )
   if (!updated) return { ok: false, status: 409, error: 'invitation_not_pending' }
 
@@ -269,7 +269,7 @@ export async function acceptSeatInvitation(caller: SeatCaller, input: Invitation
       const claimed = await SeatInvitation.findOneAndUpdate(
         { _id: invitation._id, status: 'pending' },
         { $set: { status: 'accepted', respondedAt: new Date() } },
-        { session, new: true }
+        { session, returnDocument: 'after' }
       )
       if (!claimed) throw new SeatError(409, 'invitation_not_pending')
 
@@ -328,7 +328,7 @@ export async function declineSeatInvitation(caller: SeatCaller, input: Invitatio
   const updated = await SeatInvitation.findOneAndUpdate(
     { _id: invitation._id, status: 'pending' },
     { $set: { status: 'declined', respondedAt: new Date() } },
-    { new: true }
+    { returnDocument: 'after' }
   )
   if (!updated) return { ok: false, status: 409, error: 'invitation_not_pending' }
 

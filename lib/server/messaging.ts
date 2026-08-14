@@ -48,6 +48,13 @@ export interface MessagingCaller {
   id: string
 }
 
+export interface SendMessageOptions {
+  // Les emails et notifications système ne doivent pas retarder l'affichage
+  // du message. Une route Next peut les confier à `after()` ; les appels
+  // directs (tests, scripts) gardent le comportement attendu et les attendent.
+  deferSideEffects?: (work: () => Promise<void>) => void | Promise<void>
+}
+
 type ErrResult = { ok: false; status: number; error: string }
 
 // ─────────────────────────────── vues (DTO) ──────────────────────────────
@@ -621,7 +628,11 @@ export async function assertCanSendInConversation(
   return { ok: true }
 }
 
-export async function sendMessage(caller: MessagingCaller, input: SendMessageInput): Promise<SendMessageResult> {
+export async function sendMessage(
+  caller: MessagingCaller,
+  input: SendMessageInput,
+  options: SendMessageOptions = {}
+): Promise<SendMessageResult> {
   await getDb()
 
   const conversationId = input.conversationId?.trim()
@@ -759,7 +770,7 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
     const recipients = await User.find({ _id: { $in: recipientIds } }).select('lastSeenAt').lean()
     const now = Date.now()
     const conversationUrl = `${SITE}/messages?conversationId=${conversationIdStr}`
-    await Promise.all(
+    const notifyOfflineRecipients = () => Promise.all(
       recipients
         .filter((r) => !r.lastSeenAt || now - new Date(r.lastSeenAt).getTime() > OFFLINE_DIGEST_THRESHOLD_MS)
         .map(async (r) => {
@@ -773,7 +784,9 @@ export async function sendMessage(caller: MessagingCaller, input: SendMessageInp
           // directement ici plutôt que via le mécanisme `inApp`.
           await sendPushToUser(recipientId, { title: `${senderName} t'a envoyé un message`, body: lastMessageLabel, url: conversationUrl })
         })
-    )
+    ).then(() => undefined)
+    if (options.deferSideEffects) await options.deferSideEffects(notifyOfflineRecipients)
+    else await notifyOfflineRecipients()
   }
 
   const conversationSource = conversation.toObject({ flattenMaps: true }) as unknown as ConversationSource

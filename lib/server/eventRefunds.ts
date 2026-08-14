@@ -51,12 +51,12 @@ export async function refundStripeOrder(order: OrderDoc & { _id: mongoose.Types.
 
     // Si le vendeur avait déjà été crédité (settled), on reprend le crédit —
     // mais seulement dans ce cas, sinon le ledger deviendrait négatif à tort.
-    // (grossMinor - feeMinor) = exactement le montant crédité par settleOrder,
-    // précommandes incluses.
+    // grossMinor = exactement le montant crédité par settleOrder : les frais
+    // de service étaient payés en plus par l'acheteur, pas par le vendeur.
     if (order.settled && order.sellerUid && order.connectMode === 'ledger') {
       await SellerBalance.updateOne(
         { sellerUid: order.sellerUid },
-        { $inc: { amountDueCents: -(grossMinor - order.feeMinor) } }
+        { $inc: { amountDueCents: -grossMinor } }
       )
     }
 

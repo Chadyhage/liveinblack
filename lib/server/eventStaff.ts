@@ -75,7 +75,7 @@ export async function addEventStaff(caller: StaffCaller, eventId: string, input:
   if (!target) return { ok: false, status: 404, error: 'user_not_found' }
   const name = [target.firstName, target.lastName].filter(Boolean).join(' ') || target.email
 
-  const staffDoc = await EventStaff.findOneAndUpdate({ eventId }, { $setOnInsert: { eventId } }, { upsert: true, new: true })
+  const staffDoc = await EventStaff.findOneAndUpdate({ eventId }, { $setOnInsert: { eventId } }, { upsert: true, returnDocument: 'after' })
   const roster = (staffDoc.roster ?? new Map()) as Map<string, { role: string; name?: string | null; addedBy: string; addedAt: Date }>
   if (roster.get(input.targetUserId)) return { ok: false, status: 409, error: 'already_staff' }
 

@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { completeSeatHoldOrder } from '@/lib/server/seatHolds'
 import { releaseOrder } from '@/lib/server/orders'
 import Order from '@/lib/models/Order'
+import User from '@/lib/models/User'
 import stripe from '@/lib/server/stripeClient'
 
 // Paiement du SOLDE d'un blocage de place actif — rail Stripe/EUR. Miroir de
@@ -40,11 +41,27 @@ export async function POST(req: Request) {
   }
 
   try {
+    let paymentIntentData: {
+      transfer_data: { destination: string }
+      application_fee_amount?: number
+      metadata: Record<string, string>
+    } | undefined
+    if (order.connectMode === 'auto' && order.sellerUid) {
+      const seller = await User.findById(order.sellerUid).select('stripeAccountId').lean()
+      if (seller?.stripeAccountId) {
+        paymentIntentData = {
+          transfer_data: { destination: seller.stripeAccountId },
+          ...(order.feeMinor > 0 ? { application_fee_amount: order.feeMinor } : {}),
+          metadata: { sellerUid: order.sellerUid, feeCents: String(order.feeMinor), seatHoldCompletion: 'true' },
+        }
+      }
+    }
     const stripeSession = await stripe.checkout.sessions.create(
       {
         mode: 'payment',
         payment_method_types: ['card'],
         line_items: lineItems,
+        ...(paymentIntentData ? { payment_intent_data: paymentIntentData } : {}),
         customer_email: session.user.email || undefined,
         success_url: `${SITE}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
         cancel_url: `${SITE}/payment-success?cancelled=1&event_id=${encodeURIComponent(order.eventId)}`,

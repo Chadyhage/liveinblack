@@ -412,7 +412,7 @@ export default function PreferencesModal({
   }
 
   return (
-    <Modal onClose={onClose} maxWidth={520}>
+    <Modal onClose={onClose} maxWidth={520} ariaLabel="Personnaliser mes préférences">
         {done ? (
           <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184, 243, 74,0.12)', border: '1px solid rgba(184, 243, 74,0.4)' }}>

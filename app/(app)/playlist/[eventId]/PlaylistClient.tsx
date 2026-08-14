@@ -509,7 +509,7 @@ export default function PlaylistClient({
     return (
       <main style={{ maxWidth: 640, minWidth: 0, width: '100%', margin: '0 auto', padding: '24px 18px 90px' }}>
         <div style={{ marginBottom: 18 }}>
-          <Link href={`/events/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+          <Link href={`/events/${eventId}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← {eventName}
           </Link>
         </div>
@@ -547,7 +547,7 @@ export default function PlaylistClient({
       `}</style>
 
       <div style={{ marginBottom: 18 }}>
-        <Link href={`/events/${eventId}`} style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+        <Link href={`/events/${eventId}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
           ← {eventName}
         </Link>
       </div>
@@ -706,6 +706,7 @@ export default function PlaylistClient({
           <Card style={{ padding: 14, marginBottom: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>Ajouter un son (auto-validé)</p>
             <Input
+              aria-label="Rechercher un titre ou un artiste"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Rechercher un titre, un artiste…"
@@ -975,6 +976,7 @@ export default function PlaylistClient({
                       Propose un son au DJ — <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{effectiveSongsRemaining} proposition{effectiveSongsRemaining > 1 ? 's' : ''} restante{effectiveSongsRemaining > 1 ? 's' : ''}</span>
                     </p>
                     <Input
+                      aria-label="Rechercher un titre ou un artiste"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Rechercher un titre, un artiste…"
@@ -1047,11 +1049,11 @@ export default function PlaylistClient({
                             onClick={() => handleRemoveOwnSong(song)}
                             title="Supprimer mon son"
                             style={{
-                              width: 34,
-                              height: 34,
-                              minWidth: 34,
-                              minHeight: 34,
-                              borderRadius: 10,
+                              width: 44,
+                              height: 44,
+                              minWidth: 44,
+                              minHeight: 44,
+                              borderRadius: 12,
                               flexShrink: 0,
                               cursor: 'pointer',
                               display: 'flex',
@@ -1176,11 +1178,11 @@ function SearchResultsList({
                 disabled={!r.previewUrl}
                 aria-label={playing ? `Mettre en pause l'extrait de ${r.title}` : `Écouter un extrait de ${r.title}`}
                 style={{
-                  width: 36,
-                  height: 36,
-                  minWidth: 36,
-                  minHeight: 36,
-                  borderRadius: 8,
+                  width: 44,
+                  height: 44,
+                  minWidth: 44,
+                  minHeight: 44,
+                  borderRadius: 12,
                   flexShrink: 0,
                   overflow: 'hidden',
                   position: 'relative',
@@ -1241,11 +1243,11 @@ function SongRow({
         disabled={!song.previewUrl}
         aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
         style={{
-          width: 42,
-          height: 42,
-          minWidth: 42,
-          minHeight: 42,
-          borderRadius: 9,
+          width: 44,
+          height: 44,
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 12,
           flexShrink: 0,
           overflow: 'hidden',
           position: 'relative',
@@ -1324,11 +1326,11 @@ function DjSongRow({
         disabled={!song.previewUrl}
         aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
         style={{
-          width: 42,
-          height: 42,
-          minWidth: 42,
-          minHeight: 42,
-          borderRadius: 9,
+          width: 44,
+          height: 44,
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 12,
           flexShrink: 0,
           overflow: 'hidden',
           position: 'relative',

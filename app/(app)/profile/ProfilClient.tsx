@@ -122,7 +122,7 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
       <div className={overviewStyles.grid}>
         <Card className={overviewStyles.identity}>
           <AvatarUpload user={user} setUser={setUser} />
-          <h2>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
+          <h1>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h1>
           <p className={overviewStyles.email}>{user.email}</p>
           <div className={overviewStyles.badges}>
             {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
@@ -215,10 +215,11 @@ function ConfirmModal({
       onClose={onCancel}
       maxWidth={380}
       hideClose
+      ariaLabel={title}
       dismissible={!confirmDisabled}
       contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 24, maxHeight: 'none', overflowY: 'visible' }}
     >
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{title}</h3>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{title}</h2>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 16px' }}>{body}</p>
         {children}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -345,9 +346,10 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           onClose={() => setCropSrc(null)}
           maxWidth={340}
           hideClose
+          ariaLabel="Recadrer la photo de profil"
           contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, textAlign: 'center', maxHeight: 'none', overflowY: 'visible' }}
         >
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>Recadrer la photo</h3>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>Recadrer la photo</h2>
             <p style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', margin: '0 0 16px' }}>Glisse pour repositionner</p>
             <div
               onPointerDown={onPointerDown}
@@ -390,7 +392,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                   variant="secondary"
                   aria-label={control.label}
                   onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
-                  style={{ width: 36, height: 36, minHeight: 36, minWidth: 36, padding: 0, borderRadius: 10, fontSize: 17 }}
+                  style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 12, fontSize: 18 }}
                 >
                   {control.glyph}
                 </Button>
@@ -723,8 +725,8 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       <EyebrowLabel>Informations personnelles</EyebrowLabel>
       <Label>Prénom / Nom</Label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, opacity: onCooldown ? 0.5 : 1 }}>
-        <Input value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
-        <Input value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
+        <Input aria-label="Prénom" value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
+        <Input aria-label="Nom" value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
       </div>
       {onCooldown && nextChangeDate && (
         <p style={{ fontSize: 12, color: 'var(--gold)', margin: '0 0 10px' }}>
@@ -741,14 +743,15 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       <Label>Téléphone</Label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <Select
+          aria-label="Indicatif téléphonique"
           value={dialCode}
           onChange={setDialCode}
           options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
           size="sm"
         />
-        <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ flex: 1 }} />
+        <Input aria-label="Numéro de téléphone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ flex: 1 }} />
       </div>
-      <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 13.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Utilisé pour te contacter et partagé avec les organisateurs/prestataires avec qui tu échanges en messagerie.
       </p>
       <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
@@ -760,12 +763,14 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
 
       <div className="profile-demo-row" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <Select
+          aria-label="Année de naissance"
           value={birthYear}
           onChange={setBirthYear}
           placeholder="Année de naissance —"
           options={yearOptions.map((y) => ({ value: String(y), label: String(y) }))}
         />
         <Select
+          aria-label="Genre"
           value={gender}
           onChange={setGender}
           placeholder="Genre —"
@@ -1229,10 +1234,15 @@ export function SupportPanel() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           <ArrowLeft size={17} aria-hidden="true" />
           Profil
         </Link>
+
+        <header style={{ marginBottom: 10 }}>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
+          <p style={{ maxWidth: 620, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
+        </header>
 
         <div className={helpStyles.grid}>
           <Card className={helpStyles.faq}>

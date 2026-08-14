@@ -277,11 +277,17 @@ export default function StudioClient({
         }
       `}</style>
       <main className="lb-dashboard-page">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
+      <header style={{ marginBottom: 22 }}>
+        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
+        <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Présente ton univers, publie tes médias et configure tes encaissements.</p>
+      </header>
+      <div role="tablist" aria-label="Sections du studio" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
         {(['page', 'paiements'] as const).map((t) => (
           <Button
             key={t}
             variant="ghost"
+            role="tab"
+            aria-selected={tab === t}
             onClick={() => setTab(t)}
             style={{
               padding: '12px 14px',
@@ -409,15 +415,15 @@ export default function StudioClient({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             <div>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Nom public</Label>
-              <Input value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} />
+              <Input aria-label="Nom public" value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} />
             </div>
             <div>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Slug public</Label>
-              <Input value={profile.slug} onChange={(e) => update({ slug: e.target.value })} />
+              <Input aria-label="Slug public" value={profile.slug} onChange={(e) => update({ slug: e.target.value })} />
             </div>
             <div>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Ville d&rsquo;intervention</Label>
-              <Input value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Ta ville de base" />
+              <Input aria-label="Ville d’intervention" value={profile.city} onChange={(e) => update({ city: e.target.value })} placeholder="Ta ville de base" />
             </div>
             <div />
             <div style={{ gridColumn: '1 / -1' }}>
@@ -465,6 +471,7 @@ export default function StudioClient({
             <div style={{ display: 'grid', gap: 6, gridColumn: '1 / -1' }}>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Description</Label>
               <Textarea
+                aria-label="Description publique"
                 rows={4}
                 maxLength={500}
                 value={profile.shortDescription}
@@ -480,6 +487,7 @@ export default function StudioClient({
                   <div key={net.key} style={{ display: 'grid', gap: 5 }}>
                     <Label style={{ font: '600 10.5px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>{net.label}</Label>
                     <Input
+                      aria-label={net.label}
                       value={profile.socialLinks[net.key] || ''}
                       onChange={(e) => update({ socialLinks: { ...profile.socialLinks, [net.key]: e.target.value } })}
                       placeholder={net.placeholder}
@@ -568,6 +576,7 @@ export default function StudioClient({
                   )}
                 </div>
                 <Input
+                  aria-label="Titre du média"
                   value={item.title}
                   onChange={(e) => setProfile((p) => ({ ...p, media: p.media.map((m) => (m.id === item.id ? { ...m, title: e.target.value } : m)) }))}
                   onBlur={(e) => void updateMedia(item.id, { title: e.target.value })}
@@ -575,6 +584,7 @@ export default function StudioClient({
                   style={{ marginTop: 8 }}
                 />
                 <Select
+                  aria-label="Événement lié au média"
                   value={item.eventId || ''}
                   onChange={(value) => void updateMedia(item.id, { eventId: value || null })}
                   placeholder="Aucun événement lié"

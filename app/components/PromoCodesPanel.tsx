@@ -248,6 +248,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     <Modal
       onClose={onClose}
       maxWidth={560}
+      ariaLabel="Codes promo"
       contentStyle={{ border: '1px solid rgba(255,255,255,.11)', boxShadow: '0 24px 64px rgba(0,0,0,.6)' }}
     >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>

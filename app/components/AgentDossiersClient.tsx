@@ -1058,8 +1058,8 @@ function ActionForm({
 
 function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
   return (
-    <Modal onClose={onCancel} maxWidth={360} hideClose dismissible={!busy} contentStyle={{ textAlign: 'center' }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</p>
+    <Modal onClose={onCancel} maxWidth={360} hideClose dismissible={!busy} ariaLabel={title} contentStyle={{ textAlign: 'center' }}>
+      <h2 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</h2>
       <div style={{ display: 'flex', gap: 8 }}>
         <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
           Annuler

@@ -317,6 +317,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
       onClose={onClose}
       maxWidth={480}
       dismissible={!busy}
+      ariaLabel="Équipe de la soirée"
       contentStyle={{ background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 16 }}
     >
         {/* Header */}
@@ -327,7 +328,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
-            <p style={{ fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.4px' }}>Équipe de la soirée</p>
+            <h2 style={{ fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.4px' }}>Équipe de la soirée</h2>
           </div>
           <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
             <span style={{ color: C.teal }}>{event.name}</span>
@@ -510,12 +511,12 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                       variant="danger"
                       style={{
                         flexShrink: 0,
-                        width: 30,
-                        height: 30,
-                        minHeight: 30,
-                        minWidth: 30,
+                        width: 44,
+                        height: 44,
+                        minHeight: 44,
+                        minWidth: 44,
                         padding: 0,
-                        borderRadius: 9,
+                        borderRadius: 12,
                         background: 'rgba(224,90,170,0.14)',
                         border: '1px solid rgba(224,90,170,0.45)',
                         color: '#ff9ed2',

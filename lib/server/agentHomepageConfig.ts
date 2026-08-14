@@ -102,7 +102,7 @@ export async function updateHomepageConfig(agent: AgentCaller, input: UpdateHome
   const updated = await HomepageConfig.findByIdAndUpdate(
     HOMEPAGE_ACTUALITE_ID,
     { $set: { ...clean, updatedAt: now, updatedBy: agent.id } },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   ).lean()
   return normalize(updated as RawConfig)
 }

@@ -498,10 +498,10 @@ function StepButton({ label, disabled, onClick }: { label: string; disabled: boo
       disabled={disabled}
       onClick={onClick}
       style={{
-        width: 30,
-        height: 30,
-        minWidth: 30,
-        minHeight: 30,
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
         padding: 0,
         borderRadius: '50%',
         border: '1px solid var(--border-strong)',

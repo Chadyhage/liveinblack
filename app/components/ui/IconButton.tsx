@@ -31,10 +31,10 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       disabled={disabled}
       {...rest}
       style={{
-        width: size,
-        height: size,
-        minWidth: Math.min(size, 44),
-        minHeight: Math.min(size, 44),
+        width: Math.max(size, 44),
+        height: Math.max(size, 44),
+        minWidth: 44,
+        minHeight: 44,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

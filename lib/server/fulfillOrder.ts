@@ -7,6 +7,7 @@ import EventPayout from '../models/EventPayout'
 import PaymentAlert from '../models/PaymentAlert'
 import PromoCode from '../models/PromoCode'
 import GroupMembership from '../models/GroupMembership'
+import SeatHold from '../models/SeatHold'
 import { registerPromoUse } from './promos'
 import { generateUniqueTicketCode } from './ticketCode'
 import { refundStripeOrder } from './eventRefunds'
@@ -83,7 +84,15 @@ export async function fulfillOrder(
 
   const seatCount = order.isTable ? order.tableSeats : order.qty
   const tableId = order.isTable ? `tbl_${order._id.toString()}` : null
-  const unitMajor = order.unitPriceMinor / (order.currency === 'XOF' ? 1 : 100)
+  // Une commande de complétion ne contient que le solde encaissé. Le billet
+  // doit néanmoins afficher le prix total figé avant acompte, pas seulement
+  // le second paiement.
+  let ticketUnitPriceMinor = order.unitPriceMinor
+  if (order.kind === 'seat_hold_completion' && order.completesSeatHoldId) {
+    const hold = await SeatHold.findById(order.completesSeatHoldId).select('unitPriceMinor').lean()
+    if (hold?.unitPriceMinor != null) ticketUnitPriceMinor = hold.unitPriceMinor
+  }
+  const unitMajor = ticketUnitPriceMinor / (order.currency === 'XOF' ? 1 : 100)
   const isXof = order.currency === 'XOF'
   // Précommandes payées à la caisse, portées par le seul seatIndex 0 (voir
   // plus bas) — leur montant DOIT entrer dans `totalPrice` de ce billet-là,
@@ -245,7 +254,7 @@ async function claimFulfillment(orderId: string): Promise<boolean> {
   return true
 }
 
-async function settleOrder(order: OrderDoc & { _id: mongoose.Types.ObjectId }): Promise<void> {
+export async function settleOrder(order: OrderDoc & { _id: mongoose.Types.ObjectId }): Promise<void> {
   const session = await mongoose.startSession()
   try {
     await session.withTransaction(async () => {
@@ -262,7 +271,11 @@ async function settleOrder(order: OrderDoc & { _id: mongoose.Types.ObjectId }): 
       const seatCount = fresh.isTable ? 1 : fresh.qty
       const preorderTotal = fresh.preorders.reduce((s, p) => s + p.price * p.qty, 0)
       const grossMinor = fresh.unitPriceMinor * seatCount + preorderTotal
-      const owedMinor = grossMinor - fresh.feeMinor
+      // Les frais de service sont ajoutés au paiement de l'acheteur (ligne
+      // séparée au checkout), ils ne sont jamais retirés une seconde fois à
+      // l'organisateur. Le ledger doit refléter le brut hors frais, comme le
+      // transfert Stripe Connect `auto` et comme le documente FEES.paidBy.
+      const owedMinor = grossMinor
 
       if (fresh.connectMode === 'ledger' && fresh.sellerUid && owedMinor > 0) {
         const field = fresh.currency === 'XOF' ? 'amountDueXOF' : 'amountDueCents'
