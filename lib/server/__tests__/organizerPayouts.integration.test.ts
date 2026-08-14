@@ -25,6 +25,13 @@ import PayoutRequest from '../../models/PayoutRequest'
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
 const TEST_URI = process.env.MONGODB_URI || ''
+const EXPECTED_SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
+function connectReturnUrl(path: string, status: 'refresh' | 'done') {
+  const url = new URL(path, EXPECTED_SITE)
+  url.searchParams.set('connect', status)
+  return url.toString()
+}
 
 beforeAll(async () => {
   if (!RUN_INTEGRATION) return
@@ -84,8 +91,8 @@ describeIntegration('organizerPayouts (intégration, vraie base) — Stripe Conn
     )
     expect(accountLinksCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        refresh_url: 'https://liveinblack.com/my-events?connect=refresh',
-        return_url: 'https://liveinblack.com/my-events?connect=done',
+        refresh_url: connectReturnUrl('/my-events', 'refresh'),
+        return_url: connectReturnUrl('/my-events', 'done'),
       })
     )
 
@@ -132,8 +139,8 @@ describeIntegration('organizerPayouts (intégration, vraie base) — Stripe Conn
     expect(accountLinksCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         account: 'acct_existing',
-        refresh_url: 'https://liveinblack.com/organizer-studio?connect=refresh',
-        return_url: 'https://liveinblack.com/organizer-studio?connect=done',
+        refresh_url: connectReturnUrl('/organizer-studio', 'refresh'),
+        return_url: connectReturnUrl('/organizer-studio', 'done'),
       })
     )
   })

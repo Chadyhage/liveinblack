@@ -12,7 +12,9 @@ import {
   Eye,
   EyeOff,
   MapPin,
+  Newspaper,
   Plus,
+  RotateCcw,
   Search,
   Sparkles,
   X,
@@ -187,6 +189,12 @@ export default function AgentHomepageConfigClient() {
     }
   }
 
+  function discardChanges() {
+    if (!savedDraft) return
+    setDraft(savedDraft)
+    setMessage(null)
+  }
+
   if (!loaded) {
     return (
       <main className="lb-dashboard-page">
@@ -199,13 +207,26 @@ export default function AgentHomepageConfigClient() {
   }
 
   return (
-    <main className="lb-dashboard-page lb-agent-screen">
+    <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--homepage">
       <div className={styles.page}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Link className={styles.publicLink} href="/home" target="_blank">
-            Voir l’accueil public <ExternalLink size={16} aria-hidden="true" />
+        <header className={styles.pageHeader}>
+          <div className={styles.titleGroup}>
+            <span className={styles.titleIcon}><Newspaper size={22} aria-hidden="true" /></span>
+            <div>
+              <span className={styles.eyebrow}>Édition de l’accueil</span>
+              <h1>Actualité</h1>
+              <p>Composez la sélection éditoriale visible par tous les visiteurs.</p>
+            </div>
+          </div>
+          <Link className={styles.publicLink} href="/home" target="_blank" rel="noreferrer">
+            Voir l’accueil <ExternalLink size={16} aria-hidden="true" />
           </Link>
-        </div>
+          <div className={styles.summaryBar} aria-label="État de la rubrique">
+            <span><small>Publication</small><strong>{draft.active ? 'Activée' : 'Masquée'}</strong></span>
+            <span><small>Sélection</small><strong>{eventIds.length} sur {MAX_EVENTS}</strong></span>
+            <span aria-live="polite"><small>Version</small><strong>{dirty ? 'À publier' : 'À jour'}</strong></span>
+          </div>
+        </header>
 
         {loadError && (
           <div className={`${styles.notice} ${styles.noticeError}`} role="alert">
@@ -307,7 +328,7 @@ export default function AgentHomepageConfigClient() {
               </div>
               <label className={styles.searchField}>
                 <Search size={18} aria-hidden="true" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par nom, ville ou région" />
+                <Input aria-label="Rechercher un événement" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par nom, ville ou région" />
               </label>
               {eventIds.length >= MAX_EVENTS && <p className={styles.limitMessage}>La sélection contient déjà le maximum de {MAX_EVENTS} événements.</p>}
               <div className={styles.libraryList}>
@@ -356,14 +377,19 @@ export default function AgentHomepageConfigClient() {
             </Card>
 
             <Card className={styles.publishPanel}>
-              <div className={styles.publishState}>
+              <div className={styles.publishState} aria-live="polite">
                 <span className={dirty ? styles.unsavedDot : styles.savedDot} />
                 <span><strong>{dirty ? 'Modifications non enregistrées' : 'Tout est à jour'}</strong><small>{dirty ? 'Publiez pour appliquer cette version.' : 'La version affichée est enregistrée.'}</small></span>
               </div>
               <Button variant="primary" className={styles.saveButton} onClick={save} disabled={saving || !dirty || loadError} loading={saving} loadingText="Publication…">
                 Publier les modifications
               </Button>
-              {message && <p className={message.ok ? styles.successMessage : styles.errorMessage} role="status">{message.ok && <Check size={16} aria-hidden="true" />}{message.text}</p>}
+              {dirty && (
+                <Button variant="ghost" className={styles.discardButton} onClick={discardChanges} disabled={saving}>
+                  <RotateCcw size={16} aria-hidden="true" /> Annuler les changements
+                </Button>
+              )}
+              {message && <p className={message.ok ? styles.successMessage : styles.errorMessage} role={message.ok ? 'status' : 'alert'}>{message.ok && <Check size={16} aria-hidden="true" />}{message.text}</p>}
             </Card>
           </aside>
         </div>

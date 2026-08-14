@@ -26,7 +26,6 @@ const AGENT_PAGE_TITLES: Record<string, string> = {
   '/agent/signalements': 'Signalements',
   '/agent/avis': 'Avis',
   '/agent/suppressions': 'Suppressions',
-  '/agent/actualite': 'Accueil public',
   '/agent/blog': 'Blog',
 }
 

@@ -18,10 +18,20 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray
 }
 
+async function getVapidPublicKey(): Promise<string | null> {
+  const bundledKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim()
+  if (bundledKey) return bundledKey
+
+  const response = await fetch('/api/push/public-key', { cache: 'force-cache' }).catch(() => null)
+  if (!response?.ok) return null
+  const data = (await response.json().catch(() => null)) as { publicKey?: unknown } | null
+  return typeof data?.publicKey === 'string' && data.publicKey.trim() ? data.publicKey.trim() : null
+}
+
 export async function subscribeToPush(): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isPushSupported()) return { ok: false, error: 'unsupported' }
 
-  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const vapidPublicKey = await getVapidPublicKey()
   if (!vapidPublicKey) return { ok: false, error: 'not_configured' }
 
   const permission = await Notification.requestPermission()

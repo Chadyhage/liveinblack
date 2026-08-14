@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "check:services": "node scripts/check-production-services.mjs",
     "seed": "node --env-file=.env.local --import tsx scripts/seed-dev.ts",
     "seed:blog": "node --env-file=.env.local --import tsx scripts/seed-blog.ts",
     "seed:bulk": "node --env-file=.env.local --import tsx scripts/seed-bulk.ts",
