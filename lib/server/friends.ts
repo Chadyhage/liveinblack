@@ -77,6 +77,12 @@ function isDuplicateKeyError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000
 }
 
+function isNoTextIndexError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false
+  const e = err as { code?: number }
+  return e.code === 27
+}
+
 // `userAId`/`userBId` sont TOUJOURS stockés triés (ordre lexicographique de
 // la string) — cf. en-tête de Friendship.ts — pour qu'une paire (X,Y) ne
 // puisse jamais exister deux fois dans des sens opposés. Le modèle
@@ -276,7 +282,7 @@ export async function listFriends(caller: FriendCaller): Promise<FriendListResul
   if (friendships.length === 0) return { ok: true, friends: [] }
 
   const otherIds = friendships.map((f) => (f.userAId === caller.id ? f.userBId : f.userAId))
-  const users = await User.find({ _id: { $in: otherIds } }).lean()
+  const users = await User.find({ _id: { $in: otherIds } }, { firstName: 1, lastName: 1, email: 1 }).lean()
   const friends: FriendView[] = users.map((u) => ({
     userId: String(u._id),
     name: displayName(u),
@@ -302,16 +308,49 @@ export async function searchUsers(caller: FriendCaller, query: string): Promise<
   const q = query?.trim()
   if (!q) return { ok: true, users: [] }
 
-  // Échappe les métacaractères regex — une requête utilisateur ne doit jamais
-  // être interprétée comme un pattern (DoS via regex, ou simplement un match
-  // inattendu sur '.', '*', etc.).
+  const projectedFields = { firstName: 1, lastName: 1, email: 1 }
+
+  try {
+    // Recherche scalable via index text dès que la longueur permet d'éviter
+    // un index text sur des tokens trop courts.
+    if (q.length >= 3) {
+      const users = await User.find(
+        {
+          _id: { $ne: caller.id },
+          $text: { $search: q },
+        },
+        {
+          ...projectedFields,
+          score: { $meta: 'textScore' },
+        }
+      )
+        .sort({ score: { $meta: 'textScore' } })
+        .limit(SEARCH_RESULTS_LIMIT)
+        .lean()
+
+      return {
+        ok: true,
+        users: users.map((u) => ({ userId: String(u._id), name: displayName(u), email: u.email })),
+      }
+    }
+  } catch (error) {
+    if (!isNoTextIndexError(error)) {
+      throw error
+    }
+    // Fallback en cas d'index texte encore non synchronisé.
+  }
+
+  // Repli sécurisé: regex échappée, pour éviter les attaques de pattern.
   const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const pattern = new RegExp(escaped, 'i')
 
-  const users = await User.find({
-    _id: { $ne: caller.id },
-    $or: [{ firstName: pattern }, { lastName: pattern }, { email: pattern }],
-  })
+  const users = await User.find(
+    {
+      _id: { $ne: caller.id },
+      $or: [{ firstName: { $regex: pattern } }, { lastName: { $regex: pattern } }, { email: { $regex: pattern } }],
+    },
+    projectedFields
+  )
     .limit(SEARCH_RESULTS_LIMIT)
     .lean()
 
@@ -332,7 +371,7 @@ export async function listMyFriendRequests(caller: FriendCaller): Promise<Friend
   // Batch unique pour résoudre le nom du destinataire de chaque demande
   // envoyée — la vue "reçues" a déjà `fromName` stocké sur le document.
   const toIds = [...new Set(sent.map((r) => r.toId))]
-  const toUsers = toIds.length > 0 ? await User.find({ _id: { $in: toIds } }).lean() : []
+  const toUsers = toIds.length > 0 ? await User.find({ _id: { $in: toIds } }, { firstName: 1, lastName: 1, email: 1 }).lean() : []
   const toNameById = new Map(toUsers.map((u) => [String(u._id), displayName(u)]))
 
   const received_: FriendRequestView[] = received.map((r) => ({

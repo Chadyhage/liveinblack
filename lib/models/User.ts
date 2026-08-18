@@ -157,6 +157,9 @@ const userSchema = new Schema(
   { timestamps: true }
 )
 
+userSchema.index({ firstName: 'text', lastName: 'text', email: 'text' })
+userSchema.index({ lastSeenAt: -1, disabled: 1, activeRole: 1 })
+
 export type UserDoc = InferSchemaType<typeof userSchema>
 export type UserModel = Model<UserDoc>
 

@@ -264,6 +264,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
   )
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const isLoginPage = pathname === '/login'
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1100px)')
@@ -346,7 +347,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           <HeaderSearch />
         </span>
         {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
-        {status !== 'authenticated' && (
+        {status !== 'authenticated' && !isLoginPage && (
           <>
             <Link
               href="/login"
@@ -478,7 +479,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               </Link>
             )
           })}
-          {status !== 'authenticated' && (
+          {status !== 'authenticated' && !isLoginPage && (
             <div className="lb-mobile-auth-actions">
               <Link
                 href="/login"

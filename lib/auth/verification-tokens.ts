@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { MongoDBAdapter } from '@auth/mongodb-adapter'
-import clientPromise from '../db/mongodb-client'
+import { getMongoClient } from '../db/mongodb-client'
 import {
   VERIFICATION_TOKEN_PURPOSES,
   verificationTokenIdentifier,
@@ -12,7 +12,7 @@ import {
 // (déjà branché pour la connexion — voir web/auth.ts). Réutilisé ici en
 // dehors du flux Credentials pour nos propres endpoints (register,
 // verify-email, request/reset password), qui ne passent pas par NextAuth.
-const adapter = MongoDBAdapter(clientPromise)
+const adapter = MongoDBAdapter(getMongoClient)
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
@@ -30,7 +30,7 @@ let ttlIndexPromise: Promise<void> | null = null
 function ensureVerificationTokenTTLIndex(): Promise<void> {
   if (!ttlIndexPromise) {
     ttlIndexPromise = (async () => {
-      const client = await clientPromise
+      const client = await getMongoClient()
       await client
         .db()
         .collection('verification_tokens')
@@ -89,7 +89,7 @@ export async function invalidateVerificationTokens(
   email: string,
   purpose: VerificationTokenPurpose
 ): Promise<void> {
-  const client = await clientPromise
+  const client = await getMongoClient()
   await client
     .db()
     .collection('verification_tokens')
@@ -97,7 +97,7 @@ export async function invalidateVerificationTokens(
 }
 
 export async function invalidateAllVerificationTokens(subjectId: string, email: string): Promise<void> {
-  const client = await clientPromise
+  const client = await getMongoClient()
   await client
     .db()
     .collection('verification_tokens')

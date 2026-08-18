@@ -366,7 +366,13 @@ export default function OrganizerOnboardingWizard({
                 <Label style={labelStyle}>Type d&apos;établissement {requiredMark}</Label>
                 <Select
                   value={form.typeEtablissement}
-                  onChange={(value) => set('typeEtablissement', value)}
+                  onChange={(value) => {
+                    setForm((current) => ({
+                      ...current,
+                      typeEtablissement: value,
+                      ...(value === 'Autre' ? {} : { typeEtablissementCustom: '' }),
+                    }))
+                  }}
                   options={[
                     { value: '', label: '—' },
                     { value: 'Boîte / Club', label: 'Boîte / Club' },
@@ -381,7 +387,19 @@ export default function OrganizerOnboardingWizard({
               <Checkbox
                 label="Itinérant — j'organise dans plusieurs villes / pays"
                 checked={form.itinerant}
-                onChange={(e) => set('itinerant', e.target.checked)}
+                onChange={(e) => {
+                  const itinerant = e.target.checked
+                  setForm((current) => ({
+                    ...current,
+                    itinerant,
+                    // Ne jamais soumettre des valeurs devenues invisibles :
+                    // un aller-retour du mode itinérant ne doit pas laisser
+                    // une ville/capacité obsolète dans le dossier.
+                    ...(itinerant
+                      ? { ville: '', capacite: null, horaires: '' }
+                      : { zonesActivite: [] }),
+                  }))
+                }}
               />
               {!form.itinerant ? (
                 <>

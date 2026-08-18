@@ -1,49 +1,80 @@
 import { NextResponse } from 'next/server'
-import {
-  getCachedSearchPublicEvents as searchPublicEvents,
-  getCachedPublicProviders as listPublicProviders,
-  getCachedPublicOrganizers as listPublicOrganizers,
-} from '@/lib/server/publicCache'
+import { getCachedSearchPublicEvents as searchPublicEvents } from '@/lib/server/publicCache'
+import { getCachedPublicProvidersDirectory } from '@/lib/server/publicCache'
+import { getCachedPublicOrganizersDirectory } from '@/lib/server/publicCache'
 import { normalizeGeoText, getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
+import { createCacheHeaders } from '@/lib/server/cacheHeaders'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
-// Résultats "top N" pour le champ de recherche inline du header
-// (PublicNav.tsx:HeaderSearch) — miroir léger de GET /api/search (qui reste
-// la recherche complète servant /search et l'app mobile), même logique de
-// filtrage mais cap réduit à 3/catégorie pour un dropdown compact. Pas de
-// catégorie "Utilisateurs" : la seule recherche d'utilisateurs existante
-// (lib/server/friends.ts:searchUsers, via GET /api/users/search) exige une
-// session et sert la messagerie (trouver un contact), ce n'est pas un
-// répertoire public — l'exposer ici publierait des comptes hors de ce cadre.
+// Résultats compacts pour la barre de recherche globale.
 const QUICK_CAP = 3
+const MIN_QUERY_LENGTH = 2
 
 export async function GET(req: Request) {
   const query = (new URL(req.url).searchParams.get('q') || '').trim()
   const normalized = normalizeGeoText(query)
 
-  if (!query) return NextResponse.json({ ok: true, events: [], providers: [], organizers: [] })
+  if (query.length < MIN_QUERY_LENGTH) {
+    return NextResponse.json(
+      { ok: true, events: [], providers: [], organizers: [] },
+      { headers: createCacheHeaders({ maxAgeSeconds: 20, staleWhileRevalidateSeconds: 60, shared: true }) }
+    )
+  }
 
-  const [events, providers, organizers] = await Promise.all([
+  const rateLimit = await checkRateLimit({
+    scope: 'public-quick-search',
+    identifier: getRequestIp(req),
+    limit: 400,
+    windowMs: 5 * 60 * 1000,
+  })
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+    )
+  }
+
+  const [events, providerDirectory, organizerDirectory] = await Promise.all([
     searchPublicEvents(query),
-    listPublicProviders(),
-    listPublicOrganizers(),
+    getCachedPublicProvidersDirectory({ q: query, page: 1, pageSize: 8, includeTotal: false }),
+    getCachedPublicOrganizersDirectory({ q: query, page: 1, pageSize: 8, includeTotal: false }),
   ])
+  const normalizedQuery = normalized
 
-  const matchedOrganizers = organizers
-    .filter((o) => {
-      const zones = getEntityRegionIds(o).map(getRegionName)
-      return [o.publicName, o.city, o.country, o.shortDescription, o.longDescription, ...zones].filter(Boolean).map(normalizeGeoText).join(' ').includes(normalized)
-    })
-    .slice(0, QUICK_CAP)
+  const matchOrganizer = (organizer: (typeof organizerDirectory.organizers)[number]) => {
+    const zones = getEntityRegionIds(organizer).map(getRegionName)
+    const haystack = [
+      organizer.publicName,
+      organizer.city,
+      organizer.country,
+      organizer.shortDescription,
+      organizer.longDescription,
+      ...zones,
+    ].filter(Boolean).join(' ')
+    return normalizeGeoText(haystack).includes(normalizedQuery)
+  }
+
+  const matchProvider = (provider: (typeof providerDirectory.providers)[number]) => {
+    const categoryLabels = getProviderCategories(provider).map((c) => c.label)
+    const zones = getEntityRegionIds(provider).map(getRegionName)
+    const haystack = [
+      provider.name,
+      provider.city,
+      provider.location,
+      provider.country,
+      provider.description,
+      ...categoryLabels,
+      ...zones,
+    ].filter(Boolean).join(' ')
+    return normalizeGeoText(haystack).includes(normalizedQuery)
+  }
+
+  const matchedOrganizers = organizerDirectory.organizers.filter(matchOrganizer).slice(0, QUICK_CAP)
     .map((o) => ({ userId: o.userId, slug: o.slug, publicName: o.publicName, city: o.city || null, avatarUrl: o.avatarUrl || null }))
 
-  const matchedProviders = providers
-    .filter((p) => {
-      const categoryLabels = getProviderCategories(p).map((c) => c.label)
-      const zones = getEntityRegionIds(p).map(getRegionName)
-      return [p.name, p.city, p.location, p.country, p.description, ...categoryLabels, ...zones].filter(Boolean).map(normalizeGeoText).join(' ').includes(normalized)
-    })
-    .slice(0, QUICK_CAP)
+  const matchedProviders = providerDirectory.providers.filter(matchProvider).slice(0, QUICK_CAP)
     .map((p) => ({ userId: p.userId, name: p.name, city: p.city || p.location || null, avatarUrl: p.photoUrl || null }))
 
   const matchedEvents = events.slice(0, QUICK_CAP).map((e) => ({
@@ -54,10 +85,13 @@ export async function GET(req: Request) {
     imageUrl: e.imageUrl || null,
   }))
 
-  return NextResponse.json({
-    ok: true,
-    events: matchedEvents,
-    providers: matchedProviders,
-    organizers: matchedOrganizers,
-  })
+  return NextResponse.json(
+    {
+      ok: true,
+      events: matchedEvents,
+      providers: matchedProviders,
+      organizers: matchedOrganizers,
+    },
+    { headers: createCacheHeaders({ maxAgeSeconds: 30, staleWhileRevalidateSeconds: 120, shared: true }) }
+  )
 }

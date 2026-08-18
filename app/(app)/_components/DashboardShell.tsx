@@ -293,7 +293,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         <>
           <Button variant="ghost" className={styles.drawerBackdrop} onClick={closeMobile} aria-label="Fermer le menu" />
           <nav ref={mobileDrawerRef} id="dashboard-mobile-navigation" className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
-            {status === 'authenticated' && session?.user ? <div className={styles.mobileAccount}><AccountMenu user={session.user} /></div> : null}
+            {status === 'authenticated' && session?.user ? <div className={styles.mobileAccount}><AccountMenu user={session.user} menuAlign="left" /></div> : null}
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} mobile onNavigate={closeMobile} />
             <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
           </nav>
@@ -308,7 +308,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
             </Link>
             <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
             <div className={styles.account}>
-              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} /> : null}
+              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="left" /> : null}
             </div>
           </div>
           <nav className={styles.nav} aria-label="Navigation de l’espace privé">

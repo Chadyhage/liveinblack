@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Building2, ChevronRight, CircleUserRound, Search, ShieldCheck, SlidersHorizontal, UserRoundCheck, UsersRound, X } from 'lucide-react'
-import { Button, Card, Input, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
+import { Button, Card, Input, Pagination, SkeletonRow, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
 import styles from './AgentUsersClient.module.css'
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 25
 
 // Port de la section « Comptes » (tab === 'users') de src/pages/AgentPage.jsx
 // (#9 phase agent/admin) — recherche + filtres rôle/statut/en ligne, panneau
@@ -122,6 +122,9 @@ export default function AgentUsersClient() {
   const [users, setUsers] = useState<UserSummary[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState(false)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [stats, setStats] = useState({ online: 0, professionals: 0, attention: 0 })
 
   const [search, setSearch] = useQueryParamState<string>('q', '')
   const [roleFilter, setRoleFilter] = useQueryParamState<RoleFilter>('role', 'all')
@@ -129,7 +132,7 @@ export default function AgentUsersClient() {
   const [onlineOnly, setOnlineOnly] = useState(false)
   const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
   const page = Number(pageParam) || 1
-  const setPage = (p: number) => setPageParam(String(p))
+  const setPage = useCallback((p: number) => setPageParam(String(p)), [setPageParam])
 
   const [userParam, setUserParam] = useQueryParamState<string>('user', '', { push: true })
   const selectedId = userParam || null
@@ -138,6 +141,7 @@ export default function AgentUsersClient() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState(false)
   const [detailRetry, setDetailRetry] = useState(0)
+  const [reloadVersion, setReloadVersion] = useState(0)
 
   const [editField, setEditField] = useState<{ field: EditableField; value: string } | null>(null)
   const [editBusy, setEditBusy] = useState(false)
@@ -151,37 +155,16 @@ export default function AgentUsersClient() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const { pageItems, pageCount } = useMemo(() => pagedSlice(users, page, PAGE_SIZE), [users, page])
-  const visibleStats = useMemo(() => ({
-    total: users.length,
-    online: users.filter((user) => user.online).length,
-    professionals: users.filter((user) => user.role === 'prestataire' || user.role === 'organisateur').length,
-    attention: users.filter((user) => user.disabled || user.status === 'pending' || user.status === 'rejected').length,
-  }), [users])
-
   const queryString = useMemo(() => {
     const params = new URLSearchParams()
     if (search.trim()) params.set('search', search.trim())
     if (roleFilter !== 'all') params.set('role', roleFilter)
     if (statusFilter !== 'all') params.set('status', statusFilter)
     if (onlineOnly) params.set('online', '1')
+    params.set('page', String(page))
+    params.set('pageSize', String(PAGE_SIZE))
     return params.toString()
-  }, [search, roleFilter, statusFilter, onlineOnly])
-
-  async function loadList() {
-    setListLoading(true)
-    setListError(false)
-    try {
-      const res = await fetch(`/api/agent/users${queryString ? `?${queryString}` : ''}`)
-      const data = await res.json()
-      if (!res.ok || !data.ok) throw new Error('load_failed')
-      setUsers(data.users)
-    } catch {
-      setListError(true)
-    } finally {
-      setListLoading(false)
-    }
-  }
+  }, [search, roleFilter, statusFilter, onlineOnly, page])
 
   useEffect(() => {
     let cancelled = false
@@ -192,7 +175,22 @@ export default function AgentUsersClient() {
         const res = await fetch(`/api/agent/users${queryString ? `?${queryString}` : ''}`)
         const data = await res.json()
         if (!res.ok || !data.ok) throw new Error('load_failed')
-        if (!cancelled) setUsers(data.users)
+        if (!cancelled) {
+          const list = Array.isArray(data.users) ? data.users : []
+          setUsers(list)
+          setTotalItems(typeof data.total === 'number' ? data.total : 0)
+          const safeTotalPages = Math.max(1, typeof data.totalPages === 'number' ? data.totalPages : 1)
+          setTotalPages(safeTotalPages)
+          if (page > safeTotalPages) {
+            setPage(safeTotalPages)
+            return
+          }
+          setStats({
+            online: Number(data.stats?.online) || 0,
+            professionals: Number(data.stats?.professionals) || 0,
+            attention: Number(data.stats?.attention) || 0,
+          })
+        }
       } catch {
         if (!cancelled) setListError(true)
       } finally {
@@ -203,7 +201,11 @@ export default function AgentUsersClient() {
     return () => {
       cancelled = true
     }
-  }, [queryString])
+  }, [queryString, reloadVersion, page, setPage])
+
+  function triggerReload() {
+    setReloadVersion((value) => value + 1)
+  }
 
   const closeDetail = useCallback(() => {
     setSelectedId(null)
@@ -257,7 +259,7 @@ export default function AgentUsersClient() {
       }
       showToast('Email vérifié — le compte peut maintenant se connecter', 'success')
       setDetail(data.user)
-      await loadList()
+      triggerReload()
     } finally {
       setActionBusy(false)
     }
@@ -316,7 +318,7 @@ export default function AgentUsersClient() {
       showToast(disabled ? 'Compte suspendu — connexion désactivée' : 'Compte réactivé — connexion rétablie', 'success')
       setDetail(data.user)
       setConfirmDisable(false)
-      await loadList()
+      triggerReload()
     } finally {
       setActionBusy(false)
     }
@@ -352,7 +354,7 @@ export default function AgentUsersClient() {
           : 'Modification enregistrée',
         'success'
       )
-      await loadList()
+      triggerReload()
     } finally {
       setEditBusy(false)
     }
@@ -364,17 +366,17 @@ export default function AgentUsersClient() {
         {listError && (
           <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
+            <Button variant="secondary" onClick={triggerReload} style={{ fontSize: 12.5 }}>
               Recharger
             </Button>
           </Card>
         )}
 
         <section className={styles.statGrid} aria-label="Aperçu des résultats">
-          <Card className={styles.statCard}><span className={styles.statIcon}><UsersRound size={19} /></span><div><strong>{visibleStats.total}</strong><span>Résultats visibles</span></div></Card>
-          <Card className={styles.statCard}><span className={`${styles.statIcon} ${styles.onlineIcon}`}><UserRoundCheck size={19} /></span><div><strong>{visibleStats.online}</strong><span>En ligne</span></div></Card>
-          <Card className={styles.statCard}><span className={styles.statIcon}><Building2 size={19} /></span><div><strong>{visibleStats.professionals}</strong><span>Profils professionnels</span></div></Card>
-          <Card className={`${styles.statCard} ${visibleStats.attention ? styles.attentionCard : ''}`}><span className={styles.statIcon}><ShieldCheck size={19} /></span><div><strong>{visibleStats.attention}</strong><span>À examiner</span></div></Card>
+          <Card className={styles.statCard}><span className={styles.statIcon}><UsersRound size={19} /></span><div><strong>{totalItems}</strong><span>Résultats visibles</span></div></Card>
+          <Card className={styles.statCard}><span className={`${styles.statIcon} ${styles.onlineIcon}`}><UserRoundCheck size={19} /></span><div><strong>{stats.online}</strong><span>En ligne</span></div></Card>
+          <Card className={styles.statCard}><span className={styles.statIcon}><Building2 size={19} /></span><div><strong>{stats.professionals}</strong><span>Profils professionnels</span></div></Card>
+          <Card className={`${styles.statCard} ${stats.attention ? styles.attentionCard : ''}`}><span className={styles.statIcon}><ShieldCheck size={19} /></span><div><strong>{stats.attention}</strong><span>À examiner</span></div></Card>
         </section>
 
         <Card className={styles.controlPanel}>
@@ -405,7 +407,7 @@ export default function AgentUsersClient() {
           <EmptyState title="Aucun compte trouvé" description="Aucun compte ne correspond aux filtres actuels." />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {pageItems.map((u) => {
+            {users.map((u) => {
               const st = statusLabel(u)
               return (
                 <Button
@@ -439,7 +441,7 @@ export default function AgentUsersClient() {
           </div>
         )}
 
-        <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={users.length} pageSize={PAGE_SIZE} />
+        <Pagination page={page} pageCount={totalPages} onPageChange={setPage} totalItems={totalItems} pageSize={PAGE_SIZE} />
       </div>
 
       {selectedId && (

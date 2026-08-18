@@ -1,7 +1,7 @@
 // Notification interne à l'équipe LIVEINBLACK lors d'une soumission du
 // formulaire public /contact.
 import type { Email } from '../types'
-import { DEFAULT_SITE } from '../theme'
+import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
 import { wrap, heading, paragraph, note, escapeHtml } from '../layout'
 
 export function contactRequestEmail(
@@ -14,8 +14,8 @@ export function contactRequestEmail(
   const messageHtml = escapeHtml(data.message).replace(/\n/g, '<br/>')
   const inner = `
     ${heading('Nouveau message de contact')}
-    ${paragraph(`<strong style="color:#ffffff;">De :</strong> ${name} (<a href="mailto:${email}" style="color:#b8f34a;">${email}</a>)`)}
-    ${paragraph(`<strong style="color:#ffffff;">Sujet :</strong> ${subjectLine}`)}
+    ${paragraph(`<strong style="color:${C.text};">De :</strong> ${name} (<a href="mailto:${email}" style="color:${C.primaryText};">${email}</a>)`)}
+    ${paragraph(`<strong style="color:${C.text};">Sujet :</strong> ${subjectLine}`)}
     ${paragraph(messageHtml)}
     ${note(`Envoyé depuis le formulaire de contact sur ${site}/contact.`)}
   `

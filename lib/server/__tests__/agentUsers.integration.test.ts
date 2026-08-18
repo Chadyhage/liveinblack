@@ -63,33 +63,35 @@ describeIntegration('agentUsers (intégration, vraie base) — #9 phase agent/ad
       await seedUser({ email: 'b@test.com' })
 
       const results = await listUsersForAgent()
-      expect(results).toHaveLength(2)
+      expect(results.users).toHaveLength(2)
+      expect(results.total).toBe(2)
+      expect(results.totalPages).toBe(1)
     })
 
     it('filtre par recherche sur nom/email/téléphone', async () => {
       await seedUser({ email: 'alice@test.com', firstName: 'Alice' })
       await seedUser({ email: 'bob@test.com', firstName: 'Bob' })
 
-      expect(await listUsersForAgent({ search: 'alice' })).toHaveLength(1)
-      expect(await listUsersForAgent({ search: 'introuvable' })).toHaveLength(0)
+      expect((await listUsersForAgent({ search: 'alice' })).users).toHaveLength(1)
+      expect((await listUsersForAgent({ search: 'introuvable' })).users).toHaveLength(0)
     })
 
     it('filtre par rôle', async () => {
       await seedUser({ activeRole: 'client', roles: ['client'] })
       await seedUser({ activeRole: 'organisateur', roles: ['organisateur'], orgStatus: 'active' })
 
-      expect(await listUsersForAgent({ role: 'organisateur' })).toHaveLength(1)
-      expect(await listUsersForAgent({ role: 'client' })).toHaveLength(1)
+      expect((await listUsersForAgent({ role: 'organisateur' })).users).toHaveLength(1)
+      expect((await listUsersForAgent({ role: 'client' })).users).toHaveLength(1)
     })
 
     it('filtre par statut, y compris "disabled" (indépendant du champ status)', async () => {
       await seedUser({ status: 'pending' })
       const disabledUser = await seedUser({ status: 'active', disabled: true })
 
-      expect(await listUsersForAgent({ status: 'pending' })).toHaveLength(1)
+      expect((await listUsersForAgent({ status: 'pending' })).users).toHaveLength(1)
       const disabledResults = await listUsersForAgent({ status: 'disabled' })
-      expect(disabledResults).toHaveLength(1)
-      expect(disabledResults[0].id).toBe(String(disabledUser._id))
+      expect(disabledResults.users).toHaveLength(1)
+      expect(disabledResults.users[0].id).toBe(String(disabledUser._id))
     })
 
     it('filtre "en ligne" sur lastSeenAt récent', async () => {
@@ -97,8 +99,23 @@ describeIntegration('agentUsers (intégration, vraie base) — #9 phase agent/ad
       await seedUser({ lastSeenAt: new Date(Date.now() - 60 * 60 * 1000) })
 
       const online = await listUsersForAgent({ onlineOnly: true })
-      expect(online).toHaveLength(1)
-      expect(online[0].online).toBe(true)
+      expect(online.users).toHaveLength(1)
+      expect(online.users[0].online).toBe(true)
+    })
+
+    it('implémente la pagination par page et taille de page', async () => {
+      for (let index = 0; index < 40; index += 1) await seedUser({ email: `u${index}@test.com` })
+
+      const firstPage = await listUsersForAgent({ page: 1, pageSize: 15 })
+      const secondPage = await listUsersForAgent({ page: 2, pageSize: 15 })
+
+      expect(firstPage.users).toHaveLength(15)
+      expect(secondPage.users).toHaveLength(15)
+      expect(firstPage.page).toBe(1)
+      expect(secondPage.page).toBe(2)
+      expect(firstPage.total).toBe(40)
+      expect(secondPage.totalPages).toBe(3)
+      expect(firstPage.users[0].id).not.toBe(secondPage.users[0].id)
     })
 
     it('affiche le nom commercial (profil organisateur/prestataire) comme displayName', async () => {
@@ -106,8 +123,8 @@ describeIntegration('agentUsers (intégration, vraie base) — #9 phase agent/ad
       await OrganizerProfile.create({ userId: String(org._id), publicName: 'Club Neon', slug: 'club-neon' })
 
       const results = await listUsersForAgent({ role: 'organisateur' })
-      expect(results[0].displayName).toBe('Club Neon')
-      expect(results[0].personalName).toBe('Prenom Nom')
+      expect(results.users[0].displayName).toBe('Club Neon')
+      expect(results.users[0].personalName).toBe('Prenom Nom')
     })
   })
 

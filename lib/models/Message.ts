@@ -104,6 +104,12 @@ const messageSchema = new Schema(
 )
 
 messageSchema.index({ conversationId: 1, createdAt: -1 })
+messageSchema.index({ conversationId: 1, senderId: 1, createdAt: -1 })
+messageSchema.index({ conversationId: 1, deletedForUserIds: 1, _id: -1 })
+// Une entrée MongoDB ne peut pas indexer deux tableaux en parallèle.
+// L'index ci-dessous accélère la vue "Importants" par utilisateur et
+// conversation ; deletedForUserIds reste un post-filtre après cette sélection.
+messageSchema.index({ starredByUserIds: 1, conversationId: 1, _id: -1 })
 
 export type MessageDoc = InferSchemaType<typeof messageSchema>
 export type MessageModel = Model<MessageDoc>

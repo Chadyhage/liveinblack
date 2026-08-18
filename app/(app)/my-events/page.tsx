@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { canCreateEvent, getCreateEventBlockedReason } from '@/lib/server/permissions'
-import { listMyOrganizerEvents } from '@/lib/server/organizerEvents'
+import { getInitialOrganizerEventRegion, listMyOrganizerEvents } from '@/lib/server/organizerEvents'
 import { getPayoutStatus } from '@/lib/server/organizerPayouts'
 import { listPayoutMomos } from '@/lib/server/organizerPayoutMomos'
 import MesEvenementsClient from './MesEvenementsClient'
@@ -76,10 +76,11 @@ export default async function MesEvenementsPage() {
     )
   }
 
-  const [eventsResult, payoutStatusResult, momosResult] = await Promise.all([
+  const [eventsResult, payoutStatusResult, momosResult, initialRegion] = await Promise.all([
     listMyOrganizerEvents({ id: session.user.id }),
     getPayoutStatus({ id: session.user.id }),
     listPayoutMomos({ id: session.user.id }),
+    getInitialOrganizerEventRegion({ id: session.user.id }),
   ])
 
   return (
@@ -87,6 +88,7 @@ export default async function MesEvenementsPage() {
       initialEvents={eventsResult.events}
       initialStripeChargesEnabled={payoutStatusResult.ok ? payoutStatusResult.view.chargesEnabled : false}
       initialMomos={momosResult.ok ? momosResult.momos : {}}
+      initialRegion={initialRegion}
     />
   )
 }

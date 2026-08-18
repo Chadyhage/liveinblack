@@ -24,6 +24,11 @@ const friendRequestSchema = new Schema(
 // (accepted/declined/cancelled) ne bloque jamais une nouvelle demande future.
 friendRequestSchema.index({ fromId: 1, toId: 1 }, { unique: true, partialFilterExpression: { status: 'pending' } })
 
+// Optimise les flux d'acceptation, refus, annulation et d'affichage de
+// file d'attente côté utilisateur.
+friendRequestSchema.index({ fromId: 1, status: 1, createdAt: -1 })
+friendRequestSchema.index({ toId: 1, status: 1, createdAt: -1 })
+
 export type FriendRequestDoc = InferSchemaType<typeof friendRequestSchema>
 export type FriendRequestModel = Model<FriendRequestDoc>
 

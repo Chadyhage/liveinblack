@@ -23,10 +23,8 @@ import CommanderClient, { type MenuItemView, type OrderItem } from './CommanderC
 // app/(public)/events/[id]/page.tsx.
 export async function generateMetadata({ params }: { params: Promise<{ eventId: string; ticketCode: string }> }): Promise<Metadata> {
   const { eventId } = await params
-  await getDb()
-  const event = mongoose.isValidObjectId(eventId) ? await Event.findById(eventId).select('name').lean() : null
   return {
-    title: event ? `Commander — ${event.name} — LIVEINBLACK` : 'Commander — LIVEINBLACK',
+    title: mongoose.isValidObjectId(eventId) ? `Commander — événement ${eventId} — LIVEINBLACK` : 'Commander — LIVEINBLACK',
     robots: { index: false, follow: false },
   }
 }

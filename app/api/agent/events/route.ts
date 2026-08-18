@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agentGuard'
 import { listEventsForAgent, type AgentEventStatus } from '@/lib/server/agentEvents'
+import { parsePage, parsePageSize } from '@/lib/shared/pagination'
 
 const STATUSES: AgentEventStatus[] = ['upcoming', 'past', 'cancelled']
 
@@ -12,9 +13,11 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   const statusParam = url.searchParams.get('status')
   const search = url.searchParams.get('search') ?? undefined
+  const page = parsePage(url.searchParams.get('page'), 1, { min: 1, max: 4000 })
+  const pageSize = parsePageSize(url.searchParams.get('pageSize'), 15, { min: 8, max: 50 })
 
   const status = statusParam === 'all' || (statusParam && STATUSES.includes(statusParam as AgentEventStatus)) ? (statusParam as 'all' | AgentEventStatus) : undefined
 
-  const events = await listEventsForAgent({ status, search })
-  return NextResponse.json({ ok: true, events })
+  const events = await listEventsForAgent({ status, search, page, pageSize })
+  return NextResponse.json({ ok: true, ...events })
 }

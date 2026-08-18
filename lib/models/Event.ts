@@ -150,7 +150,15 @@ const eventSchema = new Schema(
 )
 
 eventSchema.index({ date: 1, cancelled: 1, isPrivate: 1 })
+eventSchema.index({ organizerId: 1, cancelled: 1, date: 1, time: 1 })
+eventSchema.index({ organizerId: 1, cancelled: 1, date: -1, publishAt: 1 })
+eventSchema.index({ date: 1, cancelled: 1, category: 1, region: 1, isDemo: 1, publishAt: 1 })
 eventSchema.index({ name: 'text', city: 'text', category: 'text', subtitle: 'text', description: 'text' })
+eventSchema.index({ cancelled: 1, isDemo: 1, publishAt: 1, date: 1 })
+eventSchema.index({ cancelled: 1, isDemo: 1, publishAt: 1, date: 1, category: 1, region: 1 })
+eventSchema.index({ organizerId: 1, cancelled: 1, isDemo: 1, publishAt: 1, date: 1, closingDate: 1 })
+eventSchema.index({ cancelled: 1, isDemo: 1, isPrivate: 1, publishAt: 1, date: 1, closingDate: 1 })
+eventSchema.index({ isPrivate: 1, cancelled: 1, isDemo: 1, publishAt: 1, date: 1, closingDate: 1, organizerId: 1, time: 1 })
 
 export type EventDoc = InferSchemaType<typeof eventSchema>
 export type EventModel = Model<EventDoc>

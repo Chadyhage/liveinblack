@@ -16,10 +16,8 @@ import AgentSalesClient, { type PlaceView } from './AgentSalesClient'
 // initiale de les garder distincts.
 export async function generateMetadata({ params }: { params: Promise<{ eventId: string }> }): Promise<Metadata> {
   const { eventId } = await params
-  await getDb()
-  const event = mongoose.isValidObjectId(eventId) ? await Event.findById(eventId).select('name').lean() : null
   return {
-    title: event ? `Vente sur place — ${event.name} — LIVEINBLACK` : 'Vente sur place — LIVEINBLACK',
+    title: mongoose.isValidObjectId(eventId) ? `Vente sur place — événement ${eventId} — LIVEINBLACK` : 'Vente sur place — LIVEINBLACK',
     robots: { index: false, follow: false },
   }
 }

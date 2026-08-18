@@ -3,7 +3,7 @@ import Credentials from 'next-auth/providers/credentials'
 import { MongoDBAdapter } from '@auth/mongodb-adapter'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
-import clientPromise from './lib/db/mongodb-client'
+import { getMongoClient } from './lib/db/mongodb-client'
 import { getDb } from './lib/db/mongoose'
 import User from './lib/models/User'
 import type { Role, AccountStatus, RoleApprovalStatus } from './lib/server/permissions'
@@ -22,7 +22,7 @@ const MAX_KNOWN_DEVICES = 10
 // (phase profil/onboarding) ; il ne gère PAS la connexion Credentials elle-même,
 // qui est entièrement portée par notre propre collection `users` (lib/models/User.ts).
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(getMongoClient),
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',

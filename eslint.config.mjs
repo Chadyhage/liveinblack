@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".design-sync/**",
     // Prototype historique gelé et artefacts d'audit locaux.
     "old/**",
     "tmp/**",

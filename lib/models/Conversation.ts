@@ -66,6 +66,10 @@ const conversationSchema = new Schema(
 )
 
 conversationSchema.index({ participantIds: 1, updatedAt: -1 })
+// MongoDB interdit un index composé qui contient plusieurs champs tableaux
+// ("parallel arrays"). participantIds est le prédicat sélectif commun aux
+// lectures de conversations ; hiddenByUserIds/pinnedByUserIds sont filtrés ou
+// projetés après cette première sélection.
 
 export type ConversationDoc = InferSchemaType<typeof conversationSchema>
 export type ConversationModel = Model<ConversationDoc>

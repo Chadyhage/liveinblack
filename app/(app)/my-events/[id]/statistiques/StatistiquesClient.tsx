@@ -179,7 +179,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                 <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }}>{stats.assignedTickets}</p>
               </Card>
               <Card style={{ padding: '14px 16px' }}>
-                <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Revenus totaux</p>
+                <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billetterie + consommations</p>
                 <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: '0 0 8px' }}>{formatMoney(stats.totalEstimatedRevenue, view.event.currency)}</p>
                 <div style={{ display: 'grid', gap: 4, paddingLeft: 10, borderLeft: '2px solid var(--border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>

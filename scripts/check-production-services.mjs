@@ -54,13 +54,27 @@ const checks = [
 ]
 
 let failed = false
-for (const [name, check] of checks) {
-  try {
-    await withTimeout(check())
-    console.log(`${name}: opérationnel`)
-  } catch {
-    failed = true
-    console.log(`${name}: échec`)
+const results = await Promise.all(
+  checks.map(async ([name, check]) => {
+    const started = Date.now()
+    try {
+      await withTimeout(check())
+      return { name, ok: true, ms: Date.now() - started }
+    } catch (error) {
+      failed = true
+      const reason = error instanceof Error && error.message === 'missing'
+        ? 'configuration absente'
+        : 'connexion ou authentification refusée'
+      return { name, ok: false, reason, ms: Date.now() - started }
+    }
+  })
+)
+
+for (const item of results) {
+  if (item.ok) {
+    console.log(`${item.name}: opérationnel (${item.ms}ms)`)
+  } else {
+    console.log(`${item.name}: échec — ${item.reason} (${item.ms}ms)`)
   }
 }
 

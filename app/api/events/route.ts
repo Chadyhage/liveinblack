@@ -1,26 +1,77 @@
 import { NextResponse } from 'next/server'
-import {
-  getCachedPublicEvents as listPublicEvents,
-  getCachedSearchPublicEvents as searchPublicEvents,
-  getCachedBoostedEventIds as getBoostedEventIds,
-} from '@/lib/server/publicCache'
+import { getBoostedEventIds } from '@/lib/server/boosts'
+import { searchPublicEvents } from '@/lib/server/events'
+import { getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
+import { createCacheHeaders } from '@/lib/server/cacheHeaders'
+import { parsePage, parsePageSize } from '@/lib/shared/pagination'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
-// Route JSON publique de listing d'événements — n'existait pas jusqu'ici car
-// app/(public)/events/page.tsx appelle lib/server/events.ts directement
-// depuis un composant serveur (pas besoin de hop API pour le web). LIB_Mobile
-// (React Native) n'a pas accès aux composants serveur Next.js : cette route
-// lui donne le même accès en JSON, sans dupliquer la moindre règle métier
-// (réutilise listPublicEvents/searchPublicEvents tels quels).
+// Route JSON publique de listing d'événements — version paginée.
 export async function GET(req: Request) {
-  const q = new URL(req.url).searchParams.get('q')?.trim() || ''
-  const [events, boostedIds] = await Promise.all([
-    q ? searchPublicEvents(q) : listPublicEvents(),
-    getBoostedEventIds(),
-  ])
-  // `boosted` en pass-through pur pour la rangée "À la une" côté mobile
-  // (miroir de CategoryRails dans app/(public)/events/page.tsx) — le calcul
-  // du boost lui-même reste entièrement dans lib/server/boosts.ts, jamais
-  // dupliqué ici.
-  const withBoosted = events.map((e) => ({ ...e, boosted: boostedIds.has(e.id) }))
-  return NextResponse.json({ ok: true, events: withBoosted })
+  const url = new URL(req.url)
+  const q = (url.searchParams.get('q') || '').trim()
+  const page = parsePage(url.searchParams.get('page'), 1, { min: 1, max: 4_000 })
+  const pageSize = parsePageSize(url.searchParams.get('pageSize'), 24, { min: 12, max: 96 })
+  const safePageSize = pageSize
+  const category = (url.searchParams.get('category') || '').trim()
+  const region = (url.searchParams.get('region') || '').trim()
+
+  if (q && q.length < 2) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'Le terme de recherche doit contenir au moins 2 caractères.',
+      },
+      { status: 400 }
+    )
+  }
+
+  const rateLimit = await checkRateLimit({
+    scope: 'public-events-api',
+    identifier: getRequestIp(req),
+    limit: 240,
+    windowMs: 60 * 1000,
+  })
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { ...createCacheHeaders({ maxAgeSeconds: 5, shared: true }), 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+    )
+  }
+
+  if (q) {
+    const [events, boostedIds] = await Promise.all([
+      searchPublicEvents(q),
+      getBoostedEventIds(),
+    ])
+    const mappedEvents = events.map((e) => ({
+      ...e,
+      boosted: boostedIds.has(e.id),
+    }))
+    return NextResponse.json({ ok: true, events: mappedEvents }, { headers: createCacheHeaders({ maxAgeSeconds: 45, staleWhileRevalidateSeconds: 180, shared: true }) })
+  }
+
+    const [eventsPage, boostedIds] = await Promise.all([
+      getCachedPublicEventsDirectory({
+        q: '',
+        category: category || undefined,
+        region: region || undefined,
+        page,
+        pageSize: safePageSize,
+        includeTotal: true,
+      }),
+      getBoostedEventIds(),
+    ])
+
+  const withBoosted = eventsPage.events.map((e) => ({ ...e, boosted: boostedIds.has(e.id) }))
+
+  return NextResponse.json({
+    ok: true,
+    events: withBoosted,
+    page: eventsPage.page,
+    pageSize: eventsPage.pageSize,
+    total: eventsPage.total,
+    totalPages: eventsPage.totalPages,
+  }, { headers: createCacheHeaders({ maxAgeSeconds: 45, staleWhileRevalidateSeconds: 180, shared: true }) })
 }

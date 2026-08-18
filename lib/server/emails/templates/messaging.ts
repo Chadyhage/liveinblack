@@ -4,14 +4,14 @@
 // mécanisme de throttle/debounce (ex. "au plus 1 digest par conversation par
 // heure") avant d'être activé, pour ne pas spammer.
 import type { Email } from '../types'
-import { DEFAULT_SITE } from '../theme'
+import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
 import { wrap, heading, paragraph, button, escapeHtml } from '../layout'
 
 export function newMessageDigestEmail(senderName: string, preview: string, conversationUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading('Nouveau message')}
-    ${paragraph(`<strong style="color:#fff;">${escapeHtml(senderName)}</strong> t'a envoyé un message :`)}
-    ${paragraph(`<em style="color:rgba(255,255,255,0.7);">"${escapeHtml(preview)}"</em>`)}
+    ${paragraph(`<strong style="color:${C.text};">${escapeHtml(senderName)}</strong> t'a envoyé un message :`)}
+    ${paragraph(`<em style="color:${C.textMuted};">"${escapeHtml(preview)}"</em>`)}
     ${button(conversationUrl, 'Répondre')}
   `
   return { subject: `${senderName} t'a envoyé un message`, html: wrap(inner, { site, preheader: preview }) }
@@ -20,7 +20,7 @@ export function newMessageDigestEmail(senderName: string, preview: string, conve
 export function addedToGroupEmail(groupName: string, addedByName: string, groupUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading('Tu as été ajouté à un groupe')}
-    ${paragraph(`<strong style="color:#fff;">${escapeHtml(addedByName)}</strong> t'a ajouté au groupe <strong style="color:#fff;">${escapeHtml(groupName)}</strong>.`)}
+    ${paragraph(`<strong style="color:${C.text};">${escapeHtml(addedByName)}</strong> t'a ajouté au groupe <strong style="color:${C.text};">${escapeHtml(groupName)}</strong>.`)}
     ${button(groupUrl, 'Voir le groupe')}
   `
   return {

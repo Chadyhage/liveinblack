@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { searchSongs } from '@/lib/server/playlist'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
+
+const MIN_QUERY_LENGTH = 2
 
 // Proxy serveur de la recherche iTunes (voir lib/server/playlist.ts —
 // searchSongs) : le client ne parle jamais directement à itunes.apple.com,
@@ -16,7 +19,25 @@ export async function GET(req: Request, { params }: { params: Promise<{ eventId:
   // pour respecter la convention Next.js 16 (params async) même sans s'en
   // servir.
   await params
-  const query = new URL(req.url).searchParams.get('q') ?? ''
+  const query = (new URL(req.url).searchParams.get('q') || '').trim()
+
+  if (query.length < MIN_QUERY_LENGTH) {
+    return NextResponse.json({ ok: true, results: [] })
+  }
+
+  const rateLimit = await checkRateLimit({
+    scope: 'playlist-search',
+    identifier: `${session.user.id}:${getRequestIp(req)}`,
+    limit: 60,
+    windowMs: 15 * 60 * 1000,
+  })
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+    )
+  }
 
   const result = await searchSongs({ id: session.user.id, roles: session.user.roles }, { query })
 

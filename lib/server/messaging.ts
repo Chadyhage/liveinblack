@@ -93,6 +93,18 @@ export interface ConversationListView extends ConversationView {
   myGroupMute: { untilAt: string | null } | null
 }
 
+export interface ConversationListInput {
+  page?: number
+  pageSize?: number
+}
+
+export interface ConversationListPageMeta {
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
+}
+
 export interface MessagePollOptionView {
   id: string
   text: string
@@ -418,49 +430,87 @@ export async function createDirectConversation(caller: MessagingCaller, input: C
 
 // ─────────────────────────── listMyConversations ──────────────────────────
 
-export type ConversationListResult = ErrResult | { ok: true; conversations: ConversationListView[] }
+export type ConversationListResult =
+  | ErrResult
+  | ({ ok: true; conversations: ConversationListView[] } & ConversationListPageMeta)
 
-export async function listMyConversations(caller: MessagingCaller): Promise<ConversationListResult> {
+export async function listMyConversations(caller: MessagingCaller, input: ConversationListInput = {}): Promise<ConversationListResult> {
   await getDb()
 
-  const all = (await Conversation.find({ participantIds: caller.id }).lean()) as unknown as ConversationSource[]
-  // Masquage PERSONNEL (hideConversationForMe) — jamais visible pour
-  // l'appelant qui l'a masquée, mais n'affecte en rien les autres
-  // participants (voir hideConversationForMe plus bas).
-  const conversations = all.filter((c) => !(c.hiddenByUserIds ?? []).includes(caller.id))
+  const page = Number.isFinite(Number(input.page)) ? Math.max(1, Math.floor(Number(input.page))) : 1
+  const pageSize = Math.min(50, Math.max(1, Math.floor(Number(input.pageSize) || 20)))
+  const skip = (page - 1) * pageSize
 
-  // Tri : épinglées (pour MOI) d'abord, puis par lastMessageAt décroissant,
-  // jamais-messagé en dernier (traité comme "-Infinity" pour le tri, jamais
-  // comme "maintenant").
-  const sorted = [...conversations].sort((a, b) => {
-    const aPinned = (a.pinnedByUserIds ?? []).includes(caller.id)
-    const bPinned = (b.pinnedByUserIds ?? []).includes(caller.id)
-    if (aPinned !== bPinned) return aPinned ? -1 : 1
-    const at = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : -Infinity
-    const bt = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : -Infinity
-    return bt - at
-  })
+  const [aggr] = await Conversation.aggregate([
+    { $match: { participantIds: caller.id, hiddenByUserIds: { $ne: caller.id } } },
+    {
+      $addFields: {
+        _pinnedForMe: {
+          $cond: [
+            { $in: [caller.id, { $ifNull: ['$pinnedByUserIds', []] }] },
+            1,
+            0,
+          ],
+        },
+        _sortDate: { $ifNull: ['$lastMessageAt', '$createdAt'] },
+      },
+    },
+    { $sort: { _pinnedForMe: -1, _sortDate: -1 } },
+    {
+      $project: {
+        type: 1,
+        participantIds: 1,
+        members: 1,
+        name: 1,
+        avatar: 1,
+        mutedUserIds: 1,
+        lastMessage: 1,
+        lastMessageAt: 1,
+        lastSenderId: 1,
+        pinnedMessageId: 1,
+        createdAt: 1,
+        lastReadAt: 1,
+        pinnedByUserIds: 1,
+        mutedConversationByUserIds: 1,
+      },
+    },
+    {
+      $facet: {
+        items: [{ $skip: skip }, { $limit: pageSize }],
+        total: [{ $count: 'value' }],
+      },
+    },
+  ])
+
+  const conversations = (aggr?.items ?? []) as unknown as ConversationSource[]
+  const total = Number(aggr?.total?.[0]?.value ?? 0)
+  const hasMore = skip + conversations.length < total
 
   // Une seule requête User pour TOUTES les conversations directes de la
   // liste (jamais un User.find par conversation) — évite un N+1.
-  const directParticipantIds = Array.from(
-    new Set(sorted.filter((c) => c.type === 'direct').flatMap((c) => c.participantIds ?? []))
-  )
+  const directParticipantIds = Array.from(new Set(conversations.filter((c) => c.type === 'direct').flatMap((c) => c.participantIds ?? [])))
   const directNames = await resolveDirectMemberNames(directParticipantIds)
 
+  const unreadOrs = conversations.map((conv) => {
+    const lastReadAt = conv.lastReadAt ?? {}
+    const lastReadForCaller = lastReadAt[caller.id] ?? conv.createdAt
+    return {
+      conversationId: String(conv._id),
+      senderId: { $ne: caller.id },
+      deletedForUserIds: { $ne: caller.id },
+      createdAt: { $gt: new Date(lastReadForCaller) },
+    }
+  })
+
+  const unreadRows = unreadOrs.length
+    ? ((await Message.aggregate([{ $match: { $or: unreadOrs } }, { $group: { _id: '$conversationId', unreadCount: { $sum: 1 } } }])) as unknown as
+        { _id: string; unreadCount: number }[])
+    : []
+
+  const unreadByConversation = new Map(unreadRows.map((row) => [String(row._id), row.unreadCount]))
+
   const views = await Promise.all(
-    sorted.map(async (conv) => {
-      const lastReadAt = conv.lastReadAt ?? {}
-      // Aucune lecture connue pour l'appelant → tout message d'un AUTRE
-      // participant compte comme non lu (createdAt de la conversation comme
-      // plancher), jamais 0 par défaut.
-      const lastReadForCaller = lastReadAt[caller.id] ?? conv.createdAt
-      const unreadCount = await Message.countDocuments({
-        conversationId: String(conv._id),
-        senderId: { $ne: caller.id },
-        createdAt: { $gt: new Date(lastReadForCaller) },
-        deletedForUserIds: { $ne: caller.id },
-      })
+    conversations.map(async (conv) => {
       const view = toConversationView(conv)
       if (view.type === 'direct') {
         view.members = view.participantIds.map((id) => ({ userId: id, name: directNames.get(id) ?? '', role: 'member' as const }))
@@ -473,7 +523,7 @@ export async function listMyConversations(caller: MessagingCaller): Promise<Conv
       const myMuteStatus = view.type === 'group' ? resolveMemberMuteStatus(conv, caller.id) : { muted: false, untilAtMs: null }
       return {
         ...view,
-        unreadCount,
+        unreadCount: unreadByConversation.get(String(conv._id)) ?? 0,
         pinned: (conv.pinnedByUserIds ?? []).includes(caller.id),
         mutedForMe: (conv.mutedConversationByUserIds ?? []).includes(caller.id),
         myGroupMute: myMuteStatus.muted ? { untilAt: myMuteStatus.untilAtMs === null ? null : new Date(myMuteStatus.untilAtMs).toISOString() } : null,
@@ -481,7 +531,14 @@ export async function listMyConversations(caller: MessagingCaller): Promise<Conv
     })
   )
 
-  return { ok: true, conversations: views }
+  return {
+    ok: true,
+    conversations: views,
+    total,
+    page,
+    pageSize,
+    hasMore,
+  }
 }
 
 // ────────────────────────────── getMessages ───────────────────────────────
@@ -530,6 +587,7 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
   // pour livrer le tableau du plus ancien au plus récent (ordre "prêt à
   // afficher" pour un fil de discussion).
   const docs = (await Message.find(query)
+    .select('conversationId senderId senderName type content poll reactions readBy deletedForAll pinned replyToMessageId createdAt editedAt starredByUserIds forwardedFrom')
     .sort({ _id: -1 })
     .limit(limit + 1)
     .lean()) as unknown as MessageSource[]
@@ -620,8 +678,9 @@ export async function assertCanSendInConversation(
     // que la conversation existe déjà (voir en-tête de fichier, amélioration #3).
     const otherId = conversation.participantIds.find((id) => id !== callerId)
     if (otherId) {
-      const [callerUser, otherUser] = await Promise.all([User.findById(callerId).lean(), User.findById(otherId).lean()])
-      const blocked = Boolean(callerUser?.blockedUserIds?.includes(otherId)) || Boolean(otherUser?.blockedUserIds?.includes(callerId))
+      const users = await User.find({ _id: { $in: [callerId, otherId] } }).select('_id blockedUserIds').lean()
+      const byId = new Map(users.map((user) => [String(user._id), user.blockedUserIds ?? []]))
+      const blocked = (byId.get(callerId) || []).includes(otherId) || (byId.get(otherId) || []).includes(callerId)
       if (blocked) return { ok: false, status: 403, error: 'blocked' }
     }
   }
@@ -1280,37 +1339,90 @@ export async function unstarMessage(caller: MessagingCaller, input: MessageIdInp
   return { ok: true, starred: false }
 }
 
-export type ListStarredResult = ErrResult | { ok: true; messages: MessageView[] }
+export type ListStarredResult = ErrResult | {
+  ok: true
+  messages: MessageView[]
+  page: number
+  pageSize: number
+  total: number
+  hasMore: boolean
+}
+
+type ListStarredMessagesParams = {
+  page?: number
+  pageSize?: number
+}
 
 // Traverse TOUTES les conversations de l'appelant (jamais une seule) — la
 // vue "Importants" du legacy est transversale à toute la messagerie.
-export async function listStarredMessages(caller: MessagingCaller): Promise<ListStarredResult> {
+export async function listStarredMessages(
+  caller: MessagingCaller,
+  params: ListStarredMessagesParams = {},
+): Promise<ListStarredResult> {
   await getDb()
+  const safePage = Math.max(1, Number(params.page) || 1)
+  const safePageSize = Math.min(100, Math.max(10, Number(params.pageSize) || 50))
+  const skip = (safePage - 1) * safePageSize
 
-  const conversations = (await Conversation.find({ participantIds: caller.id }).lean()) as unknown as ConversationSource[]
-  if (conversations.length === 0) return { ok: true, messages: [] }
+  const conversations = (await Conversation.find({ participantIds: caller.id })
+    .select('type participantIds lastReadAt')
+    .lean()) as unknown as ConversationSource[]
+  if (conversations.length === 0) {
+    return {
+      ok: true,
+      messages: [],
+      page: safePage,
+      pageSize: safePageSize,
+      total: 0,
+      hasMore: false,
+    }
+  }
   const convById = new Map(conversations.map((c) => [String(c._id), c] as const))
+  const visibleConversationIdsSet = new Set<string>(convById.keys())
 
-  const docs = (await Message.find({
-    conversationId: { $in: [...convById.keys()] },
+  const filter = {
+    conversationId: { $in: [...visibleConversationIdsSet] },
     starredByUserIds: caller.id,
     deletedForUserIds: { $ne: caller.id },
-  })
-    .sort({ createdAt: -1 })
-    .lean()) as unknown as MessageSource[]
+  }
 
-  const allParticipantIds = [...new Set(conversations.flatMap((c) => c.participantIds ?? []))]
+  const totalPromise = Message.countDocuments(filter)
+  const docsPromise = Message.find(filter)
+    .select('conversationId senderId senderName type content poll reactions readBy deletedForAll pinned replyToMessageId createdAt editedAt starredByUserIds forwardedFrom')
+    .sort({ _id: -1 })
+    .skip(skip)
+    .limit(safePageSize + 1)
+    .lean()
+
+  const [rawRows, total] = await Promise.all([docsPromise, totalPromise])
+  const rows = rawRows as unknown as MessageSource[]
+
+  const hasMore = rows.length > safePageSize
+  const pageRows = hasMore ? rows.slice(0, safePageSize) : rows
+  const visibleConversationIds = new Set(rows.map((m) => String(m.conversationId)))
+  const visibleConversations = conversations.filter((conversation) =>
+    visibleConversationIds.has(String(conversation._id))
+  )
+  const visibleConversationMap = new Map(visibleConversations.map((conversation) => [String(conversation._id), conversation] as const))
+  const allParticipantIds = [...new Set(visibleConversations.flatMap((c) => c.participantIds ?? []))]
   const readReceiptsAllowed = await resolveReadReceiptsAllowed(allParticipantIds)
 
-  const messages = docs
+  const messages = pageRows
     .map((m) => {
-      const conversation = convById.get(m.conversationId)
+      const conversation = visibleConversationMap.get(m.conversationId) || convById.get(m.conversationId)
       if (!conversation) return null
       return toMessageView(m, { callerId: caller.id, conversation, readReceiptsAllowed })
     })
     .filter((m): m is MessageView => m !== null)
 
-  return { ok: true, messages }
+  return {
+    ok: true,
+    messages,
+    page: safePage,
+    pageSize: safePageSize,
+    total,
+    hasMore,
+  }
 }
 
 // ─────────────────────────────── forwardMessage ───────────────────────────

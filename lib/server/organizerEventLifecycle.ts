@@ -14,6 +14,7 @@ import EventOrderLog from '../models/EventOrderLog'
 import EventPlaylist from '../models/EventPlaylist'
 import SeatHold from '../models/SeatHold'
 import EventInterest from '../models/EventInterest'
+import EventRefund from '../models/EventRefund'
 import { refundStripeOrder } from './eventRefunds'
 import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyScheduleChange } from './organizerFollowNotifications'
@@ -21,6 +22,7 @@ import { notifyUserById } from './emails/notify'
 import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from './emails'
 import { fmtMoney } from '../shared/money'
 import type { OrderDoc } from '../models/Order'
+import { revalidateTag } from 'next/cache'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -104,6 +106,8 @@ export async function cancelOrganizerEvent(
     } catch (err) {
       console.error('[organizerEventLifecycle] notifyScheduleChange (cancelled) failed:', err)
     }
+    revalidateTag('public-events', 'default')
+    revalidateTag('public-organizers', 'default')
   }
 
   const paidOrders = await Order.find({ eventId, status: 'paid' })
@@ -111,6 +115,19 @@ export async function cancelOrganizerEvent(
   let refundFailedCount = 0
   let totalRefundedMajor = 0
   for (const order of paidOrders) {
+    // Garde explicite contre un second passage : le statut Order reste
+    // volontairement `paid` pour préserver l'historique financier, donc le
+    // simple filtre de la requête ne suffit pas à garantir l'idempotence.
+    // EventRefund est la trace canonique, commune aux rails Stripe/FedaPay.
+    const paymentRef = order.rail === 'stripe' ? order.stripeSessionId : order.fedapayTxnId
+    if (paymentRef) {
+      const alreadyRefunded = await EventRefund.exists({
+        eventId,
+        paymentRef,
+        status: { $in: ['refunded', 'pending_manual'] },
+      })
+      if (alreadyRefunded) continue
+    }
     const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
     if (result.ok) {
       refundedCount++
@@ -175,6 +192,10 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   const { event } = guard
   if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled' }
   if (!input.date?.trim()) return { ok: false, status: 400, error: 'date_required' }
+  const nextTime = input.time?.trim() || '00:00'
+  const nextDateTime = new Date(`${input.date.trim()}T${nextTime}`)
+  if (Number.isNaN(nextDateTime.getTime()) || nextDateTime.getTime() <= Date.now()) return { ok: false, status: 400, error: 'date_in_past' }
+  if (input.date.trim() === event.date && nextTime === (event.time || '00:00')) return { ok: false, status: 409, error: 'same_date' }
 
   // Ne garde que la date/heure D'ORIGINE (premier report) — un second report
   // ne doit jamais écraser "depuis quand" l'événement a réellement bougé.
@@ -191,6 +212,8 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   event.recapEmailSentAt = null
 
   await event.save()
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
 
   // Revente suspendue pendant un report (politique d'annulation/remboursement
   // §2) — bloque toute nouvelle mise en vente/achat tant que le détenteur
@@ -225,6 +248,8 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   } catch (err) {
     console.error('[organizerEventLifecycle] notifyScheduleChange (postponed) failed:', err)
   }
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
 
   return { ok: true }
 }
@@ -284,6 +309,8 @@ export async function deleteOrganizerEvent(caller: LifecycleCaller, eventId: str
     EventInterest.deleteMany({ eventId }),
     ResaleListing.deleteMany({ eventId }),
   ])
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
 
   return { ok: true, deleted: true }
 }

@@ -8,7 +8,7 @@ export function staffAddedEmail(eventName: string, roleLabel: string, scannerUrl
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Tu es staff sur cet événement', 'accent')}
-    ${paragraph(`Tu as été ajouté à l'équipe de <strong style="color:#fff;">${evName}</strong> avec le rôle <strong style="color:#fff;">${escapeHtml(roleLabel)}</strong>.`)}
+    ${paragraph(`Tu as été ajouté à l'équipe de <strong style="color:inherit;">${evName}</strong> avec le rôle <strong style="color:inherit;">${escapeHtml(roleLabel)}</strong>.`)}
     ${button(scannerUrl, "Accéder à l'app le jour J")}
   `
   return {
@@ -22,7 +22,7 @@ export function staffRemovedEmail(eventName: string, site: string = DEFAULT_SITE
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Tu n’es plus staff sur cet événement')}
-    ${paragraph(`Tu as été retiré de l'équipe de <strong style="color:#fff;">${evName}</strong>.`)}
+    ${paragraph(`Tu as été retiré de l'équipe de <strong style="color:inherit;">${evName}</strong>.`)}
   `
   return {
     subject: `Tu n'es plus staff sur ${eventName}`,

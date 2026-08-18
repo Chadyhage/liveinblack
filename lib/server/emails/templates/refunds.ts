@@ -5,15 +5,15 @@
 // ⚠️ Pas encore branchés — voir lib/server/organizerEventLifecycle.ts (annulation
 // /report), lib/server/eventRefunds.ts + fedapayRefunds.ts (remboursement).
 import type { Email } from '../types'
-import { DEFAULT_SITE } from '../theme'
+import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
 import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'
 
 export function eventCancelledRefundEmail(eventName: string, amountLabel: string, delayLabel: string, reason: string | null, site: string = DEFAULT_SITE): Email {
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading(`${eventName} est annulé`, 'danger')}
-    ${paragraph(`<strong style="color:#fff;">${evName}</strong> a été annulé. Tu es automatiquement remboursé de <strong style="color:#fff;">${amountLabel}</strong>.`)}
-    ${reason ? paragraph(`<strong style="color:#fff;">Motif :</strong> ${escapeHtml(reason)}`) : ''}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> a été annulé. Tu es automatiquement remboursé de <strong style="color:inherit;">${amountLabel}</strong>.`)}
+    ${reason ? paragraph(`<strong style="color:inherit;">Motif :</strong> ${escapeHtml(reason)}`) : ''}
     ${note(`Le remboursement apparaîtra sur ton moyen de paiement sous ${delayLabel}.`)}
     ${button(`${site}/events`, "Découvrir d'autres événements", 'outline')}
   `
@@ -28,8 +28,8 @@ export function eventPostponedTicketHolderEmail(eventName: string, previousWhen:
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading(`${eventName} est reporté`, 'accent')}
-    ${paragraph(`<strong style="color:#fff;">${evName}</strong> a été reporté à une nouvelle date. Ton billet reste valable.`)}
-    ${paragraph(`<span style="color:rgba(255,255,255,0.5);text-decoration:line-through;">${escapeHtml(previousWhen)}</span><br/><strong style="color:#b8f34a;">Nouvelle date : ${escapeHtml(newWhen)}</strong>`)}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> a été reporté à une nouvelle date. Ton billet reste valable.`)}
+    ${paragraph(`<span style="color:${C.textMuted};text-decoration:line-through;">${escapeHtml(previousWhen)}</span><br/><strong style="color:${C.primaryText};">Nouvelle date : ${escapeHtml(newWhen)}</strong>`)}
     ${button(refundUrl, 'Je ne peux pas venir — demander un remboursement', 'outline')}
   `
   return {
@@ -43,7 +43,7 @@ export function refundConfirmedEmail(eventName: string, amountLabel: string, del
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton remboursement est confirmé', 'accent')}
-    ${paragraph(`Ton remboursement de <strong style="color:#fff;">${amountLabel}</strong> pour <strong style="color:#fff;">${evName}</strong> a été traité.`)}
+    ${paragraph(`Ton remboursement de <strong style="color:inherit;">${amountLabel}</strong> pour <strong style="color:inherit;">${evName}</strong> a été traité.`)}
     ${note(`Le montant apparaîtra sur ton moyen de paiement sous ${delayLabel}.`)}
   `
   return {
@@ -57,7 +57,7 @@ export function refundFailedEmail(eventName: string, reason: string | null, supp
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Un problème est survenu avec ton remboursement', 'danger')}
-    ${paragraph(`Le remboursement de ton billet pour <strong style="color:#fff;">${evName}</strong> n'a pas pu être traité${reason ? ` (${escapeHtml(reason)})` : ''}.`)}
+    ${paragraph(`Le remboursement de ton billet pour <strong style="color:inherit;">${evName}</strong> n'a pas pu être traité${reason ? ` (${escapeHtml(reason)})` : ''}.`)}
     ${button(supportUrl, 'Contacter le support', 'danger')}
   `
   return {
@@ -71,7 +71,7 @@ export function ticketInvalidatedByResaleEmail(eventName: string, site: string =
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton billet a été transféré')}
-    ${paragraph(`Ton billet pour <strong style="color:#fff;">${evName}</strong> a été vendu et n'est plus valable sur ton compte.`)}
+    ${paragraph(`Ton billet pour <strong style="color:inherit;">${evName}</strong> a été vendu et n'est plus valable sur ton compte.`)}
   `
   return {
     subject: `Ton billet pour ${eventName} a été transféré`,

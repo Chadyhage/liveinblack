@@ -19,10 +19,8 @@ import ScannerClient, { type MenuItemView } from './ScannerClient'
 // app/(public)/events/[id]/page.tsx.
 export async function generateMetadata({ params }: { params: Promise<{ eventId: string }> }): Promise<Metadata> {
   const { eventId } = await params
-  await getDb()
-  const event = mongoose.isValidObjectId(eventId) ? await Event.findById(eventId).select('name').lean() : null
   return {
-    title: event ? `Scanner — ${event.name} — LIVEINBLACK` : 'Scanner — LIVEINBLACK',
+    title: mongoose.isValidObjectId(eventId) ? `Scanner — événement ${eventId} — LIVEINBLACK` : 'Scanner — LIVEINBLACK',
     robots: { index: false, follow: false },
   }
 }

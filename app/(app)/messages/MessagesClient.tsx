@@ -25,7 +25,7 @@ import {
   Handshake,
   Send,
 } from 'lucide-react'
-import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, pagedSlice, Modal, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
+import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, Modal, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 
@@ -62,6 +62,14 @@ interface ConversationView {
   pinned: boolean
   mutedForMe: boolean
   myGroupMute: { untilAt: string | null } | null
+}
+
+interface ConversationListResponse {
+  conversations: ConversationView[]
+  total?: number
+  page?: number
+  pageSize?: number
+  hasMore?: boolean
 }
 
 interface PollOption {
@@ -143,6 +151,7 @@ type PresenceMap = Record<string, { online: boolean; lastSeenAt: string | null }
 export interface MessagesClientProps {
   currentUserId: string
   initialConversations: ConversationView[]
+  initialConversationTotal: number
   initialReceived: FriendRequestView[]
   initialSent: SentFriendRequestView[]
   initialFriends: FriendView[]
@@ -339,6 +348,7 @@ let toastSeq = 0
 export default function MessagesClient({
   currentUserId,
   initialConversations,
+  initialConversationTotal,
   initialReceived,
   initialSent,
   initialFriends,
@@ -406,6 +416,7 @@ export default function MessagesClient({
   const [convContextMenu, setConvContextMenu] = useState<{ conversationId: string; x: number; y: number } | null>(null)
   const [convSearch, setConvSearch] = useState('')
   const [convPage, setConvPage] = useState(1)
+  const [conversationTotal, setConversationTotal] = useState(initialConversationTotal)
   const [showListMenu, setShowListMenu] = useState(false)
   const [forwardTargetPick, setForwardTargetPick] = useState<Set<string>>(new Set())
 
@@ -476,8 +487,11 @@ export default function MessagesClient({
     if (!activeId) return
     let cancelled = false
     async function run() {
-      const res = await apiFetch<{ conversations: ConversationView[] }>('/api/conversations')
-      if (!cancelled && res.ok) setConversations(res.data.conversations)
+      const res = await apiFetch<ConversationListResponse>(`/api/conversations?page=${convPage}&pageSize=${CONV_PAGE_SIZE}`)
+      if (!cancelled && res.ok) {
+        setConversations(res.data.conversations)
+        setConversationTotal(res.data.total ?? res.data.conversations.length)
+      }
     }
     run()
     return () => {
@@ -488,9 +502,27 @@ export default function MessagesClient({
 
   // ─── Polling : conversations, amis, messages, frappe, présence ───
   const refreshConversations = useCallback(async () => {
-    const res = await apiFetch<{ conversations: ConversationView[] }>('/api/conversations')
-    if (res.ok) setConversations(res.data.conversations)
-  }, [])
+    const res = await apiFetch<ConversationListResponse>(`/api/conversations?page=${convPage}&pageSize=${CONV_PAGE_SIZE}`)
+    if (res.ok) {
+      setConversations(res.data.conversations)
+      setConversationTotal(res.data.total ?? res.data.conversations.length)
+    }
+  }, [convPage])
+
+  useEffect(() => {
+    let cancelled = false
+    async function run() {
+      const res = await apiFetch<ConversationListResponse>(`/api/conversations?page=${convPage}&pageSize=${CONV_PAGE_SIZE}`)
+      if (!cancelled && res.ok) {
+        setConversations(res.data.conversations)
+        setConversationTotal(res.data.total ?? res.data.conversations.length)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [convPage])
 
   const refreshFriendData = useCallback(async () => {
     const [reqRes, friendsRes] = await Promise.all([
@@ -1427,7 +1459,7 @@ export default function MessagesClient({
     return conversationLabel(c, currentUserId).toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q)
   })
 
-  const { pageItems: pagedConversations, pageCount: convPageCount } = pagedSlice(filteredConversations, convPage, CONV_PAGE_SIZE)
+  const convPageCount = Math.max(1, Math.ceil((conversationTotal || 0) / CONV_PAGE_SIZE))
 
   const visibleMessages = inThreadSearchOpen && inThreadSearchQuery.trim()
     ? messages.filter((m) => (m.content || '').toLowerCase().includes(inThreadSearchQuery.trim().toLowerCase()))
@@ -1501,7 +1533,7 @@ export default function MessagesClient({
             {conversations.length > 0 && filteredConversations.length === 0 && (
               <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
             )}
-            {pagedConversations.map((conv) => {
+            {filteredConversations.map((conv) => {
               const label = conversationLabel(conv, currentUserId)
               const other = conv.type === 'direct' ? conv.members.find((m) => m.userId !== currentUserId) : null
               return (
@@ -1604,7 +1636,7 @@ export default function MessagesClient({
           </div>
           {convPageCount > 1 && (
             <div style={{ padding: '4px 12px 10px' }}>
-              <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={filteredConversations.length} pageSize={CONV_PAGE_SIZE} />
+              <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={conversationTotal} pageSize={CONV_PAGE_SIZE} />
             </div>
           )}
           {/* Bouton flottant "+" (convention WhatsApp Web) — remplace l'ancienne

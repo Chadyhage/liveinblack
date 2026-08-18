@@ -51,7 +51,8 @@ const notificationSchema = new Schema(
   { timestamps: true }
 )
 
-notificationSchema.index({ userId: 1, read: 1, createdAt: -1 })
+notificationSchema.index({ userId: 1, read: 1, updatedAt: -1 })
+notificationSchema.index({ userId: 1, read: 1, updatedAt: -1, _id: -1 })
 notificationSchema.index({ userId: 1, type: 1, 'meta.conversationId': 1 })
 
 export type NotificationDoc = InferSchemaType<typeof notificationSchema>

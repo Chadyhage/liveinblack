@@ -5,10 +5,10 @@ import { auth } from '@/auth'
 import { type PublicEvent } from '@/lib/server/events'
 import { type CatalogItem } from '@/lib/server/providers'
 import {
-  getCachedPublicEvents as listPublicEvents,
-  getCachedPublicProviders as listPublicProviders,
   getCachedPublicHomepageConfig as getPublicHomepageConfig,
   getCachedBoostedEventIds as getBoostedEventIds,
+  getCachedPublicEventsDirectory,
+  getCachedPublicProvidersDirectory,
 } from '@/lib/server/publicCache'
 import { getMyProfile } from '@/lib/server/profile'
 import { listActiveInterestSignals } from '@/lib/server/eventInterests'
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 // Événements/prestataires changent en continu (nouvelles publications,
 // stock) — sans dépendance à cookies()/searchParams, Next.js prérendrait
 // sinon cette page une fois pour toutes au build.
-export const dynamic = 'force-dynamic'
+export const revalidate = 30
 
 // Accueil unifié : vitrine de PublicLanding pour les visiteurs, enrichie du
 // Top 3 et des recommandations de HomePage pour les membres connectés.
@@ -70,7 +70,15 @@ function DateBadge({ dateISO }: { dateISO: string }) {
 }
 
 export default async function AccueilPage() {
-  const [allEvents, providers, actualiteConfig, boostedIds, session] = await Promise.all([listPublicEvents(), listPublicProviders(), getPublicHomepageConfig(), getBoostedEventIds(), auth()])
+  const [allEventsResult, providerDirectory, actualiteConfig, boostedIds, session] = await Promise.all([
+    getCachedPublicEventsDirectory({ page: 1, pageSize: 30, includeTotal: false }),
+    getCachedPublicProvidersDirectory({ page: 1, pageSize: 4, includeTotal: false }),
+    getPublicHomepageConfig(),
+    getBoostedEventIds(),
+    auth(),
+  ])
+  const allEvents = allEventsResult.events
+  const providers = providerDirectory.providers
 
   const events = [...allEvents].sort((a, b) => eventStartMs(a) - eventStartMs(b)).slice(0, 6)
   const featuredProviders = providers.slice(0, 4)

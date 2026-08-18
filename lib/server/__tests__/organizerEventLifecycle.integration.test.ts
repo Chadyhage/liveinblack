@@ -96,6 +96,21 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       expect(doc?.cancellationMessage).toBe('Premier message')
     })
 
+    it('ne repasse pas dans le remboursement lorsqu’une trace EventRefund existe déjà', async () => {
+      const eventId = await seedEvent()
+      const doc = await Event.findById(eventId).lean()
+      const placeId = doc!.places[0].id
+      await Order.create({
+        userId: 'buyer-idempotent', eventId, placeId, placeType: 'Standard', qty: 1,
+        unitPriceMinor: 2000, currency: 'XOF', rail: 'fedapay', status: 'paid',
+        fedapayTxnId: 'txn-idempotent', expiresAt: new Date(Date.now() + 3600_000),
+      })
+      await EventRefund.create({ eventId, paymentRef: 'txn-idempotent', rail: 'fedapay', status: 'pending_manual', amountMinor: 2000, currency: 'XOF' })
+
+      const result = await cancelOrganizerEvent({ id: 'org-1' }, eventId, 'Annulé')
+      expect(result).toEqual({ ok: true, refundedCount: 0, refundFailedCount: 0 })
+    })
+
     it('rembourse chaque commande payée (Stripe mocké, FedaPay réel) et compte succès/échecs', async () => {
       const eventId = await seedEvent()
       const doc = await Event.findById(eventId).lean()
@@ -179,6 +194,16 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.error).toBe('event_cancelled')
+    })
+
+    it('refuse une date passée ou identique à la date actuelle', async () => {
+      const eventId = await seedEvent()
+      const past = await postponeOrganizerEvent({ id: 'org-1' }, eventId, { date: '2020-01-01' })
+      expect(past).toEqual({ ok: false, status: 400, error: 'date_in_past' })
+
+      const current = await Event.findById(eventId).lean()
+      const same = await postponeOrganizerEvent({ id: 'org-1' }, eventId, { date: current!.date, time: current!.time })
+      expect(same).toEqual({ ok: false, status: 409, error: 'same_date' })
     })
 
     it('met à jour date/heure et conserve la date d’origine au premier report', async () => {

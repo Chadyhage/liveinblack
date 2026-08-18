@@ -10,6 +10,7 @@ import { normalizeProviderTypes, getPrimaryProviderType } from '../shared/provid
 import { SOCIAL_NETWORKS, socialUrl, type SocialNetworkKey } from '../shared/social'
 import { verifyPublicMediaUploadReference } from './publicMediaUpload'
 import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
+import { revalidateTag } from 'next/cache'
 
 // Remplace la partie ÉCRITURE de ProposerServicesPage.jsx (#8 phase
 // prestataire — profil + catalogue). Miroir volontaire de
@@ -253,6 +254,7 @@ export async function updateProviderProfile(caller: ProfileCaller, input: Update
   }
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -277,6 +279,7 @@ export async function uploadProviderProfileMedia(caller: ProfileCaller, kind: Pr
   else profile.coverUrl = uploaded.url
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -325,6 +328,7 @@ export async function addCatalogItem(caller: ProfileCaller, input: CatalogItemIn
   } as unknown as (typeof profile.catalog)[number])
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -360,6 +364,7 @@ export async function updateCatalogItem(caller: ProfileCaller, itemId: string, p
   if (patch.available !== undefined) item.available = patch.available
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -374,6 +379,7 @@ export async function deleteCatalogItem(caller: ProfileCaller, itemId: string): 
   profile.catalog = next as typeof profile.catalog
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -412,6 +418,7 @@ export async function addCatalogItemMedia(
   item.media.push({ url, type: isVideo ? 'video' : 'image' } as (typeof item.media)[number])
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -428,5 +435,6 @@ export async function removeCatalogItemMedia(caller: ProfileCaller, itemId: stri
   item.media.splice(mediaIndex, 1)
 
   await profile.save()
+  revalidateTag('public-providers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }

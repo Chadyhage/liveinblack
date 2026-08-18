@@ -40,6 +40,8 @@ export interface ListUsersFilter {
   role?: UsersRoleFilter
   status?: UsersStatusFilter
   onlineOnly?: boolean
+  page?: number
+  pageSize?: number
 }
 
 export interface AgentUserSummary {
@@ -54,6 +56,19 @@ export interface AgentUserSummary {
   emailVerified: boolean
   online: boolean
   createdAt: string
+}
+
+export interface AgentUsersPageResult {
+  users: AgentUserSummary[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  stats: {
+    online: number
+    professionals: number
+    attention: number
+  }
 }
 
 export interface AgentUserDetail extends AgentUserSummary {
@@ -125,8 +140,16 @@ function toSummary(u: LeanUser, displayName: string): AgentUserSummary {
   }
 }
 
-export async function listUsersForAgent(filter: ListUsersFilter = {}): Promise<AgentUserSummary[]> {
+const DEFAULT_USER_PAGE_SIZE = 25
+const MAX_USER_PAGE = 4000
+
+export async function listUsersForAgent(filter: ListUsersFilter = {}): Promise<AgentUsersPageResult> {
   await getDb()
+  const page = parseInt(String(filter.page || 1), 10)
+  const safePage = Math.max(1, Number.isFinite(page) ? page : 1)
+  const pageSizeRaw = Number(filter.pageSize ?? DEFAULT_USER_PAGE_SIZE)
+  const safePageSize = Number.isFinite(pageSizeRaw) ? Math.min(100, Math.max(1, pageSizeRaw)) : DEFAULT_USER_PAGE_SIZE
+  const skip = (Math.min(safePage, MAX_USER_PAGE) - 1) * safePageSize
 
   const query: Record<string, unknown> = {}
   if (filter.role && filter.role !== 'all') query.activeRole = filter.role
@@ -140,10 +163,41 @@ export async function listUsersForAgent(filter: ListUsersFilter = {}): Promise<A
     query.$or = [{ firstName: rx }, { lastName: rx }, { email: rx }, { phone: rx }]
   }
 
-  const users = (await User.find(query).sort({ createdAt: -1 }).lean()) as unknown as LeanUser[]
+  const [total, users] = await Promise.all([
+    User.countDocuments(query),
+    User.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(safePageSize)
+      .lean() as unknown as Promise<LeanUser[]>,
+  ])
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize))
   const displayNames = await displayNamesFor(users)
+  const online = await User.countDocuments({
+    ...query,
+    lastSeenAt: { $gte: new Date(Date.now() - ONLINE_WINDOW_MS) },
+  })
+  const professionals = await User.countDocuments({
+    ...query,
+    activeRole: { $in: ['organisateur', 'prestataire'] },
+  })
+  const attention = await User.countDocuments({
+    ...query,
+    $or: [{ disabled: true }, { status: 'pending' }, { status: 'rejected' }],
+  })
 
-  return users.map((u) => toSummary(u, displayNames.get(String(u._id)) || personalNameOf(u)))
+  return {
+    users: users.map((u) => toSummary(u, displayNames.get(String(u._id)) || personalNameOf(u))),
+    total,
+    page: safePage,
+    pageSize: safePageSize,
+    totalPages,
+    stats: {
+      online,
+      professionals,
+      attention,
+    },
+  }
 }
 
 export type GetUserResult = { ok: false; status: number; error: string } | { ok: true; user: AgentUserDetail }

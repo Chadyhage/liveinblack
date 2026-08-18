@@ -1,5 +1,6 @@
 import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
+import EventOrder from '../models/EventOrder'
 import Ticket from '../models/Ticket'
 import User from '../models/User'
 import ResaleListing from '../models/ResaleListing'
@@ -64,7 +65,26 @@ export async function getEventStats(caller: StatsCaller, eventId: string, filter
   // `view` fait planter la sérialisation React Server Components ("Maximum
   // call stack size exceeded"). `StatsTicket` n'a de toute façon pas besoin
   // de `_id`.
-  const rawTickets = await Ticket.find({ eventId }).lean()
+  const [rawTickets, eventOrder] = await Promise.all([
+    Ticket.find({ eventId }).lean(),
+    EventOrder.findOne({ eventId }).select('items').lean(),
+  ])
+  const activePreorderItemsByTicket = new Map<string, { name: string; price: number; qty: number }[]>()
+  const materializedPreorderTickets = new Set<string>()
+  for (const item of eventOrder?.items ?? []) {
+    if (item.kind !== 'preorder') continue
+    const ticketId = String(item.ticketId || '').toUpperCase()
+    if (!ticketId) continue
+    materializedPreorderTickets.add(ticketId)
+    if (item.status === 'cancelled') continue
+    const current = activePreorderItemsByTicket.get(ticketId) ?? []
+    current.push({
+      name: item.name,
+      price: Number(item.unitPriceMinor) || 0,
+      qty: Number(item.quantity) || 0,
+    })
+    activePreorderItemsByTicket.set(ticketId, current)
+  }
   const tickets: StatsTicket[] = rawTickets.map((t) => ({
     ticketCode: t.ticketCode,
     place: t.place ?? null,
@@ -74,7 +94,9 @@ export async function getEventStats(caller: StatsCaller, eventId: string, filter
     bookedAt: t.bookedAt ? new Date(t.bookedAt).toISOString() : null,
     userId: t.userId ?? null,
     revoked: t.revoked ?? null,
-    preorders: (t.preorders ?? []).map((p) => ({ name: p.name, price: p.price ?? null, qty: p.qty ?? null })),
+    preorders: materializedPreorderTickets.has(String(t.ticketCode || '').toUpperCase())
+      ? (activePreorderItemsByTicket.get(String(t.ticketCode || '').toUpperCase()) ?? [])
+      : (t.preorders ?? []).map((p) => ({ name: p.name, price: p.price ?? null, qty: p.qty ?? null })),
   }))
   const stats = computeEventStats(event, tickets, { filters })
   const insights = buildEventInsights(stats)

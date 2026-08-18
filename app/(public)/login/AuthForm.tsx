@@ -480,7 +480,7 @@ export default function AuthForm() {
               <Input
                 id="login-email"
                 name="email"
-                type="text"
+                type="email"
                 inputMode="email"
                 autoComplete="email"
                 placeholder="ton@email.com"

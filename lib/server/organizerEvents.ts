@@ -1,17 +1,21 @@
 import crypto from 'node:crypto'
 import { getDb } from '../db/mongoose'
+import Application from '../models/Application'
 import Event, { type EventDoc } from '../models/Event'
+import OrganizerProfile from '../models/OrganizerProfile'
 import Order from '../models/Order'
 import Ticket from '../models/Ticket'
 import { loadEventContext } from './eventOrders'
 import { regionToCurrency, eventCurrency } from '../shared/money'
-import { getRegionByName } from '../shared/regions'
+import { getRegionByName, regions } from '../shared/regions'
+import { normalizeRegionId } from '../shared/locations'
 import { notifyNewEvent } from './organizerFollowNotifications'
 import { normalizeShowOptions, type ShowOption } from '../shared/showOptions'
 import { notifyUserById } from './emails/notify'
 import { eventPublishedEmail, eventRecapBeforeEventEmail } from './emails'
 import EventStaff from '../models/EventStaff'
 import { eventStartMs } from '../shared/event-time'
+import { revalidateTag } from 'next/cache'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -32,6 +36,21 @@ export interface OrganizerEventCaller {
 }
 
 type ErrResult = { ok: false; status: number; error: string }
+
+export async function getInitialOrganizerEventRegion(caller: OrganizerEventCaller): Promise<string> {
+  await getDb()
+
+  const profile = await OrganizerProfile.findOne({ userId: caller.id }).select('regionId country').lean()
+  const profileRegionId = normalizeRegionId(profile?.regionId || profile?.country || '')
+  const profileRegion = regions.find((region) => region.id === profileRegionId)
+  if (profileRegion) return profileRegion.name
+
+  const application = await Application.findOne({ userId: caller.id, type: 'organisateur' }).select('formData').lean()
+  const formData = (application?.formData as Record<string, unknown> | undefined) ?? {}
+  const applicationRegionId = normalizeRegionId(String(formData.pays || ''))
+  const applicationRegion = regions.find((region) => region.id === applicationRegionId)
+  return applicationRegion?.name || ''
+}
 
 export interface PlaceInput {
   id: string
@@ -274,6 +293,8 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     }
     await notifyUserById(caller.id, () => eventPublishedEmail(event.name, `${SITE}/events/${String(event._id)}`, SITE))
   }
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
   // Publication différée (publishAt futur) : aucun cron ne bascule
   // aujourd'hui le statut au moment venu (vérifié seulement à la LECTURE,
   // voir orders.ts/organizers.ts) — E23 ne part donc que sur publication
@@ -387,6 +408,8 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
   }
 
   await event.save()
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
   return { ok: true }
 }
 
@@ -436,7 +459,7 @@ export async function listMyOrganizerEvents(caller: OrganizerEventCaller): Promi
         city: e.city ?? '',
         region: e.region ?? '',
         currency: eventCurrency(e),
-        soldCount: Math.max(soldByEventId.get(String(e._id)) ?? 0, (e.places || []).reduce((sum, place) => sum + placeConsumed(place), 0)),
+        soldCount: ticketStats?.ticketCount ?? soldByEventId.get(String(e._id)) ?? 0,
         totalCapacity: (e.places || []).reduce((sum, place) => sum + Math.max(0, place.total ?? 0), 0),
         ticketCount: ticketStats?.ticketCount ?? 0,
         revenue: ticketStats?.revenue ?? 0,

@@ -7,6 +7,7 @@ import mongoose from 'mongoose'
 import { getEventStats } from '../eventStats'
 import { createOrganizerEvent } from '../organizerEvents'
 import Event from '../../models/Event'
+import EventOrder from '../../models/EventOrder'
 import Ticket from '../../models/Ticket'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
@@ -27,6 +28,7 @@ afterAll(async () => {
 beforeEach(async () => {
   if (!RUN_INTEGRATION) return
   await Event.deleteMany({})
+  await EventOrder.deleteMany({})
   await Ticket.deleteMany({})
 })
 
@@ -86,5 +88,39 @@ describeIntegration('eventStats (intégration, vraie base) — accès et câblag
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.view.stats.assignedTickets).toBe(1)
+  })
+
+  it('exclut des recettes de consommation les précommandes annulées au contrôle', async () => {
+    const eventId = await seedEvent()
+    const buyer = new mongoose.Types.ObjectId().toString()
+    await Ticket.create({
+      ticketCode: 'TCK001',
+      eventId,
+      place: 'Standard',
+      placePrice: 20,
+      totalPrice: 35,
+      currency: 'XOF',
+      userId: buyer,
+      paid: true,
+      bookedAt: new Date(),
+      preorders: [
+        { name: 'Chicha', price: 10, qty: 1 },
+        { name: 'Cocktail', price: 5, qty: 1 },
+      ],
+    })
+    await EventOrder.create({
+      eventId,
+      items: [
+        { id: 'pre_TCK001_Chicha', name: 'Chicha', quantity: 1, unitPriceMinor: 10, ticketId: 'TCK001', addedBy: 'staff-1', status: 'served', kind: 'preorder', servedAt: new Date() },
+        { id: 'pre_TCK001_Cocktail', name: 'Cocktail', quantity: 1, unitPriceMinor: 5, ticketId: 'TCK001', addedBy: 'staff-1', status: 'cancelled', kind: 'preorder', cancelledAt: new Date(), cancellationReason: 'Erreur' },
+      ],
+    })
+
+    const result = await getEventStats({ id: 'org-1', roles: ['organisateur'] }, eventId)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.view.stats.preorderRevenue).toBe(10)
+    expect(result.view.stats.totalEstimatedRevenue).toBe(30)
+    expect(result.view.stats.preorderItems).toEqual([{ name: 'Chicha', quantity: 1, revenue: 10 }])
   })
 })

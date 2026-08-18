@@ -82,6 +82,9 @@ async function processOrderRefund(order: HydratedDocument<OrderDoc>, notifyEmail
   const anyCheckedIn = await Ticket.exists({ orderId: String(order._id), checkedInAt: { $ne: null } })
   if (anyCheckedIn) return { ok: false, status: 409, error: 'ticket_already_checked_in' }
 
+  const anyListedForResale = await Ticket.exists({ orderId: String(order._id), resaleListingId: { $ne: null } })
+  if (anyListedForResale) return { ok: false, status: 409, error: 'ticket_listed_for_resale' }
+
   const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
   // Ne marque la demande comme traitée qu'en cas de succès — un échec (ex.
   // erreur Stripe transitoire) doit laisser le client réessayer, jamais le

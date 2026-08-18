@@ -10,7 +10,7 @@ export function interestedEventReminderEmail(eventName: string, eventWhen: strin
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading(`${eventName} c'est demain !`, 'accent')}
-    ${paragraph(`Tu avais marqué <strong style="color:#fff;">${evName}</strong> (${escapeHtml(eventWhen)}) comme intéressant.`)}
+    ${paragraph(`Tu avais marqué <strong style="color:inherit;">${evName}</strong> (${escapeHtml(eventWhen)}) comme intéressant.`)}
     ${button(eventUrl, alreadyBought ? 'Voir mon billet' : 'Réserver maintenant', alreadyBought ? 'outline' : 'primary')}
   `
   return {

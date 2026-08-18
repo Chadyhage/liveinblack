@@ -391,7 +391,7 @@ const SAVE_ERROR_MESSAGES: Record<string, string> = {
 // Composant principal
 // ─────────────────────────────────────────────────────────────────────────
 
-export default function EventWizard({ eventId, onClose, onSaved }: { eventId: string | null; onClose: () => void; onSaved: () => void }) {
+export default function EventWizard({ eventId, initialRegion = '', onClose, onSaved }: { eventId: string | null; initialRegion?: string; onClose: () => void; onSaved: () => void }) {
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(!!eventId)
   const [loadError, setLoadError] = useState('')
@@ -473,7 +473,7 @@ export default function EventWizard({ eventId, onClose, onSaved }: { eventId: st
   const [venueName, setVenueName] = useState('')
   const [address, setAddress] = useState('')
   const [city, setCity] = useState('')
-  const [region, setRegion] = useState('')
+  const [region, setRegion] = useState(initialRegion)
 
   // ── Step 3 : Options avancées ──
   const [playlist, setPlaylist] = useState(false)

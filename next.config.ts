@@ -32,7 +32,18 @@ const securityHeaders = [
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
 ];
 
+const staticCacheHeaders = [
+  ...securityHeaders,
+  { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+];
+
+const apiDefaultHeaders = [
+  ...securityHeaders,
+  { key: 'Vary', value: 'Accept-Encoding' },
+];
+
 const nextConfig: NextConfig = {
+  output: 'standalone',
   poweredByHeader: false,
   // Le navigateur de prévisualisation local utilise 127.0.0.1 alors que
   // Next démarre sur localhost. Autoriser explicitement cette origine évite
@@ -52,7 +63,14 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }];
+    return [
+      { source: '/(.*)', headers: securityHeaders },
+      { source: '/_next/static/:path*', headers: staticCacheHeaders },
+      { source: '/_next/image/:path*', headers: staticCacheHeaders },
+      { source: '/favicon.ico', headers: staticCacheHeaders },
+      { source: '/images/:path*', headers: staticCacheHeaders },
+      { source: '/api/:path*', headers: apiDefaultHeaders },
+    ];
   },
   // Renommage FR -> EN de toutes les routes (voir CLAUDE.md / mapping de
   // migration) : redirections permanentes (308) pour ne casser aucun lien

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
-import { listPublicOrganizers } from '@/lib/server/organizers'
+import { listPublicOrganizersDirectory } from '@/lib/server/organizers'
 import FollowedOrganizersClient from './FollowedOrganizersClient'
 
 // Port de src/pages/FollowedOrganizersPage.jsx (#6 phase profil). Server
@@ -20,11 +20,14 @@ export default async function FollowedOrganizersPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const [followResult, allPublic] = await Promise.all([listMyFollowedOrganizers({ id: session.user.id }), listPublicOrganizers()])
+  const [followResult, publicDirectory] = await Promise.all([
+    listMyFollowedOrganizers({ id: session.user.id }),
+    listPublicOrganizersDirectory({ page: 1, pageSize: 20, includeTotal: false }),
+  ])
 
   const follows = followResult.ok ? followResult.follows : []
   const followedIds = new Set(follows.map((f) => f.organizerId))
-  const suggestions = allPublic
+  const suggestions = publicDirectory.organizers
     .filter((o) => o.userId !== session.user.id && !followedIds.has(o.userId))
     .slice(0, MAX_SUGGESTIONS)
     .map((o) => ({ organizerId: o.userId, name: o.publicName, slug: o.slug, city: o.city || null, country: o.country || null }))

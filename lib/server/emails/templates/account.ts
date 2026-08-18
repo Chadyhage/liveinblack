@@ -7,7 +7,7 @@ import { wrap, heading, paragraph, button, escapeHtml } from '../layout'
 export function roleActivatedEmail(roleLabel: string, dashboardUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `
     ${heading(`Ton espace ${roleLabel} est prêt`, 'accent')}
-    ${paragraph(`Tu as maintenant accès à ton espace <strong style="color:#fff;">${escapeHtml(roleLabel)}</strong> sur LIVEINBLACK.`)}
+    ${paragraph(`Tu as maintenant accès à ton espace <strong style="color:inherit;">${escapeHtml(roleLabel)}</strong> sur LIVEINBLACK.`)}
     ${button(dashboardUrl, `Accéder à mon espace ${roleLabel}`)}
   `
   return {

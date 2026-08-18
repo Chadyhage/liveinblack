@@ -49,8 +49,10 @@ function timeAgo(iso: string | null): string {
 
 export default function AccountMenu({
   user,
+  menuAlign = 'right',
 }: {
   user: { id: string; name?: string | null; email?: string | null; image?: string | null; activeRole?: string | null; roles?: string[] | null }
+  menuAlign?: 'left' | 'right'
 }) {
   const router = useRouter()
   const { update } = useSession()
@@ -230,7 +232,7 @@ export default function AccountMenu({
             style={{
               position: 'absolute',
               top: 'calc(100% + 10px)',
-              right: 0,
+              ...(menuAlign === 'left' ? { left: 0 } : { right: 0 }),
               width: 320,
               maxWidth: '90vw',
               background: 'var(--surface-2)',
@@ -318,8 +320,9 @@ export default function AccountMenu({
             style={{
               position: 'absolute',
               top: 'calc(100% + 10px)',
-              right: 0,
+              ...(menuAlign === 'left' ? { left: 0 } : { right: 0 }),
               width: 220,
+              maxWidth: 'calc(100vw - 24px)',
               background: 'var(--surface-2)',
               border: '1px solid var(--border)',
               borderRadius: 14,

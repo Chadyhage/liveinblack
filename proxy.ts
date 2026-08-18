@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { NextFetchEvent, NextRequest } from 'next/server'
 import { auth } from '@/auth'
 
 // Remplace les 5 guards de src/App.jsx (RequireAuth, RequireRole,
@@ -10,17 +11,42 @@ import { auth } from '@/auth'
 // besoin d'une lecture base à jour) reste dans app/(app)/layout.tsx, pas ici.
 // Renommé `proxy.ts` (Next.js 16 — `middleware.ts` est déprécié).
 
-const AUTH_REQUIRED_PREFIXES = ['/profile', '/messages', '/scanner', '/my-shifts', '/order', '/my-application', '/playlist']
+const AUTH_REQUIRED_PREFIXES = ['/profile', '/messages', '/scanner', '/my-shifts', '/order', '/my-application', '/playlist', '/help', '/notifications']
 const ORGANISATEUR_OR_AGENT_PREFIXES = ['/my-events']
 const ORGANISATEUR_ONLY_PREFIXES = ['/organizer-studio']
 const SERVICE_ACCESS_PREFIXES = ['/offer-services']
 const AGENT_ONLY_PREFIXES = ['/agent']
 
+const ALLOWED_API_ORIGIN_PATTERNS = [
+  /^https:\/\/liveinblack(?:-dev)?\.vercel\.app$/,
+  /^https:\/\/liveinblack\.com$/,
+  /^http:\/\/localhost(?::\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(?::\d+)?$/,
+]
+
+function getAllowedApiOrigin(origin: string | null): string | null {
+  if (!origin) return null
+  return ALLOWED_API_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin)) ? origin : null
+}
+
+function applyApiCors(req: Request, response: NextResponse): NextResponse {
+  const allowedOrigin = getAllowedApiOrigin(req.headers.get('origin'))
+  if (!allowedOrigin) return response
+
+  response.headers.set('Access-Control-Allow-Origin', allowedOrigin)
+  response.headers.set('Access-Control-Allow-Credentials', 'true')
+  response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+  response.headers.set('Access-Control-Max-Age', '86400')
+  response.headers.set('Vary', 'Origin, Accept-Encoding')
+  return response
+}
+
 function matchesPrefix(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
-export const proxy = auth((req) => {
+const guardedPageProxy = auth((req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
   const activeRole = session?.user?.activeRole
@@ -64,7 +90,18 @@ export const proxy = auth((req) => {
   }
 
   return NextResponse.next()
-})
+}) as unknown as (req: NextRequest, event: NextFetchEvent) => ReturnType<typeof NextResponse.next>
+
+export function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    if (req.method === 'OPTIONS') {
+      return applyApiCors(req, new NextResponse(null, { status: 204 }))
+    }
+    return applyApiCors(req, NextResponse.next())
+  }
+
+  return guardedPageProxy(req, event)
+}
 
 export const config = {
   matcher: [
@@ -75,9 +112,12 @@ export const config = {
     '/order/:path*',
     '/my-application/:path*',
     '/playlist/:path*',
+    '/help/:path*',
+    '/notifications/:path*',
     '/my-events/:path*',
     '/organizer-studio/:path*',
     '/offer-services/:path*',
     '/agent/:path*',
+    '/api/:path*',
   ],
 }

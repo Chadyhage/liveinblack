@@ -1,23 +1,21 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { ArrowUpRight, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
-import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/publicCache'
 import { getProviderCategories, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
-import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
+import { getRegionName } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
-import { Button, HiddenField, Input, Mascot, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, HiddenField, Input, Mascot, PageLinks } from '@/app/components/ui'
 import FilterSelect from '../_components/FilterSelect'
 import ProviderDirectoryCard from '../_components/ProviderDirectoryCard'
 import styles from './providers.module.css'
-
-const PAGE_SIZE = 24
+import { getCachedPublicProvidersDirectory } from '@/lib/server/publicCache'
 
 export const metadata: Metadata = {
   title: 'Prestataires — LIVEINBLACK',
   description: 'Trouvez DJ, lieux, traiteurs et autres prestataires événementiels et contactez-les directement sur LIVEINBLACK.',
 }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 45
 
 export default async function PublicPrestatairesPage({
   searchParams,
@@ -28,28 +26,23 @@ export default async function PublicPrestatairesPage({
   const search = (q || '').trim()
   const category = categorie || ''
   const requestedPage = Math.max(1, Number(pageParam) || 1)
-  const providers = await listPublicProviders()
-
-  const filtered = providers.filter((provider) => {
-    if (category && !getProviderCategories(provider).some((item) => item.id === category)) return false
-    if (!matchesEntityRegion(provider, region)) return false
-    if (!search) return true
-
-    const regionNames = getEntityRegionIds(provider).map(getRegionName)
-    const categoryNames = getProviderCategories(provider).flatMap((item) => [item.label, item.singular])
-    const haystack = [provider.name, provider.headline, provider.city, provider.location, provider.country, provider.description, ...regionNames, ...categoryNames]
-      .filter(Boolean)
-      .map(normalizeGeoText)
-      .join(' ')
-    return haystack.includes(normalizeGeoText(search))
+  const { providers, total, pageSize, totalPages } = await getCachedPublicProvidersDirectory({
+    q: search,
+    categorie: category,
+    region,
+    page: requestedPage,
+    pageSize: 12,
+    includeTotal: true,
   })
 
+  const filtered = providers
+
   const counts = new Map<string, number>()
-  for (const provider of providers) {
+  for (const provider of filtered) {
     for (const item of getProviderCategories(provider)) counts.set(item.id, (counts.get(item.id) || 0) + 1)
   }
 
-  const { pageItems, pageCount, safePage } = pageSlice(filtered, requestedPage, PAGE_SIZE)
+  const safePage = requestedPage
   const hasFilters = Boolean(search || category || region)
 
   function makeHref(page: number) {
@@ -118,6 +111,7 @@ export default async function PublicPrestatairesPage({
             <h2 id="directory-title">Tous les prestataires</h2>
           </div>
           <p className={styles.resultCount} aria-live="polite">{filtered.length} profil{filtered.length > 1 ? 's' : ''}</p>
+          <p style={{ color: 'var(--text-muted)' }} aria-live="polite">{total} résultat{total > 1 ? 's' : ''} au total</p>
         </div>
 
         <nav className={styles.categories} aria-label="Filtrer par métier">
@@ -149,9 +143,9 @@ export default async function PublicPrestatairesPage({
           </div>
         )}
 
-        {pageItems.length > 0 ? (
+        {filtered.length > 0 ? (
           <div className={styles.grid}>
-            {pageItems.map((provider, index) => (
+            {filtered.map((provider, index) => (
               <ProviderDirectoryCard key={provider.userId} provider={provider} eager={index < 3} />
             ))}
           </div>
@@ -165,7 +159,7 @@ export default async function PublicPrestatairesPage({
         )}
 
         <div className={styles.pagination}>
-          <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
+          <PageLinks page={safePage} pageCount={totalPages} makeHref={makeHref} totalItems={total} pageSize={pageSize} />
         </div>
 
         <aside className={styles.cta}>

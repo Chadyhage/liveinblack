@@ -21,7 +21,7 @@ export default async function MessagesPage() {
 
   const caller = { id: session.user.id }
   const [conversationsResult, requestsResult, friendsResult, blockedResult, reportsResult, starredResult] = await Promise.all([
-    listMyConversations(caller),
+    listMyConversations(caller, { page: 1, pageSize: 20 }),
     listMyFriendRequests(caller),
     listFriends(caller),
     listBlockedUsers(caller),
@@ -30,6 +30,7 @@ export default async function MessagesPage() {
   ])
 
   const initialConversations = conversationsResult.ok ? conversationsResult.conversations : []
+  const initialConversationTotal = conversationsResult.ok ? conversationsResult.total : initialConversations.length
   const initialReceived = requestsResult.ok ? requestsResult.received : []
   const initialSent = requestsResult.ok ? requestsResult.sent : []
   const initialFriends = friendsResult.ok ? friendsResult.friends : []
@@ -41,6 +42,7 @@ export default async function MessagesPage() {
     <MessagesClient
       currentUserId={session.user.id}
       initialConversations={initialConversations}
+      initialConversationTotal={initialConversationTotal}
       initialReceived={initialReceived}
       initialSent={initialSent}
       initialFriends={initialFriends}

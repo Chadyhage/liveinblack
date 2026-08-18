@@ -62,8 +62,8 @@ describeIntegration('agentEvents (intégration, vraie base) — vue admin évén
       await seedEvent({ name: 'Passé', date: '2000-01-01', ownerId: 'org-2' })
 
       const results = await listEventsForAgent()
-      expect(results).toHaveLength(2)
-      const byName = new Map(results.map((r) => [r.name, r]))
+      expect(results.events).toHaveLength(2)
+      const byName = new Map(results.events.map((r) => [r.name, r]))
       expect(byName.get('Futur')?.status).toBe('upcoming')
       expect(byName.get('Passé')?.status).toBe('past')
     })
@@ -73,27 +73,27 @@ describeIntegration('agentEvents (intégration, vraie base) — vue admin évén
       await Event.updateOne({ _id: eventId }, { $set: { cancelled: true, cancellationMessage: 'Force majeure', cancelledAt: new Date() } })
 
       const results = await listEventsForAgent()
-      expect(results).toHaveLength(1)
-      expect(results[0].status).toBe('cancelled')
-      expect(results[0].cancellationMessage).toBe('Force majeure')
+      expect(results.events).toHaveLength(1)
+      expect(results.events[0].status).toBe('cancelled')
+      expect(results.events[0].cancellationMessage).toBe('Force majeure')
     })
 
     it('filtre par statut', async () => {
       await seedEvent({ name: 'Futur', date: '2099-06-01' })
       await seedEvent({ name: 'Passé', date: '2000-01-01' })
 
-      expect(await listEventsForAgent({ status: 'upcoming' })).toHaveLength(1)
-      expect(await listEventsForAgent({ status: 'past' })).toHaveLength(1)
-      expect(await listEventsForAgent({ status: 'cancelled' })).toHaveLength(0)
+      expect((await listEventsForAgent({ status: 'upcoming' })).events).toHaveLength(1)
+      expect((await listEventsForAgent({ status: 'past' })).events).toHaveLength(1)
+      expect((await listEventsForAgent({ status: 'cancelled' })).events).toHaveLength(0)
     })
 
     it('filtre par recherche sur nom/organisateur/ville', async () => {
       await seedEvent({ name: 'Neon Night', city: 'Lomé', organizerName: 'Le Club' })
       await seedEvent({ name: 'Autre Soirée', city: 'Cotonou', organizerName: 'Neon Crew' })
 
-      expect(await listEventsForAgent({ search: 'Neon' })).toHaveLength(2) // nom + organizerName matchent chacun un event différent
-      expect(await listEventsForAgent({ search: 'Cotonou' })).toHaveLength(1)
-      expect(await listEventsForAgent({ search: 'introuvable' })).toHaveLength(0)
+      expect((await listEventsForAgent({ search: 'Neon' })).events).toHaveLength(2) // nom + organizerName matchent chacun un event différent
+      expect((await listEventsForAgent({ search: 'Cotonou' })).events).toHaveLength(1)
+      expect((await listEventsForAgent({ search: 'introuvable' })).events).toHaveLength(0)
     })
 
     it('trie les annulés à la fin, puis par date croissante', async () => {
@@ -103,7 +103,7 @@ describeIntegration('agentEvents (intégration, vraie base) — vue admin évén
       await Event.updateOne({ _id: cancelledId }, { $set: { cancelled: true } })
 
       const results = await listEventsForAgent()
-      expect(results.map((r) => r.name)).toEqual(['Proche', 'Loin', 'Annulé'])
+      expect(results.events.map((r) => r.name)).toEqual(['Proche', 'Loin', 'Annulé'])
     })
   })
 

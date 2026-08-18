@@ -18,6 +18,16 @@ export interface ListPublishedPostsResult {
 
 const DEFAULT_PAGE_SIZE = 12
 
+function publishedFilter(now = new Date()) {
+  return {
+    $or: [
+      { publishedAt: { $exists: false } },
+      { publishedAt: null },
+      { publishedAt: { $lte: now } },
+    ],
+  }
+}
+
 // Liste des articles publiés (triés du plus récent au plus ancien), filtrable
 // par catégorie, paginée côté serveur (skip/limit Mongo — contrairement à
 // pageSlice côté page utilisé pour les annuaires prestataires/organisateurs
@@ -28,7 +38,7 @@ export async function listPublishedPosts(params: ListPublishedPostsParams = {}):
   const pageSize = Math.max(1, params.pageSize || DEFAULT_PAGE_SIZE)
   const requestedPage = Math.max(1, Math.floor(params.page || 1))
 
-  const filter: Record<string, unknown> = { publishedAt: { $lte: new Date() } }
+  const filter: Record<string, unknown> = publishedFilter()
   if (params.category) filter.category = params.category
 
   const totalCount = await BlogPost.countDocuments(filter)
@@ -48,7 +58,7 @@ export async function listPublishedPosts(params: ListPublishedPostsParams = {}):
 
 export async function getPostBySlug(slug: string): Promise<PublicBlogPost | null> {
   await getDb()
-  const doc = await BlogPost.findOne({ slug, publishedAt: { $lte: new Date() } }).lean()
+  const doc = await BlogPost.findOne({ slug, ...publishedFilter() }).lean()
   if (!doc) return null
   return { ...doc, id: String(doc._id) } as PublicBlogPost
 }
@@ -60,7 +70,7 @@ export async function listRelatedPosts(post: PublicBlogPost, limit = 3): Promise
   const docs = await BlogPost.find({
     category: post.category,
     slug: { $ne: post.slug },
-    publishedAt: { $lte: new Date() },
+    ...publishedFilter(),
   })
     .sort({ publishedAt: -1 })
     .limit(limit)
@@ -70,10 +80,13 @@ export async function listRelatedPosts(post: PublicBlogPost, limit = 3): Promise
 
 // Liste complète des articles publiés, non paginée — usage sitemap uniquement
 // (voir app/sitemap.ts), pattern identique à listPublicEvents/listPublicOrganizers.
-export async function listAllPublishedPostsForSitemap(): Promise<PublicBlogPost[]> {
+export async function listAllPublishedPostsForSitemap(params: { pageSize?: number } = {}): Promise<PublicBlogPost[]> {
+  const requestedPageSize = Math.max(1, Math.floor(Number(params.pageSize) || 0))
+  const pageSize = Math.min(500, Math.max(1, requestedPageSize || 12))
   await getDb()
-  const docs = await BlogPost.find({ publishedAt: { $lte: new Date() } })
+  const docs = await BlogPost.find(publishedFilter())
     .select('slug publishedAt updatedAt')
+    .limit(pageSize)
     .sort({ publishedAt: -1 })
     .lean()
   return docs.map((d) => ({ ...d, id: String(d._id) })) as PublicBlogPost[]

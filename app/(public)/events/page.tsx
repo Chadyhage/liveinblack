@@ -1,14 +1,15 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { auth } from '@/auth'
 import { type PublicEvent } from '@/lib/server/events'
-import { getCachedPublicEvents as listPublicEvents, getCachedBoostedEventIds as getBoostedEventIds } from '@/lib/server/publicCache'
+import { getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
+import { getBoostedEventIds } from '@/lib/server/boosts'
 import { getMyProfile } from '@/lib/server/profile'
 import { listActiveInterestSignals } from '@/lib/server/eventInterests'
-import { normalizeGeoText } from '@/lib/shared/locations'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
-import { Button, HiddenField, Input, Mascot, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, HiddenField, Input, Mascot, PageLinks } from '@/app/components/ui'
 import EventListCard from '../_components/EventListCard'
 import styles from './events.module.css'
 
@@ -19,28 +20,7 @@ export const metadata: Metadata = {
   description: 'Découvrez les prochains concerts, soirées et rendez-vous culturels sur LIVEINBLACK.',
 }
 
-function matchesSearch(event: PublicEvent, query: string): boolean {
-  const haystack = [
-    event.name,
-    event.city,
-    event.category,
-    event.subtitle,
-    event.organizer,
-    event.region,
-    ...(event.tags || []),
-    ...(event.artists || []).map((artist) => artist.name),
-  ]
-    .filter(Boolean)
-    .map(normalizeGeoText)
-    .join(' ')
-
-  return haystack.includes(normalizeGeoText(query))
-}
-
-function sortByScore<T extends { id: string }>(events: T[], scores: Record<string, number>): T[] {
-  if (Object.keys(scores).length === 0) return events
-  return [...events].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
-}
+export const revalidate = 45
 
 function filterHref(category?: string) {
   if (!category) return '/events'
@@ -56,42 +36,61 @@ export default async function EventsPage({
   const search = (q || '').trim()
   const category = (categoryParam || '').trim()
   const requestedPage = Math.max(1, Number(pageParam) || 1)
+  const cookieStore = await cookies()
+  const hasSessionCookie = cookieStore.getAll().some((cookie) =>
+    cookie.name.startsWith('next-auth.session-token') || cookie.name.startsWith('__Secure-next-auth.session-token')
+  )
 
-  const [events, boostedIds, session] = await Promise.all([listPublicEvents(), getBoostedEventIds(), auth()])
+  const [{ events: pageEvents, total, pageSize, totalPages, page: safePage }, boostedIds, session] = await Promise.all([
+    getCachedPublicEventsDirectory({
+      q: search,
+      category,
+      page: requestedPage,
+      pageSize: PAGE_SIZE,
+      includeTotal: true,
+    }),
+    getBoostedEventIds(),
+    hasSessionCookie ? auth() : Promise.resolve(null),
+  ])
 
   let recommendations: ReturnType<typeof getRecommendedEvents<PublicEvent>> = []
+  let recommendationSource: PublicEvent[] = []
   if (session?.user) {
-    const [profile, interestHistory] = await Promise.all([
+    const [{ events: prefSource }, profile, interestHistory] = await Promise.all([
+      getCachedPublicEventsDirectory({
+        page: 1,
+        pageSize: 60,
+        includeTotal: false,
+      }),
       getMyProfile({ id: session.user.id }),
       listActiveInterestSignals({ id: session.user.id }),
     ])
+    recommendationSource = prefSource
+
     if (profile && profile.privacy.personalizedRecommendations !== false) {
       recommendations = getRecommendedEvents({
         preferences: profile.preferences as RecommendationPreferences | null,
         interestHistory,
-        events,
+        events: recommendationSource,
         boostedIds,
         currentUserId: session.user.id,
         max: 12,
       })
     }
+  } else {
+    recommendationSource = pageEvents
   }
 
   const reasons: Record<string, string> = {}
-  const scores: Record<string, number> = {}
   for (const recommendation of recommendations) {
     if (recommendation.reason) reasons[recommendation.event.id] = recommendation.reason
-    scores[recommendation.event.id] = recommendation.score
   }
 
-  const categories = Array.from(new Set(events.map((event) => event.category).filter((value): value is string => Boolean(value)))).sort((a, b) =>
-    a.localeCompare(b, 'fr')
-  )
-  const filteredEvents = sortByScore(
-    events.filter((event) => (!search || matchesSearch(event, search)) && (!category || event.category === category)),
-    scores
-  )
-  const { pageItems, pageCount, safePage } = pageSlice(filteredEvents, requestedPage, PAGE_SIZE)
+  const categories = Array.from(
+    new Set(
+      recommendationSource.map((event) => event.category).filter((value): value is string => Boolean(value))
+    )
+  ).sort((a, b) => a.localeCompare(b, 'fr'))
   const hasFilters = Boolean(search || category)
 
   function makePageHref(page: number) {
@@ -125,7 +124,11 @@ export default async function EventsPage({
             containerStyle={{ flex: 1, minWidth: 0 }}
             style={{ border: 0, background: 'transparent', boxShadow: 'none' }}
           />
-          <Button type="submit" className={styles.searchButton} style={{ minWidth: 154, minHeight: 52, borderRadius: 15, background: '#b8f34a', color: '#142000', fontSize: 17 }}>
+          <Button
+            type="submit"
+            className={styles.searchButton}
+            style={{ minWidth: 154, minHeight: 52, borderRadius: 15, background: '#b8f34a', color: '#142000', fontSize: 17 }}
+          >
             <Search size={19} strokeWidth={2.2} aria-hidden="true" />
             <span>Rechercher</span>
           </Button>
@@ -139,7 +142,7 @@ export default async function EventsPage({
             <h2 id="catalogue-title">Tous les événements</h2>
           </div>
           <p className={styles.resultCount} aria-live="polite">
-            {filteredEvents.length} événement{filteredEvents.length > 1 ? 's' : ''}
+            {total} événement{total > 1 ? 's' : ''}
           </p>
         </div>
 
@@ -168,9 +171,9 @@ export default async function EventsPage({
           </div>
         )}
 
-        {pageItems.length > 0 ? (
+        {pageEvents.length > 0 ? (
           <div className={styles.grid}>
-            {pageItems.map((event, index) => (
+            {pageEvents.map((event, index) => (
               <EventListCard key={event.id} event={event} reason={reasons[event.id]} eager={index < 3} />
             ))}
           </div>
@@ -184,7 +187,7 @@ export default async function EventsPage({
         )}
 
         <div className={styles.pagination}>
-          <PageLinks page={safePage} pageCount={pageCount} makeHref={makePageHref} totalItems={filteredEvents.length} pageSize={PAGE_SIZE} />
+          <PageLinks page={safePage} pageCount={totalPages} makeHref={makePageHref} totalItems={total} pageSize={pageSize} />
         </div>
       </section>
     </main>

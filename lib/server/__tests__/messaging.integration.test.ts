@@ -645,6 +645,49 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       const view = result.conversations.find((c) => c.id === conv.id)
       expect(view?.unreadCount).toBe(1)
     })
+
+    it('pagine le listing des conversations avec total/page/hasMore cohérents', async () => {
+      const a = await seedUser()
+      const others = Array.from({ length: 12 }, () => seedUser())
+      const ids: string[] = []
+      for (const seed of others) {
+        const other = await seed
+        const conv = await createDirectConversation({ id: a.id }, { otherUserId: other.id })
+        expect(conv.ok).toBe(true)
+        if (!conv.ok) return
+        const sent = await sendMessage({ id: a.id }, { conversationId: conv.conversation.id, type: 'text', content: `hello ${conv.conversation.id}` })
+        expect(sent.ok).toBe(true)
+        if (!sent.ok) return
+        ids.push(conv.conversation.id)
+      }
+
+      const firstPage = await listMyConversations({ id: a.id }, { page: 1, pageSize: 5 })
+      expect(firstPage.ok).toBe(true)
+      if (!firstPage.ok) return
+      expect(firstPage.conversations.length).toBe(5)
+      expect(firstPage.total).toBe(12)
+      expect(firstPage.page).toBe(1)
+      expect(firstPage.pageSize).toBe(5)
+      expect(firstPage.hasMore).toBe(true)
+
+      const secondPage = await listMyConversations({ id: a.id }, { page: 2, pageSize: 5 })
+      expect(secondPage.ok).toBe(true)
+      if (!secondPage.ok) return
+      expect(secondPage.conversations).toHaveLength(5)
+      expect(secondPage.page).toBe(2)
+      expect(secondPage.pageSize).toBe(5)
+      expect(secondPage.hasMore).toBe(true)
+
+      const thirdPage = await listMyConversations({ id: a.id }, { page: 3, pageSize: 5 })
+      expect(thirdPage.ok).toBe(true)
+      if (!thirdPage.ok) return
+      expect(thirdPage.conversations).toHaveLength(2)
+      expect(thirdPage.hasMore).toBe(false)
+
+      const seenIds = [...firstPage.conversations, ...secondPage.conversations, ...thirdPage.conversations].map((c) => c.id)
+      expect(new Set(seenIds).size).toBe(12)
+      expect(seenIds[0]).toBe(ids[ids.length - 1])
+    })
   })
 
   describe('blockUser / unblockUser', () => {

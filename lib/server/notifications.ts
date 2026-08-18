@@ -21,9 +21,10 @@ export interface CreateNotificationInput {
 // 50/utilisateur du legacy (old/src/utils/notifications.js), sans porter son
 // mécanisme localStorage/sync Firestore.
 async function trimToLimit(userId: string) {
-  const overflow = await Notification.find({ userId }).sort({ createdAt: -1 }).skip(MAX_PER_USER).select('_id').lean()
-  if (overflow.length === 0) return
-  await Notification.deleteMany({ _id: { $in: overflow.map((d) => d._id) } })
+  const keep = await Notification.find({ userId }).sort({ updatedAt: -1 }).limit(MAX_PER_USER).select('_id').lean()
+  if (keep.length < MAX_PER_USER) return
+  const keepIds = keep.map((d) => d._id)
+  await Notification.deleteMany({ userId, _id: { $nin: keepIds } })
 }
 
 export async function createNotification(input: CreateNotificationInput): Promise<void> {
@@ -76,6 +77,7 @@ export async function listNotifications(userId: string, { limit = 20 }: { limit?
     link: n.link,
     read: n.read,
     createdAt: n.createdAt,
+    updatedAt: n.updatedAt,
   }))
 }
 

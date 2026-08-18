@@ -8,7 +8,7 @@ export function resaleListingCreatedEmail(eventName: string, priceLabel: string,
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton billet est en vente')}
-    ${paragraph(`Ton billet pour <strong style="color:#fff;">${evName}</strong> est maintenant proposé à la revente pour <strong style="color:#fff;">${priceLabel}</strong>.`)}
+    ${paragraph(`Ton billet pour <strong style="color:inherit;">${evName}</strong> est maintenant proposé à la revente pour <strong style="color:inherit;">${priceLabel}</strong>.`)}
     ${button(manageUrl, 'Gérer mon annonce', 'outline')}
   `
   return {
@@ -22,7 +22,7 @@ export function resaleListingSoldEmail(eventName: string, netAmountLabel: string
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton billet a trouvé preneur 💸', 'accent')}
-    ${paragraph(`Ton billet pour <strong style="color:#fff;">${evName}</strong> a été vendu ! Tu recevras <strong style="color:#fff;">${netAmountLabel}</strong> (net de commission).`)}
+    ${paragraph(`Ton billet pour <strong style="color:inherit;">${evName}</strong> a été vendu ! Tu recevras <strong style="color:inherit;">${netAmountLabel}</strong> (net de commission).`)}
     ${note(`Le versement arrive généralement sous ${payoutDelayLabel} après l'événement.`)}
   `
   return {
@@ -36,7 +36,7 @@ export function resaleListingExpiredEmail(eventName: string, site: string = DEFA
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton annonce a expiré')}
-    ${paragraph(`Ton annonce de revente pour <strong style="color:#fff;">${evName}</strong> a expiré sans trouver d'acheteur (la revente ferme automatiquement peu avant l'ouverture des portes).`)}
+    ${paragraph(`Ton annonce de revente pour <strong style="color:inherit;">${evName}</strong> a expiré sans trouver d'acheteur (la revente ferme automatiquement peu avant l'ouverture des portes).`)}
   `
   return {
     subject: `Ton annonce pour ${eventName} a expiré`,

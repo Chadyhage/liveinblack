@@ -1,4 +1,27 @@
 {
+  "regions": ["cdg1", "iad1"],
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "functions": {
+    "app/api/webhooks/stripe/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/checkout/**/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/checkout/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/event-orders/**/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/agent-sales/[eventId]/**/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/agent/payments/**/route.ts": {
+      "maxDuration": 60
+    }
+  },
   "crons": [
     { "path": "/api/cron/payouts", "schedule": "0 8 * * *" },
     { "path": "/api/cron/subscriptions", "schedule": "0 7 * * *" },

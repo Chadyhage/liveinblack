@@ -185,6 +185,44 @@ describeIntegration('messaging actions (intégration, vraie base) — #50', () =
       const listBAfter = await listStarredMessages({ id: b.id })
       expect(listBAfter.ok && listBAfter.messages).toHaveLength(0)
     })
+
+    it('pagine les messages importants avec métadonnées page/total/hasMore cohérentes', async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      if (!conv.ok) throw new Error('setup failed')
+
+      const messageIds: string[] = []
+      for (let i = 0; i < 12; i++) {
+        const sent = await sendMessage({ id: a.id }, { conversationId: conv.conversation.id, type: 'text', content: `msg-${i}` })
+        expect(sent.ok).toBe(true)
+        if (!sent.ok) return
+        messageIds.push(sent.message.id)
+      }
+
+      for (const id of messageIds) {
+        const star = await starMessage({ id: b.id }, { messageId: id })
+        expect(star.ok).toBe(true)
+      }
+
+      const page1 = await listStarredMessages({ id: b.id }, { page: 1, pageSize: 10 })
+      expect(page1.ok).toBe(true)
+      if (!page1.ok) return
+      expect(page1.total).toBe(12)
+      expect(page1.page).toBe(1)
+      expect(page1.pageSize).toBe(10)
+      expect(page1.hasMore).toBe(true)
+      expect(page1.messages).toHaveLength(10)
+
+      const page2 = await listStarredMessages({ id: b.id }, { page: 2, pageSize: 10 })
+      expect(page2.ok).toBe(true)
+      if (!page2.ok) return
+      expect(page2.total).toBe(12)
+      expect(page2.page).toBe(2)
+      expect(page2.pageSize).toBe(10)
+      expect(page2.hasMore).toBe(false)
+      expect(page2.messages).toHaveLength(2)
+    })
   })
 
   describe('forwardMessage', () => {

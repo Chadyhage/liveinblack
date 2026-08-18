@@ -10,7 +10,7 @@ export function eventPublishedEmail(eventName: string, publicUrl: string, site: 
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton événement est en ligne 🎉', 'accent')}
-    ${paragraph(`<strong style="color:#fff;">${evName}</strong> est maintenant visible sur LIVEINBLACK.`)}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> est maintenant visible sur LIVEINBLACK.`)}
     ${button(publicUrl, "Voir la page de l'événement")}
     ${note('Pense à ajouter ton équipe et tes codes promo depuis ton espace organisateur.')}
   `
@@ -25,7 +25,7 @@ export function firstSaleEmail(eventName: string, dashboardUrl: string, site: st
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Première vente ! 🎟️', 'accent')}
-    ${paragraph(`Le premier billet pour <strong style="color:#fff;">${evName}</strong> vient d'être vendu.`)}
+    ${paragraph(`Le premier billet pour <strong style="color:inherit;">${evName}</strong> vient d'être vendu.`)}
     ${button(dashboardUrl, 'Voir mes statistiques', 'outline')}
   `
   return {
@@ -39,7 +39,7 @@ export function salesMilestoneEmail(eventName: string, milestoneLabel: string, d
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading(milestoneLabel, 'accent')}
-    ${paragraph(`<strong style="color:#fff;">${evName}</strong> vient d'atteindre ce jalon de ventes.`)}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> vient d'atteindre ce jalon de ventes.`)}
     ${button(dashboardUrl, 'Voir mes statistiques', 'outline')}
   `
   return {
@@ -80,7 +80,7 @@ export function boostActivatedEmail(eventName: string, durationLabel: string, da
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton boost est actif', 'accent')}
-    ${paragraph(`Le boost de <strong style="color:#fff;">${evName}</strong> est actif pour ${durationLabel}.`)}
+    ${paragraph(`Le boost de <strong style="color:inherit;">${evName}</strong> est actif pour ${durationLabel}.`)}
     ${button(dashboardUrl, 'Voir mes statistiques', 'outline')}
   `
   return {
@@ -94,7 +94,7 @@ export function boostConflictEmail(eventName: string, reason: string, alternativ
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton boost n’a pas pu être activé', 'danger')}
-    ${paragraph(`Le boost pour <strong style="color:#fff;">${evName}</strong> n'a pas pu être activé : ${escapeHtml(reason)}.`)}
+    ${paragraph(`Le boost pour <strong style="color:inherit;">${evName}</strong> n'a pas pu être activé : ${escapeHtml(reason)}.`)}
     ${button(alternativeUrl, 'Choisir un autre créneau', 'danger')}
   `
   return {
@@ -108,7 +108,7 @@ export function cancellationFinancialImpactEmail(eventName: string, totalRefunde
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Impact financier de l’annulation')}
-    ${paragraph(`Suite à l'annulation de <strong style="color:#fff;">${evName}</strong>, un total de <strong style="color:#fff;">${totalRefundedLabel}</strong> a été remboursé aux acheteurs.`)}
+    ${paragraph(`Suite à l'annulation de <strong style="color:inherit;">${evName}</strong>, un total de <strong style="color:inherit;">${totalRefundedLabel}</strong> a été remboursé aux acheteurs.`)}
     ${note(payoutImpactLabel)}
   `
   return {

@@ -10,6 +10,7 @@ import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
 import { slugifyOrganizer, validateOrganizerSlugFormat, RESERVED_ORGANIZER_SLUGS } from '../shared/organizerProfileValidation'
 import { normalizeRegionId, normalizeRegionIds } from '../shared/locations'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '../shared/social'
+import { revalidateTag } from 'next/cache'
 
 // Port de la partie ÉCRITURE de OrganizerPublicStudio.jsx (#7 phase
 // organisateur — "Ma page publique"). La lecture publique vit déjà dans
@@ -160,6 +161,7 @@ export async function getOrCreateMyOrganizerProfile(caller: ProfileCaller): Prom
     status: 'draft',
     zonesIntervention: regionId ? [regionId] : [],
   })
+  revalidateTag('public-organizers', 'default')
 
   return { ok: true, profile: toProfileView(created) }
 }
@@ -247,6 +249,7 @@ export async function updateOrganizerProfile(caller: ProfileCaller, input: Updat
     if (isDuplicateKeyError(err)) return { ok: false, status: 409, error: 'slug_taken' }
     throw err
   }
+  revalidateTag('public-organizers', 'default')
 
   return { ok: true, profile: toProfileView(profile) }
 }
@@ -311,6 +314,7 @@ export async function uploadOrganizerProfileMedia(caller: ProfileCaller, input: 
   }
 
   await profile.save()
+  revalidateTag('public-organizers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -338,6 +342,7 @@ export async function updateOrganizerMediaItem(caller: ProfileCaller, mediaId: s
   if (patch.visibility !== undefined) item.visibility = patch.visibility
 
   await profile.save()
+  revalidateTag('public-organizers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -358,6 +363,7 @@ export async function removeOrganizerMedia(caller: ProfileCaller, mediaId: strin
   profile.media = next as typeof profile.media
 
   await profile.save()
+  revalidateTag('public-organizers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }
 
@@ -384,5 +390,6 @@ export async function reorderOrganizerMedia(caller: ProfileCaller, order: string
   profile.media = reordered as typeof profile.media
 
   await profile.save()
+  revalidateTag('public-organizers', 'default')
   return { ok: true, profile: toProfileView(profile) }
 }

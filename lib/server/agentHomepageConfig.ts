@@ -2,6 +2,7 @@ import { getDb } from '../db/mongoose'
 import HomepageConfig, { HOMEPAGE_ACTUALITE_ID, ACTUALITE_ACCENTS, type ActualiteAccent } from '../models/HomepageConfig'
 import { listPublicEvents } from './events'
 import { listEventsForAgent } from './agentEvents'
+import { revalidateTag } from 'next/cache'
 
 // Port de src/utils/homepageConfig.js + src/components/ActualiteAdminPanel.jsx
 // (#9 phase agent/admin, tab 'actualite') — config éditoriale SINGLETON du
@@ -63,9 +64,18 @@ function normalize(raw: RawConfig | null | undefined): HomepageActualiteConfig {
 }
 
 async function loadConfig(): Promise<HomepageActualiteConfig> {
-  await getDb()
-  const doc = await HomepageConfig.findById(HOMEPAGE_ACTUALITE_ID).lean()
-  return normalize(doc as RawConfig | null)
+  try {
+    await getDb()
+    const doc = await HomepageConfig.findById(HOMEPAGE_ACTUALITE_ID).lean()
+    return normalize(doc as RawConfig | null)
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_APP_STRICT_HOMEPAGE_CONFIG === '1') {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Homepage config unavailable from database, using fallback', error instanceof Error ? error.message : 'db_error')
+      }
+    }
+    return normalize(null)
+  }
 }
 
 // Lecture agent (panneau admin) — mêmes données que la lecture publique,
@@ -104,6 +114,7 @@ export async function updateHomepageConfig(agent: AgentCaller, input: UpdateHome
     { $set: { ...clean, updatedAt: now, updatedBy: agent.id } },
     { upsert: true, returnDocument: 'after' }
   ).lean()
+  revalidateTag('homepage-config', 'default')
   return normalize(updated as RawConfig)
 }
 
@@ -138,9 +149,9 @@ export async function listCandidateEventsForActualite(): Promise<EventPickerOpti
 export async function resolveActualiteEventLabels(eventIds: string[]): Promise<Record<string, EventPickerOption>> {
   if (eventIds.length === 0) return {}
   const wanted = new Set(eventIds)
-  const all = await listEventsForAgent()
+  const result = await listEventsForAgent()
   const out: Record<string, EventPickerOption> = {}
-  for (const e of all) {
+  for (const e of result.events) {
     if (wanted.has(e.id)) out[e.id] = { id: e.id, name: e.name, date: e.date, dateDisplay: e.dateDisplay, city: e.city, region: '' }
   }
   return out

@@ -63,7 +63,14 @@ const organizerProfileSchema = new Schema(
   { timestamps: true }
 )
 
-organizerProfileSchema.index({ publicName: 'text', shortDescription: 'text', city: 'text' })
+organizerProfileSchema.index({ publicName: 'text', shortDescription: 'text', longDescription: 'text', city: 'text', country: 'text' })
+organizerProfileSchema.index({ status: 1, followersCount: -1 })
+organizerProfileSchema.index({ status: 1, createdAt: -1 })
+organizerProfileSchema.index({ status: 1, regionId: 1, followersCount: -1 })
+organizerProfileSchema.index({ status: 1, country: 1 })
+organizerProfileSchema.index({ status: 1, city: 1 })
+organizerProfileSchema.index({ status: 1, zonesIntervention: 1, followersCount: -1 })
+organizerProfileSchema.index({ status: 1, zonesIntervention: 1, createdAt: -1 })
 
 export type OrganizerProfileDoc = InferSchemaType<typeof organizerProfileSchema>
 export type OrganizerProfileModel = Model<OrganizerProfileDoc>

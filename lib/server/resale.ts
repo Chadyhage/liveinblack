@@ -74,6 +74,12 @@ export async function listTicketForResale(caller: ResaleCaller, ticketCode: stri
   if (ticket.revoked) return { ok: false, status: 409, error: 'ticket_revoked' }
   if (ticket.checkedInAt) return { ok: false, status: 409, error: 'ticket_already_checked_in' }
   if (ticket.resaleListingId) return { ok: false, status: 409, error: 'already_listed' }
+  if (ticket.orderId) {
+    const refundState = await Order.findById(ticket.orderId).select('clientRefundRequestedAt status').lean()
+    if (refundState?.clientRefundRequestedAt || refundState?.status === 'superseded') {
+      return { ok: false, status: 409, error: 'refund_already_requested' }
+    }
+  }
   const paidNormally = ticket.source === 'paid' || Boolean(ticket.source?.startsWith('stripe')) || Boolean(ticket.source?.startsWith('fedapay'))
   if (!paidNormally) {
     // 'guestlist'/'free' restent exclus (aucun paiement à l'origine, la

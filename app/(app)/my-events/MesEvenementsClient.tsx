@@ -28,6 +28,7 @@ export interface MesEvenementsClientProps {
   initialEvents: OrganizerEventView[]
   initialStripeChargesEnabled: boolean
   initialMomos: Record<string, string>
+  initialRegion: string
 }
 
 type ModalState =
@@ -40,7 +41,7 @@ type ModalState =
   | { type: 'postpone'; event: OrganizerEventView }
   | { type: 'delete'; event: OrganizerEventView }
 
-export default function MesEvenementsClient({ initialEvents, initialStripeChargesEnabled, initialMomos }: MesEvenementsClientProps) {
+export default function MesEvenementsClient({ initialEvents, initialStripeChargesEnabled, initialMomos, initialRegion }: MesEvenementsClientProps) {
   const [events, setEvents] = useState(initialEvents)
   // Vue tableau de bord vs. wizard plein écran (création/édition), reflétée
   // dans l'URL (?event=new pour créer, ?event=<id> pour éditer, absent pour
@@ -192,6 +193,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
     return (
       <EventWizard
         eventId={editingEventId}
+        initialRegion={initialRegion}
         onClose={() => setEventParam('')}
         onSaved={async () => {
           await refreshEvents()

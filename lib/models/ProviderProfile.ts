@@ -94,8 +94,13 @@ const providerProfileSchema = new Schema(
   { timestamps: true }
 )
 
-providerProfileSchema.index({ name: 'text', description: 'text', city: 'text' })
+providerProfileSchema.index({ name: 'text', description: 'text', city: 'text', location: 'text', country: 'text', headline: 'text' })
 providerProfileSchema.index({ subscriptionExpiresAt: 1 })
+providerProfileSchema.index({ subscriptionActive: 1, updatedAt: -1 })
+providerProfileSchema.index({ subscriptionActive: 1, prestataireType: 1, updatedAt: -1 })
+providerProfileSchema.index({ subscriptionActive: 1, prestataireTypes: 1, updatedAt: -1 })
+providerProfileSchema.index({ subscriptionActive: 1, regionId: 1, updatedAt: -1 })
+providerProfileSchema.index({ subscriptionActive: 1, zonesIntervention: 1, updatedAt: -1 })
 
 export type ProviderProfileDoc = InferSchemaType<typeof providerProfileSchema>
 export type ProviderProfileModel = Model<ProviderProfileDoc>

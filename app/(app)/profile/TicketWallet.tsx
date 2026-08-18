@@ -7,7 +7,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
 import { ArrowLeft } from 'lucide-react'
-import { ActionLink, Button, Card, Input, Mascot, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Button, Card, Input, Mascot, Modal, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -763,6 +763,7 @@ function PremiumTicketCard({
   const [flashMsg, setFlashMsg] = useState<string | null>(null)
   const [refundState, setRefundState] = useState<'idle' | 'busy' | 'done' | 'err'>(ticket.refundRequested ? 'done' : 'idle')
   const [refundErr, setRefundErr] = useState<string | null>(null)
+  const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
   const [resellOpen, setResellOpen] = useState(false)
   const [resellPrice, setResellPrice] = useState('')
   const [resellState, setResellState] = useState<'idle' | 'busy' | 'err'>('idle')
@@ -1083,7 +1084,7 @@ function PremiumTicketCard({
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={handleRefundRequest}
+                  onClick={() => setRefundConfirmOpen(true)}
                   disabled={refundState === 'busy' || refundState === 'done'}
                   loading={refundState === 'busy'}
                   loadingText="Envoi…"
@@ -1112,6 +1113,34 @@ function PremiumTicketCard({
               )}
             </div>
             {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
+
+            {refundConfirmOpen && (
+              <Modal
+                onClose={() => setRefundConfirmOpen(false)}
+                maxWidth={430}
+                title="Confirmer la demande"
+                subtitle="Cette demande est irréversible une fois le remboursement lancé."
+                ariaLabel="Confirmer la demande de remboursement"
+                actions={
+                  <>
+                    <Button variant="secondary" onClick={() => setRefundConfirmOpen(false)} disabled={refundState === 'busy'}>Annuler</Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => { setRefundConfirmOpen(false); void handleRefundRequest() }}
+                      disabled={refundState === 'busy'}
+                      loading={refundState === 'busy'}
+                      loadingText="Envoi…"
+                    >
+                      Confirmer le remboursement
+                    </Button>
+                  </>
+                }
+              >
+                <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+                  Tu demandes le remboursement de ce billet. Les frais de service ne sont pas remboursés et le billet sera désactivé si la demande est acceptée.
+                </p>
+              </Modal>
+            )}
 
             {resellOpen && !activeListing && (
               <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>

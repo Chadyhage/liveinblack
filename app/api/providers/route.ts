@@ -1,32 +1,45 @@
 import { NextResponse } from 'next/server'
-import { getCachedPublicProviders as listPublicProviders } from '@/lib/server/publicCache'
+import { getCachedPublicProvidersDirectory } from '@/lib/server/publicCache'
 import { getProviderCategories, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
-import { getEntityRegionIds, getRegionName, matchesEntityRegion, normalizeGeoText } from '@/lib/shared/locations'
+import { createCacheHeaders } from '@/lib/server/cacheHeaders'
+import { parsePage, parsePageSize } from '@/lib/shared/pagination'
+import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
-// Annuaire public des prestataires en JSON — miroir de
-// app/(public)/providers/page.tsx (même logique de filtrage q/categorie/
-// region, filtrée ici côté serveur plutôt que renvoyée en clair, pour éviter
-// à l'app mobile de dupliquer lib/shared/providerCategories.ts /
-// lib/shared/locations.ts). listPublicProviders() n'a aucun paramètre de
-// filtre propre — le filtrage est fait dans la route, pas dans lib/server/*.
+// Annuaire public des prestataires en JSON — logique alignée avec
+// app/(public)/providers/page.tsx.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const search = (searchParams.get('q') || '').trim()
   const category = searchParams.get('categorie') || ''
   const region = searchParams.get('region') || ''
+  const page = parsePage(searchParams.get('page'), 1, { min: 1, max: 4_000 })
+  const pageSize = parsePageSize(searchParams.get('pageSize'), 12, { min: 12, max: 120 })
 
-  const providers = await listPublicProviders()
+  if (search && search.length < 2) {
+    return NextResponse.json({ ok: false, error: 'Le terme de recherche doit contenir au moins 2 caractères.' }, { status: 400 })
+  }
 
-  const filtered = providers.filter((p) => {
-    if (category && !getProviderCategories(p).some((c) => c.id === category)) return false
-    if (!matchesEntityRegion(p, region)) return false
-    if (search) {
-      const regionNames = getEntityRegionIds(p).map(getRegionName)
-      const categoryNames = getProviderCategories(p).flatMap((item) => [item.label, item.singular])
-      const hay = [p.name, p.headline, p.city, p.location, p.country, p.description, ...regionNames, ...categoryNames].filter(Boolean).map(normalizeGeoText).join(' ')
-      if (!hay.includes(normalizeGeoText(search))) return false
-    }
-    return true
+  const rateLimit = await checkRateLimit({
+    scope: 'public-providers-api',
+    identifier: getRequestIp(req),
+    limit: 300,
+    windowMs: 60 * 1000,
+  })
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfter: rateLimit.retryAfterSeconds },
+      { status: 429, headers: { ...createCacheHeaders({ maxAgeSeconds: 5, shared: true }), 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+    )
+  }
+
+  const { providers, total, page: cachedPage, pageSize: returnedPageSize } = await getCachedPublicProvidersDirectory({
+    q: search,
+    categorie: category,
+    region,
+    page,
+    pageSize,
+    includeTotal: true,
   })
 
   const counts: Record<string, number> = {}
@@ -36,8 +49,10 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    providers: filtered,
-    total: providers.length,
+    providers,
+    total,
+    page: cachedPage,
+    pageSize: returnedPageSize,
     categories: PROVIDER_CATEGORIES.filter((c) => counts[c.id]).map((c) => ({ id: c.id, label: c.label, color: c.color, count: counts[c.id] })),
-  })
+  }, { headers: createCacheHeaders({ maxAgeSeconds: 45, staleWhileRevalidateSeconds: 180, shared: true }) })
 }

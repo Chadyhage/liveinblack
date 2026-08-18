@@ -265,7 +265,7 @@ export function buildEventInsights(stats: EventStatsResult): EventInsight[] {
     insights.push({ tone: 'teal', text: `${stats.byPlace[0].name} est la catégorie la plus demandée avec ${stats.byPlace[0].count} billet${stats.byPlace[0].count > 1 ? 's' : ''}.` })
   }
 
-  insights.push({ tone: 'muted', text: 'Le CA affiché est une estimation billetterie hors remboursements, remises, frais et précommandes.' })
+  insights.push({ tone: 'muted', text: 'Les montants restent estimatifs : remboursements, remises et frais ne sont pas encore déduits.' })
   return insights
 }
 

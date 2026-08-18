@@ -9,6 +9,11 @@ import { createDirectConversation, listMyConversations } from '@/lib/server/mess
 // unreadCount par conversation.
 const bodySchema = z.object({ otherUserId: z.string().min(1) })
 
+const getListSchema = z.object({
+  page: z.coerce.number().int().min(1).max(200).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
+})
+
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
@@ -21,11 +26,28 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, conversation: result.conversation })
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
 
-  const result = await listMyConversations({ id: session.user.id })
+  const url = new URL(req.url)
+  const parsed = getListSchema.safeParse({
+    page: url.searchParams.get('page'),
+    pageSize: url.searchParams.get('pageSize'),
+  })
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'invalid_query', details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const result = await listMyConversations({ id: session.user.id }, parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
-  return NextResponse.json({ ok: true, conversations: result.conversations })
+
+  return NextResponse.json({
+    ok: true,
+    conversations: result.conversations,
+    total: result.total,
+    page: result.page,
+    pageSize: result.pageSize,
+    hasMore: result.hasMore,
+  })
 }

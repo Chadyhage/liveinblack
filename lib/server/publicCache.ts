@@ -10,10 +10,16 @@
 // un passage par le cache (sérialisation JSON de unstable_cache) — déjà géré
 // par tout le code appelant, qui fait systématiquement `new Date(x)`.
 import { unstable_cache } from 'next/cache'
-import { listPublicEvents, searchPublicEvents } from './events'
+import { listPublicEvents, searchPublicEvents, listPublicEventsDirectory as listEventsDirectory } from './events'
 import { getBoostedEventIds } from './boosts'
-import { listPublicProviders } from './providers'
-import { listPublicOrganizers, listPublicOrganizersWithNextEvent } from './organizers'
+import { listPublicProviders, listPublicProvidersDirectory } from './providers'
+import {
+  type PublicOrganizerDirectoryParams,
+  listPublicOrganizers,
+  listPublicOrganizersDirectory,
+  listPublicOrganizersWithNextEvent,
+} from './organizers'
+import type { PublicProviderDirectoryParams } from './providers'
 import { getPublicHomepageConfig } from './agentHomepageConfig'
 import { listPublishedPosts, getPostBySlug, listRelatedPosts, type ListPublishedPostsParams, type PublicBlogPost } from './blog'
 
@@ -24,10 +30,11 @@ export const getCachedPublicEvents = unstable_cache(listPublicEvents, ['public-e
   tags: ['public-events'],
 })
 
-export const getCachedSearchPublicEvents = unstable_cache(searchPublicEvents, ['public-events-search'], {
-  revalidate: REVALIDATE_SECONDS,
-  tags: ['public-events'],
-})
+export const getCachedSearchPublicEvents = unstable_cache(
+  (query: string) => searchPublicEvents(query),
+  ['public-events-search'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['public-events'] }
+)
 
 // Set n'est pas sérialisable tel quel par unstable_cache (JSON-only) — on
 // cache le tableau d'ids et on reconstruit le Set à chaque appel.
@@ -45,10 +52,37 @@ export const getCachedPublicProviders = unstable_cache(listPublicProviders, ['pu
   tags: ['public-providers'],
 })
 
+export const getCachedPublicProvidersDirectory = unstable_cache(
+  (params: PublicProviderDirectoryParams = {}) => listPublicProvidersDirectory(params),
+  ['public-providers-directory'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['public-providers'] }
+)
+
 export const getCachedPublicOrganizers = unstable_cache(listPublicOrganizers, ['public-organizers-list'], {
   revalidate: REVALIDATE_SECONDS,
   tags: ['public-organizers'],
 })
+
+export const getCachedPublicOrganizersDirectory = unstable_cache(
+  (params: PublicOrganizerDirectoryParams = {}) => listPublicOrganizersDirectory(params),
+  ['public-organizers-directory'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['public-organizers'] }
+)
+
+export const getCachedPublicEventsDirectory = unstable_cache(
+  (
+    params: {
+      q?: string
+      category?: string
+      region?: string
+      page?: number
+      pageSize?: number
+      includeTotal?: boolean
+    } = {}
+  ) => listEventsDirectory(params),
+  ['public-events-directory'],
+  { revalidate: REVALIDATE_SECONDS, tags: ['public-events'] }
+)
 
 export const getCachedPublicOrganizersWithNextEvent = unstable_cache(
   listPublicOrganizersWithNextEvent,

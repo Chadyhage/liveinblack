@@ -1,59 +1,51 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { ArrowUpRight, MapPin, Search, SlidersHorizontal, Users, X } from 'lucide-react'
 import { auth } from '@/auth'
-import { getCachedPublicOrganizersWithNextEvent as listPublicOrganizersWithNextEvent } from '@/lib/server/publicCache'
+import { getCachedPublicOrganizersDirectory } from '@/lib/server/publicCache'
 import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
-import { normalizeGeoText, getEntityRegionIds, getRegionName, matchesEntityRegion } from '@/lib/shared/locations'
+import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
-import { Button, Checkbox, Input, Mascot, PageLinks, pageSlice } from '@/app/components/ui'
+import { Button, Checkbox, Input, Mascot, PageLinks } from '@/app/components/ui'
 import styles from './organizers.module.css'
-
-const PAGE_SIZE = 20
 
 export const metadata: Metadata = {
   title: 'Organisateurs — LIVEINBLACK',
   description: "Découvrez les organisateurs d'événements et suivez ceux qui font vivre la scène sur LIVEINBLACK.",
 }
 
-export const dynamic = 'force-dynamic'
-
 type DirectoryParams = { q?: string; region?: string; upcoming?: string; sort?: string; page?: string }
 
 export default async function PublicOrganizersPage({ searchParams }: { searchParams: Promise<DirectoryParams> }) {
-  const [{ q, region = '', upcoming, sort = 'popular', page: pageParam }, organizers, session] = await Promise.all([
+  const [{ q, region = '', upcoming, sort = 'popular', page: pageParam }, cookieStore] = await Promise.all([
     searchParams,
-    listPublicOrganizersWithNextEvent(),
-    auth(),
+    cookies(),
   ])
   const search = (q || '').trim()
   const upcomingOnly = upcoming === '1'
   const requestedPage = Math.max(1, Number(pageParam) || 1)
+  const hasSessionCookie = cookieStore.getAll().some((cookie) =>
+    cookie.name.startsWith('next-auth.session-token') || cookie.name.startsWith('__Secure-next-auth.session-token')
+  )
+  const session = hasSessionCookie ? await auth() : null
+
+  const { organizers, total, totalPages, pageSize } = await getCachedPublicOrganizersDirectory({
+    q: search,
+    region,
+    upcoming: upcomingOnly,
+    sort: sort === 'recent' ? 'recent' : 'popular',
+    page: requestedPage,
+    pageSize: 24,
+  })
 
   const followResult = session?.user ? await listMyFollowedOrganizers({ id: session.user.id }) : { ok: true as const, follows: [] }
   const followedIds = new Set(followResult.ok ? followResult.follows.map((follow) => follow.organizerId) : [])
 
-  const filtered = organizers
-    .filter((organizer) => {
-      if (upcomingOnly && !organizer.nextEvent) return false
-      if (!matchesEntityRegion(organizer, region, organizer.eventRegions)) return false
-      if (!search) return true
-      const zones = getEntityRegionIds(organizer, organizer.eventRegions).map(getRegionName)
-      return [organizer.publicName, organizer.city, organizer.country, organizer.shortDescription, organizer.nextEvent?.name, ...zones]
-        .filter(Boolean)
-        .map(normalizeGeoText)
-        .join(' ')
-        .includes(normalizeGeoText(search))
-    })
-    .sort((a, b) => sort === 'recent'
-      ? new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-      : (b.followersCount || 0) - (a.followersCount || 0))
-
-  const { pageItems, pageCount, safePage } = pageSlice(filtered, requestedPage, PAGE_SIZE)
   const hasFilters = Boolean(search || region || upcomingOnly || sort !== 'popular')
 
   function makeHref(page: number) {
@@ -89,14 +81,14 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
       <section className={styles.directory} aria-labelledby="organizer-directory-title">
         <div className={styles.directoryHeader}>
           <div><p className={styles.sectionKicker}><SlidersHorizontal size={18} aria-hidden="true" /> Explorer</p><h2 id="organizer-directory-title">Tous les organisateurs</h2></div>
-          <p className={styles.resultCount}>{filtered.length} profil{filtered.length > 1 ? 's' : ''}</p>
+          <p className={styles.resultCount}>{total} profil{total > 1 ? 's' : ''}</p>
         </div>
 
         {hasFilters && <div className={styles.activeFilters}><p>Résultats selon vos critères</p><Link href="/organizers"><X size={17} aria-hidden="true" /> Effacer les filtres</Link></div>}
 
-        {pageItems.length > 0 ? (
+        {organizers.length > 0 ? (
           <div className={styles.grid}>
-            {pageItems.map((organizer, index) => {
+            {organizers.map((organizer, index) => {
               const zones = getEntityRegionIds(organizer).map(getRegionName).filter(Boolean)
               const isSelf = session?.user?.id === organizer.userId
               return (
@@ -125,7 +117,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
           <div className={styles.empty}><Mascot mood="search" size={164} /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
         )}
 
-        <PageLinks page={safePage} pageCount={pageCount} makeHref={makeHref} totalItems={filtered.length} pageSize={PAGE_SIZE} />
+        <PageLinks page={requestedPage} pageCount={totalPages} makeHref={makeHref} totalItems={total} pageSize={pageSize} />
       </section>
     </main>
   )
