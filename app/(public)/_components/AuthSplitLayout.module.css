@@ -39,17 +39,17 @@
 .back { min-height: 44px; padding: 0 12px; margin-left: -12px; display: inline-flex; align-items: center; gap: 7px; border-radius: 12px; color: rgba(245, 245, 247, .72); font-size: 14px; font-weight: 600; text-decoration: none; transition: color .18s ease, background .18s ease; }
 .back:hover { color: #fff; background: rgba(255, 255, 255, .07); }
 .secure { display: inline-flex; align-items: center; gap: 6px; color: rgba(245, 245, 247, .48); font-size: 12px; }
-.content { width: 100%; max-width: 520px; margin: auto; padding: clamp(54px, 8vh, 92px) 0; }
-.privacy { max-width: 520px; margin: 0 auto; color: rgba(245, 245, 247, .4); font-size: 12px; line-height: 1.5; text-align: center; }
-.wide .content, .wide .privacy { max-width: 920px; }
+.content { width: 100%; max-width: 760px; margin: auto; padding: clamp(54px, 8vh, 92px) 0; }
+.privacy { max-width: 760px; margin: 0 auto; color: rgba(245, 245, 247, .4); font-size: 12px; line-height: 1.5; text-align: center; }
+.wide .content, .wide .privacy { max-width: 1120px; }
 .wide { grid-template-columns: minmax(300px, .64fr) minmax(620px, 1.36fr); }
 
 @media (max-width: 900px) {
   .shell { display: block; padding: 0; min-height: calc(100dvh - 64px); }
   .visual { display: none; }
   .form { min-height: calc(100dvh - 64px); padding: 16px clamp(10px, 3vw, 26px) 26px; }
-  .content { max-width: 560px; padding: 48px 0 64px; }
-  .wide .content { max-width: 760px; }
+  .content { max-width: 640px; padding: 48px 0 64px; }
+  .wide .content { max-width: 860px; }
 }
 
 @media (max-width: 560px) {

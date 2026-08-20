@@ -65,7 +65,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     <main className="lb-blog-article" style={{ padding: '40px clamp(16px, 3vw, 48px) 88px', width: '100%', minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
         <nav aria-label="Fil d'ariane" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 12.5, color: 'var(--text-faint)' }}>
           <Link href="/blog" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Blog</Link>
           <span>/</span>
@@ -90,13 +90,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Colonne de lecture ~720px, pattern LegalPageLayout.tsx */}
         <article
-          style={{ maxWidth: 720, margin: '0 auto', fontSize: 16, lineHeight: 1.75, color: 'var(--text-muted)' }}
+          style={{ maxWidth: 820, margin: '0 auto', fontSize: 16, lineHeight: 1.75, color: 'var(--text-muted)' }}
           // Contenu 100% interne (seed/agent éditorial), jamais saisi par un visiteur — voir lib/models/BlogPost.ts.
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {post.tags.length > 0 && (
-          <div style={{ maxWidth: 720, margin: '32px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ maxWidth: 820, margin: '32px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {post.tags.map((tag) => (
               <span key={tag} style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '5px 12px', borderRadius: 999 }}>
                 #{tag}
@@ -106,7 +106,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {related.length > 0 && (
-          <section style={{ maxWidth: 1200, margin: '60px auto 0' }}>
+          <section style={{ maxWidth: 1320, margin: '60px auto 0' }}>
             <h2 className="font-display" style={{ fontSize: 24, letterSpacing: '.01em', margin: '0 0 20px' }}>À lire aussi</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,280px),1fr))', gap: 20 }}>
               {related.map((r) => (

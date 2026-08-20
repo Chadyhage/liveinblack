@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { EventActionKey, OrganizerEventView } from './types'
 import { formatMoney } from './types'
@@ -15,8 +15,9 @@ import GuestlistModal from './GuestlistModal'
 import BoostModal from './BoostModal'
 import EventStaffModal from '@/app/components/EventStaffModal'
 import PromoCodesPanel from '@/app/components/PromoCodesPanel'
-import { Button, Card, EmptyState, Modal, Pagination, pagedSlice, ToastViewport } from '@/app/components/ui'
+import { Button, Card, EmptyState, Pagination, pagedSlice, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import { LoadingPlacesModal, useEventPlaces } from './eventModalHelpers'
 
 const PAST_PAGE_SIZE = 15
 
@@ -394,38 +395,10 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 // on les charge à la volée à l'ouverture plutôt que d'alourdir la vue liste
 // pour un seul champ rarement consulté.
 function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventView; onClose: () => void }) {
-  const [places, setPlaces] = useState<{ id: string; type: string; price: number }[] | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(`/api/organizer-events/${event.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return
-        if (data.ok) setPlaces(data.event.places.map((p: { id: string; type: string; price: number }) => ({ id: p.id, type: p.type, price: p.price })))
-        else setPlaces([])
-      })
-      .catch(() => {
-        if (!cancelled) setPlaces([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [event.id])
+  const places = useEventPlaces(event.id)
 
   if (!places) {
-    return (
-      <Modal onClose={onClose} hideClose ariaLabel="Chargement de la liste des invités" contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
-        <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement de la guestlist">
-          <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-            <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
-            <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
-              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-            </path>
-          </svg>
-        </div>
-      </Modal>
-    )
+    return <LoadingPlacesModal onClose={onClose} ariaLabel="Chargement de la guestlist" />
   }
   return <GuestlistModal event={{ id: event.id, name: event.name, places, currency: event.currency }} onClose={onClose} />
 }
@@ -435,38 +408,10 @@ function GuestlistModalWithPlaces({ event, onClose }: { event: OrganizerEventVie
 // confirmé en réunion live le 11/08/2026), le sélecteur a donc besoin du
 // catalogue de places, absent d'OrganizerEventView.
 function PromoCodesPanelWithPlaces({ event, onClose }: { event: OrganizerEventView; onClose: () => void }) {
-  const [places, setPlaces] = useState<{ id: string; type: string; price: number }[] | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(`/api/organizer-events/${event.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return
-        if (data.ok) setPlaces(data.event.places.map((p: { id: string; type: string; price: number }) => ({ id: p.id, type: p.type, price: p.price })))
-        else setPlaces([])
-      })
-      .catch(() => {
-        if (!cancelled) setPlaces([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [event.id])
+  const places = useEventPlaces(event.id)
 
   if (!places) {
-    return (
-      <Modal onClose={onClose} hideClose ariaLabel="Chargement des codes promo" contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
-        <div style={{ position: 'relative', width: 40, height: 40 }} aria-label="Chargement des codes promo">
-          <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-            <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
-            <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
-              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
-            </path>
-          </svg>
-        </div>
-      </Modal>
-    )
+    return <LoadingPlacesModal onClose={onClose} ariaLabel="Chargement des codes promo" />
   }
   return <PromoCodesPanel event={{ id: event.id, name: event.name, currency: event.currency, places }} onClose={onClose} />
 }

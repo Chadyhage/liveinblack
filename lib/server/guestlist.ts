@@ -3,9 +3,12 @@ import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
 import Ticket from '../models/Ticket'
 import { generateUniqueTicketCode } from './ticketCode'
-import { signTicketToken } from './ticketToken'
-
-const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+import {
+  normalizeGuestlistTicketCode,
+  restockedAvailable,
+  toGuestlistView,
+  type GuestlistEntryView,
+} from './guestlistUtils'
 
 // Port de src/utils/guestlist.js (#7 phase organisateur) — invitations
 // gratuites émises par l'organisateur, en dehors de tout paiement. Contraire-
@@ -23,15 +26,6 @@ export interface GuestlistCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-export interface GuestlistEntryView {
-  ticketCode: string
-  place: string
-  guestName: string | null
-  bookedAt: string | null
-  checkedInAt: string | null
-  ticketUrl: string
-}
-
 export type AddGuestResult = ErrResult | { ok: true; entry: GuestlistEntryView }
 export type RemoveGuestResult = ErrResult | { ok: true }
 export type ListGuestlistResult = ErrResult | { ok: true; entries: GuestlistEntryView[] }
@@ -41,26 +35,6 @@ async function assertOwner(eventId: string, callerId: string) {
   if (!event) return { ok: false as const, status: 404, error: 'event_not_found' }
   if (event.organizerId !== callerId && event.createdBy !== callerId) return { ok: false as const, status: 403, error: 'forbidden' }
   return { ok: true as const, event }
-}
-
-function toView(t: {
-  ticketCode: string
-  place?: string | null
-  guestName?: string | null
-  bookedAt?: Date | string | null
-  checkedInAt?: Date | string | null
-  seatVersion?: number | null
-  entryNonce?: string | null
-}): GuestlistEntryView {
-  const token = signTicketToken({ ticketCode: t.ticketCode, seatVersion: t.seatVersion ?? 0, entryNonce: t.entryNonce ?? null })
-  return {
-    ticketCode: t.ticketCode,
-    place: t.place ?? '',
-    guestName: t.guestName ?? null,
-    bookedAt: t.bookedAt ? new Date(t.bookedAt).toISOString() : null,
-    checkedInAt: t.checkedInAt ? new Date(t.checkedInAt).toISOString() : null,
-    ticketUrl: `${SITE}/ticket/${token}`,
-  }
 }
 
 // ──────────────────────────────── addGuestlistEntry ──────────────────────────
@@ -112,7 +86,7 @@ export async function addGuestlistEntry(caller: GuestlistCaller, input: { eventI
       return { ok: true as const, ticket: ticket.toObject() }
     })
     if (!outcome.ok) return outcome
-    return { ok: true, entry: toView(outcome.ticket) }
+    return { ok: true, entry: toGuestlistView(outcome.ticket) }
   } finally {
     await session.endSession()
   }
@@ -129,7 +103,7 @@ export async function removeGuestlistEntry(caller: GuestlistCaller, input: { eve
   const guard = await assertOwner(input.eventId, caller.id)
   if (!guard.ok) return guard
 
-  const ticketCode = input.ticketCode.trim().toUpperCase()
+  const ticketCode = normalizeGuestlistTicketCode(input.ticketCode)
 
   const session = await mongoose.startSession()
   try {
@@ -145,7 +119,7 @@ export async function removeGuestlistEntry(caller: GuestlistCaller, input: { eve
       const fresh = await Event.findById(input.eventId).session(session)
       const place = fresh?.places?.find((p) => p.type === ticket.place)
       if (fresh && place) {
-        place.available = Math.min(place.total || 0, (place.available || 0) + 1)
+        place.available = restockedAvailable(place.total, place.available)
         await fresh.save({ session })
       }
       return { ok: true as const }
@@ -167,5 +141,5 @@ export async function listGuestlistEntries(caller: GuestlistCaller, eventId: str
   const entries = await Ticket.find({ eventId, source: 'guestlist', revoked: { $ne: true } })
     .sort({ bookedAt: -1 })
     .lean()
-  return { ok: true, entries: entries.map(toView) }
+  return { ok: true, entries: entries.map(toGuestlistView) }
 }

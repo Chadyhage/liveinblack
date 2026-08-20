@@ -8,7 +8,8 @@ import Event from '@/lib/models/Event'
 import Ticket from '@/lib/models/Ticket'
 import { isEventEnded, eventStartMs } from '@/lib/shared/event-time'
 import { listOrdersForTicket } from '@/lib/server/eventOrders'
-import CommanderClient, { type MenuItemView, type OrderItem } from './CommanderClient'
+import CommanderClient from './CommanderClient'
+import { type MenuItemView, type OrderItem } from './commanderUtils'
 
 // Port de src/pages/OnSiteOrderPage.jsx. Server Component : charge
 // événement + billet + commandes déjà existantes, applique les gates
@@ -72,8 +73,9 @@ function GateScreen({
   const accentBg = variant === 'notice' ? 'rgba(184,243,74,0.08)' : 'rgba(224,90,170,0.08)'
   const accentBorder = variant === 'notice' ? 'rgba(184,243,74,0.35)' : 'rgba(224,90,170,0.35)'
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
-      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+    <main style={{ minHeight: '100vh', width: '100%', padding: '32px clamp(18px, 3vw, 48px) 56px' }}>
+      <div style={{ width: '100%', maxWidth: 'none', minHeight: 'calc(100vh - 88px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', maxWidth: 420 }}>
         <div
           style={{
             width: 72,
@@ -102,6 +104,7 @@ function GateScreen({
         <Link href={backHref} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
           ← {backLabel}
         </Link>
+      </div>
       </div>
     </main>
   )

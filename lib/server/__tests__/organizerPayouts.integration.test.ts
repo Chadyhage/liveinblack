@@ -145,6 +145,53 @@ describeIntegration('organizerPayouts (intégration, vraie base) — Stripe Conn
     )
   })
 
+  it('ignore un returnPath externe et retombe sur /my-events', async () => {
+    const userId = await seedUser({ stripeAccountId: 'acct_existing', stripeCountry: 'FR' })
+    accountLinksCreate.mockResolvedValue({ url: 'https://connect.stripe.test/resume' })
+
+    const result = await startStripeConnectOnboarding({ id: userId }, { returnPath: 'https://evil.example/steal' })
+    expect(result.ok).toBe(true)
+    if (!result.ok || 'manual' in result) return
+    expect(result.url).toBe('https://connect.stripe.test/resume')
+    expect(accountLinksCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refresh_url: connectReturnUrl('/my-events', 'refresh'),
+        return_url: connectReturnUrl('/my-events', 'done'),
+      })
+    )
+  })
+
+  it('renvoie stripe_unavailable si Stripe refuse de recréer un lien de reprise sur un compte existant', async () => {
+    const userId = await seedUser({ stripeAccountId: 'acct_existing', stripeCountry: 'FR' })
+    accountLinksCreate.mockRejectedValue(new Error('stripe down'))
+
+    const result = await startStripeConnectOnboarding({ id: userId }, { returnPath: '/organizer-studio' })
+    expect(result).toEqual({
+      ok: false,
+      status: 502,
+      error: 'stripe_unavailable',
+    })
+    expect(accountsCreate).not.toHaveBeenCalled()
+  })
+
+  it('renvoie stripe_unavailable si Stripe échoue à créer le compte Connect initial', async () => {
+    const userId = await seedUser()
+    await Application.create({ userId, type: 'organisateur', status: 'approved', formData: { pays: 'France' } })
+    accountsCreate.mockRejectedValue(new Error('stripe down'))
+
+    const result = await startStripeConnectOnboarding({ id: userId }, {})
+    expect(result).toEqual({
+      ok: false,
+      status: 502,
+      error: 'stripe_unavailable',
+    })
+    expect(accountLinksCreate).not.toHaveBeenCalled()
+
+    const user = await User.findById(userId).lean()
+    expect(user?.stripeAccountId).toBeFalsy()
+    expect(user?.stripeCountry).toBeFalsy()
+  })
+
   it('refuse une demande de reversement manuel si rien n’est dû', async () => {
     const userId = await seedUser()
     const result = await requestManualPayout({ id: userId })

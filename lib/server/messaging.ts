@@ -1,7 +1,7 @@
 import mongoose, { type HydratedDocument } from 'mongoose'
 import { getDb } from '../db/mongoose'
 import Conversation, { type ConversationDoc } from '../models/Conversation'
-import Message, { type MessageDoc } from '../models/Message'
+import Message from '../models/Message'
 import User from '../models/User'
 import ProviderProfile from '../models/ProviderProfile'
 import Event from '../models/Event'
@@ -11,6 +11,48 @@ import { upsertMessageNotification } from './notifications'
 import { notifyUserById, notifyAllAgents } from './emails/notify'
 import { reportReceivedAgainstAccountEmail, newReportToReviewEmail, newMessageDigestEmail } from './emails'
 import { sendPushToUser } from './push'
+import {
+  toConversationView,
+  toMessageView,
+  type ConversationSource,
+  type ConversationView,
+  type MessageSource,
+  type MessageView,
+} from './messagingViews'
+import { collectDirectParticipantIds, withDirectConversationMembers } from './messagingConversationUtils'
+import { buildTypingUsers, collectActiveTypingUserIds } from './messagingTypingUtils'
+import {
+  buildConversationLookup,
+  normalizeStarredPagination,
+  resolveVisibleStarredConversations,
+} from './messagingStarredUtils'
+import { resolveMemberMuteStatus } from './messagingMuteUtils'
+import {
+  buildReactionTogglePipeline,
+  normalizeReactionMap,
+  validateReactionEmoji,
+} from './messagingReactionUtils'
+import { loadParticipantMessage } from './messagingMessageGuards'
+import {
+  buildCatalogItemMessageContent,
+  buildEventMessageContent,
+  isSendableType,
+  resolveLastMessageLabel,
+  validateMessageContentLength,
+} from './messagingSendUtils'
+import {
+  buildForwardedPoll,
+  canForwardMessageType,
+  normalizeForwardTargetIds,
+  resolveForwardedLastMessageLabel,
+} from './messagingForwardUtils'
+import {
+  buildConversationMessagePath,
+  buildConversationMessageUrl,
+  buildMessagePushPayload,
+  selectOfflineRecipientIds,
+} from './messagingNotificationUtils'
+import { findOtherParticipantId, hasBlockedEitherWay, toBlockedUserIdsMap } from './messagingDirectBlockUtils'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -59,30 +101,6 @@ type ErrResult = { ok: false; status: number; error: string }
 
 // ─────────────────────────────── vues (DTO) ──────────────────────────────
 
-export interface ConversationMemberView {
-  userId: string
-  name: string
-  role: 'admin' | 'member'
-  // Présent (non-undefined) UNIQUEMENT si ce membre est actuellement muté —
-  // null = sourdine indéfinie ("jusqu'à réactivation"), sinon échéance ISO.
-  muteUntilAt?: string | null
-}
-
-export interface ConversationView {
-  id: string
-  type: 'direct' | 'group'
-  participantIds: string[]
-  members: ConversationMemberView[]
-  name: string | null
-  avatar: string | null
-  mutedUserIds: string[]
-  lastMessage: string
-  lastMessageAt: string | null
-  lastSenderId: string | null
-  pinnedMessageId: string | null
-  createdAt: string
-}
-
 export interface ConversationListView extends ConversationView {
   unreadCount: number
   // Personnalisation PROPRE À L'APPELANT (jamais partagée entre participants).
@@ -105,135 +123,6 @@ export interface ConversationListPageMeta {
   hasMore: boolean
 }
 
-export interface MessagePollOptionView {
-  id: string
-  text: string
-  voterIds: string[]
-}
-
-export interface MessagePollView {
-  pollType: 'poll' | 'event_poll'
-  question: string
-  options: MessagePollOptionView[]
-  event: { id: string; name: string; date: string; price: number; currency: string; image: string | null } | null
-}
-
-export interface MessageView {
-  id: string
-  conversationId: string
-  senderId: string
-  senderName: string
-  type: 'text' | 'image' | 'voice' | 'poll' | 'event_poll' | 'story' | 'event' | 'catalog_item' | 'system'
-  content: string | null
-  // Renseigné UNIQUEMENT pour type 'poll'/'event_poll' — voir lib/server/polls.ts
-  // pour la logique de création/vote. getMessages() (ce fichier) doit
-  // renvoyer cette donnée pour que l'historique d'une conversation affiche
-  // correctement un sondage déjà envoyé, pas seulement au moment de sa
-  // création (qui passe par polls.ts, jamais par ce fichier).
-  poll: MessagePollView | null
-  reactions: Record<string, string[]>
-  readBy: Record<string, string>
-  deletedForAll: boolean
-  pinned: boolean
-  replyToMessageId: string | null
-  createdAt: string
-  editedAt: string | null
-  starredByMe: boolean
-  forwardedFrom: { senderName: string; convName: string } | null
-  // Renseigné UNIQUEMENT sur les messages de L'APPELANT — statut de lecture
-  // par les AUTRES participants ('read' si au moins un autre participant a lu
-  // la conversation après l'envoi de ce message, sinon 'sent'). Pas d'état
-  // "delivered" distinct : cette migration n'utilise QUE du polling (jamais
-  // de websocket, cf. instructions), donc "livré" et "lu" ne peuvent pas être
-  // distingués de façon significative sans un signal de livraison dédié —
-  // fidèle à ce que le polling peut honnêtement observer.
-  readStatus: 'sent' | 'read' | null
-}
-
-// Formes minimales attendues en lecture, distinctes des types
-// `InferSchemaType` de Mongoose : les champs `Map` (`lastReadAt`,
-// `reactions`, `readBy`) redeviennent des objets JS bruts une fois passés par
-// `.lean()`/`.toObject({flattenMaps:true})` (même constat, et même
-// convention de cast, que `StaffRoster` dans lib/server/eventOrders.ts et
-// `payoutMomos` dans lib/server/eventPayouts.ts) — Mongoose ne retype pas ça
-// automatiquement pour TypeScript.
-interface ConversationSource {
-  _id: unknown
-  type: 'direct' | 'group'
-  participantIds: string[]
-  members?: { userId: string; name?: string | null; role?: 'admin' | 'member' }[]
-  name?: string | null
-  avatar?: string | null
-  mutedUserIds?: string[]
-  memberMuteUntil?: Record<string, string> | Map<string, string>
-  lastMessage?: string
-  lastMessageAt?: Date | string | null
-  lastSenderId?: string | null
-  pinnedMessageId?: string | null
-  lastReadAt?: Record<string, Date | string>
-  pinnedByUserIds?: string[]
-  mutedConversationByUserIds?: string[]
-  hiddenByUserIds?: string[]
-  typingAt?: Record<string, Date | string> | Map<string, Date | string>
-  createdAt: Date | string
-}
-
-interface MessageSource {
-  _id: unknown
-  conversationId: string
-  senderId: string
-  senderName?: string | null
-  type: MessageView['type']
-  content?: string | null
-  poll?: {
-    pollType: 'poll' | 'event_poll'
-    question: string
-    options: { id: string; text: string; voterIds?: string[] }[]
-    event?: { id: string; name?: string | null; date?: string | null; price?: number | null; currency?: string | null; image?: string | null } | null
-  } | null
-  reactions?: Record<string, string[]>
-  readBy?: Record<string, Date | string>
-  deletedForAll?: boolean
-  deletedForUserIds?: string[]
-  pinned?: boolean
-  replyToMessageId?: string | null
-  createdAt: Date | string
-  editedAt?: Date | string | null
-  starredByUserIds?: string[]
-  forwardedFrom?: { senderName?: string | null; convName?: string | null } | null
-}
-
-// Exportée : réutilisée telle quelle par lib/server/groups.ts (gestion du
-// cycle de vie des groupes) plutôt que dupliquée — un DTO de conversation ne
-// doit avoir qu'une seule définition dans tout le module de messagerie.
-export function toConversationView(conv: ConversationSource): ConversationView {
-  return {
-    id: String(conv._id),
-    type: conv.type,
-    participantIds: conv.participantIds ?? [],
-    members: (conv.members ?? []).map((m) => ({ userId: m.userId, name: m.name ?? '', role: m.role ?? 'member' })),
-    name: conv.name ?? null,
-    avatar: conv.avatar ?? null,
-    mutedUserIds: conv.mutedUserIds ?? [],
-    lastMessage: conv.lastMessage ?? '',
-    lastMessageAt: conv.lastMessageAt ? new Date(conv.lastMessageAt).toISOString() : null,
-    lastSenderId: conv.lastSenderId ?? null,
-    pinnedMessageId: conv.pinnedMessageId ?? null,
-    createdAt: new Date(conv.createdAt).toISOString(),
-  }
-}
-
-// `lastReadAt` d'une conversation, pour calculer `readStatus` — accepte
-// aussi bien la forme Map (document Mongoose vivant) que l'objet brut
-// (`.lean()`), les deux formes circulant selon le point d'appel.
-function readLastReadAt(source: Record<string, Date | string> | Map<string, Date | string> | undefined, userId: string): number | null {
-  if (!source) return null
-  const raw = source instanceof Map ? source.get(userId) : source[userId]
-  if (!raw) return null
-  const ms = new Date(raw).getTime()
-  return Number.isFinite(ms) ? ms : null
-}
-
 // Une seule requête pour tous les participants fournis — jamais une par
 // message ni une par appel de toMessageView. `!== false` partout où cette
 // Map est lue : un id absent (utilisateur supprimé, ou Map vide passée par
@@ -243,83 +132,6 @@ async function resolveReadReceiptsAllowed(participantIds: string[]): Promise<Map
   if (participantIds.length === 0) return new Map()
   const users = await User.find({ _id: { $in: participantIds } }).select('privacy.readReceipts').lean()
   return new Map(users.map((u) => [String(u._id), u.privacy?.readReceipts !== false]))
-}
-
-// ctx.conversation : nécessaire pour calculer `readStatus` (statut de
-// lecture PAR LES AUTRES, uniquement pertinent sur les messages de
-// l'appelant) — jamais dérivé d'une valeur fournie par le client.
-// ctx.readReceiptsAllowed : réglage "Confirmations de lecture" (section
-// Confidentialité de ProfilePage.jsx), pré-résolu en Map une seule fois par
-// getMessages pour tous les participants de la conversation — jamais une
-// requête par message. Réciproque comme sur WhatsApp/le legacy : un message
-// n'apparaît "lu" QUE si l'expéditeur ET le lecteur ont tous deux ce réglage
-// actif ; le désactiver empêche de voir SI ses propres messages sont lus,
-// pas seulement d'en informer les autres.
-function toMessageView(
-  msg: MessageSource,
-  ctx: { callerId: string; conversation: ConversationSource; readReceiptsAllowed: Map<string, boolean> }
-): MessageView {
-  const reactions = msg.reactions ?? {}
-  const readByRaw = msg.readBy ?? {}
-  const readBy: Record<string, string> = {}
-  for (const [userId, at] of Object.entries(readByRaw)) readBy[userId] = new Date(at).toISOString()
-
-  let readStatus: MessageView['readStatus'] = null
-  if (msg.senderId === ctx.callerId && !msg.deletedForAll) {
-    const createdAtMs = new Date(msg.createdAt).getTime()
-    const callerAllows = ctx.readReceiptsAllowed.get(ctx.callerId) !== false
-    const others = (ctx.conversation.participantIds ?? []).filter((id) => id !== ctx.callerId)
-    const readByAnyOther =
-      callerAllows &&
-      others.some((id) => {
-        if (ctx.readReceiptsAllowed.get(id) === false) return false
-        const lastReadMs = readLastReadAt(ctx.conversation.lastReadAt, id)
-        return lastReadMs !== null && lastReadMs >= createdAtMs
-      })
-    readStatus = readByAnyOther ? 'read' : 'sent'
-  }
-
-  return {
-    id: String(msg._id),
-    conversationId: msg.conversationId,
-    senderId: msg.senderId,
-    senderName: msg.senderName ?? '',
-    type: msg.type,
-    // Jamais le vrai contenu d'un message supprimé pour tout le monde — voir
-    // l'en-tête de fichier (ferme la fuite potentielle "l'historique reste
-    // lisible même après suppression").
-    content: msg.deletedForAll ? null : (msg.content ?? null),
-    poll:
-      msg.poll && !msg.deletedForAll
-        ? {
-            pollType: msg.poll.pollType,
-            question: msg.poll.question,
-            options: msg.poll.options.map((o) => ({ id: o.id, text: o.text, voterIds: [...(o.voterIds ?? [])] })),
-            event: msg.poll.event
-              ? {
-                  id: msg.poll.event.id,
-                  name: msg.poll.event.name ?? '',
-                  date: msg.poll.event.date ?? '',
-                  price: msg.poll.event.price ?? 0,
-                  currency: msg.poll.event.currency ?? 'EUR',
-                  image: msg.poll.event.image ?? null,
-                }
-              : null,
-          }
-        : null,
-    reactions,
-    readBy,
-    deletedForAll: Boolean(msg.deletedForAll),
-    pinned: Boolean(msg.pinned),
-    replyToMessageId: msg.replyToMessageId ?? null,
-    createdAt: new Date(msg.createdAt).toISOString(),
-    editedAt: msg.editedAt ? new Date(msg.editedAt).toISOString() : null,
-    starredByMe: (msg.starredByUserIds ?? []).includes(ctx.callerId),
-    forwardedFrom: msg.forwardedFrom
-      ? { senderName: msg.forwardedFrom.senderName ?? '', convName: msg.forwardedFrom.convName ?? '' }
-      : null,
-    readStatus,
-  }
 }
 
 // BSON ObjectId parsing est insensible à la casse (`"507f..."` et `"507F..."`
@@ -412,8 +224,7 @@ export async function createDirectConversation(caller: MessagingCaller, input: C
   if (existing) {
     const view = toConversationView(existing as unknown as ConversationSource)
     const names = await resolveDirectMemberNames(view.participantIds)
-    view.members = view.participantIds.map((id) => ({ userId: id, name: names.get(id) ?? '', role: 'member' as const }))
-    return { ok: true, conversation: view }
+    return { ok: true, conversation: withDirectConversationMembers(view, names) }
   }
 
   const callerUser = await User.findById(caller.id).lean()
@@ -424,8 +235,7 @@ export async function createDirectConversation(caller: MessagingCaller, input: C
   const created = await Conversation.create({ type: 'direct', participantIds: [caller.id, otherUserId] })
   const view = toConversationView(created.toObject({ flattenMaps: true }) as unknown as ConversationSource)
   const names = await resolveDirectMemberNames(view.participantIds)
-  view.members = view.participantIds.map((id) => ({ userId: id, name: names.get(id) ?? '', role: 'member' as const }))
-  return { ok: true, conversation: view }
+  return { ok: true, conversation: withDirectConversationMembers(view, names) }
 }
 
 // ─────────────────────────── listMyConversations ──────────────────────────
@@ -488,7 +298,7 @@ export async function listMyConversations(caller: MessagingCaller, input: Conver
 
   // Une seule requête User pour TOUTES les conversations directes de la
   // liste (jamais un User.find par conversation) — évite un N+1.
-  const directParticipantIds = Array.from(new Set(conversations.filter((c) => c.type === 'direct').flatMap((c) => c.participantIds ?? [])))
+  const directParticipantIds = collectDirectParticipantIds(conversations)
   const directNames = await resolveDirectMemberNames(directParticipantIds)
 
   const unreadOrs = conversations.map((conv) => {
@@ -513,7 +323,13 @@ export async function listMyConversations(caller: MessagingCaller, input: Conver
     conversations.map(async (conv) => {
       const view = toConversationView(conv)
       if (view.type === 'direct') {
-        view.members = view.participantIds.map((id) => ({ userId: id, name: directNames.get(id) ?? '', role: 'member' as const }))
+        return {
+          ...withDirectConversationMembers(view, directNames),
+          unreadCount: unreadByConversation.get(String(conv._id)) ?? 0,
+          pinned: (conv.pinnedByUserIds ?? []).includes(caller.id),
+          mutedForMe: (conv.mutedConversationByUserIds ?? []).includes(caller.id),
+          myGroupMute: null,
+        }
       } else {
         view.members = view.members.map((m) => {
           const status = resolveMemberMuteStatus(conv, m.userId)
@@ -632,9 +448,6 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
 // CONTENU n'est jamais pris depuis `input.content` : le serveur recharge
 // l'Event réel depuis Mongo à partir du seul `eventId` fourni, jamais depuis
 // des champs (nom/prix/image) que le client pourrait forger.
-const SENDABLE_TYPES = ['text', 'image', 'voice', 'catalog_item', 'event'] as const
-type SendableType = (typeof SENDABLE_TYPES)[number]
-
 export interface SendMessageInput {
   conversationId: string
   type: string
@@ -676,11 +489,10 @@ export async function assertCanSendInConversation(
     // Re-vérifié À CHAQUE envoi même si createDirectConversation l'a déjà
     // vérifié à la création : un blocage peut survenir à tout moment APRÈS
     // que la conversation existe déjà (voir en-tête de fichier, amélioration #3).
-    const otherId = conversation.participantIds.find((id) => id !== callerId)
+    const otherId = findOtherParticipantId(conversation.participantIds, callerId)
     if (otherId) {
       const users = await User.find({ _id: { $in: [callerId, otherId] } }).select('_id blockedUserIds').lean()
-      const byId = new Map(users.map((user) => [String(user._id), user.blockedUserIds ?? []]))
-      const blocked = (byId.get(callerId) || []).includes(otherId) || (byId.get(otherId) || []).includes(callerId)
+      const blocked = hasBlockedEitherWay(toBlockedUserIdsMap(users), callerId, otherId)
       if (blocked) return { ok: false, status: 403, error: 'blocked' }
     }
   }
@@ -701,8 +513,8 @@ export async function sendMessage(
   if (!guard.ok) return guard
   const conversation = guard.conversation
 
-  if (!SENDABLE_TYPES.includes(input.type as SendableType)) return { ok: false, status: 400, error: 'invalid_type' }
-  const type = input.type as SendableType
+  if (!isSendableType(input.type)) return { ok: false, status: 400, error: 'invalid_type' }
+  const type = input.type
 
   let content = (input.content ?? '').trim()
   if (type === 'catalog_item') {
@@ -730,25 +542,10 @@ export async function sendMessage(
     // catalogItemId soumis.
     if (!provider || !item) return { ok: false, status: 404, error: 'catalog_item_not_found' }
 
-    const media = item.media?.find((m) => m.type !== 'video') ?? item.media?.[0]
-    const rawDescription = item.description ?? ''
-    // Plafonné : contrairement à name/price/unit/category (bornés par nature
-    // ou déjà courts), une description prestataire n'a pas de plafond ferme
-    // à l'écriture (voir addCatalogItem) — sans ce cap, un item avec une très
-    // longue description pourrait faire dépasser la limite de 2000
-    // caractères ci-dessous et transformer un item par ailleurs valide en
-    // erreur `message_too_long` surprenante pour l'appelant.
-    const description = rawDescription.length > 400 ? `${rawDescription.slice(0, 400)}…` : rawDescription
-    content = JSON.stringify({
+    content = buildCatalogItemMessageContent({
       providerId: otherId,
       providerName: provider.name || '',
-      itemId: item.id,
-      name: item.name,
-      description,
-      price: item.price ?? null,
-      unit: item.unit || '',
-      category: item.category || '',
-      image: media?.url ?? null,
+      item,
     })
   } else if (type === 'event') {
     // Voir commentaire sur SENDABLE_TYPES : le client ne fournit qu'un id,
@@ -759,14 +556,7 @@ export async function sendMessage(
     if (!eventId) return { ok: false, status: 400, error: 'invalid_input' }
     const event = await Event.findById(eventId).lean()
     if (!event) return { ok: false, status: 404, error: 'event_not_found' }
-    const price = event.places && event.places.length > 0 ? Math.min(...event.places.map((p) => p.price ?? 0)) : 0
-    content = JSON.stringify({
-      id: String(event._id),
-      name: event.name,
-      date: event.dateDisplay || event.date || '',
-      price,
-      image: event.imageUrl ?? null,
-    })
+    content = buildEventMessageContent(event)
   } else if (type !== 'text' && !content && input.mediaDataUri) {
     const uploaded = await uploadDataUri(input.mediaDataUri, `messages/${String(conversation._id)}`, {
       allowedMimeTypes: type === 'voice' ? AUDIO_MIME_TYPES : IMAGE_MIME_TYPES,
@@ -774,15 +564,8 @@ export async function sendMessage(
     if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
     content = uploaded.url
   }
-  if (!content) return { ok: false, status: 400, error: 'empty_message' }
-  // 'text' : contenu affiché tel quel, plafond généreux pour un message de
-  // chat. 'image'/'voice' : `content` est documenté (lib/models/Message.ts)
-  // comme une URL Cloudinary, jamais le média lui-même — un plafond plus
-  // court suffit largement et empêche un appelant de faire passer un blob de
-  // plusieurs méga-octets pour une "URL" (ce champ n'avait, avant ce
-  // correctif, AUCUNE limite de taille pour ces deux types).
-  if (type === 'text' && content.length > 4000) return { ok: false, status: 400, error: 'message_too_long' }
-  if (type !== 'text' && content.length > 2000) return { ok: false, status: 400, error: 'message_too_long' }
+  const contentValidation = validateMessageContentLength(type, content)
+  if (!contentValidation.ok) return { ok: false, status: 400, error: contentValidation.error }
 
   const sendGuard = await assertCanSendInConversation(conversation, caller.id)
   if (!sendGuard.ok) return sendGuard
@@ -801,8 +584,7 @@ export async function sendMessage(
 
   // Libellé dérivé du type pour image/voice, fidèle au legacy
   // (messaging.js:702-714) : la conversation liste un aperçu, pas une URL.
-  const lastMessageLabel =
-    type === 'text' ? content : type === 'image' ? 'Photo' : type === 'voice' ? 'Message vocal' : type === 'event' ? 'Événement' : type === 'catalog_item' ? 'Offre prestataire' : 'Message'
+  const lastMessageLabel = resolveLastMessageLabel(type, content)
   await Conversation.updateOne(
     { _id: conversation._id },
     { $set: { lastMessage: lastMessageLabel, lastMessageAt: created.createdAt, lastSenderId: caller.id } }
@@ -812,9 +594,10 @@ export async function sendMessage(
   // voir upsertMessageNotification) — jamais pour l'expéditeur lui-même.
   const conversationIdStr = String(conversation._id)
   const recipientIds = conversation.participantIds.filter((id) => id !== caller.id)
+  const conversationPath = buildConversationMessagePath(conversationIdStr)
   await Promise.all(
     recipientIds.map((recipientId) =>
-      upsertMessageNotification(recipientId, conversationIdStr, lastMessageLabel, `/messages?conversationId=${conversationIdStr}`)
+      upsertMessageNotification(recipientId, conversationIdStr, lastMessageLabel, conversationPath)
     )
   )
 
@@ -824,16 +607,13 @@ export async function sendMessage(
   // ligne" seulement si le destinataire est hors ligne depuis plus de 30 min
   // ou ne s'est jamais connecté, jamais si sa présence est fraîche (évite
   // d'inonder un destinataire déjà en train de discuter dans l'app).
-  const OFFLINE_DIGEST_THRESHOLD_MS = 30 * 60 * 1000
   if (recipientIds.length) {
     const recipients = await User.find({ _id: { $in: recipientIds } }).select('lastSeenAt').lean()
-    const now = Date.now()
-    const conversationUrl = `${SITE}/messages?conversationId=${conversationIdStr}`
+    const conversationUrl = buildConversationMessageUrl(SITE, conversationIdStr)
+    const offlineRecipientIds = selectOfflineRecipientIds(recipients)
     const notifyOfflineRecipients = () => Promise.all(
-      recipients
-        .filter((r) => !r.lastSeenAt || now - new Date(r.lastSeenAt).getTime() > OFFLINE_DIGEST_THRESHOLD_MS)
-        .map(async (r) => {
-          const recipientId = String(r._id)
+      offlineRecipientIds
+        .map(async (recipientId) => {
           await notifyUserById(recipientId, () => newMessageDigestEmail(senderName, lastMessageLabel, conversationUrl, SITE))
           // Pas de champ `inApp` sur newMessageDigestEmail : la notification
           // in-app existe déjà via upsertMessageNotification ci-dessus
@@ -841,7 +621,7 @@ export async function sendMessage(
           // dupliquerait l'entrée. Le push, lui, n'a pas cet anti-spam
           // (une seule notif système par appareil de toute façon), appelé
           // directement ici plutôt que via le mécanisme `inApp`.
-          await sendPushToUser(recipientId, { title: `${senderName} t'a envoyé un message`, body: lastMessageLabel, url: conversationUrl })
+          await sendPushToUser(recipientId, buildMessagePushPayload(senderName, lastMessageLabel, conversationUrl))
         })
     ).then(() => undefined)
     if (options.deferSideEffects) await options.deferSideEffects(notifyOfflineRecipients)
@@ -862,31 +642,6 @@ export async function sendMessage(
   }
 }
 
-// ─────────────────────── resolveMemberMuteStatus ──────────────────────────
-
-// Source de vérité pour "ce membre de groupe est-il actuellement muté ?" —
-// dérivée de `memberMuteUntil`, avec repli sur `mutedUserIds` seul (muté
-// indéfiniment) si aucune échéance n'est enregistrée — un document seedé/
-// migré qui ne porte que `mutedUserIds` (avant l'introduction de
-// `memberMuteUntil`) doit rester traité comme muté, jamais silencieusement
-// débloqué. Exportée : groups.ts (muteMember/unmuteMember/écriture du champ)
-// ET les DTO de conversation (listMyConversations) en ont besoin.
-export function resolveMemberMuteStatus(
-  conversation: { mutedUserIds?: string[]; memberMuteUntil?: Record<string, string> | Map<string, string> },
-  userId: string
-): { muted: boolean; untilAtMs: number | null } {
-  const source = conversation.memberMuteUntil
-  const raw = source instanceof Map ? source.get(userId) : source?.[userId]
-  if (raw === undefined) {
-    const inLegacyList = (conversation.mutedUserIds ?? []).includes(userId)
-    return inLegacyList ? { muted: true, untilAtMs: null } : { muted: false, untilAtMs: null }
-  }
-  if (raw === '') return { muted: true, untilAtMs: null } // sourdine indéfinie
-  const untilAtMs = new Date(raw).getTime()
-  if (!Number.isFinite(untilAtMs) || untilAtMs <= Date.now()) return { muted: false, untilAtMs: null }
-  return { muted: true, untilAtMs }
-}
-
 // ───────────────────────────── reactToMessage ─────────────────────────────
 
 export interface ReactToMessageInput {
@@ -896,121 +651,20 @@ export interface ReactToMessageInput {
 
 export type ReactToMessageResult = ErrResult | { ok: true; reactions: Record<string, string[]> }
 
-// Construit le pipeline d'agrégation utilisé par `updateOne(..., pipeline,
-// {updatePipeline:true})` pour appliquer atomiquement la sémantique
-// "single-select toggle" (une seule réaction par utilisateur, ré-émettre la
-// même bascule off, en émettre une différente déplace) sur un champ Map
-// (`reactions: Map<string, string[]>`) — l'équivalent du toggle déjà en
-// place pour les votes de sondage dans cette même migration, mais adapté ici
-// avec $objectToArray/$map/$filter/$arrayToObject puisqu'une Map (pas un
-// tableau de sous-documents) ne peut pas être manipulée par un simple
-// `$push`/`$pull` positionnel.
-function buildReactionTogglePipeline(callerId: string, emoji: string): Record<string, unknown>[] {
-  return [
-    // 1) L'utilisateur avait-il DÉJÀ réagi avec CET emoji précis ? (décide
-    // toggle-off vs toggle-on/switch plus bas)
-    {
-      $set: {
-        __targetV: {
-          $ifNull: [
-            {
-              $arrayElemAt: [
-                {
-                  $map: {
-                    input: {
-                      $filter: {
-                        input: { $objectToArray: { $ifNull: ['$reactions', {}] } },
-                        as: 'e',
-                        cond: { $eq: ['$$e.k', emoji] },
-                      },
-                    },
-                    as: 'e',
-                    in: '$$e.v',
-                  },
-                },
-                0,
-              ],
-            },
-            [],
-          ],
-        },
-      },
-    },
-    { $set: { __hadTarget: { $in: [callerId, '$__targetV'] } } },
-    // 2) Retire l'utilisateur de TOUS les emoji (une seule réaction possible
-    // à la fois, comme un sondage single-select).
-    {
-      $set: {
-        __cleaned: {
-          $map: {
-            input: { $objectToArray: { $ifNull: ['$reactions', {}] } },
-            as: 'e',
-            in: { k: '$$e.k', v: { $filter: { input: '$$e.v', as: 'uid', cond: { $ne: ['$$uid', callerId] } } } },
-          },
-        },
-      },
-    },
-    // 3) Si ce n'était PAS déjà l'emoji cible, on le rajoute — à l'entrée
-    // existante si elle survit encore après le nettoyage, sinon en créant une
-    // toute nouvelle entrée (premier·ère à réagir avec cet emoji).
-    {
-      $set: {
-        __hasTargetEntry: {
-          $gt: [{ $size: { $filter: { input: '$__cleaned', as: 'e', cond: { $eq: ['$$e.k', emoji] } } } }, 0],
-        },
-      },
-    },
-    {
-      $set: {
-        __withTarget: {
-          $cond: [
-            '$__hadTarget',
-            '$__cleaned',
-            {
-              $cond: [
-                '$__hasTargetEntry',
-                {
-                  $map: {
-                    input: '$__cleaned',
-                    as: 'e',
-                    in: {
-                      k: '$$e.k',
-                      v: { $cond: [{ $eq: ['$$e.k', emoji] }, { $concatArrays: ['$$e.v', [callerId]] }, '$$e.v'] },
-                    },
-                  },
-                },
-                { $concatArrays: ['$__cleaned', [{ k: emoji, v: [callerId] }]] },
-              ],
-            },
-          ],
-        },
-      },
-    },
-    // 4) Toute entrée dont le tableau est devenu vide disparaît de la Map —
-    // pas de clé emoji fantôme à `[]`.
-    {
-      $set: {
-        reactions: {
-          $arrayToObject: { $filter: { input: '$__withTarget', as: 'e', cond: { $gt: [{ $size: '$$e.v' }, 0] } } },
-        },
-      },
-    },
-    { $unset: ['__targetV', '__hadTarget', '__cleaned', '__hasTargetEntry', '__withTarget'] },
-  ]
-}
-
 export async function reactToMessage(caller: MessagingCaller, input: ReactToMessageInput): Promise<ReactToMessageResult> {
   await getDb()
 
   const messageId = input.messageId?.trim()
-  const emoji = input.emoji?.trim()
-  if (!messageId || !emoji) return { ok: false, status: 400, error: 'invalid_input' }
+  const emojiResult = validateReactionEmoji(input.emoji)
+  if (!messageId || !emojiResult.ok) {
+    return { ok: false, status: 400, error: emojiResult.ok ? 'invalid_input' : emojiResult.error }
+  }
+  const emoji = emojiResult.emoji
   // Défense en profondeur : borne indépendamment du zod de la route
   // (app/api/messages/[messageId]/react/route.ts) — cette fonction ne doit
   // jamais faire confiance à ce que SEULE la route ait validé la taille,
   // sinon une chaîne de taille arbitraire devient une clé Map permanente sur
   // un message partagé (voir en-tête de reactToMessage/buildReactionTogglePipeline).
-  if (emoji.length > 32) return { ok: false, status: 400, error: 'invalid_emoji' }
   if (!mongoose.isValidObjectId(messageId)) return { ok: false, status: 404, error: 'message_not_found' }
 
   const message = await Message.findById(messageId).lean()
@@ -1026,7 +680,7 @@ export async function reactToMessage(caller: MessagingCaller, input: ReactToMess
   await Message.updateOne({ _id: message._id }, buildReactionTogglePipeline(caller.id, emoji), { updatePipeline: true })
 
   const updated = await Message.findById(message._id).lean()
-  const reactions = ((updated?.reactions as unknown as Record<string, string[]>) ?? {}) as Record<string, string[]>
+  const reactions = normalizeReactionMap(updated?.reactions)
   return { ok: true, reactions }
 }
 
@@ -1206,26 +860,6 @@ export async function getContactPhone(caller: MessagingCaller, input: { conversa
   return { ok: true, phone: providerPhone || null }
 }
 
-// ─────────────────────── loadParticipantMessage ───────────────────────────
-
-type MessageGuardResult = ErrResult | { ok: true; message: HydratedDocument<MessageDoc>; conversation: HydratedDocument<ConversationDoc> }
-
-// Garde PARTAGÉE par toute action ciblant un message précis (editMessage,
-// deleteMessageForMe/ForAll, starMessage, forwardMessage) : charge le VRAI
-// document Message, résout sa conversation, et vérifie que l'appelant en est
-// bien participant — 404 générique dans les deux cas (message inexistant OU
-// appelant non participant), même raisonnement que loadParticipantConversation.
-async function loadParticipantMessage(messageId: string, callerId: string): Promise<MessageGuardResult> {
-  if (!mongoose.isValidObjectId(messageId)) return { ok: false, status: 404, error: 'message_not_found' }
-  const message = await Message.findById(messageId)
-  if (!message) return { ok: false, status: 404, error: 'message_not_found' }
-  const conversation = await Conversation.findById(message.conversationId)
-  if (!conversation || !conversation.participantIds.includes(callerId)) {
-    return { ok: false, status: 404, error: 'message_not_found' }
-  }
-  return { ok: true, message, conversation }
-}
-
 // ───────────────────────────── editMessage ────────────────────────────────
 
 export interface EditMessageInput {
@@ -1360,9 +994,7 @@ export async function listStarredMessages(
   params: ListStarredMessagesParams = {},
 ): Promise<ListStarredResult> {
   await getDb()
-  const safePage = Math.max(1, Number(params.page) || 1)
-  const safePageSize = Math.min(100, Math.max(10, Number(params.pageSize) || 50))
-  const skip = (safePage - 1) * safePageSize
+  const { page: safePage, pageSize: safePageSize, skip } = normalizeStarredPagination(params)
 
   const conversations = (await Conversation.find({ participantIds: caller.id })
     .select('type participantIds lastReadAt')
@@ -1377,11 +1009,10 @@ export async function listStarredMessages(
       hasMore: false,
     }
   }
-  const convById = new Map(conversations.map((c) => [String(c._id), c] as const))
-  const visibleConversationIdsSet = new Set<string>(convById.keys())
+  const convLookup = buildConversationLookup(conversations)
 
   const filter = {
-    conversationId: { $in: [...visibleConversationIdsSet] },
+    conversationId: { $in: convLookup.ids },
     starredByUserIds: caller.id,
     deletedForUserIds: { $ne: caller.id },
   }
@@ -1399,17 +1030,12 @@ export async function listStarredMessages(
 
   const hasMore = rows.length > safePageSize
   const pageRows = hasMore ? rows.slice(0, safePageSize) : rows
-  const visibleConversationIds = new Set(rows.map((m) => String(m.conversationId)))
-  const visibleConversations = conversations.filter((conversation) =>
-    visibleConversationIds.has(String(conversation._id))
-  )
-  const visibleConversationMap = new Map(visibleConversations.map((conversation) => [String(conversation._id), conversation] as const))
-  const allParticipantIds = [...new Set(visibleConversations.flatMap((c) => c.participantIds ?? []))]
+  const { visibleConversationMap, allParticipantIds } = resolveVisibleStarredConversations(conversations, rows)
   const readReceiptsAllowed = await resolveReadReceiptsAllowed(allParticipantIds)
 
   const messages = pageRows
     .map((m) => {
-      const conversation = visibleConversationMap.get(m.conversationId) || convById.get(m.conversationId)
+      const conversation = visibleConversationMap.get(m.conversationId) || convLookup.byId.get(m.conversationId)
       if (!conversation) return null
       return toMessageView(m, { callerId: caller.id, conversation, readReceiptsAllowed })
     })
@@ -1440,8 +1066,6 @@ export interface ForwardMessageInput {
 
 export type ForwardMessageResult = ErrResult | { ok: true; messages: MessageView[] }
 
-const MAX_FORWARD_TARGETS = 20
-
 export async function forwardMessage(caller: MessagingCaller, input: ForwardMessageInput): Promise<ForwardMessageResult> {
   await getDb()
 
@@ -1451,13 +1075,12 @@ export async function forwardMessage(caller: MessagingCaller, input: ForwardMess
   const guard = await loadParticipantMessage(messageId, caller.id)
   if (!guard.ok) return guard
   const { message: source, conversation: sourceConversation } = guard
-  if (source.deletedForAll) return { ok: false, status: 400, error: 'message_deleted' }
-  if (source.type === 'system') return { ok: false, status: 400, error: 'invalid_type' }
+  const sourceGuard = canForwardMessageType(source)
+  if (!sourceGuard.ok) return { ok: false, status: 400, error: sourceGuard.error }
 
-  const targetIdsRaw = Array.isArray(input.toConversationIds) ? input.toConversationIds : []
-  const targetIds = [...new Set(targetIdsRaw.map((id) => id?.trim()).filter((id): id is string => Boolean(id)))]
-  if (targetIds.length === 0) return { ok: false, status: 400, error: 'invalid_input' }
-  if (targetIds.length > MAX_FORWARD_TARGETS) return { ok: false, status: 400, error: 'too_many_targets' }
+  const targetIdsResult = normalizeForwardTargetIds(input.toConversationIds)
+  if (!targetIdsResult.ok) return { ok: false, status: 400, error: targetIdsResult.error }
+  const { targetIds } = targetIdsResult
 
   const sourceConvLabel = await resolveConversationLabel(sourceConversation, caller.id)
   const senderName = await resolveDisplayName(caller.id)
@@ -1480,14 +1103,7 @@ export async function forwardMessage(caller: MessagingCaller, input: ForwardMess
     // à des utilisateurs étrangers à G2, sans qu'aucun membre de G2 ne puisse
     // jamais les retirer (createPoll/createEventPoll dans polls.ts démarrent
     // toujours `voterIds: []` pour la même raison).
-    const forwardedPoll = source.poll
-      ? {
-          pollType: source.poll.pollType,
-          question: source.poll.question,
-          options: source.poll.options.map((o) => ({ id: o.id, text: o.text, voterIds: [] as string[] })),
-          event: source.poll.event ? { ...source.poll.event } : null,
-        }
-      : null
+    const forwardedPoll = buildForwardedPoll(source.poll)
 
     const created = await Message.create({
       conversationId: String(targetConversation._id),
@@ -1499,8 +1115,7 @@ export async function forwardMessage(caller: MessagingCaller, input: ForwardMess
       forwardedFrom: { senderName: source.senderName, convName: sourceConvLabel },
     })
 
-    const lastMessageLabel =
-      source.type === 'text' ? (source.content ?? '') : source.type === 'image' ? 'Photo' : source.type === 'voice' ? 'Message vocal' : 'Message'
+    const lastMessageLabel = resolveForwardedLastMessageLabel(source.type, source.content)
     await Conversation.updateOne(
       { _id: targetConversation._id },
       { $set: { lastMessage: lastMessageLabel, lastMessageAt: created.createdAt, lastSenderId: caller.id } }
@@ -1640,16 +1255,8 @@ export async function getTypingUsers(caller: MessagingCaller, input: Conversatio
   if (!guard.ok) return guard
   const conv = guard.conversation
 
-  const typingAtRaw = conv.typingAt as unknown as Map<string, Date> | Record<string, Date> | undefined
-  const entries = typingAtRaw instanceof Map ? Array.from(typingAtRaw.entries()) : Object.entries(typingAtRaw ?? {})
-  const now = Date.now()
-  const activeUserIds = entries
-    .filter(([userId, at]) => {
-      if (userId === caller.id) return false
-      const ms = new Date(at).getTime()
-      return Number.isFinite(ms) && now - ms < TYPING_TTL_MS
-    })
-    .map(([userId]) => userId)
+  const typingAtRaw = conv.typingAt as unknown as Map<string, Date | string> | Record<string, Date | string> | undefined
+  const activeUserIds = collectActiveTypingUserIds(typingAtRaw, caller.id, TYPING_TTL_MS)
 
   if (activeUserIds.length === 0) return { ok: true, users: [] }
 
@@ -1659,7 +1266,7 @@ export async function getTypingUsers(caller: MessagingCaller, input: Conversatio
   } else {
     names = await resolveDirectMemberNames(activeUserIds)
   }
-  return { ok: true, users: activeUserIds.map((id) => ({ userId: id, name: names.get(id) ?? '' })) }
+  return { ok: true, users: buildTypingUsers(activeUserIds, names) }
 }
 
 // ──────────────────────── listMyReports / listBlockedUsers ────────────────

@@ -35,7 +35,16 @@ async function seedEvent(ownerId = 'org-1') {
   const result = await createOrganizerEvent(
     { id: ownerId },
     'Organisateur Test',
-    { name: 'Soirée Test', date: '2026-12-31', city: 'Lomé', region: 'Togo', places: [{ id: '', type: 'Standard', price: 20, total: 100 }] }
+    {
+      name: 'Soirée Test',
+      date: '2026-12-31',
+      city: 'Lomé',
+      region: 'Togo',
+      places: [
+        { id: '', type: 'Standard', price: 20, total: 100 },
+        { id: '', type: 'VIP', price: 50, total: 20 },
+      ],
+    }
   )
   if (!result.ok) throw new Error('seed failed')
   return result.eventId
@@ -98,6 +107,44 @@ describeIntegration('organizerPromoCodes (intégration, vraie base) — codes pr
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.error).toBe('code_taken')
+    })
+
+    it('refuse des placeIds inconnus', async () => {
+      const eventId = await seedEvent()
+      const result = await createPromoCode({ id: 'org-1' }, eventId, {
+        code: 'VIPONLY',
+        type: 'percent',
+        value: 10,
+        placeIds: ['ghost-place'],
+      })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('invalid_place_ids')
+    })
+
+    it('évalue le plafond fixe seulement sur les places ciblées', async () => {
+      const eventId = await seedEvent()
+      const event = await Event.findById(eventId).lean()
+      const vipPlaceId = event?.places.find((place) => place.type === 'VIP')?.id
+      expect(vipPlaceId).toBeTruthy()
+
+      const accepted = await createPromoCode({ id: 'org-1' }, eventId, {
+        code: 'VIP40',
+        type: 'fixed',
+        value: 40,
+        placeIds: [vipPlaceId as string],
+      })
+      expect(accepted.ok).toBe(true)
+
+      const rejected = await createPromoCode({ id: 'org-1' }, eventId, {
+        code: 'VIP50',
+        type: 'fixed',
+        value: 50,
+        placeIds: [vipPlaceId as string],
+      })
+      expect(rejected.ok).toBe(false)
+      if (rejected.ok) return
+      expect(rejected.error).toBe('fixed_covers_cheapest_ticket')
     })
   })
 

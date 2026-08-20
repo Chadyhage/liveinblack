@@ -364,7 +364,7 @@ export default function AuthForm() {
   // ── "Vérifie ton email" screen ──
   if (registeredEmail) {
     return (
-      <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
+      <div style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
@@ -421,7 +421,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="lb-auth-form" style={{ width: '100%', maxWidth: 520, margin: '0 auto' }}>
+    <div className="lb-auth-form" style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
       <style>{`
         @keyframes lb-spin { to { transform: rotate(360deg) } }
         .lb-role-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.05) !important }

@@ -22,6 +22,7 @@ import OrganizerProfile from '../../models/OrganizerProfile'
 import Application from '../../models/Application'
 import User from '../../models/User'
 import Event from '../../models/Event'
+import { SOCIAL_NETWORKS } from '../../shared/social'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -155,6 +156,25 @@ describeIntegration('organizerProfile (intégration, vraie base) — studio "Ma 
     expect(doc?.longDescription).toBe('')
   })
 
+  it('reconstruit tous les socialLinks et normalise les handles saisis', async () => {
+    const userId = await seedUser()
+    await OrganizerProfile.create({ userId, publicName: 'Le Loft', slug: 'le-loft', status: 'draft' })
+
+    const result = await updateOrganizerProfile({
+      id: userId,
+    }, {
+      socialLinks: {
+        instagram: '@leloft',
+        website: 'leloft.com',
+      },
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.profile.socialLinks.instagram).toBe('@leloft')
+    expect(result.profile.socialLinks.website).toBe('leloft.com')
+    expect(Object.keys(result.profile.socialLinks).sort()).toEqual(SOCIAL_NETWORKS.map((network) => network.key).sort())
+  })
+
   it('relève totalEventsCount au nombre réel d’événements possédés, jamais à la baisse', async () => {
     const userId = await seedUser()
     await OrganizerProfile.create({ userId, publicName: 'Le Loft', slug: 'le-loft', totalEventsCount: 5, status: 'draft' })
@@ -170,7 +190,7 @@ describeIntegration('organizerProfile (intégration, vraie base) — studio "Ma 
     expect(result.profile.totalEventsCount).toBe(5)
   })
 
-  it('upload avatar/banner et persiste immédiatement', async () => {
+  it('upload avatar puis bannière et persiste immédiatement', async () => {
     const userId = await seedUser()
     await OrganizerProfile.create({ userId, publicName: 'Le Loft', slug: 'le-loft', status: 'draft' })
 
@@ -178,8 +198,49 @@ describeIntegration('organizerProfile (intégration, vraie base) — studio "Ma 
     expect(avatar.ok).toBe(true)
     if (avatar.ok) expect(avatar.profile.avatarUrl).toContain('organizer-media')
 
+    const banner = await uploadOrganizerProfileMedia({ id: userId }, { kind: 'banner', dataUri: 'data:image/jpeg;base64,BBB' })
+    expect(banner.ok).toBe(true)
+    if (banner.ok) expect(banner.profile.bannerUrl).toContain('organizer-media')
+
     const doc = await OrganizerProfile.findOne({ userId }).lean()
     expect(doc?.avatarUrl).toContain('mock.jpg')
+    expect(doc?.bannerUrl).toContain('mock.jpg')
+  })
+
+  it('refuse une vidéo pour avatar ou bannière quand le média arrive via upload vérifié', async () => {
+    const userId = await seedUser()
+    await OrganizerProfile.create({ userId, publicName: 'Le Loft', slug: 'le-loft', status: 'draft' })
+
+    const result = await uploadOrganizerProfileMedia(
+      { id: userId },
+      { kind: 'avatar', upload: { url: 'https://cdn.test/video.mp4', resourceType: 'video', purpose: 'organizer-gallery' } }
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toBe('invalid_media_type')
+  })
+
+  it('refuse un upload galerie vérifié si la référence ne correspond pas au caller', async () => {
+    const userId = await seedUser()
+    await OrganizerProfile.create({ userId, publicName: 'Le Loft', slug: 'le-loft', status: 'draft' })
+
+    const result = await uploadOrganizerProfileMedia(
+      { id: userId },
+      {
+        kind: 'gallery',
+        upload: {
+          publicId: 'media/pending/fake-owner/file',
+          format: 'jpg',
+          resourceType: 'image',
+          deliveryType: 'upload',
+          bytes: 1024,
+          version: 1,
+          signature: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          intentToken: 'invalid.invalid.invalid.invalid.invalid.invalid',
+        },
+      }
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toBe('invalid_media_upload')
   })
 
   it('ajoute un média galerie, le modifie, le réordonne puis le supprime', async () => {

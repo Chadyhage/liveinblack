@@ -166,13 +166,13 @@
 /* Lecture du blog */
 .lb-blog-article { padding: 34px clamp(10px, 2vw, 28px) 72px !important; background: rgba(10, 10, 13, .72); }
 .lb-blog-article h1 { font-size: clamp(42px, 6vw, 72px) !important; line-height: 1.02 !important; letter-spacing: -.05em !important; }
-.lb-blog-article article { max-width: 760px !important; color: rgba(245, 245, 247, .72) !important; font-size: 18px !important; line-height: 1.78 !important; }
+.lb-blog-article article { max-width: 820px !important; color: rgba(245, 245, 247, .72) !important; font-size: 18px !important; line-height: 1.78 !important; }
 .lb-blog-article article :where(h2, h3) { margin-top: 1.45em; color: #f5f5f7; font-size: 1.45em !important; letter-spacing: -.025em !important; }
 .lb-blog-article article a { color: #b8f34a; }
 
 /* Retours de paiement et d'activation */
 .lb-status-page { padding: clamp(54px, 8vw, 96px) 20px !important; background: rgba(10, 10, 13, .72); }
-.lb-status-page > div { max-width: 560px !important; padding: clamp(34px, 5vw, 52px) !important; border-radius: 28px !important; background: rgba(255, 255, 255, .06) !important; }
+.lb-status-page > div { max-width: 760px !important; padding: clamp(34px, 5vw, 52px) !important; border-radius: 28px !important; background: rgba(255, 255, 255, .06) !important; }
 .lb-status-page h1 { font-size: clamp(32px, 4vw, 44px) !important; line-height: 1.08 !important; letter-spacing: -.04em !important; }
 .lb-status-page p { font-size: 16px !important; line-height: 1.65 !important; }
 .lb-status-page button,

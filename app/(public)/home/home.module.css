@@ -51,7 +51,7 @@
 }
 
 .heroContent {
-  width: min(100%, 730px);
+  width: min(100%, 820px);
 }
 
 .heroEyebrow {
@@ -79,7 +79,7 @@
 }
 
 .heroDescription {
-  max-width: 590px;
+  max-width: 720px;
   margin: 24px 0 0;
   color: rgba(255, 255, 255, .74);
   font-size: clamp(18px, 1.55vw, 21px);

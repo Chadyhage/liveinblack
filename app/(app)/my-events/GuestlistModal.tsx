@@ -151,7 +151,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
   const arrivedCount = entries.filter((entry) => entry.checkedInAt).length
 
   return (
-    <Modal onClose={onClose} maxWidth={560} ariaLabel="Liste des invités">
+    <Modal onClose={onClose} maxWidth={1120} ariaLabel="Liste des invités">
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.5}>

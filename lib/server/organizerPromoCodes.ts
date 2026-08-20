@@ -1,7 +1,15 @@
 import { getDb } from '../db/mongoose'
 import Event from '../models/Event'
-import PromoCode, { type PromoCodeDoc } from '../models/PromoCode'
+import PromoCode from '../models/PromoCode'
 import { normalizePromoCode } from './promos'
+import {
+  hasOnlyKnownPromoPlaceIds,
+  minPositivePlacePrice,
+  normalizePromoPlaceIds,
+  scopedPromoPlaces,
+  toPromoCodeView,
+  type PromoCodeView,
+} from './organizerPromoCodeUtils'
 
 // Port de src/components/PromoCodesPanel.jsx (#7 phase organisateur) — côté
 // organisateur uniquement (création/activation/suppression) ; la
@@ -24,33 +32,6 @@ async function assertOwner(eventId: string, callerId: string) {
   if (!event) return { ok: false as const, status: 404, error: 'event_not_found' }
   if (event.organizerId !== callerId && event.createdBy !== callerId) return { ok: false as const, status: 403, error: 'forbidden' }
   return { ok: true as const, event }
-}
-
-export interface PromoCodeView {
-  code: string
-  type: 'percent' | 'fixed'
-  value: number
-  maxUses: number
-  usedCount: number
-  active: boolean
-  expiresAt: string | null
-  createdAt: string
-  // Absent/vide = s'applique à toutes les places (comportement historique).
-  placeIds?: string[]
-}
-
-function toView(p: PromoCodeDoc): PromoCodeView {
-  return {
-    code: p.code,
-    type: p.type as 'percent' | 'fixed',
-    value: p.value,
-    maxUses: p.maxUses ?? 0,
-    usedCount: p.usedCount ?? 0,
-    active: p.active ?? true,
-    expiresAt: p.expiresAt ? new Date(p.expiresAt).toISOString() : null,
-    createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : '',
-    placeIds: p.placeIds && p.placeIds.length > 0 ? (p.placeIds as string[]) : undefined,
-  }
 }
 
 export interface CreatePromoInput {
@@ -80,8 +61,8 @@ export async function createPromoCode(caller: PromoCaller, eventId: string, inpu
   // sur cet événement — jamais un id inventé/périmé qui ne matcherait jamais
   // rien à l'achat (resolvePromo se contenterait de refuser silencieusement).
   const eventPlaceIds = new Set((guard.event.places || []).map((p) => p.id))
-  const placeIds = (input.placeIds || []).map((id) => id.trim()).filter(Boolean)
-  if (placeIds.length > 0 && !placeIds.every((id) => eventPlaceIds.has(id))) {
+  const placeIds = normalizePromoPlaceIds(input.placeIds)
+  if (!hasOnlyKnownPromoPlaceIds(eventPlaceIds, placeIds)) {
     return { ok: false, status: 400, error: 'invalid_place_ids' }
   }
 
@@ -91,15 +72,14 @@ export async function createPromoCode(caller: PromoCaller, eventId: string, inpu
   // code fixe restreint à une place chère ne doit pas être bloqué par le
   // prix d'une AUTRE place moins chère qu'il ne concerne pas), sinon toutes
   // les places de l'événement comme avant.
-  const scopedPlaces = placeIds.length > 0 ? (guard.event.places || []).filter((p) => placeIds.includes(p.id)) : guard.event.places || []
+  const scopedPlaces = scopedPromoPlaces(guard.event.places || [], placeIds)
 
   if (input.type === 'percent') {
     // Max 99 % — un code à 100% reviendrait à offrir la place, ce qui doit
     // passer par la guestlist (billets gratuits), jamais par un code promo.
     if (value >= 100) return { ok: false, status: 400, error: 'percent_too_high' }
   } else {
-    const prices = scopedPlaces.map((p) => Number(p.price)).filter((n) => Number.isFinite(n) && n > 0)
-    const minPrice = prices.length ? Math.min(...prices) : 0
+    const minPrice = minPositivePlacePrice(scopedPlaces)
     if (minPrice > 0 && value >= minPrice) return { ok: false, status: 400, error: 'fixed_covers_cheapest_ticket' }
   }
 
@@ -118,7 +98,7 @@ export async function createPromoCode(caller: PromoCaller, eventId: string, inpu
       createdBy: caller.id,
       placeIds: placeIds.length > 0 ? placeIds : undefined,
     })
-    return { ok: true, promo: toView(promo.toObject()) }
+    return { ok: true, promo: toPromoCodeView(promo.toObject()) }
   } catch (err) {
     if (typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000) {
       return { ok: false, status: 409, error: 'code_taken' }
@@ -135,7 +115,7 @@ export async function listPromoCodes(caller: PromoCaller, eventId: string): Prom
   if (!guard.ok) return guard
 
   const promos = await PromoCode.find({ eventId }).sort({ createdAt: -1 }).lean()
-  return { ok: true, promos: promos.map(toView) }
+  return { ok: true, promos: promos.map(toPromoCodeView) }
 }
 
 export type ToggleResult = ErrResult | { ok: true; active: boolean }

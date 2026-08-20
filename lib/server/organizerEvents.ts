@@ -1,4 +1,3 @@
-import crypto from 'node:crypto'
 import { getDb } from '../db/mongoose'
 import Application from '../models/Application'
 import Event, { type EventDoc } from '../models/Event'
@@ -10,12 +9,21 @@ import { regionToCurrency, eventCurrency } from '../shared/money'
 import { getRegionByName, regions } from '../shared/regions'
 import { normalizeRegionId } from '../shared/locations'
 import { notifyNewEvent } from './organizerFollowNotifications'
-import { normalizeShowOptions, type ShowOption } from '../shared/showOptions'
+import { type ShowOption } from '../shared/showOptions'
 import { notifyUserById } from './emails/notify'
 import { eventPublishedEmail, eventRecapBeforeEventEmail } from './emails'
 import EventStaff from '../models/EventStaff'
 import { eventStartMs } from '../shared/event-time'
 import { revalidateTag } from 'next/cache'
+import {
+  assignStablePlaceIds,
+  normalizeMenuItems,
+  placeConsumed,
+  RECAP_WINDOW_END_MS,
+  shouldSendEventRecap,
+  toEventDates,
+  validatePlaces,
+} from './organizerEventUtils'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -142,77 +150,6 @@ export interface OrganizerEventView {
 export type CreateEventResult = ErrResult | { ok: true; eventId: string }
 export type UpdateEventResult = ErrResult | { ok: true }
 export type ListMyEventsResult = { ok: true; events: OrganizerEventView[] }
-
-// `available` n'est jamais fourni par le client — c'est un champ SERVEUR,
-// toujours initialisé à `total` pour une place neuve (aucune vente pos-
-// sible avant la création). Il est ensuite décrémenté/recrédité
-// atomiquement par lib/server/orders.ts (réservation payante) et
-// lib/server/guestlist.ts (invitation gratuite) — jamais réécrit ici après
-// coup, sauf lors d'un changement de `total` sur une place NON verrouillée
-// (voir updateOrganizerEvent, qui recalcule le delta plutôt que d'écraser).
-function assignStablePlaceIds(places: PlaceInput[]): (PlaceInput & { available: number })[] {
-  return places.map((p) => ({ ...p, id: p.id?.trim() || `p${crypto.randomBytes(6).toString('hex')}`, available: p.total }))
-}
-
-// Consommation réelle d'une place = total - available. Fonctionne pour
-// TOUTE origine de consommation (réservation payante VIA orders.ts, ou
-// invitation gratuite VIA guestlist.ts) puisque les deux décrémentent le
-// MÊME champ `available` — contrairement à une agrégation Order seule (qui
-// manquerait les invitations guestlist, jamais des Order), jamais par nom de
-// place (une place renommée ne doit jamais "débloquer" un verrouillage
-// post-vente, bug legacy explicitement corrigé ici).
-function placeConsumed(place: { total?: number | null; available?: number | null }): number {
-  return Math.max(0, (place.total ?? 0) - (place.available ?? 0))
-}
-
-// Plafond défensif — un organisateur ne configure jamais réellement plus de
-// quelques dizaines de types de place ; borne surtout contre un payload
-// malformé/scripté plutôt qu'un cas d'usage réel.
-const MAX_PLACE_TYPES = 40
-
-// Validation serveur des places — jusqu'ici absente (Gap confirmé le
-// 11/08/2026) : seul `groupType==='group' → price>0` était revérifié
-// serveur, tout le reste (qty/maxPerAccount/price négatifs, groupMax <
-// groupMin) était persisté tel quel depuis le client. Miroir des bornes déjà
-// imposées côté UI par NumberField/NumberInputField — jamais faire confiance
-// au client seul pour des valeurs qui déterminent stock et prix réels.
-function validatePlaces(places: PlaceInput[]): string | null {
-  if (places.length > MAX_PLACE_TYPES) return 'too_many_place_types'
-  for (const place of places) {
-    if (!place.type?.trim()) return 'place_type_required'
-    if (!Number.isFinite(place.price) || place.price < 0) return 'invalid_place_price'
-    if (!Number.isFinite(place.total) || place.total < 0 || !Number.isInteger(place.total)) return 'invalid_place_qty'
-    if (place.maxPerAccount !== undefined && (!Number.isFinite(place.maxPerAccount) || place.maxPerAccount < 0)) {
-      return 'invalid_place_max_per_account'
-    }
-    if (place.groupType === 'group' && !(place.price > 0)) return 'group_place_requires_price'
-    if (place.groupType === 'group') {
-      const min = place.groupMin ?? 0
-      const max = place.groupMax ?? 0
-      if (!Number.isFinite(min) || min < 0) return 'invalid_group_min'
-      if (!Number.isFinite(max) || max < 0) return 'invalid_group_max'
-      if (min > 0 && max > 0 && max < min) return 'group_max_below_min'
-    }
-  }
-  return null
-}
-
-function normalizeMenuItems(menu: MenuItemInput[] | null | undefined): MenuItemInput[] {
-  return (menu || []).map((item) => ({
-    ...item,
-    available: item.available !== false,
-    showOptions: item.hasShow ? normalizeShowOptions(item.showOptions) : [],
-  }))
-}
-
-function toEventDates(date: string) {
-  const d = new Date(date + 'T00:00:00')
-  const dateDisplay = d
-    .toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-    .toUpperCase()
-    .replace('.', '')
-  return dateDisplay
-}
 
 // ──────────────────────────────── createOrganizerEvent ──────────────────────
 
@@ -604,9 +541,6 @@ export type { EventDoc }
 // envoi par événement (réinitialisé par postponeOrganizerEvent si la date
 // change, voir lib/server/organizerEventLifecycle.ts). Fenêtre large (24h)
 // pour absorber un cron qui ne tournerait pas exactement toutes les heures.
-const RECAP_WINDOW_START_MS = 24 * 60 * 60 * 1000 // 1 jour
-const RECAP_WINDOW_END_MS = 48 * 60 * 60 * 1000 // 2 jours
-
 export async function sendEventRecapReminders(): Promise<{ reminded: number }> {
   await getDb()
   const now = Date.now()
@@ -620,7 +554,7 @@ export async function sendEventRecapReminders(): Promise<{ reminded: number }> {
   let reminded = 0
   for (const event of candidates) {
     const startMs = eventStartMs(event)
-    if (startMs < now + RECAP_WINDOW_START_MS || startMs > now + RECAP_WINDOW_END_MS) continue
+    if (!shouldSendEventRecap(startMs, now)) continue
 
     const claimed = await Event.updateOne({ _id: event._id, recapEmailSentAt: null }, { $set: { recapEmailSentAt: new Date() } })
     if (claimed.modifiedCount !== 1) continue

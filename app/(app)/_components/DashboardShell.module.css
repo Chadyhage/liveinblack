@@ -57,16 +57,44 @@
 .navList { display: flex; flex-direction: column; gap: 4px; }
 .footer { padding: 12px; border-top: 1px solid rgba(255, 255, 255, .085); }
 .publicLink { min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 13px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 13px; background: rgba(255, 255, 255, .045); color: rgba(245, 245, 247, .72); font-size: 14px; font-weight: 600; text-decoration: none; }
-.main { flex: 1; min-width: 0; min-height: 100dvh; padding: 46px clamp(12px, 2vw, 32px) 88px; }
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 100dvh;
+  width: min(100%, calc(100vw - var(--dashboard-sidebar)));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px clamp(6px, 0.75vw, 12px) 20px;
+}
 .mainFull { padding: 0; }
 
 .mobileBar { display: none; position: fixed; top: 12px; left: 12px; z-index: 50; }
 .mobileBar button { width: 46px; height: 46px; min-height: 46px !important; background: rgba(22,23,27,.92) !important; backdrop-filter: blur(24px); }
-.mobileDrawer { display: none; position: fixed; inset: 68px 10px auto; z-index: 49; max-height: calc(100dvh - 80px); overflow-y: auto; padding: 12px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 20px; background: rgba(25, 25, 29, .93); backdrop-filter: blur(30px) saturate(160%); box-shadow: 0 28px 80px rgba(0, 0, 0, .5); }
+.mobileDrawer { display: none; position: fixed; inset: 64px 8px 8px; z-index: 49; overflow-y: auto; padding: 12px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 18px; background: rgba(25, 25, 29, .95); backdrop-filter: blur(30px) saturate(160%); box-shadow: 0 28px 80px rgba(0, 0, 0, .5); }
 .mobileAccount { margin-bottom: 12px; padding: 4px 4px 13px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .drawerBackdrop { display: none !important; position: fixed; inset: 0; z-index: 48; width: 100%; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: rgba(0, 0, 0, .48) !important; backdrop-filter: blur(4px); }
 
-.root :global(.lb-dashboard-page) { width: 100%; max-width: none; }
+.main > * {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin-inline: 0;
+}
+
+.root :global(.lb-dashboard-page),
+.root :global(.lb-page-shell) {
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+.root :global(.lb-dashboard-page) {
+  padding-inline: 0 !important;
+}
+.root :global(.lb-page-shell) {
+  padding-inline: 0 !important;
+}
 .root :global(.lb-dashboard-title) { font-family: inherit !important; font-size: clamp(36px, 4vw, 54px); font-weight: 720; line-height: 1.03; letter-spacing: -.045em; text-transform: none; }
 .root :global(.lb-dashboard-description) { max-width: 760px; color: rgba(245, 245, 247, .62); font-size: 16px; line-height: 1.6; }
 .root :global(.lb-dashboard-main) :where(h1, h2, h3) { font-family: inherit !important; text-transform: none !important; }
@@ -80,12 +108,12 @@
   .sidebar { display: none; }
   .mobileBar { display: flex; }
   .mobileDrawer, .drawerBackdrop { display: block !important; }
-  .main { min-height: 100dvh; padding: 72px clamp(8px, 2vw, 17px) 84px; }
+  .main { min-height: 100dvh; width: 100%; padding: 64px clamp(6px, 1.1vw, 10px) 18px; }
   .mainFull { padding: 0; }
 }
 
 @media (max-width: 620px) {
-  .main { padding: 70px 14px 78px; }
+  .main { padding: 62px 4px 14px; }
   .mainFull { padding: 0; }
   .root :global(.lb-dashboard-title) { font-size: 36px; }
   .root :global(.lb-dashboard-description) { font-size: 15px; }

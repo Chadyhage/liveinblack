@@ -44,12 +44,12 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         minHeight: '100vh',
         position: 'relative',
         zIndex: 1,
-        padding: '20px 16px 48px',
+        padding: '20px clamp(14px, 2vw, 28px) 48px',
       }}
     >
       {/* Filigrane discret, harmonisé avec l'univers sombre du produit. */}
       <FiligraneRoseBg />
-      <div style={{ maxWidth: 1440, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: 1560, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
           <LegalBackButton />
@@ -141,7 +141,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 >
                   {s.n}
                 </span>
-                <div style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: 920 }}>
                   <h2
                     style={{
                       fontWeight: 700,

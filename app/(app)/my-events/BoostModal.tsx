@@ -158,7 +158,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
   }
 
   return (
-    <Modal onClose={onClose} maxWidth={660} ariaLabel="Promouvoir l’événement">
+    <Modal onClose={onClose} maxWidth={1120} ariaLabel="Promouvoir l’événement">
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
           <p

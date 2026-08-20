@@ -78,11 +78,11 @@ export default function ContactClient() {
         minHeight: '100vh',
         position: 'relative',
         zIndex: 1,
-        padding: '20px 16px 48px',
+        padding: '20px clamp(14px, 2vw, 28px) 48px',
         background: 'radial-gradient(circle at 80% 0%, rgba(184,243,74,0.07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
-      <div style={{ maxWidth: 1440, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: 1560, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
           <LegalBackButton />
           <div>
@@ -99,7 +99,7 @@ export default function ContactClient() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
-        <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', maxWidth: 640 }}>
+        <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', maxWidth: 860 }}>
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '24px 8px' }}>
               <Mascot mood="message" size={148} />

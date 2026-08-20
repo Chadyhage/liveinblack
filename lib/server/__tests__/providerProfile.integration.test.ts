@@ -153,6 +153,35 @@ describeIntegration('updateProviderProfile', () => {
     expect(result.profile.socialLinks.website).toBe('https://djkayo.com')
   })
 
+  it('normalise les handles sociaux en URLs cliquables et resynchronise website depuis socialLinks.website', async () => {
+    const userId = await seedUser()
+    await getOrCreateMyProviderProfile({ id: userId })
+
+    const result = await updateProviderProfile({
+      id: userId,
+      socialLinks: {
+        instagram: '@djkayo',
+        website: 'djkayo.com',
+      },
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.profile.socialLinks.instagram).toBe('https://instagram.com/djkayo')
+    expect(result.profile.socialLinks.website).toBe('https://djkayo.com')
+    expect(result.profile.website).toBe('https://djkayo.com')
+  })
+
+  it('collapse les zones sur "international" quand ce choix est présent', async () => {
+    const userId = await seedUser()
+    await Application.create({ userId, type: 'prestataire', status: 'approved', formData: { pays: 'Togo' } })
+    await getOrCreateMyProviderProfile({ id: userId })
+
+    const result = await updateProviderProfile({ id: userId }, { zonesIntervention: ['senegal', 'international'] })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.profile.zonesIntervention).toEqual(['international'])
+  })
+
   it('recalcule prestataireType (primaire) quand prestataireTypes change', async () => {
     const userId = await seedUser()
     await getOrCreateMyProviderProfile({ id: userId })
@@ -268,6 +297,19 @@ describeIntegration('Catalogue', () => {
     const result = await removeCatalogItemMedia({ id: userId }, itemId, 0)
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.profile.catalog[0].media).toHaveLength(1)
+  })
+
+  it('rejette un index média invalide', async () => {
+    const userId = await seedUser()
+    await getOrCreateMyProviderProfile({ id: userId })
+    const created = await addCatalogItem({ id: userId }, { name: 'Article' })
+    if (!created.ok) throw new Error('setup failed')
+    const itemId = created.profile.catalog[0].id
+    await addCatalogItemMedia({ id: userId }, itemId, { dataUri: TINY_PNG })
+
+    const result = await removeCatalogItemMedia({ id: userId }, itemId, 4)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toBe('invalid_media_index')
   })
 })
 

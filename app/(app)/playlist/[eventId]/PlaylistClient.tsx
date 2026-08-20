@@ -5,18 +5,17 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Button, Card, Input, Modal, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-
-interface PlaylistSong {
-  id: string
-  title: string
-  artist: string
-  previewUrl: string | null
-  cover: string | null
-  addedBy: string
-  addedByName: string
-  likedBy: string[]
-  status: 'pending' | 'validated' | 'refused' | 'played'
-}
+import { playlistApiFetch, playlistClientErrorMessage } from './playlistClientUtils'
+import {
+  buildPlaylistExportText,
+  effectiveParticipantState,
+  moderationSongsForTab,
+  myPlaylistSongs,
+  playlistDjStats,
+  rankPlaylistSongs,
+  STATUS_BADGE,
+  type PlaylistSong,
+} from './playlistUtils'
 
 interface NowPlaying {
   id: string
@@ -58,49 +57,7 @@ export interface PlaylistClientProps {
 const HEX = { teal: '#b8f34a', gold: '#b8f34a', violet: '#b8f34a', pink: '#ff7b7b' }
 const LIKE_BUDGET = 5
 
-const ERROR_MESSAGES: Record<string, string> = {
-  auth_required: 'Ta session a expiré — reconnecte-toi.',
-  invalid_input: 'Requête invalide.',
-  invalid_query: 'Recherche invalide.',
-  search_unavailable: 'La recherche de titres est momentanément indisponible.',
-  title_required: 'Titre requis.',
-  not_checked_in: "Tu dois être scanné à l'entrée pour proposer un son.",
-  quota_exceeded: 'Tu as déjà utilisé tous tes sons proposés pour cet événement.',
-  duplicate_song: 'Ce titre est déjà dans la playlist.',
-  staff_only: "Réservé au DJ/à l'équipe de cet événement.",
-  invalid_status: 'Statut invalide.',
-  song_not_found: 'Ce titre a déjà été retiré.',
-  playlist_not_found: 'Playlist introuvable.',
-  cannot_like_own_song: 'Tu ne peux pas liker ton propre son.',
-  like_quota_exceeded: 'Tu as utilisé tes 5 likes pour cet événement.',
-  event_not_found: 'Événement introuvable.',
-  not_song_owner: "Tu ne peux retirer que tes propres sons.",
-}
-
-function errorMessageFor(code: string | undefined): string {
-  if (!code) return 'Une erreur est survenue.'
-  return ERROR_MESSAGES[code] ?? 'Une erreur est survenue.'
-}
-
-async function apiFetch<T>(url: string, init?: RequestInit): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
-  try {
-    const res = await fetch(url, init)
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok || data?.ok === false) return { ok: false, error: data?.error ?? 'unknown_error' }
-    return { ok: true, data: data as T }
-  } catch {
-    return { ok: false, error: 'network_error' }
-  }
-}
-
 let toastSeq = 0
-
-const STATUS_BADGE: Record<PlaylistSong['status'], { label: string; color: string } | null> = {
-  pending: null,
-  validated: { label: 'Validé', color: 'var(--teal)' },
-  refused: { label: 'Refusé par le DJ', color: 'var(--pink)' },
-  played: { label: 'Joué', color: 'var(--violet)' },
-}
 
 const STATUS_ACTION_LABEL: Record<PlaylistSong['status'], string> = {
   pending: 'Remis en attente',
@@ -274,7 +231,7 @@ export default function PlaylistClient({
   }
 
   const refreshPlaylist = useCallback(async () => {
-    const res = await apiFetch<{
+    const res = await playlistApiFetch<{
       songs: PlaylistSong[]
       nowPlaying: NowPlaying | null
       canModerate: boolean
@@ -314,11 +271,11 @@ export default function PlaylistClient({
     const mySeq = ++searchSeq.current
     const timer = setTimeout(async () => {
       setSearching(true)
-      const res = await apiFetch<{ results: SearchResult[] }>(`/api/events/${eventId}/playlist/search?q=${encodeURIComponent(trimmedQuery)}`)
+      const res = await playlistApiFetch<{ results: SearchResult[] }>(`/api/events/${eventId}/playlist/search?q=${encodeURIComponent(trimmedQuery)}`)
       if (searchSeq.current !== mySeq) return
       setSearching(false)
       if (!res.ok) {
-        pushToast(errorMessageFor(res.error))
+        pushToast(playlistClientErrorMessage(res.error))
         return
       }
       setResults(res.data.results)
@@ -337,7 +294,7 @@ export default function PlaylistClient({
     // `not_checked_in`. Le staff garde ses droits de modération pour l'appel
     // API même quand l'écran affiché imite la vue participant.
     const path = canModerate ? 'songs/dj' : 'songs'
-    const res = await apiFetch<{ song: PlaylistSong }>(`/api/events/${eventId}/playlist/${path}`, {
+    const res = await playlistApiFetch<{ song: PlaylistSong }>(`/api/events/${eventId}/playlist/${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: result.title, artist: result.artist, previewUrl: result.previewUrl, cover: result.cover }),
@@ -349,7 +306,7 @@ export default function PlaylistClient({
       if (res.error === 'duplicate_song') {
         pushToast(`« ${result.title} » est déjà dans la playlist.`)
       } else {
-        pushToast(errorMessageFor(res.error))
+        pushToast(playlistClientErrorMessage(res.error))
       }
       return
     }
@@ -371,10 +328,10 @@ export default function PlaylistClient({
 
   async function handleToggleLike(songId: string) {
     setBusyId(songId)
-    const res = await apiFetch<{ liked: boolean }>(`/api/events/${eventId}/playlist/songs/${songId}/like`, { method: 'POST' })
+    const res = await playlistApiFetch<{ liked: boolean }>(`/api/events/${eventId}/playlist/songs/${songId}/like`, { method: 'POST' })
     setBusyId(null)
     if (!res.ok) {
-      pushToast(errorMessageFor(res.error))
+      pushToast(playlistClientErrorMessage(res.error))
       return
     }
     await refreshPlaylist()
@@ -387,14 +344,14 @@ export default function PlaylistClient({
   async function handleSetStatus(song: PlaylistSong, status: PlaylistSong['status']) {
     const nextStatus = song.status === status ? 'pending' : status
     setBusyId(song.id)
-    const res = await apiFetch(`/api/events/${eventId}/playlist/songs/${song.id}/status`, {
+    const res = await playlistApiFetch(`/api/events/${eventId}/playlist/songs/${song.id}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: nextStatus }),
     })
     setBusyId(null)
     if (!res.ok) {
-      pushToast(errorMessageFor(res.error))
+      pushToast(playlistClientErrorMessage(res.error))
       return
     }
     pushToast(`« ${song.title} » → ${STATUS_ACTION_LABEL[nextStatus]}`, 'ok')
@@ -403,10 +360,10 @@ export default function PlaylistClient({
 
   async function handleModeratorRemove(song: PlaylistSong) {
     setBusyId(song.id)
-    const res = await apiFetch(`/api/events/${eventId}/playlist/songs/${song.id}`, { method: 'DELETE' })
+    const res = await playlistApiFetch(`/api/events/${eventId}/playlist/songs/${song.id}`, { method: 'DELETE' })
     setBusyId(null)
     if (!res.ok) {
-      pushToast(errorMessageFor(res.error))
+      pushToast(playlistClientErrorMessage(res.error))
       return
     }
     pushToast(`« ${song.title} » retiré`, 'ok')
@@ -418,10 +375,10 @@ export default function PlaylistClient({
   // Mirrors PlaylistSystem.jsx removeSong().
   async function handleRemoveOwnSong(song: PlaylistSong) {
     setBusyId(song.id)
-    const res = await apiFetch(`/api/events/${eventId}/playlist/songs/${song.id}/mine`, { method: 'DELETE' })
+    const res = await playlistApiFetch(`/api/events/${eventId}/playlist/songs/${song.id}/mine`, { method: 'DELETE' })
     setBusyId(null)
     if (!res.ok) {
-      pushToast(errorMessageFor(res.error))
+      pushToast(playlistClientErrorMessage(res.error))
       return
     }
     pushToast(`« ${song.title} » retiré — tu peux proposer un autre son.`, 'ok')
@@ -443,10 +400,10 @@ export default function PlaylistClient({
   // l'appel plutôt que de laisser un double-tap déclencher deux DELETE.
   async function handleStopNow() {
     setBusyId('now-playing')
-    const res = await apiFetch(`/api/events/${eventId}/playlist/now-playing`, { method: 'DELETE' })
+    const res = await playlistApiFetch(`/api/events/${eventId}/playlist/now-playing`, { method: 'DELETE' })
     setBusyId(null)
     if (!res.ok) {
-      pushToast(errorMessageFor(res.error))
+      pushToast(playlistClientErrorMessage(res.error))
       return
     }
     await refreshPlaylist()
@@ -455,9 +412,7 @@ export default function PlaylistClient({
   // Export TOUJOURS la liste complète (indépendamment du filtre actif) —
   // mirrors PlaylistDJPanel.jsx exportList().
   function handleExport() {
-    const full = [...songs].sort((a, b) => (djSort === 'likes' ? b.likedBy.length - a.likedBy.length : songs.indexOf(b) - songs.indexOf(a)))
-    const lines = full.map((s, i) => `${i + 1}. ${s.title} — ${s.artist}${STATUS_BADGE[s.status] ? ` [${STATUS_BADGE[s.status]!.label}]` : ''}`).join('\n')
-    const text = `Playlist — ${eventName}\n\n${lines}`
+    const text = buildPlaylistExportText(songs, eventName, djSort)
     const done = () => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2200)
@@ -477,38 +432,32 @@ export default function PlaylistClient({
     }
   }
 
-  const rankedSongs = [...songs].filter((s) => s.status !== 'refused').sort((a, b) => b.likedBy.length - a.likedBy.length)
-  const mySongs = songs.filter((s) => s.addedBy === currentUserId)
+  const rankedSongs = rankPlaylistSongs(songs)
+  const mySongs = myPlaylistSongs(songs, currentUserId)
 
   // "Aperçu participant" : simule un billet scanné pour le staff qui n'en a
   // pas réellement, sinon le champ d'ajout resterait invisible (quota 0/0) et
   // l'aperçu ne montrerait que l'écran "Conditions pour proposer un son" —
   // mirrors PlaylistSystem.jsx lignes 161 (`Math.max(1, ...)`) et 166
   // (`previewCheckedIn || isCheckedInReal`).
-  const effectiveHasTicket = hasTicket || previewMode
-  const effectiveIsCheckedIn = isCheckedIn || previewMode
-  const ticketCount = previewMode ? Math.max(1, realTicketCount) : realTicketCount
-  const effectiveSongsRemaining = previewMode ? Math.max(0, ticketCount - mySongs.length) : songsRemaining
+  const { effectiveHasTicket, effectiveIsCheckedIn, ticketCount, effectiveSongsRemaining } = effectiveParticipantState({
+    hasTicket,
+    isCheckedIn,
+    previewMode,
+    realTicketCount,
+    songsRemaining,
+    mySongsCount: mySongs.length,
+  })
 
-  const moderationSongs = moderationTab === 'all' ? songs : songs.filter((s) => s.status === moderationTab)
-  const orderedModerationSongs = [...moderationSongs].sort((a, b) =>
-    djSort === 'likes' ? b.likedBy.length - a.likedBy.length : songs.indexOf(b) - songs.indexOf(a)
-  )
-  const djStats = {
-    total: songs.length,
-    likes: songs.reduce((sum, s) => sum + s.likedBy.length, 0),
-    pending: songs.filter((s) => s.status === 'pending').length,
-    validated: songs.filter((s) => s.status === 'validated').length,
-    played: songs.filter((s) => s.status === 'played').length,
-    refused: songs.filter((s) => s.status === 'refused').length,
-  }
+  const orderedModerationSongs = moderationSongsForTab(songs, moderationTab, djSort)
+  const djStats = playlistDjStats(songs)
 
   // ── Verrouillé : non-participant (mirrors PlaylistSystem.jsx lignes 470-484) ──
   // Ne s'applique jamais à la modération : un DJ/l'équipe accède toujours au
   // panneau de gestion, billet ou non.
   if (!canModerate && !hasTicket) {
     return (
-      <main style={{ maxWidth: 640, minWidth: 0, width: '100%', margin: '0 auto', padding: '24px 18px 90px' }}>
+      <main style={{ width: '100%', minWidth: 0, padding: '24px clamp(14px, 2vw, 28px) 90px' }}>
         <div style={{ marginBottom: 18 }}>
           <Link href={`/events/${eventId}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← {eventName}
@@ -539,7 +488,7 @@ export default function PlaylistClient({
   }
 
   return (
-    <main style={{ maxWidth: 640, minWidth: 0, width: '100%', margin: '0 auto', padding: '24px 18px 90px' }}>
+    <main style={{ width: '100%', minWidth: 0, padding: '24px clamp(14px, 2vw, 28px) 90px' }}>
       <style>{`
         @keyframes lbBar1 { from { height: 5px } to { height: 18px } }
         @keyframes lbBar2 { from { height: 14px } to { height: 6px } }

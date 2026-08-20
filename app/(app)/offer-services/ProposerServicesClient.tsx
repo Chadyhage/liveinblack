@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { INTERNATIONAL_REGION_ID } from '@/lib/shared/locations'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '@/lib/shared/social'
-import { PROVIDER_CATEGORIES, CATALOG_CATEGORIES, getPrimaryProviderType, getProviderCategory } from '@/lib/shared/providerCategories'
+import { PROVIDER_CATEGORIES, getPrimaryProviderType, getProviderCategory } from '@/lib/shared/providerCategories'
 import { fmtMoney } from '@/lib/shared/money'
 import { REVIEW_REPORT_REASONS, computeReviewStats } from '@/lib/shared/reviews'
 import { Stars } from '@/app/components/StarRating'
@@ -15,6 +15,13 @@ import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Button, Input, Textarea, Select, Label, Card, Modal } from '@/app/components/ui'
 import SubscriptionPanel from './SubscriptionPanel'
+import {
+  applyPrimaryRegionChange,
+  catalogCategoriesForProviderTypes,
+  comparableProviderProfile,
+  toggleProviderCategorySelection,
+  toggleProviderZoneSelection,
+} from './providerProfileUtils'
 
 // Port de ProposerServicesPage.jsx + MyProviderReviews.jsx (#8 phase
 // prestataire, tâche #91). Contrairement au legacy (facturation chargée
@@ -327,23 +334,10 @@ export default function ProposerServicesClient({
   const type = getPrimaryProviderType({ prestataireTypes: providerTypes })
   const category = getProviderCategory(type)
   const catalogDefaultCurrency = subscription.currency
-  const catalogCategories = [...new Set(providerTypes.flatMap((t) => CATALOG_CATEGORIES[t] || CATALOG_CATEGORIES.autre || []))]
+  const catalogCategories = catalogCategoriesForProviderTypes(providerTypes)
   const billingRegion = regions.find((r) => r.id === subscription.billingRegionId) || null
 
-  function comparableProfile(p: ProviderProfileView) {
-    return JSON.stringify({
-      name: (p.name || '').trim(),
-      headline: (p.headline || '').trim(),
-      description: (p.description || '').trim(),
-      city: (p.city || '').trim(),
-      regionId: p.regionId,
-      website: (p.socialLinks.website || p.website || '').trim(),
-      socialLinks: p.socialLinks,
-      prestataireTypes: p.prestataireTypes,
-      zonesIntervention: p.zonesIntervention,
-    })
-  }
-  const hasUnsavedProfileChanges = comparableProfile(profile) !== comparableProfile(savedProfile)
+  const hasUnsavedProfileChanges = comparableProviderProfile(profile) !== comparableProviderProfile(savedProfile)
 
   function notify(text: string) {
     setMessage(text)
@@ -357,33 +351,21 @@ export default function ProposerServicesClient({
 
   function toggleProviderCategory(categoryId: string) {
     setProfile((current) => {
-      const selected = current.prestataireTypes
-      const prestataireTypes = selected.includes(categoryId)
-        ? selected.filter((v) => v !== categoryId)
-        : categoryId === 'autre'
-          ? ['autre']
-          : [...selected.filter((v) => v !== 'autre'), categoryId]
+      const prestataireTypes = toggleProviderCategorySelection(current.prestataireTypes, categoryId)
       return { ...current, prestataireTypes }
     })
   }
 
   function toggleZone(zoneId: string) {
     setProfile((current) => {
-      const selected = current.zonesIntervention
-      if (zoneId === INTERNATIONAL_REGION_ID) {
-        return { ...current, zonesIntervention: selected.includes(zoneId) ? [current.regionId] : [INTERNATIONAL_REGION_ID] }
-      }
-      const withoutIntl = selected.filter((v) => v !== INTERNATIONAL_REGION_ID)
-      const zonesIntervention = withoutIntl.includes(zoneId) ? withoutIntl.filter((v) => v !== zoneId) : [...withoutIntl, zoneId]
+      const zonesIntervention = toggleProviderZoneSelection(current.zonesIntervention, zoneId, current.regionId)
       return { ...current, zonesIntervention: zonesIntervention.length ? zonesIntervention : [current.regionId] }
     })
   }
 
   function handlePrimaryRegionChange(regionId: string) {
     setProfile((current) => {
-      const zones = current.zonesIntervention.includes(INTERNATIONAL_REGION_ID)
-        ? current.zonesIntervention
-        : [...new Set([regionId, ...current.zonesIntervention.filter((v) => v !== current.regionId)])]
+      const zones = applyPrimaryRegionChange(current.zonesIntervention, current.regionId, regionId)
       return { ...current, regionId, zonesIntervention: zones.length ? zones : [regionId] }
     })
   }

@@ -12,11 +12,11 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { minHeight: 46, padding: '11px 15px', fontSize: 15, borderRadius: 'var(--radius-md)' },
-  md: { minHeight: 52, padding: '14px 17px', fontSize: 16, borderRadius: 'var(--radius-md)' },
+  sm: { minHeight: 48, padding: '14px 20px', fontSize: 15, borderRadius: 'var(--radius-md)' },
+  md: { minHeight: 54, padding: '17px 24px', fontSize: 16, borderRadius: 'var(--radius-md)' },
 }
 
-const ICON_OFFSET = 44
+const ICON_OFFSET = 52
 
 const PLACEHOLDER_STYLE_ID = 'lb-input-placeholder-comfort'
 
@@ -28,6 +28,8 @@ function ensurePlaceholderComfortStyle() {
     .lb-input-control::placeholder {
       color: rgba(255, 255, 255, 0.46);
       opacity: 1;
+      letter-spacing: 0;
+      transform: translateY(0.2px);
     }
   `
   document.head.appendChild(style)

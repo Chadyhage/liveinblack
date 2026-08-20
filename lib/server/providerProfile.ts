@@ -1,16 +1,25 @@
 import crypto from 'node:crypto'
 import { getDb } from '../db/mongoose'
-import ProviderProfile, { type ProviderProfileDoc } from '../models/ProviderProfile'
+import ProviderProfile from '../models/ProviderProfile'
 import Application from '../models/Application'
 import User from '../models/User'
 import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { getProviderBillingContext } from './providerBilling'
 import { normalizeRegionId, normalizeRegionIds, getRegionName } from '../shared/locations'
 import { normalizeProviderTypes, getPrimaryProviderType } from '../shared/providerCategories'
-import { SOCIAL_NETWORKS, socialUrl, type SocialNetworkKey } from '../shared/social'
+import { socialUrl, type SocialNetworkKey } from '../shared/social'
 import { verifyPublicMediaUploadReference } from './publicMediaUpload'
 import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
 import { revalidateTag } from 'next/cache'
+import {
+  resolveCatalogCurrency,
+  resolveProviderZones,
+  sanitizeProviderSocialLinks,
+  toProviderProfileView,
+  type ProviderProfileView,
+} from './providerProfileUtils'
+
+export type { ProviderProfileView } from './providerProfileUtils'
 
 // Remplace la partie ÉCRITURE de ProposerServicesPage.jsx (#8 phase
 // prestataire — profil + catalogue). Miroir volontaire de
@@ -28,100 +37,6 @@ export interface ProfileCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-export interface CatalogItemView {
-  id: string
-  name: string
-  description: string
-  price: number | null
-  currency: 'EUR' | 'XOF'
-  unit: string
-  category: string
-  available: boolean
-  media: Array<{ url: string; type: string }>
-  createdAt: string
-}
-
-export interface ProviderProfileView {
-  userId: string
-  name: string
-  headline: string
-  description: string
-  city: string
-  regionId: string
-  country: string
-  zonesIntervention: string[]
-  website: string
-  socialLinks: Record<SocialNetworkKey, string>
-  photoUrl: string | null
-  coverUrl: string | null
-  prestataireType: string
-  prestataireTypes: string[]
-  phone: string
-  catalogCurrency: 'EUR' | 'XOF'
-  subscriptionActive: boolean
-  subscriptionStatus: string
-  subscriptionExpiresAt: string | null
-  gracePeriodEndsAt: string | null
-  ratingAvg: number
-  ratingCount: number
-  catalog: CatalogItemView[]
-}
-
-// Même prudence que organizerProfile.ts : un sous-document Mongoose (ou un
-// tableau Mongoose de sous-documents) contient des références circulaires
-// ($__parent) qui font planter la sérialisation React Server Components dès
-// qu'il traverse vers un composant client — tout est reconstruit champ par
-// champ, jamais retourné/spread tel quel.
-function toSocialLinks(links: unknown): Record<SocialNetworkKey, string> {
-  const source = (links ?? {}) as Partial<Record<SocialNetworkKey, string>>
-  const result = {} as Record<SocialNetworkKey, string>
-  for (const net of SOCIAL_NETWORKS) result[net.key] = source[net.key] ?? ''
-  return result
-}
-
-function toCatalogView(catalog: ProviderProfileDoc['catalog']): CatalogItemView[] {
-  return (catalog ?? []).map((item) => ({
-    id: item.id,
-    name: item.name,
-    description: item.description ?? '',
-    price: item.price ?? null,
-    currency: (item.currency as 'EUR' | 'XOF') ?? 'EUR',
-    unit: item.unit ?? '',
-    category: item.category ?? '',
-    available: item.available !== false,
-    media: (item.media ?? []).map((m) => ({ url: m.url, type: m.type ?? 'image' })),
-    createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : new Date().toISOString(),
-  }))
-}
-
-function toProfileView(profile: ProviderProfileDoc): ProviderProfileView {
-  return {
-    userId: profile.userId,
-    name: profile.name,
-    headline: profile.headline ?? '',
-    description: profile.description ?? '',
-    city: profile.city ?? '',
-    regionId: profile.regionId ?? '',
-    country: profile.country ?? '',
-    zonesIntervention: [...(profile.zonesIntervention ?? [])],
-    website: profile.website ?? '',
-    socialLinks: toSocialLinks(profile.socialLinks),
-    photoUrl: profile.photoUrl ?? null,
-    coverUrl: profile.coverUrl ?? null,
-    prestataireType: profile.prestataireType ?? 'autre',
-    prestataireTypes: [...(profile.prestataireTypes ?? [])],
-    phone: profile.phone ?? '',
-    catalogCurrency: (profile.catalogCurrency as 'EUR' | 'XOF') ?? 'EUR',
-    subscriptionActive: Boolean(profile.subscriptionActive),
-    subscriptionStatus: profile.subscriptionStatus ?? 'none',
-    subscriptionExpiresAt: profile.subscriptionExpiresAt ? new Date(profile.subscriptionExpiresAt).toISOString() : null,
-    gracePeriodEndsAt: profile.gracePeriodEndsAt ? new Date(profile.gracePeriodEndsAt).toISOString() : null,
-    ratingAvg: profile.ratingAvg ?? 0,
-    ratingCount: profile.ratingCount ?? 0,
-    catalog: toCatalogView(profile.catalog),
-  }
-}
-
 // ────────────────────────── getOrCreateMyProviderProfile ────────────────────
 
 export type GetOrCreateResult = ErrResult | { ok: true; profile: ProviderProfileView }
@@ -130,7 +45,7 @@ export async function getOrCreateMyProviderProfile(caller: ProfileCaller): Promi
   await getDb()
 
   const existing = await ProviderProfile.findOne({ userId: caller.id })
-  if (existing) return { ok: true, profile: toProfileView(existing) }
+  if (existing) return { ok: true, profile: toProviderProfileView(existing) }
 
   const user = await User.findById(caller.id).lean()
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
@@ -170,7 +85,7 @@ export async function getOrCreateMyProviderProfile(caller: ProfileCaller): Promi
     catalogCurrency: billing.currency,
   })
 
-  return { ok: true, profile: toProfileView(created) }
+  return { ok: true, profile: toProviderProfileView(created) }
 }
 
 // ──────────────────────────── updateProviderProfile ─────────────────────────
@@ -190,21 +105,32 @@ export interface UpdateProfileInput {
 
 export type UpdateProfileResult = ErrResult | { ok: true; profile: ProviderProfileView }
 
-export async function updateProviderProfile(caller: ProfileCaller, input: UpdateProfileInput): Promise<UpdateProfileResult> {
+function splitUpdateProfileArgs(
+  caller: ProfileCaller,
+  input?: UpdateProfileInput
+): { caller: ProfileCaller; input: UpdateProfileInput } {
+  if (input) return { caller, input }
+  const { id, ...legacyInput } = caller as ProfileCaller & UpdateProfileInput
+  return { caller: { id }, input: legacyInput }
+}
+
+export async function updateProviderProfile(caller: ProfileCaller, input?: UpdateProfileInput): Promise<UpdateProfileResult> {
   await getDb()
 
-  const profile = await ProviderProfile.findOne({ userId: caller.id })
+  const resolved = splitUpdateProfileArgs(caller, input)
+
+  const profile = await ProviderProfile.findOne({ userId: resolved.caller.id })
   if (!profile) return { ok: false, status: 404, error: 'profile_not_found' }
 
-  const nextName = input.name !== undefined ? input.name.trim() : profile.name
+  const nextName = resolved.input.name !== undefined ? resolved.input.name.trim() : profile.name
   if (!nextName) return { ok: false, status: 400, error: 'name_required' }
   profile.name = nextName
 
-  if (input.headline !== undefined) profile.headline = input.headline.trim().slice(0, 140)
-  if (input.description !== undefined) profile.description = input.description.trim().slice(0, 1000)
-  if (input.city !== undefined) {
-    profile.city = input.city.trim()
-    profile.location = input.city.trim()
+  if (resolved.input.headline !== undefined) profile.headline = resolved.input.headline.trim().slice(0, 140)
+  if (resolved.input.description !== undefined) profile.description = resolved.input.description.trim().slice(0, 1000)
+  if (resolved.input.city !== undefined) {
+    profile.city = resolved.input.city.trim()
+    profile.location = resolved.input.city.trim()
   }
 
   // `regionId` ("Pays de base") est un champ 100% marketing/affichage ici —
@@ -212,50 +138,45 @@ export async function updateProviderProfile(caller: ProfileCaller, input: Update
   // User.providerBillingRegionId / lib/server/providerBilling.ts, totalement
   // séparé). Traité AVANT zonesIntervention pour que la garantie ci-dessous
   // utilise le nouveau pays, pas l'ancien.
-  if (input.regionId !== undefined) {
-    const regionId = normalizeRegionId(input.regionId)
+  if (resolved.input.regionId !== undefined) {
+    const regionId = normalizeRegionId(resolved.input.regionId)
     if (regionId) {
       profile.regionId = regionId
       profile.country = getRegionName(regionId)
     }
   }
 
-  if (input.zonesIntervention !== undefined) {
+  if (resolved.input.zonesIntervention !== undefined) {
     // Marketing multi-pays — même garantie que updateOrganizerProfile :
     // regionId reste toujours dans la liste.
-    const zones = normalizeRegionIds(input.zonesIntervention)
-    profile.zonesIntervention = (
-      zones.includes('international') ? ['international'] : profile.regionId && !zones.includes(profile.regionId) ? [profile.regionId, ...zones] : zones
-    ) as typeof profile.zonesIntervention
+    profile.zonesIntervention = resolveProviderZones(profile.regionId, resolved.input.zonesIntervention) as typeof profile.zonesIntervention
   }
 
-  if (input.prestataireTypes !== undefined) {
-    const types = normalizeProviderTypes(input.prestataireTypes)
+  if (resolved.input.prestataireTypes !== undefined) {
+    const types = normalizeProviderTypes(resolved.input.prestataireTypes)
     profile.prestataireTypes = types as typeof profile.prestataireTypes
     profile.prestataireType = getPrimaryProviderType({ prestataireTypes: types })
   }
 
-  if (input.phone !== undefined) profile.phone = input.phone.trim()
+  if (resolved.input.phone !== undefined) profile.phone = resolved.input.phone.trim()
 
   // `website` legacy : double-écriture du même champ (top-level ET
   // socialLinks.website, toujours synchronisés) — compat lecture ancienne,
   // voir ProposerServicesPage.jsx.
-  if (input.website !== undefined) {
-    const website = socialUrl('website', input.website) ?? ''
+  if (resolved.input.website !== undefined) {
+    const website = socialUrl('website', resolved.input.website) ?? ''
     profile.website = website
     profile.socialLinks = { ...(profile.socialLinks ?? {}), website } as typeof profile.socialLinks
   }
-  if (input.socialLinks !== undefined) {
-    const sanitizedLinks = Object.fromEntries(
-      Object.entries(input.socialLinks).map(([key, value]) => [key, socialUrl(key, value) ?? ''])
-    )
+  if (resolved.input.socialLinks !== undefined) {
+    const sanitizedLinks = sanitizeProviderSocialLinks(resolved.input.socialLinks)
     profile.socialLinks = { ...(profile.socialLinks ?? {}), ...sanitizedLinks } as typeof profile.socialLinks
-    if (input.socialLinks.website !== undefined) profile.website = sanitizedLinks.website ?? ''
+    if (resolved.input.socialLinks.website !== undefined) profile.website = sanitizedLinks.website ?? ''
   }
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }
 
 // ─────────────────────────── uploadProviderProfileMedia ─────────────────────
@@ -280,7 +201,7 @@ export async function uploadProviderProfileMedia(caller: ProfileCaller, kind: Pr
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }
 
 // ─────────────────────────────── Catalogue ───────────────────────────────────
@@ -301,10 +222,6 @@ export type CatalogResult = ErrResult | { ok: true; profile: ProviderProfileView
 // est retenue telle quelle ; toute autre valeur (y compris 'EUR' explicite)
 // retombe sur la devise dérivée du pays de facturation. Pas une simplification
 // de notre part — un comportement du produit à préserver tel quel.
-function resolveCatalogCurrency(selected: string | undefined, catalogDefaultCurrency: 'EUR' | 'XOF'): 'EUR' | 'XOF' {
-  return selected === 'XOF' ? 'XOF' : catalogDefaultCurrency
-}
-
 export async function addCatalogItem(caller: ProfileCaller, input: CatalogItemInput): Promise<CatalogResult> {
   await getDb()
 
@@ -329,7 +246,7 @@ export async function addCatalogItem(caller: ProfileCaller, input: CatalogItemIn
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }
 
 export interface CatalogItemPatch {
@@ -365,7 +282,7 @@ export async function updateCatalogItem(caller: ProfileCaller, itemId: string, p
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }
 
 export async function deleteCatalogItem(caller: ProfileCaller, itemId: string): Promise<CatalogResult> {
@@ -380,7 +297,7 @@ export async function deleteCatalogItem(caller: ProfileCaller, itemId: string): 
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }
 
 const MAX_CATALOG_ITEM_MEDIA = 4
@@ -419,7 +336,7 @@ export async function addCatalogItemMedia(
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }
 
 export async function removeCatalogItemMedia(caller: ProfileCaller, itemId: string, mediaIndex: number): Promise<CatalogResult> {
@@ -436,5 +353,5 @@ export async function removeCatalogItemMedia(caller: ProfileCaller, itemId: stri
 
   await profile.save()
   revalidateTag('public-providers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toProviderProfileView(profile) }
 }

@@ -5,13 +5,8 @@
 import { getDb } from '../db/mongoose'
 import User from '../models/User'
 import Application from '../models/Application'
-import { normalizeProviderBillingRegion, providerBillingCurrency } from '../shared/providerBillingRegion'
-
-export type BillingContext = {
-  billingRegionId: string
-  currency: 'EUR' | 'XOF'
-  canChange: boolean
-}
+import { buildProviderBillingContext, deriveDefaultBillingRegionFromApplication, type BillingContext } from './providerBillingUtils'
+import { normalizeProviderBillingRegion } from '../shared/providerBillingRegion'
 
 // Premier chargement : pas encore de pays de facturation choisi explicitement.
 // On dérive un défaut raisonnable (pays déclaré dans le dernier dossier
@@ -22,10 +17,7 @@ async function deriveDefaultBillingRegion(userId: string): Promise<string> {
   const application = await Application.findOne({ userId, type: 'prestataire' })
     .sort({ updatedAt: -1 })
     .lean()
-  const fromApplication = normalizeProviderBillingRegion(
-    (application?.formData as Record<string, unknown> | undefined)?.pays
-  )
-  return fromApplication || 'france'
+  return deriveDefaultBillingRegionFromApplication((application?.formData as Record<string, unknown> | undefined)?.pays)
 }
 
 export async function getProviderBillingContext(caller: { id: string }): Promise<BillingContext> {
@@ -38,11 +30,10 @@ export async function getProviderBillingContext(caller: { id: string }): Promise
     await User.updateOne({ _id: caller.id }, { $set: { providerBillingRegionId: billingRegionId } })
   }
 
-  return {
+  return buildProviderBillingContext({
     billingRegionId,
-    currency: providerBillingCurrency(billingRegionId),
-    canChange: user?.prestataireSubActive !== true,
-  }
+    prestataireSubActive: user?.prestataireSubActive,
+  })
 }
 
 export type SetBillingRegionResult =
@@ -65,10 +56,9 @@ export async function setProviderBillingRegion(caller: { id: string }, regionId:
 
   return {
     ok: true,
-    context: {
+    context: buildProviderBillingContext({
       billingRegionId: nextRegionId,
-      currency: providerBillingCurrency(nextRegionId),
-      canChange: current.canChange,
-    },
+      prestataireSubActive: !current.canChange,
+    }),
   }
 }

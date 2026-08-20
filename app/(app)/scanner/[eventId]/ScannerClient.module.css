@@ -1,12 +1,10 @@
 .shell {
   min-height: 100vh;
-  padding: 32px clamp(18px, 3vw, 48px) 118px;
+  padding: 28px clamp(18px, 2.4vw, 36px) 118px;
 }
 
 .workspace {
   width: 100%;
-  max-width: 1480px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -21,7 +19,7 @@
 
 .scanGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(380px, 0.9fr);
   gap: 20px;
   align-items: start;
 }
@@ -46,7 +44,7 @@
 
 .serviceGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(380px, 520px);
+  grid-template-columns: minmax(0, 1.18fr) minmax(400px, 0.82fr);
   gap: 20px;
   align-items: start;
 }
@@ -76,8 +74,6 @@
 
 .payBarInner {
   width: 100%;
-  max-width: 1480px;
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;

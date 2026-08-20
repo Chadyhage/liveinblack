@@ -22,9 +22,9 @@ export default function SectionHeader({ eyebrow, title, description, align = 'le
       <Heading style={{ margin: eyebrow ? '8px 0 0' : 0, color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 42px)', lineHeight: 1.02, fontWeight: 800, letterSpacing: '0.01em' }}>
         {title}
       </Heading>
-      {description && <p style={{ maxWidth: 560, margin: '10px 0 0', marginInline: align === 'center' ? 'auto' : undefined, color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{description}</p>}
+      {description && <p style={{ maxWidth: 760, margin: '10px 0 0', marginInline: align === 'center' ? 'auto' : undefined, color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>{description}</p>}
     </header>
   )
 }
 
-export const sectionHeaderContent: CSSProperties = { maxWidth: 1120, margin: '0 auto', padding: '0 22px' }
+export const sectionHeaderContent: CSSProperties = { maxWidth: 1320, margin: '0 auto', padding: '0 clamp(14px, 2vw, 28px)' }

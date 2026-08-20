@@ -34,6 +34,10 @@ describe('ticketToken', () => {
     expect(extractTicketCode('nodothere')).toBeNull()
   })
 
+  it('extracts with the last separator only and keeps dots inside the ticketCode part', () => {
+    expect(extractTicketCode('ABCD.2345.signaturepart')).toBe('ABCD.2345')
+  })
+
   it('rejects a token whose signature was tampered with', () => {
     const token = signTicketToken(solo)
     const tampered = token.slice(0, -1) + (token.at(-1) === 'a' ? 'b' : 'a')
@@ -63,5 +67,20 @@ describe('ticketToken', () => {
 
   it('rejects an empty signature', () => {
     expect(verifyTicketToken('ABCD2345.', solo)).toBe(false)
+  })
+
+  it('rejects a token with an empty ticketCode before the separator', () => {
+    expect(extractTicketCode('.signature')).toBeNull()
+    expect(verifyTicketToken('.signature', solo)).toBe(false)
+  })
+
+  it('throws when signing without AUTH_SECRET configured', () => {
+    const previous = process.env.AUTH_SECRET
+    delete process.env.AUTH_SECRET
+    try {
+      expect(() => signTicketToken(solo)).toThrow(/AUTH_SECRET manquant/)
+    } finally {
+      process.env.AUTH_SECRET = previous
+    }
   })
 })

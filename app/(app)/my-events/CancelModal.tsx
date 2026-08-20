@@ -63,7 +63,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
   }
 
   return (
-    <Modal onClose={onClose} maxWidth={520} ariaLabel="Annuler l’événement">
+    <Modal onClose={onClose} maxWidth={960} ariaLabel="Annuler l’événement">
         <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>
           {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
         </h2>

@@ -5,13 +5,12 @@ import Message from '../models/Message'
 import User from '../models/User'
 import { IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
 import {
-  toConversationView,
   normalizeObjectId,
   resolveDisplayName,
   loadParticipantConversation,
   type MessagingCaller,
-  type ConversationView,
 } from './messaging'
+import { toConversationView, type ConversationView } from './messagingViews'
 import { notifyUserById } from './emails/notify'
 import { addedToGroupEmail } from './emails'
 

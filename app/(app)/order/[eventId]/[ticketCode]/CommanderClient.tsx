@@ -5,6 +5,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Card, ConfirmDialog } from '@/app/components/ui'
+import {
+  errorMessageFor,
+  findEditableLine,
+  findLockedOwnLine,
+  groupByCategory,
+  lockedLineLabel,
+  type MenuItemView,
+  type OrderItem,
+  type OrderItemStatus,
+} from './commanderUtils'
 
 // Port de src/pages/OnSiteOrderPage.jsx (partie interactive uniquement — les
 // gates de chargement/accès vivent dans page.tsx, un Server Component). Ce
@@ -14,43 +24,6 @@ import { Button, Card, ConfirmDialog } from '@/app/components/ui'
 // un détail d'implémentation serveur invisible d'ici. Les types ci-dessous
 // sont donc des copies volontaires (pas des imports) des formes JSON exactes
 // renvoyées par ces routes, pas de la vue serveur interne.
-
-export type OrderItemStatus = 'sent' | 'served' | 'cancelled'
-export type OrderItemKind = 'order' | 'preorder' | 'included'
-
-export interface OrderItem {
-  id: string
-  menuItemId: string | null
-  name: string
-  quantity: number
-  unitPriceMinor: number
-  showOptionId: string | null
-  showLabel: string | null
-  showInfo: string | null
-  ticketId: string
-  addedBy: string
-  addedByName: string | null
-  status: OrderItemStatus
-  kind: OrderItemKind
-  servedAt: string | null
-  servedBy: string | null
-  servedByName: string | null
-  paidAt: string | null
-  paidBy: string | null
-  paidByName: string | null
-  cancelledAt: string | null
-  cancelledBy: string | null
-  cancellationReason: string | null
-}
-
-export interface MenuItemView {
-  name: string
-  emoji: string
-  imageUrl: string | null
-  price: number
-  category: string
-  description: string
-}
 
 export interface CommanderClientProps {
   eventId: string
@@ -87,79 +60,11 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
   }
 }
 
-// Tous les codes d'erreur documentés par les quatre routes, plus quelques
-// codes additionnels réellement renvoyés par lib/server/eventOrders.ts pour
-// un appelant rang 0 (not_your_item, locked) — jamais d'échec silencieux :
-// un code non listé retombe sur un message générique, jamais un no-op muet.
-const ERROR_MESSAGES: Record<string, string> = {
-  auth_required: 'Ta session a expiré — reconnecte-toi pour commander.',
-  not_your_ticket: "Ce billet ne t'appartient pas.",
-  not_your_item: "Cette ligne de commande ne t'appartient pas.",
-  unknown_menu_item: "Cet article n'est plus disponible au menu.",
-  invalid_quantity: 'Quantité invalide.',
-  invalid_input: 'Requête invalide.',
-  invalid_body: 'Requête invalide.',
-  item_not_found: 'Cette ligne de commande est introuvable — elle a peut-être déjà été retirée.',
-  ticket_not_found: 'Billet introuvable.',
-  forbidden: 'Action non autorisée.',
-  locked: 'Cet article a déjà été servi, payé ou annulé — modification impossible.',
-  bad_response: 'Réponse du serveur illisible — réessaie.',
-}
-
-function errorMessageFor(code: string | undefined): string {
-  if (!code) return 'Une erreur est survenue. Réessaie.'
-  return ERROR_MESSAGES[code] ?? 'Une erreur est survenue. Réessaie.'
-}
-
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'rgba(184,243,74,0.14)' },
   served: { label: 'Servi', color: 'var(--teal)', bg: 'rgba(184,243,74,0.16)' },
   cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
 }
-
-function isLocked(item: OrderItem): boolean {
-  return Boolean(item.servedAt) || Boolean(item.paidAt) || item.status === 'cancelled'
-}
-
-// Une ligne n'est "la mienne à éditer via +/-" que si (a) c'est bien MOI qui
-// l'ai ajoutée et (b) c'est une ligne de commande normale (`kind === 'order'`)
-// — pas un `included` (perk offert avec la place, matérialisé par le staff
-// via /api/event-orders/materialize, donc addedBy = un membre du staff,
-// jamais le client) ni un `preorder`. Sans le filtre `addedBy`, une ligne
-// ajoutée par le staff SUR le billet du client (flux normal — voir
-// addOrderItem, rank >= 1) serait aussi confondue avec "ma ligne éditable" :
-// le client taperait alors sur +/- une ligne qui ne lui appartient pas et
-// recevrait systématiquement 403 not_your_item côté serveur, sans jamais
-// pouvoir retomber sur le bouton "Ajouter".
-function findEditableLine(items: OrderItem[], menuItemName: string, currentUserId: string): OrderItem | undefined {
-  return items.find((i) => i.menuItemId === menuItemName && i.kind === 'order' && i.addedBy === currentUserId && !isLocked(i))
-}
-
-// Ligne (verrouillée) qui explique pourquoi le contrôle +/- vient de
-// disparaître pour cet article, plutôt que de laisser le client face à un
-// bouton "Ajouter" qui réapparaît silencieusement comme si rien n'avait
-// jamais été commandé.
-function findLockedOwnLine(items: OrderItem[], menuItemName: string, currentUserId: string): OrderItem | undefined {
-  return items.find((i) => i.menuItemId === menuItemName && i.kind === 'order' && i.addedBy === currentUserId && isLocked(i))
-}
-
-function lockedLineLabel(item: OrderItem): string {
-  if (item.paidAt) return 'Déjà payé — non modifiable'
-  if (item.servedAt) return 'Déjà servi — non modifiable'
-  return 'Annulé — non modifiable'
-}
-
-function groupByCategory(menu: MenuItemView[]): Array<[string, MenuItemView[]]> {
-  const map = new Map<string, MenuItemView[]>()
-  for (const item of menu) {
-    const category = item.category?.trim() || 'Autres'
-    const bucket = map.get(category)
-    if (bucket) bucket.push(item)
-    else map.set(category, [item])
-  }
-  return Array.from(map.entries())
-}
-
 let toastSeq = 0
 
 export default function CommanderClient({ eventId, ticketCode, eventName, currency, menu, initialItems, currentUserId }: CommanderClientProps) {

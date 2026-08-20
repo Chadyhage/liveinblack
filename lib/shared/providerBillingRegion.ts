@@ -10,8 +10,9 @@ import { stripDiacritics } from './diacritics'
 function normKey(value: unknown): string {
   const token = typeof value === 'object' && value !== null ? ((value as { id?: string; name?: string }).id ?? (value as { name?: string }).name ?? '') : value
   return stripDiacritics(String(token ?? ''))
-    .replace(/[\s']+/g, '-')
     .trim()
+    .replace(/[\s']+/g, '-')
+    .replace(/^-+|-+$/g, '')
     .toLowerCase()
 }
 

@@ -183,7 +183,7 @@ export default function PaymentSuccessClient({
   return (
     <main className="lb-status-page" style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <style>{`@keyframes lib-pay-spin { to { transform: rotate(360deg) } }`}</style>
-      <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 460, width: '100%', textAlign: 'center' }}>
+      <Card style={{ ...CARD, padding: '40px 32px', maxWidth: 760, width: '100%', textAlign: 'center' }}>
 
         {state === 'loading' && (
           <>

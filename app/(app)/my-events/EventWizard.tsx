@@ -9,6 +9,22 @@ import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEdito
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import { Button, Card, Input, Textarea, Select, Spinner, Modal } from '@/app/components/ui'
 import { IconClose, InputField, LockIcon, NumberInputField, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
+import {
+  buildEventPayload,
+  canProceedWizardAdvancedStep,
+  defaultPlaceRow,
+  getValidMenuItems,
+  makeLocalKey,
+  newPlaceRow,
+  snapshotEventWizardForm,
+  toDatetimeLocalValue,
+  validateWizardBasics,
+  validateWizardLocation,
+  validateWizardPlaces,
+  type ArtistRow,
+  type EventFormInput,
+  type PlaceRow,
+} from './eventWizardUtils'
 
 // Port du wizard de création/édition d'événement en 5 étapes
 // (src/pages/MesEvenementsPage.jsx, vue 'create' — lignes ~2140-3274 pour le
@@ -83,72 +99,6 @@ interface ServerEventDetail {
   postponedFrom: { date: string; time: string } | null
   locked: boolean
   totalSold: number
-}
-
-interface EventFormPlace {
-  id: string
-  type: string
-  price: number
-  total: number
-  icon?: string
-  maxPerAccount?: number
-  groupType?: 'solo' | 'group'
-  groupMin?: number
-  groupMax?: number
-  photos?: string[]
-  included?: { name: string; qty: number }[]
-}
-
-interface EventFormInput {
-  name: string
-  subtitle?: string
-  description?: string
-  category?: string
-  tags?: string[]
-  eventType?: string
-  musicStyles?: string[]
-  ambiances?: string[]
-  date: string
-  time?: string
-  endTime?: string
-  location?: string
-  city: string
-  region: string
-  imageUrl?: string | null
-  videoUrl?: string | null
-  places: EventFormPlace[]
-  playlist?: boolean
-  preorder?: boolean
-  menu?: MenuItemRow[] | null
-  artists?: { name: string; role?: string; providerId?: string | null }[]
-  dj?: string
-  performers?: string[]
-  minAge?: number
-  publishAt?: string | null
-  closingDate?: string | null
-}
-
-interface ArtistRow {
-  name: string
-  role: string
-  // Lien optionnel vers un vrai profil prestataire (#E7) — voir
-  // lib/models/Event.ts::artistSchema.providerId.
-  providerId?: string | null
-}
-
-interface PlaceRow {
-  key: string // clé React locale uniquement — jamais envoyée au serveur
-  id: string // '' pour une nouvelle place, sinon id stable serveur
-  type: string
-  price: number
-  qty: number
-  sold: number
-  maxPerAccount: number
-  groupType: 'solo' | 'group'
-  groupMin: number
-  groupMax: number
-  photos: string[]
-  included: { name: string; qty: number }[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -230,59 +180,6 @@ const S = {
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers purs
 // ─────────────────────────────────────────────────────────────────────────
-
-function makeLocalKey(): string {
-  return 'k' + Math.random().toString(36).slice(2, 9)
-}
-
-function defaultPlaceRow(): PlaceRow {
-  return {
-    key: makeLocalKey(),
-    id: '',
-    type: 'Entrée libre',
-    price: 0,
-    qty: 100,
-    sold: 0,
-    maxPerAccount: 0,
-    groupType: 'solo',
-    groupMin: 0,
-    groupMax: 0,
-    photos: [],
-    included: [],
-  }
-}
-
-function newPlaceRow(): PlaceRow {
-  return {
-    key: makeLocalKey(),
-    id: '',
-    type: '',
-    price: 0,
-    qty: 50,
-    sold: 0,
-    maxPerAccount: 0,
-    groupType: 'solo',
-    groupMin: 0,
-    groupMax: 0,
-    photos: [],
-    included: [],
-  }
-}
-
-function toDatetimeLocalValue(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function fromDatetimeLocalValue(v: string): string | null {
-  if (!v) return null
-  const d = new Date(v)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toISOString()
-}
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -485,7 +382,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   // ── Suivi des modifications non enregistrées (confirmation à la fermeture) ──
   function snapshotForm() {
-    return JSON.stringify({
+    return snapshotEventWizardForm({
       name,
       subtitle,
       description,
@@ -732,43 +629,25 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   // ── Validation par étape ──
   function validateStep0(): boolean {
-    const errs: Record<string, string> = {}
-    if (!name.trim()) errs.name = 'Le nom est obligatoire'
-    if (!dateStr) {
-      errs.date = 'La date est obligatoire'
-    } else if (!locked) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const picked = new Date(dateStr + 'T00:00:00')
-      if (picked < today) errs.date = 'La date que tu as choisie est déjà passée'
-    }
-    if (timeStart && timeEnd && timeStart === timeEnd) {
-      errs.timeEnd = "L'heure de fin doit être différente de l'heure de début"
-    }
+    const errs = validateWizardBasics({ name, dateStr, timeStart, timeEnd, locked })
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
   function validateStep1(): boolean {
-    const errs: Record<string, string> = {}
-    places.forEach((p) => {
-      if (!p.type.trim()) errs[`place_${p.key}`] = 'Donne un nom à cette place'
-      else if (p.groupType === 'group' && (Number(p.price) || 0) <= 0) errs[`place_${p.key}`] = 'Une table de groupe doit avoir un prix (supérieur à 0)'
-    })
+    const errs = validateWizardPlaces(places)
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
   function validateStep2(): boolean {
-    const errs: Record<string, string> = {}
-    if (!city.trim()) errs.city = 'La ville est obligatoire'
-    if (!region) errs.region = 'Choisis une région'
+    const errs = validateWizardLocation({ city, region })
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
-  const validMenuItemsForGate = menuItems.filter((i) => i.name.trim() && i.price > 0)
-  const canProceedStep3 = !preorder || validMenuItemsForGate.length > 0
+  const canProceedStep3 = canProceedWizardAdvancedStep(preorder, menuItems)
+  const validMenuItemsForGate = getValidMenuItems(menuItems)
 
   function goNext(current: number) {
     if (current === 0 && !validateStep0()) return
@@ -781,77 +660,33 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   // ── Construction de la charge utile & soumission ──
   function buildPayload(): EventFormInput {
-    const finalCategory = category === 'Autre' ? customGenre.trim() || 'Autre' : category
-    const tags = [partyType, ...musicStyles, ...ambiances].filter(Boolean).slice(0, 6)
-    const filteredArtists = artists.filter((a) => a.name.trim()).map((a) => ({ name: a.name.trim(), role: a.role, providerId: a.providerId || null }))
-    const dj = filteredArtists.length > 0 ? filteredArtists.map((a) => a.name).join(', ') : ''
-    const validMenuItems = menuItems
-      .filter((i) => i.name.trim() && i.price > 0)
-      .map((item) => ({
-        ...item,
-        name: item.name.trim(),
-        showOptions: item.hasShow
-          ? item.showOptions
-              .filter((option) => option.label.trim())
-              .map((option) => ({ ...option, label: option.label.trim(), infoPrompt: option.infoPrompt.trim() }))
-          : [],
-      }))
-    const menuNameSet = new Set(validMenuItems.map((i) => i.name.trim()))
-    const anyIncluded = places.some((p) => p.included.length > 0)
-
-    // Un "avantage inclus" n'est plus obligatoirement un article réel du
-    // menu (#E6, confirmé en réunion live le 11/08/2026 — "Vestiaire offert"
-    // n'a jamais de raison d'être un item de précommande facturable) : seul
-    // un nom non vide est requis désormais. `menuNameSet` ne sert plus qu'à
-    // l'affichage (badge "correspond à un article de précommande" côté UI),
-    // jamais à filtrer/perdre silencieusement une saisie organisateur.
-    function sanitizeIncluded(list: { name: string; qty: number }[]) {
-      void menuNameSet
-      return list.map((inc) => ({ name: inc.name.trim(), qty: Math.max(1, Number(inc.qty) || 1) })).filter((inc) => inc.name)
-    }
-
-    const locationValue = [venueName.trim(), address.trim()].filter(Boolean).join(', ')
-
-    return {
-      name: name.trim(),
-      subtitle: subtitle.trim() || description.trim().slice(0, 60),
-      description: description.trim(),
-      category: finalCategory,
-      tags,
-      eventType: partyType,
+    return buildEventPayload({
+      name,
+      subtitle,
+      description,
+      category,
+      customGenre,
+      partyType,
       musicStyles,
       ambiances,
-      date: dateStr,
-      time: timeStart || '22:00',
-      endTime: timeEnd || '05:00',
-      location: locationValue,
-      city: city.trim(),
-      region,
+      artists,
+      minAge,
       imageUrl,
       videoUrl,
-      places: places.map((p) => ({
-        id: p.id,
-        type: p.type.trim() || 'Entrée',
-        price: Number(p.price) || 0,
-        total: Number(p.qty) || 0,
-        icon: '',
-        maxPerAccount: p.groupType === 'group' ? 1 : Number(p.maxPerAccount) || 0,
-        groupType: p.groupType,
-        groupMin: Number(p.groupMin) || 0,
-        groupMax: Number(p.groupMax) || 0,
-        photos: p.photos,
-        included: sanitizeIncluded(p.included),
-      })),
+      places,
+      venueName,
+      address,
+      city,
+      region,
       playlist,
       preorder,
-      menu: preorder || anyIncluded ? validMenuItems : null,
-      artists: filteredArtists,
-      dj,
-      performers: [],
-      minAge,
-      publishAt: fromDatetimeLocalValue(publishAt),
-      closingDate: fromDatetimeLocalValue(closingDate),
-    }
+      menuItems,
+      publishAt,
+      closingDate,
+      dateStr,
+      timeStart,
+      timeEnd,
+    })
   }
 
   async function handleSubmit() {
@@ -896,7 +731,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 1320, margin: '0 auto', padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ width: '100%', padding: '48px clamp(14px, 2vw, 28px) 72px', display: 'flex', justifyContent: 'center' }}>
         <Spinner size={22} />
       </main>
     )
@@ -904,7 +739,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   if (loadError) {
     return (
-      <main style={{ maxWidth: 720, margin: '80px auto', padding: '0 20px', textAlign: 'center' }}>
+      <main style={{ width: '100%', padding: '80px clamp(14px, 2vw, 28px) 56px', textAlign: 'center' }}>
         <p style={{ color: 'var(--pink)', fontSize: 14, marginBottom: 18 }}>{loadError}</p>
         <Button
           variant="secondary"
@@ -919,7 +754,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   if (cancelled) {
     return (
-      <main style={{ maxWidth: 860, margin: '0 auto', padding: '30px 20px 100px' }}>
+      <main style={{ width: '100%', padding: '30px clamp(14px, 2vw, 28px) 100px' }}>
         <div
           style={{
             background: 'var(--surface-2)',
@@ -957,7 +792,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
   const currency = regionToCurrency(region)
 
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '20px 16px 100px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main style={{ width: '100%', padding: '20px clamp(14px, 2vw, 28px) 100px', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Button

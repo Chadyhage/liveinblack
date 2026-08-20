@@ -3,9 +3,14 @@ import {
   canBook,
   canCreateEvent,
   canProposeServices,
+  canOrderServices,
   canAdminister,
+  canViewMessaging,
+  canViewWallet,
+  canScanTickets,
   getBookingBlockedReason,
   getCreateEventBlockedReason,
+  getRoleLabel,
 } from '../permissions'
 
 describe('canBook', () => {
@@ -73,6 +78,43 @@ describe('canAdminister', () => {
   it('seul le rôle actif agent administre', () => {
     expect(canAdminister({ activeRole: 'agent', status: 'active' })).toBe(true)
     expect(canAdminister({ activeRole: 'client', status: 'active' })).toBe(false)
+  })
+})
+
+describe('autres permissions transverses', () => {
+  it('canOrderServices autorise client, organisateur et agent, refuse prestataire et invité', () => {
+    expect(canOrderServices({ activeRole: 'client', status: 'active' })).toBe(true)
+    expect(canOrderServices({ activeRole: 'organisateur', status: 'active' })).toBe(true)
+    expect(canOrderServices({ activeRole: 'agent', status: 'active' })).toBe(true)
+    expect(canOrderServices({ activeRole: 'prestataire', status: 'active' })).toBe(false)
+    expect(canOrderServices(null)).toBe(false)
+  })
+
+  it('canViewMessaging exige simplement une session', () => {
+    expect(canViewMessaging({ activeRole: 'client', status: 'pending' })).toBe(true)
+    expect(canViewMessaging(null)).toBe(false)
+  })
+
+  it('canViewWallet refuse uniquement les agents', () => {
+    expect(canViewWallet({ activeRole: 'client', status: 'active' })).toBe(true)
+    expect(canViewWallet({ activeRole: 'organisateur', status: 'active' })).toBe(true)
+    expect(canViewWallet({ activeRole: 'prestataire', status: 'active' })).toBe(true)
+    expect(canViewWallet({ activeRole: 'agent', status: 'active' })).toBe(false)
+    expect(canViewWallet(null)).toBe(false)
+  })
+
+  it('canScanTickets autorise organisateur et agent uniquement', () => {
+    expect(canScanTickets({ activeRole: 'organisateur', status: 'active' })).toBe(true)
+    expect(canScanTickets({ activeRole: 'agent', status: 'active' })).toBe(true)
+    expect(canScanTickets({ activeRole: 'client', status: 'active' })).toBe(false)
+    expect(canScanTickets({ activeRole: 'prestataire', status: 'active' })).toBe(false)
+    expect(canScanTickets(null)).toBe(false)
+  })
+
+  it('getRoleLabel expose un libellé humain connu et retombe sur la valeur brute sinon', () => {
+    expect(getRoleLabel('client')).toBe('Client')
+    expect(getRoleLabel('organisateur')).toBe('Organisateur')
+    expect(getRoleLabel('unknown-role')).toBe('unknown-role')
   })
 })
 

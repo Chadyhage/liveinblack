@@ -1,5 +1,5 @@
 .root { width:100%; --settings-accent:#70b7ff; --settings-surface:rgba(24,25,29,.9); }
-.root :global(.profile-settings) { width:100%; max-width:1440px; margin-inline:auto; padding-bottom:90px; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif; }
+.root :global(.profile-settings) { width:100%; max-width:1560px; margin-inline:auto; padding-bottom:90px; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif; }
 .root :global(.settings-page-stack) { display:flex; flex-direction:column; gap:20px; }
 
 .root :global(.settings-hero) { min-height:238px; position:relative; display:flex; align-items:flex-end; justify-content:space-between; gap:36px; overflow:hidden; padding:32px; border:1px solid rgba(255,255,255,.11); border-radius:30px; background:linear-gradient(120deg,rgba(112,183,255,.14),rgba(255,255,255,.035) 55%,rgba(196,167,255,.075)); box-shadow:0 30px 85px rgba(0,0,0,.2); }

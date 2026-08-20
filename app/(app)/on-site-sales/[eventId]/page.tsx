@@ -27,8 +27,9 @@ export async function generateMetadata({ params }: { params: Promise<{ eventId: 
 // avec l'icône ronde rose, l'autre non.
 function GateScreen({ title, message }: { title: string; message: string }) {
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
-      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+    <main style={{ minHeight: '100vh', width: '100%', padding: '32px clamp(18px, 3vw, 48px) 56px' }}>
+      <div style={{ width: '100%', maxWidth: 'none', minHeight: 'calc(100vh - 88px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', maxWidth: 420 }}>
         <div
           style={{
             width: 72,
@@ -49,6 +50,7 @@ function GateScreen({ title, message }: { title: string; message: string }) {
         <Link href="/home" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Accueil
         </Link>
+      </div>
       </div>
     </main>
   )

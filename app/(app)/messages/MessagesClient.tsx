@@ -1,170 +1,83 @@
 'use client'
 
-import NextImage from 'next/image'
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Camera,
-  Plus,
   MessageCircle,
   Search,
   Pin,
-  BellOff,
   X,
   ArrowDown,
-  Trash2,
-  Check,
-  CheckCheck,
-  Mic,
-  ArrowLeft,
-  BarChart2,
-  CornerUpRight,
-  Star,
-  Hourglass,
-  Play,
-  Pause,
-  Handshake,
-  Send,
 } from 'lucide-react'
-import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
+import { Button, Input, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
-import { ModalShell, ModalActions, ConfirmModal, ReportModal, ForwardModal, PollDraftModal, BlockedReportedModal } from '@/app/components/features/messaging'
+import { ConfirmModal, ReportModal, ForwardModal, PollDraftModal, BlockedReportedModal, StarredModal, EventPickerModal, ConversationListPane, MessageContextMenu, FullReactionPicker, DropdownMenu, PhotoPreviewModal, CameraCaptureModal, MessagingComposer, inputStyle, NewDirectModal, NewGroupModal, FriendsPanel, GroupSettingsModal, MuteMemberModal, ContactPanelModal } from '@/app/components/features/messaging'
+import {
+  addConversationMember,
+  clearConversationHistory,
+  clearConversationMemberMute,
+  createDirectConversation,
+  createGroupConversation,
+  deleteConversation,
+  hideConversation,
+  leaveConversation,
+  muteConversationMember,
+  removeConversationMember,
+  renameConversation,
+  setConversationMemberRole,
+  toggleConversationMute,
+  toggleConversationPin,
+  uploadConversationAvatar,
+} from '@/app/components/features/messaging/messagingActions'
+import {
+  actOnFriendRequest,
+  blockUser,
+  listBlockedUsers,
+  listMyReports,
+  lookupUserByEmail,
+  removeFriend,
+  sendFriendRequest,
+  submitUserReport,
+  unblockUser,
+} from '@/app/components/features/messaging/messagingSocialActions'
+import {
+  compressImage,
+  fileToDataUrl,
+} from '@/app/components/features/messaging/messagingComposerActions'
+import { useMessagingDirectoryPolling } from '@/app/components/features/messaging/messagingData'
+import { useActiveThread } from '@/app/components/features/messaging/useActiveThread'
+import { useMessagingPresence } from '@/app/components/features/messaging/useMessagingPresence'
+import { useDesktopThreadView } from '@/app/components/features/messaging/useDesktopThreadView'
+import { useMessagingMedia } from '@/app/components/features/messaging/useMessagingMedia'
+import { Avatar, GroupAvatar, MessageRow, ThreadHeaderSection, TypingDots, messageTypeLabel } from '@/app/components/features/messaging/MessageThreadParts'
+import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
+import {
+  applyMentionSelection,
+  buildReplyPreview,
+  conversationLabel,
+  errorMessageFor,
+  findMentionMatches,
+  formatDateSeparator,
+  isSameDay,
+  formatMuteUntil,
+  formatTime,
+  mergeMessagesById,
+  NEW_FRIEND_IDS_STORAGE_KEY,
+  persistNewFriendIds,
+} from '@/app/components/features/messaging/messagingUtils'
+import type {
+  ConversationListResponse,
+  ConversationMember,
+  ConversationView,
+  EventSearchResult,
+  MessageView,
+  MessagesClientProps,
+  PollOption,
+} from '@/app/components/features/messaging/types'
 
 const CONV_PAGE_SIZE = 20
-import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
 import styles from './MessagesClient.module.css'
 
-// ─────────────────────────── types (miroir des DTO JSON) ────────────────────
-// Copies volontaires des formes renvoyées par les routes HTTP (pas des
-// imports directs de lib/server/*, qui restent un détail serveur) — même
-// convention que CommanderClient.tsx / ScannerClient.tsx (phase 4).
-
-interface ConversationMember {
-  userId: string
-  name: string
-  role: 'admin' | 'member'
-  muteUntilAt?: string | null
-}
-
-interface ConversationView {
-  id: string
-  type: 'direct' | 'group'
-  participantIds: string[]
-  members: ConversationMember[]
-  name: string | null
-  avatar: string | null
-  mutedUserIds: string[]
-  lastMessage: string
-  lastMessageAt: string | null
-  lastSenderId: string | null
-  pinnedMessageId: string | null
-  createdAt: string
-  unreadCount: number
-  pinned: boolean
-  mutedForMe: boolean
-  myGroupMute: { untilAt: string | null } | null
-}
-
-interface ConversationListResponse {
-  conversations: ConversationView[]
-  total?: number
-  page?: number
-  pageSize?: number
-  hasMore?: boolean
-}
-
-interface PollOption {
-  id: string
-  text: string
-  voterIds: string[]
-}
-
-interface MessagePoll {
-  pollType: 'poll' | 'event_poll'
-  question: string
-  options: PollOption[]
-  event: { id: string; name: string; date: string; price: number; currency: string; image: string | null } | null
-}
-
-type MessageType = 'text' | 'image' | 'voice' | 'poll' | 'event_poll' | 'story' | 'event' | 'catalog_item' | 'system'
-
-interface MessageView {
-  id: string
-  conversationId: string
-  senderId: string
-  senderName: string
-  type: MessageType
-  content: string | null
-  poll: MessagePoll | null
-  reactions: Record<string, string[]>
-  readBy: Record<string, string>
-  deletedForAll: boolean
-  pinned: boolean
-  replyToMessageId: string | null
-  createdAt: string
-  editedAt: string | null
-  starredByMe: boolean
-  forwardedFrom: { senderName: string; convName: string } | null
-  readStatus: 'sent' | 'read' | null
-}
-
-interface FriendRequestView {
-  id: string
-  fromId: string
-  fromName: string
-  toId: string
-  status: string
-  createdAt: string
-  respondedAt: string | null
-}
-
-interface SentFriendRequestView extends FriendRequestView {
-  toName: string
-}
-
-interface FriendView {
-  userId: string
-  name: string
-  email: string
-}
-
-interface BlockedUserView {
-  userId: string
-  name: string
-  email: string
-}
-
-interface MyReportView {
-  id: string
-  targetId: string
-  targetName: string
-  reason: string
-  createdAt: string
-}
-
-interface TypingUserView {
-  userId: string
-  name: string
-}
-
-type PresenceMap = Record<string, { online: boolean; lastSeenAt: string | null }>
-
-export interface MessagesClientProps {
-  currentUserId: string
-  initialConversations: ConversationView[]
-  initialConversationTotal: number
-  initialReceived: FriendRequestView[]
-  initialSent: SentFriendRequestView[]
-  initialFriends: FriendView[]
-  initialBlocked: BlockedUserView[]
-  initialReports: MyReportView[]
-  initialStarred: MessageView[]
-}
-
 // ─────────────────────────────────── constantes ──────────────────────────────
-
-const EMOJIS = ['❤️', '😂', '😮', '😢', '😡', '👍', '👎', '🔥', '🎉', '💀', '🤣', '😍', '😭', '🙏', '💯', '✅']
-const QUICK_REACT = EMOJIS.slice(0, 8)
 
 const GROUP_MUTE_DURATIONS: { id: string; label: string; ms: number | null }[] = [
   { id: '15m', label: '15 min', ms: 15 * 60 * 1000 },
@@ -175,51 +88,6 @@ const GROUP_MUTE_DURATIONS: { id: string; label: string; ms: number | null }[] =
   { id: 'forever', label: "Jusqu'à réactivation", ms: null },
 ]
 
-const AVATAR_COLORS = ['var(--primary)', '#8b5cf6', '#e05aaa', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
-
-const ERROR_MESSAGES: Record<string, string> = {
-  auth_required: 'Ta session a expiré — reconnecte-toi.',
-  user_not_found: 'Aucun compte trouvé avec cet email.',
-  cannot_message_self: 'Tu ne peux pas te contacter toi-même.',
-  cannot_block_self: 'Tu ne peux pas te bloquer toi-même.',
-  cannot_report_self: 'Tu ne peux pas te signaler toi-même.',
-  cannot_friend_self: 'Tu ne peux pas être ton propre ami.',
-  blocked: 'Impossible — un blocage existe entre vos deux comptes.',
-  empty_message: 'Le message est vide.',
-  message_too_long: 'Message trop long.',
-  muted: 'Tu es en sourdine dans ce groupe.',
-  conversation_not_found: 'Conversation introuvable.',
-  message_not_found: 'Message introuvable.',
-  group_name_required: 'Le nom du groupe est requis.',
-  not_enough_members: 'Ajoute au moins un autre membre.',
-  admin_only: "Réservé à l'administrateur du groupe.",
-  not_a_member: "Cette personne n'est pas membre du groupe.",
-  already_a_member: 'Cette personne est déjà membre du groupe.',
-  too_many_members: 'Le groupe a atteint sa taille maximale.',
-  cannot_remove_self: 'Utilise "Quitter le groupe" pour te retirer toi-même.',
-  only_admin: "Nomme un autre administrateur avant de te retirer ce rôle.",
-  target_is_admin: 'Impossible de mettre en sourdine un autre administrateur.',
-  not_message_owner: "Tu ne peux modifier ou supprimer que tes propres messages.",
-  invalid_type: 'Action impossible sur ce type de message.',
-  message_deleted: 'Ce message a été supprimé.',
-  forward_failed: "Le transfert n'a abouti dans aucune conversation.",
-  already_friends: 'Vous êtes déjà amis.',
-  request_already_pending: 'Une demande est déjà en attente.',
-  request_not_pending: 'Cette demande a déjà été traitée.',
-  request_not_found: 'Demande introuvable.',
-  not_friends: "Vous n'êtes pas amis.",
-  invalid_options: 'Options de sondage invalides (2 à 6, non vides, sans doublon).',
-  question_required: 'La question du sondage est requise.',
-  reason_required: 'Un motif est requis.',
-  file_too_large: 'Fichier trop volumineux.',
-  upload_failed: "L'envoi du fichier a échoué.",
-}
-
-function errorMessageFor(code: string | undefined): string {
-  if (!code) return 'Une erreur est survenue.'
-  return ERROR_MESSAGES[code] ?? 'Une erreur est survenue.'
-}
-
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   try {
     const res = await fetch(url, init)
@@ -229,117 +97,6 @@ async function apiFetch<T>(url: string, init?: RequestInit): Promise<{ ok: true;
   } catch {
     return { ok: false, error: 'network_error' }
   }
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
-
-const NEW_FRIEND_IDS_STORAGE_KEY = 'liveinblack:newFriendIds'
-
-function persistNewFriendIds(ids: Set<string>): void {
-  try {
-    window.localStorage.setItem(NEW_FRIEND_IDS_STORAGE_KEY, JSON.stringify([...ids]))
-  } catch {
-    // localStorage indisponible — le badge "Nouveau" ne survivra pas à un
-    // rechargement dans ce cas, dégradation silencieuse acceptable.
-  }
-}
-
-function isSameDay(a: string, b: string): boolean {
-  const da = new Date(a)
-  const db = new Date(b)
-  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate()
-}
-
-function formatDateSeparator(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
-  if (isSameDay(iso, now.toISOString())) return "Aujourd'hui"
-  if (isSameDay(iso, yesterday.toISOString())) return 'Hier'
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
-
-function avatarColorFor(userId: string): string {
-  if (!userId) return AVATAR_COLORS[0]
-  const code = userId.charCodeAt(userId.length - 1) || 0
-  return AVATAR_COLORS[code % AVATAR_COLORS.length]
-}
-
-// Union par id, triée par id croissant (= ordre chronologique, voir
-// GetMessagesInput dans lib/server/messaging.ts) — `older` peut contenir des
-// messages déjà présents dans `existing` en cas de chevauchement de fenêtre,
-// jamais l'inverse ne doit produire de doublon visible dans le fil.
-function mergeMessagesById(older: MessageView[], existing: MessageView[]): MessageView[] {
-  const byId = new Map<string, MessageView>()
-  for (const m of older) byId.set(m.id, m)
-  for (const m of existing) byId.set(m.id, m)
-  return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-}
-
-function conversationLabel(conv: ConversationView, currentUserId: string): string {
-  if (conv.type === 'group') return conv.name || 'Groupe'
-  const other = conv.members.find((m) => m.userId !== currentUserId)
-  return other?.name || 'Conversation'
-}
-
-function formatMuteUntil(untilAt: string | null): string {
-  if (!untilAt) return "jusqu'à réactivation"
-  return `jusqu'au ${new Date(untilAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
-}
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
-}
-
-function compressImage(dataUrl: string, maxSize = 1000, quality = 0.8): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      let { width, height } = img
-      if (width > maxSize || height > maxSize) {
-        const r = Math.min(maxSize / width, maxSize / height)
-        width = Math.round(width * r)
-        height = Math.round(height * r)
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return resolve(dataUrl)
-      ctx.drawImage(img, 0, 0, width, height)
-      resolve(canvas.toDataURL('image/jpeg', quality))
-    }
-    img.onerror = () => resolve(dataUrl)
-    img.src = dataUrl
-  })
-}
-
-const DESKTOP_QUERY = '(min-width: 768px)'
-function subscribeToDesktopQuery(callback: () => void): () => void {
-  const mq = window.matchMedia(DESKTOP_QUERY)
-  mq.addEventListener('change', callback)
-  return () => mq.removeEventListener('change', callback)
-}
-function getDesktopSnapshot(): boolean {
-  return window.matchMedia(DESKTOP_QUERY).matches
-}
-function getDesktopServerSnapshot(): boolean {
-  return false
 }
 
 let toastSeq = 0
@@ -369,9 +126,6 @@ export default function MessagesClient({
   // /messages entièrement. Fermer (id=null) reste en replace : "retour"
   // après avoir fermé ne doit pas rouvrir ce qu'on vient de fermer.
   const setActiveId = (id: string | null) => setActiveIdParam(id ?? '', { push: id != null })
-  const [messages, setMessages] = useState<MessageView[]>([])
-  const [hasMoreOlder, setHasMoreOlder] = useState(false)
-  const [loadingOlder, setLoadingOlder] = useState(false)
   const [composerText, setComposerText] = useState('')
   const [busy, setBusy] = useState(false)
   const [toasts, setToasts] = useState<{ id: number; message: string }[]>([])
@@ -410,16 +164,11 @@ export default function MessagesClient({
   // conversationId: null quand la photo vient du bouton caméra de l'EN-TÊTE
   // DE LISTE (aucune conversation ouverte) — il faut alors choisir le
   // destinataire dans l'aperçu avant de pouvoir envoyer.
-  const [photoPreview, setPhotoPreview] = useState<{ dataUrl: string; conversationId: string | null } | null>(null)
-  const [photoPreviewPickedConv, setPhotoPreviewPickedConv] = useState<string | null>(null)
-  const [showCamera, setShowCamera] = useState(false)
-  const [showAttachMenu, setShowAttachMenu] = useState(false)
   const [muteMemberDialog, setMuteMemberDialog] = useState<{ userId: string; name: string } | null>(null)
   const [convContextMenu, setConvContextMenu] = useState<{ conversationId: string; x: number; y: number } | null>(null)
   const [convSearch, setConvSearch] = useState('')
   const [convPage, setConvPage] = useState(1)
   const [conversationTotal, setConversationTotal] = useState(initialConversationTotal)
-  const [showListMenu, setShowListMenu] = useState(false)
   const [forwardTargetPick, setForwardTargetPick] = useState<Set<string>>(new Set())
 
   const [replyTo, setReplyTo] = useState<{ id: string; senderName: string; preview: string } | null>(null)
@@ -427,36 +176,12 @@ export default function MessagesClient({
   const [inThreadSearchOpen, setInThreadSearchOpen] = useState(false)
   const [inThreadSearchQuery, setInThreadSearchQuery] = useState('')
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
-  const [showScrollButton, setShowScrollButton] = useState(false)
-  const [typingUsers, setTypingUsers] = useState<TypingUserView[]>([])
-  const [presence, setPresence] = useState<PresenceMap>({})
   const [addMemberSearch, setAddMemberSearch] = useState('')
 
   const [mobileView, setMobileView] = useState<'list' | 'thread'>('list')
 
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordDuration, setRecordDuration] = useState(0)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
-  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pressStartRef = useRef(0)
-  const wasHoldingRef = useRef(false)
-  const shouldSendRef = useRef(true)
-
-  const activeIdRef = useRef(activeId)
-  useEffect(() => {
-    activeIdRef.current = activeId
-  }, [activeId])
-
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const cameraFileInputRef = useRef<HTMLInputElement | null>(null)
   const groupAvatarInputRef = useRef<HTMLInputElement | null>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const cameraStreamRef = useRef<MediaStream | null>(null)
-  const chatScrollRef = useRef<HTMLDivElement | null>(null)
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const pushToast = useCallback((message: string) => {
     const id = ++toastSeq
     setToasts((prev) => [...prev, { id, message }])
@@ -464,11 +189,12 @@ export default function MessagesClient({
   }, [])
 
   // ─── Responsive : split-view desktop (>=768px) vs plein écran mobile ───
-  // useSyncExternalStore (pas useState+useEffect) : c'est l'API React dédiée
-  // à la lecture d'un store externe (ici matchMedia) sans jamais déclencher
-  // de setState synchrone dans un effet — le rendu serveur utilise le
-  // troisième argument (snapshot serveur), jamais `window`.
-  const isDesktop = useSyncExternalStore(subscribeToDesktopQuery, getDesktopSnapshot, getDesktopServerSnapshot)
+  const isDesktop = useDesktopThreadView()
+
+  const activeIdRef = useRef(activeId)
+  useEffect(() => {
+    activeIdRef.current = activeId
+  }, [activeId])
 
   // ─── Deep-link : /messages?conversationId=… ouvre directement le fil
   // correspondant — `activeId` vient déjà de l'URL (voir useQueryParamState
@@ -503,180 +229,92 @@ export default function MessagesClient({
   }, [])
 
   // ─── Polling : conversations, amis, messages, frappe, présence ───
-  const refreshConversations = useCallback(async () => {
-    const res = await apiFetch<ConversationListResponse>(`/api/conversations?page=${convPage}&pageSize=${CONV_PAGE_SIZE}`)
-    if (res.ok) {
-      setConversations(res.data.conversations)
-      setConversationTotal(res.data.total ?? res.data.conversations.length)
-    }
-  }, [convPage])
+  const { refreshConversations, refreshFriendData } = useMessagingDirectoryPolling({
+    apiFetch,
+    conversationPage: convPage,
+    conversationPageSize: CONV_PAGE_SIZE,
+    onConversationsLoaded: ({ conversations: nextConversations, total }) => {
+      setConversations(nextConversations)
+      setConversationTotal(total)
+    },
+    onFriendsLoaded: ({ received: nextReceived, sent: nextSent, friends: nextFriends }) => {
+      setReceived(nextReceived)
+      setSent(nextSent)
+      setFriends(nextFriends)
+    },
+  })
+  const {
+    messages,
+    setMessages,
+    loadingOlder,
+    showScrollButton,
+    chatScrollRef,
+    fetchMessages,
+    handleChatScroll,
+    scrollToBottom,
+  } = useActiveThread({
+    activeId,
+    apiFetch,
+    onRead: refreshConversations,
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    async function run() {
-      const res = await apiFetch<ConversationListResponse>(`/api/conversations?page=${convPage}&pageSize=${CONV_PAGE_SIZE}`)
-      if (!cancelled && res.ok) {
-        setConversations(res.data.conversations)
-        setConversationTotal(res.data.total ?? res.data.conversations.length)
-      }
-    }
-    run()
-    return () => {
-      cancelled = true
-    }
-  }, [convPage])
-
-  const refreshFriendData = useCallback(async () => {
-    const [reqRes, friendsRes] = await Promise.all([
-      apiFetch<{ received: FriendRequestView[]; sent: SentFriendRequestView[] }>('/api/friends/requests'),
-      apiFetch<{ friends: FriendView[] }>('/api/friends'),
-    ])
-    if (reqRes.ok) {
-      setReceived(reqRes.data.received)
-      setSent(reqRes.data.sent)
-    }
-    if (friendsRes.ok) setFriends(friendsRes.data.friends)
-  }, [])
-
-  // Fenêtre "les 50 derniers messages" — utilisée à la fois pour le chargement
-  // initial d'une conversation et pour le polling live (toutes les 3s).
-  // MERGE par id plutôt que remplacement complet : si l'utilisateur a scrollé
-  // vers le haut et chargé de l'historique plus ancien (loadOlderMessages
-  // ci-dessous), un poll qui remplacerait `messages` effacerait cet
-  // historique à chaque tick. `hasMore` de cette fenêtre indique juste "il
-  // existe plus de 50 messages au total" — approximatif une fois de
-  // l'historique déjà chargé plus loin, mais sans risque (loadOlderMessages
-  // corrige avec son propre curseur `before` à l'appel suivant).
-  const fetchMessages = useCallback(async (conversationId: string) => {
-    const res = await apiFetch<{ messages: MessageView[]; hasMore: boolean }>(`/api/conversations/${conversationId}/messages?limit=50`)
-    if (!res.ok || activeIdRef.current !== conversationId) return
-    setMessages((prev) => mergeMessagesById(prev, res.data.messages))
-    setHasMoreOlder(res.data.hasMore)
-  }, [])
-
-  const loadOlderMessages = useCallback(async () => {
-    const conversationId = activeIdRef.current
-    if (!conversationId || loadingOlder || !hasMoreOlder || messages.length === 0) return
-    const oldest = messages[0].id
-    setLoadingOlder(true)
-    const el = chatScrollRef.current
-    const prevScrollHeight = el?.scrollHeight ?? 0
-    try {
-      const res = await apiFetch<{ messages: MessageView[]; hasMore: boolean }>(
-        `/api/conversations/${conversationId}/messages?before=${oldest}&limit=50`
-      )
-      if (res.ok && activeIdRef.current === conversationId) {
-        setMessages((prev) => mergeMessagesById(res.data.messages, prev))
-        setHasMoreOlder(res.data.hasMore)
-        // Restaure la position de lecture : sans ça, préfixer des messages plus
-        // anciens en haut du fil ferait "sauter" visuellement le contenu que
-        // l'utilisateur était en train de lire.
-        requestAnimationFrame(() => {
-          if (el) el.scrollTop = el.scrollHeight - prevScrollHeight
-        })
-      }
-    } finally {
-      setLoadingOlder(false)
-    }
-  }, [loadingOlder, hasMoreOlder, messages])
-
-  useEffect(() => {
-    if (!activeId) return
-    fetchMessages(activeId)
-    apiFetch(`/api/conversations/${activeId}/read`, { method: 'POST' }).then(() => refreshConversations())
-    const interval = setInterval(() => fetchMessages(activeId), 3000)
-    return () => clearInterval(interval)
-  }, [activeId, fetchMessages, refreshConversations])
-
-  useEffect(() => {
-    const interval = setInterval(refreshConversations, 4000)
-    return () => clearInterval(interval)
-  }, [refreshConversations])
-
-  useEffect(() => {
-    const interval = setInterval(refreshFriendData, 8000)
-    return () => clearInterval(interval)
-  }, [refreshFriendData])
+  const {
+    typingUsers,
+    presence,
+    notifyTyping,
+  } = useMessagingPresence({
+    apiFetch,
+    activeId,
+    conversations,
+    currentUserId,
+  })
 
   // Réinitialise l'état propre au FIL à chaque changement de conversation —
-  // ajustement PENDANT LE RENDU (pattern documenté React "Adjusting some
-  // state when a prop changes"), jamais un effet : évite un rendu-fantôme
-  // supplémentaire et le setState synchrone dans un effet.
+  // tout ce qui ne relève pas du chargement/polling du fil lui-même.
   const [prevActiveId, setPrevActiveId] = useState(activeId)
   if (activeId !== prevActiveId) {
     setPrevActiveId(activeId)
-    setMessages([])
-    setHasMoreOlder(false)
     setReplyTo(null)
     setEditingMessageId(null)
     setComposerText('')
     setInThreadSearchOpen(false)
     setInThreadSearchQuery('')
     setContextMenu(null)
-    setTypingUsers([])
   }
 
   const activeConversation = conversations.find((c) => c.id === activeId) ?? null
 
-  // ─── Indicateur de frappe (polling, jamais de websocket) ───
-  useEffect(() => {
-    if (!activeId) return
-    const interval = setInterval(async () => {
-      const res = await apiFetch<{ users: TypingUserView[] }>(`/api/conversations/${activeId}/typing`)
-      if (res.ok && activeIdRef.current === activeId) setTypingUsers(res.data.users)
-    }, 2500)
-    return () => clearInterval(interval)
-  }, [activeId])
-
-  // ─── Présence (heartbeat + lecture des interlocuteurs pertinents) ───
-  useEffect(() => {
-    apiFetch('/api/users/presence', { method: 'POST' })
-    const interval = setInterval(() => apiFetch('/api/users/presence', { method: 'POST' }), 20000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const relevantPresenceIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const conv of conversations) for (const m of conv.members) if (m.userId !== currentUserId) ids.add(m.userId)
-    return [...ids]
-  }, [conversations, currentUserId])
-
-  useEffect(() => {
-    if (relevantPresenceIds.length === 0) return
-    let cancelled = false
-    async function poll() {
-      const res = await apiFetch<{ presence: PresenceMap }>(`/api/users/presence?ids=${relevantPresenceIds.join(',')}`)
-      if (res.ok && !cancelled) setPresence(res.data.presence)
-    }
-    poll()
-    const interval = setInterval(poll, 15000)
-    return () => {
-      cancelled = true
-      clearInterval(interval)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [relevantPresenceIds.join(',')])
-
-  // ─── Auto-scroll (seulement si déjà en bas) + bouton scroll-to-bottom ───
-  useEffect(() => {
-    if (!showScrollButton) {
-      const el = chatScrollRef.current
-      if (el) el.scrollTop = el.scrollHeight
-    }
-  }, [messages, showScrollButton])
-
-  function handleChatScroll() {
-    const el = chatScrollRef.current
-    if (!el) return
-    setShowScrollButton(el.scrollHeight - el.scrollTop - el.clientHeight > 120)
-    if (el.scrollTop < 80) loadOlderMessages()
-  }
-
-  function scrollToBottom() {
-    const el = chatScrollRef.current
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-    setShowScrollButton(false)
-  }
+  const {
+    photoPreview,
+    setPhotoPreview,
+    photoPreviewPickedConv,
+    setPhotoPreviewPickedConv,
+    showCamera,
+    showAttachMenu,
+    isRecording,
+    recordDuration,
+    videoRef,
+    openAttachMenu,
+    closeAttachMenu,
+    handlePhotoFileChange,
+    openCamera,
+    closeCamera,
+    capturePhoto,
+    handleSendPhoto,
+    handleMicPointerDown,
+    handleMicPointerUp,
+    stopRecording,
+  } = useMessagingMedia({
+    apiFetch,
+    activeId,
+    replyTo,
+    setReplyTo,
+    setMessages,
+    refreshConversations,
+    openConversation,
+    pushToast,
+    setBusy,
+  })
 
   function openConversation(id: string) {
     setActiveId(id)
@@ -687,19 +325,7 @@ export default function MessagesClient({
   function handleInputChange(value: string) {
     setComposerText(value)
     if (!activeId || editingMessageId) return
-    apiFetch(`/api/conversations/${activeId}/typing`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ typing: true }),
-    })
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-    typingTimeoutRef.current = setTimeout(() => {
-      apiFetch(`/api/conversations/${activeId}/typing`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ typing: false }),
-      })
-    }, 2500)
+    notifyTyping(activeId)
   }
 
   async function handleSend() {
@@ -751,17 +377,7 @@ export default function MessagesClient({
   }
 
   function handleReply(msg: MessageView) {
-    const preview =
-      msg.type === 'text'
-        ? (msg.content || '').slice(0, 60)
-        : msg.type === 'image'
-          ? 'Photo'
-          : msg.type === 'voice'
-            ? 'Message vocal'
-            : msg.type === 'poll' || msg.type === 'event_poll'
-              ? 'Sondage'
-              : 'Pièce jointe'
-    setReplyTo({ id: msg.id, senderName: msg.senderName, preview })
+    setReplyTo({ id: msg.id, senderName: msg.senderName, preview: buildReplyPreview(msg) })
     setEditingMessageId(null)
     setContextMenu(null)
   }
@@ -775,13 +391,15 @@ export default function MessagesClient({
   }
 
   // ─── @mentions (groupes) ───
-  const mentionMatch = activeConversation?.type === 'group' && !editingMessageId ? composerText.match(/(?:^|\s)@([^\s@]*)$/) : null
-  const mentionMatches =
-    mentionMatch && activeConversation
-      ? activeConversation.members.filter((m) => m.userId !== currentUserId && m.name.toLowerCase().includes(mentionMatch[1].toLowerCase())).slice(0, 5)
-      : []
+  const mentionMatches = findMentionMatches({
+    conversationType: activeConversation?.type ?? null,
+    editingMessageId,
+    composerText,
+    members: activeConversation?.members ?? [],
+    currentUserId,
+  })
   function applyMention(member: ConversationMember) {
-    setComposerText((prev) => prev.replace(/((?:^|\s)@)[^\s@]*$/, `$1${member.name} `))
+    setComposerText((prev) => applyMentionSelection(prev, member.name))
   }
 
   // ─── Réactions ───
@@ -951,182 +569,9 @@ export default function MessagesClient({
     if (activeId && forwardTargetPick.has(activeId)) fetchMessages(activeId)
   }
 
-  // ─── Photo : sélection fichier / webcam → aperçu → envoi ───
-  function openAttachMenu() {
-    setShowAttachMenu((v) => !v)
-  }
-
-  async function handlePhotoFileChange(e: React.ChangeEvent<HTMLInputElement>, targetConversationId: string | null) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    setShowAttachMenu(false)
-    if (!file) return
-    const dataUrl = await fileToDataUrl(file)
-    setPhotoPreview({ dataUrl, conversationId: targetConversationId })
-    setPhotoPreviewPickedConv(targetConversationId)
-  }
-
-  async function openCamera() {
-    setShowAttachMenu(false)
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      cameraStreamRef.current = stream
-      setShowCamera(true)
-      setTimeout(() => {
-        if (videoRef.current) videoRef.current.srcObject = stream
-      }, 0)
-    } catch {
-      pushToast("Impossible d'accéder à la caméra.")
-    }
-  }
-
-  function closeCamera() {
-    cameraStreamRef.current?.getTracks().forEach((t) => t.stop())
-    cameraStreamRef.current = null
-    setShowCamera(false)
-  }
-
-  function capturePhoto() {
-    const video = videoRef.current
-    if (!video) return
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.drawImage(video, 0, 0)
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
-    closeCamera()
-    // Le bouton "Appareil photo" ne vit que dans le menu d'une conversation
-    // déjà ouverte — jamais depuis l'en-tête de liste.
-    setPhotoPreview({ dataUrl, conversationId: activeId })
-    setPhotoPreviewPickedConv(activeId)
-  }
-
-  async function handleSendPhoto() {
-    const targetId = photoPreview?.conversationId ?? photoPreviewPickedConv
-    if (!photoPreview || !targetId) return
-    setBusy(true)
-    try {
-      const compressed = await compressImage(photoPreview.dataUrl)
-      const res = await apiFetch<{ message: MessageView }>(`/api/conversations/${targetId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'image', content: '', mediaDataUri: compressed, replyToMessageId: targetId === activeId ? (replyTo?.id ?? undefined) : undefined }),
-      })
-      if (!res.ok) {
-        // Conserver l'aperçu : l'utilisateur peut relancer l'envoi sans avoir
-        // à retrouver puis sélectionner à nouveau son fichier.
-        pushToast(errorMessageFor(res.error))
-      } else {
-        setPhotoPreview(null)
-        if (targetId === activeId) {
-          setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
-          setReplyTo(null)
-        } else {
-          openConversation(targetId)
-        }
-        refreshConversations()
-      }
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  // ─── Notes vocales : tap-to-record ou press-and-hold, durée, annuler/envoyer ───
-  async function startRecording() {
-    if (!activeId || mediaRecorderRef.current?.state === 'recording') return
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported(t)) || ''
-      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
-      audioChunksRef.current = []
-      shouldSendRef.current = true
-      mr.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data)
-      }
-      mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop())
-        if (recordTimerRef.current) clearInterval(recordTimerRef.current)
-        setRecordDuration(0)
-        setIsRecording(false)
-        if (shouldSendRef.current && audioChunksRef.current.length > 0) {
-          // `MediaRecorder.mimeType` renvoie souvent le type AVEC ses
-          // paramètres codec (ex. "audio/webm;codecs=opus"). Si on garde ce
-          // type tel quel sur le Blob, le data URL produit ci-dessous devient
-          // "data:audio/webm;codecs=opus;base64,...", que le regex de
-          // validateDataUri (lib/server/cloudinary.ts, format strict
-          // "data:<mime>;base64,...") ne matche PLUS — l'upload échoue donc
-          // systématiquement en 'invalid_data_uri' et la note vocale n'est
-          // jamais envoyée. On ne garde que le type de base (avant le premier
-          // ';') pour rester compatible avec AUDIO_MIME_TYPES côté serveur.
-          const actualMime = (mr.mimeType || 'audio/webm').split(';')[0].trim() || 'audio/webm'
-          const blob = new Blob(audioChunksRef.current, { type: actualMime })
-          const dataUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(String(reader.result))
-            reader.readAsDataURL(blob)
-          })
-          if (!activeIdRef.current) return
-          const res = await apiFetch<{ message: MessageView }>(`/api/conversations/${activeIdRef.current}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'voice', content: '', mediaDataUri: dataUrl, replyToMessageId: replyTo?.id ?? undefined }),
-          })
-          if (!res.ok) pushToast(errorMessageFor(res.error))
-          else {
-            setMessages((prev) => mergeMessagesById(prev, [res.data.message]))
-            setReplyTo(null)
-            refreshConversations()
-          }
-        }
-      }
-      mr.start()
-      mediaRecorderRef.current = mr
-      setIsRecording(true)
-      setRecordDuration(0)
-      if (recordTimerRef.current) clearInterval(recordTimerRef.current)
-      recordTimerRef.current = setInterval(() => setRecordDuration((d) => d + 1), 1000)
-    } catch {
-      pushToast('Impossible d’accéder au micro.')
-    }
-  }
-
-  function stopRecording(send: boolean) {
-    shouldSendRef.current = send
-    const mr = mediaRecorderRef.current
-    if (mr && mr.state === 'recording') mr.stop()
-    mediaRecorderRef.current = null
-  }
-
-  function handleMicPointerDown() {
-    pressStartRef.current = Date.now()
-    wasHoldingRef.current = false
-    holdTimerRef.current = setTimeout(() => {
-      wasHoldingRef.current = true
-      startRecording()
-    }, 250)
-  }
-
-  function handleMicPointerUp() {
-    if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
-    const pressDuration = Date.now() - pressStartRef.current
-    if (pressDuration < 250 && !wasHoldingRef.current) {
-      // Tap : bascule démarrage/arrêt.
-      if (mediaRecorderRef.current?.state === 'recording') stopRecording(true)
-      else startRecording()
-    } else if (wasHoldingRef.current) {
-      stopRecording(true)
-    }
-  }
-
   // ─── Nouvelle conversation directe (parmi les amis, ou par email) ───
   async function handleStartDirectConversation(otherUserId: string) {
-    const res = await apiFetch<{ conversation: ConversationView }>('/api/conversations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ otherUserId }),
-    })
+    const res = await createDirectConversation(apiFetch, otherUserId)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1147,22 +592,14 @@ export default function MessagesClient({
 
   // ─── Nouveau groupe ───
   async function handleCreateGroup(name: string, memberIds: string[], avatarDataUrl: string | null) {
-    const res = await apiFetch<{ conversation: ConversationView }>('/api/conversations/groups', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, memberUserIds: memberIds }),
-    })
+    const res = await createGroupConversation(apiFetch, name, memberIds)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
     }
     if (avatarDataUrl) {
       const compressed = await compressImage(avatarDataUrl, 500, 0.85)
-      await apiFetch(`/api/conversations/${res.data.conversation.id}/avatar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUri: compressed }),
-      })
+      await uploadConversationAvatar(apiFetch, res.data.conversation.id, compressed)
     }
     setPanel('none')
     await refreshConversations()
@@ -1172,7 +609,7 @@ export default function MessagesClient({
   // ─── Groupe : quitter / supprimer / renommer / avatar / admin ───
   async function handleLeaveGroup() {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}/leave`, { method: 'POST' })
+    const res = await leaveConversation(apiFetch, activeId)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1186,7 +623,7 @@ export default function MessagesClient({
 
   async function handleDeleteGroup() {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}`, { method: 'DELETE' })
+    const res = await deleteConversation(apiFetch, activeId)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1200,11 +637,7 @@ export default function MessagesClient({
 
   async function handleRenameGroup(name: string) {
     if (!activeId) return
-    const res = await apiFetch<{ name: string }>(`/api/conversations/${activeId}/rename`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    })
+    const res = await renameConversation(apiFetch, activeId, name)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
   }
@@ -1213,22 +646,14 @@ export default function MessagesClient({
     if (!activeId) return
     const dataUrl = await fileToDataUrl(file)
     const compressed = await compressImage(dataUrl, 500, 0.85)
-    const res = await apiFetch<{ avatar: string }>(`/api/conversations/${activeId}/avatar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dataUri: compressed }),
-    })
+    const res = await uploadConversationAvatar(apiFetch, activeId, compressed)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
   }
 
   async function handleAddMember(userId: string) {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}/members`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    })
+    const res = await addConversationMember(apiFetch, activeId, userId)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else {
       refreshConversations()
@@ -1239,29 +664,21 @@ export default function MessagesClient({
 
   async function handleRemoveMember(userId: string) {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}/members/${userId}`, { method: 'DELETE' })
+    const res = await removeConversationMember(apiFetch, activeId, userId)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
   }
 
   async function handleSetMemberRole(userId: string, role: 'admin' | 'member') {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}/members/${userId}/role`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role }),
-    })
+    const res = await setConversationMemberRole(apiFetch, activeId, userId, role)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
   }
 
   async function handleApplyMemberMute(durationMs: number | null) {
     if (!activeId || !muteMemberDialog) return
-    const res = await apiFetch<{ untilAtMs: number | null }>(`/api/conversations/${activeId}/members/${muteMemberDialog.userId}/mute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ durationMs }),
-    })
+    const res = await muteConversationMember(apiFetch, activeId, muteMemberDialog.userId, durationMs)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1273,32 +690,28 @@ export default function MessagesClient({
 
   async function handleClearMemberMute(userId: string) {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}/members/${userId}/mute`, { method: 'DELETE' })
+    const res = await clearConversationMemberMute(apiFetch, activeId, userId)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
   }
 
   // ─── Conversation : épingler / masquer / couper notifs / vider historique ───
   async function handleToggleConvPin(conv: ConversationView) {
-    const res = conv.pinned
-      ? await apiFetch(`/api/conversations/${conv.id}/pin`, { method: 'DELETE' })
-      : await apiFetch(`/api/conversations/${conv.id}/pin`, { method: 'POST' })
+    const res = await toggleConversationPin(apiFetch, conv.id, conv.pinned)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
     setConvContextMenu(null)
   }
 
   async function handleToggleConvMute(conv: ConversationView) {
-    const res = conv.mutedForMe
-      ? await apiFetch(`/api/conversations/${conv.id}/mute`, { method: 'DELETE' })
-      : await apiFetch(`/api/conversations/${conv.id}/mute`, { method: 'POST' })
+    const res = await toggleConversationMute(apiFetch, conv.id, conv.mutedForMe)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else refreshConversations()
     setConvContextMenu(null)
   }
 
   async function handleHideConversation(conversationId: string) {
-    const res = await apiFetch(`/api/conversations/${conversationId}/hide`, { method: 'POST' })
+    const res = await hideConversation(apiFetch, conversationId)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1314,7 +727,7 @@ export default function MessagesClient({
 
   async function handleClearHistory() {
     if (!activeId) return
-    const res = await apiFetch(`/api/conversations/${activeId}/clear`, { method: 'POST' })
+    const res = await clearConversationHistory(apiFetch, activeId)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else {
       setMessages([])
@@ -1324,16 +737,12 @@ export default function MessagesClient({
 
   // ─── Amis / blocage / signalement ───
   async function handleSendFriendRequest(email: string) {
-    const lookup = await apiFetch<{ user: { id: string } }>(`/api/users/lookup?email=${encodeURIComponent(email)}`)
+    const lookup = await lookupUserByEmail(apiFetch, email)
     if (!lookup.ok) {
       pushToast(errorMessageFor(lookup.error))
       return false
     }
-    const res = await apiFetch<{ status: string }>('/api/friends/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toUserId: lookup.data.user.id }),
-    })
+    const res = await sendFriendRequest(apiFetch, lookup.data.user.id)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return false
@@ -1344,7 +753,7 @@ export default function MessagesClient({
   }
 
   async function handleFriendRequestAction(requestId: string, action: 'accept' | 'decline' | 'cancel') {
-    const res = await apiFetch(`/api/friends/requests/${requestId}/${action}`, { method: 'POST' })
+    const res = await actOnFriendRequest(apiFetch, requestId, action)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1353,11 +762,7 @@ export default function MessagesClient({
   }
 
   async function handleRemoveFriend(friendUserId: string) {
-    const res = await apiFetch('/api/friends/remove', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ friendUserId }),
-    })
+    const res = await removeFriend(apiFetch, friendUserId)
     if (!res.ok) pushToast(errorMessageFor(res.error))
     else {
       refreshFriendData()
@@ -1404,26 +809,18 @@ export default function MessagesClient({
   }
 
   async function handleBlock(userId: string) {
-    const res = await apiFetch('/api/users/block', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetUserId: userId }),
-    })
+    const res = await blockUser(apiFetch, userId)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
     }
     pushToast('Compte bloqué.')
-    const blockedRes = await apiFetch<{ blocked: BlockedUserView[] }>('/api/users/blocked')
+    const blockedRes = await listBlockedUsers(apiFetch)
     if (blockedRes.ok) setBlocked(blockedRes.data.blocked)
   }
 
   async function handleUnblock(userId: string) {
-    const res = await apiFetch('/api/users/unblock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetUserId: userId }),
-    })
+    const res = await unblockUser(apiFetch, userId)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
@@ -1433,18 +830,14 @@ export default function MessagesClient({
   }
 
   async function handleSubmitReport(userId: string, userName: string, reason: string) {
-    const res = await apiFetch('/api/users/report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetUserId: userId, reason }),
-    })
+    const res = await submitUserReport(apiFetch, userId, reason)
     if (!res.ok) {
       pushToast(errorMessageFor(res.error))
       return
     }
     setReportTarget(null)
     setBlockAfterReport({ userId, userName })
-    const reportsRes = await apiFetch<{ reports: MyReportView[] }>('/api/users/report')
+    const reportsRes = await listMyReports(apiFetch)
     if (reportsRes.ok) setReports(reportsRes.data.reports)
   }
 
@@ -1486,184 +879,49 @@ export default function MessagesClient({
             position: 'relative',
           }}
         >
-          <div style={{ padding: '18px 16px 12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h1 className="font-display" style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text)' }}>Messages</h1>
-              <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
-                <input
-                  ref={cameraFileInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  style={{ display: 'none' }}
-                  onChange={(e) => handlePhotoFileChange(e, activeId)}
-                />
-                <IconButton title="Envoyer une photo" onClick={() => cameraFileInputRef.current?.click()}>
-                  <Camera size={16} />
-                </IconButton>
-                <IconButton title="Menu" onClick={() => setShowListMenu((v) => !v)}>
-                  ⋮
-                </IconButton>
-                {showListMenu && (
-                  <div style={{ position: 'absolute', top: 36, right: 0, zIndex: 50 }}>
-                    <DropdownMenu
-                      onClose={() => setShowListMenu(false)}
-                      items={[
-                        { label: 'Ajouter un ami', onClick: () => setPanel('friends') },
-                        { label: 'Créer un groupe', onClick: () => setPanel('newGroup') },
-                        { label: 'Importants', onClick: () => setPanel('starred') },
-                        { label: 'Bloqués & signalés', onClick: () => setPanel('blockedReported') },
-                      ]}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-            <Input
-              aria-label="Rechercher une conversation"
-              value={convSearch}
-              onChange={(e) => {
-                setConvSearch(e.target.value)
-                setConvPage(1)
-              }}
-              placeholder="Rechercher une conversation…"
-              style={{ ...inputStyle, marginBottom: 0 }}
-            />
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 8px 16px' }}>
-            {conversations.length === 0 && <MessagingEmptyState icon={<MessageCircle size={32} />} title="Aucune conversation" subtitle="Ajoute un contact et commence à discuter" />}
-            {conversations.length > 0 && filteredConversations.length === 0 && (
-              <MessagingEmptyState icon={<Search size={32} />} title="Aucun résultat" subtitle="Essaie un autre terme de recherche" />
-            )}
-            {filteredConversations.map((conv) => {
-              const label = conversationLabel(conv, currentUserId)
-              const other = conv.type === 'direct' ? conv.members.find((m) => m.userId !== currentUserId) : null
-              return (
-                <Button
-                  key={conv.id}
-                  variant="ghost"
-                  onClick={() => openConversation(conv.id)}
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    setConvContextMenu({ conversationId: conv.id, x: e.clientX, y: e.clientY })
-                  }}
-                  aria-label={`Ouvrir la conversation avec ${label}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '9px 10px',
-                    borderRadius: 12,
-                    border: 'none',
-                    background: conv.id === activeId ? 'var(--surface-2)' : 'transparent',
-                    cursor: 'pointer',
-                    marginBottom: 2,
-                    fontWeight: 400,
-                  }}
-                >
-                  {conv.type === 'group' ? (
-                    <GroupAvatar conv={conv} size={42} />
-                  ) : (
-                    <Avatar userId={other?.userId ?? ''} name={label} size={42} online={other ? presence[other.userId]?.online : false} showOnline />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                      <span
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color: 'var(--text)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        {conv.pinned && <span title="Épinglée"><Pin size={12} /></span>}
-                        {label}
-                      </span>
-                      <span style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>{conv.lastMessageAt ? formatTime(conv.lastMessageAt) : ''}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: conv.unreadCount > 0 && !conv.mutedForMe ? 'var(--text)' : 'var(--text-faint)',
-                          fontWeight: conv.unreadCount > 0 && !conv.mutedForMe ? 600 : 400,
-                          margin: '2px 0 0',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {conv.lastMessage || 'Aucun message'}
-                      </p>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                        {conv.mutedForMe && <span style={{ fontSize: 11, opacity: 0.6, display: 'inline-flex', alignItems: 'center' }}><BellOff size={12} /></span>}
-                        {conv.unreadCount > 0 &&
-                          (conv.mutedForMe ? (
-                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--teal-solid)', display: 'inline-block' }} />
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color: '#04120e',
-                                background: 'var(--teal-solid)',
-                                borderRadius: 999,
-                                padding: '1px 6px',
-                              }}
-                            >
-                              {conv.unreadCount}
-                            </span>
-                          ))}
-                      </span>
-                    </div>
-                  </div>
-                </Button>
-              )
-            })}
-            {/* Avec 1-2 conversations, la zone flex:1 laisse un grand vide noir
-                sous la liste (surtout mobile plein écran) — un indice discret
-                comble l'espace au lieu d'un fond nu. */}
-            {conversations.length > 0 && conversations.length <= 2 && filteredConversations.length === conversations.length && (
-              <div style={{ marginTop: 18, padding: '18px 14px', textAlign: 'center', color: 'var(--text-faint)', fontSize: 12.5, lineHeight: 1.6 }}>
-                <p style={{ margin: 0 }}>Envoie un message à un organisateur ou un prestataire pour démarrer une nouvelle discussion.</p>
-              </div>
-            )}
-          </div>
-          {convPageCount > 1 && (
-            <div style={{ padding: '4px 12px 10px' }}>
-              <Pagination page={convPage} pageCount={convPageCount} onPageChange={setConvPage} totalItems={conversationTotal} pageSize={CONV_PAGE_SIZE} />
-            </div>
-          )}
-          {/* Bouton flottant "+" (convention WhatsApp Web) — remplace l'ancienne
-              icône crayon "Nouvelle discussion" jugée peu lisible par le
-              client. Ouvre le même NewDirectModal (liste d'amis + recherche
-              par nom/email), inchangé sur le fond. */}
-          <UiIconButton
-            label="Nouvelle discussion"
-            onClick={() => setPanel('newDirect')}
-            size={52}
-            style={{
-              position: 'absolute',
-              bottom: 20,
-              right: 20,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'var(--teal-solid)',
-              color: '#04120e',
-              boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
-              zIndex: 20,
+          <ConversationListPane
+            currentUserId={currentUserId}
+            conversations={conversations}
+            filteredConversations={filteredConversations}
+            activeId={activeId}
+            convSearch={convSearch}
+            onConvSearchChange={(value) => {
+              setConvSearch(value)
+              setConvPage(1)
             }}
-            icon={
+            onOpenConversation={openConversation}
+            onConversationContextMenu={(conversationId, x, y) => setConvContextMenu({ conversationId, x, y })}
+            conversationLabel={conversationLabel}
+            renderAvatar={(conv, label, online) =>
+              conv.type === 'group'
+                ? <GroupAvatar conv={conv} size={42} />
+                : <Avatar userId={conv.members.find((m) => m.userId !== currentUserId)?.userId ?? ''} name={label} size={42} online={online} showOnline />
+            }
+            presenceOnlineFor={(userId) => (userId ? Boolean(presence[userId]?.online) : false)}
+            formatTime={formatTime}
+            convPage={convPage}
+            convPageCount={convPageCount}
+            conversationTotal={conversationTotal}
+            pageSize={CONV_PAGE_SIZE}
+            onConvPageChange={setConvPage}
+            toolbar={
               <>
-                {received.length > 0 && <Badge count={received.length} />}
-                <Plus size={24} strokeWidth={2.4} />
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setPanel('friends')}
+                  style={{ borderRadius: 14, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal' }}
+                >
+                  Amis
+                </Button>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setPanel('newGroup')}
+                  style={{ borderRadius: 14, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal' }}
+                >
+                  Nouveau groupe
+                </Button>
               </>
             }
           />
@@ -1678,7 +936,7 @@ export default function MessagesClient({
             </div>
           ) : (
             <>
-              <ThreadHeader
+              <ThreadHeaderSection
                 conversation={activeConversation}
                 currentUserId={currentUserId}
                 presence={presence}
@@ -1848,199 +1106,41 @@ export default function MessagesClient({
                   </p>
                 </div>
               ) : (
-                <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--border)' }}>
-                  {mentionMatches.length > 0 && (
-                    <div style={{ marginBottom: 8, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: 10, overflow: 'hidden' }}>
-                      {mentionMatches.map((m) => (
-                        <Button
-                          key={m.userId}
-                          variant="ghost"
-                          onClick={() => applyMention(m)}
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '8px 12px',
-                            color: 'var(--text)',
-                            fontSize: 13,
-                            fontWeight: 400,
-                          }}
-                        >
-                          @{m.name}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-
-                  {editingMessageId && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'var(--surface-2)',
-                        borderRadius: 10,
-                        padding: '6px 10px',
-                        marginBottom: 8,
-                        borderLeft: '3px solid var(--gold)',
-                      }}
-                    >
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
-                      <Button variant="ghost" aria-label="Annuler la modification" onClick={handleEditCancel} style={{ padding: 0 }}>
-                        <X size={14} />
-                      </Button>
-                    </div>
-                  )}
-
-                  {replyTo && !editingMessageId && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'var(--surface-2)',
-                        borderRadius: 10,
-                        padding: '6px 10px',
-                        marginBottom: 8,
-                        borderLeft: '3px solid var(--violet)',
-                      }}
-                    >
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--teal)', margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {replyTo.preview}
-                        </p>
-                      </div>
-                      <Button variant="ghost" onClick={() => setReplyTo(null)} style={{ padding: 0 }}>
-                        <X size={14} />
-                      </Button>
-                    </div>
-                  )}
-
-                  {isRecording ? (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        padding: '10px 14px',
-                        background: 'var(--surface)',
-                        borderRadius: 999,
-                        border: '1px solid var(--border-strong)',
-                      }}
-                    >
-                      <Button
-                        variant="ghost"
-                        onClick={() => stopRecording(false)}
-                        style={{ color: 'var(--pink)', fontSize: 18, padding: 0 }}
-                        aria-label="Annuler"
-                      >
-                        <Trash2 size={18} />
-                      </Button>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pink)', animation: 'lib-pulse 1.2s infinite' }} />
-                      <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>
-                        {Math.floor(recordDuration / 60)}:{String(recordDuration % 60).padStart(2, '0')}
-                      </span>
-                      <Button
-                        variant="primary"
-                        onClick={() => stopRecording(true)}
-                        style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0 }}
-                        aria-label="Envoyer"
-                      >
-                        <Check size={18} />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', position: 'relative' }}>
-                      <div style={{ position: 'relative' }}>
-                        <IconButton title="Joindre" onClick={openAttachMenu}>
-                          +
-                        </IconButton>
-                        {showAttachMenu && (
-                          <div style={{ position: 'absolute', bottom: 44, left: 0, zIndex: 50 }}>
-                            <DropdownMenu
-                              onClose={() => setShowAttachMenu(false)}
-                              items={[
-                                { label: 'Photo', onClick: () => fileInputRef.current?.click() },
-                                { label: 'Appareil photo', onClick: openCamera },
-                                { label: 'Sondage', onClick: () => setPollDraft({ question: '', options: ['', ''] }) },
-                                { label: 'Partager un événement', onClick: () => setShowEventPicker(true) },
-                              ]}
-                            />
-                          </div>
-                        )}
-                        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoFileChange(e, activeId)} />
-                      </div>
-                      <Textarea
-                        value={composerText}
-                        onChange={(e) => handleInputChange(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault()
-                            handleSend()
-                          }
-                        }}
-                        placeholder="Écris un message…"
-                        rows={1}
-                        style={{
-                          ...inputStyle,
-                          marginBottom: 0,
-                          flex: 1,
-                          resize: 'none',
-                          maxHeight: 120,
-                          borderRadius: 22,
-                          background: 'var(--surface)',
-                        }}
-                      />
-                      {composerText.trim() ? (
-                        <Button
-                          variant="primary"
-                          onClick={handleSend}
-                          disabled={busy}
-                          aria-label={editingMessageId ? 'Modifier' : 'Envoyer'}
-                          title={editingMessageId ? 'Modifier' : 'Envoyer'}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            minWidth: 44,
-                            minHeight: 44,
-                            padding: 0,
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#04120e',
-                            background: busy ? 'rgba(159, 224, 34,0.5)' : 'var(--teal-solid)',
-                            cursor: busy ? 'default' : 'pointer',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {editingMessageId ? <Check size={18} /> : <Send size={17} />}
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="primary"
-                          onPointerDown={handleMicPointerDown}
-                          onPointerUp={handleMicPointerUp}
-                          style={{
-                            width: 44,
-                            height: 44,
-                            minWidth: 44,
-                            minHeight: 44,
-                            padding: 0,
-                            borderRadius: '50%',
-                            background: 'var(--teal-solid)',
-                            color: '#04120e',
-                            flexShrink: 0,
-                          }}
-                          aria-label="Message vocal"
-                        >
-                          <Mic size={18} />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <MessagingComposer
+                  mentionMatches={mentionMatches}
+                  onApplyMention={applyMention}
+                  editingMessage={Boolean(editingMessageId)}
+                  onCancelEdit={handleEditCancel}
+                  replyTo={replyTo}
+                  onCancelReply={() => setReplyTo(null)}
+                  isRecording={isRecording}
+                  recordDuration={recordDuration}
+                  onCancelRecording={() => stopRecording(false)}
+                  onSendRecording={() => stopRecording(true)}
+                  onOpenAttachMenu={openAttachMenu}
+                  showAttachMenu={showAttachMenu}
+                  onCloseAttachMenu={closeAttachMenu}
+                  onOpenPhotoPicker={() => fileInputRef.current?.click()}
+                  onOpenCamera={openCamera}
+                  onOpenPoll={() => setPollDraft({ question: '', options: ['', ''] })}
+                  onOpenEventShare={() => setShowEventPicker(true)}
+                  fileInputRef={fileInputRef}
+                  onPhotoFileChange={handlePhotoFileChange}
+                  activeConversationId={activeId}
+                  composerText={composerText}
+                  onComposerChange={handleInputChange}
+                  onComposerKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSend()
+                    }
+                  }}
+                  onSendText={handleSend}
+                  busy={busy}
+                  editingMessageId={editingMessageId}
+                  onMicPointerDown={handleMicPointerDown}
+                  onMicPointerUp={handleMicPointerUp}
+                />
               )}
             </>
           )}
@@ -2118,10 +1218,26 @@ export default function MessagesClient({
 
       {/* ─── Panneaux / modales ─── */}
       {panel === 'newDirect' && (
-        <NewDirectModal friends={friends} onPick={handleStartDirectConversation} onEmail={handleStartDirectConversationByEmail} onClose={() => setPanel('none')} />
+        <NewDirectModal
+          friends={friends}
+          onPick={handleStartDirectConversation}
+          onEmail={handleStartDirectConversationByEmail}
+          onClose={() => setPanel('none')}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} online={Boolean(presence[userId]?.online)} showOnline />}
+        />
       )}
       {panel === 'newGroup' && (
-        <NewGroupModal friends={friends} onCreate={handleCreateGroup} onClose={() => setPanel('none')} onGoToFriends={() => setPanel('friends')} />
+        <NewGroupModal
+          friends={friends}
+          onCreate={handleCreateGroup}
+          onClose={() => setPanel('none')}
+          onGoToFriends={() => setPanel('friends')}
+          onPickAvatar={async (file) => compressImage(await fileToDataUrl(file))}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} online={Boolean(presence[userId]?.online)} showOnline />}
+          renderGroupAvatar={(name, avatar, size = 40) => (
+            <GroupAvatar conv={{ name, avatar }} size={size} />
+          )}
+        />
       )}
       {panel === 'friends' && (
         <FriendsPanel
@@ -2165,6 +1281,8 @@ export default function MessagesClient({
           onRename={handleRenameGroup}
           onUploadAvatar={handleUploadGroupAvatar}
           groupAvatarInputRef={groupAvatarInputRef}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} online={Boolean(presence[userId]?.online)} showOnline />}
+          renderGroupAvatar={(name, avatar, size = 40) => <GroupAvatar conv={{ name, avatar }} size={size} />}
           onLeave={() =>
             setPendingConfirm({
               title: 'Quitter le groupe',
@@ -2243,6 +1361,13 @@ export default function MessagesClient({
             })
           }
           onReport={() => setReportTarget({ userId: otherDirectMember.userId, userName: otherDirectMember.name })}
+          onLoadPhone={async (conversationId) => {
+            const res = await apiFetch<{ phone: string | null }>(`/api/conversations/${conversationId}/contact-phone`)
+            return res.ok ? res.data.phone : null
+          }}
+          renderAvatar={(userId, name, size = 40, online = false, showOnline = false) => (
+            <Avatar userId={userId} name={name} size={size} online={online} showOnline={showOnline} />
+          )}
           onClose={() => setPanel('none')}
         />
       )}
@@ -2258,6 +1383,7 @@ export default function MessagesClient({
             handleToggleStar({ ...(starred.find((m) => m.id === id) as MessageView), starredByMe: true })
           }}
           onClose={() => setPanel('none')}
+          messageTypeLabel={messageTypeLabel}
         />
       )}
       {panel === 'blockedReported' && (
@@ -2312,65 +1438,36 @@ export default function MessagesClient({
       )}
 
       {muteMemberDialog && (
-        <MuteMemberModal name={muteMemberDialog.name} onApply={handleApplyMemberMute} onClose={() => setMuteMemberDialog(null)} />
+        <MuteMemberModal name={muteMemberDialog.name} durations={GROUP_MUTE_DURATIONS} onApply={handleApplyMemberMute} onClose={() => setMuteMemberDialog(null)} />
       )}
 
       {pollDraft && <PollDraftModal draft={pollDraft} onChange={setPollDraft} onSubmit={handleCreatePoll} onClose={() => setPollDraft(null)} />}
 
       {showEventPicker && (
-        <EventPickerModal onShare={handleShareEvent} onPoll={handleCreateEventPoll} onClose={() => setShowEventPicker(false)} />
+        <EventPickerModal
+          onShare={handleShareEvent}
+          onPoll={handleCreateEventPoll}
+          onClose={() => setShowEventPicker(false)}
+          searchEvents={async (query) => {
+            const res = await apiFetch<{ events: EventSearchResult[] }>(`/api/events/search?q=${encodeURIComponent(query)}`)
+            return res.ok ? res.data.events : []
+          }}
+        />
       )}
 
-      {photoPreview && (
-        <ModalShell title="Envoyer la photo" onClose={() => setPhotoPreview(null)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photoPreview.dataUrl} alt="Aperçu" style={{ width: '100%', borderRadius: 10, marginBottom: 12, maxHeight: 320, objectFit: 'contain' }} />
-          {photoPreview.conversationId === null && (
-            <>
-              <p style={sectionLabelStyle}>Choisir un destinataire</p>
-              <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: 10 }}>
-                {conversations.map((conv) => {
-                  const label = conversationLabel(conv, currentUserId)
-                  return (
-                    <Radio
-                      key={conv.id}
-                      name="photo-target-conversation"
-                      checked={photoPreviewPickedConv === conv.id}
-                      onChange={() => setPhotoPreviewPickedConv(conv.id)}
-                      style={{ ...rowButtonStyle, cursor: 'pointer' }}
-                      label={
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          {conv.type === 'group' ? <GroupAvatar conv={conv} size={28} /> : <Avatar userId={conv.id} name={label} size={28} />}
-                          <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{label}</span>
-                        </span>
-                      }
-                    />
-                  )
-                })}
-              </div>
-            </>
-          )}
-          <ModalActions
-            onCancel={() => setPhotoPreview(null)}
-            onConfirm={handleSendPhoto}
-            confirmLabel="Envoyer"
-            disabled={photoPreview.conversationId === null && !photoPreviewPickedConv}
-          />
-        </ModalShell>
-      )}
+      {photoPreview ? (
+        <PhotoPreviewModal
+          photoPreview={photoPreview}
+          photoPreviewPickedConv={photoPreviewPickedConv}
+          conversations={conversations}
+          currentUserId={currentUserId}
+          onPickConversation={setPhotoPreviewPickedConv}
+          onCancel={() => setPhotoPreview(null)}
+          onConfirm={handleSendPhoto}
+        />
+      ) : null}
 
-      {showCamera && (
-        <ImmersiveDialog
-          title="Prendre une photo"
-          subtitle="Cadre ta photo avant de la partager"
-          onClose={closeCamera}
-          zIndex={500}
-          media
-          actions={<><Button variant="secondary" onClick={closeCamera}>Annuler</Button><Button variant="primary" onClick={capturePhoto}>Capturer</Button></>}
-        >
-          <video ref={videoRef} autoPlay playsInline aria-label="Aperçu de la caméra" style={{ width: 'min(100%, 1100px)', maxHeight: 'calc(100dvh - 170px)', objectFit: 'contain', borderRadius: 20, boxShadow: '0 28px 90px rgba(0,0,0,.5)' }} />
-        </ImmersiveDialog>
-      )}
+      {showCamera ? <CameraCaptureModal videoRef={videoRef} onClose={closeCamera} onCapture={capturePhoto} /> : null}
 
       <ToastViewport items={toasts.map((toast) => ({ id: toast.id, message: toast.message, kind: 'info' }))} />
 
@@ -2380,1605 +1477,4 @@ export default function MessagesClient({
       `}</style>
     </main>
   )
-}
-
-// Décode le contenu `SYS::{...}` posté par postBlockSystemMessage
-// (lib/server/messaging.ts) — le texte affiché dépend de qui regarde ("Tu as
-// bloqué X" vs "X t'a bloqué"), donc jamais pré-traduit côté serveur. Cette
-// fonction manquait entièrement malgré le commentaire de messaging.ts qui la
-// référençait déjà : le JSON brut s'affichait tel quel dans la conversation.
-function systemMessageLabel(content: string | null, currentUserId: string): string {
-  if (!content || !content.startsWith('SYS::')) return content || ''
-  try {
-    const data = JSON.parse(content.slice(5)) as { kind: 'block' | 'unblock'; by: string; byName: string; target: string; targetName: string }
-    const iActed = data.by === currentUserId
-    if (data.kind === 'block') return iActed ? `Tu as bloqué ${data.targetName}.` : `${data.byName} t'a bloqué.`
-    return iActed ? `Tu as débloqué ${data.targetName}.` : `${data.byName} t'a débloqué.`
-  } catch {
-    return content
-  }
-}
-
-function messageTypeLabel(type: MessageType): string {
-  if (type === 'image') return 'Photo'
-  if (type === 'voice') return 'Message vocal'
-  if (type === 'poll' || type === 'event_poll') return 'Sondage'
-  if (type === 'story') return 'Article'
-  if (type === 'event') return 'Événement'
-  if (type === 'catalog_item') return 'Offre prestataire'
-  return ''
-}
-
-// ═══════════════════════════════ Sous-composants ══════════════════════════════
-
-function IconButton({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <Button
-      variant="secondary"
-      title={title}
-      aria-label={title}
-      onClick={onClick}
-      style={{
-        position: 'relative',
-        width: 44,
-        height: 44,
-        minWidth: 44,
-        minHeight: 44,
-        padding: 0,
-        borderRadius: '50%',
-        fontSize: 14,
-      }}
-    >
-      {children}
-    </Button>
-  )
-}
-
-function Badge({ count }: { count: number }) {
-  return (
-    <span
-      style={{
-        position: 'absolute',
-        top: -3,
-        right: -3,
-        fontSize: 9,
-        fontWeight: 700,
-        color: '#fff',
-        background: 'var(--pink)',
-        borderRadius: 999,
-        padding: '1px 4px',
-        minWidth: 14,
-        textAlign: 'center',
-      }}
-    >
-      {count}
-    </span>
-  )
-}
-
-
-function Avatar({
-  userId,
-  name,
-  size = 38,
-  online,
-  showOnline,
-}: {
-  userId: string
-  name: string
-  size?: number
-  online?: boolean
-  showOnline?: boolean
-}) {
-  return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          background: avatarColorFor(userId),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#04040b',
-          fontWeight: 700,
-          fontSize: size <= 32 ? 10 : 13,
-        }}
-      >
-        {getInitials(name)}
-      </div>
-      {showOnline && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            background: online ? '#22c55e' : 'rgba(255,255,255,0.2)',
-            border: '2px solid var(--obsidian)',
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-function GroupAvatar({ conv, size = 38 }: { conv: { avatar: string | null; name: string | null }; size?: number }) {
-  if (conv.avatar) {
-    return (
-      <NextImage
-        src={conv.avatar}
-        alt={conv.name ?? 'Groupe'}
-        width={size}
-        height={size}
-        style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-      />
-    )
-  }
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: 'rgba(184, 243, 74,0.14)',
-        border: '1px solid rgba(184, 243, 74,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <svg width={size * 0.45} height={size * 0.45} viewBox="0 0 24 24" fill="var(--gold)">
-        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-      </svg>
-    </div>
-  )
-}
-
-function TypingDots() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--text-faint)', animation: `lib-bounce 1.2s ${i * 0.2}s infinite` }}
-        />
-      ))}
-    </div>
-  )
-}
-
-function ThreadHeader({
-  conversation,
-  currentUserId,
-  presence,
-  isDesktop,
-  onBack,
-  onOpenSearch,
-  onOpenPoll,
-  onOpenGroupSettings,
-  onOpenContactPanel,
-}: {
-  conversation: ConversationView
-  currentUserId: string
-  presence: PresenceMap
-  isDesktop: boolean
-  onBack: () => void
-  onOpenSearch: () => void
-  onOpenPoll: () => void
-  onOpenGroupSettings: () => void
-  onOpenContactPanel: () => void
-}) {
-  const label = conversationLabel(conversation, currentUserId)
-  const other = conversation.type === 'direct' ? conversation.members.find((m) => m.userId !== currentUserId) : null
-  const otherOnline = other ? presence[other.userId]?.online : false
-  return (
-    <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-      <Button
-        variant="ghost"
-        onClick={conversation.type === 'group' ? onOpenGroupSettings : onOpenContactPanel}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', minWidth: 0, fontWeight: 400, padding: 0 }}
-      >
-        {!isDesktop && (
-          <span
-            onClick={(e) => {
-              e.stopPropagation()
-              onBack()
-            }}
-            style={{ color: 'var(--text-faint)', fontSize: 18, marginRight: 4, display: 'inline-flex', alignItems: 'center' }}
-          >
-            <ArrowLeft size={18} />
-          </span>
-        )}
-        {conversation.type === 'group' ? <GroupAvatar conv={conversation} size={36} /> : <Avatar userId={other?.userId ?? ''} name={label} size={36} />}
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</h2>
-          <p style={{ fontSize: 11, color: otherOnline ? '#22c55e' : 'var(--text-faint)', margin: 0 }}>
-            {conversation.type === 'group' ? `${conversation.members.length} membres` : otherOnline ? 'En ligne' : 'Hors ligne'}
-          </p>
-        </div>
-      </Button>
-      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-        <IconButton title="Rechercher" onClick={onOpenSearch}>
-          <Search size={16} />
-        </IconButton>
-        <IconButton title="Sondage" onClick={onOpenPoll}>
-          <BarChart2 size={16} />
-        </IconButton>
-      </div>
-    </div>
-  )
-}
-
-function MessageRow({
-  message,
-  isMine,
-  currentUserId,
-  showAvatar,
-  showSenderName,
-  members,
-  highlighted,
-  onlineForAvatar,
-  replyPreview,
-  onReplyClick,
-  onOpenContextMenu,
-  onReact,
-  onOpenFullPicker,
-  onVote,
-  onReply,
-}: {
-  message: MessageView
-  isMine: boolean
-  currentUserId: string
-  showAvatar: boolean
-  showSenderName: boolean
-  members: ConversationMember[]
-  highlighted: boolean
-  onlineForAvatar?: boolean
-  replyPreview: MessageView | null
-  onReplyClick: (id: string) => void
-  onOpenContextMenu: (x: number, y: number) => void
-  onReact: (messageId: string, emoji: string) => void
-  onOpenFullPicker: () => void
-  onVote: (messageId: string, optionId: string) => void
-  onReply: (message: MessageView) => void
-}) {
-  const touchStartX = useRef(0)
-  const [swipeX, setSwipeX] = useState(0)
-
-  if (message.type === 'system') {
-    return (
-      <div style={{ textAlign: 'center', padding: '4px 0' }}>
-        <span style={{ fontSize: 11.5, color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 20, padding: '4px 12px' }}>
-          {systemMessageLabel(message.content, currentUserId)}
-        </span>
-      </div>
-    )
-  }
-
-  const reactionEntries = Object.entries(message.reactions).filter(([, users]) => users.length > 0)
-
-  function onTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0].clientX
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    const dx = e.touches[0].clientX - touchStartX.current
-    if (dx > 0) setSwipeX(Math.min(dx, 70))
-  }
-  function onTouchEnd() {
-    if (swipeX >= 60) onReply(message)
-    setSwipeX(0)
-  }
-
-  return (
-    <div
-      style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6, marginBottom: 6, touchAction: 'pan-y' }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      <div style={{ width: 26, flexShrink: 0 }}>{showAvatar && <Avatar userId={message.senderId} name={message.senderName} size={26} online={onlineForAvatar} showOnline />}</div>
-      <div style={{ maxWidth: '74%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', gap: 2, transform: `translateX(${swipeX}px)` }}>
-        {showSenderName && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>{message.senderName}</span>}
-        {message.forwardedFrom && (
-          <span style={{ fontSize: 10.5, color: 'var(--text-faint)', paddingLeft: isMine ? 0 : 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}><CornerUpRight size={11} /> Transféré de {message.forwardedFrom.senderName}</span>
-        )}
-        {replyPreview && (
-          <div
-            onClick={() => onReplyClick(replyPreview.id)}
-            style={{
-              background: 'var(--surface)',
-              borderRadius: 8,
-              padding: '5px 9px',
-              borderLeft: '3px solid var(--violet)',
-              maxWidth: 220,
-              cursor: 'pointer',
-            }}
-          >
-            <p style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>{replyPreview.senderName}</p>
-            <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {replyPreview.deletedForAll ? 'Message supprimé' : replyPreview.content || messageTypeLabel(replyPreview.type)}
-            </p>
-          </div>
-        )}
-        <div
-          onContextMenu={(e) => {
-            e.preventDefault()
-            onOpenContextMenu(e.clientX, e.clientY)
-          }}
-          style={{
-            padding: message.deletedForAll ? '8px 14px' : ['image', 'poll', 'event_poll', 'story', 'event', 'catalog_item'].includes(message.type) ? 6 : '9px 14px',
-            borderRadius: isMine ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-            background: isMine ? 'rgba(159, 224, 34,0.16)' : 'var(--surface)',
-            border: `1px solid ${isMine ? 'rgba(159, 224, 34,0.32)' : 'var(--border)'}`,
-            maxWidth: '100%',
-            cursor: 'context-menu',
-            boxShadow: highlighted ? '0 0 0 2px rgba(255,255,255,0.85)' : 'none',
-            transition: 'box-shadow 0.3s',
-          }}
-        >
-          <MessageContent message={message} members={members} onVote={onVote} currentUserId={currentUserId} />
-        </div>
-
-        {reactionEntries.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center' }}>
-            {reactionEntries.map(([emoji, users]) => {
-              const reactedByMe = users.includes(currentUserId)
-              return (
-                <Button
-                  key={emoji}
-                  variant="secondary"
-                  onClick={() => onReact(message.id, emoji)}
-                  style={{
-                    background: reactedByMe ? 'rgba(184, 243, 74,0.14)' : 'var(--surface-2)',
-                    border: `1px solid ${reactedByMe ? 'rgba(184, 243, 74,0.3)' : 'var(--border)'}`,
-                    borderRadius: 10,
-                    padding: '2px 6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    fontSize: 11,
-                    fontWeight: 400,
-                    color: reactedByMe ? 'var(--teal)' : 'var(--text)',
-                  }}
-                >
-                  <span>{emoji}</span>
-                  <span style={{ fontSize: 9, color: reactedByMe ? 'var(--teal)' : 'var(--text-faint)' }}>{users.length}</span>
-                </Button>
-              )
-            })}
-            <Button
-              variant="ghost"
-              onClick={onOpenFullPicker}
-              style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '2px 6px', color: 'var(--text-faint)', fontSize: 11 }}
-            >
-              +
-            </Button>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {message.starredByMe && <span style={{ fontSize: 10, color: 'var(--gold)', display: 'inline-flex', alignItems: 'center' }}><Star size={10} /></span>}
-          <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{formatTime(message.createdAt)}</span>
-          {isMine && message.readStatus && (
-            <span style={{ fontSize: 9, color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
-              {message.readStatus === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MessageContent({
-  message,
-  members,
-  onVote,
-  currentUserId,
-}: {
-  message: MessageView
-  members: ConversationMember[]
-  onVote: (messageId: string, optionId: string) => void
-  currentUserId: string
-}) {
-  if (message.deletedForAll) return <span style={{ fontSize: 12.5, color: 'var(--text-faint)', fontStyle: 'italic' }}>Message supprimé</span>
-
-  if (message.type === 'text') {
-    return (
-      <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.45 }}>
-        <MentionText content={message.content ?? ''} members={members} />
-        {message.editedAt && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span>}
-      </p>
-    )
-  }
-  if (message.type === 'image') return <ImageBubble content={message.content} createdAt={message.createdAt} />
-  if (message.type === 'voice') return <VoiceBubble content={message.content} />
-  if (message.type === 'poll' || message.type === 'event_poll') return <PollCard message={message} onVote={onVote} currentUserId={currentUserId} />
-  if (message.type === 'story') return <StoryCard content={message.content} />
-  if (message.type === 'event') return <EventCard content={message.content} />
-  if (message.type === 'catalog_item') return <CatalogItemCard content={message.content} />
-  return <span style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>{message.content}</span>
-}
-
-function MentionText({ content, members }: { content: string; members: ConversationMember[] }) {
-  if (members.length === 0 || !content.includes('@')) return <>{content}</>
-  const names = members.map((m) => m.name).filter(Boolean)
-  if (names.length === 0) return <>{content}</>
-  const pattern = new RegExp(`(@(?:${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')}))`, 'g')
-  const parts = content.split(pattern)
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.startsWith('@') && names.includes(part.slice(1)) ? (
-          <span key={i} style={{ color: 'var(--teal)', fontWeight: 700 }}>
-            {part}
-          </span>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      )}
-    </>
-  )
-}
-
-// L'expiration dépend de l'horloge murale (Date.now()), pas d'une donnée
-// React — lue UNIQUEMENT dans l'effet (jamais pendant le rendu, qui doit
-// rester pur), recalculée périodiquement pour que le badge d'heures restantes
-// et le passage à "expirée" progressent sans nécessiter d'interaction.
-function usePhotoExpiry(createdAt: string): { isExpired: boolean; hoursLeft: number } {
-  const [state, setState] = useState(() => ({ isExpired: false, hoursLeft: 24 }))
-  useEffect(() => {
-    function compute() {
-      const expiresAt = new Date(createdAt).getTime() + 24 * 3600 * 1000
-      const now = Date.now()
-      setState({ isExpired: now > expiresAt, hoursLeft: Math.ceil((expiresAt - now) / 3600000) })
-    }
-    compute()
-    const id = setInterval(compute, 60_000)
-    return () => clearInterval(id)
-  }, [createdAt])
-  return state
-}
-
-function ImageBubble({ content, createdAt }: { content: string | null; createdAt: string }) {
-  const [zoomed, setZoomed] = useState(false)
-  const { isExpired, hoursLeft } = usePhotoExpiry(createdAt)
-  if (!content) return <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>Photo</span>
-
-  if (isExpired) {
-    return (
-      <div style={{ width: 180, height: 90, borderRadius: 10, background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-        <span style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center' }}><Hourglass size={18} /></span>
-        <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Photo expirée</span>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <div style={{ position: 'relative', display: 'inline-block' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={content}
-          alt="Photo"
-          onClick={() => setZoomed(true)}
-          style={{ maxWidth: 220, maxHeight: 220, borderRadius: 10, display: 'block', cursor: 'zoom-in' }}
-        />
-        {hoursLeft <= 23 && (
-          <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.65)', borderRadius: 6, padding: '2px 6px', fontSize: 10, fontWeight: 600, color: '#fff' }}>
-            {hoursLeft} h
-          </span>
-        )}
-        <a
-          href={content}
-          download="photo.jpg"
-          onClick={(e) => e.stopPropagation()}
-          style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(0,0,0,0.55)', borderRadius: 6, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', textDecoration: 'none' }}
-        >
-          <ArrowDown size={14} />
-        </a>
-      </div>
-      {zoomed && (
-        <ImmersiveDialog title="Aperçu de la photo" onClose={() => setZoomed(false)} zIndex={600} media>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={content} alt="Photo en plein écran" style={{ maxWidth: '100%', maxHeight: 'calc(100dvh - 40px)', objectFit: 'contain', borderRadius: 12 }} />
-        </ImmersiveDialog>
-      )}
-    </>
-  )
-}
-
-const VOICE_BARS = 26
-function VoiceBubble({ content }: { content: string | null }) {
-  const [playing, setPlaying] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [bars, setBars] = useState<number[] | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    if (!content) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch(content)
-        const buf = await res.arrayBuffer()
-        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-        const ctx = new AudioCtx()
-        const audioBuffer = await ctx.decodeAudioData(buf)
-        ctx.close()
-        if (cancelled) return
-        const data = audioBuffer.getChannelData(0)
-        const blockSize = Math.floor(data.length / VOICE_BARS) || 1
-        const peaks = Array.from({ length: VOICE_BARS }, (_, i) => {
-          let max = 0
-          for (let j = 0; j < blockSize; j++) max = Math.max(max, Math.abs(data[i * blockSize + j] || 0))
-          return max
-        })
-        const maxPeak = Math.max(...peaks, 0.01)
-        setBars(peaks.map((p) => Math.max(0.15, p / maxPeak)))
-        setDuration(Math.round(audioBuffer.duration))
-      } catch {
-        if (!cancelled) {
-          setBars(Array.from({ length: VOICE_BARS }, (_, i) => 0.2 + ((content.charCodeAt(i % content.length) + i * 17) % 80) / 100))
-        }
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [content])
-
-  function handlePlay() {
-    if (!content) return
-    if (!audioRef.current) {
-      const a = new Audio(content)
-      a.ontimeupdate = () => setProgress(a.currentTime / (a.duration || 1))
-      a.onended = () => {
-        setPlaying(false)
-        setProgress(0)
-      }
-      audioRef.current = a
-    }
-    if (playing) {
-      audioRef.current.pause()
-      setPlaying(false)
-    } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false))
-    }
-  }
-
-  if (!content) return <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>Message vocal</span>
-  const activeBars = bars ?? Array.from({ length: VOICE_BARS }, () => 0.3)
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 190, maxWidth: 240 }}>
-      <Button
-        variant="ghost"
-        onClick={handlePlay}
-        style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}
-      >
-        {playing ? <Pause size={14} /> : <Play size={14} />}
-      </Button>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, height: 24 }}>
-        {activeBars.map((h, i) => (
-          <div
-            key={i}
-            style={{
-              width: 2.5,
-              height: `${h * 100}%`,
-              borderRadius: 2,
-              background: progress > 0 && i / activeBars.length <= progress ? '#fff' : 'rgba(255,255,255,0.3)',
-            }}
-          />
-        ))}
-      </div>
-      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', minWidth: 26, textAlign: 'right', flexShrink: 0 }}>{duration > 0 ? fmt(duration) : ''}</span>
-    </div>
-  )
-}
-
-function PollCard({ message, onVote, currentUserId }: { message: MessageView; onVote: (messageId: string, optionId: string) => void; currentUserId: string }) {
-  const poll = message.poll
-  if (!poll) return <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>Sondage indisponible.</span>
-  const totalVotes = poll.options.reduce((s, o) => s + o.voterIds.length, 0)
-  return (
-    <div style={{ minWidth: 220, maxWidth: 280 }}>
-      {poll.event && <p style={{ fontSize: 11, color: 'var(--gold)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{poll.event.name}</p>}
-      <p style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 8px', color: 'var(--text)' }}>{poll.question}</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {poll.options.map((opt) => {
-          const pct = totalVotes ? Math.round((opt.voterIds.length / totalVotes) * 100) : 0
-          const votedByMe = opt.voterIds.includes(currentUserId)
-          return (
-            <Button
-              key={opt.id}
-              variant="secondary"
-              onClick={() => onVote(message.id, opt.id)}
-              aria-label={`Voter pour ${opt.text}`}
-              aria-pressed={votedByMe}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 6,
-                padding: '8px 10px',
-                borderRadius: 8,
-                border: votedByMe ? '1px solid var(--teal)' : '1px solid var(--border-strong)',
-                background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text)',
-                fontSize: 12.5,
-                fontWeight: 400,
-                textAlign: 'left',
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(184, 243, 74,0.22)' }} />
-              <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {votedByMe && <span style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span>}
-                {opt.text}
-              </span>
-              <span style={{ position: 'relative', color: 'var(--teal)', fontWeight: 700 }}>{opt.voterIds.length}</span>
-            </Button>
-          )
-        })}
-      </div>
-      <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '6px 0 0' }}>
-        {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
-      </p>
-    </div>
-  )
-}
-
-function StoryCard({ content }: { content: string | null }) {
-  let story: { title?: string; text?: string; imageUrl?: string } = {}
-  try {
-    story = content ? JSON.parse(content) : {}
-  } catch {
-    return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Article</span>
-  }
-  return (
-    <div style={{ minWidth: 200, maxWidth: 260 }}>
-      {story.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={story.imageUrl} alt={story.title} style={{ width: '100%', borderRadius: 6, maxHeight: 130, objectFit: 'cover', marginBottom: 8 }} />
-      )}
-      <p style={{ fontSize: 15, color: 'var(--text)', margin: '0 0 4px', fontWeight: 500 }}>{story.title}</p>
-      {story.text && <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>{story.text}</p>}
-    </div>
-  )
-}
-
-function EventCard({ content }: { content: string | null }) {
-  let ev: { id?: string; name?: string; date?: string; price?: number; image?: string } = {}
-  try {
-    ev = content ? JSON.parse(content) : {}
-  } catch {
-    return <span style={{ fontSize: 12, color: 'var(--gold)' }}>Événement</span>
-  }
-  const clickable = Boolean(ev.id)
-  const priceLabel = ev.price == null ? null : Number(ev.price) <= 0 ? 'Gratuit' : `dès ${ev.price}€`
-  return (
-    <a
-      href={clickable ? `/events/${ev.id}` : undefined}
-      style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
-    >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
-        {ev.id ? (
-          <NextImage src={ev.image || placeholderPhotoUrl(ev.id, 480, 270)} alt={ev.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
-        ) : ev.image ? (
-          <NextImage src={ev.image} alt={ev.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
-        )}
-        {priceLabel && (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10, fontWeight: 700, color: 'var(--gold)', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6 }}>
-            {priceLabel}
-          </span>
-        )}
-      </div>
-      <div style={{ padding: '10px 12px' }}>
-        <p style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 3px', fontWeight: 600 }}>{ev.name || 'Événement'}</p>
-        <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: 0, textTransform: 'uppercase' }}>{ev.date || ''}</p>
-      </div>
-    </a>
-  )
-}
-
-function CatalogItemCard({ content }: { content: string | null }) {
-  let it: { providerId?: string; name?: string; category?: string; image?: string; price?: number } = {}
-  try {
-    it = content ? JSON.parse(content) : {}
-  } catch {
-    return <span style={{ fontSize: 11, color: 'var(--gold)' }}>Offre prestataire</span>
-  }
-  const clickable = Boolean(it.providerId)
-  return (
-    <a
-      href={clickable ? `/providers/${encodeURIComponent(it.providerId!)}` : undefined}
-      style={{ display: 'block', width: 240, borderRadius: 10, overflow: 'hidden', background: 'var(--surface-2)', textDecoration: 'none', cursor: clickable ? 'pointer' : 'default' }}
-    >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
-        {it.providerId ? (
-          <NextImage src={it.image || placeholderPhotoUrl(it.providerId, 480, 270)} alt={it.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
-        ) : it.image ? (
-          <NextImage src={it.image} alt={it.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
-        )}
-      </div>
-      <div style={{ padding: '10px 12px' }}>
-        <p style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 3px', fontWeight: 600 }}>{it.name || 'Offre'}</p>
-        {it.category && <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: 0, textTransform: 'uppercase' }}>{it.category}</p>}
-      </div>
-    </a>
-  )
-}
-
-function MessageContextMenu({
-  message,
-  x,
-  y,
-  currentUserId,
-  amAdmin,
-  pinnedMessageId,
-  onClose,
-  onReact,
-  onReply,
-  onEdit,
-  onStar,
-  onForward,
-  onPin,
-  onDeleteForMe,
-  onDeleteForAll,
-}: {
-  message: MessageView
-  x: number
-  y: number
-  currentUserId: string
-  amAdmin: boolean
-  pinnedMessageId: string | null
-  onClose: () => void
-  onReact: (emoji: string) => void
-  onReply: () => void
-  onEdit: () => void
-  onStar: () => void
-  onForward: () => void
-  onPin: () => void
-  onDeleteForMe: () => void
-  onDeleteForAll: () => void
-}) {
-  const isMine = message.senderId === currentUserId
-  const items: { label: string; onClick: () => void; danger?: boolean }[] = []
-  if (!message.deletedForAll) {
-    items.push({ label: 'Répondre', onClick: onReply })
-    if (isMine && message.type === 'text') items.push({ label: 'Modifier', onClick: onEdit })
-    items.push({ label: message.starredByMe ? 'Retirer des importants' : 'Marquer important', onClick: onStar })
-    items.push({ label: 'Transférer', onClick: onForward })
-    if (amAdmin) items.push({ label: pinnedMessageId === message.id ? 'Désépingler' : 'Épingler', onClick: onPin })
-    items.push({ label: 'Supprimer pour moi', onClick: onDeleteForMe })
-    if (isMine) items.push({ label: 'Supprimer pour tous', onClick: onDeleteForAll, danger: true })
-  }
-
-  const maxX = typeof window !== 'undefined' ? window.innerWidth - 220 : x
-  const left = Math.max(12, Math.min(x, maxX))
-  const maxY = typeof window !== 'undefined' ? window.innerHeight - Math.min(440, 52 + items.length * 48) - 12 : y
-  const top = Math.max(12, Math.min(y, maxY))
-
-  return (
-    <>
-      <Button className={styles.menuBackdrop} variant="ghost" onClick={onClose} onContextMenu={(e) => e.preventDefault()} aria-label="Fermer le menu" />
-      <div
-        role="menu"
-        aria-label="Actions du message"
-        className={`${styles.menu} ${styles.fixedMenu}`}
-        style={{ top, left }}
-        onKeyDown={(event) => handleMenuKeyDown(event, onClose)}
-      >
-        {!message.deletedForAll && (
-          <div className={styles.quickReactions} aria-label="Réactions rapides">
-            {QUICK_REACT.map((emoji, index) => (
-              <Button key={emoji} variant="ghost" role="menuitem" autoFocus={index === 0} onClick={() => { onReact(emoji); onClose() }} aria-label={`Réagir avec ${emoji}`}>
-                {emoji}
-              </Button>
-            ))}
-          </div>
-        )}
-        {items.map((item, index) => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            role="menuitem"
-            autoFocus={message.deletedForAll && index === 0}
-            onClick={() => {
-              item.onClick()
-              onClose()
-            }}
-            className={`${styles.menuItem}${item.danger ? ` ${styles.dangerItem}` : ''}`}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function FullReactionPicker({ onPick, onClose }: { onPick: (emoji: string) => void; onClose: () => void }) {
-  return (
-    <ModalShell title="Réagir" onClose={onClose}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
-        {EMOJIS.map((emoji) => (
-          <Button
-            key={emoji}
-            variant="secondary"
-            onClick={() => {
-              onPick(emoji)
-              onClose()
-            }}
-            style={{ background: 'var(--surface)', border: 'none', borderRadius: 8, padding: 8, fontSize: 20 }}
-          >
-            {emoji}
-          </Button>
-        ))}
-      </div>
-    </ModalShell>
-  )
-}
-
-function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () => void }[]; onClose: () => void }) {
-  return (
-    <>
-      <Button className={styles.menuBackdrop} variant="ghost" onClick={onClose} aria-label="Fermer le menu" style={{ zIndex: 49 }} />
-      <div
-        role="menu"
-        aria-label="Actions disponibles"
-        className={`${styles.menu} ${styles.relativeMenu}`}
-        onKeyDown={(event) => handleMenuKeyDown(event, onClose)}
-      >
-        {items.map((item, index) => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            role="menuitem"
-            autoFocus={index === 0}
-            onClick={() => {
-              item.onClick()
-              onClose()
-            }}
-            className={styles.menuItem}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>, onClose: () => void) {
-  if (event.key === 'Escape') { event.preventDefault(); onClose(); return }
-  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
-  event.preventDefault()
-  const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
-  if (!controls.length) return
-  const current = controls.indexOf(document.activeElement as HTMLElement)
-  if (event.key === 'Home') return controls[0].focus()
-  if (event.key === 'End') return controls[controls.length - 1].focus()
-  const offset = event.key === 'ArrowDown' ? 1 : -1
-  controls[(current + offset + controls.length) % controls.length].focus()
-}
-
-function NewDirectModal({
-  friends,
-  onPick,
-  onEmail,
-  onClose,
-}: {
-  friends: FriendView[]
-  onPick: (userId: string) => void
-  onEmail: (email: string) => void
-  onClose: () => void
-}) {
-  const [query, setQuery] = useState('')
-  const [email, setEmail] = useState('')
-  const filtered = friends.filter((f) => f.name.toLowerCase().includes(query.trim().toLowerCase()))
-  return (
-    <ModalShell title="Nouvelle discussion" subtitle="Choisis une personne ou démarre une conversation par e-mail." onClose={onClose} wide>
-      <Input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Rechercher un ami"
-        aria-label="Rechercher un ami"
-        leftIcon={<Search size={17} aria-hidden="true" />}
-        containerStyle={{ marginBottom: 14 }}
-        style={inputStyle}
-        autoFocus
-      />
-      <p className={styles.modalSectionLabel}>Amis</p>
-      <div className={styles.modalPeopleList}>
-        {filtered.length === 0 && <p className={styles.modalEmpty}>Aucun ami trouvé.</p>}
-        {filtered.map((f) => (
-          <Button key={f.userId} variant="ghost" onClick={() => onPick(f.userId)} className={styles.modalPersonRow}>
-            <Avatar userId={f.userId} name={f.name} size={40} />
-            <span className={styles.modalPersonName}>{f.name}</span>
-            <span className={styles.modalChevron} aria-hidden="true">›</span>
-          </Button>
-        ))}
-      </div>
-      <div className={styles.modalDivider}><span>ou</span></div>
-      <form
-        className={styles.modalEmailForm}
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (email.trim()) onEmail(email.trim())
-        }}
-      >
-        <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="Adresse e-mail" aria-label="Adresse e-mail du contact" style={{ ...inputStyle, marginBottom: 0 }} />
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!email.trim()}
-          size="md"
-          style={{ borderRadius: 999, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal' }}
-        >
-          Continuer
-        </Button>
-      </form>
-    </ModalShell>
-  )
-}
-
-function NewGroupModal({
-  friends,
-  onCreate,
-  onClose,
-  onGoToFriends,
-}: {
-  friends: FriendView[]
-  onCreate: (name: string, memberIds: string[], avatarDataUrl: string | null) => void
-  onClose: () => void
-  onGoToFriends: () => void
-}) {
-  const [step, setStep] = useState<1 | 2>(1)
-  const [name, setName] = useState('')
-  const [query, setQuery] = useState('')
-  const [memberIds, setMemberIds] = useState<Set<string>>(new Set())
-  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null)
-  const filtered = friends.filter((f) => f.name.toLowerCase().includes(query.trim().toLowerCase()))
-
-  function toggleMember(userId: string) {
-    setMemberIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(userId)) next.delete(userId)
-      else next.add(userId)
-      return next
-    })
-  }
-
-  if (step === 2) {
-    const selected = friends.filter((f) => memberIds.has(f.userId))
-    return (
-      <ModalShell title="Confirmer le groupe" onClose={onClose}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, cursor: 'pointer' }}>
-          {avatarDataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarDataUrl} alt="Avatar du groupe" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover' }} />
-          ) : (
-            <GroupAvatar conv={{ avatar: null, name }} size={52} />
-          )}
-          <span style={{ fontSize: 12, color: 'var(--teal)' }}>Choisir une photo</span>
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0]
-              if (!file) return
-              setAvatarDataUrl(await fileToDataUrl(file))
-            }}
-          />
-        </label>
-        <p style={sectionLabelStyle}>{name}</p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-          {selected.map((f) => (
-            <div key={f.userId} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface)', borderRadius: 999, padding: '4px 10px 4px 4px' }}>
-              <Avatar userId={f.userId} name={f.name} size={22} />
-              <span style={{ fontSize: 12, color: 'var(--text)' }}>{f.name}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <Button variant="secondary" onClick={() => setStep(1)} size="sm" style={{ borderRadius: 999 }}>
-            Retour
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => onCreate(name, [...memberIds], avatarDataUrl)}
-            size="sm"
-            style={{ borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
-          >
-            Créer le groupe
-          </Button>
-        </div>
-      </ModalShell>
-    )
-  }
-
-  return (
-    <ModalShell title="Nouveau groupe" onClose={onClose} wide>
-      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du groupe" style={inputStyle} autoFocus />
-      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} />
-      <div style={{ maxHeight: 220, overflowY: 'auto', marginBottom: 14 }}>
-        {filtered.map((f) => (
-          <Checkbox
-            key={f.userId}
-            checked={memberIds.has(f.userId)}
-            onChange={() => toggleMember(f.userId)}
-            style={{ ...rowButtonStyle, cursor: 'pointer' }}
-            label={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Avatar userId={f.userId} name={f.name} size={32} />
-                <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{f.name}</span>
-              </span>
-            }
-          />
-        ))}
-        {filtered.length === 0 && friends.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-            <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Tu n&apos;as pas encore d&apos;amis. Ajoute-en pour pouvoir créer un groupe.</p>
-            <Button variant="secondary" onClick={onGoToFriends} size="sm" style={{ borderRadius: 999 }}>
-              Ajouter un ami
-            </Button>
-          </div>
-        )}
-        {filtered.length === 0 && friends.length > 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
-      </div>
-      <ModalActions onCancel={onClose} onConfirm={() => setStep(2)} confirmLabel="Suivant" disabled={!name.trim() || memberIds.size === 0} />
-    </ModalShell>
-  )
-}
-
-function FriendsPanel({
-  received,
-  sent,
-  friends,
-  newFriendIds,
-  onDismissNew,
-  onAction,
-  onSend,
-  onRemove,
-  onClose,
-}: {
-  received: FriendRequestView[]
-  sent: SentFriendRequestView[]
-  friends: FriendView[]
-  newFriendIds: Set<string>
-  onDismissNew: (userId: string) => void
-  onAction: (requestId: string, action: 'accept' | 'decline' | 'cancel') => void
-  onSend: (email: string) => Promise<boolean>
-  onRemove: (friendUserId: string, name: string) => void
-  onClose: () => void
-}) {
-  const [email, setEmail] = useState('')
-  return (
-    <ModalShell title="Amis" onClose={onClose} wide>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email d'un ami" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-        <Button
-          variant="secondary"
-          onClick={() => {
-            const trimmed = email.trim()
-            if (trimmed) {
-              onSend(trimmed).then((success) => {
-                if (success) setEmail('')
-              })
-            }
-          }}
-          size="sm"
-          style={{ borderRadius: 999 }}
-        >
-          Envoyer
-        </Button>
-      </div>
-
-      {received.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <p style={sectionLabelStyle}>Demandes reçues</p>
-          {received.map((r) => (
-            <div key={r.id} style={rowStyle}>
-              <span style={{ fontSize: 13, color: 'var(--text)' }}>{r.fromName}</span>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <Button variant="secondary" onClick={() => onAction(r.id, 'accept')} size="sm" style={{ borderRadius: 999 }}>
-                  Accepter
-                </Button>
-                <Button variant="danger" onClick={() => onAction(r.id, 'decline')} size="sm" style={{ borderRadius: 999 }}>
-                  Refuser
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {sent.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <p style={sectionLabelStyle}>Demandes envoyées</p>
-          {sent.map((r) => (
-            <div key={r.id} style={rowStyle}>
-              <span style={{ fontSize: 13, color: 'var(--text)' }}>{r.toName}</span>
-              <Button variant="secondary" onClick={() => onAction(r.id, 'cancel')} size="sm" style={{ borderRadius: 999 }}>
-                Annuler
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div>
-        <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
-        {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
-        {friends.map((f) => (
-          <div key={f.userId} style={rowStyle}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>
-              {f.name}
-              {newFriendIds.has(f.userId) && (
-                <Button
-                  variant="secondary"
-                  onClick={() => onDismissNew(f.userId)}
-                  title="Marquer comme vu"
-                  style={{
-                    fontSize: 10,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    color: 'var(--teal)',
-                    background: 'rgba(184, 243, 74,0.12)',
-                    border: '1px solid rgba(184, 243, 74,0.35)',
-                    borderRadius: 999,
-                    padding: '2px 8px',
-                  }}
-                >
-                  Nouveau
-                </Button>
-              )}
-            </span>
-            <Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>
-              Retirer
-            </Button>
-          </div>
-        ))}
-      </div>
-    </ModalShell>
-  )
-}
-
-function GroupSettingsModal({
-  conversation,
-  currentUserId,
-  friends,
-  addMemberSearch,
-  onAddMemberSearchChange,
-  onAddMember,
-  onRemoveMember,
-  onSetRole,
-  onOpenMuteDialog,
-  onClearMute,
-  onRename,
-  onUploadAvatar,
-  groupAvatarInputRef,
-  onLeave,
-  onDelete,
-  onClose,
-}: {
-  conversation: ConversationView
-  currentUserId: string
-  friends: FriendView[]
-  addMemberSearch: string
-  onAddMemberSearchChange: (value: string) => void
-  onAddMember: (userId: string) => void
-  onRemoveMember: (userId: string, name: string) => void
-  onSetRole: (userId: string, role: 'admin' | 'member') => void
-  onOpenMuteDialog: (userId: string, name: string) => void
-  onClearMute: (userId: string) => void
-  onRename: (name: string) => void
-  onUploadAvatar: (file: File) => void
-  groupAvatarInputRef: React.RefObject<HTMLInputElement | null>
-  onLeave: () => void
-  onDelete: () => void
-  onClose: () => void
-}) {
-  const [name, setName] = useState(conversation.name || '')
-  const [showAddMember, setShowAddMember] = useState(false)
-  const isAdmin = conversation.members.find((m) => m.userId === currentUserId)?.role === 'admin'
-  const memberIds = new Set(conversation.members.map((m) => m.userId))
-  const addableFriends = friends.filter((f) => !memberIds.has(f.userId) && f.name.toLowerCase().includes(addMemberSearch.trim().toLowerCase()))
-
-  return (
-    <ModalShell title="Groupe" onClose={onClose} wide>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <label style={{ cursor: isAdmin ? 'pointer' : 'default' }}>
-          <GroupAvatar conv={conversation} size={52} />
-          {isAdmin && (
-            <input
-              ref={groupAvatarInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) onUploadAvatar(file)
-                e.target.value = ''
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
-        </label>
-        {isAdmin ? (
-          <div style={{ flex: 1, display: 'flex', gap: 8 }}>
-            <Input value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginBottom: 0, flex: 1 }} />
-            <Button
-              variant="secondary"
-              onClick={() => name.trim() && name.trim() !== conversation.name && onRename(name.trim())}
-              size="sm"
-              style={{ borderRadius: 999 }}
-            >
-              Renommer
-            </Button>
-          </div>
-        ) : (
-          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{conversation.name}</p>
-        )}
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <p style={{ ...sectionLabelStyle, margin: 0 }}>Membres ({conversation.members.length})</p>
-        {isAdmin && (
-          <Button variant="secondary" onClick={() => setShowAddMember((v) => !v)} size="sm" style={{ borderRadius: 999 }}>
-            + Ajouter
-          </Button>
-        )}
-      </div>
-
-      {showAddMember && (
-        <div style={{ marginBottom: 12, background: 'var(--surface)', borderRadius: 10, padding: 10 }}>
-          <Input value={addMemberSearch} onChange={(e) => onAddMemberSearchChange(e.target.value)} placeholder="Rechercher un ami…" style={{ ...inputStyle, marginBottom: 8 }} />
-          <div style={{ maxHeight: 140, overflowY: 'auto' }}>
-            {addableFriends.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami à ajouter.</p>}
-            {addableFriends.map((f) => (
-              <Button key={f.userId} variant="ghost" onClick={() => onAddMember(f.userId)} style={{ ...rowButtonStyle, fontWeight: 400 }}>
-                <Avatar userId={f.userId} name={f.name} size={28} />
-                <span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginBottom: 18 }}>
-        {conversation.members.map((m) => (
-          <div key={m.userId} style={rowStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-              <Avatar userId={m.userId} name={m.name} size={30} />
-              <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {m.name}
-                {m.role === 'admin' && <em style={{ color: 'var(--gold)', fontStyle: 'normal', fontSize: 11 }}> · admin</em>}
-                {m.muteUntilAt !== undefined && <em style={{ color: 'var(--pink)', fontStyle: 'normal', fontSize: 11 }}> · en sourdine</em>}
-              </span>
-            </div>
-            {isAdmin && m.userId !== currentUserId && (
-              <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                {m.role !== 'admin' && (
-                  <>
-                    {m.muteUntilAt !== undefined ? (
-                      <Button variant="secondary" onClick={() => onClearMute(m.userId)} size="sm" style={{ borderRadius: 999 }}>
-                        Réactiver
-                      </Button>
-                    ) : (
-                      <Button variant="secondary" onClick={() => onOpenMuteDialog(m.userId, m.name)} size="sm" style={{ borderRadius: 999 }}>
-                        Sourdine
-                      </Button>
-                    )}
-                  </>
-                )}
-                <Button variant="secondary" onClick={() => onSetRole(m.userId, m.role === 'admin' ? 'member' : 'admin')} size="sm" style={{ borderRadius: 999 }}>
-                  {m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}
-                </Button>
-                <Button variant="danger" onClick={() => onRemoveMember(m.userId, m.name)} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
-                  Retirer
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="secondary" onClick={onLeave} size="sm" style={{ borderRadius: 999 }}>
-          Quitter le groupe
-        </Button>
-        {isAdmin && (
-          <Button variant="danger" onClick={onDelete} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
-            Supprimer le groupe
-          </Button>
-        )}
-      </div>
-    </ModalShell>
-  )
-}
-
-function MuteMemberModal({ name, onApply, onClose }: { name: string; onApply: (durationMs: number | null) => void; onClose: () => void }) {
-  const [durationMs, setDurationMs] = useState<number | null>(GROUP_MUTE_DURATIONS[1].ms)
-  return (
-    <ModalShell title={`Mettre ${name} en sourdine`} onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-        {GROUP_MUTE_DURATIONS.map((d) => (
-          <Radio
-            key={d.id}
-            name="mute-duration"
-            checked={durationMs === d.ms}
-            onChange={() => setDurationMs(d.ms)}
-            label={<span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{d.label}</span>}
-          />
-        ))}
-      </div>
-      <ModalActions onCancel={onClose} onConfirm={() => onApply(durationMs)} confirmLabel="Mettre en sourdine" />
-    </ModalShell>
-  )
-}
-
-function ContactPanelModal({
-  conversationId,
-  member,
-  online,
-  lastSeenAt,
-  isFriend,
-  isBlocked,
-  onClearHistory,
-  onRemoveFriend,
-  onBlock,
-  onUnblock,
-  onReport,
-  onClose,
-}: {
-  conversationId: string
-  member: ConversationMember
-  online?: boolean
-  lastSeenAt: string | null
-  isFriend: boolean
-  isBlocked: boolean
-  onClearHistory: () => void
-  onRemoveFriend: () => void
-  onBlock: () => void
-  onUnblock: () => void
-  onReport: () => void
-  onClose: () => void
-}) {
-  const [phone, setPhone] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    apiFetch<{ phone: string | null }>(`/api/conversations/${conversationId}/contact-phone`).then((res) => {
-      if (!cancelled && res.ok) setPhone(res.data.phone)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [conversationId])
-
-  return (
-    <ModalShell title="Contact" onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <Avatar userId={member.userId} name={member.name} size={64} online={online} showOnline />
-        <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>
-        <p style={{ fontSize: 12, color: online ? '#22c55e' : 'var(--text-faint)', margin: 0 }}>
-          {online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}
-        </p>
-        {phone && (
-          <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>
-            {phone}
-          </a>
-        )}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Button variant="secondary" onClick={onClearHistory} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>
-          Vider l&apos;historique
-        </Button>
-        {isFriend && (
-          <Button variant="secondary" onClick={onRemoveFriend} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>
-            Retirer des amis
-          </Button>
-        )}
-        {isBlocked ? (
-          <Button variant="secondary" onClick={onUnblock} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>
-            Débloquer
-          </Button>
-        ) : (
-          <Button variant="danger" onClick={onBlock} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
-            Bloquer
-          </Button>
-        )}
-        <Button variant="danger" onClick={onReport} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
-          Signaler
-        </Button>
-      </div>
-    </ModalShell>
-  )
-}
-
-function StarredModal({
-  messages,
-  currentUserId,
-  onJumpTo,
-  onUnstar,
-  onClose,
-}: {
-  messages: MessageView[]
-  currentUserId: string
-  onJumpTo: (conversationId: string) => void
-  onUnstar: (messageId: string) => void
-  onClose: () => void
-}) {
-  return (
-    <ModalShell title="Messages importants" onClose={onClose} wide>
-      {messages.length === 0 && (
-        <MessagingEmptyState icon={<Star size={32} />} title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
-      )}
-      {messages.map((m) => (
-        <div key={m.id} style={rowStyle}>
-          <Button variant="ghost" onClick={() => onJumpTo(m.conversationId)} style={{ textAlign: 'left', flex: 1, minWidth: 0, fontWeight: 400, display: 'block', padding: 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: m.senderId === currentUserId ? 'var(--teal)' : 'var(--text-muted)', margin: 0 }}>{m.senderName}</p>
-            <p style={{ fontSize: 13, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {m.content || messageTypeLabel(m.type)}
-            </p>
-          </Button>
-          <Button variant="secondary" onClick={() => onUnstar(m.id)} size="sm" style={{ borderRadius: 999 }}>
-            Retirer
-          </Button>
-        </div>
-      ))}
-    </ModalShell>
-  )
-}
-
-interface EventSearchResult {
-  id: string
-  name: string
-  date: string
-  city: string | null
-  image: string | null
-}
-
-// "Partager un événement" (attach menu) → deux actions possibles par
-// résultat : partage direct (message 'event', EventCard cliquable — voir
-// handleShareEvent) ou sondage "On y va ?" (kind:'event_poll' via POST
-// /api/conversations/[id]/polls, handleCreateEventPoll). Dans les deux cas,
-// lib/server/{messaging,polls}.ts recharge l'Event complet depuis Mongo,
-// jamais depuis ce qui est affiché ici. Recherche débouncée sur GET
-// /api/events/search.
-function EventPickerModal({
-  onShare,
-  onPoll,
-  onClose,
-}: {
-  onShare: (eventId: string) => void
-  onPoll: (eventId: string) => void
-  onClose: () => void
-}) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<EventSearchResult[]>([])
-  const [searching, setSearching] = useState(false)
-  const trimmedQuery = query.trim()
-
-  useEffect(() => {
-    // Rien à chercher pour une requête vide — les résultats affichés sont de
-    // toute façon dérivés de trimmedQuery ci-dessous, jamais rendus quand
-    // elle est vide (évite un setState synchrone dans le corps de l'effet).
-    if (!trimmedQuery) return
-    const timer = setTimeout(async () => {
-      setSearching(true)
-      const res = await apiFetch<{ events: EventSearchResult[] }>(`/api/events/search?q=${encodeURIComponent(trimmedQuery)}`)
-      setSearching(false)
-      if (res.ok) setResults(res.data.events)
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [trimmedQuery])
-
-  const visibleResults = trimmedQuery ? results : []
-
-  return (
-    <ModalShell title="Partager un événement" onClose={onClose} wide>
-      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un événement…" style={inputStyle} autoFocus />
-      {searching && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 8px' }}>Recherche…</p>}
-      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-        {!searching && trimmedQuery && visibleResults.length === 0 && (
-          <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun événement trouvé.</p>
-        )}
-        {visibleResults.map((ev) => (
-          <div key={ev.id} style={{ ...rowButtonStyle, alignItems: 'center', display: 'flex', gap: 10 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)' }}>
-              {ev.image && (
-                <NextImage src={ev.image} alt="" width={44} height={44} style={{ objectFit: 'cover' }} />
-              )}
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {ev.name}
-              </p>
-              <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>{[ev.date, ev.city].filter(Boolean).join(' · ')}</p>
-            </div>
-            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <Button variant="secondary" size="sm" onClick={() => onShare(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                Partager
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => onPoll(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                Sondage
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </ModalShell>
-  )
-}
-
-// ─────────────────────────────────── styles partagés ──────────────────────────
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  borderRadius: 14,
-  border: '1px solid rgba(255,255,255,.12)',
-  background: 'rgba(118,118,128,.16)',
-  color: 'var(--text)',
-  fontSize: 14,
-  marginBottom: 10,
-  fontFamily: 'inherit',
-}
-
-const fullRowButtonStyle: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: 10,
-  border: '1px solid var(--border-strong)',
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: 'pointer',
-  textAlign: 'left',
-}
-
-const rowStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '7px 0',
-  borderBottom: '1px solid var(--border)',
-  gap: 8,
-}
-
-const rowButtonStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  width: '100%',
-  textAlign: 'left',
-  padding: '7px 4px',
-  border: 'none',
-  background: 'transparent',
-  cursor: 'pointer',
-}
-
-const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 650,
-  color: 'var(--text-faint)',
-  letterSpacing: '-0.01em',
-  fontFamily: 'var(--font-interface), sans-serif',
-  margin: '0 0 8px',
 }

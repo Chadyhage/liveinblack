@@ -91,22 +91,12 @@ function DiscArt({ size, imgSrc, bgPosition, filter, spinning, ring }: { size: n
   )
 }
 
-// Le lecteur d'ambiance flotte sur toutes les pages authentifiées, sauf celles
-// qui prennent tout l'écran (chat plein écran, scanner caméra) — même logique
-// que HIDE_ON dans le legacy MusicPlayer.jsx / MusicPlayerGate d'App.jsx.
-const HIDE_ON = ['/messages', '/scanner']
-
-// Masqué sur les pages « vitrine » publiques (landing anonyme, prestataires,
-// organisateurs, à propos, connexion, inscriptions) : ces pages ont leur
-// propre univers marketing et le disque flottait par-dessus le contenu.
-// Port fidèle de MusicPlayerGate.onPublicShowcase dans le legacy App.jsx —
-// /accueil (non connecté) → /home, /prestataires → /providers,
-// /organisateurs → /organizers, /c-est-quoi → /about, /connexion → /login,
-// /inscription-organisateur|prestataire → /organizer-signup, /provider-signup.
-// Le layout public (public)/layout.tsx ne sert que les visiteurs anonymes
-// (cf. commentaire de (public)/home/page.tsx), donc pas besoin de re-vérifier
-// `user` ici comme le fait legacy pour /accueil.
-const HIDE_ON_PUBLIC_SHOWCASE = ['/providers', '/organizers', '/about', '/login', '/organizer-signup', '/provider-signup']
+// Passe UX 2026-08-20 : le lecteur flottant surchargeait les espaces privés
+// (capture client sur /notifications) et entrait en concurrence avec des
+// éléments déjà présents dans la navigation. On le réserve désormais à la
+// page d'accueil publique, où l'ambiance fait partie de l'expérience,
+// au lieu de le laisser suivre le visiteur partout.
+const SHOW_ON_PUBLIC_PATHS = ['/home']
 
 const SEEN_KEY = 'lib_ambiance_seen'
 interface SearchResult {
@@ -187,9 +177,8 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
     return () => document.removeEventListener('keydown', h)
   }, [open])
 
-  if (HIDE_ON.some((p) => pathname?.startsWith(p))) return null
   if (publicMode) return null
-  if (HIDE_ON_PUBLIC_SHOWCASE.some((p) => pathname?.startsWith(p))) return null
+  if (!SHOW_ON_PUBLIC_PATHS.some((p) => pathname === p || pathname?.startsWith(`${p}/`))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]
   const accent = 'var(--primary)'

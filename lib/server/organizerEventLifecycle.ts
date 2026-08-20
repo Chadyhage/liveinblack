@@ -21,21 +21,15 @@ import { notifyScheduleChange } from './organizerFollowNotifications'
 import { notifyUserById } from './emails/notify'
 import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from './emails'
 import { fmtMoney } from '../shared/money'
-import type { OrderDoc } from '../models/Order'
 import { revalidateTag } from 'next/cache'
+import {
+  buildRefundWindowCloseDate,
+  grossRefundMajor,
+  isPastOrInvalidEventDate,
+  resolveRefundWindowDays,
+} from './organizerEventLifecycleUtils'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
-
-// Montant remboursé = prix du billet + précommandes, HORS frais de service
-// (jamais remboursés, cf. CGU §05) — même formule que refundStripeOrder/
-// recordFedapayRefund, dupliquée ici uniquement pour l'AFFICHAGE dans
-// l'email (ces fonctions ne retournent pas le montant, juste { ok }).
-function grossRefundMajor(order: Pick<OrderDoc, 'isTable' | 'qty' | 'unitPriceMinor' | 'preorders' | 'currency'>): number {
-  const seatCount = order.isTable ? 1 : order.qty
-  const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
-  const grossMinor = Math.max(0, order.unitPriceMinor * seatCount + preorderTotal)
-  return grossMinor / (order.currency === 'XOF' ? 1 : 100)
-}
 
 // Port des flux "annuler" / "reporter" / "supprimer" de
 // src/pages/MesEvenementsPage.jsx (#7 phase organisateur). Seul le
@@ -176,8 +170,6 @@ export interface PostponeInput {
 
 export type PostponeEventResult = ErrResult | { ok: true }
 
-const DEFAULT_REFUND_WINDOW_DAYS = 7
-
 // Les billets/QR déjà émis restent valables tels quels — aucun remboursement
 // automatique, aucune modification de billet : le contrôle d'entrée
 // (isEventEnded) relit `Event.date`/`time` en direct, donc reporter prolonge
@@ -193,8 +185,7 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled' }
   if (!input.date?.trim()) return { ok: false, status: 400, error: 'date_required' }
   const nextTime = input.time?.trim() || '00:00'
-  const nextDateTime = new Date(`${input.date.trim()}T${nextTime}`)
-  if (Number.isNaN(nextDateTime.getTime()) || nextDateTime.getTime() <= Date.now()) return { ok: false, status: 400, error: 'date_in_past' }
+  if (isPastOrInvalidEventDate(input.date, input.time, Date.now())) return { ok: false, status: 400, error: 'date_in_past' }
   if (input.date.trim() === event.date && nextTime === (event.time || '00:00')) return { ok: false, status: 409, error: 'same_date' }
 
   // Ne garde que la date/heure D'ORIGINE (premier report) — un second report
@@ -202,8 +193,8 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   if (!event.postponedFrom) {
     event.postponedFrom = { date: event.date, time: event.time }
   }
-  const windowDays = input.refundWindowDays && input.refundWindowDays > 0 ? input.refundWindowDays : DEFAULT_REFUND_WINDOW_DAYS
-  event.refundWindowClosesAt = new Date(Date.now() + windowDays * 24 * 60 * 60 * 1000)
+  const windowDays = resolveRefundWindowDays(input.refundWindowDays)
+  event.refundWindowClosesAt = buildRefundWindowCloseDate(Date.now(), windowDays)
   const previousWhen = [event.date, event.time].filter(Boolean).join(' · ')
   event.date = input.date
   if (input.time?.trim()) event.time = input.time

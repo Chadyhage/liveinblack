@@ -2,8 +2,7 @@
 // conversation ajoutées en #50 (fidélité legacy MessagingPage.jsx) :
 // édition, suppression (moi/tous), marquage important, transfert, épingle/
 // masquage/sourdine PERSONNELS de conversation, indicateur de frappe.
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import mongoose from 'mongoose'
+import { describe, it, expect } from 'vitest'
 import {
   createDirectConversation,
   sendMessage,
@@ -25,43 +24,17 @@ import {
   listMyConversations,
   getMessages,
 } from '../messaging'
+import { createPoll, voteOnPoll } from '../polls'
 import { createGroup, muteMember } from '../groups'
 import Conversation from '../../models/Conversation'
 import Message from '../../models/Message'
 import User from '../../models/User'
 import Report from '../../models/Report'
+import { RUN_INTEGRATION, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
-const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
-const TEST_URI = process.env.MONGODB_URI || ''
 
-beforeAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connect(TEST_URI)
-}, 20000)
-
-afterAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connection.dropDatabase()
-  await mongoose.disconnect()
-})
-
-beforeEach(async () => {
-  if (!RUN_INTEGRATION) return
-  await Promise.all([Conversation.deleteMany({}), Message.deleteMany({}), User.deleteMany({}), Report.deleteMany({})])
-})
-
-async function seedUser(overrides: Record<string, unknown> = {}) {
-  return User.create({
-    email: `user-${Math.random().toString(36).slice(2)}@test.com`,
-    passwordHash: 'x',
-    firstName: 'Prenom',
-    lastName: 'Nom',
-    roles: ['client'],
-    activeRole: 'client',
-    ...overrides,
-  })
-}
+setupMongoIntegrationSuite([Conversation, Message, User, Report])
 
 describeIntegration('messaging actions (intégration, vraie base) — #50', () => {
   describe('editMessage', () => {
@@ -244,6 +217,56 @@ describeIntegration('messaging actions (intégration, vraie base) — #50', () =
       expect(fwd.messages[0].forwardedFrom?.senderName).toBe('Alice A')
     })
 
+    it('transfère un sondage en réinitialisant les votes de la conversation source', async () => {
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const b = await seedUser({ firstName: 'Bob', lastName: 'B' })
+      const c = await seedUser({ firstName: 'Charly', lastName: 'C' })
+      const convAB = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      const convAC = await createDirectConversation({ id: a.id }, { otherUserId: c.id })
+      if (!convAB.ok || !convAC.ok) throw new Error('setup failed')
+
+      const created = await createPoll({ id: a.id }, { conversationId: convAB.conversation.id, question: 'On commande quoi ?', options: ['Pizza', 'Burger'] })
+      expect(created.ok).toBe(true)
+      if (!created.ok) return
+
+      const voteA = await voteOnPoll({ id: a.id }, { messageId: created.message.id, optionId: '0' })
+      expect(voteA.ok).toBe(true)
+      const voteB = await voteOnPoll({ id: b.id }, { messageId: created.message.id, optionId: '1' })
+      expect(voteB.ok).toBe(true)
+
+      const fwd = await forwardMessage({ id: a.id }, { messageId: created.message.id, toConversationIds: [convAC.conversation.id] })
+      expect(fwd.ok).toBe(true)
+      if (!fwd.ok) return
+      expect(fwd.messages).toHaveLength(1)
+      expect(fwd.messages[0].type).toBe('poll')
+      expect(fwd.messages[0].content).toBeNull()
+      expect(fwd.messages[0].poll?.question).toBe('On commande quoi ?')
+      expect(fwd.messages[0].poll?.options).toEqual([
+        { id: '0', text: 'Pizza', voterIds: [] },
+        { id: '1', text: 'Burger', voterIds: [] },
+      ])
+
+      const sourceMessages = await getMessages({ id: a.id }, { conversationId: convAB.conversation.id })
+      expect(sourceMessages.ok).toBe(true)
+      if (!sourceMessages.ok) return
+      expect(sourceMessages.messages).toHaveLength(1)
+      expect(sourceMessages.messages[0].poll?.options).toEqual([
+        { id: '0', text: 'Pizza', voterIds: [a.id] },
+        { id: '1', text: 'Burger', voterIds: [b.id] },
+      ])
+
+      const targetMessages = await getMessages({ id: a.id }, { conversationId: convAC.conversation.id })
+      expect(targetMessages.ok).toBe(true)
+      if (!targetMessages.ok) return
+      expect(targetMessages.messages).toHaveLength(1)
+      expect(targetMessages.messages[0].poll?.options).toEqual([
+        { id: '0', text: 'Pizza', voterIds: [] },
+        { id: '1', text: 'Burger', voterIds: [] },
+      ])
+      expect(targetMessages.messages[0].forwardedFrom?.senderName).toBe('Alice A')
+      expect(targetMessages.messages[0].forwardedFrom?.convName).toBe('Bob B')
+    })
+
     it("ignore silencieusement une conversation cible où l'appelant n'est pas participant", async () => {
       const a = await seedUser()
       const b = await seedUser()
@@ -302,6 +325,36 @@ describeIntegration('messaging actions (intégration, vraie base) — #50', () =
       expect(listB.ok && listB.conversations).toHaveLength(1)
     })
 
+    it("une conversation masquée reste masquée même si l'autre participant envoie un nouveau message", async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      if (!conv.ok) throw new Error('setup failed')
+
+      const hide = await hideConversationForMe({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(hide.ok).toBe(true)
+
+      const sent = await sendMessage({ id: b.id }, { conversationId: conv.conversation.id, type: 'text', content: 'nouveau message' })
+      expect(sent.ok).toBe(true)
+
+      const listA = await listMyConversations({ id: a.id })
+      expect(listA.ok).toBe(true)
+      if (!listA.ok) return
+      expect(listA.conversations).toHaveLength(0)
+
+      const listB = await listMyConversations({ id: b.id })
+      expect(listB.ok).toBe(true)
+      if (!listB.ok) return
+      expect(listB.conversations).toHaveLength(1)
+      expect(listB.conversations[0].lastMessage).toBe('nouveau message')
+
+      const messagesA = await getMessages({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(messagesA.ok).toBe(true)
+      if (!messagesA.ok) return
+      expect(messagesA.messages).toHaveLength(1)
+      expect(messagesA.messages[0].content).toBe('nouveau message')
+    })
+
     it('couper les notifications marque mutedForMe SANS affecter la sourdine de groupe (envoi toujours possible)', async () => {
       const a = await seedUser()
       const b = await seedUser()
@@ -337,6 +390,37 @@ describeIntegration('messaging actions (intégration, vraie base) — #50', () =
       expect(aMessages.ok && aMessages.messages).toHaveLength(0)
       const bMessages = await getMessages({ id: b.id }, { conversationId: conv.conversation.id })
       expect(bMessages.ok && bMessages.messages).toHaveLength(2)
+    })
+
+    it("vider l'historique ne masque PAS les nouveaux messages reçus ensuite", async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      if (!conv.ok) throw new Error('setup failed')
+      await sendMessage({ id: a.id }, { conversationId: conv.conversation.id, type: 'text', content: 'ancien a' })
+      await sendMessage({ id: b.id }, { conversationId: conv.conversation.id, type: 'text', content: 'ancien b' })
+
+      const cleared = await clearHistoryForMe({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(cleared.ok).toBe(true)
+
+      const afterClear = await getMessages({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(afterClear.ok).toBe(true)
+      if (!afterClear.ok) return
+      expect(afterClear.messages).toEqual([])
+
+      const fresh = await sendMessage({ id: b.id }, { conversationId: conv.conversation.id, type: 'text', content: 'nouveau après nettoyage' })
+      expect(fresh.ok).toBe(true)
+
+      const aMessages = await getMessages({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(aMessages.ok).toBe(true)
+      if (!aMessages.ok) return
+      expect(aMessages.messages).toHaveLength(1)
+      expect(aMessages.messages[0].content).toBe('nouveau après nettoyage')
+
+      const bMessages = await getMessages({ id: b.id }, { conversationId: conv.conversation.id })
+      expect(bMessages.ok).toBe(true)
+      if (!bMessages.ok) return
+      expect(bMessages.messages.map((message) => message.content)).toEqual(['ancien a', 'ancien b', 'nouveau après nettoyage'])
     })
   })
 

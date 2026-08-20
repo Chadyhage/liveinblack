@@ -2,41 +2,18 @@
 // in-app (voir lib/models/Notification.ts / lib/server/notifications.ts) —
 // couvre create/list/markRead/markAllRead, le plafond 50/utilisateur, et
 // l'anti-spam par conversation de upsertMessageNotification.
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import mongoose from 'mongoose'
+import { describe, it, expect } from 'vitest'
 import { createNotification, upsertMessageNotification, listNotifications, unreadCount, markRead, markAllRead } from '../notifications'
 import Notification from '../../models/Notification'
 import User from '../../models/User'
+import { RUN_INTEGRATION, seedUser as seedUserDocument, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
-const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
-const TEST_URI = process.env.MONGODB_URI || ''
 
-beforeAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connect(TEST_URI)
-}, 20000)
-
-afterAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connection.dropDatabase()
-  await mongoose.disconnect()
-})
-
-beforeEach(async () => {
-  if (!RUN_INTEGRATION) return
-  await Promise.all([Notification.deleteMany({}), User.deleteMany({})])
-})
+setupMongoIntegrationSuite([Notification, User])
 
 async function seedUser() {
-  const user = await User.create({
-    email: `user-${Math.random().toString(36).slice(2)}@test.com`,
-    passwordHash: 'x',
-    firstName: 'Prenom',
-    lastName: 'Nom',
-    roles: ['client'],
-    activeRole: 'client',
-  })
+  const user = await seedUserDocument()
   return String(user._id)
 }
 

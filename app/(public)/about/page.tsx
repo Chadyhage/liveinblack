@@ -16,7 +16,7 @@ export default function PublicAboutPage() {
   return (
     <PageShell style={{ maxWidth: 'none', padding: 0 }}>
       <div className={styles.page}>
-      <section className={styles.hero} style={{ maxWidth: 820, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
+      <section className={styles.hero} style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
         <p style={{ fontSize: 24, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
           L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
         </p>
@@ -25,14 +25,14 @@ export default function PublicAboutPage() {
           <br />
           <span style={{ color: 'var(--teal)' }}>au même endroit.</span>
         </h1>
-        <p style={{ fontSize: 'clamp(15px,4vw,18px)', color: 'var(--text-muted)', margin: '20px auto 0', maxWidth: 600, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 'clamp(15px,4vw,18px)', color: 'var(--text-muted)', margin: '20px auto 0', maxWidth: 760, lineHeight: 1.6 }}>
           Live in Black est la marketplace de la nuit et de l&apos;événementiel. On réunit ceux qui font la fête, ceux qui l&apos;organisent et ceux qui la rendent
           inoubliable — sur une seule plateforme, simple et sécurisée.
         </p>
       </section>
 
       <Section eyebrow="La promesse" title="La fête, sans les frictions">
-        <p style={{ fontSize: 'clamp(15px,4vw,18px)', color: 'var(--text-muted)', lineHeight: 1.7, textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
+        <p style={{ fontSize: 'clamp(15px,4vw,18px)', color: 'var(--text-muted)', lineHeight: 1.7, textAlign: 'center', maxWidth: 820, margin: '0 auto' }}>
           Trouver la bonne soirée, réserver sans stress, garder son billet dans sa poche, contacter un DJ ou une salle en un message : tout devrait être simple.
           Live in Black enlève les frictions entre l&apos;envie de sortir et le moment où la musique démarre.
         </p>
@@ -74,9 +74,9 @@ export default function PublicAboutPage() {
       </Section>
 
       <section className={styles.ctaWrap} style={{ padding: '20px 22px 0' }}>
-          <div className={styles.cta} style={{ maxWidth: 820, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
+          <div className={styles.cta} style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,40px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
-          <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 500, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 720, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
@@ -92,7 +92,7 @@ export default function PublicAboutPage() {
 
 function Section({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
-    <section className={styles.section} style={{ padding: 'clamp(42px, 5vw, 56px) clamp(10px, 1.5vw, 24px)', maxWidth: 1400, margin: '0 auto' }}>
+    <section className={styles.section} style={{ padding: 'clamp(42px, 5vw, 56px) clamp(10px, 1.5vw, 24px)', maxWidth: 1560, margin: '0 auto' }}>
       <SectionHeader eyebrow={eyebrow} title={title} align="center" level={2} />
       {children}
     </section>

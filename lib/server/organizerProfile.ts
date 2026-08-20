@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import { getDb } from '../db/mongoose'
-import OrganizerProfile, { type OrganizerProfileDoc } from '../models/OrganizerProfile'
+import OrganizerProfile from '../models/OrganizerProfile'
 import Application from '../models/Application'
 import User from '../models/User'
 import Event from '../models/Event'
@@ -8,9 +8,10 @@ import { IMAGE_MIME_TYPES, VIDEO_MIME_TYPES, uploadDataUri } from './cloudinary'
 import { verifyPublicMediaUploadReference } from './publicMediaUpload'
 import type { PublicMediaUploadReference } from '../shared/publicMediaUploads'
 import { slugifyOrganizer, validateOrganizerSlugFormat, RESERVED_ORGANIZER_SLUGS } from '../shared/organizerProfileValidation'
-import { normalizeRegionId, normalizeRegionIds } from '../shared/locations'
-import { SOCIAL_NETWORKS, type SocialNetworkKey } from '../shared/social'
+import { normalizeRegionId } from '../shared/locations'
+import type { SocialNetworkKey } from '../shared/social'
 import { revalidateTag } from 'next/cache'
+import { reorderOrganizerMediaList, resolveOrganizerZones, toOrganizerProfileView, type OrganizerProfileView } from './organizerProfileUtils'
 
 // Port de la partie ÉCRITURE de OrganizerPublicStudio.jsx (#7 phase
 // organisateur — "Ma page publique"). La lecture publique vit déjà dans
@@ -30,77 +31,6 @@ export interface ProfileCaller {
 }
 
 type ErrResult = { ok: false; status: number; error: string }
-
-export interface OrganizerProfileView {
-  publicName: string
-  slug: string
-  city: string
-  country: string
-  regionId: string
-  shortDescription: string
-  socialLinks: Record<SocialNetworkKey, string>
-  zonesIntervention: string[]
-  avatarUrl: string | null
-  bannerUrl: string | null
-  status: string
-  isVerified: boolean
-  followersCount: number
-  totalEventsCount: number
-  viewsCount: number
-  media: Array<{
-    id: string
-    url: string
-    type: string
-    title: string
-    description: string
-    eventId: string | null
-    visibility: string
-    displayOrder: number
-  }>
-}
-
-// `profile.socialLinks` est un SOUS-DOCUMENT Mongoose (pas un objet simple) —
-// le retourner tel quel (comme le faisait une version antérieure de cette
-// fonction) expose une référence circulaire ($__parent) qui fait planter la
-// sérialisation React Server Components ("Maximum call stack size exceeded")
-// dès que ce profil atteint un composant client. Reconstruit champ par champ,
-// exactement comme `media` ci-dessous.
-function toSocialLinks(links: unknown): Record<SocialNetworkKey, string> {
-  const source = (links ?? {}) as Partial<Record<SocialNetworkKey, string>>
-  const result = {} as Record<SocialNetworkKey, string>
-  for (const net of SOCIAL_NETWORKS) result[net.key] = source[net.key] ?? ''
-  return result
-}
-
-function toProfileView(profile: OrganizerProfileDoc): OrganizerProfileView {
-  return {
-    publicName: profile.publicName,
-    slug: profile.slug,
-    city: profile.city ?? '',
-    country: profile.country ?? '',
-    regionId: profile.regionId ?? '',
-    shortDescription: profile.shortDescription ?? '',
-    socialLinks: toSocialLinks(profile.socialLinks),
-    zonesIntervention: [...(profile.zonesIntervention ?? [])],
-    avatarUrl: profile.avatarUrl ?? null,
-    bannerUrl: profile.bannerUrl ?? null,
-    status: profile.status ?? 'draft',
-    isVerified: Boolean(profile.isVerified),
-    followersCount: profile.followersCount ?? 0,
-    totalEventsCount: profile.totalEventsCount ?? 0,
-    viewsCount: profile.viewsCount ?? 0,
-    media: (profile.media ?? []).map((m) => ({
-      id: m.id,
-      url: m.url,
-      type: m.type ?? 'image',
-      title: m.title ?? '',
-      description: m.description ?? '',
-      eventId: m.eventId ?? null,
-      visibility: m.visibility ?? 'public',
-      displayOrder: m.displayOrder ?? 0,
-    })),
-  }
-}
 
 function isDuplicateKeyError(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000
@@ -133,7 +63,7 @@ export async function getOrCreateMyOrganizerProfile(caller: ProfileCaller): Prom
   await getDb()
 
   const existing = await OrganizerProfile.findOne({ userId: caller.id })
-  if (existing) return { ok: true, profile: toProfileView(existing) }
+  if (existing) return { ok: true, profile: toOrganizerProfileView(existing) }
 
   const user = await User.findById(caller.id).lean()
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
@@ -163,7 +93,7 @@ export async function getOrCreateMyOrganizerProfile(caller: ProfileCaller): Prom
   })
   revalidateTag('public-organizers', 'default')
 
-  return { ok: true, profile: toProfileView(created) }
+  return { ok: true, profile: toOrganizerProfileView(created) }
 }
 
 // ──────────────────────────── updateOrganizerProfile ────────────────────────
@@ -217,10 +147,7 @@ export async function updateOrganizerProfile(caller: ProfileCaller, input: Updat
     // figée à l'onboarding, jamais recalculée ici). On garantit que regionId
     // reste toujours présent dans la liste, sinon un organisateur pourrait
     // « intervenir » partout sauf dans sa propre zone de facturation.
-    const zones = normalizeRegionIds(input.zonesIntervention)
-    profile.zonesIntervention = (
-      zones.includes('international') ? ['international'] : profile.regionId && !zones.includes(profile.regionId) ? [profile.regionId, ...zones] : zones
-    ) as typeof profile.zonesIntervention
+    profile.zonesIntervention = resolveOrganizerZones(profile.regionId, input.zonesIntervention) as typeof profile.zonesIntervention
   }
 
   if (input.shortDescription !== undefined) {
@@ -251,7 +178,7 @@ export async function updateOrganizerProfile(caller: ProfileCaller, input: Updat
   }
   revalidateTag('public-organizers', 'default')
 
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toOrganizerProfileView(profile) }
 }
 
 // ─────────────────────────── uploadOrganizerProfileMedia ────────────────────
@@ -278,11 +205,11 @@ export async function uploadOrganizerProfileMedia(caller: ProfileCaller, input: 
   let uploadedUrl: string
   let isVideo: boolean
   if (input.upload) {
-    const verified = await verifyPublicMediaUploadReference(input.upload, caller.id, 'organizer-gallery')
-    if (!verified.ok) return { ok: false, status: 400, error: 'invalid_media_upload' }
-    if (input.kind !== 'gallery' && verified.resourceType === 'video') {
+    if (input.kind !== 'gallery' && input.upload.resourceType === 'video') {
       return { ok: false, status: 400, error: 'invalid_media_type' }
     }
+    const verified = await verifyPublicMediaUploadReference(input.upload, caller.id, 'organizer-gallery')
+    if (!verified.ok) return { ok: false, status: 400, error: 'invalid_media_upload' }
     uploadedUrl = verified.url
     isVideo = verified.resourceType === 'video'
   } else if (input.dataUri) {
@@ -315,7 +242,7 @@ export async function uploadOrganizerProfileMedia(caller: ProfileCaller, input: 
 
   await profile.save()
   revalidateTag('public-organizers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toOrganizerProfileView(profile) }
 }
 
 // ──────────────────────────── updateOrganizerMediaItem ──────────────────────
@@ -343,7 +270,7 @@ export async function updateOrganizerMediaItem(caller: ProfileCaller, mediaId: s
 
   await profile.save()
   revalidateTag('public-organizers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toOrganizerProfileView(profile) }
 }
 
 // ─────────────────────────────── removeOrganizerMedia ───────────────────────
@@ -364,7 +291,7 @@ export async function removeOrganizerMedia(caller: ProfileCaller, mediaId: strin
 
   await profile.save()
   revalidateTag('public-organizers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toOrganizerProfileView(profile) }
 }
 
 // ─────────────────────────────── reorderOrganizerMedia ──────────────────────
@@ -378,18 +305,11 @@ export async function reorderOrganizerMedia(caller: ProfileCaller, order: string
   const profile = await OrganizerProfile.findOne({ userId: caller.id })
   if (!profile) return { ok: false, status: 404, error: 'profile_not_found' }
 
-  const byId = new Map(profile.media.map((m) => [m.id, m]))
-  if (order.length !== profile.media.length || order.some((id) => !byId.has(id))) {
-    return { ok: false, status: 400, error: 'invalid_order' }
-  }
-
-  const reordered = order.map((id) => byId.get(id)!)
-  reordered.forEach((m, i) => {
-    m.displayOrder = i
-  })
-  profile.media = reordered as typeof profile.media
+  const reordered = reorderOrganizerMediaList(profile.media as Array<(typeof profile.media)[number]>, order)
+  if (!reordered.ok) return { ok: false, status: 400, error: reordered.error }
+  profile.media = reordered.media as typeof profile.media
 
   await profile.save()
   revalidateTag('public-organizers', 'default')
-  return { ok: true, profile: toProfileView(profile) }
+  return { ok: true, profile: toOrganizerProfileView(profile) }
 }

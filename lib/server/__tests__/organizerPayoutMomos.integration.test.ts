@@ -138,4 +138,19 @@ describeIntegration('organizerPayoutMomos (intégration, vraie base) — numéro
     expect(envelope?.status).toBe('accumulating')
     expect(envelope?.momoCountry).toBe('bj')
   })
+
+  it('laisse en échec une enveloppe country_undetermined si aucun pays ne peut être déduit', async () => {
+    const userId = await seedUser()
+    const event = await Event.create({ name: 'Soirée Mystère', date: '2020-01-01', city: 'Atlantis', region: 'Unknown', organizerId: userId, createdBy: userId, places: [] })
+    await EventPayout.create({ eventId: String(event._id), sellerUid: userId, amountDueXOF: 9000, momoCountry: null, status: 'failed', failCode: 'country_undetermined' })
+
+    const result = await updatePayoutMomos({ id: userId }, { tg: '+228 90 00 00 00' })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.rearmedCount).toBe(0)
+
+    const envelope = await EventPayout.findOne({ eventId: String(event._id) }).lean()
+    expect(envelope?.status).toBe('failed')
+    expect(envelope?.failCode).toBe('country_undetermined')
+  })
 })

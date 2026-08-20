@@ -2,9 +2,7 @@ import { getDb } from '../db/mongoose'
 import User from '../models/User'
 import Event from '../models/Event'
 import EventPayout from '../models/EventPayout'
-import { validateMomoNumber } from '../shared/payoutMomoValidation'
-import { normalizeRegionId } from '../shared/locations'
-import { regions } from '../shared/regions'
+import { canRearmPayout, momosToRecord, sanitizePayoutMomos } from './organizerPayoutMomosUtils'
 
 // Port de src/components/MomoPayoutManager.jsx (numéros mobile money par pays
 // UEMOA, #7 phase organisateur) + de rearmFailedPayouts (lib/eventPayouts.js)
@@ -27,11 +25,6 @@ type ErrResult = { ok: false; status: number; error: string }
 
 export type ListPayoutMomosResult = ErrResult | { ok: true; momos: Record<string, string> }
 
-function momosToRecord(momos: unknown): Record<string, string> {
-  if (momos instanceof Map) return Object.fromEntries(momos)
-  return (momos as Record<string, string>) ?? {}
-}
-
 export async function listPayoutMomos(caller: PayoutMomoCaller): Promise<ListPayoutMomosResult> {
   await getDb()
   const user = await User.findById(caller.id).lean()
@@ -51,13 +44,9 @@ export async function updatePayoutMomos(caller: PayoutMomoCaller, momos: Record<
   const user = await User.findById(caller.id)
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
 
-  const clean: Record<string, string> = {}
-  for (const [momoCountry, raw] of Object.entries(momos)) {
-    if (!raw || !String(raw).trim()) continue
-    const result = validateMomoNumber(momoCountry, raw)
-    if (!result.ok) return { ok: false, status: 400, error: result.error }
-    clean[momoCountry] = result.number
-  }
+  const sanitized = sanitizePayoutMomos(momos)
+  if (!sanitized.ok) return { ok: false, status: 400, error: sanitized.error }
+  const clean = sanitized.momos
 
   user.payoutMomos = clean as unknown as typeof user.payoutMomos
   await user.save()
@@ -82,18 +71,11 @@ export async function rearmFailedPayouts(sellerUid: string | null = null): Promi
 
   let rearmed = 0
   for (const ep of candidates) {
-    if (ep.failCode !== 'no_momo_number' && ep.failCode !== 'country_undetermined') continue
-
     const event = await Event.findById(ep.eventId).lean()
-    if (!event || event.cancelled) continue // supprimé/annulé → pas de ré-arm
-
-    const regionId = normalizeRegionId(event.region)
-    const eventCountry = ep.momoCountry || regions.find((r) => r.id === regionId)?.momoCountry || null
-    if (!eventCountry) continue // toujours pas de pays déterminable → laisse en échec
 
     const seller = await User.findById(ep.sellerUid).lean()
-    const number = momosToRecord(seller?.payoutMomos)[eventCountry]
-    if (!number) continue // toujours pas de numéro pour ce pays → laisse en échec
+    const decision = canRearmPayout(ep, event, momosToRecord(seller?.payoutMomos))
+    if (!decision.ok) continue // cause toujours non levée → laisse en échec
 
     // Update mono-document atomique : ne repasse en 'accumulating' QUE si le
     // doc est encore 'failed' avec le MÊME failCode qu'à la lecture — une
@@ -101,7 +83,7 @@ export async function rearmFailedPayouts(sellerUid: string | null = null): Promi
     // écraser un 'paying'/'paid' déjà repris entre-temps.
     const claim = await EventPayout.findOneAndUpdate(
       { _id: ep._id, status: 'failed', failCode: ep.failCode },
-      { $set: { status: 'accumulating', failReason: null, failCode: null, momoCountry: eventCountry } }
+      { $set: { status: 'accumulating', failReason: null, failCode: null, momoCountry: decision.eventCountry } }
     )
     if (claim) rearmed++
   }

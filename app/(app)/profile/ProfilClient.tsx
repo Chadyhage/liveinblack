@@ -11,9 +11,9 @@ import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button, Input, Select, Switch, Badge, Label, Slider, Card, Accordion, ConfirmDialog, Modal } from '@/app/components/ui'
-import { stripDiacritics } from '@/lib/shared/diacritics'
 import overviewStyles from './ProfileOverview.module.css'
 import helpStyles from './HelpPanel.module.css'
+import { filterSettingEntries, normalizeSettingsQuery, settingsInitials, splitPhone } from './profileSettingsUtils'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -377,19 +377,6 @@ interface SettingEntry {
   render: (ctx: { user: ProfilUser; setUser: (u: ProfilUser) => void }) => React.ReactNode
 }
 
-function normalizeQuery(s: string): string {
-  return stripDiacritics(s)
-    .toLowerCase()
-    .trim()
-}
-
-function settingsInitials(value: string): string {
-  const parts = value.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-}
-
 export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (u: ProfilUser) => void; onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [activeGroup, setActiveGroup] = useState('profil')
@@ -408,9 +395,9 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
     []
   )
 
-  const q = normalizeQuery(query)
+  const q = normalizeSettingsQuery(query)
   const tokens = q.split(/\s+/).filter(Boolean)
-  const filtered = tokens.length === 0 ? entries : entries.filter((e) => tokens.every((t) => e.keywords.some((k) => normalizeQuery(k).includes(t)) || normalizeQuery(e.id).includes(t)))
+  const filtered = filterSettingEntries(entries, query)
   const settingGroups = [
     { id: 'profil', title: 'Profil et préférences', shortTitle: 'Profil', description: 'Identité, téléphone et goûts', ids: ['identite', 'goûts'], icon: UserRound, color: '#70b7ff' },
     { id: 'privacy', title: 'Confidentialité et données', shortTitle: 'Confidentialité', description: 'Visibilité, recommandations et export', ids: ['visibilite', 'confidentialite', 'mes donnees'], icon: ShieldCheck, color: '#70dac4' },
@@ -546,23 +533,6 @@ function PasswordField({
       </Button>
     </div>
   )
-}
-
-// Le téléphone est stocké côté serveur comme un seul champ combiné
-// (indicatif + numéro national, ex. "+33612345678", même forme que
-// l'inscription — voir AuthForm.tsx / lib/server/profile.ts:updatePhone).
-// Ce helper le rescinde pour préremplir le sélecteur d'indicatif + le champ
-// numéro à l'ouverture de la carte.
-function splitPhone(phone: string): { dialCode: string; number: string } {
-  if (!phone) return { dialCode: regions[0].dial, number: '' }
-  const match = [...regions].sort((a, b) => b.dial.length - a.dial.length).find((r) => phone.startsWith(r.dial))
-  if (!match) return { dialCode: regions[0].dial, number: phone.trim() }
-  // Le numéro brut stocké côté serveur peut contenir un espace juste après
-  // l'indicatif (ex. "+228 90 11 22 33") — sans trim ici, phoneChanged
-  // comparerait un phoneNumber initial non-trimmé à sa version trim()ée et ne
-  // serait jamais égal, laissant le bouton "Enregistrer le téléphone" actif
-  // dès le chargement de la page.
-  return { dialCode: match.dial, number: phone.slice(match.dial.length).trim() }
 }
 
 function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser) => void }) {

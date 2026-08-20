@@ -31,6 +31,12 @@ beforeEach(async () => {
 })
 
 describeIntegration('organizerBookings (intégration, vraie base) — détail des réservations (#7)', () => {
+  it('retourne event_not_found si l’événement demandé n’existe pas', async () => {
+    const result = await getEventBookings({ id: 'org-1' }, new mongoose.Types.ObjectId().toString())
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toBe('event_not_found')
+  })
+
   it('refuse un appelant qui ne possède pas l’événement', async () => {
     const mine = await createOrganizerEvent(
       { id: 'org-1' },
@@ -42,6 +48,35 @@ describeIntegration('organizerBookings (intégration, vraie base) — détail de
     const result = await getEventBookings({ id: 'intrus' }, mine.eventId)
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toBe('forbidden')
+  })
+
+  it('autorise aussi le créateur technique de l’événement quand il diffère de organizerId', async () => {
+    const mine = await createOrganizerEvent(
+      { id: 'org-1' },
+      'Organisateur Test',
+      { name: 'Soirée', date: '2030-01-01', city: 'Lomé', region: 'Togo', places: [{ id: '', type: 'Standard', price: 20, total: 100 }] }
+    )
+    if (!mine.ok) throw new Error('seed failed')
+    await Event.updateOne({ _id: mine.eventId }, { $set: { createdBy: 'staff-creator' } })
+
+    const buyer = await User.create({ email: `${new mongoose.Types.ObjectId().toString()}@test.com`, passwordHash: 'x', firstName: 'Ada', lastName: 'Lovelace' })
+    await Ticket.create({
+      ticketCode: 'CRBY001',
+      eventId: mine.eventId,
+      place: 'Standard',
+      placePrice: 20,
+      totalPrice: 20,
+      currency: 'XOF',
+      userId: String(buyer._id),
+      paid: true,
+      bookedAt: new Date(),
+    })
+
+    const result = await getEventBookings({ id: 'staff-creator' }, mine.eventId)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.view.ticketCount).toBe(1)
+    expect(result.view.tickets[0].buyerName).toBe('Ada Lovelace')
   })
 
   it('agrège le détail par billet, le résumé par place et les précommandes, en excluant les révoqués', async () => {
@@ -113,5 +148,70 @@ describeIntegration('organizerBookings (intégration, vraie base) — détail de
 
     const guestTicket = result.view.tickets.find((t) => t.ticketCode === 'TCK002')
     expect(guestTicket?.buyerName).toBe('Ami Invité')
+  })
+
+  it('ne casse pas si un billet porte un userId invalide et retombe sur buyerName null', async () => {
+    const mine = await createOrganizerEvent(
+      { id: 'org-1' },
+      'Organisateur Test',
+      { name: 'Soirée', date: '2030-01-01', city: 'Lomé', region: 'Togo', places: [{ id: '', type: 'VIP', price: 20, total: 100 }] }
+    )
+    if (!mine.ok) throw new Error('seed failed')
+
+    await Ticket.create({
+      ticketCode: 'BROKEN01',
+      eventId: mine.eventId,
+      place: 'VIP',
+      placePrice: 20,
+      totalPrice: 20,
+      currency: 'XOF',
+      userId: 'not-a-valid-object-id',
+      paid: true,
+      bookedAt: new Date(),
+    })
+
+    const result = await getEventBookings({ id: 'org-1' }, mine.eventId)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.view.ticketCount).toBe(1)
+    expect(result.view.tickets[0].buyerName).toBeNull()
+  })
+
+  it('applique les fallbacks métier sur la place Standard et les précommandes incomplètes', async () => {
+    const mine = await createOrganizerEvent(
+      { id: 'org-1' },
+      'Organisateur Test',
+      { name: 'Soirée', date: '2030-01-01', city: 'Lomé', region: 'Togo', places: [{ id: '', type: 'VIP', price: 20, total: 100 }] }
+    )
+    if (!mine.ok) throw new Error('seed failed')
+
+    const buyer = await User.create({ email: `${new mongoose.Types.ObjectId().toString()}@test.com`, passwordHash: 'x', firstName: 'Grace', lastName: 'Hopper' })
+    await Ticket.create({
+      ticketCode: 'STD001',
+      eventId: mine.eventId,
+      place: '',
+      placePrice: null,
+      totalPrice: null,
+      currency: 'XOF',
+      userId: String(buyer._id),
+      paid: true,
+      bookedAt: new Date(),
+      preorders: [{ name: 'Soft', qty: undefined, price: undefined }],
+    })
+
+    const result = await getEventBookings({ id: 'org-1' }, mine.eventId)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.view.summaryByPlace).toEqual([{ place: 'Standard', count: 1 }])
+    expect(result.view.preorderSummary).toEqual([{ name: 'Soft', qty: 1 }])
+    expect(result.view.tickets[0]).toMatchObject({
+      ticketCode: 'STD001',
+      place: 'Standard',
+      placePrice: 0,
+      totalPrice: 0,
+      buyerName: 'Grace Hopper',
+      preorders: [{ name: 'Soft', qty: 1, price: 0, showLabel: null, showInfo: null }],
+    })
   })
 })

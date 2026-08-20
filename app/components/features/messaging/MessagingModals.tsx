@@ -8,17 +8,17 @@ export function ModalShell({
   title,
   subtitle,
   onClose,
-  wide,
   children,
+  wide = false,
 }: {
   title: string
   subtitle?: string
   onClose: () => void
-  wide?: boolean
   children: ReactNode
+  wide?: boolean
 }) {
   return (
-    <Modal onClose={onClose} maxWidth={wide ? 520 : 390} zIndex={200} title={title} subtitle={subtitle}>
+    <Modal onClose={onClose} zIndex={200} title={title} subtitle={subtitle} maxWidth={wide ? 1440 : 1280}>
       {children}
     </Modal>
   )

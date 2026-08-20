@@ -122,6 +122,7 @@ input::placeholder,
 textarea::placeholder {
   color: rgba(255, 255, 255, 0.46);
   opacity: 1;
+  letter-spacing: 0;
 }
 
 :where(main, .lb-dashboard-main, .lb-page-shell) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']), textarea, select) {
@@ -135,7 +136,11 @@ textarea::placeholder {
 :where(main, .lb-dashboard-main, .lb-page-shell) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']), textarea, select)[style*='padding:8px'],
 :where(main, .lb-dashboard-main, .lb-page-shell) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']), textarea, select)[style*='padding:9px'],
 :where(main, .lb-dashboard-main, .lb-page-shell) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']), textarea, select)[style*='padding:10px'] {
-  padding: 13px 16px !important;
+  padding: 13px 18px !important;
+}
+
+:where(main, .lb-dashboard-main, .lb-page-shell) :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']), textarea, select)::placeholder {
+  transform: translateY(0.2px);
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -330,9 +335,9 @@ button:hover > .lb-card {
 
 .lb-dashboard-page {
   width: 100%;
-  max-width: 1600px;
+  max-width: none;
   min-height: calc(100vh - 170px);
-  margin: 0 auto;
+  margin: 0;
   padding: 0 0 72px;
 }
 

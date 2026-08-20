@@ -4,7 +4,13 @@
 // transactionnelle (conversation + messages, jamais l'un sans l'autre).
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
-import { createGroup, leaveGroup, deleteGroup, muteMember, unmuteMember } from '../groups'
+
+vi.mock('../cloudinary', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../cloudinary')>()),
+  uploadDataUri: vi.fn(async (_dataUri: string, folder: string) => ({ ok: true, url: `https://res.cloudinary.test/${folder}/mock.jpg` })),
+}))
+
+import { createGroup, leaveGroup, deleteGroup, muteMember, unmuteMember, setGroupAvatar } from '../groups'
 import Conversation from '../../models/Conversation'
 import Message from '../../models/Message'
 import User from '../../models/User'
@@ -482,6 +488,40 @@ describeIntegration('groups (intégration, vraie base) — cycle de vie des grou
       if (result.ok) return
       expect(result.status).toBe(400)
       expect(result.error).toBe('not_a_member')
+    })
+  })
+
+  describe('setGroupAvatar', () => {
+    it("l'admin peut définir un avatar de groupe, persisté sur la conversation", async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await seedGroup([
+        { userId: a.id, name: 'Alice A', role: 'admin' },
+        { userId: b.id, name: 'Bob B', role: 'member' },
+      ])
+
+      const result = await setGroupAvatar({ id: a.id }, { conversationId: conv.id, dataUri: 'data:image/jpeg;base64,AAA' })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.avatar).toContain(`groups/${conv.id}`)
+
+      const fresh = await Conversation.findById(conv.id).lean()
+      expect(fresh?.avatar).toContain('mock.jpg')
+    })
+
+    it("refuse un non-admin avec admin_only", async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const conv = await seedGroup([
+        { userId: a.id, name: 'Alice A', role: 'admin' },
+        { userId: b.id, name: 'Bob B', role: 'member' },
+      ])
+
+      const result = await setGroupAvatar({ id: b.id }, { conversationId: conv.id, dataUri: 'data:image/jpeg;base64,AAA' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.status).toBe(403)
+      expect(result.error).toBe('admin_only')
     })
   })
 

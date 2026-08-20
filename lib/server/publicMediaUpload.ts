@@ -79,9 +79,10 @@ function issueIntentToken(payload: UploadIntentPayload): string | null {
   return `${encoded}.${signTokenPayload(encoded, secret)}`
 }
 
-function readIntentToken(token: string): UploadIntentPayload | null {
+function readIntentToken(token: unknown): UploadIntentPayload | null {
   const secret = tokenSecret()
   if (!secret) return null
+  if (typeof token !== 'string' || !token) return null
   const [encoded, signature, extra] = token.split('.')
   if (!encoded || !signature || extra || !equalSecret(signature, signTokenPayload(encoded, secret))) return null
 

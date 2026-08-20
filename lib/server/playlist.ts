@@ -7,6 +7,15 @@ import EventPlaylist, { type EventPlaylistDoc, type PlaylistSong } from '../mode
 import Ticket from '../models/Ticket'
 import User from '../models/User'
 import { createNotification } from './notifications'
+import {
+  canModeratePlaylist,
+  countMySpentLikes,
+  formatDuration,
+  toSongView,
+  type PlaylistSongView,
+} from './playlistServerUtils'
+
+export { canModeratePlaylist } from './playlistServerUtils'
 
 // Port de src/components/PlaylistSystem.jsx + PlaylistDJPanel.jsx vers un
 // modèle serveur-only. Ferme l'audit H16 (firestore.rules:367-385 laissait
@@ -36,29 +45,6 @@ type ErrResult = { ok: false; status: number; error: string }
 
 export type StaffRoster = Record<string, { role: string }>
 
-// ─────────────────────────── canModeratePlaylist ────────────────────────────
-
-// Règle d'autorisation DJ, volontairement DIFFÉRENTE de l'échelle de rang de
-// lib/server/eventOrders.ts (resolveRank : manager:3, serveur:2, scan:1,
-// dj/absent:0 — pensée pour la commande sur place, pas pour la playlist).
-// Ici, on reprend exactement `canDJ = (role) => role === 'dj' || role ===
-// 'manager'` du legacy (PlaylistDJPanel.jsx) : propriétaire de l'événement OU
-// agent (bypass total, comme ticketCheckin.ts) OU rôle roster EXACTEMENT
-// 'dj' ou 'manager'. 'serveur' et 'scan' n'ont PAS la main sur la playlist,
-// contrairement à la commande sur place où ils ont rang ≥ 1.
-export function canModeratePlaylist(
-  callerId: string,
-  callerRoles: string[],
-  event: Pick<EventDoc, 'organizerId' | 'createdBy'>,
-  staffRoster: StaffRoster | undefined
-): boolean {
-  const isOwner = event.organizerId === callerId || event.createdBy === callerId
-  if (isOwner) return true
-  if (callerRoles.includes('agent')) return true
-  const role = staffRoster?.[callerId]?.role
-  return role === 'dj' || role === 'manager'
-}
-
 // ─────────────────────────── hasEventParticipation ──────────────────────────
 
 export interface EventParticipation {
@@ -81,32 +67,6 @@ export async function hasEventParticipation(callerId: string, eventId: string): 
 }
 
 // ──────────────────────────────── vues / utils ──────────────────────────────
-
-export interface PlaylistSongView {
-  id: string
-  title: string
-  artist: string
-  previewUrl: string | null
-  cover: string | null
-  addedBy: string
-  addedByName: string
-  likedBy: string[]
-  status: 'pending' | 'validated' | 'refused' | 'played'
-}
-
-function toSongView(song: PlaylistSong): PlaylistSongView {
-  return {
-    id: song.id,
-    title: song.title,
-    artist: song.artist ?? '',
-    previewUrl: song.previewUrl ?? null,
-    cover: song.cover ?? null,
-    addedBy: song.addedBy,
-    addedByName: song.addedByName ?? '',
-    likedBy: song.likedBy ?? [],
-    status: (song.status ?? 'pending') as PlaylistSongView['status'],
-  }
-}
 
 async function resolveCallerName(callerId: string): Promise<string> {
   const user = await User.findById(callerId).lean()
@@ -139,13 +99,6 @@ async function loadEventAndRoster(eventId: string): Promise<{ event: HydratedDoc
   return { event, roster }
 }
 
-function countMySpentLikes(songs: PlaylistSong[], callerId: string): number {
-  // EXCLUT les chansons refusées : c'est tout le mécanisme de remboursement
-  // (voir commentaire d'en-tête) — un like sur un son refusé n'est plus
-  // compté contre le budget, sans jamais toucher à `likedBy` lui-même.
-  return songs.filter((s) => s.status !== 'refused' && (s.likedBy ?? []).includes(callerId)).length
-}
-
 const LIKE_BUDGET = 5
 
 // ──────────────────────────────── searchSongs ───────────────────────────────
@@ -169,14 +122,6 @@ interface ItunesTrack {
 }
 interface ItunesSearchResponse {
   results?: ItunesTrack[]
-}
-
-// Mirrors formatMs/fmtMs (PlaylistSystem.jsx:9-13, PlaylistDJPanel.jsx:20) :
-// mm:ss dérivé de trackTimeMillis, chaîne vide si l'API iTunes ne le fournit pas.
-function formatDuration(ms: number | undefined): string {
-  if (!ms) return ''
-  const s = Math.floor(ms / 1000)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
 // Proxy serveur de l'iTunes Search API (le legacy l'appelait directement
@@ -378,7 +323,7 @@ export async function toggleLike(caller: PlaylistCaller, input: { eventId: strin
 
   const playlist = await EventPlaylist.findOne({ eventId }).lean()
   const song = playlist?.songs.find((s) => s.id === songId)
-  if (!playlist || !song) return { ok: false, status: 404, error: 'playlist_not_found' }
+  if (!playlist || !song) return { ok: false, status: 404, error: 'song_not_found' }
 
   if (song.addedBy === caller.id) return { ok: false, status: 400, error: 'cannot_like_own_song' }
 

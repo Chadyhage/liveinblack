@@ -37,7 +37,7 @@ export default function ConfirmDialog({
   confirmDisabled,
   confirmLoading,
   confirmLoadingText,
-  maxWidth = 390,
+  maxWidth = 760,
   zIndex,
 }: ConfirmDialogProps) {
   if (!open) return null

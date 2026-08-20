@@ -70,7 +70,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
               isAuthenticated={Boolean(session?.user)}
               appearance="outline"
             />
-            <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 420 }}>
+            <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 620 }}>
               En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux personnaliser tes alertes ou
               te désabonner à tout moment depuis{' '}
               <Link href="/profile/followed-organizers" style={{ color: 'var(--teal)' }}>

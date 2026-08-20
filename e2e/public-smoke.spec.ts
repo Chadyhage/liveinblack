@@ -4,8 +4,9 @@ test.describe('public smoke', () => {
   test('home renders primary navigation and headline', async ({ page }) => {
     await page.goto('/home')
 
-    await expect(page.getByRole('link', { name: /liveinblack/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /connexion/i })).toBeVisible()
+    const primaryNav = page.getByLabel('Navigation principale')
+    await expect(page.getByRole('banner').getByRole('link', { name: /liveinblack/i }).first()).toBeVisible()
+    await expect(primaryNav.getByRole('link', { name: /^connexion$/i })).toBeVisible()
     await expect(page.locator('main')).toBeVisible()
   })
 

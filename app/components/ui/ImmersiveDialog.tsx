@@ -24,7 +24,7 @@ export default function ImmersiveDialog({
   onClose,
   children,
   actions,
-  maxWidth = 980,
+  maxWidth = 1440,
   zIndex = 3000,
   media = false,
   dismissible = true,

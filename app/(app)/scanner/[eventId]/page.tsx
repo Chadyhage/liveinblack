@@ -7,7 +7,8 @@ import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import { getCallerEventRank } from '@/lib/server/eventOrders'
-import ScannerClient, { type MenuItemView } from './ScannerClient'
+import ScannerClient from './ScannerClient'
+import { type MenuItemView } from './scannerUtils'
 
 // Port de src/pages/ScannerPage.jsx (Server Component gate + composant
 // client, même architecture que app/(app)/commander/[eventId]/[ticketCode]/).
@@ -37,8 +38,9 @@ interface MenuItemDoc {
 
 function GateScreen({ title, message }: { title: string; message: string }) {
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
-      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+    <main style={{ minHeight: '100vh', width: '100%', padding: '32px clamp(18px, 3vw, 48px) 56px' }}>
+      <div style={{ width: '100%', maxWidth: 'none', minHeight: 'calc(100vh - 88px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
         <div
           style={{
             width: 72,
@@ -59,6 +61,7 @@ function GateScreen({ title, message }: { title: string; message: string }) {
         <Link href="/my-shifts" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Événements
         </Link>
+        </div>
       </div>
     </main>
   )

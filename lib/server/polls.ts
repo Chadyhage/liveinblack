@@ -4,7 +4,13 @@ import Message, { type MessageDoc } from '../models/Message'
 import Conversation, { type ConversationDoc } from '../models/Conversation'
 import Event from '../models/Event'
 import User from '../models/User'
-import { assertCanSendInConversation } from './messaging'
+import { assertCanSendInConversation, loadParticipantConversation } from './messaging'
+import {
+  toMessageView as toSharedMessageView,
+  type ConversationSource,
+  type MessageSource,
+  type MessageView,
+} from './messagingViews'
 
 // Sondages de conversation (poll + event_poll). Port de `voteOnPoll` /
 // création de sondage côté legacy (src/utils/messaging.js), avec UNE
@@ -49,91 +55,27 @@ export interface PollEventSnapshotView {
   image: string | null
 }
 
-export interface MessagePollView {
-  id: string
-  conversationId: string
-  senderId: string
-  senderName: string
-  type: 'poll' | 'event_poll'
-  // Forme complète, alignée sur MessageView (lib/server/messaging.ts) — le
-  // client (MessagesClient.tsx) ajoute directement la réponse de
-  // createPoll/createEventPoll à sa liste de messages typée MessageView[],
-  // sans repasser par getMessages. Une forme partielle ici (déjà rencontré :
-  // `reactions` manquant faisait planter MessageBubble sur
-  // `Object.keys(message.reactions)`) recasse ce même rendu.
-  content: string | null
-  poll: {
-    pollType: 'poll' | 'event_poll'
-    question: string
-    options: PollOptionView[]
-    event: PollEventSnapshotView | null
-  }
-  reactions: Record<string, string[]>
-  readBy: Record<string, string>
-  deletedForAll: boolean
-  pinned: boolean
-  replyToMessageId: string | null
-  createdAt: string
-  editedAt: string | null
-  starredByMe: boolean
-  forwardedFrom: { senderName: string; convName: string } | null
-  readStatus: 'sent' | 'read' | null
-}
+export type MessagePollView = MessageView
 
 type ErrResult = { ok: false; status: number; error: string }
+type ConversationPostGuardResult = ErrResult | { ok: true; conversation: HydratedDocument<ConversationDoc> }
 
 const MAX_QUESTION_LEN = 500
 const MIN_OPTIONS = 2
 const MAX_OPTIONS = 6
 const MAX_OPTION_LEN = 200
 
-function toMessageView(message: HydratedDocument<MessageDoc>): MessagePollView {
-  const poll = message.poll
-  if (!poll) throw new Error('toMessageView appelé sur un message sans poll')
-  return {
-    id: message.id as string,
-    conversationId: message.conversationId,
-    senderId: message.senderId,
-    senderName: message.senderName ?? '',
-    type: message.type as 'poll' | 'event_poll',
-    // Toujours null pour un message de type sondage — voir lib/models/Message.ts.
-    content: null,
-    poll: {
-      pollType: poll.pollType as 'poll' | 'event_poll',
-      question: poll.question,
-      options: poll.options.map((o) => ({ id: o.id, text: o.text, voterIds: [...(o.voterIds ?? [])] })),
-      event: poll.event
-        ? {
-            id: poll.event.id,
-            name: poll.event.name ?? '',
-            date: poll.event.date ?? '',
-            price: poll.event.price ?? 0,
-            currency: poll.event.currency ?? 'EUR',
-            image: poll.event.image ?? null,
-          }
-        : null,
-    },
-    // Message qui vient d'être créé : ces champs sont nécessairement à leur
-    // valeur par défaut, jamais renseignables à la création (voir
-    // lib/models/Message.ts) — pas besoin de relire le document pour ça.
-    reactions: {},
-    readBy: {},
-    deletedForAll: false,
-    pinned: false,
-    replyToMessageId: null,
-    createdAt: new Date(message.createdAt as unknown as string).toISOString(),
-    // Forme alignée sur messaging.ts:toMessageView (voir commentaire de
-    // MessagePollView ci-dessus) : un message qui vient d'être créé n'a
-    // jamais été édité, épinglé en favori, transféré, ni lu par personne
-    // d'autre — sauf `readStatus`, qui doit malgré tout valoir 'sent' (et non
-    // `null`/`undefined`) pour que le tick d'envoi s'affiche immédiatement
-    // côté expéditeur, sans attendre le prochain rafraîchissement 3s de
-    // getMessages().
-    editedAt: null,
-    starredByMe: false,
-    forwardedFrom: null,
-    readStatus: 'sent',
-  }
+function toCreatedPollMessageView(
+  message: HydratedDocument<MessageDoc>,
+  callerId: string,
+  conversation: { _id: unknown; type: 'direct' | 'group'; participantIds: string[]; createdAt: Date | string }
+): MessagePollView {
+  return toSharedMessageView(message.toObject({ flattenMaps: true }) as unknown as MessageSource, {
+    callerId,
+    conversation: conversation as ConversationSource,
+    // Message tout juste créé : personne n'a encore eu le temps de le lire.
+    readReceiptsAllowed: new Map(),
+  })
 }
 
 async function resolveSenderName(callerId: string): Promise<string> {
@@ -141,8 +83,6 @@ async function resolveSenderName(callerId: string): Promise<string> {
   if (!user) return ''
   return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email
 }
-
-type ConversationGuardResult = ErrResult | { ok: true; conversation: HydratedDocument<ConversationDoc> }
 
 // Précondition PARTAGÉE par createPoll/createEventPoll : la conversation
 // existe ET l'appelant en est participant. Un id malformé (pas un ObjectId
@@ -158,17 +98,11 @@ type ConversationGuardResult = ErrResult | { ok: true; conversation: HydratedDoc
 // corrigé ici : une vérification locale à polls.ts ne connaissait ni la
 // sourdine temporisée ni le blocage direct, un compte bloqué pouvait donc
 // créer/voter des sondages dans une conversation directe malgré le blocage).
-async function loadConversationForPost(callerId: string, conversationId: string): Promise<ConversationGuardResult> {
-  if (!conversationId || !mongoose.isValidObjectId(conversationId)) {
-    return { ok: false, status: 404, error: 'conversation_not_found' }
-  }
-  const conversation = await Conversation.findById(conversationId)
-  // 404 générique que la conversation n'existe pas ou que l'appelant n'en
-  // est pas participant : ne jamais laisser un non-participant distinguer
-  // les deux cas (il ne doit même pas apprendre que la conversation existe).
-  if (!conversation || !conversation.participantIds.includes(callerId)) {
-    return { ok: false, status: 404, error: 'conversation_not_found' }
-  }
+async function loadConversationForPost(callerId: string, conversationId: string): Promise<ConversationPostGuardResult> {
+  if (!conversationId) return { ok: false, status: 404, error: 'conversation_not_found' } as const
+  const conversationGuard = await loadParticipantConversation(conversationId, callerId)
+  if (!conversationGuard.ok) return conversationGuard
+  const conversation = conversationGuard.conversation
   const sendGuard = await assertCanSendInConversation(conversation, callerId)
   if (!sendGuard.ok) return sendGuard
   return { ok: true, conversation }
@@ -223,7 +157,7 @@ export async function createPoll(caller: PollCaller, input: CreatePollInput): Pr
   await getDb()
 
   const guard = await loadConversationForPost(caller.id, input.conversationId?.trim())
-  if (!guard.ok) return guard
+  if (!guard.ok) return { ok: false, status: guard.status, error: guard.error }
   const { conversation } = guard
 
   const questionResult = validateQuestion(input.question)
@@ -254,7 +188,15 @@ export async function createPoll(caller: PollCaller, input: CreatePollInput): Pr
   conversation.lastSenderId = caller.id
   await conversation.save()
 
-  return { ok: true, message: toMessageView(message) }
+  return {
+    ok: true,
+    message: toCreatedPollMessageView(message, caller.id, {
+      _id: conversation._id,
+      type: conversation.type,
+      participantIds: conversation.participantIds,
+      createdAt: conversation.createdAt,
+    }),
+  }
 }
 
 // ─────────────────────────────── createEventPoll ────────────────────────────
@@ -268,7 +210,7 @@ export async function createEventPoll(caller: PollCaller, input: CreateEventPoll
   await getDb()
 
   const guard = await loadConversationForPost(caller.id, input.conversationId?.trim())
-  if (!guard.ok) return guard
+  if (!guard.ok) return { ok: false, status: guard.status, error: guard.error }
   const { conversation } = guard
 
   const eventId = input.eventId?.trim()
@@ -320,7 +262,15 @@ export async function createEventPoll(caller: PollCaller, input: CreateEventPoll
   conversation.lastSenderId = caller.id
   await conversation.save()
 
-  return { ok: true, message: toMessageView(message) }
+  return {
+    ok: true,
+    message: toCreatedPollMessageView(message, caller.id, {
+      _id: conversation._id,
+      type: conversation.type,
+      participantIds: conversation.participantIds,
+      createdAt: conversation.createdAt,
+    }),
+  }
 }
 
 // ───────────────────────────────── voteOnPoll ───────────────────────────────

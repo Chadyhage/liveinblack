@@ -268,7 +268,7 @@ export default function PrestataireOnboardingWizard({
   if (submitted) {
     return (
       <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Card style={{ padding: 24, maxWidth: 420, textAlign: 'center' }}>
+        <Card style={{ padding: 24, width: '100%', maxWidth: 760, textAlign: 'center' }}>
           <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
@@ -288,7 +288,7 @@ export default function PrestataireOnboardingWizard({
 
   return (
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 1080, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Prestataire</h1>

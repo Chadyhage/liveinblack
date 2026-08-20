@@ -4,8 +4,7 @@
 // délibérés par rapport au legacy (C10 : appartenance vérifiée AVANT toute
 // lecture/écriture de messages ; validation réelle à l'envoi ; blocage
 // réellement appliqué côté serveur, y compris re-vérifié à l'envoi).
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
-import mongoose from 'mongoose'
+import { describe, it, expect, vi } from 'vitest'
 
 // Session mockée pour les tests de route ci-dessous (canOrderServices lit
 // activeRole/status depuis session.user) — voir mockSessionUser.
@@ -24,52 +23,22 @@ import {
   blockUser,
   unblockUser,
   reportUser,
+  listBlockedUsers,
+  listMyReports,
 } from '../messaging'
 import Conversation from '../../models/Conversation'
 import Message from '../../models/Message'
 import User from '../../models/User'
 import Report from '../../models/Report'
+import { fakeObjectId, RUN_INTEGRATION, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
-const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
-const TEST_URI = process.env.MONGODB_URI || ''
 
-beforeAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connect(TEST_URI)
-}, 20000)
-
-afterAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connection.dropDatabase()
-  await mongoose.disconnect()
+setupMongoIntegrationSuite([Conversation, Message, User, Report], {
+  beforeEachExtra: () => {
+    mockSessionUser = null
+  },
 })
-
-beforeEach(async () => {
-  if (!RUN_INTEGRATION) return
-  await Promise.all([Conversation.deleteMany({}), Message.deleteMany({}), User.deleteMany({}), Report.deleteMany({})])
-  mockSessionUser = null
-})
-
-// Toujours de VRAIS documents User Mongoose avec un VRAI ObjectId `.id` —
-// jamais une chaîne arbitraire (`Ticket.findById`/`User.findById` lèvent un
-// CastError sur une chaîne non-ObjectId, bug déjà rencontré plusieurs fois
-// dans cette migration).
-async function seedUser(overrides: Record<string, unknown> = {}) {
-  return User.create({
-    email: `user-${Math.random().toString(36).slice(2)}@test.com`,
-    passwordHash: 'x',
-    firstName: 'Prenom',
-    lastName: 'Nom',
-    roles: ['client'],
-    activeRole: 'client',
-    ...overrides,
-  })
-}
-
-function fakeObjectId(): string {
-  return new mongoose.Types.ObjectId().toString()
-}
 
 describeIntegration('messaging (intégration, vraie base) — cœur messagerie (#40)', () => {
   describe('createDirectConversation', () => {
@@ -754,6 +723,27 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       expect(result.status).toBe(404)
       expect(result.error).toBe('user_not_found')
     })
+
+    it('listBlockedUsers ne renvoie que les comptes bloqués de l’appelant, avec nom et email résolus', async () => {
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const b = await seedUser({ firstName: 'Bob', lastName: 'B' })
+      const c = await seedUser({ firstName: 'Charly', lastName: 'C' })
+
+      await blockUser({ id: a.id }, { targetUserId: b.id })
+      await blockUser({ id: c.id }, { targetUserId: b.id })
+
+      const blockedByA = await listBlockedUsers({ id: a.id })
+      expect(blockedByA.ok).toBe(true)
+      if (!blockedByA.ok) return
+      expect(blockedByA.blocked).toEqual([
+        expect.objectContaining({ userId: b.id, name: 'Bob B', email: b.email }),
+      ])
+
+      const blockedByB = await listBlockedUsers({ id: b.id })
+      expect(blockedByB.ok).toBe(true)
+      if (!blockedByB.ok) return
+      expect(blockedByB.blocked).toEqual([])
+    })
   })
 
   describe('reportUser', () => {
@@ -819,6 +809,25 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       if (result.ok) return
       expect(result.status).toBe(404)
       expect(result.error).toBe('user_not_found')
+    })
+
+    it('listMyReports ne renvoie que les signalements de l’appelant, triés du plus récent au plus ancien', async () => {
+      const a = await seedUser({ firstName: 'Alice', lastName: 'A' })
+      const b = await seedUser({ firstName: 'Bob', lastName: 'B' })
+      const c = await seedUser({ firstName: 'Charly', lastName: 'C' })
+
+      const first = await reportUser({ id: a.id }, { targetUserId: b.id, reason: 'Spam' })
+      expect(first.ok).toBe(true)
+      const second = await reportUser({ id: a.id }, { targetUserId: c.id, reason: 'Abus' })
+      expect(second.ok).toBe(true)
+      await reportUser({ id: b.id }, { targetUserId: c.id, reason: 'Autre auteur' })
+
+      const reports = await listMyReports({ id: a.id })
+      expect(reports.ok).toBe(true)
+      if (!reports.ok) return
+      expect(reports.reports).toHaveLength(2)
+      expect(reports.reports.map((report) => report.targetName)).toEqual(['Charly C', 'Bob B'])
+      expect(reports.reports.map((report) => report.reason)).toEqual(['Abus', 'Spam'])
     })
   })
 })

@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { minHeight: 46, padding: '11px 15px', fontSize: 15 } : { minHeight: 52, padding: '14px 17px', fontSize: 16 }
+  const sizeStyle = size === 'sm' ? { minHeight: 48, padding: '13px 20px', fontSize: 15 } : { minHeight: 54, padding: '16px 22px', fontSize: 16 }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>

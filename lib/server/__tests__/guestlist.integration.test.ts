@@ -71,6 +71,22 @@ describeIntegration('guestlist (intégration, vraie base) — invitations gratui
       expect(doc?.places[0].available).toBe(4) // 5 - 1
     })
 
+    it('refuse si le nom invité est vide', async () => {
+      const { eventId, placeId } = await seedEvent()
+      const result = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: '   ' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('guest_name_required')
+    })
+
+    it('refuse si la place demandée n’existe pas', async () => {
+      const { eventId } = await seedEvent()
+      const result = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId: 'missing-place', guestName: 'Ami Test' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('place_not_found')
+    })
+
     it('refuse quand la place est épuisée', async () => {
       const { eventId, placeId } = await seedEvent('org-1', 1)
       await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Premier' })
@@ -78,6 +94,16 @@ describeIntegration('guestlist (intégration, vraie base) — invitations gratui
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.error).toBe('sold_out')
+    })
+
+    it('refuse sur un événement annulé', async () => {
+      const { eventId, placeId } = await seedEvent()
+      await Event.updateOne({ _id: eventId }, { $set: { cancelled: true } })
+
+      const result = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Ami Test' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('event_cancelled')
     })
 
     it('un billet guestlist permet le check-in même sur une place payante (source, pas prix)', async () => {
@@ -92,6 +118,20 @@ describeIntegration('guestlist (intégration, vraie base) — invitations gratui
   })
 
   describe('removeGuestlistEntry', () => {
+    it("refuse le retrait pour quelqu'un d'autre que le propriétaire", async () => {
+      const { eventId, placeId } = await seedEvent()
+      const added = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Ami Test' })
+      if (!added.ok) throw new Error('setup failed')
+
+      const result = await removeGuestlistEntry({ id: 'intrus' }, { eventId, ticketCode: added.entry.ticketCode })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('forbidden')
+
+      const ticket = await Ticket.findOne({ ticketCode: added.entry.ticketCode }).lean()
+      expect(ticket?.revoked).toBe(false)
+    })
+
     it('recrédite le stock et révoque le billet', async () => {
       const { eventId, placeId } = await seedEvent()
       const added = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Ami Test' })
@@ -118,9 +158,43 @@ describeIntegration('guestlist (intégration, vraie base) — invitations gratui
       if (result.ok) return
       expect(result.error).toBe('already_checked_in')
     })
+
+    it('est idempotent si le billet guestlist est déjà révoqué', async () => {
+      const { eventId, placeId } = await seedEvent()
+      const added = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Ami Test' })
+      if (!added.ok) throw new Error('setup failed')
+
+      const first = await removeGuestlistEntry({ id: 'org-1' }, { eventId, ticketCode: added.entry.ticketCode })
+      const second = await removeGuestlistEntry({ id: 'org-1' }, { eventId, ticketCode: added.entry.ticketCode })
+      expect(first.ok).toBe(true)
+      expect(second.ok).toBe(true)
+
+      const doc = await Event.findById(eventId).lean()
+      expect(doc?.places[0].available).toBe(5)
+    })
+
+    it('normalise le ticketCode saisi avant de rechercher le billet guestlist', async () => {
+      const { eventId, placeId } = await seedEvent()
+      const added = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'Ami Test' })
+      if (!added.ok) throw new Error('setup failed')
+
+      const result = await removeGuestlistEntry({ id: 'org-1' }, { eventId, ticketCode: `  ${added.entry.ticketCode.toLowerCase()}  ` })
+      expect(result.ok).toBe(true)
+
+      const ticket = await Ticket.findOne({ ticketCode: added.entry.ticketCode }).lean()
+      expect(ticket?.revoked).toBe(true)
+    })
   })
 
   describe('listGuestlistEntries', () => {
+    it("refuse la liste pour quelqu'un d'autre que le propriétaire", async () => {
+      const { eventId } = await seedEvent()
+      const result = await listGuestlistEntries({ id: 'intrus' }, eventId)
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('forbidden')
+    })
+
     it('liste uniquement les invités actifs (pas les retirés)', async () => {
       const { eventId, placeId } = await seedEvent()
       const a = await addGuestlistEntry({ id: 'org-1' }, { eventId, placeId, guestName: 'A' })

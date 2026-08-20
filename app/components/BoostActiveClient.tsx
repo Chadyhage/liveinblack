@@ -92,7 +92,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
   return (
     <main className="lb-status-page" style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <style>{`@keyframes lib-boost-spin { to { transform: rotate(360deg) } }`}</style>
-      <Card style={{ ...CARD, padding: 32, maxWidth: 460, width: '100%', textAlign: 'center' }}>
+      <Card style={{ ...CARD, padding: 32, maxWidth: 760, width: '100%', textAlign: 'center' }}>
         {state === 'loading' && (
           <>
             <Mascot mood="sleeping" size={148} />

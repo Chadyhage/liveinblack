@@ -450,6 +450,40 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
         expect(overBudgetAgain.error).toBe('like_quota_exceeded')
       }
     })
+
+    it("renvoie 404 song_not_found pour un songId inexistant ou d'un autre événement", async () => {
+      const owner = await seedUser()
+      const event = await seedEvent(owner.id)
+      const author = await seedUser()
+      await seedCheckedInTicket(event.id, author.id)
+      const added = await addSong({ id: author.id, roles: ['client'] }, { eventId: event.id, title: 'Son A' })
+      expect(added.ok).toBe(true)
+      if (!added.ok) return
+
+      const liker = await seedUser()
+
+      const bogus = await toggleLike({ id: liker.id, roles: ['client'] }, { eventId: event.id, songId: 'does-not-exist' })
+      expect(bogus.ok).toBe(false)
+      if (!bogus.ok) {
+        expect(bogus.status).toBe(404)
+        expect(bogus.error).toBe('song_not_found')
+      }
+
+      const owner2 = await seedUser()
+      const event2 = await seedEvent(owner2.id)
+      const author2 = await seedUser()
+      await seedCheckedInTicket(event2.id, author2.id)
+      const otherSong = await addSong({ id: author2.id, roles: ['client'] }, { eventId: event2.id, title: 'Son B' })
+      expect(otherSong.ok).toBe(true)
+      if (!otherSong.ok) return
+
+      const crossEvent = await toggleLike({ id: liker.id, roles: ['client'] }, { eventId: event.id, songId: otherSong.song.id })
+      expect(crossEvent.ok).toBe(false)
+      if (!crossEvent.ok) {
+        expect(crossEvent.status).toBe(404)
+        expect(crossEvent.error).toBe('song_not_found')
+      }
+    })
   })
 
   // ───────────────── setSongStatus / removeSong / playNow / stopNow ──────────
@@ -534,6 +568,16 @@ describeIntegration('playlist (intégration, transaction réelle)', () => {
       if (result.ok) return
       expect(result.status).toBe(400)
       expect(result.error).toBe('invalid_status')
+    })
+
+    it("playNow renvoie 404 song_not_found pour un songId inexistant dans cet événement", async () => {
+      const { owner, event } = await seedModerationFixture()
+      const result = await playNow({ id: owner.id, roles: ['client'] }, { eventId: event.id, songId: 'does-not-exist' })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.status).toBe(404)
+        expect(result.error).toBe('song_not_found')
+      }
     })
 
     it("removeSong renvoie 404 song_not_found (PAS ok:true) quand songId n'existe pas dans CET événement — id d'un autre événement, ou déjà supprimé", async () => {

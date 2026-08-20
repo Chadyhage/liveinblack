@@ -28,7 +28,27 @@
 .drawerAccount { margin-bottom: 14px; padding: 4px 4px 14px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .publicLink { min-height: 46px; padding: 0 12px; display: flex; align-items: center; gap: 10px; border-radius: 12px; color: rgba(245,245,247,.58); font-size: 13px; font-weight: 600; text-decoration: none; }
 .mobileTrigger { display: none !important; }
-.workspace { grid-column: 2; position: relative; min-width: 0; padding: 34px clamp(12px,2vw,30px) 90px; }
+.workspace {
+  grid-column: 2;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 28px clamp(14px,2vw,30px) 72px;
+}
+.workspace > * {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin-inline: 0;
+}
+.workspace :global(.lb-dashboard-page),
+.workspace :global(.lb-page-shell) {
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
 .screenReaderTitle { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); border:0; white-space:nowrap; }
 .workspaceFull { height: 100dvh; padding: 0; overflow: hidden; }
 .drawer, .backdrop { display: none; }

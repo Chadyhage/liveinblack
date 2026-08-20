@@ -9,6 +9,16 @@ import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel
 import { ArrowLeft } from 'lucide-react'
 import { ActionLink, Button, Card, ConfirmDialog, Input, Mascot, Modal, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
+import {
+  bucketTicketGroups,
+  classifyTicketGroup,
+  countUpcomingSeats,
+  hoursRemainingLabel,
+  readDismissedTicketBanners,
+  toMajor,
+  visibleGroupTickets,
+  type GroupBucket,
+} from './ticketWalletUtils'
 
 const GROUP_PAGE_SIZE = 12
 
@@ -91,50 +101,16 @@ const RESELL_ERROR_LABELS: Record<string, string> = {
   group_not_fully_held_by_host: 'Impossible de revendre : au moins une place de ce groupe a déjà été attribuée à quelqu’un d’autre.',
 }
 
-function toMajor(minor: number, currency: string): number {
-  return currency === 'XOF' ? minor : minor / 100
-}
-
 function readDismissed(): Set<string> {
   if (typeof window === 'undefined') return new Set()
-  try {
-    return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]'))
-  } catch {
-    return new Set()
-  }
-}
-
-type GroupBucket = 'upcoming' | 'past' | 'cancelled'
-
-function classify(group: TicketWalletGroupView): GroupBucket {
-  if (group.event?.cancelled) return 'cancelled'
-  const dateStr = group.event?.date
-  if (!dateStr) return 'past'
-  const d = new Date(dateStr)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return d.getTime() < today.getTime() ? 'past' : 'upcoming'
+  return readDismissedTicketBanners(localStorage.getItem(DISMISSED_KEY))
 }
 
 
 export default function TicketWalletPanel({ groups, currentUserId }: { groups: TicketWalletGroupView[]; currentUserId: string }) {
-  const buckets = useMemo(() => {
-    const withBucket = groups.map((g) => ({ g, bucket: classify(g) }))
-    const rank: Record<GroupBucket, number> = { upcoming: 0, past: 1, cancelled: 2 }
-    withBucket.sort((a, b) => {
-      if (rank[a.bucket] !== rank[b.bucket]) return rank[a.bucket] - rank[b.bucket]
-      const da = a.g.event?.date ? new Date(a.g.event.date).getTime() : 0
-      const db = b.g.event?.date ? new Date(b.g.event.date).getTime() : 0
-      return a.bucket === 'upcoming' ? da - db : db - da
-    })
-    return {
-      upcoming: withBucket.filter((x) => x.bucket === 'upcoming').map((x) => x.g),
-      past: withBucket.filter((x) => x.bucket === 'past').map((x) => x.g),
-      cancelled: withBucket.filter((x) => x.bucket === 'cancelled').map((x) => x.g),
-    }
-  }, [groups])
+  const buckets = useMemo(() => bucketTicketGroups(groups), [groups])
 
-  const upcomingSeatCount = buckets.upcoming.reduce((sum, g) => sum + g.myTickets.length, 0)
+  const upcomingSeatCount = countUpcomingSeats(buckets.upcoming)
 
   return (
     <main className="lb-dashboard-page">
@@ -156,7 +132,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
 
         <header style={{ marginBottom: 8 }}>
           <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
-          <p style={{ maxWidth: 600, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
+          <p style={{ maxWidth: 760, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
         </header>
 
         <SeatHoldsPanel />
@@ -207,19 +183,6 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
       </div>
     </main>
   )
-}
-
-// Compte à rebours en heures/minutes (pas en jours — les fenêtres de hold
-// sont de 24h/72h, `countdownLabel` ci-dessus est conçu pour un compte à
-// rebours en JOURS avant un événement, pas adapté ici).
-function hoursRemainingLabel(expiresAtISO: string): string {
-  const ms = new Date(expiresAtISO).getTime() - Date.now()
-  if (ms <= 0) return 'Expiré'
-  const totalMinutes = Math.floor(ms / 60000)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  if (hours >= 1) return `${hours}h${minutes.toString().padStart(2, '0')} restantes`
-  return `${minutes} min restantes`
 }
 
 interface SeatHoldItem {
@@ -326,7 +289,7 @@ function Section({
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 420px), 1fr))', gap: 10, alignItems: 'start' }}>
         {pageItems.map((g) => (
-          <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classify(g)} />
+          <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
         ))}
       </div>
       <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={groups.length} pageSize={GROUP_PAGE_SIZE} />
@@ -385,7 +348,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
   // comme carte de billet séparée ici — il vit uniquement dans
   // TableHostPanel, pour empêcher l'hôte de scanner une invitation qu'il a
   // donnée.
-  const visibleTickets = group.myTickets.filter((t) => !(t.isHostSeat && t.assignedTo && t.assignedTo !== currentUserId))
+  const visibleTickets = visibleGroupTickets(group, currentUserId)
 
   function dismissBanner() {
     const next = new Set(dismissed)

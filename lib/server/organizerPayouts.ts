@@ -5,10 +5,15 @@ import SellerBalance from '../models/SellerBalance'
 import PayoutRequest from '../models/PayoutRequest'
 import stripe from './stripeClient'
 import { isStripeConnectCountry, resolveCountryISO } from '../shared/fees'
-import { safeInternalPath } from '../shared/safeNavigation'
+import {
+  buildConnectReturnUrls,
+  buildPayoutStatusView,
+  readManualPayoutAmounts,
+  resolveConnectReturnPath,
+  type PayoutStatusView,
+} from './organizerPayoutsUtils'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
-const CONNECT_RETURN_PATHS = new Set(['/my-events', '/organizer-studio'])
 
 // Port de la partie STRIPE CONNECT de api/connect.js + du panneau
 // PayoutPanel.jsx (#7 phase organisateur) — CÔTÉ ORGANISATEUR uniquement
@@ -36,15 +41,6 @@ export interface PayoutCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-export interface PayoutStatusView {
-  mode: 'connect' | 'manual' | 'none'
-  connected: boolean
-  chargesEnabled: boolean
-  country: string | null
-  amountDueCents: number
-  amountDueXOF: number
-}
-
 export type GetPayoutStatusResult = ErrResult | { ok: true; view: PayoutStatusView }
 
 export async function getPayoutStatus(caller: PayoutCaller): Promise<GetPayoutStatusResult> {
@@ -55,22 +51,9 @@ export async function getPayoutStatus(caller: PayoutCaller): Promise<GetPayoutSt
 
   const balance = await SellerBalance.findOne({ sellerUid: caller.id }).lean()
 
-  const connected = Boolean(user.stripeAccountId)
-  // Mode dérivé, jamais mis en cache : 'connect' si un compte existe déjà,
-  // sinon 'manual' si le pays connu est hors zone Stripe, sinon 'none' (pays
-  // pas encore résolu — l'onboarding le déterminera).
-  const mode: PayoutStatusView['mode'] = connected ? 'connect' : user.stripeCountry && !isStripeConnectCountry(user.stripeCountry) ? 'manual' : 'none'
-
   return {
     ok: true,
-    view: {
-      mode,
-      connected,
-      chargesEnabled: Boolean(user.stripeChargesEnabled),
-      country: user.stripeCountry ?? null,
-      amountDueCents: balance?.amountDueCents ?? 0,
-      amountDueXOF: balance?.amountDueXOF ?? 0,
-    },
+    view: buildPayoutStatusView(user, balance),
   }
 }
 
@@ -86,14 +69,8 @@ export async function startStripeConnectOnboarding(caller: PayoutCaller, input: 
   const user = await User.findById(caller.id)
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
 
-  const candidatePath = safeInternalPath(input.returnPath, '/my-events')
-  const returnPath = CONNECT_RETURN_PATHS.has(candidatePath) ? candidatePath : '/my-events'
-  const refreshUrl = new URL(returnPath, SITE)
-  refreshUrl.searchParams.set('connect', 'refresh')
-  const returnUrl = new URL(returnPath, SITE)
-  returnUrl.searchParams.set('connect', 'done')
-  const refresh_url = refreshUrl.toString()
-  const return_url = returnUrl.toString()
+  const returnPath = resolveConnectReturnPath(input.returnPath, '/my-events')
+  const { refresh_url, return_url } = buildConnectReturnUrls(SITE, returnPath)
 
   // Compte déjà existant → nouveau lien de reprise, jamais un second compte.
   if (user.stripeAccountId) {
@@ -160,8 +137,7 @@ export async function requestManualPayout(caller: PayoutCaller): Promise<Request
   await getDb()
 
   const balance = await SellerBalance.findOne({ sellerUid: caller.id }).lean()
-  const amountDueCents = balance?.amountDueCents ?? 0
-  const amountDueXOF = balance?.amountDueXOF ?? 0
+  const { amountDueCents, amountDueXOF } = readManualPayoutAmounts(balance)
   if (amountDueCents <= 0 && amountDueXOF <= 0) return { ok: false, status: 400, error: 'nothing_due' }
 
   const existing = await PayoutRequest.findOne({ sellerUid: caller.id, status: 'pending' }).lean()

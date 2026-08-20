@@ -2,12 +2,18 @@
 // (#7 phase organisateur — lib/server/organizerEvents.ts). Priorité donnée
 // aux règles de verrouillage post-vente RE-VÉRIFIÉES SERVEUR (jamais
 // seulement côté UI, cf. Gap #3/#4 du research) et à la propriété.
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
-import { createOrganizerEvent, updateOrganizerEvent, listMyOrganizerEvents, getMyOrganizerEventDetail, type EventFormInput, type PlaceInput } from '../organizerEvents'
+import { createOrganizerEvent, updateOrganizerEvent, listMyOrganizerEvents, getMyOrganizerEventDetail, sendEventRecapReminders, type EventFormInput, type PlaceInput } from '../organizerEvents'
 import Event from '../../models/Event'
 import Order from '../../models/Order'
 import Ticket from '../../models/Ticket'
+import EventStaff from '../../models/EventStaff'
+import { notifyUserById } from '../emails/notify'
+
+vi.mock('../emails/notify', () => ({
+  notifyUserById: vi.fn(async () => {}),
+}))
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -29,6 +35,8 @@ beforeEach(async () => {
   await Event.deleteMany({})
   await Order.deleteMany({})
   await Ticket.deleteMany({})
+  await EventStaff.deleteMany({})
+  vi.mocked(notifyUserById).mockClear()
 })
 
 // Simule une VRAIE vente : crée l'Order ET décrémente `available` sur la
@@ -298,6 +306,91 @@ describeIntegration('organizerEvents (intégration, vraie base) — CRUD événe
       expect(result.event.totalSold).toBe(4)
       expect(result.event.places[0].sold).toBe(4)
       expect(result.event.places[0].available).toBe(96)
+    })
+  })
+
+  describe('sendEventRecapReminders', () => {
+    it('envoie un seul rappel pour un événement dans la fenêtre 1-2 jours et marque recapEmailSentAt', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-08-20T12:00:00.000Z'))
+      try {
+        const event = await Event.create({
+          name: 'Soirée imminente',
+          date: '2026-08-22',
+          time: '12:00',
+          dateDisplay: 'SAM 22 AOÛT 2026',
+          createdBy: 'org-1',
+          organizerId: 'org-1',
+          currency: 'XOF',
+          recapEmailSentAt: null,
+          cancelled: false,
+          places: [],
+        })
+
+        await Ticket.create([
+          { ticketCode: 'R1', eventId: String(event._id), userId: 'buyer-1', paid: true, totalPrice: 20, placePrice: 20, currency: 'XOF', bookedAt: new Date() },
+          { ticketCode: 'R2', eventId: String(event._id), userId: 'buyer-2', paid: true, totalPrice: 20, placePrice: 20, currency: 'XOF', bookedAt: new Date() },
+        ])
+        await EventStaff.create({
+          eventId: String(event._id),
+          roster: {
+            a: { role: 'scan', addedBy: 'org-1', name: 'Scan A' },
+            b: { role: 'vendeur', addedBy: 'org-1', name: 'Vendeur B' },
+          },
+        })
+
+        const result = await sendEventRecapReminders()
+        expect(result.reminded).toBe(1)
+        expect(notifyUserById).toHaveBeenCalledTimes(1)
+
+        const fresh = await Event.findById(event._id).lean()
+        expect(fresh?.recapEmailSentAt).toBeTruthy()
+
+        const rerun = await sendEventRecapReminders()
+        expect(rerun.reminded).toBe(0)
+        expect(notifyUserById).toHaveBeenCalledTimes(1)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('ignore les événements hors fenêtre ou annulés', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-08-20T12:00:00.000Z'))
+      try {
+        await Event.create([
+          {
+            name: 'Trop tôt',
+            date: '2026-08-23',
+            time: '12:00',
+            dateDisplay: 'DIM 23 AOÛT 2026',
+            createdBy: 'org-1',
+            organizerId: 'org-1',
+            currency: 'XOF',
+            recapEmailSentAt: null,
+            cancelled: false,
+            places: [],
+          },
+          {
+            name: 'Annulé',
+            date: '2026-08-22',
+            time: '12:00',
+            dateDisplay: 'SAM 22 AOÛT 2026',
+            createdBy: 'org-1',
+            organizerId: 'org-1',
+            currency: 'XOF',
+            recapEmailSentAt: null,
+            cancelled: true,
+            places: [],
+          },
+        ])
+
+        const result = await sendEventRecapReminders()
+        expect(result.reminded).toBe(0)
+        expect(notifyUserById).not.toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
+      }
     })
   })
 })

@@ -41,7 +41,7 @@ function getPanelContentStyle(contentStyle: CSSProperties | undefined): CSSPrope
 export default function Modal({
   onClose,
   children,
-  maxWidth = 520,
+  maxWidth = 1280,
   hideClose,
   contentStyle,
   ariaLabel = 'Fenêtre de dialogue',

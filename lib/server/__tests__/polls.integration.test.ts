@@ -8,82 +8,24 @@
 //  - le CHEMIN PARTAGÉ poll/event_poll pour le vote (#42, cf. CLAUDE.md) ;
 //  - la CONCURRENCE réelle : le correctif du bug legacy "last-write-wins"
 //    via le pipeline d'agrégation atomique (voir lib/server/polls.ts).
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import mongoose from 'mongoose'
+import { describe, it, expect } from 'vitest'
 import { createPoll, createEventPoll, voteOnPoll } from '../polls'
 import Conversation from '../../models/Conversation'
 import Message from '../../models/Message'
 import Event from '../../models/Event'
 import User from '../../models/User'
+import { fakeObjectId, RUN_INTEGRATION, seedCatalogEvent, seedDirectConversation, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
-const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
-const TEST_URI = process.env.MONGODB_URI || ''
 
-beforeAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connect(TEST_URI)
-}, 20000)
-
-afterAll(async () => {
-  if (!RUN_INTEGRATION) return
-  await mongoose.connection.dropDatabase()
-  await mongoose.disconnect()
-})
-
-beforeEach(async () => {
-  if (!RUN_INTEGRATION) return
-  await Promise.all([Conversation.deleteMany({}), Message.deleteMany({}), Event.deleteMany({}), User.deleteMany({})])
-})
-
-// userId/participantIds doivent être de vrais ObjectId Mongo (comme en prod,
-// où ils viennent toujours de session.user.id = String(user._id)) — jamais
-// de chaînes arbitraires ('user-1') : Mongoose lève un CastError sur
-// User.findById avec une telle chaîne, et Conversation.findById(messageId)
-// se comporterait différemment d'un vrai id.
-async function seedUser(overrides: Record<string, unknown> = {}) {
-  return User.create({
-    email: `user-${Math.random().toString(36).slice(2)}@test.com`,
-    passwordHash: 'x',
-    firstName: 'Prenom',
-    lastName: 'Nom',
-    roles: ['client'],
-    activeRole: 'client',
-    ...overrides,
-  })
-}
-
-async function seedConversation(participantIds: string[], overrides: Record<string, unknown> = {}) {
-  return Conversation.create({
-    type: 'direct',
-    participantIds,
-    ...overrides,
-  })
-}
-
-async function seedEvent(overrides: Record<string, unknown> = {}) {
-  return Event.create({
-    name: 'Soirée Test XYZ',
-    date: '2099-06-15',
-    currency: 'EUR',
-    createdBy: 'organizer-1',
-    organizerId: 'organizer-1',
-    imageUrl: 'https://example.com/event.jpg',
-    places: [
-      { id: 'vip', type: 'VIP', price: 3000, available: 5, total: 5 },
-      { id: 'std', type: 'Standard', price: 1000, available: 20, total: 20 },
-      { id: 'tbl', type: 'Table', price: 2000, available: 3, total: 3 },
-    ],
-    ...overrides,
-  })
-}
+setupMongoIntegrationSuite([Conversation, Message, Event, User])
 
 describeIntegration('polls (intégration, mise à jour atomique) — poll + event_poll (#42)', () => {
   describe('createPoll', () => {
     it('crée un sondage et met à jour l’aperçu de conversation', async () => {
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id])
+      const conversation = await seedDirectConversation([alice.id, bob.id])
 
       const result = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: '  On sort où ce soir ?  ', options: ['Le Black', 'Le Rouge'] })
       expect(result.ok).toBe(true)
@@ -117,7 +59,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse une question vide après trim (question_required)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
 
       const result = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: '   ', options: ['A', 'B'] })
       expect(result.ok).toBe(false)
@@ -128,7 +70,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse une seule option (invalid_options)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
 
       const result = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Solo'] })
       expect(result.ok).toBe(false)
@@ -139,7 +81,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse sept options (invalid_options)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
 
       const result = await createPoll(
         { id: alice.id },
@@ -153,7 +95,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse deux options identiques après trim + minuscule (invalid_options)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
 
       const result = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Le Black', '  LE BLACK  '] })
       expect(result.ok).toBe(false)
@@ -165,7 +107,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it("refuse un appelant qui n'est pas participant (conversation_not_found)", async () => {
       const alice = await seedUser()
       const outsider = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
 
       const result = await createPoll({ id: outsider.id }, { conversationId: conversation.id, question: 'Q ?', options: ['A', 'B'] })
       expect(result.ok).toBe(false)
@@ -177,7 +119,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it('refuse un participant muet dans un groupe (muted)', async () => {
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id], { type: 'group', name: 'Groupe Test', mutedUserIds: [bob.id] })
+      const conversation = await seedDirectConversation([alice.id, bob.id], { type: 'group', name: 'Groupe Test', mutedUserIds: [bob.id] })
 
       const result = await createPoll({ id: bob.id }, { conversationId: conversation.id, question: 'Q ?', options: ['A', 'B'] })
       expect(result.ok).toBe(false)
@@ -194,7 +136,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       const alice = await seedUser()
       const bob = await seedUser()
       await User.updateOne({ _id: alice.id }, { $addToSet: { blockedUserIds: bob.id } })
-      const conversation = await seedConversation([alice.id, bob.id])
+      const conversation = await seedDirectConversation([alice.id, bob.id])
 
       const result = await createPoll({ id: bob.id }, { conversationId: conversation.id, question: 'Q ?', options: ['A', 'B'] })
       expect(result.ok).toBe(false)
@@ -208,8 +150,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it("crée un sondage-événement avec un snapshot fidèle à l'Event chargé serveur", async () => {
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id])
-      const event = await seedEvent()
+      const conversation = await seedDirectConversation([alice.id, bob.id])
+      const event = await seedCatalogEvent()
 
       // Le contrat de createEventPoll n'accepte que {conversationId, eventId}
       // — on force ici un input avec des champs événement supplémentaires
@@ -248,8 +190,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse un eventId inexistant (event_not_found)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
-      const bogusId = new mongoose.Types.ObjectId().toString()
+      const conversation = await seedDirectConversation([alice.id])
+      const bogusId = fakeObjectId()
 
       const result = await createEventPoll({ id: alice.id }, { conversationId: conversation.id, eventId: bogusId })
       expect(result.ok).toBe(false)
@@ -261,8 +203,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it("refuse un appelant qui n'est pas participant (conversation_not_found)", async () => {
       const alice = await seedUser()
       const outsider = await seedUser()
-      const conversation = await seedConversation([alice.id])
-      const event = await seedEvent()
+      const conversation = await seedDirectConversation([alice.id])
+      const event = await seedCatalogEvent()
 
       const result = await createEventPoll({ id: outsider.id }, { conversationId: conversation.id, eventId: event.id })
       expect(result.ok).toBe(false)
@@ -275,8 +217,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       const alice = await seedUser()
       const bob = await seedUser()
       await User.updateOne({ _id: alice.id }, { $addToSet: { blockedUserIds: bob.id } })
-      const conversation = await seedConversation([alice.id, bob.id])
-      const event = await seedEvent()
+      const conversation = await seedDirectConversation([alice.id, bob.id])
+      const event = await seedCatalogEvent()
 
       const result = await createEventPoll({ id: bob.id }, { conversationId: conversation.id, eventId: event.id })
       expect(result.ok).toBe(false)
@@ -290,7 +232,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it('premier vote enregistré, puis un vote pour une AUTRE option retire le premier', async () => {
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id])
+      const conversation = await seedDirectConversation([alice.id, bob.id])
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -314,7 +256,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('revoter pour la MÊME option bascule le vote (retrait, pas un doublon)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -334,7 +276,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse un optionId invalide SANS muter le sondage (invalid_option)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -353,7 +295,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it("refuse un non-participant SANS enregistrer aucun vote (poll_not_found)", async () => {
       const alice = await seedUser()
       const outsider = await seedUser()
-      const conversation = await seedConversation([alice.id])
+      const conversation = await seedDirectConversation([alice.id])
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -375,7 +317,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       // Le groupe est créé SANS bob dans mutedUserIds, pour que la création
       // du sondage par alice réussisse ; bob est muté APRÈS coup, comme un
       // admin de groupe le ferait en pratique.
-      const conversation = await seedConversation([alice.id, bob.id], { type: 'group', name: 'Groupe Test' })
+      const conversation = await seedDirectConversation([alice.id, bob.id], { type: 'group', name: 'Groupe Test' })
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -401,7 +343,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       // malgré le blocage.
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id])
+      const conversation = await seedDirectConversation([alice.id, bob.id])
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -424,8 +366,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it('premier vote enregistré, puis un vote pour l’autre option retire le premier — sur un vrai event_poll', async () => {
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id])
-      const event = await seedEvent()
+      const conversation = await seedDirectConversation([alice.id, bob.id])
+      const event = await seedCatalogEvent()
       const created = await createEventPoll({ id: alice.id }, { conversationId: conversation.id, eventId: event.id })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -454,8 +396,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('revoter pour la même option bascule le vote — sur un event_poll', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
-      const event = await seedEvent()
+      const conversation = await seedDirectConversation([alice.id])
+      const event = await seedCatalogEvent()
       const created = await createEventPoll({ id: alice.id }, { conversationId: conversation.id, eventId: event.id })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -474,8 +416,8 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
 
     it('refuse un optionId invalide sur un event_poll (invalid_option)', async () => {
       const alice = await seedUser()
-      const conversation = await seedConversation([alice.id])
-      const event = await seedEvent()
+      const conversation = await seedDirectConversation([alice.id])
+      const event = await seedCatalogEvent()
       const created = await createEventPoll({ id: alice.id }, { conversationId: conversation.id, eventId: event.id })
       expect(created.ok).toBe(true)
       if (!created.ok) return
@@ -492,7 +434,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
     it('deux votes SIMULTANÉS de deux utilisateurs différents sur deux options différentes du même message : aucun vote perdu, aucune contamination croisée', async () => {
       const alice = await seedUser()
       const bob = await seedUser()
-      const conversation = await seedConversation([alice.id, bob.id])
+      const conversation = await seedDirectConversation([alice.id, bob.id])
       const created = await createPoll({ id: alice.id }, { conversationId: conversation.id, question: 'Q ?', options: ['Option A', 'Option B'] })
       expect(created.ok).toBe(true)
       if (!created.ok) return

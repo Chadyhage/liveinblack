@@ -1,7 +1,7 @@
 // Port du sous-ensemble signature/webhook de scripts/fedapay.test.mjs
 import { describe, it, expect } from 'vitest'
 import crypto from 'node:crypto'
-import { verifyWebhookSignature, isApprovedTransactionEvent, transactionAmountMatches } from '../fedapayClient'
+import { verifyWebhookSignature, isApprovedTransactionEvent, transactionAmountMatches, isFedapayConfigured } from '../fedapayClient'
 
 function signedHeader(payload: string, secret: string, timestamp = Math.floor(Date.now() / 1000)): string {
   const sig = crypto.createHmac('sha256', secret).update(`${timestamp}.${payload}`, 'utf8').digest('hex')
@@ -37,6 +37,7 @@ describe('isApprovedTransactionEvent', () => {
     expect(isApprovedTransactionEvent('transaction.approved', { status: 'approved' })).toBe(true)
     expect(isApprovedTransactionEvent('transaction.updated', { status: 'approved' })).toBe(true)
     expect(isApprovedTransactionEvent('transaction.updated', { status: 'pending' })).toBe(false)
+    expect(isApprovedTransactionEvent('transaction.updated', null)).toBe(false)
     expect(isApprovedTransactionEvent('transaction.declined', { status: 'declined' })).toBe(false)
   })
 })
@@ -44,8 +45,21 @@ describe('isApprovedTransactionEvent', () => {
 describe('transactionAmountMatches', () => {
   it('aucun billet si le montant ne correspond pas exactement', () => {
     expect(transactionAmountMatches(12800, 12800)).toBe(true)
+    expect(transactionAmountMatches('12800.4', 12800)).toBe(true)
+    expect(transactionAmountMatches('12800.6', 12801)).toBe(true)
     expect(transactionAmountMatches(12799, 12800)).toBe(false)
     expect(transactionAmountMatches(12801, 12800)).toBe(false)
     expect(transactionAmountMatches(0, 0)).toBe(false)
+  })
+})
+
+describe('isFedapayConfigured', () => {
+  it('dépend uniquement de la présence de FEDAPAY_SECRET_KEY', () => {
+    const previous = process.env.FEDAPAY_SECRET_KEY
+    delete process.env.FEDAPAY_SECRET_KEY
+    expect(isFedapayConfigured()).toBe(false)
+    process.env.FEDAPAY_SECRET_KEY = 'sandbox-key'
+    expect(isFedapayConfigured()).toBe(true)
+    process.env.FEDAPAY_SECRET_KEY = previous
   })
 })
