@@ -10,7 +10,7 @@ import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { Eye, EyeOff } from 'lucide-react'
-import { Button, Input, Select, Switch, Badge, Label, Slider, Modal, Card, Accordion } from '@/app/components/ui'
+import { Button, Input, Select, Switch, Badge, Label, Slider, Card, Accordion, ConfirmDialog, Modal } from '@/app/components/ui'
 import { stripDiacritics } from '@/lib/shared/diacritics'
 import overviewStyles from './ProfileOverview.module.css'
 import helpStyles from './HelpPanel.module.css'
@@ -162,16 +162,17 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
         </div>
       </div>
 
-      {showLogoutConfirm && (
-        <ConfirmModal
-          title="Se déconnecter ?"
-          body="Tu devras te reconnecter pour accéder à ton compte."
-          confirmLabel={loggingOut ? 'Déconnexion…' : 'Déconnecter'}
-          confirmDisabled={loggingOut}
-          onCancel={() => setShowLogoutConfirm(false)}
-          onConfirm={confirmLogout}
-        />
-      )}
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        title="Se déconnecter ?"
+        body="Tu devras te reconnecter pour accéder à ton compte."
+        confirmLabel={loggingOut ? 'Déconnexion…' : 'Déconnecter'}
+        confirmDisabled={loggingOut}
+        confirmLoading={loggingOut}
+        confirmLoadingText="Déconnexion…"
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={() => { void confirmLogout() }}
+      />
     </main>
   )
 }
@@ -188,54 +189,6 @@ function QuickAccessCard({ href, icon, label }: { href: string; icon: React.Reac
       <span className={overviewStyles.quickIcon}>{icon}</span>
       <span className={overviewStyles.quickLabel}>{label}</span>
     </Link>
-  )
-}
-
-function ConfirmModal({
-  title,
-  body,
-  confirmLabel,
-  confirmDisabled,
-  danger = true,
-  onCancel,
-  onConfirm,
-  children,
-}: {
-  title: string
-  body: React.ReactNode
-  confirmLabel: string
-  confirmDisabled?: boolean
-  danger?: boolean
-  onCancel: () => void
-  onConfirm: () => void
-  children?: React.ReactNode
-}) {
-  return (
-    <Modal
-      onClose={onCancel}
-      maxWidth={380}
-      hideClose
-      ariaLabel={title}
-      dismissible={!confirmDisabled}
-      contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 24, maxHeight: 'none', overflowY: 'visible' }}
-    >
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>{title}</h2>
-        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 16px' }}>{body}</p>
-        {children}
-        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-          <Button onClick={onCancel} variant="secondary" style={{ flex: 1, padding: '11px 0', borderRadius: 10 }}>
-            Annuler
-          </Button>
-          <Button
-            onClick={onConfirm}
-            disabled={confirmDisabled}
-            variant={danger ? 'danger' : 'primary'}
-            style={{ flex: 1, padding: '11px 0', borderRadius: 3, background: danger ? '#c2347f' : 'var(--teal-solid)', color: danger ? '#fff' : '#04120e', textTransform: 'none', letterSpacing: 'normal' }}
-          >
-            {confirmLabel}
-          </Button>
-        </div>
-    </Modal>
   )
 }
 
@@ -1030,20 +983,21 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
           </Button>
         </>
       )}
-      {confirmCancelRequest && (
-        <ConfirmModal
-          title="Annuler la demande ?"
-          body="Le changement d’adresse e-mail en attente sera abandonné."
-          confirmLabel={cancelling ? 'Annulation…' : 'Annuler la demande'}
-          confirmDisabled={cancelling}
-          danger={false}
-          onCancel={() => setConfirmCancelRequest(false)}
-          onConfirm={() => {
-            setConfirmCancelRequest(false)
-            void cancelRequest()
-          }}
-        />
-      )}
+      <ConfirmDialog
+        open={confirmCancelRequest}
+        title="Annuler la demande ?"
+        body="Le changement d’adresse e-mail en attente sera abandonné."
+        confirmLabel={cancelling ? 'Annulation…' : 'Annuler la demande'}
+        confirmVariant="primary"
+        confirmDisabled={cancelling}
+        confirmLoading={cancelling}
+        confirmLoadingText="Annulation…"
+        onCancel={() => setConfirmCancelRequest(false)}
+        onConfirm={() => {
+          setConfirmCancelRequest(false)
+          void cancelRequest()
+        }}
+      />
       {msg && <Toast text={msg.text} kind={msg.kind} />}
     </Card>
   )
@@ -1192,24 +1146,27 @@ function DangerZoneCard() {
         </Button>
       )}
 
-      {showConfirm && (
-        <ConfirmModal
-          title="Supprimer mon compte"
-          body={
-            <>
-              Cette action est <strong style={{ color: 'var(--pink)' }}>irréversible</strong>. Ton compte, tes billets et ton solde ne seront plus accessibles. Si tu es organisateur ou prestataire avec un dossier validé, ta demande sera d&apos;abord transmise à l&apos;équipe pour revue.
-            </>
-          }
-          confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
-          confirmDisabled={deleting || !password}
-          onCancel={() => setShowConfirm(false)}
-          onConfirm={handleDelete}
-        >
+      <ConfirmDialog
+        open={showConfirm}
+        title="Supprimer mon compte"
+        body={
+          <>
+            Cette action est <strong style={{ color: 'var(--pink)' }}>irréversible</strong>. Ton compte, tes billets et ton solde ne seront plus accessibles. Si tu es organisateur ou prestataire avec un dossier validé, ta demande sera d&apos;abord transmise à l&apos;équipe pour revue.
+          </>
+        }
+        confirmLabel={deleting ? 'Suppression…' : 'Supprimer'}
+        confirmDisabled={deleting || !password}
+        confirmLoading={deleting}
+        confirmLoadingText="Suppression…"
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={() => { void handleDelete() }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <Label>Confirme avec ton mot de passe</Label>
           <PasswordField value={password} onChange={setPassword} placeholder="Mot de passe" autoFocus />
-          {error && <p style={{ fontSize: 12, color: '#ff7b7b', margin: '8px 0 0' }}>{error}</p>}
-        </ConfirmModal>
-      )}
+          {error ? <p style={{ fontSize: 12, color: '#ff7b7b', margin: 0 }}>{error}</p> : null}
+        </div>
+      </ConfirmDialog>
     </Card>
   )
 }

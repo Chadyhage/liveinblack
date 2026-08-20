@@ -6,7 +6,7 @@ import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
 import { AlertTriangle, BriefcaseBusiness, CheckCircle2, ChevronRight, Clock3, FileCheck2, FilePenLine, RefreshCw, RotateCcw, Search, UserRound, XCircle } from 'lucide-react'
-import { Avatar, Button, Card, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
+import { Avatar, Button, Card, ConfirmDialog, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, SlideOverModal, ToastViewport } from '@/app/components/ui'
 import styles from './AgentDossiersClient.module.css'
 
 const PAGE_SIZE = 15
@@ -893,15 +893,16 @@ function DossierActions({
         <Button variant="danger" style={pink} onClick={() => setConfirmSuspend(true)} disabled={actionBusy}>
           Suspendre le compte
         </Button>
-        {confirmSuspend && (
-          <ConfirmModal
-            title={`Suspendre le dossier de ${displayName} ?`}
-            color="#c2347f"
-            busy={actionBusy}
-            onCancel={() => setConfirmSuspend(false)}
-            onConfirm={() => onAction('suspend')}
-          />
-        )}
+        <ConfirmDialog
+          open={confirmSuspend}
+          title={`Suspendre le dossier de ${displayName} ?`}
+          body="Le compte lié à ce dossier sera suspendu jusqu’à réactivation."
+          confirmDisabled={actionBusy}
+          confirmLoading={actionBusy}
+          confirmLoadingText="Confirmation…"
+          onCancel={() => setConfirmSuspend(false)}
+          onConfirm={() => onAction('suspend')}
+        />
       </>
     )
   }
@@ -912,15 +913,17 @@ function DossierActions({
         <Button variant="primary" style={teal} onClick={() => setConfirmReactivate(true)} disabled={actionBusy}>
           Réactiver le dossier
         </Button>
-        {confirmReactivate && (
-          <ConfirmModal
-            title={`Réactiver le dossier de ${displayName} ?`}
-            color="var(--teal)"
-            busy={actionBusy}
-            onCancel={() => setConfirmReactivate(false)}
-            onConfirm={() => onAction('reactivate')}
-          />
-        )}
+        <ConfirmDialog
+          open={confirmReactivate}
+          title={`Réactiver le dossier de ${displayName} ?`}
+          body="Le dossier et le compte lié redeviendront actifs immédiatement."
+          confirmVariant="primary"
+          confirmDisabled={actionBusy}
+          confirmLoading={actionBusy}
+          confirmLoadingText="Confirmation…"
+          onCancel={() => setConfirmReactivate(false)}
+          onConfirm={() => onAction('reactivate')}
+        />
       </>
     )
   }
@@ -1065,21 +1068,5 @@ function ActionForm({
         </Button>
       </div>
     </Card>
-  )
-}
-
-function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
-  return (
-    <Modal onClose={onCancel} maxWidth={360} hideClose dismissible={!busy} ariaLabel={title} contentStyle={{ textAlign: 'center' }}>
-      <h2 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</h2>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
-          Annuler
-        </Button>
-        <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
-          Confirmer
-        </Button>
-      </div>
-    </Modal>
   )
 }

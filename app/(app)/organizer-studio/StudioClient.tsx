@@ -878,12 +878,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                     variant="ghost"
                     onClick={() => {
                       if (!momos[code]?.trim()) removeCountry(code)
-                      else setPendingConfirm({
-                        title: `Retirer ${region.name}`,
-                        message: `Le numéro Mobile Money saisi pour ${region.name} sera perdu sur cet écran.`,
-                        confirmLabel: 'Retirer',
-                        onConfirm: () => removeCountry(code),
-                      })
+                      else if (window.confirm(`Le numéro Mobile Money saisi pour ${region.name} sera perdu sur cet écran.`)) removeCountry(code)
                     }}
                     aria-label="Retirer"
                     style={{ color: 'var(--text-faint)', fontSize: 18, padding: 0 }}

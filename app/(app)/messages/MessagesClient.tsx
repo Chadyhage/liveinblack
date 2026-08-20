@@ -25,9 +25,10 @@ import {
   Handshake,
   Send,
 } from 'lucide-react'
-import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, Modal, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
+import { Button, IconButton as UiIconButton, Input, Textarea, Checkbox, Radio, Pagination, ImmersiveDialog, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { ModalShell, ModalActions, ConfirmModal, ReportModal, ForwardModal, PollDraftModal, BlockedReportedModal } from '@/app/components/features/messaging'
 
 const CONV_PAGE_SIZE = 20
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
@@ -3275,59 +3276,6 @@ function handleMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>, onClose: 
   controls[(current + offset + controls.length) % controls.length].focus()
 }
 
-function ModalShell({ title, subtitle, onClose, wide, children }: { title: string; subtitle?: string; onClose: () => void; wide?: boolean; children: React.ReactNode }) {
-  return (
-    <Modal onClose={onClose} maxWidth={wide ? 520 : 390} zIndex={200} title={title} subtitle={subtitle}>
-      {children}
-    </Modal>
-  )
-}
-
-function ModalActions({ onCancel, onConfirm, confirmLabel, disabled }: { onCancel: () => void; onConfirm: () => void; confirmLabel: string; disabled?: boolean }) {
-  return (
-    <div className={styles.modalActions}>
-      <Button variant="secondary" onClick={onCancel} size="md" style={{ borderRadius: 999 }}>
-        Annuler
-      </Button>
-      <Button
-        variant="primary"
-        onClick={onConfirm}
-        disabled={disabled}
-        size="md"
-        style={{
-          borderRadius: 999,
-          fontWeight: 650,
-          textTransform: 'none',
-          letterSpacing: 'normal',
-        }}
-      >
-        {confirmLabel}
-      </Button>
-    </div>
-  )
-}
-
-function ConfirmModal({
-  title,
-  message,
-  confirmLabel,
-  onConfirm,
-  onCancel,
-}: {
-  title: string
-  message: string
-  confirmLabel: string
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <ModalShell title={title} onClose={onCancel}>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 8px' }}>{message}</p>
-      <ModalActions onCancel={onCancel} onConfirm={onConfirm} confirmLabel={confirmLabel} />
-    </ModalShell>
-  )
-}
-
 function NewDirectModal({
   friends,
   onPick,
@@ -3864,22 +3812,6 @@ function ContactPanelModal({
   )
 }
 
-function ReportModal({ target, onSubmit, onClose }: { target: { userId: string; userName: string }; onSubmit: (reason: string) => void; onClose: () => void }) {
-  const [reason, setReason] = useState('')
-  return (
-    <ModalShell title={`Signaler ${target.userName}`} onClose={onClose}>
-      <Textarea
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="Décris le problème…"
-        style={{ ...inputStyle, minHeight: 90, resize: 'vertical' as const }}
-        autoFocus
-      />
-      <ModalActions onCancel={onClose} onConfirm={() => reason.trim() && onSubmit(reason.trim())} confirmLabel="Envoyer" disabled={!reason.trim()} />
-    </ModalShell>
-  )
-}
-
 function StarredModal({
   messages,
   currentUserId,
@@ -3911,142 +3843,6 @@ function StarredModal({
           </Button>
         </div>
       ))}
-    </ModalShell>
-  )
-}
-
-function BlockedReportedModal({
-  blocked,
-  reports,
-  onUnblock,
-  onClose,
-}: {
-  blocked: BlockedUserView[]
-  reports: MyReportView[]
-  onUnblock: (userId: string, name: string) => void
-  onClose: () => void
-}) {
-  return (
-    <ModalShell title="Bloqués & signalés" onClose={onClose} wide>
-      <p style={sectionLabelStyle}>Comptes bloqués ({blocked.length})</p>
-      {blocked.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 16 }}>Aucun compte bloqué.</p>}
-      {blocked.map((b) => (
-        <div key={b.userId} style={rowStyle}>
-          <span style={{ fontSize: 13, color: 'var(--text)' }}>{b.name}</span>
-          <Button variant="secondary" onClick={() => onUnblock(b.userId, b.name)} size="sm" style={{ borderRadius: 999 }}>
-            Débloquer
-          </Button>
-        </div>
-      ))}
-      <p style={{ ...sectionLabelStyle, marginTop: 18 }}>Signalements envoyés ({reports.length})</p>
-      {reports.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun signalement envoyé.</p>}
-      {reports.map((r) => (
-        <div key={r.id} style={rowStyle}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 13, color: 'var(--text)', margin: 0 }}>{r.targetName}</p>
-            <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.reason}</p>
-          </div>
-          <span style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>{new Date(r.createdAt).toLocaleDateString('fr-FR')}</span>
-        </div>
-      ))}
-    </ModalShell>
-  )
-}
-
-function ForwardModal({
-  conversations,
-  currentUserId,
-  picked,
-  onToggle,
-  onConfirm,
-  onClose,
-}: {
-  conversations: ConversationView[]
-  currentUserId: string
-  picked: Set<string>
-  onToggle: (conversationId: string) => void
-  onConfirm: () => void
-  onClose: () => void
-}) {
-  return (
-    <ModalShell title="Transférer vers…" onClose={onClose} wide>
-      <div style={{ maxHeight: 320, overflowY: 'auto', marginBottom: 14 }}>
-        {conversations.map((conv) => {
-          const label = conversationLabel(conv, currentUserId)
-          return (
-            <Checkbox
-              key={conv.id}
-              checked={picked.has(conv.id)}
-              onChange={() => onToggle(conv.id)}
-              style={{ ...rowButtonStyle, cursor: 'pointer' }}
-              label={
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {conv.type === 'group' ? <GroupAvatar conv={conv} size={30} /> : <Avatar userId={conv.id} name={label} size={30} />}
-                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{label}</span>
-                </span>
-              }
-            />
-          )
-        })}
-      </div>
-      <ModalActions onCancel={onClose} onConfirm={onConfirm} confirmLabel="Transférer" disabled={picked.size === 0} />
-    </ModalShell>
-  )
-}
-
-function PollDraftModal({
-  draft,
-  onChange,
-  onSubmit,
-  onClose,
-}: {
-  draft: { question: string; options: string[] }
-  onChange: (next: { question: string; options: string[] }) => void
-  onSubmit: () => void
-  onClose: () => void
-}) {
-  const normalized = draft.options.map((o) => o.trim().toLowerCase())
-  const duplicateIndexes = new Set<number>()
-  normalized.forEach((val, i) => {
-    if (!val) return
-    if (normalized.indexOf(val) !== i) {
-      duplicateIndexes.add(i)
-      duplicateIndexes.add(normalized.indexOf(val))
-    }
-  })
-  const hasBlankOption = normalized.some((val) => !val)
-  const hasDuplicate = duplicateIndexes.size > 0
-  return (
-    <ModalShell title="Nouveau sondage" onClose={onClose}>
-      <Input value={draft.question} onChange={(e) => onChange({ ...draft, question: e.target.value })} placeholder="Question" style={inputStyle} autoFocus />
-      {draft.options.map((opt, i) => (
-        <Input
-          key={i}
-          value={opt}
-          onChange={(e) => {
-            const next = [...draft.options]
-            next[i] = e.target.value
-            onChange({ ...draft, options: next })
-          }}
-          placeholder={`Option ${i + 1}`}
-          invalid={duplicateIndexes.has(i)}
-          style={{ ...inputStyle, border: duplicateIndexes.has(i) ? '1px solid var(--pink)' : inputStyle.border }}
-        />
-      ))}
-      {hasDuplicate && <p style={{ fontSize: 11.5, color: 'var(--pink)', margin: '-6px 0 10px' }}>Deux options ne peuvent pas être identiques.</p>}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {draft.options.length < 6 && (
-          <Button variant="secondary" onClick={() => onChange({ ...draft, options: [...draft.options, ''] })} size="sm" style={{ borderRadius: 999 }}>
-            + Option
-          </Button>
-        )}
-        {draft.options.length > 2 && (
-          <Button variant="secondary" onClick={() => onChange({ ...draft, options: draft.options.slice(0, -1) })} size="sm" style={{ borderRadius: 999 }}>
-            − Option
-          </Button>
-        )}
-      </div>
-      <ModalActions onCancel={onClose} onConfirm={onSubmit} confirmLabel="Envoyer" disabled={!draft.question.trim() || hasBlankOption || hasDuplicate} />
     </ModalShell>
   )
 }

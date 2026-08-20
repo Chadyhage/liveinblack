@@ -5,7 +5,7 @@
   min-width: 0;
 }
 
-.workspace :global(.lb-dashboard-page) { max-width: 1500px; margin-inline: auto; }
+.workspace :global(.lb-dashboard-page) { width: 100%; max-width: none; margin-inline: 0; }
 .workspace :global(.lb-dashboard-page) > div { gap: 30px !important; }
 .workspace :global(.lb-dashboard-page) > div > div:first-child:has(h1),
 .workspace :global(.lb-dashboard-page) > div > h1:first-child {

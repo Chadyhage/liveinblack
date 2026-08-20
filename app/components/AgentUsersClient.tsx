@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { Building2, ChevronRight, CircleUserRound, Search, ShieldCheck, SlidersHorizontal, UserRoundCheck, UsersRound, X } from 'lucide-react'
-import { Button, Card, Input, Pagination, SkeletonRow, EmptyState, Modal, SlideOverModal, ToastViewport } from '@/app/components/ui'
+import { Button, Card, ConfirmDialog, Input, Pagination, SkeletonRow, EmptyState, SlideOverModal, ToastViewport } from '@/app/components/ui'
 import styles from './AgentUsersClient.module.css'
 
 const PAGE_SIZE = 25
@@ -710,59 +710,54 @@ function DetailPanel({
             >
               Suspendre le compte
             </Button>
-            {confirmDisable && (
-              <ConfirmModal
-                title={`Suspendre le compte de ${detail.displayName} ?`}
-                color="var(--pink)"
-                busy={actionBusy}
-                onCancel={() => setConfirmDisable(false)}
-                onConfirm={() => onSetDisabled(true)}
-              />
-            )}
+            <ConfirmDialog
+              open={confirmDisable}
+              title={`Suspendre le compte de ${detail.displayName} ?`}
+              body="Cette action coupe immédiatement l’accès au compte jusqu’à réactivation."
+              confirmDisabled={actionBusy}
+              confirmLoading={actionBusy}
+              confirmLoadingText="Confirmation…"
+              onCancel={() => setConfirmDisable(false)}
+              onConfirm={() => onSetDisabled(true)}
+            />
           </>
         )}
       </section>
 
-      {pendingAccountAction && (
-        <ConfirmModal
-          title={
-            pendingAccountAction === 'verifyEmail'
-              ? `Marquer l’email de ${detail.displayName} comme vérifié ?`
-              : pendingAccountAction === 'sendVerification'
-                ? `Renvoyer un lien de vérification à ${detail.displayName} ?`
-                : pendingAccountAction === 'sendPasswordReset'
-                  ? `Envoyer un lien de réinitialisation à ${detail.displayName} ?`
-                  : `Réactiver le compte de ${detail.displayName} ?`
-          }
-          color={pendingAccountAction === 'enable' ? 'var(--primary)' : 'var(--pink)'}
-          busy={actionBusy}
-          onCancel={() => setPendingAccountAction(null)}
-          onConfirm={() => {
-            const action = pendingAccountAction
-            setPendingAccountAction(null)
-            if (action === 'verifyEmail') onVerifyEmail()
-            else if (action === 'sendVerification') onSendVerification()
-            else if (action === 'sendPasswordReset') onSendPasswordReset()
-            else onSetDisabled(false)
-          }}
-        />
-      )}
+      <ConfirmDialog
+        open={Boolean(pendingAccountAction)}
+        title={
+          pendingAccountAction === 'verifyEmail'
+            ? `Marquer l’email de ${detail.displayName} comme vérifié ?`
+            : pendingAccountAction === 'sendVerification'
+              ? `Renvoyer un lien de vérification à ${detail.displayName} ?`
+              : pendingAccountAction === 'sendPasswordReset'
+                ? `Envoyer un lien de réinitialisation à ${detail.displayName} ?`
+                : `Réactiver le compte de ${detail.displayName} ?`
+        }
+        body={
+          pendingAccountAction === 'verifyEmail'
+            ? 'Le compte sera considéré comme vérifié sans nouvelle action de la part de l’utilisateur.'
+            : pendingAccountAction === 'sendVerification'
+              ? 'Un nouvel e-mail de vérification sera envoyé immédiatement.'
+              : pendingAccountAction === 'sendPasswordReset'
+                ? 'Un lien de réinitialisation de mot de passe sera envoyé immédiatement.'
+                : 'Le compte retrouvera immédiatement son accès.'
+        }
+        confirmVariant={pendingAccountAction === 'enable' ? 'primary' : 'danger'}
+        confirmDisabled={actionBusy}
+        confirmLoading={actionBusy}
+        confirmLoadingText="Confirmation…"
+        onCancel={() => setPendingAccountAction(null)}
+        onConfirm={() => {
+          const action = pendingAccountAction
+          setPendingAccountAction(null)
+          if (action === 'verifyEmail') onVerifyEmail()
+          else if (action === 'sendVerification') onSendVerification()
+          else if (action === 'sendPasswordReset') onSendPasswordReset()
+          else onSetDisabled(false)
+        }}
+      />
     </div>
-  )
-}
-
-function ConfirmModal({ title, color, busy, onCancel, onConfirm }: { title: string; color: string; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
-  return (
-    <Modal onClose={onCancel} maxWidth={360} hideClose ariaLabel={title} contentStyle={{ textAlign: 'center' }}>
-      <h2 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 18px' }}>{title}</h2>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, fontSize: 13 }}>
-          Annuler
-        </Button>
-        <Button variant="danger" onClick={onConfirm} disabled={busy} style={{ flex: 1, background: color, fontSize: 13, borderRadius: 3, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}>
-          Confirmer
-        </Button>
-      </div>
-    </Modal>
   )
 }

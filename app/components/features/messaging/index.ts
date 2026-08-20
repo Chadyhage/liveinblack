@@ -1,3 +1,8 @@
 export { default as MessagesClient } from '@/app/(app)/messages/MessagesClient'
 export { default as AmbientMusicPlayer } from '@/app/components/AmbientMusicPlayer'
+export { ModalShell, ModalActions, ConfirmModal } from './MessagingModals'
+export { default as ReportModal } from './ReportModal'
+export { default as ForwardModal } from './ForwardModal'
+export { default as PollDraftModal } from './PollDraftModal'
+export { default as BlockedReportedModal } from './BlockedReportedModal'
 export { default as MessagingEmptyState } from './MessagingEmptyState'

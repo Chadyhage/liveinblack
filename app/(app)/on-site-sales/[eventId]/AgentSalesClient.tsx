@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Input, Select, Checkbox, Label, Card, Modal } from '@/app/components/ui'
+import { Button, Input, Select, Checkbox, Label, Card, ConfirmDialog } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 export interface PlaceView {
@@ -284,41 +284,35 @@ export default function AgentSalesClient({
         {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
       </Card>
 
-      {confirmOpen && (
-        <Modal onClose={() => setConfirmOpen(false)} maxWidth={420} title="Confirmer la vente">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Confirmer la vente"
+        body={
+          <>
             <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {selectedPlace ? `${selectedPlace.type} · ${effectiveQty} billet${effectiveQty > 1 ? 's' : ''}` : 'Vente en cours'}
             </p>
-            <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--gold)' }}>
+            <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 800, color: 'var(--gold)' }}>
               {fmtMoney(saleAmount, currency)}
             </p>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {method === 'cash'
                 ? `Paiement en espèces · ${settlementMode === 'agent_settles' ? 'règlement manuel par l’agent' : 'prélèvement immédiat sur le solde organisateur'}`
                 : `Paiement Mobile Money · ${momoNumber.trim() || 'numéro à confirmer'}`}
             </p>
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-            <Button variant="secondary" onClick={() => setConfirmOpen(false)} disabled={busy} style={{ flex: 1 }}>
-              Annuler
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                setConfirmOpen(false)
-                void handleSubmit()
-              }}
-              disabled={busy}
-              loading={busy}
-              loadingText="Traitement…"
-              style={{ flex: 1, textTransform: 'none', letterSpacing: 'normal' }}
-            >
-              Confirmer
-            </Button>
-          </div>
-        </Modal>
-      )}
+          </>
+        }
+        confirmLabel="Confirmer"
+        confirmDisabled={busy}
+        confirmLoading={busy}
+        confirmLoadingText="Traitement…"
+        maxWidth={420}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          void handleSubmit()
+        }}
+      />
     </main>
   )
 }

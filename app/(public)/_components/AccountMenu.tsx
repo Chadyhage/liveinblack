@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { Ticket, User, LayoutDashboard, LogOut, Check, ChevronDown, Globe, Bell } from 'lucide-react'
-import { Avatar, Button, Modal } from '@/app/components/ui'
+import { Avatar, Button, ConfirmDialog } from '@/app/components/ui'
 import { DASHBOARD_BY_ROLE } from '@/lib/shared/dashboardRoutes'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
@@ -17,9 +17,11 @@ import { DASHBOARD_BY_ROLE } from '@/lib/shared/dashboardRoutes'
 export default function AccountMenu({
   user,
   menuAlign = 'right',
+  dashboardMode = false,
 }: {
   user: { id: string; name?: string | null; email?: string | null; image?: string | null; activeRole?: string | null; roles?: string[] | null }
   menuAlign?: 'left' | 'right'
+  dashboardMode?: boolean
 }) {
   const router = useRouter()
   const { update } = useSession()
@@ -175,9 +177,13 @@ export default function AccountMenu({
                 {user.name}
               </p>
             )}
-            <MenuLink href="/notifications" onClick={() => setAccountOpen(false)} icon={<Bell size={15} />} label="Notifications" badge={notifUnread} />
-            <MenuLink href="/profile" onClick={() => setAccountOpen(false)} icon={<User size={15} />} label="Mon profil" />
-            <MenuLink href="/profile/billets" onClick={() => setAccountOpen(false)} icon={<Ticket size={15} />} label="Mes billets" />
+            {!dashboardMode ? (
+              <>
+                <MenuLink href="/notifications" onClick={() => setAccountOpen(false)} icon={<Bell size={15} />} label="Notifications" badge={notifUnread} />
+                <MenuLink href="/profile" onClick={() => setAccountOpen(false)} icon={<User size={15} />} label="Mon profil" />
+                <MenuLink href="/profile/billets" onClick={() => setAccountOpen(false)} icon={<Ticket size={15} />} label="Mes billets" />
+              </>
+            ) : null}
             {dashboards.length > 0 && <div style={{ height: 1, background: 'var(--border)', margin: '6px 4px' }} />}
             {dashboards.map((d) => (
               <Button
@@ -237,21 +243,16 @@ export default function AccountMenu({
         )}
       </div>
 
-      {logoutConfirmOpen && (
-        <Modal onClose={() => setLogoutConfirmOpen(false)} maxWidth={390} zIndex={120} title="Se déconnecter ?">
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>
-            Tu vas quitter ton espace actuel et revenir à l&apos;accueil.
-          </p>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Button variant="secondary" onClick={() => setLogoutConfirmOpen(false)} style={{ flex: 1, borderRadius: 999 }}>
-              Annuler
-            </Button>
-            <Button variant="primary" onClick={() => { void handleLogoutConfirm() }} style={{ flex: 1, borderRadius: 999, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal' }}>
-              Déconnexion
-            </Button>
-          </div>
-        </Modal>
-      )}
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="Se déconnecter ?"
+        body="Tu vas quitter ton espace actuel et revenir à l’accueil."
+        confirmLabel="Déconnexion"
+        confirmVariant="primary"
+        zIndex={120}
+        onCancel={() => setLogoutConfirmOpen(false)}
+        onConfirm={() => { void handleLogoutConfirm() }}
+      />
     </div>
   )
 }

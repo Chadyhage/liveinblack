@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LIVEINBLACK Web
 
-## Getting Started
+Application web Next.js 16 pour l’écosystème LIVEINBLACK.
 
-First, run the development server:
+## Démarrage local
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Application disponible sur `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Qualité et tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Le projet sépare désormais clairement trois niveaux de vérification :
 
-## Learn More
+```bash
+npm run lint:core
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Tests unitaires
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- lancés via `npm run test:unit`
+- n’exigent pas de base Mongo
+- couvrent les helpers, la logique partagée et les contrats isolés
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Tests d’intégration
 
-## Deploy on Vercel
+- lancés via `npm run test:integration`
+- exigent `MONGODB_TEST_URI`
+- utilisent une base dédiée dont le nom doit contenir `test`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Exemple :
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+MONGODB_TEST_URI=mongodb://127.0.0.1:27017/liveinblack_test npm run test:integration
+```
+
+### Tests end-to-end
+
+- lancés via `npm run test:e2e`
+- démarrent automatiquement l’application locale
+- vérifient le smoke public et l’endpoint de santé
+- si tu as déjà un serveur local ouvert, `npm run test:e2e:local` s’y branche directement via `PLAYWRIGHT_BASE_URL`
+
+## CI GitHub
+
+Le workflow [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) s’exécute à chaque `push` et `pull_request` avec :
+
+1. `lint:core`
+2. `test:unit`
+3. `test:integration`
+4. `test:e2e`
+
+La CI démarre un service Mongo dédié aux intégrations et aux smoke tests.
+
+## Principes de robustesse à préserver
+
+- garder la logique métier testable dans `lib/server` et `lib/shared`
+- réserver les composants UI à l’orchestration et au rendu
+- ajouter un test avant ou pendant chaque refactorisation à risque
+- éviter les actions sensibles sans confirmation explicite côté interface

@@ -7,7 +7,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
 import { ArrowLeft } from 'lucide-react'
-import { ActionLink, Button, Card, Input, Mascot, Modal, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
+import { ActionLink, Button, Card, ConfirmDialog, Input, Mascot, Modal, Pagination, Skeleton, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 const GROUP_PAGE_SIZE = 12
@@ -744,34 +744,19 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
           )
         })}
       </div>
-      {confirmAction && (
-        <Modal
-          onClose={() => setConfirmAction(null)}
-          maxWidth={390}
-          ariaLabel={confirmAction.title}
-          title={confirmAction.title}
-          actions={
-            <>
-              <Button variant="secondary" onClick={() => setConfirmAction(null)} disabled={Boolean(busyCode)}>
-                Annuler
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => {
-                  const run = confirmAction.onConfirm
-                  setConfirmAction(null)
-                  run()
-                }}
-                disabled={Boolean(busyCode)}
-              >
-                {confirmAction.confirmLabel}
-              </Button>
-            </>
-          }
-        >
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>{confirmAction.body}</p>
-        </Modal>
-      )}
+      <ConfirmDialog
+        open={Boolean(confirmAction)}
+        title={confirmAction?.title || 'Confirmation'}
+        body={confirmAction?.body || ''}
+        confirmLabel={confirmAction?.confirmLabel || 'Confirmer'}
+        confirmDisabled={Boolean(busyCode)}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={() => {
+          const run = confirmAction?.onConfirm
+          setConfirmAction(null)
+          run?.()
+        }}
+      />
     </div>
   )
 }

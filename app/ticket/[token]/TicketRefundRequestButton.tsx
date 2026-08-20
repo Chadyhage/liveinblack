@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Modal } from '@/app/components/ui'
+import { Button, ConfirmDialog } from '@/app/components/ui'
 
 // Bouton "lien sécurisé" pour un acheteur SANS compte (Politique Annulation/
 // Remboursement §2) — visible uniquement sur un billet invité (ticket.guestName),
@@ -63,28 +63,18 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
       >
         Demander un remboursement
       </Button>
-      {confirmOpen && (
-        <Modal onClose={() => setConfirmOpen(false)} maxWidth={390} title="Demander un remboursement ?">
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>
-            Ta demande sera transmise immédiatement pour ce billet. Tu recevras ensuite la confirmation par email si elle est acceptée.
-          </p>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Button variant="secondary" onClick={() => setConfirmOpen(false)} style={{ flex: 1, borderRadius: 12 }}>
-              Annuler
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setConfirmOpen(false)
-                void handleClick()
-              }}
-              style={{ flex: 1, borderRadius: 12, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
-            >
-              Confirmer
-            </Button>
-          </div>
-        </Modal>
-      )}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Demander un remboursement ?"
+        body="Ta demande sera transmise immédiatement pour ce billet. Tu recevras ensuite la confirmation par email si elle est acceptée."
+        confirmLabel="Confirmer"
+        confirmVariant="primary"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          void handleClick()
+        }}
+      />
       {message && <p style={{ fontSize: 11.5, color: '#e05aaa', textAlign: 'center', margin: 0 }}>{message}</p>}
     </div>
   )

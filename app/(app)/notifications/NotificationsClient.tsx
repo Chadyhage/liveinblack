@@ -67,20 +67,22 @@ export default function NotificationsClient({ initialNotifications }: { initialN
 
   return (
     <main className="lb-dashboard-page">
+      <div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(320px, 0.9fr)', gap: 24, alignItems: 'start' }}>
       <header style={{ marginBottom: 24 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#b8f34a', fontSize: 13, fontWeight: 750, letterSpacing: '.08em', textTransform: 'uppercase' }}>
           <BellRing size={17} aria-hidden="true" /> Centre d’alertes
         </span>
         <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Notifications</h1>
-        <p style={{ maxWidth: 760, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
+        <p style={{ margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
       </header>
-      {unreadCount > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignSelf: 'start', paddingTop: 6 }}>
+        {unreadCount > 0 ? (
           <Button variant="secondary" onClick={markAllRead} style={{ fontSize: 13 }}>
             Tout marquer lu
           </Button>
-        </div>
-      )}
+        ) : null}
+      </div>
+      </div>
 
       {pushPermission === 'default' && (
         <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>

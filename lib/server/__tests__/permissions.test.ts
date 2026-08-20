@@ -80,10 +80,14 @@ describe('messages de blocage', () => {
   it('getBookingBlockedReason explique chaque cas de refus', () => {
     expect(getBookingBlockedReason(null)).toMatch(/Connecte-toi/)
     expect(getBookingBlockedReason({ activeRole: 'organisateur', status: 'active' })).toMatch(/organisateurs/)
+    expect(getBookingBlockedReason({ activeRole: 'client', status: 'pending' })).toMatch(/attente/)
+    expect(getBookingBlockedReason({ activeRole: 'client', status: 'rejected' })).toMatch(/rejeté/)
     expect(getBookingBlockedReason({ activeRole: 'client', status: 'active' })).toBeNull()
   })
   it('getCreateEventBlockedReason explique chaque cas de refus', () => {
     expect(getCreateEventBlockedReason({ activeRole: 'client', status: 'active' })).toMatch(/organisateurs/)
     expect(getCreateEventBlockedReason({ activeRole: 'organisateur', status: 'active' })).toBeNull()
+    expect(getCreateEventBlockedReason({ activeRole: 'organisateur', status: 'active', orgStatus: 'pending' })).toMatch(/validation/)
+    expect(getCreateEventBlockedReason({ activeRole: 'organisateur', status: 'active', orgStatus: 'rejected' })).toMatch(/rejeté/)
   })
 })
