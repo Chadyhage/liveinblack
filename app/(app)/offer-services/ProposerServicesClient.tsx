@@ -308,6 +308,7 @@ export default function ProposerServicesClient({
   const [editingItem, setEditingItem] = useState<NewItemForm | null>(null)
   const [mediaUploading, setMediaUploading] = useState(false)
   const [confirmRemoveItem, setConfirmRemoveItem] = useState<CatalogItemView | null>(null)
+  const [confirmRemoveMedia, setConfirmRemoveMedia] = useState<{ itemId: string; mediaIndex: number } | null>(null)
   const [removingItem, setRemovingItem] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
   const [togglingItemId, setTogglingItemId] = useState<string | null>(null)
@@ -1121,7 +1122,7 @@ export default function ProposerServicesClient({
                                   ) : (
                                     <NextImage src={m.url} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                                   )}
-                                  <Button variant="ghost" aria-label={`Retirer le média ${i + 1}`} onClick={() => void removeOfferMedia(item.id, i)} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 20, padding: 0 }}>
+                                  <Button variant="ghost" aria-label={`Retirer le média ${i + 1}`} onClick={() => setConfirmRemoveMedia({ itemId: item.id, mediaIndex: i })} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 20, padding: 0 }}>
                                     ×
                                   </Button>
                                 </div>
@@ -1444,6 +1445,35 @@ export default function ProposerServicesClient({
                 Supprimer
               </Button>
             </div>
+        </Modal>
+      )}
+
+      {confirmRemoveMedia && (
+        <Modal onClose={() => !mediaUploading && setConfirmRemoveMedia(null)} maxWidth={390} dismissible={!mediaUploading} zIndex={3200} hideClose ariaLabel="Supprimer ce média">
+          <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer ce média ?</h3>
+          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
+            Ce média sera retiré de ton offre immédiatement.
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="secondary" onClick={() => setConfirmRemoveMedia(null)} disabled={mediaUploading} style={secondaryButton}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                const target = confirmRemoveMedia
+                if (!target) return
+                void removeOfferMedia(target.itemId, target.mediaIndex)
+                setConfirmRemoveMedia(null)
+              }}
+              disabled={mediaUploading}
+              loading={mediaUploading}
+              loadingText="Suppression…"
+              style={{ ...primaryButton, background: '#c2347f', boxShadow: 'none' }}
+            >
+              Supprimer
+            </Button>
+          </div>
         </Modal>
       )}
     </>

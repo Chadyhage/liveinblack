@@ -112,6 +112,7 @@ export default function AgentBlogClient() {
   const [renderedAt] = useState(() => Date.now())
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -269,7 +270,7 @@ export default function AgentBlogClient() {
                   <Button
                     variant="ghost"
                     aria-label="Supprimer"
-                    onClick={() => onDelete(p.id)}
+                    onClick={() => setConfirmDeleteId(p.id)}
                     disabled={deletingId === p.id}
                     style={{ padding: 8, minHeight: 44, minWidth: 44, color: '#ff9ed2' }}
                   >
@@ -360,6 +361,39 @@ export default function AgentBlogClient() {
           </div>
         </div>
       </Modal>
+      )}
+
+      {confirmDeleteId && (
+        <Modal
+          onClose={() => setConfirmDeleteId(null)}
+          maxWidth={390}
+          ariaLabel="Supprimer l’article"
+          title="Supprimer cet article"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmDeleteId(null)} disabled={deletingId === confirmDeleteId}>
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  const id = confirmDeleteId
+                  setConfirmDeleteId(null)
+                  void onDelete(id)
+                }}
+                disabled={deletingId === confirmDeleteId}
+                loading={deletingId === confirmDeleteId}
+                loadingText="Suppression…"
+              >
+                Supprimer
+              </Button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+            L’article sera retiré définitivement du blog public.
+          </p>
+        </Modal>
       )}
     </main>
   )

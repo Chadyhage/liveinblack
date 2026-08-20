@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { Ticket, User, LayoutDashboard, LogOut, Check, ChevronDown, Globe, Bell } from 'lucide-react'
-import { Avatar, Button } from '@/app/components/ui'
+import { Avatar, Button, Modal } from '@/app/components/ui'
 import { DASHBOARD_BY_ROLE } from '@/lib/shared/dashboardRoutes'
 
 // Remplace les boutons Connexion/Créer un compte de PublicNav dès qu'une
@@ -24,6 +24,7 @@ export default function AccountMenu({
   const router = useRouter()
   const { update } = useSession()
   const [accountOpen, setAccountOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [switchingRole, setSwitchingRole] = useState(false)
   const [notifUnread, setNotifUnread] = useState(0)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -110,6 +111,11 @@ export default function AccountMenu({
   const dashboards = (user.roles ?? [])
     .map((role) => (DASHBOARD_BY_ROLE[role] ? { role, ...DASHBOARD_BY_ROLE[role] } : null))
     .filter((d): d is { role: string; href: string; label: string } => d !== null)
+
+  async function handleLogoutConfirm() {
+    setLogoutConfirmOpen(false)
+    await signOut({ callbackUrl: '/home' })
+  }
 
   return (
     <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
@@ -207,7 +213,10 @@ export default function AccountMenu({
             <MenuLink href="/events" onClick={() => setAccountOpen(false)} icon={<Globe size={15} />} label="Voir le site public" />
             <Button
               variant="ghost"
-              onClick={() => signOut({ callbackUrl: '/home' })}
+              onClick={() => {
+                setAccountOpen(false)
+                setLogoutConfirmOpen(true)
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -227,6 +236,22 @@ export default function AccountMenu({
           </div>
         )}
       </div>
+
+      {logoutConfirmOpen && (
+        <Modal onClose={() => setLogoutConfirmOpen(false)} maxWidth={390} zIndex={120} title="Se déconnecter ?">
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>
+            Tu vas quitter ton espace actuel et revenir à l&apos;accueil.
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="secondary" onClick={() => setLogoutConfirmOpen(false)} style={{ flex: 1, borderRadius: 999 }}>
+              Annuler
+            </Button>
+            <Button variant="primary" onClick={() => { void handleLogoutConfirm() }} style={{ flex: 1, borderRadius: 999, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal' }}>
+              Déconnexion
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

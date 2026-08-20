@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import CameraScanner from './CameraScanner'
-import { Button, Card, Input, Label } from '@/app/components/ui'
+import { Button, Card, Input, Label, Modal } from '@/app/components/ui'
 import styles from './ScannerClient.module.css'
 
 // Port de src/pages/ScannerPage.jsx (outil staff : porte + bar). Ce composant
@@ -265,6 +265,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
   const [scanning, setScanning] = useState(false)
   const [manualCode, setManualCode] = useState('')
   const [checkinBusy, setCheckinBusy] = useState(false)
+  const [confirmPayOpen, setConfirmPayOpen] = useState(false)
   const [checkinError, setCheckinError] = useState<string | null>(null)
   const [checkinErrorCode, setCheckinErrorCode] = useState<string | undefined>(undefined)
   const [checkinResult, setCheckinResult] = useState<CheckinSuccessResponse | null>(null)
@@ -281,6 +282,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
   const ticketCodeRef = useRef<string | null>(null)
   const [items, setItems] = useState<OrderItem[]>([])
   const [busyKey, setBusyKey] = useState<string | null>(null)
+  const [confirmRemoveItem, setConfirmRemoveItem] = useState<{ menuItem: MenuItemView; item: OrderItem } | null>(null)
   const [cancellingItemId, setCancellingItemId] = useState<string | null>(null)
   const [cancelDrafts, setCancelDrafts] = useState<Record<string, string>>({})
 
@@ -559,7 +561,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       return
     }
     const next = editable.quantity + delta
-    if (next <= 0) void handleRemoveLine(menuItem, editable)
+    if (next <= 0) {
+      setConfirmRemoveItem({ menuItem, item: editable })
+      return
+    }
     else void handleSetQuantity(menuItem, editable, next)
   }
 
@@ -592,10 +597,11 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
   async function handlePay() {
     if (!ticketCode) return
-    // Action financière potentiellement conséquente et immédiate (pas de
-    // brouillon) — une confirmation explicite évite qu'un mistap n'encaisse
-    // tout le ticket, symétrique du motif écrit déjà exigé pour annuler.
-    if (!window.confirm(`Confirmer l'encaissement de ${fmtMoney(unpaidTotal, currency)} ?`)) return
+    setConfirmPayOpen(true)
+  }
+
+  async function confirmPay() {
+    if (!ticketCode) return
     setBusyKey('pay')
     try {
       const res = await fetch('/api/event-orders/pay', {
@@ -1088,6 +1094,60 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
           </div>
         ))}
       </div>
+      {confirmPayOpen && (
+        <Modal
+          onClose={() => setConfirmPayOpen(false)}
+          maxWidth={420}
+          ariaLabel="Confirmer l'encaissement"
+          title="Confirmer l'encaissement"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmPayOpen(false)} disabled={busyKey === 'pay'}>
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setConfirmPayOpen(false)
+                  void confirmPay()
+                }}
+                disabled={busyKey === 'pay'}
+                loading={busyKey === 'pay'}
+                loadingText="Encaissement…"
+              >
+                Encaisser
+              </Button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+            Confirmer l&apos;encaissement de {fmtMoney(unpaidTotal, currency)} pour ce ticket.
+          </p>
+        </Modal>
+      )}
+      {confirmRemoveItem && (
+        <Modal onClose={() => setConfirmRemoveItem(null)} maxWidth={390} title="Retirer cette ligne ?">
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+            « {confirmRemoveItem.item.name} » sera retiré de la commande de ce billet.
+          </p>
+          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            <Button variant="secondary" onClick={() => setConfirmRemoveItem(null)} style={{ flex: 1 }}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                const target = confirmRemoveItem
+                setConfirmRemoveItem(null)
+                if (target) void handleRemoveLine(target.menuItem, target.item)
+              }}
+              style={{ flex: 1, textTransform: 'none', letterSpacing: 'normal' }}
+            >
+              Retirer
+            </Button>
+          </div>
+        </Modal>
+      )}
     </main>
   )
 }

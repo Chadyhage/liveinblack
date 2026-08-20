@@ -963,6 +963,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  const [confirmCancelRequest, setConfirmCancelRequest] = useState(false)
 
   async function submit() {
     setMsg(null)
@@ -1014,7 +1015,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Un lien a été envoyé à {user.pendingEmail}. Ouvre-le pour confirmer le changement.
           </p>
-          <Button onClick={cancelRequest} disabled={cancelling} variant="link" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+          <Button onClick={() => setConfirmCancelRequest(true)} disabled={cancelling} variant="link" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
             Annuler la demande
           </Button>
         </div>
@@ -1028,6 +1029,20 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
             Envoyer le lien de vérification
           </Button>
         </>
+      )}
+      {confirmCancelRequest && (
+        <ConfirmModal
+          title="Annuler la demande ?"
+          body="Le changement d’adresse e-mail en attente sera abandonné."
+          confirmLabel={cancelling ? 'Annulation…' : 'Annuler la demande'}
+          confirmDisabled={cancelling}
+          danger={false}
+          onCancel={() => setConfirmCancelRequest(false)}
+          onConfirm={() => {
+            setConfirmCancelRequest(false)
+            void cancelRequest()
+          }}
+        />
       )}
       {msg && <Toast text={msg.text} kind={msg.kind} />}
     </Card>

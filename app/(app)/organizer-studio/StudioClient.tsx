@@ -13,7 +13,7 @@ import { fmtMoney } from '@/lib/shared/money'
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
 import type { PublicMediaUploadReference } from '@/lib/shared/publicMediaUploads'
-import { Button, Card, Input, Textarea, Checkbox, Radio, Select, Label } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Checkbox, Radio, Select, Label, Modal } from '@/app/components/ui'
 
 // Port de OrganizerPublicStudio.jsx + PayoutPanel.jsx + MomoPayoutManager.jsx
 // (#7 phase organisateur, tâche #81). Avatar et bannière passent par le
@@ -106,6 +106,7 @@ export default function StudioClient({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [events, setEvents] = useState<{ id: string; name: string }[]>([])
   const [linkCopied, setLinkCopied] = useState(false)
+  const [pendingConfirm, setPendingConfirm] = useState<{ title: string; message: string; confirmLabel: string; onConfirm: () => void } | null>(null)
   const publicOrigin = useSyncExternalStore(subscribeToNothing, () => window.location.origin, () => '')
   const [crop, setCrop] = useState<{ kind: 'avatar' | 'banner'; src: string } | null>(null)
   // Page publique (profil, galerie) et Encaissement (Stripe Connect + Mobile
@@ -606,9 +607,14 @@ export default function StudioClient({
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => {
-                      if (window.confirm('Supprimer définitivement ce média de ta page ?')) void removeMedia(item.id)
-                    }}
+                    onClick={() =>
+                      setPendingConfirm({
+                        title: 'Supprimer ce média',
+                        message: 'Ce média sera retiré définitivement de ta page organisateur.',
+                        confirmLabel: 'Supprimer',
+                        onConfirm: () => { void removeMedia(item.id) },
+                      })
+                    }
                     style={{ ...mediaActionStyle, color: 'var(--pink)' }}
                   >
                     Supprimer
@@ -635,6 +641,28 @@ export default function StudioClient({
           onCancel={() => setCrop(null)}
           onConfirm={async (dataUri) => { await uploadData(crop.kind, { dataUri }); setCrop(null) }}
         />
+      )}
+      {pendingConfirm && (
+        <Modal onClose={() => setPendingConfirm(null)} maxWidth={420} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="secondary" onClick={() => setPendingConfirm(null)} style={{ flex: 1 }}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                const run = pendingConfirm.onConfirm
+                setPendingConfirm(null)
+                run()
+              }}
+              style={{ flex: 1 }}
+            >
+              {pendingConfirm.confirmLabel}
+            </Button>
+          </div>
+        </Modal>
       )}
     </>
   )
@@ -849,7 +877,13 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                   <Button
                     variant="ghost"
                     onClick={() => {
-                      if (!momos[code]?.trim() || window.confirm(`Retirer ${region.name} ? Le numéro saisi pour ce pays sera perdu.`)) removeCountry(code)
+                      if (!momos[code]?.trim()) removeCountry(code)
+                      else setPendingConfirm({
+                        title: `Retirer ${region.name}`,
+                        message: `Le numéro Mobile Money saisi pour ${region.name} sera perdu sur cet écran.`,
+                        confirmLabel: 'Retirer',
+                        onConfirm: () => removeCountry(code),
+                      })
                     }}
                     aria-label="Retirer"
                     style={{ color: 'var(--text-faint)', fontSize: 18, padding: 0 }}

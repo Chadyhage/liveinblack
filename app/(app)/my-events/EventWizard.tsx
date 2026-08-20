@@ -7,7 +7,7 @@ import { regionToCurrency, currencySymbol, payRailLabel } from '@/lib/shared/mon
 import ImageCropperModal from '@/app/components/ImageCropperModal'
 import MenuItemEditor, { emptyMenuItem, type MenuItemRow } from './MenuItemEditor'
 import { uploadPublicMedia } from '@/lib/client/publicMediaUpload'
-import { Button, Card, Input, Textarea, Select, Spinner } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Select, Spinner, Modal } from '@/app/components/ui'
 import { IconClose, InputField, LockIcon, NumberInputField, Pill, Toggle } from '@/app/components/features/organizer/WizardControls'
 
 // Port du wizard de création/édition d'événement en 5 étapes
@@ -481,6 +481,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
   const [menuItems, setMenuItems] = useState<MenuItemRow[]>([emptyMenuItem()])
   const [publishAt, setPublishAt] = useState('')
   const [closingDate, setClosingDate] = useState('')
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false)
 
   // ── Suivi des modifications non enregistrées (confirmation à la fermeture) ──
   function snapshotForm() {
@@ -622,7 +623,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
   }
 
   function requestClose() {
-    if (isFormDirty() && !window.confirm('Quitter sans enregistrer ? Les modifications en cours seront perdues.')) return
+    if (isFormDirty()) {
+      setConfirmCloseOpen(true)
+      return
+    }
     onClose()
   }
 
@@ -1923,6 +1927,34 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
           onCancel={() => setPosterCropSrc(null)}
           onConfirm={uploadCroppedPoster}
         />
+      )}
+      {confirmCloseOpen && (
+        <Modal
+          onClose={() => setConfirmCloseOpen(false)}
+          maxWidth={420}
+          ariaLabel="Quitter sans enregistrer"
+          title="Quitter sans enregistrer"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmCloseOpen(false)}>
+                Continuer l’édition
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setConfirmCloseOpen(false)
+                  onClose()
+                }}
+              >
+                Quitter
+              </Button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+            Les modifications en cours ne sont pas enregistrées et seront perdues si tu fermes maintenant.
+          </p>
+        </Modal>
       )}
     </main>
   )

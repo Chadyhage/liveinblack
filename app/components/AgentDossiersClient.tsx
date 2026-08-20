@@ -871,6 +871,7 @@ function DossierActions({
   displayName: string
   onAction: (action: ModerateAction, note?: string) => void
 }) {
+  const [confirmReactivate, setConfirmReactivate] = useState(false)
   const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
   const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
   const amber: React.CSSProperties = { ...btnBase, background: '#f59e0b', color: '#1a1508' }
@@ -907,9 +908,20 @@ function DossierActions({
 
   if (status === 'suspended') {
     return (
-      <Button variant="primary" style={teal} onClick={() => onAction('reactivate')} disabled={actionBusy}>
-        Réactiver le dossier
-      </Button>
+      <>
+        <Button variant="primary" style={teal} onClick={() => setConfirmReactivate(true)} disabled={actionBusy}>
+          Réactiver le dossier
+        </Button>
+        {confirmReactivate && (
+          <ConfirmModal
+            title={`Réactiver le dossier de ${displayName} ?`}
+            color="var(--teal)"
+            busy={actionBusy}
+            onCancel={() => setConfirmReactivate(false)}
+            onConfirm={() => onAction('reactivate')}
+          />
+        )}
+      </>
     )
   }
 

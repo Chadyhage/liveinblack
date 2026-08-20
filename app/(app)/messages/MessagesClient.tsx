@@ -398,6 +398,7 @@ export default function MessagesClient({
   const [forwardTarget, setForwardTarget] = useState<MessageView | null>(null)
   const [reportTarget, setReportTarget] = useState<{ userId: string; userName: string } | null>(null)
   const [blockAfterReport, setBlockAfterReport] = useState<{ userId: string; userName: string } | null>(null)
+  const [pendingConfirm, setPendingConfirm] = useState<{ title: string; message: string; confirmLabel: string; onConfirm: () => void } | null>(null)
   // Suppression de groupe = perte définitive de la conversation ET de tous
   // ses messages pour tous les membres (transactionnel côté serveur) — trop
   // destructeur pour partir directement du clic, contrairement à "Quitter le
@@ -2061,8 +2062,22 @@ export default function MessagesClient({
           onStar={() => handleToggleStar(contextMenu.message)}
           onForward={() => handleForwardOpen(contextMenu.message)}
           onPin={() => handleTogglePin(contextMenu.message)}
-          onDeleteForMe={() => handleDeleteForMe(contextMenu.message.id)}
-          onDeleteForAll={() => handleDeleteForAll(contextMenu.message.id)}
+          onDeleteForMe={() =>
+            setPendingConfirm({
+              title: 'Supprimer pour moi',
+              message: 'Ce message disparaîtra uniquement de ta conversation.',
+              confirmLabel: 'Supprimer',
+              onConfirm: () => { void handleDeleteForMe(contextMenu.message.id) },
+            })
+          }
+          onDeleteForAll={() =>
+            setPendingConfirm({
+              title: 'Supprimer pour tous',
+              message: 'Ce message sera retiré définitivement pour tous les membres de la conversation.',
+              confirmLabel: 'Supprimer',
+              onConfirm: () => { void handleDeleteForAll(contextMenu.message.id) },
+            })
+          }
         />
       )}
 
@@ -2079,7 +2094,16 @@ export default function MessagesClient({
                   items={[
                     { label: conv.pinned ? 'Désépingler' : 'Épingler', onClick: () => handleToggleConvPin(conv) },
                     { label: conv.mutedForMe ? 'Réactiver les notifications' : 'Couper les notifications', onClick: () => handleToggleConvMute(conv) },
-                    { label: 'Masquer la conversation', onClick: () => handleHideConversation(conv.id) },
+                    {
+                      label: 'Masquer la conversation',
+                      onClick: () =>
+                        setPendingConfirm({
+                          title: 'Masquer la conversation',
+                          message: 'Cette conversation disparaîtra de ta liste principale. Tu pourras la retrouver plus tard si nécessaire.',
+                          confirmLabel: 'Masquer',
+                          onConfirm: () => { void handleHideConversation(conv.id) },
+                        }),
+                    },
                   ]}
                 />
               </div>
@@ -2107,7 +2131,14 @@ export default function MessagesClient({
           onDismissNew={handleDismissNewFriend}
           onAction={handleFriendRequestAction}
           onSend={handleSendFriendRequest}
-          onRemove={handleRemoveFriend}
+          onRemove={(userId, name) =>
+            setPendingConfirm({
+              title: 'Retirer ce contact',
+              message: `${name} sera retiré de ta liste d'amis.`,
+              confirmLabel: 'Retirer',
+              onConfirm: () => { void handleRemoveFriend(userId) },
+            })
+          }
           onClose={() => setPanel('none')}
         />
       )}
@@ -2119,14 +2150,28 @@ export default function MessagesClient({
           addMemberSearch={addMemberSearch}
           onAddMemberSearchChange={setAddMemberSearch}
           onAddMember={handleAddMember}
-          onRemoveMember={handleRemoveMember}
+          onRemoveMember={(userId, name) =>
+            setPendingConfirm({
+              title: 'Retirer ce membre',
+              message: `${name} sera retiré du groupe et perdra l'accès à cette conversation.`,
+              confirmLabel: 'Retirer',
+              onConfirm: () => { void handleRemoveMember(userId) },
+            })
+          }
           onSetRole={handleSetMemberRole}
           onOpenMuteDialog={(userId, name) => setMuteMemberDialog({ userId, name })}
           onClearMute={handleClearMemberMute}
           onRename={handleRenameGroup}
           onUploadAvatar={handleUploadGroupAvatar}
           groupAvatarInputRef={groupAvatarInputRef}
-          onLeave={handleLeaveGroup}
+          onLeave={() =>
+            setPendingConfirm({
+              title: 'Quitter le groupe',
+              message: 'Tu quitteras cette conversation et tu ne recevras plus ses nouveaux messages.',
+              confirmLabel: 'Quitter',
+              onConfirm: () => { void handleLeaveGroup() },
+            })
+          }
           onDelete={() => setDeleteGroupConfirm(true)}
           onClose={() => setPanel('none')}
         />
@@ -2143,6 +2188,19 @@ export default function MessagesClient({
           onCancel={() => setDeleteGroupConfirm(false)}
         />
       )}
+      {pendingConfirm && (
+        <ConfirmModal
+          title={pendingConfirm.title}
+          message={pendingConfirm.message}
+          confirmLabel={pendingConfirm.confirmLabel}
+          onConfirm={() => {
+            const run = pendingConfirm.onConfirm
+            setPendingConfirm(null)
+            run()
+          }}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      )}
       {panel === 'contactPanel' && activeConversation?.type === 'direct' && otherDirectMember && (
         <ContactPanelModal
           conversationId={activeId as string}
@@ -2151,10 +2209,38 @@ export default function MessagesClient({
           lastSeenAt={presence[otherDirectMember.userId]?.lastSeenAt ?? null}
           isFriend={isFriend}
           isBlocked={isBlockedByMe}
-          onClearHistory={handleClearHistory}
-          onRemoveFriend={() => handleRemoveFriend(otherDirectMember.userId)}
-          onBlock={() => handleBlock(otherDirectMember.userId)}
-          onUnblock={() => handleUnblock(otherDirectMember.userId)}
+          onClearHistory={() =>
+            setPendingConfirm({
+              title: 'Vider l’historique',
+              message: 'Tous les messages de cette conversation seront supprimés de ton historique.',
+              confirmLabel: 'Vider',
+              onConfirm: () => { void handleClearHistory() },
+            })
+          }
+          onRemoveFriend={() =>
+            setPendingConfirm({
+              title: 'Retirer ce contact',
+              message: `${otherDirectMember.name} sera retiré de ta liste d'amis.`,
+              confirmLabel: 'Retirer',
+              onConfirm: () => { void handleRemoveFriend(otherDirectMember.userId) },
+            })
+          }
+          onBlock={() =>
+            setPendingConfirm({
+              title: 'Bloquer ce compte',
+              message: `${otherDirectMember.name} ne pourra plus te contacter tant que ce blocage restera actif.`,
+              confirmLabel: 'Bloquer',
+              onConfirm: () => { void handleBlock(otherDirectMember.userId) },
+            })
+          }
+          onUnblock={() =>
+            setPendingConfirm({
+              title: 'Débloquer ce compte',
+              message: `${otherDirectMember.name} pourra à nouveau te contacter si vous reprenez la conversation.`,
+              confirmLabel: 'Débloquer',
+              onConfirm: () => { void handleUnblock(otherDirectMember.userId) },
+            })
+          }
           onReport={() => setReportTarget({ userId: otherDirectMember.userId, userName: otherDirectMember.name })}
           onClose={() => setPanel('none')}
         />
@@ -2174,7 +2260,19 @@ export default function MessagesClient({
         />
       )}
       {panel === 'blockedReported' && (
-        <BlockedReportedModal blocked={blocked} reports={reports} onUnblock={handleUnblock} onClose={() => setPanel('none')} />
+        <BlockedReportedModal
+          blocked={blocked}
+          reports={reports}
+          onUnblock={(userId, name) =>
+            setPendingConfirm({
+              title: 'Débloquer ce compte',
+              message: `${name} pourra à nouveau te contacter si vous reprenez la conversation.`,
+              confirmLabel: 'Débloquer',
+              onConfirm: () => { void handleUnblock(userId) },
+            })
+          }
+          onClose={() => setPanel('none')}
+        />
       )}
 
       {forwardTarget && (
@@ -3418,7 +3516,7 @@ function FriendsPanel({
   onDismissNew: (userId: string) => void
   onAction: (requestId: string, action: 'accept' | 'decline' | 'cancel') => void
   onSend: (email: string) => Promise<boolean>
-  onRemove: (friendUserId: string) => void
+  onRemove: (friendUserId: string, name: string) => void
   onClose: () => void
 }) {
   const [email, setEmail] = useState('')
@@ -3503,7 +3601,7 @@ function FriendsPanel({
                 </Button>
               )}
             </span>
-            <Button variant="secondary" onClick={() => onRemove(f.userId)} size="sm" style={{ borderRadius: 999 }}>
+            <Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>
               Retirer
             </Button>
           </div>
@@ -3537,7 +3635,7 @@ function GroupSettingsModal({
   addMemberSearch: string
   onAddMemberSearchChange: (value: string) => void
   onAddMember: (userId: string) => void
-  onRemoveMember: (userId: string) => void
+  onRemoveMember: (userId: string, name: string) => void
   onSetRole: (userId: string, role: 'admin' | 'member') => void
   onOpenMuteDialog: (userId: string, name: string) => void
   onClearMute: (userId: string) => void
@@ -3644,7 +3742,7 @@ function GroupSettingsModal({
                 <Button variant="secondary" onClick={() => onSetRole(m.userId, m.role === 'admin' ? 'member' : 'admin')} size="sm" style={{ borderRadius: 999 }}>
                   {m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}
                 </Button>
-                <Button variant="danger" onClick={() => onRemoveMember(m.userId)} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
+                <Button variant="danger" onClick={() => onRemoveMember(m.userId, m.name)} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>
                   Retirer
                 </Button>
               </div>
@@ -3825,7 +3923,7 @@ function BlockedReportedModal({
 }: {
   blocked: BlockedUserView[]
   reports: MyReportView[]
-  onUnblock: (userId: string) => void
+  onUnblock: (userId: string, name: string) => void
   onClose: () => void
 }) {
   return (
@@ -3835,7 +3933,7 @@ function BlockedReportedModal({
       {blocked.map((b) => (
         <div key={b.userId} style={rowStyle}>
           <span style={{ fontSize: 13, color: 'var(--text)' }}>{b.name}</span>
-          <Button variant="secondary" onClick={() => onUnblock(b.userId)} size="sm" style={{ borderRadius: 999 }}>
+          <Button variant="secondary" onClick={() => onUnblock(b.userId, b.name)} size="sm" style={{ borderRadius: 999 }}>
             Débloquer
           </Button>
         </div>

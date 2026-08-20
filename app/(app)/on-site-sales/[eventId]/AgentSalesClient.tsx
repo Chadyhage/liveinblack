@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Input, Select, Checkbox, Label, Card } from '@/app/components/ui'
+import { Button, Input, Select, Checkbox, Label, Card, Modal } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 export interface PlaceView {
@@ -50,10 +50,13 @@ export default function AgentSalesClient({
   const [momoCountry, setMomoCountry] = useState('TG')
   const [momoMode, setMomoMode] = useState<'mtn' | 'moov' | 'mtn_ci' | 'moov_tg'>('moov_tg')
   const [busy, setBusy] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [result, setResult] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [dashboard, setDashboard] = useState(initialDashboard)
 
   const selectedPlace = places.find((p) => p.id === placeId) || null
+  const effectiveQty = mode === 'onsite' && !isTable ? qty : 1
+  const saleAmount = selectedPlace ? selectedPlace.price * effectiveQty : 0
 
   async function refreshDashboard() {
     const res = await fetch(`/api/agent-sales/${eventId}/dashboard`)
@@ -269,7 +272,7 @@ export default function AgentSalesClient({
         )}
 
         <Button
-          onClick={handleSubmit}
+          onClick={() => setConfirmOpen(true)}
           disabled={!placeId}
           loading={busy}
           loadingText="Traitement…"
@@ -280,6 +283,42 @@ export default function AgentSalesClient({
 
         {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
       </Card>
+
+      {confirmOpen && (
+        <Modal onClose={() => setConfirmOpen(false)} maxWidth={420} title="Confirmer la vente">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              {selectedPlace ? `${selectedPlace.type} · ${effectiveQty} billet${effectiveQty > 1 ? 's' : ''}` : 'Vente en cours'}
+            </p>
+            <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--gold)' }}>
+              {fmtMoney(saleAmount, currency)}
+            </p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              {method === 'cash'
+                ? `Paiement en espèces · ${settlementMode === 'agent_settles' ? 'règlement manuel par l’agent' : 'prélèvement immédiat sur le solde organisateur'}`
+                : `Paiement Mobile Money · ${momoNumber.trim() || 'numéro à confirmer'}`}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            <Button variant="secondary" onClick={() => setConfirmOpen(false)} disabled={busy} style={{ flex: 1 }}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setConfirmOpen(false)
+                void handleSubmit()
+              }}
+              disabled={busy}
+              loading={busy}
+              loadingText="Traitement…"
+              style={{ flex: 1, textTransform: 'none', letterSpacing: 'normal' }}
+            >
+              Confirmer
+            </Button>
+          </div>
+        </Modal>
+      )}
     </main>
   )
 }

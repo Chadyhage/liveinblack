@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/app/components/ui'
+import { Button, Modal } from '@/app/components/ui'
 
 // Bouton "lien sécurisé" pour un acheteur SANS compte (Politique Annulation/
 // Remboursement §2) — visible uniquement sur un billet invité (ticket.guestName),
@@ -27,6 +27,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default function TicketRefundRequestButton({ token }: { token: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'err'>('idle')
   const [message, setMessage] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   async function handleClick() {
     setState('busy')
@@ -54,7 +55,7 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
       <Button
         variant="secondary"
-        onClick={handleClick}
+        onClick={() => setConfirmOpen(true)}
         disabled={state === 'busy'}
         loading={state === 'busy'}
         loadingText="Envoi…"
@@ -62,6 +63,28 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
       >
         Demander un remboursement
       </Button>
+      {confirmOpen && (
+        <Modal onClose={() => setConfirmOpen(false)} maxWidth={390} title="Demander un remboursement ?">
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>
+            Ta demande sera transmise immédiatement pour ce billet. Tu recevras ensuite la confirmation par email si elle est acceptée.
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="secondary" onClick={() => setConfirmOpen(false)} style={{ flex: 1, borderRadius: 12 }}>
+              Annuler
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setConfirmOpen(false)
+                void handleClick()
+              }}
+              style={{ flex: 1, borderRadius: 12, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
+            >
+              Confirmer
+            </Button>
+          </div>
+        </Modal>
+      )}
       {message && <p style={{ fontSize: 11.5, color: '#e05aaa', textAlign: 'center', margin: 0 }}>{message}</p>}
     </div>
   )

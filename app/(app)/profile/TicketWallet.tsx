@@ -529,6 +529,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
   const [busyCode, setBusyCode] = useState<string | null>(null)
   const [toast, setToast] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
   const [loadedInvitations, setLoadedInvitations] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ title: string; body: string; confirmLabel: string; onConfirm: () => void } | null>(null)
 
   const assignedCount = hostedSeats.filter((s) => s.assignedTo).length
 
@@ -671,11 +672,37 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                   </p>
                 </div>
                 {seat.assignedTo ? (
-                  <Button variant="danger" size="sm" onClick={() => revoke(seat.ticketCode)} disabled={busyCode === seat.ticketCode} style={smallBtnStyle('rgba(224,90,170,0.14)', '#e05aaa')}>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() =>
+                      setConfirmAction({
+                        title: 'Reprendre cette place',
+                        body: `Cette place ne sera plus attribuée à ${seat.assignedName || 'cet invité'}.`,
+                        confirmLabel: 'Reprendre',
+                        onConfirm: () => { void revoke(seat.ticketCode) },
+                      })
+                    }
+                    disabled={busyCode === seat.ticketCode}
+                    style={smallBtnStyle('rgba(224,90,170,0.14)', '#e05aaa')}
+                  >
                     Reprendre
                   </Button>
                 ) : pendingEmail ? (
-                  <Button variant="secondary" size="sm" onClick={() => cancelInvite(seat.ticketCode)} disabled={busyCode === seat.ticketCode} style={smallBtnStyle('rgba(255,255,255,0.06)', 'var(--text-muted)')}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setConfirmAction({
+                        title: 'Annuler cette invitation',
+                        body: `L'invitation envoyée à ${pendingEmail} sera annulée.`,
+                        confirmLabel: 'Annuler l’invitation',
+                        onConfirm: () => { void cancelInvite(seat.ticketCode) },
+                      })
+                    }
+                    disabled={busyCode === seat.ticketCode}
+                    style={smallBtnStyle('rgba(255,255,255,0.06)', 'var(--text-muted)')}
+                  >
                     Annuler
                   </Button>
                 ) : (
@@ -717,6 +744,34 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
           )
         })}
       </div>
+      {confirmAction && (
+        <Modal
+          onClose={() => setConfirmAction(null)}
+          maxWidth={390}
+          ariaLabel={confirmAction.title}
+          title={confirmAction.title}
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmAction(null)} disabled={Boolean(busyCode)}>
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  const run = confirmAction.onConfirm
+                  setConfirmAction(null)
+                  run()
+                }}
+                disabled={Boolean(busyCode)}
+              >
+                {confirmAction.confirmLabel}
+              </Button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>{confirmAction.body}</p>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -764,6 +819,7 @@ function PremiumTicketCard({
   const [refundState, setRefundState] = useState<'idle' | 'busy' | 'done' | 'err'>(ticket.refundRequested ? 'done' : 'idle')
   const [refundErr, setRefundErr] = useState<string | null>(null)
   const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
+  const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [resellOpen, setResellOpen] = useState(false)
   const [resellPrice, setResellPrice] = useState('')
   const [resellState, setResellState] = useState<'idle' | 'busy' | 'err'>('idle')
@@ -1102,7 +1158,7 @@ function PremiumTicketCard({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={handleWithdrawResell}
+                  onClick={() => setWithdrawConfirmOpen(true)}
                   disabled={withdrawState === 'busy'}
                   loading={withdrawState === 'busy'}
                   loadingText="Retrait…"
@@ -1113,6 +1169,34 @@ function PremiumTicketCard({
               )}
             </div>
             {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
+
+            {withdrawConfirmOpen && (
+              <Modal
+                onClose={() => setWithdrawConfirmOpen(false)}
+                maxWidth={430}
+                title="Retirer la mise en vente"
+                subtitle="Le billet sera retiré du marché de revente."
+                ariaLabel="Confirmer le retrait de la mise en vente"
+                actions={
+                  <>
+                    <Button variant="secondary" onClick={() => setWithdrawConfirmOpen(false)} disabled={withdrawState === 'busy'}>Annuler</Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => { setWithdrawConfirmOpen(false); void handleWithdrawResell() }}
+                      disabled={withdrawState === 'busy'}
+                      loading={withdrawState === 'busy'}
+                      loadingText="Retrait…"
+                    >
+                      Confirmer le retrait
+                    </Button>
+                  </>
+                }
+              >
+                <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+                  Ce billet ne sera plus visible à la revente et un nouveau billet actif sera généré pour toi.
+                </p>
+              </Modal>
+            )}
 
             {refundConfirmOpen && (
               <Modal

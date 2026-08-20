@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Card } from '@/app/components/ui'
+import { Button, Card, Modal } from '@/app/components/ui'
 
 // Port de src/pages/OnSiteOrderPage.jsx (partie interactive uniquement — les
 // gates de chargement/accès vivent dans page.tsx, un Server Component). Ce
@@ -166,6 +166,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
   const [items, setItems] = useState<OrderItem[]>(initialItems)
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [toasts, setToasts] = useState<{ id: number; message: string }[]>([])
+  const [confirmRemoveItem, setConfirmRemoveItem] = useState<OrderItem | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -287,7 +288,10 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
       return
     }
     const next = editable.quantity + delta
-    if (next <= 0) void handleRemoveLine(editable)
+    if (next <= 0) {
+      setConfirmRemoveItem(editable)
+      return
+    }
     else void handleSetQuantity(editable, next)
   }
 
@@ -490,6 +494,30 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
           </div>
         ))}
       </div>
+
+      {confirmRemoveItem && (
+        <Modal onClose={() => setConfirmRemoveItem(null)} maxWidth={390} title="Retirer cette ligne ?">
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 12px' }}>
+            « {confirmRemoveItem.name} » sera retiré de cette commande.
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="secondary" onClick={() => setConfirmRemoveItem(null)} style={{ flex: 1, borderRadius: 12 }}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                const item = confirmRemoveItem
+                setConfirmRemoveItem(null)
+                if (item) void handleRemoveLine(item)
+              }}
+              style={{ flex: 1, borderRadius: 12, textTransform: 'none', letterSpacing: 'normal' }}
+            >
+              Retirer
+            </Button>
+          </div>
+        </Modal>
+      )}
     </main>
   )
 }

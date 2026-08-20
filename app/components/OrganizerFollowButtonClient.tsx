@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Button } from '@/app/components/ui'
+import { Button, Modal } from '@/app/components/ui'
 
 // Port de src/components/OrganizerFollowButton.jsx — utilisé sur la page
 // publique organisateur, la page "Organisateurs suivis" (#6 phase profil) et
@@ -43,6 +43,7 @@ export default function OrganizerFollowButtonClient({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmUnfollow, setConfirmUnfollow] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -88,6 +89,7 @@ export default function OrganizerFollowButtonClient({
     setBusy(true)
     setError(null)
     setMenuOpen(false)
+    setConfirmUnfollow(false)
     try {
       const res = await fetch(`/api/organizers/${organizerId}/follow`, { method: 'DELETE' })
       const data = await res.json()
@@ -166,12 +168,38 @@ export default function OrganizerFollowButtonClient({
             type="button"
             variant="danger"
             role="menuitem"
-            onClick={unfollow}
+            onClick={() => {
+              setMenuOpen(false)
+              setConfirmUnfollow(true)
+            }}
             style={{ display: 'block', width: '100%', borderRadius: 'var(--radius-md)', padding: '10px 16px', background: 'rgba(255,123,123,0.14)', color: 'var(--pink)', border: 'none', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap' }}
           >
             Se désabonner
           </Button>
         </div>
+      )}
+
+      {confirmUnfollow && (
+        <Modal
+          onClose={() => setConfirmUnfollow(false)}
+          maxWidth={380}
+          ariaLabel={`Se désabonner de ${organizerName}`}
+          title="Se désabonner"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmUnfollow(false)} disabled={busy}>
+                Annuler
+              </Button>
+              <Button variant="danger" onClick={() => void unfollow()} disabled={busy} loading={busy} loadingText="Mise à jour…">
+                Se désabonner
+              </Button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+            Tu ne recevras plus les alertes et actualités de {organizerName}.
+          </p>
+        </Modal>
       )}
 
       {error && <p style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, fontSize: 11.5, color: 'var(--pink)', whiteSpace: 'nowrap' }}>{error}</p>}

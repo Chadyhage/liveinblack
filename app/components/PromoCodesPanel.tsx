@@ -118,6 +118,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
   const [form, setForm] = useState<FormState>({ code: '', type: 'percent', value: '', maxUses: '', expiresAt: '', placeIds: [] })
   const places = event.places || []
   const [confirmRemove, setConfirmRemove] = useState<PromoCode | null>(null)
+  const [confirmToggle, setConfirmToggle] = useState<PromoCode | null>(null)
   // L'horloge murale (Date.now()) ne doit jamais être lue pendant le rendu
   // (impur) — lecture unique via l'initialiseur paresseux de useState (même
   // pattern que ProfilClient.tsx:onCooldown), suffisant le temps d'une
@@ -241,6 +242,13 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     const p = confirmRemove
     setConfirmRemove(null)
     await removeCode(p)
+  }
+
+  async function doConfirmToggle() {
+    if (!confirmToggle) return
+    const p = confirmToggle
+    setConfirmToggle(null)
+    await toggleActive(p)
   }
 
   return (
@@ -418,7 +426,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                       </div>
                       <Button
                         variant="secondary"
-                        onClick={() => toggleActive(p)}
+                        onClick={() => setConfirmToggle(p)}
                         disabled={rowBusy || saving}
                         style={{
                           padding: '8px 12px',
@@ -482,6 +490,35 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                 style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px var(--font-open-sans)` }}
               >
                 Supprimer
+              </Button>
+            </div>
+        </Modal>
+      )}
+      {confirmToggle && (
+        <Modal onClose={() => setConfirmToggle(null)} maxWidth={360} hideClose zIndex={3010} ariaLabel={confirmToggle.active === false ? 'Réactiver le code promo' : 'Désactiver le code promo'} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>
+              {confirmToggle.active === false ? 'Réactiver ce code promo ?' : 'Désactiver ce code promo ?'}
+            </p>
+            <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
+              <strong style={{ color: '#fff' }}>{confirmToggle.code}</strong>{' '}
+              {confirmToggle.active === false
+                ? 'redeviendra immédiatement disponible lors de la réservation.'
+                : 'ne pourra plus être utilisé pour de nouvelles réservations tant que tu ne le réactives pas.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmToggle(null)}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px var(--font-open-sans)` }}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                onClick={doConfirmToggle}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px var(--font-open-sans)` }}
+              >
+                {confirmToggle.active === false ? 'Réactiver' : 'Désactiver'}
               </Button>
             </div>
         </Modal>

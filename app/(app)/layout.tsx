@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import AmbientMusicPlayer from '@/app/components/AmbientMusicPlayer'
 import DashboardShell from './_components/DashboardShell'
 
 // Zone authentifiée. Le proxy (proxy.ts) fait déjà un premier filtre rapide
@@ -29,7 +28,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <DashboardShell activeRole={activeRole}>{children}</DashboardShell>
-      <AmbientMusicPlayer />
     </>
   )
 }

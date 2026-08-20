@@ -146,6 +146,7 @@ export default function AgentUsersClient() {
   const [editField, setEditField] = useState<{ field: EditableField; value: string } | null>(null)
   const [editBusy, setEditBusy] = useState(false)
   const [confirmDisable, setConfirmDisable] = useState(false)
+  const [pendingAccountAction, setPendingAccountAction] = useState<null | 'verifyEmail' | 'sendVerification' | 'sendPasswordReset' | 'enable'>(null)
   const [actionBusy, setActionBusy] = useState(false)
 
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -470,7 +471,9 @@ export default function AgentUsersClient() {
                 onSaveEdit={saveEditField}
                 actionBusy={actionBusy}
                 confirmDisable={confirmDisable}
+                pendingAccountAction={pendingAccountAction}
                 setConfirmDisable={setConfirmDisable}
+                setPendingAccountAction={setPendingAccountAction}
                 onVerifyEmail={handleVerifyEmail}
                 onSendVerification={() => handleSendAccountEmail('verification')}
                 onSendPasswordReset={() => handleSendAccountEmail('password-reset')}
@@ -494,7 +497,9 @@ function DetailPanel({
   onSaveEdit,
   actionBusy,
   confirmDisable,
+  pendingAccountAction,
   setConfirmDisable,
+  setPendingAccountAction,
   onVerifyEmail,
   onSendVerification,
   onSendPasswordReset,
@@ -507,7 +512,9 @@ function DetailPanel({
   onSaveEdit: () => void
   actionBusy: boolean
   confirmDisable: boolean
+  pendingAccountAction: null | 'verifyEmail' | 'sendVerification' | 'sendPasswordReset' | 'enable'
   setConfirmDisable: (v: boolean) => void
+  setPendingAccountAction: (v: null | 'verifyEmail' | 'sendVerification' | 'sendPasswordReset' | 'enable') => void
   onVerifyEmail: () => void
   onSendVerification: () => void
   onSendPasswordReset: () => void
@@ -574,7 +581,7 @@ function DetailPanel({
             <Button
               variant="secondary"
               disabled={actionBusy}
-              onClick={onSendVerification}
+              onClick={() => setPendingAccountAction('sendVerification')}
               style={{
                 width: '100%',
                 padding: '10px 0',
@@ -595,7 +602,7 @@ function DetailPanel({
             <Button
               variant="primary"
               disabled={actionBusy}
-              onClick={onVerifyEmail}
+              onClick={() => setPendingAccountAction('verifyEmail')}
               style={{
                 width: '100%',
                 padding: '10px 0',
@@ -613,7 +620,7 @@ function DetailPanel({
           <Button
             variant="secondary"
             disabled={actionBusy}
-            onClick={onSendPasswordReset}
+            onClick={() => setPendingAccountAction('sendPasswordReset')}
             style={{
               width: '100%',
               padding: '10px 0',
@@ -687,7 +694,7 @@ function DetailPanel({
         ) : detail.disabled ? (
           <Button
             variant="primary"
-            onClick={() => onSetDisabled(false)}
+            onClick={() => setPendingAccountAction('enable')}
             disabled={actionBusy}
             style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, border: '1px solid var(--border-strong)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
           >
@@ -715,6 +722,31 @@ function DetailPanel({
           </>
         )}
       </section>
+
+      {pendingAccountAction && (
+        <ConfirmModal
+          title={
+            pendingAccountAction === 'verifyEmail'
+              ? `Marquer l’email de ${detail.displayName} comme vérifié ?`
+              : pendingAccountAction === 'sendVerification'
+                ? `Renvoyer un lien de vérification à ${detail.displayName} ?`
+                : pendingAccountAction === 'sendPasswordReset'
+                  ? `Envoyer un lien de réinitialisation à ${detail.displayName} ?`
+                  : `Réactiver le compte de ${detail.displayName} ?`
+          }
+          color={pendingAccountAction === 'enable' ? 'var(--primary)' : 'var(--pink)'}
+          busy={actionBusy}
+          onCancel={() => setPendingAccountAction(null)}
+          onConfirm={() => {
+            const action = pendingAccountAction
+            setPendingAccountAction(null)
+            if (action === 'verifyEmail') onVerifyEmail()
+            else if (action === 'sendVerification') onSendVerification()
+            else if (action === 'sendPasswordReset') onSendPasswordReset()
+            else onSetDisabled(false)
+          }}
+        />
+      )}
     </div>
   )
 }

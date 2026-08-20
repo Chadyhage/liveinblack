@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Button, Card, Input, ToastViewport } from '@/app/components/ui'
+import { Button, Card, Input, Modal, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
 interface PlaylistSong {
@@ -234,6 +234,7 @@ export default function PlaylistClient({
   const [copied, setCopied] = useState(false)
   const [playingKey, setPlayingKey] = useState<string | null>(null)
   const [toasts, setToasts] = useState<{ id: number; text: string; kind: 'ok' | 'warn' }[]>([])
+  const [pendingConfirm, setPendingConfirm] = useState<{ title: string; message: string; confirmLabel: string; onConfirm: () => void } | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   // `refreshPlaylist` est appelée depuis de nombreux endroits (polling ET
   // handlers de mutation après un POST/DELETE), pas seulement l'effet de
@@ -678,7 +679,14 @@ export default function PlaylistClient({
               disabled={busyId === 'now-playing'}
               loading={busyId === 'now-playing'}
               loadingText="…"
-              onClick={handleStopNow}
+              onClick={() =>
+                setPendingConfirm({
+                  title: 'Terminer le son en cours',
+                  message: 'Le morceau affiché comme en cours sera retiré immédiatement de la salle.',
+                  confirmLabel: 'Terminer',
+                  onConfirm: () => { void handleStopNow() },
+                })
+              }
               style={ghostButtonStyle}
             >
               Terminer
@@ -799,12 +807,31 @@ export default function PlaylistClient({
                     <Button
                       variant="danger"
                       disabled={busyId === song.id}
-                      onClick={() => handleSetStatus(song, 'refused')}
+                      onClick={() =>
+                        setPendingConfirm({
+                          title: 'Refuser ce son',
+                          message: `« ${song.title} » sera marqué comme refusé dans la playlist.`,
+                          confirmLabel: 'Refuser',
+                          onConfirm: () => { void handleSetStatus(song, 'refused') },
+                        })
+                      }
                       style={{ ...smallButtonStyle, borderColor: song.status === 'refused' ? 'var(--pink)' : 'var(--border)' }}
                     >
                       Refuser
                     </Button>
-                    <Button variant="danger" disabled={busyId === song.id} onClick={() => handleModeratorRemove(song)} style={{ ...smallButtonStyle, color: 'var(--pink)' }}>
+                    <Button
+                      variant="danger"
+                      disabled={busyId === song.id}
+                      onClick={() =>
+                        setPendingConfirm({
+                          title: 'Supprimer ce son',
+                          message: `« ${song.title} » sera retiré définitivement de la playlist.`,
+                          confirmLabel: 'Supprimer',
+                          onConfirm: () => { void handleModeratorRemove(song) },
+                        })
+                      }
+                      style={{ ...smallButtonStyle, color: 'var(--pink)' }}
+                    >
                       Supprimer
                     </Button>
                   </div>
@@ -1046,7 +1073,14 @@ export default function PlaylistClient({
                           <Button
                             variant="danger"
                             disabled={busyId === song.id}
-                            onClick={() => handleRemoveOwnSong(song)}
+                            onClick={() =>
+                              setPendingConfirm({
+                                title: 'Supprimer mon son',
+                                message: `« ${song.title} » sera retiré et tu pourras proposer un autre son à la place.`,
+                                confirmLabel: 'Supprimer',
+                                onConfirm: () => { void handleRemoveOwnSong(song) },
+                              })
+                            }
                             title="Supprimer mon son"
                             style={{
                               width: 44,
@@ -1120,6 +1154,28 @@ export default function PlaylistClient({
       )}
 
       <ToastViewport items={toasts.map((toast) => ({ id: toast.id, message: toast.text, kind: toast.kind === 'ok' ? 'success' : 'error' }))} />
+      {pendingConfirm && (
+        <Modal onClose={() => setPendingConfirm(null)} maxWidth={420} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="secondary" onClick={() => setPendingConfirm(null)} style={{ flex: 1 }}>
+              Annuler
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                const run = pendingConfirm.onConfirm
+                setPendingConfirm(null)
+                run()
+              }}
+              style={{ flex: 1 }}
+            >
+              {pendingConfirm.confirmLabel}
+            </Button>
+          </div>
+        </Modal>
+      )}
     </main>
   )
 }
