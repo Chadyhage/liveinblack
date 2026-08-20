@@ -66,13 +66,13 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   }
 
   return (
-    <main style={{ width: '100%', maxWidth: 760, marginInline: 'auto' }}>
+    <main className="lb-dashboard-page">
       <header style={{ marginBottom: 24 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#b8f34a', fontSize: 13, fontWeight: 750, letterSpacing: '.08em', textTransform: 'uppercase' }}>
           <BellRing size={17} aria-hidden="true" /> Centre d’alertes
         </span>
         <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Notifications</h1>
-        <p style={{ maxWidth: 560, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
+        <p style={{ maxWidth: 760, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
       </header>
       {unreadCount > 0 && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>

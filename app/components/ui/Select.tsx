@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { padding: '9px 12px', fontSize: 15 } : { padding: '12px 14px', fontSize: 16 }
+  const sizeStyle = size === 'sm' ? { minHeight: 46, padding: '11px 15px', fontSize: 15 } : { minHeight: 52, padding: '14px 17px', fontSize: 16 }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
@@ -105,7 +105,6 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
         aria-controls={listboxId}
         {...aria}
         style={{
-          minHeight: 44,
           width: '100%',
           display: 'flex',
           alignItems: 'center',

@@ -37,6 +37,7 @@ function applyApiCors(req: Request, response: NextResponse): NextResponse {
   response.headers.set('Access-Control-Allow-Credentials', 'true')
   response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+  response.headers.set('Access-Control-Expose-Headers', 'Location')
   response.headers.set('Access-Control-Max-Age', '86400')
   response.headers.set('Vary', 'Origin, Accept-Encoding')
   return response

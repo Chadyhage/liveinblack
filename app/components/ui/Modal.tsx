@@ -20,6 +20,18 @@ export interface ModalProps {
   actions?: ReactNode
 }
 
+function getPanelContentStyle(contentStyle: CSSProperties | undefined): CSSProperties {
+  if (!contentStyle) return {}
+  const next = { ...contentStyle }
+  delete next.width
+  delete next.maxWidth
+  delete next.minWidth
+  delete next.height
+  delete next.maxHeight
+  delete next.minHeight
+  return next
+}
+
 // Coquille de modal partagée — remplace le bloc dupliqué (overlay plein
 // écran + fond flouté cliquable + carte centrée + croix de fermeture) trouvé
 // à l'identique dans une douzaine de modales (BoostModal, CancelModal,
@@ -41,6 +53,7 @@ export default function Modal({
 }: ModalProps) {
   const titleId = useId()
   const subtitleId = useId()
+  const panelContentStyle = getPanelContentStyle(contentStyle)
 
   return (
     <BaseModal
@@ -55,7 +68,7 @@ export default function Modal({
       rootStyle={{ zIndex }}
       panelStyle={{
           '--modal-width': `${maxWidth}px`,
-          ...contentStyle,
+          ...panelContentStyle,
         } as CSSProperties}
       ariaLabel={title ? undefined : ariaLabel}
       ariaLabelledBy={title ? titleId : undefined}

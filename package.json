@@ -22,6 +22,7 @@
     "check:mobile-web-smoke:fixture": "LIB_MOBILE_WEB_FIXTURE_API=true node scripts/check-mobile-web-smoke.mjs",
     "check:mobile-config": "node scripts/check-mobile-config.mjs",
     "check:mobile-client-flow": "node scripts/check-mobile-client-flow.mjs",
+    "check:mobile-agent-flow": "node scripts/check-mobile-agent-flow.mjs",
     "check:mobile-password-flow": "node scripts/check-mobile-password-flow.mjs",
     "ops:readiness": "node scripts/ops-readiness.mjs",
     "ops:deploy:prod": "node scripts/ops-deploy.mjs",

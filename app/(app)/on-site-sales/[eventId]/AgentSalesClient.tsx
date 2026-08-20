@@ -117,7 +117,7 @@ export default function AgentSalesClient({
   }
 
   return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px 60px' }}>
+    <main style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: '32px clamp(18px, 3vw, 48px) 72px' }}>
       <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px' }}>Vente sur place</h1>
       <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '0 0 20px' }}>{eventName}</p>
 

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import CameraScanner from './CameraScanner'
 import { Button, Card, Input, Label } from '@/app/components/ui'
+import styles from './ScannerClient.module.css'
 
 // Port de src/pages/ScannerPage.jsx (outil staff : porte + bar). Ce composant
 // ne parle QU'aux routes HTTP déjà construites (/api/tickets/checkin et les
@@ -661,9 +662,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
   const groups = groupByCategory(menu)
 
   return (
-    <main style={{ minHeight: '100vh', padding: '28px 16px 110px' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+    <main className={styles.shell}>
+      <div className={styles.workspace}>
+        <div className={styles.header}>
           <div>
             <Link href="/my-shifts" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
               ← Événements
@@ -693,9 +694,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         )}
 
         {mode === 'scan' ? (
-          <>
+          <div className={styles.scanGrid}>
             {checkinError && (
-              <div role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 16, padding: '10px 14px' }}>
+              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 16, padding: '10px 14px' }}>
                 <p style={{ fontSize: 13, color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 8px' : 0 }}>{checkinError}</p>
                 {checkinErrorCode === 'auth_required' && (
                   <Link href="/login" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
@@ -705,7 +706,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               </div>
             )}
 
-            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+            <Card className={styles.cameraCard} style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <h2 style={{ ...sectionTitleStyle, margin: 0 }}>Caméra</h2>
                 <Button type="button" variant="secondary" size="sm" onClick={() => setScanning((s) => !s)}>
@@ -715,7 +716,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               <CameraScanner active={scanning} onScan={handleScanValue} />
             </Card>
 
-            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+            <Card className={styles.manualCard} style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <h2 style={sectionTitleStyle}>Saisie manuelle</h2>
               <form
                 onSubmit={(e) => {
@@ -728,7 +729,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   }
                   void performCheckin(manualCode)
                 }}
-                style={{ display: 'flex', gap: 8 }}
+                className={styles.manualForm}
               >
                 <Label htmlFor="scanner-manual-code" style={SR_ONLY_STYLE}>
                   Code du billet
@@ -747,11 +748,13 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 </Button>
               </form>
             </Card>
-          </>
+          </div>
         ) : (
-          <>
+          <div className={styles.serviceGrid}>
+            <div className={styles.servicePrimary}>
             {checkinResult && (
               <Card
+                className={styles.resultCard}
                 style={{
                   border: checkinResult.alreadyCheckedIn ? '1px solid rgba(184,243,74,0.35)' : '1px solid rgba(184, 243, 74,0.35)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
@@ -803,24 +806,26 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     {checkinResult.alreadyCheckedIn ? 'Déjà entré' : 'Billet valide'}
                   </p>
                 </div>
-                <p style={{ fontSize: 13.5, color: 'var(--text)', margin: '0 0 4px' }}>
-                  {checkinResult.ticket.place} · {fmtMoney(checkinResult.ticket.totalPrice, checkinResult.ticket.currency)}
-                </p>
-                {checkinResult.ticket.holderName && (
-                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
-                )}
-                {checkinResult.ticket.guestName && (
-                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
-                )}
-                {checkinResult.ticket.preorders.length > 0 && (
-                  <div style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 6px' }}>
-                    <p style={{ margin: '0 0 3px' }}>Précommandes :</p>
-                    {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '2px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
-                  </div>
-                )}
-                <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
-                  {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
-                </p>
+                <div>
+                  <p style={{ fontSize: 13.5, color: 'var(--text)', margin: '0 0 4px' }}>
+                    {checkinResult.ticket.place} · {fmtMoney(checkinResult.ticket.totalPrice, checkinResult.ticket.currency)}
+                  </p>
+                  {checkinResult.ticket.holderName && (
+                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
+                  )}
+                  {checkinResult.ticket.guestName && (
+                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
+                  )}
+                  {checkinResult.ticket.preorders.length > 0 && (
+                    <div style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 6px' }}>
+                      <p style={{ margin: '0 0 3px' }}>Précommandes :</p>
+                      {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '2px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
+                    </div>
+                  )}
+                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
+                    {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
+                  </p>
+                </div>
               </Card>
             )}
 
@@ -829,7 +834,6 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 c'est le rôle du serveur (rang 2+) uniquement. Voir D4,
                 confirmé en réunion live le 11/08/2026. */}
             {rank >= 2 && (
-            <>
             <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
               <h2 style={sectionTitleStyle}>Commande de ce billet</h2>
               {items.length === 0 ? (
@@ -946,8 +950,11 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 </div>
               )}
             </Card>
+            )}
+            </div>
 
-            <section>
+            {rank >= 2 && (
+            <section className={styles.menuPanel}>
               <h2 style={{ ...sectionTitleStyle, marginBottom: 18 }}>Ajouter au menu</h2>
               {menu.length === 0 ? (
                 <Card style={{ padding: '40px 20px', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
@@ -1005,9 +1012,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 </div>
               )}
             </section>
-            </>
             )}
-          </>
+          </div>
         )}
       </div>
 
@@ -1024,7 +1030,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             padding: '14px 16px',
           }}
         >
-          <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div className={styles.payBarInner}>
             <div>
               <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>À encaisser</span>
               <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>

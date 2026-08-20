@@ -1,0 +1,124 @@
+.shell {
+  min-height: 100vh;
+  padding: 32px clamp(18px, 3vw, 48px) 118px;
+}
+
+.workspace {
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.scanGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.cameraCard {
+  min-height: 520px;
+}
+
+.manualCard {
+  position: sticky;
+  top: 24px;
+}
+
+.manualForm {
+  display: flex;
+  gap: 10px;
+}
+
+.serviceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 520px);
+  gap: 20px;
+  align-items: start;
+}
+
+.servicePrimary {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.resultCard {
+  display: grid;
+  grid-template-columns: minmax(220px, .55fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.menuPanel {
+  min-width: 0;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.payBarInner {
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 1020px) {
+  .shell {
+    padding: 28px 16px 110px;
+  }
+
+  .scanGrid,
+  .serviceGrid,
+  .resultCard {
+    grid-template-columns: 1fr;
+  }
+
+  .cameraCard {
+    min-height: 0;
+  }
+
+  .manualCard,
+  .menuPanel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 620px) {
+  .shell {
+    padding: 22px 14px 104px;
+  }
+
+  .header,
+  .manualForm {
+    flex-direction: column;
+  }
+
+  .header > button,
+  .manualForm > button {
+    width: 100%;
+  }
+}

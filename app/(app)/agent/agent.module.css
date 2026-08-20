@@ -5,7 +5,7 @@
   min-width: 0;
 }
 
-.workspace :global(.lb-dashboard-page) { max-width: 1360px; margin-inline: auto; }
+.workspace :global(.lb-dashboard-page) { max-width: 1500px; margin-inline: auto; }
 .workspace :global(.lb-dashboard-page) > div { gap: 30px !important; }
 .workspace :global(.lb-dashboard-page) > div > div:first-child:has(h1),
 .workspace :global(.lb-dashboard-page) > div > h1:first-child {
@@ -122,7 +122,7 @@
    rythme visuel et sa hiérarchie opérationnelle. */
 
 /* Comptes : recherche centrale et filtres compacts façon barre d’outils. */
-.workspace :global(.lb-agent-screen--users) > div > div[style*="position: relative"] { max-width: 760px; }
+.workspace :global(.lb-agent-screen--users) > div > div[style*="position: relative"] { max-width: none; }
 .workspace :global(.lb-agent-screen--users) > div > div[style*="overflow-x: auto"] { padding: 8px; border: 1px solid var(--agent-border); border-radius: 16px; background: rgba(255, 255, 255, .035); }
 
 /* Événements : visuels plus généreux, lignes lisibles comme un catalogue de contrôle. */
@@ -137,7 +137,7 @@
 .workspace :global(.lb-agent-screen--payments) :global(.lb-responsive-metrics) button:hover,
 .workspace :global(.lb-agent-screen--reports) > div > div[style*="grid-template-columns"] button:hover { background: rgba(255,255,255,.07) !important; }
 .workspace :global(.lb-agent-screen--applications) div[style*="position: fixed"] > div:last-child,
-.workspace :global(.lb-agent-screen--deletions) div[style*="position: fixed"] > div:last-child { max-width: 680px !important; }
+.workspace :global(.lb-agent-screen--deletions) div[style*="position: fixed"] > div:last-child { max-width: calc(100vw - 56px) !important; }
 
 /* Modération : davantage d’air entre les dossiers sensibles. */
 .workspace :global(.lb-agent-screen--deletions) > div > div:last-of-type,
@@ -161,11 +161,11 @@
 .workspace :global(.lb-agent-homepage-stack) > :global(.lb-card) { min-width: 0; }
 .workspace :global(.lb-agent-blog-grid) { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px !important; }
 .workspace :global(.lb-agent-blog-grid) > :global(.lb-card) { min-height: 104px; padding: 18px !important; }
-.workspace :global(.lb-agent-screen--blog) :global(.lb-modal-panel) { max-width: 760px !important; }
+.workspace :global(.lb-agent-screen--blog) :global(.lb-modal-panel) { max-width: calc(100vw - 56px) !important; }
 .workspace :global(.lb-agent-screen--blog) textarea { min-height: 150px !important; }
 .workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child {
-  width: min(660px, 100%) !important;
-  height: calc(100dvh - 20px);
+  width: calc(100vw - 56px) !important;
+  height: calc(100dvh - 56px);
   max-height: none !important;
   border-color: rgba(255, 255, 255, .13) !important;
   border-radius: 26px !important;
@@ -173,7 +173,7 @@
   backdrop-filter: blur(30px) saturate(150%);
   box-shadow: -26px 0 80px rgba(0, 0, 0, .45) !important;
 }
-.workspace div[style*="position: fixed"][style*="align-items: flex-end"][style*="justify-content: center"] { justify-content: flex-end !important; padding: 10px; }
+.workspace div[style*="position: fixed"][style*="align-items: flex-end"][style*="justify-content: center"] { justify-content: center !important; align-items: center !important; padding: 28px; }
 .workspace div[style*="position: fixed"][style*="justify-content: center"] > div:last-child {
   border-radius: 24px !important;
   background: rgba(27, 27, 32, .94) !important;
@@ -191,8 +191,8 @@
   .workspace :global(.lb-agent-homepage-stack),
   .workspace :global(.lb-agent-blog-grid) { grid-template-columns: 1fr; }
   .workspace :global(.lb-agent-homepage-stack) > :global(.lb-card) { grid-column: auto !important; }
-  .workspace div[style*="position: fixed"][style*="align-items: flex-end"][style*="justify-content: center"] { align-items: flex-end !important; justify-content: center !important; padding: 0; }
-  .workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child { width: 100% !important; height: auto; max-height: 90dvh !important; border-radius: 26px 26px 0 0 !important; box-shadow: 0 -26px 80px rgba(0,0,0,.45) !important; }
+  .workspace div[style*="position: fixed"][style*="align-items: flex-end"][style*="justify-content: center"] { align-items: center !important; justify-content: center !important; padding: 10px; }
+  .workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child { width: calc(100vw - 20px) !important; height: calc(100dvh - 20px); max-height: none !important; border-radius: 22px !important; box-shadow: 0 26px 80px rgba(0,0,0,.45) !important; }
 }
 
 @media (max-width: 460px) {

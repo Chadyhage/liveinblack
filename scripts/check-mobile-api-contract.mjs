@@ -217,9 +217,12 @@ const results = uniqueCalls.map((call) => {
   }
 })
 
+// Tous les appels mobiles font partie du contrat de production, y compris
+// l’espace agent. Le flag `admin` reste exposé dans le JSON pour faciliter le
+// tri, mais ne doit plus retirer ces appels du verdict global.
 const clientResults = results.filter((result) => !result.admin)
 const adminResults = results.filter((result) => result.admin)
-const failures = clientResults.filter((result) => result.status !== 'ok')
+const failures = results.filter((result) => result.status !== 'ok')
 
 if (process.argv.includes('--json')) {
   console.log(JSON.stringify({
@@ -233,13 +236,13 @@ if (process.argv.includes('--json')) {
 }
 
 console.log(
-  'Contrat mobile non-admin : ' +
-    clientResults.filter((result) => result.status === 'ok').length +
+  'Contrat mobile complet : ' +
+    results.filter((result) => result.status === 'ok').length +
     '/' +
-    clientResults.length +
+    results.length +
     ' appels uniques reliés à une route et une méthode.'
 )
-console.log('Appels admin hors périmètre : ' + adminResults.length + '.')
+console.log('Dont espace agent : ' + adminResults.length + ' appels.')
 console.log('Appels backend non analysables statiquement : ' + unparsedBackendCalls + '.')
 
 for (const result of failures) {
