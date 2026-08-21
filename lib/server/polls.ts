@@ -4,7 +4,8 @@ import Message, { type MessageDoc } from '../models/Message'
 import Conversation, { type ConversationDoc } from '../models/Conversation'
 import Event from '../models/Event'
 import User from '../models/User'
-import { assertCanSendInConversation, loadParticipantConversation } from './messaging'
+import { assertCanSendInConversation } from './messaging'
+import { loadParticipantConversation } from './messagingCoreService'
 import {
   toMessageView as toSharedMessageView,
   type ConversationSource,

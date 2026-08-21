@@ -956,7 +956,6 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       {confirmPayOpen && (
         <Modal
           onClose={() => setConfirmPayOpen(false)}
-          maxWidth={420}
           ariaLabel="Confirmer l'encaissement"
           title="Confirmer l'encaissement"
           actions={
@@ -985,7 +984,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         </Modal>
       )}
       {confirmRemoveItem && (
-        <Modal onClose={() => setConfirmRemoveItem(null)} maxWidth={390} title="Retirer cette ligne ?">
+        <Modal onClose={() => setConfirmRemoveItem(null)} title="Retirer cette ligne ?">
           <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
             « {confirmRemoveItem.item.name} » sera retiré de la commande de ce billet.
           </p>

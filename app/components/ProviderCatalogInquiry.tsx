@@ -197,7 +197,7 @@ export default function ProviderCatalogInquiry({
       </Button>
 
       {open && (
-        <Modal onClose={closeSheet} maxWidth={520} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
+        <Modal onClose={closeSheet} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
 
             <Card
               style={{

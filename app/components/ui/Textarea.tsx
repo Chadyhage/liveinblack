@@ -3,26 +3,37 @@
 import { forwardRef, useState } from 'react'
 import type { TextareaHTMLAttributes } from 'react'
 
-export interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className'> {
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   invalid?: boolean
+  autoTrim?: boolean
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { invalid, style, onFocus, onBlur, disabled, rows = 4, ...rest },
+  { invalid, style, className, onFocus, onBlur, disabled, autoTrim, rows = 4, ...rest },
   ref
 ) {
   const [focused, setFocused] = useState(false)
   return (
     <textarea
+      className={`lb-input-control${className ? ` ${className}` : ''}`}
       ref={ref}
       rows={rows}
       disabled={disabled}
+      aria-invalid={invalid || undefined}
       onFocus={(e) => {
         setFocused(true)
         onFocus?.(e)
       }}
       onBlur={(e) => {
         setFocused(false)
+        if (autoTrim && e.target.value) {
+          const trimmed = e.target.value.trim()
+          if (trimmed !== e.target.value) {
+            e.target.value = trimmed
+            const event = new Event('input', { bubbles: true })
+            e.target.dispatchEvent(event)
+          }
+        }
         onBlur?.(e)
       }}
       style={{
@@ -32,10 +43,10 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
         border: `1px solid ${invalid ? '#ff5b5b' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
         outline: 'none',
         fontFamily: 'inherit',
-        minHeight: 132,
+        minHeight: 140,
         fontSize: 16,
-        lineHeight: 1.5,
-        padding: '20px 24px',
+        lineHeight: 1.55,
+        padding: '20px 22px',
         borderRadius: 'var(--radius-md)',
         resize: 'vertical',
         transition: 'border-color 0.15s ease, box-shadow 0.15s ease',

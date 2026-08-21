@@ -1,12 +1,38 @@
-import crypto from 'node:crypto'
 import mongoose, { type HydratedDocument } from 'mongoose'
 import { getDb } from '../db/mongoose'
-import Event, { type EventDoc } from '../models/Event'
-import EventStaff from '../models/EventStaff'
 import EventOrder, { type EventOrderDoc, type OrderItem } from '../models/EventOrder'
-import EventOrderLog from '../models/EventOrderLog'
 import Ticket from '../models/Ticket'
-import User from '../models/User'
+import { addEventOrderItem, type AddOrderItemInput, type AddOrderItemResult } from './eventOrderAddItemService'
+import {
+  cancelEventOrderItem,
+  type CancelOrderItemInput,
+  type CancelOrderItemResult,
+} from './eventOrderCancelItemService'
+import { payEventTicketOrders, type PayTicketOrdersInput, type PayTicketOrdersResult } from './eventOrderPayService'
+import {
+  removeEventOrderItem,
+  type RemoveOrderItemInput,
+  type RemoveOrderItemResult,
+} from './eventOrderRemoveItemService'
+import {
+  serveEventOrderItem,
+  type ServeOrderItemInput,
+  type ServeOrderItemResult,
+} from './eventOrderServeItemService'
+import {
+  updateEventOrderItemQuantity,
+  type UpdateOrderItemQuantityInput,
+  type UpdateOrderItemQuantityResult,
+} from './eventOrderUpdateItemService'
+import {
+  appendEventOrderLog,
+  buildSanitizedEventOrderItemId,
+  getCallerEventOrderRank,
+  getOrCreateEventOrder,
+  loadEventOrderContext,
+  resolveEventOrderCallerName,
+  type EventContextResult,
+} from './eventOrderCoreService'
 
 // Port de api/event-stock.js (action 'order') vers le modèle Mongo à un seul
 // document EventOrder par événement (tableau `items` embarqué — voir
@@ -110,48 +136,18 @@ function toItemView(item: OrderItem): EventOrderItemView {
   }
 }
 
-type StaffRoster = Record<string, { role: string }>
-
 // Formule de rang EXACTE (api/event-stock.js:115-126) : propriétaire/créateur
 // de l'événement → 3 ; sinon rôle du roster EventStaff → manager:3,
 // serveur:2, scan:1 ; 'dj' ou absent du roster (simple client/titulaire de
 // billet) → 0. `computeAuthContext` centralise cette formule ET le libellé de
 // rôle utilisé pour le journal, pour n'avoir qu'une seule source de vérité —
 // `resolveRank` (le helper au contrat exact demandé) n'en expose que le rang.
-function computeAuthContext(
-  callerId: string,
-  event: Pick<EventDoc, 'organizerId' | 'createdBy'>,
-  roster: StaffRoster | undefined
-): { rank: number; role: string } {
-  const isOwner = event.organizerId === callerId || event.createdBy === callerId
-  if (isOwner) return { rank: 3, role: 'owner' }
-  const staffRole = roster?.[callerId]?.role ?? null
-  const rankByRole: Record<string, number> = { manager: 3, serveur: 2, scan: 1 }
-  const rank = staffRole ? (rankByRole[staffRole] ?? 0) : 0
-  return { rank, role: staffRole ?? 'client' }
-}
-
-function resolveRank(callerId: string, event: Pick<EventDoc, 'organizerId' | 'createdBy'>, roster: StaffRoster | undefined): number {
-  return computeAuthContext(callerId, event, roster).rank
-}
-
-export type EventContext = { event: HydratedDocument<EventDoc>; rank: number; role: string }
-export type EventContextResult = ErrResult | { ok: true; ctx: EventContext }
-
 // Exportée (#7 phase organisateur) : lib/server/organizerEvents.ts réutilise
 // EXACTEMENT cette même formule de rang pour les mutations d'événement
 // (create/update/cancel/postpone/delete), plutôt que d'en réinventer une
 // seconde qui pourrait diverger avec le temps.
 export async function loadEventContext(eventId: string, callerId: string): Promise<EventContextResult> {
-  const event = await Event.findById(eventId)
-  if (!event) return { ok: false, status: 404, error: 'event_not_found' }
-  const staffDoc = await EventStaff.findOne({ eventId }).lean()
-  // .lean() renvoie un objet JS brut pour un champ Map (pas un vrai Map) —
-  // même cast que ticketCheckin.ts.
-  const roster = staffDoc?.roster as StaffRoster | undefined
-  const rank = resolveRank(callerId, event, roster)
-  const { role } = computeAuthContext(callerId, event, roster)
-  return { ok: true, ctx: { event, rank, role } }
+  return loadEventOrderContext(eventId, callerId)
 }
 
 // ─────────────────────── getCallerEventRank (scanner) ───────────────────────
@@ -170,27 +166,15 @@ export async function loadEventContext(eventId: string, callerId: string): Promi
 // invalide dans l'URL).
 export async function getCallerEventRank(callerId: string, eventId: string): Promise<number> {
   await getDb()
-  if (!mongoose.isValidObjectId(eventId)) return 0
-  const event = await Event.findById(eventId).lean()
-  if (!event) return 0
-  const staffDoc = await EventStaff.findOne({ eventId }).lean()
-  const roster = staffDoc?.roster as StaffRoster | undefined
-  return resolveRank(callerId, event, roster)
+  return getCallerEventOrderRank(callerId, eventId)
 }
 
 async function resolveCallerName(callerId: string): Promise<string | null> {
-  const user = await User.findById(callerId).lean()
-  if (!user) return null
-  return `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email
+  return resolveEventOrderCallerName(callerId)
 }
 
 async function getOrCreateOrder(eventId: string, session: mongoose.ClientSession): Promise<HydratedDocument<EventOrderDoc>> {
-  const order = await EventOrder.findOneAndUpdate(
-    { eventId },
-    { $setOnInsert: { eventId, items: [] } },
-    { upsert: true, returnDocument: 'after', session }
-  )
-  return order as HydratedDocument<EventOrderDoc>
+  return getOrCreateEventOrder(eventId, session)
 }
 
 // Journal (audit H14) : une entrée par mutation, poussée DANS la même
@@ -221,533 +205,91 @@ async function appendLog(
   },
   session: mongoose.ClientSession
 ): Promise<void> {
-  const fullEntry = {
-    id: crypto.randomBytes(12).toString('hex'),
-    ts: new Date(),
-    actorId: entry.actorId,
-    actorName: entry.actorName ?? null,
-    actorRole: entry.actorRole ?? null,
-    itemId: entry.itemId ?? null,
-    ticketId: entry.ticketId ?? null,
-    itemName: entry.itemName ?? null,
-    action: entry.action,
-    oldValue: entry.oldValue ?? null,
-    newValue: entry.newValue ?? null,
-    amountMinor: entry.amountMinor ?? null,
-    note: entry.note ?? null,
-  }
-  await EventOrderLog.findOneAndUpdate(
-    { eventId },
-    { $push: { entries: fullEntry }, $setOnInsert: { eventId } },
-    { upsert: true, session }
-  )
+  await appendEventOrderLog(eventId, entry, session)
 }
 
 function sanitizedItemId(prefix: string, ticketCode: string, name: string): string {
-  const raw = `${prefix}_${ticketCode}_${name.replace(/ /g, '_')}`
-  return raw.slice(0, 90)
+  return buildSanitizedEventOrderItemId(prefix, ticketCode, name)
 }
 
 // ─────────────────────────────── addOrderItem ───────────────────────────────
 
-export interface AddOrderItemInput {
-  eventId: string
-  ticketId: string
-  menuItemId: string
-  quantity: number
-}
-
-export type AddOrderItemResult = ErrResult | { ok: true; item: EventOrderItemView }
-
 export async function addOrderItem(caller: OrderCaller, input: AddOrderItemInput): Promise<AddOrderItemResult> {
   await getDb()
-
-  const eventId = input.eventId?.trim()
-  const ticketCode = input.ticketId?.trim().toUpperCase()
-  const menuItemId = input.menuItemId?.trim()
-  const quantity = Math.floor(Number(input.quantity))
-  if (!eventId || !ticketCode || !menuItemId) return { ok: false, status: 400, error: 'invalid_input' }
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) return { ok: false, status: 400, error: 'invalid_quantity' }
-
-  const ctxResult = await loadEventContext(eventId, caller.id)
-  if (!ctxResult.ok) return ctxResult
-  const { event, rank, role } = ctxResult.ctx
-
-  // Prix TOUJOURS résolu serveur depuis event.menu — cet endpoint n'accepte
-  // aucun prix venant du client (contrairement au legacy, qui faisait
-  // confiance au client quand event.menu était vide). Plus simple ET
-  // strictement plus sûr : pas de carve-out "menu vide" ici, un menu vide ou
-  // un item introuvable refusent tout simplement la ligne.
-  const menuItem = event.menu?.find((m) => m.name === menuItemId)
-  if (!menuItem || menuItem.available === false) return { ok: false, status: 400, error: 'unknown_menu_item' }
-
-  const ticket = await Ticket.findOne({ ticketCode })
-  if (!ticket || ticket.eventId !== eventId) return { ok: false, status: 404, error: 'ticket_not_found' }
-
-  // Ferme la lacune legacy : api/event-stock.js ne vérifiait la propriété du
-  // billet qu'à l'ÉDITION d'une ligne existante (addedBy === caller), jamais
-  // à la CRÉATION — n'importe quel compte connecté pouvait donc attacher des
-  // lignes à un billet appartenant à un inconnu. Un rang 0 (simple
-  // titulaire) ne peut créer une ligne que sur SON PROPRE billet ; le staff
-  // (rang ≥ 1), lui, ajoute légitimement des lignes sur le billet d'un
-  // client au bar — flux normal, aucune restriction pour lui.
-  if (rank === 0 && (String(ticket.userId) !== caller.id || ticket.revoked === true)) {
-    return { ok: false, status: 403, error: 'not_your_ticket' }
-  }
-
-  const addedByName = await resolveCallerName(caller.id)
-  const itemId = crypto.randomBytes(12).toString('hex')
-  const unitPriceMinor = menuItem.price ?? 0
-
-  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'item'; item: OrderItem }
-
-  const session = await mongoose.startSession()
-  let outcome: Outcome
-  try {
-    outcome = await session.withTransaction(async (): Promise<Outcome> => {
-      const order = await getOrCreateOrder(eventId, session)
-
-      // A repeated tap must increment the editable line instead of creating
-      // visually identical rows. Keeping this rule in the transaction also
-      // protects callers other than the scanner UI and fast double clicks.
-      const existing = order.items.find(
-        (item) =>
-          item.ticketId === ticketCode &&
-          item.menuItemId === menuItemId &&
-          item.kind === 'order' &&
-          item.unitPriceMinor === unitPriceMinor &&
-          !item.servedAt &&
-          !item.paidAt &&
-          item.status !== 'cancelled' &&
-          (rank > 0 || item.addedBy === caller.id)
-      )
-
-      if (existing) {
-        const oldQuantity = existing.quantity
-        const nextQuantity = oldQuantity + quantity
-        if (nextQuantity > 50) return { kind: 'error', status: 400, error: 'invalid_quantity' }
-
-        existing.quantity = nextQuantity
-        await order.save({ session })
-        await appendLog(
-          eventId,
-          {
-            actorId: caller.id,
-            actorName: addedByName,
-            actorRole: role,
-            itemId: existing.id,
-            ticketId: ticketCode,
-            itemName: existing.name,
-            action: 'edit',
-            oldValue: { quantity: oldQuantity },
-            newValue: { quantity: nextQuantity },
-            note: 'merged_repeated_add',
-          },
-          session
-        )
-        return { kind: 'item', item: existing }
-      }
-
-      order.items.push({
-        id: itemId,
-        menuItemId,
-        name: menuItem.name,
-        quantity,
-        unitPriceMinor,
-        ticketId: ticketCode,
-        addedBy: caller.id,
-        addedByName,
-        status: 'sent',
-        kind: 'order',
-      })
-      await order.save({ session })
-      const newItem = order.items[order.items.length - 1]
-
-      await appendLog(
-        eventId,
-        {
-          actorId: caller.id,
-          actorName: addedByName,
-          actorRole: role,
-          itemId,
-          ticketId: ticketCode,
-          itemName: menuItem.name,
-          action: 'add',
-          newValue: { quantity, unitPriceMinor },
-        },
-        session
-      )
-
-      return { kind: 'item', item: newItem }
-    })
-  } finally {
-    await session.endSession()
-  }
-
-  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
-  return { ok: true, item: toItemView(outcome.item) }
+  return addEventOrderItem(caller, input, {
+    loadEventContext,
+    resolveCallerName,
+    getOrCreateOrder,
+    appendLog,
+    toItemView,
+    startSession: mongoose.startSession,
+  })
 }
 
 // ────────────────────────── updateOrderItemQuantity ─────────────────────────
-
-export interface UpdateOrderItemQuantityInput {
-  eventId: string
-  itemId: string
-  quantity: number
-}
-
-export type UpdateOrderItemQuantityResult = ErrResult | { ok: true; noop: true } | { ok: true; noop?: false; item: EventOrderItemView }
 
 export async function updateOrderItemQuantity(
   caller: OrderCaller,
   input: UpdateOrderItemQuantityInput
 ): Promise<UpdateOrderItemQuantityResult> {
   await getDb()
-
-  const eventId = input.eventId?.trim()
-  const itemId = input.itemId?.trim()
-  const quantity = Math.floor(Number(input.quantity))
-  if (!eventId || !itemId) return { ok: false, status: 400, error: 'invalid_input' }
-  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 50) return { ok: false, status: 400, error: 'invalid_quantity' }
-
-  const ctxResult = await loadEventContext(eventId, caller.id)
-  if (!ctxResult.ok) return ctxResult
-  const { rank, role } = ctxResult.ctx
-  const actorName = await resolveCallerName(caller.id)
-
-  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'noop' } | { kind: 'updated'; item: OrderItem }
-
-  const session = await mongoose.startSession()
-  let outcome: Outcome
-  try {
-    outcome = await session.withTransaction(async (): Promise<Outcome> => {
-      const order = await EventOrder.findOne({ eventId }).session(session)
-      const item = order?.items.find((i) => i.id === itemId)
-      if (!order || !item) return { kind: 'error', status: 404, error: 'item_not_found' }
-
-      // Précondition PARTAGÉE rang0/staff : ligne encore non servie, non
-      // payée, ET non annulée. `status === 'cancelled'` est un état TERMINAL
-      // atteignable uniquement par cancelOrderItem (rang 3) — sans ce
-      // troisième cas, un rang 0 pourrait éditer la quantité (finding 4 :
-      // compounding avec une re-service ultérieure) ou un rang ≥1 pourrait
-      // silencieusement échapper au no-op puisque servedAt/paidAt restent
-      // null sur une ligne annulée avant tout service/paiement. Ce qui
-      // diffère, c'est la RÉACTION quand la précondition ne tient pas —
-      // erreur dure pour le rang 0 sur SA PROPRE ligne, no-op silencieux pour
-      // le staff sur N'IMPORTE QUELLE ligne (asymétrie volontaire, cf. prompt).
-      const locked = Boolean(item.servedAt) || Boolean(item.paidAt) || item.status === 'cancelled'
-
-      if (rank === 0) {
-        if (item.addedBy !== caller.id) return { kind: 'error', status: 403, error: 'not_your_item' }
-        if (locked) return { kind: 'error', status: 409, error: 'locked' }
-      } else if (locked) {
-        return { kind: 'noop' }
-      }
-
-      const oldQuantity = item.quantity
-      item.quantity = quantity
-      await order.save({ session })
-
-      await appendLog(
-        eventId,
-        {
-          actorId: caller.id,
-          actorName,
-          actorRole: role,
-          itemId,
-          ticketId: item.ticketId,
-          itemName: item.name,
-          action: 'edit',
-          oldValue: { quantity: oldQuantity },
-          newValue: { quantity },
-        },
-        session
-      )
-
-      return { kind: 'updated', item }
-    })
-  } finally {
-    await session.endSession()
-  }
-
-  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
-  if (outcome.kind === 'noop') return { ok: true, noop: true }
-  return { ok: true, item: toItemView(outcome.item) }
+  return updateEventOrderItemQuantity(caller, input, {
+    loadEventContext,
+    resolveCallerName,
+    appendLog,
+    toItemView,
+    startSession: mongoose.startSession,
+  })
 }
 
 // ────────────────────────────── serveOrderItem ──────────────────────────────
 
-export interface ServeOrderItemInput {
-  eventId: string
-  itemId: string
-}
-
-export type ServeOrderItemResult = ErrResult | { ok: true; alreadyServed: true } | { ok: true; alreadyServed?: false; item: EventOrderItemView }
-
 export async function serveOrderItem(caller: OrderCaller, input: ServeOrderItemInput): Promise<ServeOrderItemResult> {
   await getDb()
-
-  const eventId = input.eventId?.trim()
-  const itemId = input.itemId?.trim()
-  if (!eventId || !itemId) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const ctxResult = await loadEventContext(eventId, caller.id)
-  if (!ctxResult.ok) return ctxResult
-  const { rank, role } = ctxResult.ctx
-  if (rank < 1) return { ok: false, status: 403, error: 'serve_staff_only' }
-  const actorName = await resolveCallerName(caller.id)
-
-  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'already' } | { kind: 'served'; item: OrderItem }
-
-  const session = await mongoose.startSession()
-  let outcome: Outcome
-  try {
-    outcome = await session.withTransaction(async (): Promise<Outcome> => {
-      const order = await EventOrder.findOne({ eventId }).session(session)
-      const item = order?.items.find((i) => i.id === itemId)
-      if (!order || !item) return { kind: 'error', status: 404, error: 'item_not_found' }
-      // Une ligne annulée (rang 3 uniquement, cf. cancelOrderItem) est un état
-      // TERMINAL : la servir la rendrait de nouveau facturable via
-      // payTicketOrders (dont le filtre payable n'exclut que status ===
-      // 'cancelled'), ce qui contournerait entièrement la porte
-      // cancel_manager_only avec une simple action rang ≥ 1. Vérifié AVANT
-      // `item.servedAt` : une ligne annulée n'a jamais été servie
-      // (servedAt/paidAt restent null), donc sans ce garde-fou explicite elle
-      // tomberait dans le chemin normal de service, pas dans l'idempotence
-      // 'already'.
-      if (item.status === 'cancelled') {
-        return { kind: 'error', status: 409, error: 'item_cancelled' }
-      }
-      if (item.servedAt) {
-        // Idempotent — aucune nouvelle entrée de journal sur un re-scan/replay.
-        return { kind: 'already' }
-      }
-      item.servedAt = new Date()
-      item.servedBy = caller.id
-      item.servedByName = actorName
-      item.status = 'served'
-      await order.save({ session })
-
-      await appendLog(
-        eventId,
-        { actorId: caller.id, actorName, actorRole: role, itemId, ticketId: item.ticketId, itemName: item.name, action: 'serve' },
-        session
-      )
-
-      return { kind: 'served', item }
-    })
-  } finally {
-    await session.endSession()
-  }
-
-  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
-  if (outcome.kind === 'already') return { ok: true, alreadyServed: true }
-  return { ok: true, item: toItemView(outcome.item) }
+  return serveEventOrderItem(caller, input, {
+    loadEventContext,
+    resolveCallerName,
+    appendLog,
+    toItemView,
+    startSession: mongoose.startSession,
+  })
 }
 
 // ───────────────────────────── payTicketOrders ──────────────────────────────
 
-export interface PayTicketOrdersInput {
-  eventId: string
-  ticketId: string
-}
-
-export type PayTicketOrdersResult = ErrResult | { ok: true; total: number; itemCount: number }
-
 export async function payTicketOrders(caller: OrderCaller, input: PayTicketOrdersInput): Promise<PayTicketOrdersResult> {
   await getDb()
-
-  const eventId = input.eventId?.trim()
-  const ticketCode = input.ticketId?.trim().toUpperCase()
-  if (!eventId || !ticketCode) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const ctxResult = await loadEventContext(eventId, caller.id)
-  if (!ctxResult.ok) return ctxResult
-  const { rank, role } = ctxResult.ctx
-  if (rank < 2) return { ok: false, status: 403, error: 'pay_staff_only' }
-  const actorName = await resolveCallerName(caller.id)
-
-  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'paid'; total: number; itemCount: number }
-
-  const session = await mongoose.startSession()
-  let outcome: Outcome
-  try {
-    outcome = await session.withTransaction(async (): Promise<Outcome> => {
-      const order = await EventOrder.findOne({ eventId }).session(session)
-      // Précommandes déjà payées au checkout (Phase 3) : jamais re-facturées
-      // ici. Lignes annulées : jamais facturées. Lignes déjà payées :
-      // exclues pour ne jamais les compter deux fois dans le total.
-      const payable = order
-        ? order.items.filter((i) => i.ticketId === ticketCode && i.kind !== 'preorder' && i.status !== 'cancelled' && !i.paidAt)
-        : []
-      if (payable.length === 0) return { kind: 'error', status: 400, error: 'nothing_to_pay' }
-
-      const now = new Date()
-      let total = 0
-      for (const item of payable) {
-        total += item.unitPriceMinor * item.quantity
-        item.paidAt = now
-        item.paidBy = caller.id
-        item.paidByName = actorName
-      }
-      await order!.save({ session })
-
-      await appendLog(
-        eventId,
-        {
-          actorId: caller.id,
-          actorName,
-          actorRole: role,
-          ticketId: ticketCode,
-          action: 'pay',
-          amountMinor: total,
-          newValue: { itemCount: payable.length },
-        },
-        session
-      )
-
-      return { kind: 'paid', total, itemCount: payable.length }
-    })
-  } finally {
-    await session.endSession()
-  }
-
-  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
-  return { ok: true, total: outcome.total, itemCount: outcome.itemCount }
+  return payEventTicketOrders(caller, input, {
+    loadEventContext,
+    resolveCallerName,
+    appendLog,
+    startSession: mongoose.startSession,
+  })
 }
 
 // ───────────────────────────── cancelOrderItem ──────────────────────────────
 
-export interface CancelOrderItemInput {
-  eventId: string
-  itemId: string
-  reason: string
-}
-
-export type CancelOrderItemResult = ErrResult | { ok: true; noop: true } | { ok: true; noop?: false; item: EventOrderItemView }
-
 export async function cancelOrderItem(caller: OrderCaller, input: CancelOrderItemInput): Promise<CancelOrderItemResult> {
   await getDb()
-
-  const eventId = input.eventId?.trim()
-  const itemId = input.itemId?.trim()
-  const reason = input.reason?.trim()
-  if (!eventId || !itemId) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const ctxResult = await loadEventContext(eventId, caller.id)
-  if (!ctxResult.ok) return ctxResult
-  const { rank, role } = ctxResult.ctx
-  if (rank !== 3) return { ok: false, status: 403, error: 'cancel_manager_only' }
-  if (!reason) return { ok: false, status: 400, error: 'reason_required' }
-  const actorName = await resolveCallerName(caller.id)
-
-  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'noop' } | { kind: 'cancelled'; item: OrderItem }
-
-  const session = await mongoose.startSession()
-  let outcome: Outcome
-  try {
-    outcome = await session.withTransaction(async (): Promise<Outcome> => {
-      const order = await EventOrder.findOne({ eventId }).session(session)
-      const item = order?.items.find((i) => i.id === itemId)
-      if (!order || !item) return { kind: 'error', status: 404, error: 'item_not_found' }
-      // Déjà payé (legacy) OU déjà annulé (idempotence — ajout non-legacy,
-      // évite qu'un double-clic manager ne produise une seconde entrée de
-      // journal) → succès silencieux, jamais une erreur.
-      if (item.paidAt || item.status === 'cancelled') return { kind: 'noop' }
-
-      item.status = 'cancelled'
-      item.cancelledAt = new Date()
-      item.cancelledBy = caller.id
-      item.cancellationReason = reason
-      await order.save({ session })
-
-      await appendLog(
-        eventId,
-        { actorId: caller.id, actorName, actorRole: role, itemId, ticketId: item.ticketId, itemName: item.name, action: 'cancel', note: reason },
-        session
-      )
-
-      return { kind: 'cancelled', item }
-    })
-  } finally {
-    await session.endSession()
-  }
-
-  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
-  if (outcome.kind === 'noop') return { ok: true, noop: true }
-  return { ok: true, item: toItemView(outcome.item) }
+  return cancelEventOrderItem(caller, input, {
+    loadEventContext,
+    resolveCallerName,
+    appendLog,
+    toItemView,
+    startSession: mongoose.startSession,
+  })
 }
 
 // ───────────────────────────── removeOrderItem ──────────────────────────────
 
-export interface RemoveOrderItemInput {
-  eventId: string
-  itemId: string
-}
-
-export type RemoveOrderItemResult = ErrResult | { ok: true; noop: true } | { ok: true; noop?: false }
-
 export async function removeOrderItem(caller: OrderCaller, input: RemoveOrderItemInput): Promise<RemoveOrderItemResult> {
   await getDb()
-
-  const eventId = input.eventId?.trim()
-  const itemId = input.itemId?.trim()
-  if (!eventId || !itemId) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const ctxResult = await loadEventContext(eventId, caller.id)
-  if (!ctxResult.ok) return ctxResult
-  const { rank, role } = ctxResult.ctx
-  const actorName = await resolveCallerName(caller.id)
-
-  type Outcome = { kind: 'error'; status: number; error: string } | { kind: 'noop' } | { kind: 'removed' }
-
-  const session = await mongoose.startSession()
-  let outcome: Outcome
-  try {
-    outcome = await session.withTransaction(async (): Promise<Outcome> => {
-      const order = await EventOrder.findOne({ eventId }).session(session)
-      const item = order?.items.find((i) => i.id === itemId)
-      if (!order || !item) return { kind: 'error', status: 404, error: 'item_not_found' }
-
-      // Voir le commentaire équivalent dans updateOrderItemQuantity : `locked`
-      // inclut aussi status === 'cancelled' pour empêcher un rang 0 ou un
-      // staff non-manager d'effacer (deleteOne) une ligne déjà annulée par un
-      // manager — ce qui supprimerait cancelledAt/cancelledBy/
-      // cancellationReason, le seul historique de cette décision rang 3.
-      const locked = Boolean(item.servedAt) || Boolean(item.paidAt) || item.status === 'cancelled'
-
-      if (rank === 0) {
-        if (item.addedBy !== caller.id) return { kind: 'error', status: 403, error: 'not_your_item' }
-        if (locked) return { kind: 'error', status: 409, error: 'locked' }
-      } else if (locked) {
-        return { kind: 'noop' }
-      }
-
-      const snapshot = { ticketId: item.ticketId, name: item.name, quantity: item.quantity }
-      // Suppression réelle (pas un flip de statut) : `deleteOne()` sur le
-      // sous-document lui-même (pas `array.pull({_id})`/`.id()`) — notre clé
-      // de lookup métier est le champ `id` (string), pas l'`_id` Mongo
-      // auto-généré, donc on localise d'abord la ligne via `.find()` puis on
-      // la retire par sa propre méthode d'instance, qui sait se retirer du
-      // tableau parent par son `_id` réel (voir ArraySubdocument.$__removeFromParent).
-      item.deleteOne()
-      await order.save({ session })
-
-      await appendLog(
-        eventId,
-        { actorId: caller.id, actorName, actorRole: role, itemId, ticketId: snapshot.ticketId, itemName: snapshot.name, action: 'remove', oldValue: snapshot },
-        session
-      )
-
-      return { kind: 'removed' }
-    })
-  } finally {
-    await session.endSession()
-  }
-
-  if (outcome.kind === 'error') return { ok: false, status: outcome.status, error: outcome.error }
-  if (outcome.kind === 'noop') return { ok: true, noop: true }
-  return { ok: true }
+  return removeEventOrderItem(caller, input, {
+    loadEventContext,
+    resolveCallerName,
+    appendLog,
+    startSession: mongoose.startSession,
+  })
 }
 
 // ────────────────────────── materializeTicketOrders ─────────────────────────

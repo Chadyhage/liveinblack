@@ -1766,7 +1766,6 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {confirmCloseOpen && (
         <Modal
           onClose={() => setConfirmCloseOpen(false)}
-          maxWidth={420}
           ariaLabel="Quitter sans enregistrer"
           title="Quitter sans enregistrer"
           actions={

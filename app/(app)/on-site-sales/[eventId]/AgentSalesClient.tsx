@@ -306,7 +306,6 @@ export default function AgentSalesClient({
         confirmDisabled={busy}
         confirmLoading={busy}
         confirmLoadingText="Traitement…"
-        maxWidth={420}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
           setConfirmOpen(false)

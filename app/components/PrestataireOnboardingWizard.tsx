@@ -191,7 +191,8 @@ export default function PrestataireOnboardingWizard({
       const result = validatePrestataireStep0(form)
       if (!result.ok) return setError(result.error)
       if (mode === 'anonymous') {
-        if (!regEmail.trim() || !regEmail.includes('@')) return setError('Adresse e-mail invalide.')
+        const cleanRegEmail = regEmail.trim().toLowerCase()
+        if (!cleanRegEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanRegEmail)) return setError('Adresse e-mail invalide.')
         const passwordErrors = getPasswordPolicyErrors(regPassword)
         if (passwordErrors.length > 0) return setError(passwordErrors[0])
         if (regPassword !== regPasswordConfirm) return setError('Les mots de passe ne correspondent pas.')
@@ -203,7 +204,17 @@ export default function PrestataireOnboardingWizard({
     }
     if (mode === 'loggedIn') {
       setAutosaveState('saving')
-      fetch('/api/applications/prestataire/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      const cleanedForm = {
+        ...form,
+        prenom: form.prenom.trim(),
+        nom: form.nom.trim(),
+        telephone: form.telephone.trim(),
+        ville: form.ville.trim(),
+        nomCommercial: form.nomCommercial.trim(),
+        nomScene: form.nomScene.trim(),
+        siret: form.siret.trim(),
+      }
+      fetch('/api/applications/prestataire/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleanedForm) })
         .then((res) => setAutosaveState(res.ok ? 'saved' : 'error'))
         .catch(() => setAutosaveState('error'))
     }
@@ -222,13 +233,25 @@ export default function PrestataireOnboardingWizard({
     setError(null)
     if (missingDocs.length > 0) return setError('Certains documents obligatoires sont manquants.')
 
+    const cleanedForm = {
+      ...form,
+      prenom: form.prenom.trim(),
+      nom: form.nom.trim(),
+      telephone: form.telephone.trim(),
+      ville: form.ville.trim(),
+      nomCommercial: form.nomCommercial.trim(),
+      nomScene: form.nomScene.trim(),
+      siret: form.siret.trim(),
+    }
+
     setBusy(true)
     try {
       if (mode === 'anonymous') {
+        const cleanRegEmail = regEmail.trim().toLowerCase()
         const res = await fetch('/api/applications/prestataire/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: regEmail.trim().toLowerCase(), password: regPassword, formData: form, documents, candidateNote }),
+          body: JSON.stringify({ email: cleanRegEmail, password: regPassword, formData: cleanedForm, documents, candidateNote: candidateNote.trim() }),
         })
         const data = await res.json()
         if (!res.ok || !data.ok) {
@@ -239,12 +262,12 @@ export default function PrestataireOnboardingWizard({
           }
           return
         }
-        setSubmitted({ email: regEmail.trim().toLowerCase() })
+        setSubmitted({ email: cleanRegEmail })
       } else {
         const res = await fetch('/api/applications/prestataire/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ formData: form, documents, candidateNote }),
+          body: JSON.stringify({ formData: cleanedForm, documents, candidateNote: candidateNote.trim() }),
         })
         const data = await res.json()
         if (!res.ok || !data.ok) {

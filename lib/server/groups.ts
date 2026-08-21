@@ -1,6 +1,6 @@
-import mongoose, { type HydratedDocument } from 'mongoose'
+import mongoose from 'mongoose'
 import { getDb } from '../db/mongoose'
-import Conversation, { type ConversationDoc } from '../models/Conversation'
+import Conversation from '../models/Conversation'
 import Message from '../models/Message'
 import User from '../models/User'
 import { IMAGE_MIME_TYPES, uploadDataUri } from './cloudinary'
@@ -9,10 +9,30 @@ import {
   resolveDisplayName,
   loadParticipantConversation,
   type MessagingCaller,
-} from './messaging'
+} from './messagingCoreService'
 import { toConversationView, type ConversationView } from './messagingViews'
 import { notifyUserById } from './emails/notify'
 import { addedToGroupEmail } from './emails'
+import { appendGroupSystemMessage } from './groupSystemMessageService'
+import { loadGroupAsAdminForCaller, loadGroupConversationForCaller } from './groupGuardService'
+import {
+  addGroupMemberForCaller,
+  removeGroupMemberForCaller,
+  setGroupMemberRoleForCaller,
+} from './groupMemberService'
+import {
+  pinGroupMessageForCaller,
+  renameGroupForCaller,
+  setGroupAvatarForCaller,
+  unpinGroupMessageForCaller,
+  type GroupConversationIdInput as ConversationIdInput,
+  type PinMessageInput,
+  type PinMessageResult,
+  type RenameGroupInput,
+  type RenameGroupResult,
+  type SetGroupAvatarInput,
+  type SetGroupAvatarResult,
+} from './groupAdminToolsService'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -36,46 +56,6 @@ const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 // ─────────────────────────── gardes partagées ─────────────────────────────
 
 type ErrResult = { ok: false; status: number; error: string }
-
-// Sous-type dérivé de ConversationDoc plutôt que redéfini à la main : reste
-// automatiquement synchronisé si memberSchema (lib/models/Conversation.ts)
-// change un jour.
-type ConversationMember = NonNullable<ConversationDoc['members']>[number]
-
-type GroupGuardResult = ErrResult | { ok: true; conversation: HydratedDocument<ConversationDoc>; members: ConversationMember[] }
-
-// Garde PARTAGÉE par toute action de groupe : réutilise loadParticipantConversation
-// (messaging.ts) pour existence+appartenance, puis vérifie EN PLUS que
-// `type === 'group'`. Une conversation directe échoue avec EXACTEMENT le même
-// 404 générique qu'une conversation inexistante ou une non-appartenance —
-// jamais un code distinct qui laisserait un appelant deviner qu'elle existe
-// bel et bien, juste pas de type 'group' (même raisonnement de confidentialité
-// que loadParticipantConversation lui-même).
-async function loadGroupConversation(callerId: string, conversationId: string): Promise<GroupGuardResult> {
-  const guard = await loadParticipantConversation(conversationId, callerId)
-  if (!guard.ok) return guard
-  const { conversation } = guard
-  if (conversation.type !== 'group' || !conversation.members) {
-    return { ok: false, status: 404, error: 'conversation_not_found' }
-  }
-  return { ok: true, conversation, members: conversation.members }
-}
-
-// Garde PARTAGÉE par toute action RÉSERVÉE AUX ADMINS (deleteGroup,
-// muteMember, unmuteMember) : au-dessus de loadGroupConversation, exige que
-// l'entrée `members[]` de l'appelant ait le rôle 'admin'. 403 (pas 404) ici —
-// l'appelant a DÉJÀ passé la vérification d'appartenance ci-dessus, donc lui
-// répondre "tu es bien dans ce groupe, juste pas admin" ne lui apprend rien
-// qu'il ne sache déjà ; c'est un cas distinct de "non-participant", qui lui
-// reste un 404 générique.
-async function loadGroupAsAdmin(caller: MessagingCaller, conversationId: string): Promise<GroupGuardResult> {
-  const guard = await loadGroupConversation(caller.id, conversationId)
-  if (!guard.ok) return guard
-  const { members } = guard
-  const callerMember = members.find((m) => m.userId === caller.id)
-  if (callerMember?.role !== 'admin') return { ok: false, status: 403, error: 'admin_only' }
-  return guard
-}
 
 // ──────────────────────────────── createGroup ──────────────────────────────
 
@@ -153,19 +133,13 @@ export async function createGroup(caller: MessagingCaller, input: CreateGroupInp
   // qui interdit explicitement type:'system' (réservé aux annonces serveur).
   // Le document Message est donc créé directement ici.
   const systemContent = `${callerName} a créé le groupe`
-  const systemMessage = await Message.create({
-    conversationId: conversation.id as string,
-    senderId: caller.id,
-    senderName: callerName,
-    type: 'system',
-    content: systemContent,
-  })
-
   // Même convention que sendMessage (messaging.ts) : la conversation reflète
   // toujours son dernier message, y compris un message système.
-  conversation.lastMessage = systemContent
-  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
-  conversation.lastSenderId = caller.id
+  await appendGroupSystemMessage(conversation, {
+    senderId: caller.id,
+    senderName: callerName,
+    content: systemContent,
+  })
   await conversation.save()
 
   const groupUrl = `${SITE}/conversation/${String(conversation._id)}`
@@ -198,7 +172,7 @@ export async function leaveGroup(caller: MessagingCaller, input: ConversationIdI
   // d'un appelant invalide. La garde RÉELLE contre la course avec un AUTRE
   // membre quittant EN MÊME TEMPS est la relecture fraîche DANS la
   // transaction ci-dessous — jamais celle-ci seule.
-  const guard = await loadGroupConversation(caller.id, conversationId)
+  const guard = await loadGroupConversationForCaller(caller.id, conversationId, { loadParticipantConversation })
   if (!guard.ok) return guard
   const conversationId_ = guard.conversation._id
 
@@ -257,15 +231,16 @@ export async function leaveGroup(caller: MessagingCaller, input: ConversationIdI
         ? `${leavingName} a quitté le groupe (${promotedName} devient administrateur)`
         : `${leavingName} a quitté le groupe`
 
-      const [systemMessage] = await Message.create(
-        [{ conversationId: String(fresh._id), senderId: caller.id, senderName: leavingName, type: 'system', content: systemContent }],
-        { session }
+      await appendGroupSystemMessage(
+        fresh,
+        {
+          senderId: caller.id,
+          senderName: leavingName,
+          content: systemContent,
+        },
+        { session },
       )
-
       fresh.participantIds = fresh.members.map((m) => m.userId)
-      fresh.lastMessage = systemContent
-      fresh.lastMessageAt = systemMessage.createdAt as unknown as Date
-      fresh.lastSenderId = caller.id
       await fresh.save({ session })
     })
   } finally {
@@ -285,7 +260,7 @@ export async function deleteGroup(caller: MessagingCaller, input: ConversationId
   const conversationId = input.conversationId?.trim()
   if (!conversationId) return { ok: false, status: 400, error: 'invalid_input' }
 
-  const guard = await loadGroupAsAdmin(caller, conversationId)
+  const guard = await loadGroupAsAdminForCaller(caller, conversationId, { loadParticipantConversation })
   if (!guard.ok) return guard
   const { conversation } = guard
 
@@ -327,7 +302,7 @@ export async function muteMember(caller: MessagingCaller, input: MuteMemberInput
     return { ok: false, status: 400, error: 'invalid_duration' }
   }
 
-  const guard = await loadGroupAsAdmin(caller, conversationId)
+  const guard = await loadGroupAsAdminForCaller(caller, conversationId, { loadParticipantConversation })
   if (!guard.ok) return guard
   const { conversation, members } = guard
 
@@ -361,7 +336,7 @@ export async function unmuteMember(caller: MessagingCaller, input: { conversatio
   const targetUserId = input.targetUserId?.trim()
   if (!conversationId || !targetUserId) return { ok: false, status: 400, error: 'invalid_input' }
 
-  const guard = await loadGroupAsAdmin(caller, conversationId)
+  const guard = await loadGroupAsAdminForCaller(caller, conversationId, { loadParticipantConversation })
   if (!guard.ok) return guard
 
   // Contrairement à muteMember, PAS de check not_a_member/target_is_admin
@@ -390,48 +365,19 @@ export type AddMemberResult = ErrResult | { ok: true; conversation: Conversation
 
 export async function addMember(caller: MessagingCaller, input: AddMemberInput): Promise<AddMemberResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  const userIdRaw = input.userId?.trim()
-  if (!conversationId || !userIdRaw) return { ok: false, status: 400, error: 'invalid_input' }
-  if (!mongoose.isValidObjectId(userIdRaw)) return { ok: false, status: 404, error: 'user_not_found' }
-  const userId = normalizeObjectId(userIdRaw)
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-  const { conversation, members } = guard
-
-  if (members.some((m) => m.userId === userId)) return { ok: false, status: 400, error: 'already_a_member' }
-  if (members.length >= MAX_MEMBERS_TOTAL) return { ok: false, status: 400, error: 'too_many_members' }
-
-  const user = await User.findById(userId).lean()
-  if (!user) return { ok: false, status: 404, error: 'user_not_found' }
-  const memberName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email
-
-  conversation.members!.push({ userId, name: memberName, role: 'member' })
-  conversation.participantIds = conversation.members!.map((m) => m.userId)
-
-  const callerName = await resolveDisplayName(caller.id)
-  const systemContent = `${callerName} a ajouté ${memberName}`
-  const systemMessage = await Message.create({
-    conversationId: String(conversation._id),
-    senderId: caller.id,
-    senderName: callerName,
-    type: 'system',
-    content: systemContent,
+  return addGroupMemberForCaller(caller, input, {
+    normalizeObjectId,
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+    resolveDisplayName,
+    appendGroupSystemMessage,
+    notifyUserById,
+    addedToGroupEmail,
+    toConversationView: (conversation) =>
+      toConversationView(conversation as unknown as Parameters<typeof toConversationView>[0]),
+    maxMembersTotal: MAX_MEMBERS_TOTAL,
+    site: SITE,
   })
-  conversation.lastMessage = systemContent
-  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
-  conversation.lastSenderId = caller.id
-  await conversation.save()
-
-  const groupUrl = `${SITE}/conversation/${String(conversation._id)}`
-  await notifyUserById(userId, () => addedToGroupEmail(conversation.name || 'un groupe', callerName, groupUrl, SITE))
-
-  return {
-    ok: true,
-    conversation: toConversationView(conversation.toObject({ flattenMaps: true }) as unknown as Parameters<typeof toConversationView>[0]),
-  }
 }
 
 export interface RemoveMemberInput {
@@ -443,43 +389,12 @@ export type RemoveMemberResult = ErrResult | { ok: true }
 
 export async function removeMember(caller: MessagingCaller, input: RemoveMemberInput): Promise<RemoveMemberResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  const userId = input.userId?.trim()
-  if (!conversationId || !userId) return { ok: false, status: 400, error: 'invalid_input' }
-  // Se retirer soi-même passe par leaveGroup (messaging.ts) — pas ce chemin,
-  // qui suppose une cible DISTINCTE de l'appelant.
-  if (userId === caller.id) return { ok: false, status: 400, error: 'cannot_remove_self' }
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-  const { conversation, members } = guard
-
-  const idx = members.findIndex((m) => m.userId === userId)
-  if (idx === -1) return { ok: false, status: 400, error: 'not_a_member' }
-  const removedName = members[idx].name
-
-  conversation.members!.splice(idx, 1)
-  conversation.participantIds = conversation.members!.map((m) => m.userId)
-
-  const callerName = await resolveDisplayName(caller.id)
-  const systemContent = `${removedName} a été retiré du groupe`
-  const systemMessage = await Message.create({
-    conversationId: String(conversation._id),
-    senderId: caller.id,
-    senderName: callerName,
-    type: 'system',
-    content: systemContent,
+  return removeGroupMemberForCaller(caller, input, {
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+    resolveDisplayName,
+    appendGroupSystemMessage,
   })
-  conversation.lastMessage = systemContent
-  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
-  conversation.lastSenderId = caller.id
-  // Nettoyage : un membre retiré ne doit garder aucune sourdine résiduelle.
-  conversation.mutedUserIds = conversation.mutedUserIds.filter((id) => id !== userId)
-  if (conversation.memberMuteUntil) conversation.memberMuteUntil.delete(userId)
-  await conversation.save()
-
-  return { ok: true }
 }
 
 export interface SetMemberRoleInput {
@@ -492,109 +407,35 @@ export type SetMemberRoleResult = ErrResult | { ok: true }
 
 export async function setMemberRole(caller: MessagingCaller, input: SetMemberRoleInput): Promise<SetMemberRoleResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  const userId = input.userId?.trim()
-  const role = input.role
-  if (!conversationId || !userId || (role !== 'admin' && role !== 'member')) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-  const { conversation, members } = guard
-
-  const target = members.find((m) => m.userId === userId)
-  if (!target) return { ok: false, status: 400, error: 'not_a_member' }
-  if (target.role === role) return { ok: true }
-
-  if (target.role === 'admin' && role === 'member') {
-    const adminCount = members.filter((m) => m.role === 'admin').length
-    // Garde ajoutée délibérément AU-DELÀ du legacy (qui ne la vérifiait
-    // jamais) : un groupe ne doit jamais se retrouver sans AUCUN admin —
-    // sinon plus personne ne peut plus jamais le gérer (rôles, sourdines,
-    // suppression...).
-    if (adminCount <= 1) return { ok: false, status: 400, error: 'only_admin' }
-  }
-
-  target.role = role
-  const callerName = await resolveDisplayName(caller.id)
-  const systemContent = role === 'admin' ? `${callerName} a nommé ${target.name} administrateur` : `${callerName} a retiré le rôle Admin à ${target.name}`
-  const systemMessage = await Message.create({
-    conversationId: String(conversation._id),
-    senderId: caller.id,
-    senderName: callerName,
-    type: 'system',
-    content: systemContent,
+  return setGroupMemberRoleForCaller(caller, input, {
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+    resolveDisplayName,
+    appendGroupSystemMessage,
   })
-  conversation.lastMessage = systemContent
-  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
-  conversation.lastSenderId = caller.id
-  await conversation.save()
-  return { ok: true }
 }
 
 // ───────────────────────── renameGroup / setGroupAvatar ────────────────────
 
-export interface RenameGroupInput {
-  conversationId: string
-  name: string
-}
-
-export type RenameGroupResult = ErrResult | { ok: true; name: string }
-
 export async function renameGroup(caller: MessagingCaller, input: RenameGroupInput): Promise<RenameGroupResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  const name = input.name?.trim()
-  if (!conversationId || !name) return { ok: false, status: 400, error: 'group_name_required' }
-  if (name.length > MAX_GROUP_NAME_LEN) return { ok: false, status: 400, error: 'group_name_too_long' }
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-  const { conversation } = guard
-  if (conversation.name === name) return { ok: true, name }
-
-  conversation.name = name
-  const callerName = await resolveDisplayName(caller.id)
-  const systemContent = `${callerName} a renommé le groupe en "${name}"`
-  const systemMessage = await Message.create({
-    conversationId: String(conversation._id),
-    senderId: caller.id,
-    senderName: callerName,
-    type: 'system',
-    content: systemContent,
+  return renameGroupForCaller(caller, input, {
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+    resolveDisplayName,
+    appendGroupSystemMessage,
+    maxGroupNameLength: MAX_GROUP_NAME_LEN,
   })
-  conversation.lastMessage = systemContent
-  conversation.lastMessageAt = systemMessage.createdAt as unknown as Date
-  conversation.lastSenderId = caller.id
-  await conversation.save()
-  return { ok: true, name }
 }
-
-export interface SetGroupAvatarInput {
-  conversationId: string
-  dataUri: string
-}
-
-export type SetGroupAvatarResult = ErrResult | { ok: true; avatar: string }
 
 export async function setGroupAvatar(caller: MessagingCaller, input: SetGroupAvatarInput): Promise<SetGroupAvatarResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  const dataUri = input.dataUri
-  if (!conversationId || !dataUri) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-
-  const uploaded = await uploadDataUri(dataUri, `groups/${String(guard.conversation._id)}`, {
-    allowedMimeTypes: IMAGE_MIME_TYPES,
+  return setGroupAvatarForCaller(caller, input, {
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+    uploadDataUri,
+    imageMimeTypes: IMAGE_MIME_TYPES,
   })
-  if (!uploaded.ok) return { ok: false, status: 400, error: uploaded.error }
-
-  await Conversation.updateOne({ _id: guard.conversation._id }, { $set: { avatar: uploaded.url } })
-  return { ok: true, avatar: uploaded.url }
 }
 
 // ───────────────────────────── pinMessage / unpinMessage ───────────────────
@@ -602,49 +443,18 @@ export async function setGroupAvatar(caller: MessagingCaller, input: SetGroupAva
 // propose jamais cette entrée de menu sur une conversation directe
 // (`amAdmin` conditionne l'item, toujours faux hors groupe).
 
-export interface PinMessageInput {
-  conversationId: string
-  messageId: string
-}
-
-export type PinMessageResult = ErrResult | { ok: true }
-
 export async function pinMessage(caller: MessagingCaller, input: PinMessageInput): Promise<PinMessageResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  const messageId = input.messageId?.trim()
-  if (!conversationId || !messageId) return { ok: false, status: 400, error: 'invalid_input' }
-  if (!mongoose.isValidObjectId(messageId)) return { ok: false, status: 404, error: 'message_not_found' }
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-
-  const message = await Message.findOne({ _id: messageId, conversationId })
-  if (!message) return { ok: false, status: 404, error: 'message_not_found' }
-
-  await Promise.all([
-    Conversation.updateOne({ _id: guard.conversation._id }, { $set: { pinnedMessageId: String(message._id) } }),
-    Message.updateOne({ _id: message._id }, { $set: { pinned: true } }),
-  ])
-  return { ok: true }
+  return pinGroupMessageForCaller(caller, input, {
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+  })
 }
 
 export async function unpinMessage(caller: MessagingCaller, input: ConversationIdInput): Promise<PinMessageResult> {
   await getDb()
-
-  const conversationId = input.conversationId?.trim()
-  if (!conversationId) return { ok: false, status: 400, error: 'invalid_input' }
-
-  const guard = await loadGroupAsAdmin(caller, conversationId)
-  if (!guard.ok) return guard
-
-  const pinnedId = guard.conversation.pinnedMessageId
-  await Conversation.updateOne({ _id: guard.conversation._id }, { $set: { pinnedMessageId: null } })
-  if (pinnedId) await Message.updateOne({ _id: pinnedId }, { $set: { pinned: false } })
-  return { ok: true }
-}
-
-export interface ConversationIdInput {
-  conversationId: string
+  return unpinGroupMessageForCaller(caller, input, {
+    loadGroupAsAdmin: (guardCaller, conversationId) =>
+      loadGroupAsAdminForCaller(guardCaller, conversationId, { loadParticipantConversation }),
+  })
 }

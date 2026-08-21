@@ -1414,7 +1414,7 @@ export default function ProposerServicesClient({
       )}
 
       {confirmRemoveItem && (
-        <Modal onClose={() => setConfirmRemoveItem(null)} maxWidth={420} dismissible={!removingItem} zIndex={3200} hideClose ariaLabel="Supprimer l’offre">
+        <Modal onClose={() => setConfirmRemoveItem(null)} dismissible={!removingItem} zIndex={3200} hideClose ariaLabel="Supprimer l’offre">
             <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer cette offre ?</h3>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
               « {confirmRemoveItem.name} » sera retirée de ton catalogue. Cette action est définitive.
@@ -1431,7 +1431,7 @@ export default function ProposerServicesClient({
       )}
 
       {confirmRemoveMedia && (
-        <Modal onClose={() => !mediaUploading && setConfirmRemoveMedia(null)} maxWidth={390} dismissible={!mediaUploading} zIndex={3200} hideClose ariaLabel="Supprimer ce média">
+        <Modal onClose={() => !mediaUploading && setConfirmRemoveMedia(null)} dismissible={!mediaUploading} zIndex={3200} hideClose ariaLabel="Supprimer ce média">
           <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer ce média ?</h3>
           <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
             Ce média sera retiré de ton offre immédiatement.

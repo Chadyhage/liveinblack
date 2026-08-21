@@ -9,11 +9,12 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   rightIcon?: React.ReactNode
   size?: 'sm' | 'md'
   containerStyle?: CSSProperties
+  autoTrim?: boolean
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { minHeight: 48, padding: '14px 20px', fontSize: 15, borderRadius: 'var(--radius-md)' },
-  md: { minHeight: 54, padding: '17px 24px', fontSize: 16, borderRadius: 'var(--radius-md)' },
+  sm: { minHeight: 50, padding: '15px 18px', fontSize: 15, lineHeight: 1.35, borderRadius: 'var(--radius-md)' },
+  md: { minHeight: 56, padding: '18px 20px', fontSize: 16, lineHeight: 1.4, borderRadius: 'var(--radius-md)' },
 }
 
 const ICON_OFFSET = 52
@@ -26,10 +27,11 @@ function ensurePlaceholderComfortStyle() {
   style.id = PLACEHOLDER_STYLE_ID
   style.textContent = `
     .lb-input-control::placeholder {
-      color: rgba(255, 255, 255, 0.46);
+      color: rgba(255, 255, 255, 0.5);
       opacity: 1;
       letter-spacing: 0;
-      transform: translateY(0.2px);
+      transform: none;
+      line-height: 1.4;
     }
   `
   document.head.appendChild(style)
@@ -40,27 +42,63 @@ function ensurePlaceholderComfortStyle() {
 // directement dans une page : toujours ce composant, pour un look et un
 // comportement (focus, erreur, icônes) garantis identiques partout.
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, leftIcon, rightIcon, size = 'md', style, containerStyle, className, onFocus, onBlur, disabled, ...rest },
+  {
+    invalid,
+    leftIcon,
+    rightIcon,
+    size = 'md',
+    style,
+    containerStyle,
+    className,
+    onFocus,
+    onBlur,
+    disabled,
+    autoTrim,
+    autoCapitalize,
+    autoCorrect,
+    spellCheck,
+    type,
+    ...rest
+  },
   ref
 ) {
   const [focused, setFocused] = useState(false)
   useEffect(() => {
     ensurePlaceholderComfortStyle()
   }, [])
+
+  const isSensitiveType = type === 'email' || type === 'url' || type === 'tel'
+  const shouldTrim = autoTrim ?? (isSensitiveType || type === 'search')
+  const defaultAutoCapitalize = autoCapitalize ?? (isSensitiveType ? 'none' : undefined)
+  const defaultAutoCorrect = autoCorrect ?? (isSensitiveType ? 'off' : undefined)
+  const defaultSpellCheck = spellCheck ?? (isSensitiveType ? false : undefined)
+
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', ...containerStyle }}>
       {leftIcon && <span style={{ position: 'absolute', left: 15, display: 'flex', color: 'var(--text-faint)', pointerEvents: 'none' }}>{leftIcon}</span>}
       <input
         className={`lb-input-control${className ? ` ${className}` : ''}`}
         ref={ref}
+        type={type}
         disabled={disabled}
         aria-invalid={invalid || undefined}
+        autoCapitalize={defaultAutoCapitalize}
+        autoCorrect={defaultAutoCorrect}
+        spellCheck={defaultSpellCheck}
         onFocus={(e) => {
           setFocused(true)
           onFocus?.(e)
         }}
         onBlur={(e) => {
           setFocused(false)
+          if (shouldTrim && e.target.value) {
+            const trimmed = e.target.value.trim()
+            if (trimmed !== e.target.value) {
+              e.target.value = trimmed
+              const event = new Event('input', { bubbles: true })
+              e.target.dispatchEvent(event)
+            }
+          }
           onBlur?.(e)
         }}
         style={{
@@ -73,11 +111,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
           boxShadow: focused ? 'var(--focus-ring)' : undefined,
           ...SIZE_STYLES[size],
-          paddingLeft: leftIcon ? ICON_OFFSET : undefined,
-          paddingRight: rightIcon ? ICON_OFFSET : undefined,
+          ...style,
+          paddingLeft: leftIcon ? ICON_OFFSET : style?.paddingLeft ?? (typeof style?.padding === 'string' || typeof style?.padding === 'number' ? style.padding : SIZE_STYLES[size].padding?.toString().split(' ')[1] || '18px'),
+          paddingRight: rightIcon ? ICON_OFFSET : style?.paddingRight ?? (typeof style?.padding === 'string' || typeof style?.padding === 'number' ? style.padding : SIZE_STYLES[size].padding?.toString().split(' ')[1] || '18px'),
           opacity: disabled ? 0.55 : 1,
           cursor: disabled ? 'not-allowed' : 'text',
-          ...style,
         }}
         {...rest}
       />

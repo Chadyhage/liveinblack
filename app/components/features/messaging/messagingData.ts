@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import type {
   ConversationListResponse,
   ConversationView,
@@ -62,27 +62,55 @@ export function useMessagingDirectoryPolling({
   onConversationsLoaded,
   onFriendsLoaded,
 }: UseMessagingDirectoryPollingArgs) {
+  const onConversationsLoadedRef = useRef(onConversationsLoaded)
+  useEffect(() => {
+    onConversationsLoadedRef.current = onConversationsLoaded
+  })
+
+  const onFriendsLoadedRef = useRef(onFriendsLoaded)
+  useEffect(() => {
+    onFriendsLoadedRef.current = onFriendsLoaded
+  })
+
+  const lastConvFetchRef = useRef<number>(0)
+  const isConvFetchingRef = useRef<boolean>(false)
+
   const refreshConversations = useCallback(async () => {
-    const payload = await loadConversationPage(apiFetch, conversationPage, conversationPageSize)
-    if (payload) onConversationsLoaded(payload)
-  }, [apiFetch, conversationPage, conversationPageSize, onConversationsLoaded])
+    const now = Date.now()
+    if (isConvFetchingRef.current || now - lastConvFetchRef.current < 1500) return
+    isConvFetchingRef.current = true
+    lastConvFetchRef.current = now
+    try {
+      const payload = await loadConversationPage(apiFetch, conversationPage, conversationPageSize)
+      if (payload) onConversationsLoadedRef.current(payload)
+    } finally {
+      isConvFetchingRef.current = false
+    }
+  }, [apiFetch, conversationPage, conversationPageSize])
+
+  const lastFriendFetchRef = useRef<number>(0)
+  const isFriendFetchingRef = useRef<boolean>(false)
 
   const refreshFriendData = useCallback(async () => {
-    const payload = await loadFriendDirectory(apiFetch)
-    if (payload) onFriendsLoaded(payload)
-  }, [apiFetch, onFriendsLoaded])
+    const now = Date.now()
+    if (isFriendFetchingRef.current || now - lastFriendFetchRef.current < 3000) return
+    isFriendFetchingRef.current = true
+    lastFriendFetchRef.current = now
+    try {
+      const payload = await loadFriendDirectory(apiFetch)
+      if (payload) onFriendsLoadedRef.current(payload)
+    } finally {
+      isFriendFetchingRef.current = false
+    }
+  }, [apiFetch])
 
   useEffect(() => {
-    void refreshConversations()
-  }, [refreshConversations])
-
-  useEffect(() => {
-    const interval = setInterval(refreshConversations, 4000)
+    const interval = setInterval(refreshConversations, 5000)
     return () => clearInterval(interval)
   }, [refreshConversations])
 
   useEffect(() => {
-    const interval = setInterval(refreshFriendData, 8000)
+    const interval = setInterval(refreshFriendData, 10000)
     return () => clearInterval(interval)
   }, [refreshFriendData])
 

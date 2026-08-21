@@ -250,7 +250,7 @@ export default function AgentDeletionClient() {
       </div>
 
       {selectedId && (
-        <SlideOverModal onClose={closeDetail} maxWidth={600} ariaLabel="Détail de la demande de suppression">
+        <SlideOverModal onClose={closeDetail} ariaLabel="Détail de la demande de suppression">
           <div style={{ minHeight: '100%', padding: '26px 26px 40px' }}>
             {detailError ? (
               <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
@@ -419,7 +419,7 @@ function DetailPanel({
       </div>
 
       {confirmApprove && (
-        <Modal onClose={() => setConfirmApprove(false)} maxWidth={380} hideClose dismissible={!actionBusy} ariaLabel="Confirmer la suppression définitive" contentStyle={{ textAlign: 'center' }}>
+        <Modal onClose={() => setConfirmApprove(false)} hideClose dismissible={!actionBusy} ariaLabel="Confirmer la suppression définitive" contentStyle={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</h2>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
             Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.

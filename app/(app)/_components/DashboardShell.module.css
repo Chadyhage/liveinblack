@@ -1,5 +1,5 @@
 .root {
-  --dashboard-sidebar: 292px;
+  --dashboard-sidebar: 284px;
   position: relative;
   min-height: 100dvh;
   isolation: isolate;
@@ -60,12 +60,15 @@
 .main {
   flex: 1;
   min-width: 0;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
   width: min(100%, calc(100vw - var(--dashboard-sidebar)));
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 8px clamp(6px, 0.75vw, 12px) 20px;
+  padding: 8px clamp(6px, 0.7vw, 12px);
 }
 .mainFull { padding: 0; }
 
@@ -90,16 +93,19 @@
 }
 
 .root :global(.lb-dashboard-page) {
-  padding-inline: 0 !important;
+  padding-inline: clamp(8px, 0.95vw, 18px) !important;
 }
 .root :global(.lb-page-shell) {
-  padding-inline: 0 !important;
+  padding-inline: clamp(8px, 0.95vw, 18px) !important;
 }
 .root :global(.lb-dashboard-title) { font-family: inherit !important; font-size: clamp(36px, 4vw, 54px); font-weight: 720; line-height: 1.03; letter-spacing: -.045em; text-transform: none; }
 .root :global(.lb-dashboard-description) { max-width: 760px; color: rgba(245, 245, 247, .62); font-size: 16px; line-height: 1.6; }
 .root :global(.lb-dashboard-main) :where(h1, h2, h3) { font-family: inherit !important; text-transform: none !important; }
 .root :global(.lb-dashboard-main) :where(input, textarea, select) { min-height: 48px; border-radius: 13px !important; font-size: 15px !important; }
 .root :global(.lb-dashboard-main) button { min-height: 44px; border-radius: 12px; }
+.root :global(.lb-dashboard-main) :where(section, article, aside, div) {
+  min-width: 0;
+}
 .root :global(.lb-card),
 .root :global(.lb-detail-section),
 .root :global(.lb-loading-panel) { border-color: rgba(255, 255, 255, .11) !important; border-radius: 22px !important; background: rgba(24, 24, 28, .72) !important; backdrop-filter: blur(22px) saturate(130%); box-shadow: 0 22px 60px rgba(0, 0, 0, .23) !important; }
@@ -108,13 +114,15 @@
   .sidebar { display: none; }
   .mobileBar { display: flex; }
   .mobileDrawer, .drawerBackdrop { display: block !important; }
-  .main { min-height: 100dvh; width: 100%; padding: 64px clamp(6px, 1.1vw, 10px) 18px; }
+  .main { min-height: 100dvh; width: 100%; padding: 64px clamp(4px, .8vw, 8px) 14px; }
   .mainFull { padding: 0; }
 }
 
 @media (max-width: 620px) {
-  .main { padding: 62px 4px 14px; }
+  .main { padding: 62px 2px 12px; }
   .mainFull { padding: 0; }
+  .root :global(.lb-dashboard-page),
+  .root :global(.lb-page-shell) { padding-inline: 4px !important; }
   .root :global(.lb-dashboard-title) { font-size: 36px; }
   .root :global(.lb-dashboard-description) { font-size: 15px; }
 }

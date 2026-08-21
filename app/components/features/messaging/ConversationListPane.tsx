@@ -74,7 +74,7 @@ export default function ConversationListPane({
           value={convSearch}
           onChange={(e) => onConvSearchChange(e.target.value)}
           placeholder="Rechercher une conversation…"
-          style={{ width: '100%', borderRadius: 14, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(118,118,128,.16)', color: 'var(--text)', fontSize: 14, marginBottom: 0, fontFamily: 'inherit' }}
+          style={{ width: '100%', borderRadius: 14, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(118,118,128,.16)', color: 'var(--text)', fontSize: 14, padding: '12px 18px', marginBottom: 0, fontFamily: 'inherit' }}
         />
         {toolbar ? <div className={styles.toolbarRow}>{toolbar}</div> : null}
       </div>

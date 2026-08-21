@@ -284,7 +284,7 @@ export default function AgentBlogClient() {
       </div>
 
       {modalOpen && (
-      <Modal onClose={() => setModalOpen(false)} maxWidth={640} ariaLabel={editingId ? "Modifier l’article" : "Créer un article"}>
+      <Modal onClose={() => setModalOpen(false)} ariaLabel={editingId ? "Modifier l’article" : "Créer un article"}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#fff' }}>{editingId ? "Modifier l'article" : 'Nouvel article'}</h3>
           <div>
@@ -366,7 +366,6 @@ export default function AgentBlogClient() {
       {confirmDeleteId && (
         <Modal
           onClose={() => setConfirmDeleteId(null)}
-          maxWidth={390}
           ariaLabel="Supprimer l’article"
           title="Supprimer cet article"
           actions={

@@ -446,7 +446,7 @@ export default function AgentUsersClient() {
       </div>
 
       {selectedId && (
-        <SlideOverModal onClose={closeDetail} maxWidth={540} ariaLabel="Détail du compte">
+        <SlideOverModal onClose={closeDetail} ariaLabel="Détail du compte">
           <div className={styles.inspectorBody}>
             {detailError ? (
               <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>

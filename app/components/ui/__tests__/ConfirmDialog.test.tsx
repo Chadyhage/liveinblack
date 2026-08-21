@@ -2,14 +2,19 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import ConfirmDialog from '../ConfirmDialog'
 
+const modalSpy = vi.fn()
+
 vi.mock('../Modal', () => ({
   default: function MockModal({
     title,
     children,
+    zIndex,
   }: {
     title?: string
     children: React.ReactNode
+    zIndex?: number
   }) {
+    modalSpy({ title, zIndex })
     return (
       <section data-testid="modal">
         {title ? <h2>{title}</h2> : null}
@@ -20,6 +25,23 @@ vi.mock('../Modal', () => ({
 }))
 
 describe('ConfirmDialog', () => {
+  it('ignore maxWidth legacy mais conserve les autres props utiles', () => {
+    renderToStaticMarkup(
+      <ConfirmDialog
+        open
+        title="Supprimer"
+        body="Texte"
+        maxWidth={420}
+        zIndex={120}
+        onCancel={() => {}}
+        onConfirm={() => {}}
+      />
+    )
+
+    const call = modalSpy.mock.calls.at(-1)?.[0]
+    expect(call).toEqual({ title: 'Supprimer', zIndex: 120 })
+  })
+
   it('ne rend rien quand il est fermé', () => {
     const html = renderToStaticMarkup(
       <ConfirmDialog

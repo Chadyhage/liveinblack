@@ -9,6 +9,10 @@ import styles from './Modal.module.css'
 export interface ModalProps {
   onClose: () => void
   children: ReactNode
+  // Héritage compat: les modales LIVEINBLACK occupent désormais tout l'écran
+  // utile avec une marge minimale commune. La largeur du panneau n'est donc
+  // plus pilotée par les appelants, mais on garde la prop pour éviter de
+  // casser les nombreux usages existants.
   maxWidth?: number
   hideClose?: boolean
   contentStyle?: CSSProperties
@@ -41,7 +45,6 @@ function getPanelContentStyle(contentStyle: CSSProperties | undefined): CSSPrope
 export default function Modal({
   onClose,
   children,
-  maxWidth = 1280,
   hideClose,
   contentStyle,
   ariaLabel = 'Fenêtre de dialogue',
@@ -66,10 +69,7 @@ export default function Modal({
       backdropClassName={`lb-modal-backdrop ${styles.backdrop}`}
       panelClassName={`lb-modal-panel ${styles.panel}`}
       rootStyle={{ zIndex }}
-      panelStyle={{
-          '--modal-width': `${maxWidth}px`,
-          ...panelContentStyle,
-        } as CSSProperties}
+      panelStyle={panelContentStyle}
       ariaLabel={title ? undefined : ariaLabel}
       ariaLabelledBy={title ? titleId : undefined}
       ariaDescribedBy={title && subtitle ? subtitleId : undefined}

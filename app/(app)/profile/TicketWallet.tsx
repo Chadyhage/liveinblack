@@ -1121,7 +1121,6 @@ function PremiumTicketCard({
             {withdrawConfirmOpen && (
               <Modal
                 onClose={() => setWithdrawConfirmOpen(false)}
-                maxWidth={430}
                 title="Retirer la mise en vente"
                 subtitle="Le billet sera retiré du marché de revente."
                 ariaLabel="Confirmer le retrait de la mise en vente"
@@ -1149,7 +1148,6 @@ function PremiumTicketCard({
             {refundConfirmOpen && (
               <Modal
                 onClose={() => setRefundConfirmOpen(false)}
-                maxWidth={430}
                 title="Confirmer la demande"
                 subtitle="Cette demande est irréversible une fois le remboursement lancé."
                 ariaLabel="Confirmer la demande de remboursement"

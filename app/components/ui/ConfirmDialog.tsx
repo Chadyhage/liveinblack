@@ -17,6 +17,8 @@ export interface ConfirmDialogProps {
   confirmDisabled?: boolean
   confirmLoading?: boolean
   confirmLoadingText?: string
+  // Héritage compat: conservé pour ne pas casser les appelants existants,
+  // mais la modale partagée occupe désormais tout l'écran utile.
   maxWidth?: number
   zIndex?: number
 }
@@ -37,13 +39,12 @@ export default function ConfirmDialog({
   confirmDisabled,
   confirmLoading,
   confirmLoadingText,
-  maxWidth = 760,
   zIndex,
 }: ConfirmDialogProps) {
   if (!open) return null
 
   return (
-    <Modal onClose={onCancel} maxWidth={maxWidth} zIndex={zIndex} title={title}>
+    <Modal onClose={onCancel} zIndex={zIndex} title={title}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
           {body}

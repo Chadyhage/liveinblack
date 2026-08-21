@@ -76,7 +76,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
       {status && !reportOpen && <p role="status" style={{ color: 'var(--text-muted)', fontSize: 12, margin: '8px 0 0' }}>{status}</p>}
 
       {reportOpen && (
-        <Modal onClose={() => setReportOpen(false)} maxWidth={430} ariaLabel={`Signaler ${displayName}`}>
+        <Modal onClose={() => setReportOpen(false)} ariaLabel={`Signaler ${displayName}`}>
           <form onSubmit={submitReport}>
             <h2 id="profile-report-title" style={{ margin: '0 0 16px', fontSize: 21 }}>Signaler {displayName}</h2>
             <Label htmlFor="profile-report-reason" style={label}>Motif</Label>

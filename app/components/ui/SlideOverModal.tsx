@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import Button from './Button'
@@ -9,6 +9,8 @@ import styles from './SlideOverModal.module.css'
 
 export interface SlideOverModalProps {
   children: ReactNode
+  // Héritage compat: le tiroir détail est maintenant plein écran utile,
+  // ancré bord à bord avec une marge viewport uniforme.
   maxWidth?: number
   // Par défaut router.back() (routes interceptées @modal) — un appelant qui
   // pilote sa propre navigation (état local, paramètre d'URL applicatif type
@@ -30,7 +32,7 @@ export interface SlideOverModalProps {
 // plein-hauteur ancré à droite — pas de lib d'animation dans ce repo, donc
 // transition CSS pure pilotée par un état "monté" pour déclencher le
 // slide-in au prochain frame.
-export default function SlideOverModal({ children, maxWidth = 820, onClose, ariaLabel = 'Panneau de détails', variant = 'default' }: SlideOverModalProps) {
+export default function SlideOverModal({ children, onClose, ariaLabel = 'Panneau de détails', variant = 'default' }: SlideOverModalProps) {
   const router = useRouter()
   const eventSheet = variant === 'event'
 
@@ -43,7 +45,6 @@ export default function SlideOverModal({ children, maxWidth = 820, onClose, aria
       backdropClassName={`${styles.backdrop}${eventSheet ? ` ${styles.eventBackdrop}` : ''}`}
       backdropLabel="Fermer le panneau"
       panelClassName={`${styles.panel}${eventSheet ? ` ${styles.eventPanel}` : ''}`}
-      panelStyle={{ '--slide-over-width': `${maxWidth}px` } as CSSProperties}
       ariaLabel={ariaLabel}
     >
       {({ close }) => (

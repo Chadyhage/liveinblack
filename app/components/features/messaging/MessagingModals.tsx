@@ -9,7 +9,9 @@ export function ModalShell({
   subtitle,
   onClose,
   children,
-  wide = false,
+  // Héritage compat: gardé pour ne pas casser les appelants existants, mais
+  // la modal partagée occupe déjà tout l'écran utile.
+  wide: _wide = false,
 }: {
   title: string
   subtitle?: string
@@ -17,8 +19,10 @@ export function ModalShell({
   children: ReactNode
   wide?: boolean
 }) {
+  void _wide
+
   return (
-    <Modal onClose={onClose} zIndex={200} title={title} subtitle={subtitle} maxWidth={wide ? 1440 : 1280}>
+    <Modal onClose={onClose} zIndex={200} title={title} subtitle={subtitle}>
       {children}
     </Modal>
   )

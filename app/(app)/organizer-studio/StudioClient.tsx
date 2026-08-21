@@ -643,7 +643,7 @@ export default function StudioClient({
         />
       )}
       {pendingConfirm && (
-        <Modal onClose={() => setPendingConfirm(null)} maxWidth={420} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Modal onClose={() => setPendingConfirm(null)} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
           <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
           <div style={{ display: 'flex', gap: 10 }}>

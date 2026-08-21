@@ -872,7 +872,7 @@ export default function EventCheckoutPanel({
       )}
 
       {photoGallery && (
-        <Modal onClose={() => setPhotoGallery(null)} maxWidth={800} ariaLabel={`Photos de la place ${photoGallery.type}`} contentStyle={{ padding: 18 }}>
+        <Modal onClose={() => setPhotoGallery(null)} ariaLabel={`Photos de la place ${photoGallery.type}`} contentStyle={{ padding: 18 }}>
             <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: '#090a10', border: '1px solid var(--border-strong)' }}>
               <Image src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type}, photo ${photoGallery.index + 1}`} fill style={{ objectFit: 'contain' }} sizes="(max-width: 768px) 100vw, 760px" />
             </div>
@@ -885,7 +885,7 @@ export default function EventCheckoutPanel({
       )}
 
       {includedModal && (
-        <Modal onClose={() => setIncludedModal(null)} maxWidth={430} ariaLabel={`Inclus dans ${includedModal.type}`}>
+        <Modal onClose={() => setIncludedModal(null)} ariaLabel={`Inclus dans ${includedModal.type}`}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
             </div>
@@ -901,7 +901,7 @@ export default function EventCheckoutPanel({
       )}
 
       {showInfoModal && (
-        <Modal onClose={() => setShowInfoModal(null)} maxWidth={430} ariaLabel={`Personnaliser ${showInfoModal.option.label}`}>
+        <Modal onClose={() => setShowInfoModal(null)} ariaLabel={`Personnaliser ${showInfoModal.option.label}`}>
             <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Personnaliser le show</p>
             <h3 id="show-info-title" style={{ margin: '5px 0 4px', fontSize: 20 }}>{showInfoModal.option.label}</h3>
             <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 12 }}>Pour {showInfoModal.itemName} · billet {showInfoModal.ticketIndex + 1}</p>
@@ -913,7 +913,7 @@ export default function EventCheckoutPanel({
       )}
 
       {showConfirmation && selectedPlace && (
-        <Modal onClose={() => setShowConfirmation(false)} maxWidth={470} dismissible={!submitting} ariaLabel="Récapitulatif de la commande">
+        <Modal onClose={() => setShowConfirmation(false)} dismissible={!submitting} ariaLabel="Récapitulatif de la commande">
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />

@@ -766,7 +766,7 @@ function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAc
   }
 
   return (
-    <Modal onClose={onCancel} maxWidth={440} hideClose dismissible={!busy} ariaLabel={title}>
+    <Modal onClose={onCancel} hideClose dismissible={!busy} ariaLabel={title}>
       <div className={styles.confirmIcon} aria-hidden="true"><ShieldCheck size={25} /></div>
       <h2 className={styles.confirmTitle}>{title}</h2>
       <p className={styles.confirmHelper}>{helper}</p>

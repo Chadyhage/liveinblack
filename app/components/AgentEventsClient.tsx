@@ -285,7 +285,7 @@ function AdminCancelModal({
   onConfirm: () => void
 }) {
   return (
-    <Modal onClose={onCancel} maxWidth={460} dismissible={!busy} ariaLabel={`Annuler ${name}`} contentStyle={{ borderColor: 'rgba(224,90,170,.3)' }}>
+    <Modal onClose={onCancel} dismissible={!busy} ariaLabel={`Annuler ${name}`} contentStyle={{ borderColor: 'rgba(224,90,170,.3)' }}>
       <div className={styles.modalHeader}><span className={styles.modalIcon}><AlertTriangle size={22} aria-hidden="true" /></span><h2>Annuler « {name} » ?</h2><p>Cette action est irréversible. Les billets seront annulés, le stock libéré, les versements bloqués et les remboursements déclenchés selon le moyen de paiement.</p></div>
       <Label>Message aux acheteurs (optionnel)</Label>
       <Textarea

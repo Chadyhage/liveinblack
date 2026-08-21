@@ -236,20 +236,21 @@ export default function AuthForm() {
     e.preventDefault()
     setLoginError('')
     setLoginInfo('')
+    const cleanEmail = loginEmail.trim().toLowerCase()
     // Validation gérée entièrement ici (plutôt que via required/type="email"
     // natifs) pour que toute erreur passe par la bannière custom du design
     // system au lieu de l'infobulle non stylée du navigateur.
-    if (!loginEmail.trim() || !loginPassword) {
+    if (!cleanEmail || !loginPassword) {
       setLoginError('Merci de renseigner ton email et ton mot de passe.')
       return
     }
-    if (!EMAIL_RE.test(loginEmail.trim())) {
+    if (!EMAIL_RE.test(cleanEmail)) {
       setLoginError('Adresse email invalide.')
       return
     }
     setLoginLoading(true)
     try {
-      const result = await signIn('credentials', { email: loginEmail, password: loginPassword, redirect: false })
+      const result = await signIn('credentials', { email: cleanEmail, password: loginPassword, redirect: false })
       if (result?.error) {
         setLoginError('Email ou mot de passe incorrect.')
         return
@@ -267,7 +268,7 @@ export default function AuthForm() {
   }
 
   function openForgotModal() {
-    setForgotEmail(loginEmail)
+    setForgotEmail(loginEmail.trim())
     setForgotSubmitted(false)
     setForgotError('')
     setShowForgotModal(true)
@@ -283,7 +284,8 @@ export default function AuthForm() {
   async function handleForgotSubmit(e: React.FormEvent) {
     e.preventDefault()
     setForgotError('')
-    if (!EMAIL_RE.test(forgotEmail.trim())) {
+    const cleanEmail = forgotEmail.trim().toLowerCase()
+    if (!EMAIL_RE.test(cleanEmail)) {
       setForgotError('Saisis une adresse email valide.')
       forgotEmailRef.current?.focus()
       return
@@ -293,7 +295,7 @@ export default function AuthForm() {
       await fetch('/api/auth/request-password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),
+        body: JSON.stringify({ email: cleanEmail }),
       })
       setForgotSubmitted(true)
     } catch {
@@ -307,10 +309,15 @@ export default function AuthForm() {
     e.preventDefault()
     setRegError('')
 
-    if (!firstName.trim()) { setRegError('Le prénom est requis.'); return }
-    if (!lastName.trim()) { setRegError('Le nom est requis.'); return }
-    if (!EMAIL_RE.test(regEmail)) { setRegError('Adresse email invalide.'); return }
-    if (phone.trim() && !PHONE_RE.test(phone.trim())) { setRegError('Numéro de téléphone invalide.'); return }
+    const cleanFirstName = firstName.trim()
+    const cleanLastName = lastName.trim()
+    const cleanRegEmail = regEmail.trim().toLowerCase()
+    const cleanPhone = phone.trim()
+
+    if (!cleanFirstName) { setRegError('Le prénom est requis.'); return }
+    if (!cleanLastName) { setRegError('Le nom est requis.'); return }
+    if (!EMAIL_RE.test(cleanRegEmail)) { setRegError('Adresse email invalide.'); return }
+    if (cleanPhone && !PHONE_RE.test(cleanPhone)) { setRegError('Numéro de téléphone invalide.'); return }
     const pwdErrs = getPasswordPolicyErrors(regPwd)
     if (pwdErrs.length > 0) { setRegError(pwdErrs[0]); return }
     if (regPwd !== regPwdConfirm) {
@@ -327,17 +334,17 @@ export default function AuthForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: regEmail,
+          email: cleanRegEmail,
           password: regPwd,
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          phone: phone.trim() ? (dialCode + phone.trim()).replace(/\s/g, '') : undefined,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          phone: cleanPhone ? (dialCode + cleanPhone).replace(/\s/g, '') : undefined,
           birthYear: birthYear ? Number(birthYear) : null,
           gender: gender || null,
         }),
       })
       if (res.status === 201) {
-        setRegisteredEmail(regEmail)
+        setRegisteredEmail(cleanRegEmail)
         return
       }
       const body = await res.json().catch(() => ({}))

@@ -61,13 +61,18 @@ export function useActiveThread({ activeId, apiFetch, onRead }: UseActiveThreadA
     }
   }, [apiFetch, hasMoreOlder, loadingOlder, messages])
 
+  const onReadRef = useRef(onRead)
+  useEffect(() => {
+    onReadRef.current = onRead
+  })
+
   useEffect(() => {
     if (!activeId) return
     void fetchMessages(activeId)
-    void apiFetch(`/api/conversations/${activeId}/read`, { method: 'POST' }).then(() => onRead?.())
-    const interval = setInterval(() => void fetchMessages(activeId), 3000)
+    void apiFetch(`/api/conversations/${activeId}/read`, { method: 'POST' }).then(() => onReadRef.current?.())
+    const interval = setInterval(() => void fetchMessages(activeId), 4000)
     return () => clearInterval(interval)
-  }, [activeId, apiFetch, fetchMessages, onRead])
+  }, [activeId, apiFetch, fetchMessages])
 
   const [previousActiveId, setPreviousActiveId] = useState(activeId)
   if (activeId !== previousActiveId) {

@@ -25,16 +25,18 @@ import {
   reportUser,
   listBlockedUsers,
   listMyReports,
+  getContactPhone,
 } from '../messaging'
 import Conversation from '../../models/Conversation'
 import Message from '../../models/Message'
 import User from '../../models/User'
 import Report from '../../models/Report'
+import ProviderProfile from '../../models/ProviderProfile'
 import { fakeObjectId, RUN_INTEGRATION, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
 
-setupMongoIntegrationSuite([Conversation, Message, User, Report], {
+setupMongoIntegrationSuite([Conversation, Message, User, Report, ProviderProfile], {
   beforeEachExtra: () => {
     mockSessionUser = null
   },
@@ -828,6 +830,51 @@ describeIntegration('messaging (intégration, vraie base) — cœur messagerie (
       expect(reports.reports).toHaveLength(2)
       expect(reports.reports.map((report) => report.targetName)).toEqual(['Charly C', 'Bob B'])
       expect(reports.reports.map((report) => report.reason)).toEqual(['Abus', 'Spam'])
+    })
+  })
+
+  describe('getContactPhone', () => {
+    it('renvoie le numéro pro du compte destinataire dans une conversation directe', async () => {
+      const a = await seedUser()
+      const b = await seedUser({ phone: '+22890000000' })
+      const conv = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      if (!conv.ok) throw new Error('setup failed')
+
+      const result = await getContactPhone({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.phone).toBe('+22890000000')
+    })
+
+    it('retombe sur ProviderProfile.phone quand User.phone est vide', async () => {
+      const a = await seedUser()
+      const b = await seedUser({ phone: '' })
+      await ProviderProfile.create({ userId: b.id, name: 'Prestataire Bob', phone: '+22891111111' })
+      const conv = await createDirectConversation({ id: a.id }, { otherUserId: b.id })
+      if (!conv.ok) throw new Error('setup failed')
+
+      const result = await getContactPhone({ id: a.id }, { conversationId: conv.conversation.id })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.phone).toBe('+22891111111')
+    })
+
+    it('refuse une conversation de groupe', async () => {
+      const a = await seedUser()
+      const b = await seedUser()
+      const group = await Conversation.create({
+        type: 'group',
+        participantIds: [a.id, b.id],
+        members: [
+          { userId: a.id, name: 'Alice A', role: 'admin' },
+          { userId: b.id, name: 'Bob B', role: 'member' },
+        ],
+      })
+
+      const result = await getContactPhone({ id: a.id }, { conversationId: String(group._id) })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('invalid_type')
     })
   })
 })

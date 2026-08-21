@@ -30,7 +30,7 @@ function fmtDate(iso: string): string {
 }
 
 function Sheet({ onClose, title, subtitle, children }: { onClose: () => void; title: string; subtitle?: string; children: React.ReactNode }) {
-  return <Modal onClose={onClose} maxWidth={520} zIndex={3200} title={title} subtitle={subtitle}>{children}</Modal>
+  return <Modal onClose={onClose} zIndex={3200} title={title} subtitle={subtitle}>{children}</Modal>
 }
 
 export interface PublicReviewView {

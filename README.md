@@ -19,6 +19,7 @@ Le projet sépare désormais clairement trois niveaux de vérification :
 npm run lint:core
 npm run test:unit
 npm run test:integration
+npm run test:integration:optional
 npm run test:e2e
 ```
 
@@ -33,6 +34,14 @@ npm run test:e2e
 - lancés via `npm run test:integration`
 - exigent `MONGODB_TEST_URI`
 - utilisent une base dédiée dont le nom doit contenir `test`
+- échouent explicitement si la variable manque, pour éviter un faux vert local
+
+Si tu veux seulement laisser passer localement tant qu’aucune base d’intégration
+n’est branchée, utilise :
+
+```bash
+npm run test:integration:optional
+```
 
 Exemple :
 

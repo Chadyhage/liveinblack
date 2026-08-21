@@ -297,7 +297,6 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       {cropSrc && (
         <Modal
           onClose={() => setCropSrc(null)}
-          maxWidth={340}
           hideClose
           ariaLabel="Recadrer la photo de profil"
           contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, textAlign: 'center', maxHeight: 'none', overflowY: 'visible' }}
@@ -568,10 +567,12 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
 
   async function saveName() {
     if (onCooldown) return
+    const cleanFirst = firstName.trim()
+    const cleanLast = lastName.trim()
     setSaving(true)
     setMsg(null)
     try {
-      const res = await fetch('/api/profil/nom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName }) })
+      const res = await fetch('/api/profil/nom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName: cleanFirst, lastName: cleanLast }) })
       const data = await res.json()
       if (!res.ok || !data.ok) {
         setMsg({ text: errorMessage(data.error, data), kind: 'err' })

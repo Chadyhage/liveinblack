@@ -602,7 +602,7 @@ export default function AgentDossiersClient() {
         // panneau est piloté par le paramètre d'URL `dossier`
         // (useQueryParamState), pas par une route interceptée, donc jamais
         // router.back() par défaut.
-        <SlideOverModal onClose={closeDetail} maxWidth={620} ariaLabel="Détail du dossier">
+        <SlideOverModal onClose={closeDetail} ariaLabel="Détail du dossier">
           <div className={styles.drawerContent}>
             {detailError ? (
               <Card accent="rgba(224,90,170,.35)" className={styles.drawerError}>

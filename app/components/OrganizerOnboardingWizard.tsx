@@ -138,7 +138,8 @@ export default function OrganizerOnboardingWizard({
       const result = validateOrganizerStep0(form)
       if (!result.ok) return setError(result.error)
       if (mode === 'anonymous') {
-        if (!regEmail.trim() || !regEmail.includes('@')) return setError('Adresse e-mail invalide.')
+        const cleanRegEmail = regEmail.trim().toLowerCase()
+        if (!cleanRegEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanRegEmail)) return setError('Adresse e-mail invalide.')
         const passwordErrors = getPasswordPolicyErrors(regPassword)
         if (passwordErrors.length > 0) return setError(passwordErrors[0])
         if (regPassword !== regPasswordConfirm) return setError('Les mots de passe ne correspondent pas.')
@@ -149,13 +150,18 @@ export default function OrganizerOnboardingWizard({
       if (!result.ok) return setError(result.error)
     }
     if (mode === 'loggedIn') {
-      fetch('/api/applications/organisateur/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      const cleanedForm = {
+        ...form,
+        nomCommercial: form.nomCommercial.trim(),
+        siret: form.siret.trim(),
+        emailPro: form.emailPro.trim().toLowerCase(),
+        telephonePro: form.telephonePro.trim(),
+        adresseEtablissement: form.adresseEtablissement.trim(),
+        ville: form.ville.trim(),
+      }
+      fetch('/api/applications/organisateur/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleanedForm) })
         .then((res) => setAutosaveState(res.ok ? 'saved' : 'error'))
         .catch(() => {
-          // Autosave best-effort — une étape perdue en cas de coupure réseau
-          // n'empêche pas de continuer le wizard, seule la soumission finale
-          // (handleSubmit) doit réellement aboutir. On informe quand même
-          // l'utilisateur de l'échec via autosaveState (pied de page).
           setAutosaveState('error')
         })
     }
@@ -171,13 +177,23 @@ export default function OrganizerOnboardingWizard({
     setEmailTaken(false)
     if (!(documents.identity?.length > 0)) return setError("La pièce d'identité est obligatoire.")
 
+    const cleanedForm = {
+      ...form,
+      nomCommercial: form.nomCommercial.trim(),
+      siret: form.siret.trim(),
+      emailPro: form.emailPro.trim().toLowerCase(),
+      telephonePro: form.telephonePro.trim(),
+      adresseEtablissement: form.adresseEtablissement.trim(),
+      ville: form.ville.trim(),
+    }
+
     setBusy(true)
     try {
       if (mode === 'anonymous') {
         const res = await fetch('/api/applications/organisateur/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: regEmail.trim().toLowerCase(), password: regPassword, formData: form, documents, candidateNote }),
+          body: JSON.stringify({ email: regEmail.trim().toLowerCase(), password: regPassword, formData: cleanedForm, documents, candidateNote: candidateNote.trim() }),
         })
         const data = await res.json()
         if (!res.ok || !data.ok) {
@@ -189,12 +205,12 @@ export default function OrganizerOnboardingWizard({
           }
           return
         }
-        setSubmitted({ emailPro: form.emailPro })
+        setSubmitted({ emailPro: cleanedForm.emailPro })
       } else {
         const res = await fetch('/api/applications/organisateur/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ formData: form, documents, candidateNote }),
+          body: JSON.stringify({ formData: cleanedForm, documents, candidateNote: candidateNote.trim() }),
         })
         const data = await res.json()
         if (!res.ok || !data.ok) {

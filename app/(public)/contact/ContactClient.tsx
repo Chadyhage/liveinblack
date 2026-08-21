@@ -42,7 +42,13 @@ export default function ContactClient() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const fieldErrors = validate(form)
+    const cleanedForm: FormState = {
+      name: form.name.trim(),
+      email: form.email.trim().toLowerCase(),
+      subject: form.subject.trim(),
+      message: form.message.trim(),
+    }
+    const fieldErrors = validate(cleanedForm)
     setErrors(fieldErrors)
     if (Object.keys(fieldErrors).length > 0) return
 
@@ -52,7 +58,7 @@ export default function ContactClient() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(cleanedForm),
       })
       if (!res.ok) {
         if (res.status === 429) {

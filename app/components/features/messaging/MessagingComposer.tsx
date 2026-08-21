@@ -13,6 +13,7 @@ export const inputStyle: React.CSSProperties = {
   background: 'rgba(118,118,128,.16)',
   color: 'var(--text)',
   fontSize: 14,
+  padding: '12px 18px',
   marginBottom: 10,
   fontFamily: 'inherit',
 }

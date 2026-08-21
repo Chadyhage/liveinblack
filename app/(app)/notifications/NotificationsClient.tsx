@@ -68,56 +68,148 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   const showPushCta = pushPermission === 'default'
   const readCount = notifications.length - unreadCount
 
+  const shellStyle = `
+    .lb-notifications-page {
+      display: grid;
+      grid-template-columns: minmax(0, minmax(780px, 1.55fr)) minmax(320px, 0.7fr);
+      gap: 12px;
+      width: 100%;
+      min-height: 100%;
+      min-width: 0;
+      align-content: start;
+      align-items: start;
+    }
+
+    .lb-notifications-actions {
+      display: flex;
+      flex: 0 1 auto;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .lb-notifications-list {
+      width: 100%;
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .lb-notifications-main {
+      width: 100%;
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+      align-content: start;
+    }
+
+    .lb-notifications-header {
+      min-width: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 4px 0 6px;
+      flex-wrap: wrap;
+    }
+
+    .lb-notifications-copy {
+      min-width: 0;
+      flex: 1 1 820px;
+    }
+
+    .lb-notifications-side {
+      width: 100%;
+      min-width: 0;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      position: sticky;
+      top: 10px;
+    }
+
+    .lb-notifications-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .lb-notifications-stat,
+    .lb-notifications-push {
+      border-radius: 16px;
+      padding: 18px 18px 16px;
+    }
+
+    .lb-notifications-stat {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(24,24,28,.72);
+    }
+
+    .lb-notifications-push {
+      border: 1px solid rgba(184,243,74,.2);
+      background: rgba(184,243,74,.05);
+    }
+
+    @media (max-width: 1120px) {
+      .lb-notifications-page {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      .lb-notifications-page > aside {
+        position: static !important;
+      }
+
+      .lb-notifications-side {
+        position: static !important;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .lb-notifications-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .lb-notifications-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .lb-notifications-page {
+        gap: 14px !important;
+      }
+
+      .lb-notifications-header { align-items: stretch !important; }
+
+      .lb-notifications-actions {
+        width: 100%;
+        justify-content: stretch !important;
+      }
+
+      .lb-notifications-actions > * {
+        flex: 1 1 100%;
+        min-width: 0 !important;
+      }
+    }
+  `
+
   return (
-    <main
-      className="lb-dashboard-page"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr)',
-        gap: 18,
-        width: '100%',
-        minWidth: 0,
-        alignContent: 'start',
-        alignItems: 'start',
-      }}
-    >
-      <section
-        style={{
-          width: '100%',
-          display: 'grid',
-          gap: 18,
-          minWidth: 0,
-        }}
-      >
-        <header
-          style={{
-            minWidth: 0,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 18,
-            padding: '4px 0 6px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ minWidth: 0, flex: '1 1 560px' }}>
+    <main className="lb-dashboard-page lb-notifications-page">
+      <style>{shellStyle}</style>
+      <section className="lb-notifications-main">
+        <header className="lb-notifications-header">
+          <div className="lb-notifications-copy">
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#b8f34a', fontSize: 13, fontWeight: 750, letterSpacing: '.08em', textTransform: 'uppercase' }}>
               <BellRing size={17} aria-hidden="true" /> Centre d’alertes
             </span>
-            <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Notifications</h1>
-            <p style={{ margin: '10px 0 0', maxWidth: 760, color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
+            <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,4.4vw,56px)', fontWeight: 720, letterSpacing: '-.045em' }}>Notifications</h1>
+            <p style={{ margin: '10px 0 0', maxWidth: 'none', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flex: '0 1 auto',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 10,
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="lb-notifications-actions">
             {showPushCta ? (
               <Button
                 variant="ghost"
@@ -138,28 +230,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
           </div>
         </header>
 
-        <div style={{ width: '100%', display: 'grid', gap: 12, minWidth: 0 }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-              gap: 12,
-            }}
-          >
-            <div style={{ border: '1px solid rgba(255,255,255,.1)', borderRadius: 18, background: 'rgba(24,24,28,.72)', padding: '18px 18px 16px' }}>
-              <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{unreadCount}</span>
-              <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Non lues</span>
-            </div>
-            <div style={{ border: '1px solid rgba(255,255,255,.1)', borderRadius: 18, background: 'rgba(24,24,28,.72)', padding: '18px 18px 16px' }}>
-              <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{readCount}</span>
-              <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Lues</span>
-            </div>
-            <div style={{ border: '1px solid rgba(255,255,255,.1)', borderRadius: 18, background: 'rgba(24,24,28,.72)', padding: '18px 18px 16px' }}>
-              <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{notifications.length}</span>
-              <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Total</span>
-            </div>
-          </div>
-
+        <div className="lb-notifications-list">
           {notifications.length === 0 ? (
             <EmptyState title="Aucune notification" description="Tu seras prévenu ici dès qu'il se passe quelque chose te concernant." />
           ) : (
@@ -170,13 +241,14 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                 fullWidth
                 onClick={() => handleClick(n)}
                 style={{
-                  minHeight: 108,
+                  minHeight: 116,
                   display: 'grid',
                   alignContent: 'center',
+                  width: '100%',
                   background: n.read ? 'var(--surface)' : 'rgba(184, 243, 74,0.06)',
                   border: n.read ? '1px solid var(--border)' : '1px solid rgba(184, 243, 74,0.28)',
-                  borderRadius: 18,
-                  padding: '20px 22px',
+                  borderRadius: 16,
+                  padding: '22px 24px',
                   textAlign: 'left',
                 }}
               >
@@ -187,9 +259,28 @@ export default function NotificationsClient({ initialNotifications }: { initialN
             ))
           )}
         </div>
+      </section>
+
+      <aside
+        className="lb-notifications-side"
+      >
+        <div className="lb-notifications-grid">
+          <div className="lb-notifications-stat">
+            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{unreadCount}</span>
+            <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Non lues</span>
+          </div>
+          <div className="lb-notifications-stat">
+            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{readCount}</span>
+            <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Lues</span>
+          </div>
+          <div className="lb-notifications-stat">
+            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{notifications.length}</span>
+            <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Total</span>
+          </div>
+        </div>
 
         {showPushCta ? (
-          <div style={{ border: '1px solid rgba(184,243,74,.2)', borderRadius: 18, background: 'rgba(184,243,74,.05)', padding: '18px 18px 16px' }}>
+          <div className="lb-notifications-push">
             <p style={{ margin: 0, color: '#f5f5f7', fontSize: 15, fontWeight: 700 }}>Alertes instantanées</p>
             <p style={{ margin: '8px 0 0', color: 'rgba(245,245,247,.64)', fontSize: 13.5, lineHeight: 1.5 }}>Active les notifications push pour recevoir les nouveautés importantes sans repasser par la page.</p>
             <Button
@@ -205,35 +296,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
             </Button>
           </div>
         ) : null}
-      </section>
-
-      <style>{`
-        @media (max-width: 860px) {
-          .lb-dashboard-page > section > div:first-of-type {
-            grid-template-columns: minmax(0, 1fr) !important;
-          }
-        }
-
-        @media (max-width: 760px) {
-          .lb-dashboard-page {
-            gap: 14px !important;
-          }
-
-          .lb-dashboard-page header {
-            align-items: stretch !important;
-          }
-
-          .lb-dashboard-page header > div:last-child {
-            width: 100%;
-            justify-content: stretch !important;
-          }
-
-          .lb-dashboard-page header > div:last-child > * {
-            flex: 1 1 100%;
-            min-width: 0 !important;
-          }
-        }
-      `}</style>
+      </aside>
     </main>
   )
 }

@@ -255,7 +255,6 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     <>
     <Modal
       onClose={onClose}
-      maxWidth={560}
       ariaLabel="Codes promo"
       contentStyle={{ border: '1px solid rgba(255,255,255,.11)', boxShadow: '0 24px 64px rgba(0,0,0,.6)' }}
     >
@@ -470,7 +469,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     </Modal>
     {/* Confirmation de suppression */}
       {confirmRemove && (
-        <Modal onClose={() => setConfirmRemove(null)} maxWidth={360} hideClose zIndex={3010} ariaLabel="Supprimer le code promo" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Modal onClose={() => setConfirmRemove(null)} hideClose zIndex={3010} ariaLabel="Supprimer le code promo" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>Supprimer ce code promo ?</p>
             <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
               <strong style={{ color: '#fff' }}>{confirmRemove.code}</strong> sera définitivement supprimé, y compris son historique d&apos;utilisation ({Number(confirmRemove.usedCount) || 0}{' '}
@@ -495,7 +494,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
         </Modal>
       )}
       {confirmToggle && (
-        <Modal onClose={() => setConfirmToggle(null)} maxWidth={360} hideClose zIndex={3010} ariaLabel={confirmToggle.active === false ? 'Réactiver le code promo' : 'Désactiver le code promo'} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Modal onClose={() => setConfirmToggle(null)} hideClose zIndex={3010} ariaLabel={confirmToggle.active === false ? 'Réactiver le code promo' : 'Désactiver le code promo'} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>
               {confirmToggle.active === false ? 'Réactiver ce code promo ?' : 'Désactiver ce code promo ?'}
             </p>

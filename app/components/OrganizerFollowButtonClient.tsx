@@ -182,7 +182,6 @@ export default function OrganizerFollowButtonClient({
       {confirmUnfollow && (
         <Modal
           onClose={() => setConfirmUnfollow(false)}
-          maxWidth={380}
           ariaLabel={`Se désabonner de ${organizerName}`}
           title="Se désabonner"
           actions={

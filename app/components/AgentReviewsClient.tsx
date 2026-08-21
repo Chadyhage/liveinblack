@@ -344,7 +344,6 @@ export default function AgentReviewsClient() {
       {noteReview ? (
         <Modal
           onClose={() => { if (!busyId) { setNoteForId(null); setNoteText('') } }}
-          maxWidth={460}
           dismissible={!busyId}
           title="Note interne"
           subtitle={noteReview.providerName ? `À propos de l’avis de ${noteReview.authorName} sur ${noteReview.providerName}.` : `À propos de l’avis de ${noteReview.authorName}.`}
@@ -359,7 +358,6 @@ export default function AgentReviewsClient() {
       {deleteReview ? (
         <Modal
           onClose={() => { if (!busyId) setConfirmDeleteId(null) }}
-          maxWidth={420}
           hideClose
           dismissible={!busyId}
           title="Supprimer cet avis ?"

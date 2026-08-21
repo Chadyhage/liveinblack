@@ -56,10 +56,11 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
     }
     setLoading(true)
     try {
+      const cleanEmail = email ? email.trim().toLowerCase() : ''
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, token, password }),
+        body: JSON.stringify({ email: cleanEmail, token, password }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok && data.ok) {

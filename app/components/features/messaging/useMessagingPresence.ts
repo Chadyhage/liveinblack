@@ -46,14 +46,14 @@ export function useMessagingPresence({
     activeIdRef.current = activeId
   }, [activeId])
 
-  const relevantPresenceIds = useMemo(() => {
+  const presenceIdsKey = useMemo(() => {
     const ids = new Set<string>()
     for (const conversation of conversations) {
       for (const member of conversation.members) {
         if (member.userId !== currentUserId) ids.add(member.userId)
       }
     }
-    return [...ids]
+    return [...ids].sort().join(',')
   }, [conversations, currentUserId])
 
   useEffect(() => {
@@ -72,10 +72,11 @@ export function useMessagingPresence({
   }, [apiFetch])
 
   useEffect(() => {
-    if (relevantPresenceIds.length === 0) return
+    if (!presenceIdsKey) return
+    const ids = presenceIdsKey.split(',')
     let cancelled = false
     async function poll() {
-      const result = await fetchPresenceMap(apiFetch, relevantPresenceIds)
+      const result = await fetchPresenceMap(apiFetch, ids)
       if (result.ok && !cancelled) setPresence(result.data.presence)
     }
     void poll()
@@ -84,7 +85,7 @@ export function useMessagingPresence({
       cancelled = true
       clearInterval(interval)
     }
-  }, [apiFetch, relevantPresenceIds])
+  }, [apiFetch, presenceIdsKey])
 
   const notifyTyping = useCallback((conversationId: string) => {
     void sendTypingState(apiFetch, conversationId, true)

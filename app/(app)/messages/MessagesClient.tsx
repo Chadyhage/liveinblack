@@ -207,26 +207,7 @@ export default function MessagesClient({
   // Cas d'usage d'origine (ex. "Demander ce service" sur la page publique
   // d'un prestataire, voir ProviderCatalogInquiry.tsx) : la conversation
   // vient d'être créée côté serveur juste avant la navigation vers cette
-  // page, donc absente de la liste chargée côté serveur AVANT sa création —
-  // on relit immédiatement la liste au montage si une conversation est
-  // active, pour éviter un en-tête de thread vide le temps que le polling
-  // ci-dessous rattrape son retard.
-  useEffect(() => {
-    if (!activeId) return
-    let cancelled = false
-    async function run() {
-      const res = await apiFetch<ConversationListResponse>(`/api/conversations?page=${convPage}&pageSize=${CONV_PAGE_SIZE}`)
-      if (!cancelled && res.ok) {
-        setConversations(res.data.conversations)
-        setConversationTotal(res.data.total ?? res.data.conversations.length)
-      }
-    }
-    run()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+
 
   // ─── Polling : conversations, amis, messages, frappe, présence ───
   const { refreshConversations, refreshFriendData } = useMessagingDirectoryPolling({

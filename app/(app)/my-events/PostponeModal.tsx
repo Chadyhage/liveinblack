@@ -54,7 +54,7 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
   }
 
   return (
-    <Modal onClose={onClose} maxWidth={920} ariaLabel="Reporter l’événement">
+    <Modal onClose={onClose} ariaLabel="Reporter l’événement">
         <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 14px' }}>
           Les billets déjà vendus restent valables pour la nouvelle date — personne n&rsquo;est remboursé. Chaque acheteur est prévenu par e-mail (ancienne et nouvelle date).

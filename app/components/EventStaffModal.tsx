@@ -315,7 +315,6 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
     <>
     <Modal
       onClose={onClose}
-      maxWidth={480}
       dismissible={!busy}
       ariaLabel="Équipe de la soirée"
       contentStyle={{ background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 16 }}
@@ -541,7 +540,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
     </Modal>
     {/* Confirmation de retrait */}
       {confirmRemove && (
-        <Modal onClose={() => setConfirmRemove(null)} maxWidth={360} hideClose dismissible={!busy} zIndex={3010} ariaLabel="Retirer le membre de l’équipe" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Modal onClose={() => setConfirmRemove(null)} hideClose dismissible={!busy} zIndex={3010} ariaLabel="Retirer le membre de l’équipe" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span
                 style={{
