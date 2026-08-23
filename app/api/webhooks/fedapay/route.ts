@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db/mongoose'
 import { verifyWebhookSignature, isApprovedTransactionEvent } from '@/lib/server/payments/fedapayClient'

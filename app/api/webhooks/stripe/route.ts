@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { NextResponse } from 'next/server'
 import stripe from '@/lib/server/payments/stripeClient'
 import { getDb } from '@/lib/db/mongoose'
