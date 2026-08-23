@@ -29,9 +29,9 @@ type CanSendInConversationLike<TConversation> = (
 
 type ForwardSourceMessageLike = {
   type: MessageView['type']
-  content: string | null
-  poll: MessageSource['poll']
-  senderName: string
+  content?: string | null
+  poll?: MessageSource['poll']
+  senderName?: string | null
 }
 
 export async function resolveForwardConversationLabel(
@@ -64,7 +64,7 @@ export async function forwardMessageForCaller<
   const guard = await deps.loadParticipantMessage(messageId, caller.id)
   if (!guard.ok) return guard
 
-  const sourceGuard = canForwardMessageType(guard.message)
+  const sourceGuard = canForwardMessageType(guard.message as any)
   if (!sourceGuard.ok) return { ok: false, status: 400, error: sourceGuard.error }
 
   const targetIdsResult = normalizeForwardTargetIds(input.toConversationIds)
@@ -75,9 +75,9 @@ export async function forwardMessageForCaller<
     {
       source: {
         type: guard.message.type,
-        content: guard.message.content,
+        content: guard.message.content ?? null,
         poll: guard.message.poll,
-        senderName: guard.message.senderName,
+        senderName: guard.message.senderName ?? '',
       },
       sourceConversation: guard.conversation,
       targetIds: targetIdsResult.targetIds,
@@ -123,7 +123,7 @@ export async function forwardMessageToConversations<
     const canSend = await deps.assertCanSendInConversation(targetConversation, caller.id)
     if (!canSend.ok) continue
 
-    const forwardedPoll = buildForwardedPoll(args.source.poll)
+    const forwardedPoll = buildForwardedPoll(args.source.poll as any)
     const created = await Message.create({
       conversationId: String(targetConversation._id),
       senderId: caller.id,

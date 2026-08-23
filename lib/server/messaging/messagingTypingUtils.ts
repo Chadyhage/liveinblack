@@ -1,4 +1,4 @@
-import type { TypingUserView } from './messaging'
+import type { TypingUserView } from './messagingTypingService'
 
 export function collectActiveTypingUserIds(
   typingAt: Map<string, Date | string> | Record<string, Date | string> | undefined,

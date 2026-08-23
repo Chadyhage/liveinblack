@@ -27,7 +27,7 @@ export type PinMessageResult = MessagingErrorResult | { ok: true }
 export interface GroupAdminConversationGuard {
   ok: true
   conversation: {
-    _id: string
+    _id: unknown
     name?: string | null
     pinnedMessageId?: string | null
     save?: () => Promise<unknown>
@@ -41,7 +41,7 @@ export interface GroupAdminDependencies {
   ) => Promise<MessagingErrorResult | GroupAdminConversationGuard>
   resolveDisplayName: (userId: string) => Promise<string>
   appendGroupSystemMessage: (
-    conversation: GroupAdminConversationGuard['conversation'],
+    conversation: any,
     input: {
       senderId: string
       senderName: string

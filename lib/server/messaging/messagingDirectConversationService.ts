@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import Conversation from '@/lib/models/Conversation'
 import User from '@/lib/models/User'
 
@@ -53,7 +54,7 @@ export async function createDirectConversationForCaller<
   const otherUserIdRaw = input.otherUserId?.trim()
   if (!otherUserIdRaw) return { ok: false, status: 400, error: 'invalid_input' }
 
-  if (!User.base?.mongoose?.isValidObjectId(otherUserIdRaw)) return { ok: false, status: 404, error: 'user_not_found' }
+  if (!mongoose.isValidObjectId(otherUserIdRaw)) return { ok: false, status: 404, error: 'user_not_found' }
 
   const otherUserId = normalizeObjectId(otherUserIdRaw)
   const other = await User.findById(otherUserId).lean()

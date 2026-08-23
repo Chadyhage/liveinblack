@@ -152,12 +152,12 @@ export type ConversationResult = ErrResult | { ok: true; conversation: Conversat
 
 export async function createDirectConversation(caller: MessagingCaller, input: CreateDirectConversationInput): Promise<ConversationResult> {
   await getDb()
-  return createDirectConversationForCaller(caller, input, {
+  return (await createDirectConversationForCaller(caller, input, {
     normalizeObjectId,
     toConversationView: (conversation) => toConversationView(conversation as ConversationSource),
     withDirectConversationMembers,
     resolveDirectMemberNames,
-  })
+  })) as unknown as ConversationResult
 }
 
 // ─────────────────────────── listMyConversations ──────────────────────────
@@ -242,7 +242,7 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
 // blocage) avant ce correctif, ce qui permettait à un compte bloqué de créer
 // des sondages ou d'y voter dans une conversation directe malgré le blocage.
 export async function assertCanSendInConversation(
-  conversation: HydratedDocument<ConversationDoc>,
+  conversation: any,
   callerId: string
 ): Promise<{ ok: true } | ErrResult> {
   return assertConversationSendAllowed(conversation, callerId)

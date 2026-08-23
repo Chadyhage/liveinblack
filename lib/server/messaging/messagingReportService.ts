@@ -15,21 +15,21 @@ export interface ReportUserDependencies {
   normalizeObjectId: (id: string) => string
   notifyUserById: (
     userId: string,
-    buildEmail: () => Promise<unknown> | unknown,
+    buildEmail: () => any,
   ) => Promise<void>
   notifyAllAgents: (
-    buildEmail: () => Promise<unknown> | unknown,
+    buildEmail: () => any,
   ) => Promise<void>
   reportReceivedAgainstAccountEmail: (
     reason: string,
     helpUrl: string,
     site: string,
-  ) => Promise<unknown> | unknown
+  ) => any
   newReportToReviewEmail: (
     subject: string,
     moderationUrl: string,
     site: string,
-  ) => Promise<unknown> | unknown
+  ) => any
 }
 
 export async function reportUserForCaller(

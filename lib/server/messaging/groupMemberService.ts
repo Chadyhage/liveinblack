@@ -52,14 +52,14 @@ export interface GroupMemberDependencies {
   ) => Promise<void>
   notifyUserById: (
     userId: string,
-    buildEmail: () => Promise<unknown> | unknown,
+    buildEmail: () => any,
   ) => Promise<void>
   addedToGroupEmail: (
     groupName: string,
     callerName: string,
     groupUrl: string,
     site: string,
-  ) => Promise<unknown> | unknown
+  ) => any
   toConversationView: (conversation: ConversationDoc) => ConversationView
   maxMembersTotal: number
   site: string
@@ -113,7 +113,7 @@ export async function addGroupMemberForCaller(
 
   return {
     ok: true,
-    conversation: toConversationView(conversation.toObject({ flattenMaps: true }) as ConversationDoc),
+    conversation: toConversationView(conversation.toObject({ flattenMaps: true }) as unknown as ConversationDoc),
   }
 }
 

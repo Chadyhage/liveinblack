@@ -24,10 +24,10 @@ export interface ResolveSendContentDependencies {
   uploadDataUri: (
     dataUri: string,
     folder: string,
-    options: { allowedMimeTypes: string[] },
+    options: { allowedMimeTypes: readonly string[] | string[] },
   ) => Promise<UploadedMediaResult | UploadMediaFailure>
-  imageMimeTypes: string[]
-  audioMimeTypes: string[]
+  imageMimeTypes: readonly string[] | string[]
+  audioMimeTypes: readonly string[] | string[]
 }
 
 export async function resolveSendMessageContent(

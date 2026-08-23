@@ -17,14 +17,15 @@ export function canForwardMessageType(message: Pick<MessageDoc, 'deletedForAll' 
 }
 
 export function buildForwardedPoll(
-  poll: MessageDoc['poll'] | null | undefined,
-): MessageDoc['poll'] | null {
+  poll: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
   if (!poll) return null
+  const p = poll as any
   return {
-    pollType: poll.pollType,
-    question: poll.question,
-    options: poll.options.map((option) => ({ id: option.id, text: option.text, voterIds: [] as string[] })),
-    event: poll.event ? { ...poll.event } : null,
+    pollType: p.pollType,
+    question: p.question,
+    options: (p.options ?? []).map((option: any) => ({ id: option.id, text: option.text, voterIds: [] as string[] })),
+    event: p.event ? { ...p.event } : null,
   }
 }
 

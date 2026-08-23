@@ -53,6 +53,8 @@ export async function listConversationsForCaller<
     lastReadAt?: Record<string, string | Date> | Map<string, string | Date>
     pinnedByUserIds?: string[]
     mutedConversationByUserIds?: string[]
+    mutedUserIds?: string[]
+    memberMuteUntil?: Record<string, string> | Map<string, string>
   },
   TConversationView extends ConversationListView,
 >(
@@ -143,12 +145,12 @@ export async function listConversationsForCaller<
       const view = toConversationView(conv)
       if (view.type === 'direct') {
         return {
-          ...withDirectConversationMembers(view, directNames),
+          ...withDirectConversationMembers(view as any, directNames),
           unreadCount: unreadByConversation.get(String(conv._id)) ?? 0,
           pinned: (conv.pinnedByUserIds ?? []).includes(caller.id),
           mutedForMe: (conv.mutedConversationByUserIds ?? []).includes(caller.id),
           myGroupMute: null,
-        }
+        } as unknown as TConversationView
       }
 
       view.members = view.members.map((member) => {
@@ -170,13 +172,13 @@ export async function listConversationsForCaller<
         myGroupMute: myMuteStatus.muted
           ? { untilAt: myMuteStatus.untilAtMs === null ? null : new Date(myMuteStatus.untilAtMs).toISOString() }
           : null,
-      }
+      } as unknown as TConversationView
     })
   )
 
   return {
     ok: true,
-    conversations: views,
+    conversations: views as TConversationView[],
     total,
     page,
     pageSize,

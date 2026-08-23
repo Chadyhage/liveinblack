@@ -38,14 +38,14 @@ export interface DeliverMessageDependencies<TMessageView> {
   ) => Promise<void>
   notifyUserById: (
     userId: string,
-    buildEmail: () => Promise<unknown> | unknown,
+    buildEmail: () => any,
   ) => Promise<void>
   newMessageDigestEmail: (
     senderName: string,
     preview: string,
     conversationUrl: string,
     site: string,
-  ) => Promise<unknown> | unknown
+  ) => any
   sendPushToUser: (
     userId: string,
     payload: { title: string; body: string; url: string },
