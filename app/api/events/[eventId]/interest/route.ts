@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { markEventInterested, unmarkEventInterested, isEventInterested } from '@/lib/server/eventInterests'
+import { markEventInterested, unmarkEventInterested, isEventInterested } from '@/lib/server/events/eventInterests'
 
 // Marquer / retirer un événement de "mes événements intéressés" — voir
 // lib/server/eventInterests.ts. GET expose un simple booléen `interested`,

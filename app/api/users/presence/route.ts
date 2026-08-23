@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { heartbeat, getPresence } from '@/lib/server/presence'
+import { heartbeat, getPresence } from '@/lib/server/messaging/presence'
 
 const MAX_PRESENCE_IDS = 100
 

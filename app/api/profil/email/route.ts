@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requestEmailChange, cancelEmailChangeRequest } from '@/lib/server/profile'
+import { requestEmailChange, cancelEmailChangeRequest } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({
   newEmail: z.string().trim().toLowerCase().email(),

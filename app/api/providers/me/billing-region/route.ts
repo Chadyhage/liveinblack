@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { getProviderBillingContext, setProviderBillingRegion } from '@/lib/server/providerBilling'
+import { getProviderBillingContext, setProviderBillingRegion } from '@/lib/server/provider/providerBilling'
 
 const bodySchema = z.object({ billingRegionId: z.string().min(1) })
 

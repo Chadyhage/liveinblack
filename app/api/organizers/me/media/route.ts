@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { uploadOrganizerProfileMedia, reorderOrganizerMedia } from '@/lib/server/organizerProfile'
+import { uploadOrganizerProfileMedia, reorderOrganizerMedia } from '@/lib/server/organizer/organizerProfile'
 import { publicMediaUploadReferenceSchema } from '@/lib/shared/publicMediaUploads'
 
 const uploadSchema = z.object({

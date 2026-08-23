@@ -11,10 +11,10 @@ vi.mock('../cloudinary', async (importOriginal) => ({
   uploadDataUri: vi.fn(async (dataUri: string, folder: string) => ({ ok: true, url: `https://res.cloudinary.test/${folder}/mock.png` })),
 }))
 
-import { getMyApplication, saveApplicationDraft, submitPrestataireApplication, registerAndSubmitPrestataireApplication, type DocumentEntryInput } from '../applications'
-import { validatePrestataireFormData, getRequiredDocs, type PrestataireFormData } from '../../shared/applicationValidation'
-import User from '../../models/User'
-import Application from '../../models/Application'
+import { getMyApplication, saveApplicationDraft, submitPrestataireApplication, registerAndSubmitPrestataireApplication, type DocumentEntryInput } from '../provider/applications'
+import { validatePrestataireFormData, getRequiredDocs, type PrestataireFormData } from '@/lib/shared/applicationValidation'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

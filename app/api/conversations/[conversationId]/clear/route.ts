@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { clearHistoryForMe } from '@/lib/server/messaging'
+import { clearHistoryForMe } from '@/lib/server/messaging/messaging'
 
 // "Vider l'historique" (panneau contact) — masque tous les messages
 // existants pour l'appelant seul. Voir lib/server/messaging.ts (clearHistoryForMe).

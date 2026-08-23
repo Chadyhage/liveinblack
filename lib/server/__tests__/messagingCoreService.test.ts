@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import Conversation from '../../models/Conversation'
-import User from '../../models/User'
+import Conversation from '@/lib/models/Conversation'
+import User from '@/lib/models/User'
 import {
   loadParticipantConversation,
   normalizeObjectId,
   resolveDisplayName,
-} from '../messagingCoreService'
+} from '../messaging/messagingCoreService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

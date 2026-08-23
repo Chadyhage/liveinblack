@@ -5,12 +5,12 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
-import { listMyStaffedEvents } from '../staffEvents'
-import { addEventStaff } from '../eventStaff'
-import { createOrganizerEvent } from '../organizerEvents'
-import Event from '../../models/Event'
-import EventStaff from '../../models/EventStaff'
-import User from '../../models/User'
+import { listMyStaffedEvents } from '../organizer/staffEvents'
+import { addEventStaff } from '../events/eventStaff'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import EventStaff from '@/lib/models/EventStaff'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

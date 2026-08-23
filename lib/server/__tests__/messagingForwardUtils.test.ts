@@ -4,7 +4,7 @@ import {
   canForwardMessageType,
   normalizeForwardTargetIds,
   resolveForwardedLastMessageLabel,
-} from '../messagingForwardUtils'
+} from '../messaging/messagingForwardUtils'
 
 describe('messagingForwardUtils', () => {
   it('normalise et déduplique les cibles, avec garde-fous de cardinalité', () => {

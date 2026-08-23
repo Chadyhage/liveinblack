@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { moderateApplication, type AgentApplicationAction } from '@/lib/server/applications'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { moderateApplication, type AgentApplicationAction } from '@/lib/server/provider/applications'
 
 const ACTIONS: AgentApplicationAction[] = ['under_review', 'approve', 'request_changes', 'reject', 'suspend', 'reactivate']
 

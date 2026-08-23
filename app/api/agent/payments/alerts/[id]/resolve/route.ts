@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { resolvePaymentAlert } from '@/lib/server/agentPayments'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { resolvePaymentAlert } from '@/lib/server/agent/agentPayments'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

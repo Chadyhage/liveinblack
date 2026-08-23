@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import AgentDashboardClient from '@/app/components/AgentDashboardClient'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import AgentDashboardClient from '@/app/components/features/agent/AgentDashboardClient'
 
 // Port de src/pages/AgentPage.jsx (#9 phase agent/admin). `proxy.ts` bloque
 // déjà /agent/:path* aux non-agents côté middleware — cette page revérifie

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Report from '../../models/Report'
-import User from '../../models/User'
-import { listBlockedSafetyUsers, listSafetyReports } from '../messagingSafetyListsService'
+import Report from '@/lib/models/Report'
+import User from '@/lib/models/User'
+import { listBlockedSafetyUsers, listSafetyReports } from '../messaging/messagingSafetyListsService'
 
 vi.mock('../../models/Report', () => ({
   default: {

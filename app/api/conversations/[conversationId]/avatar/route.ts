@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { setGroupAvatar } from '@/lib/server/groups'
+import { setGroupAvatar } from '@/lib/server/messaging/groups'
 
 // Change la photo d'un groupe — réservé aux admins, upload Cloudinary fait
 // SERVEUR (voir lib/server/cloudinary.ts uploadDataUri) à partir d'un data:

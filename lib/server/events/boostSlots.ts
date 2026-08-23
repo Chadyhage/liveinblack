@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
-import BoostSlot, { type BoostSlotDoc } from '../models/BoostSlot'
-import Event from '../models/Event'
-import { boostSlotId, normalizeBoostRegion } from '../shared/boosts'
+import BoostSlot, { type BoostSlotDoc } from '@/lib/models/BoostSlot'
+import Event from '@/lib/models/Event'
+import { boostSlotId, normalizeBoostRegion } from '@/lib/shared/boosts'
 
 const HOLD_MINUTES = 24 * 60 // volontairement long : un webhook en échec ne doit
 // pas rouvrir le créneau avant qu'un humain ait pu regarder (voir legacy).

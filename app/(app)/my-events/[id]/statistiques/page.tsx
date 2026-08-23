@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/auth'
-import { getEventStats } from '@/lib/server/eventStats'
+import { getEventStats } from '@/lib/server/events/eventStats'
 import StatistiquesClient from './StatistiquesClient'
 
 // Port de StatsPanel (MesEvenementsPage.jsx lignes 3886-4003) — devenu une

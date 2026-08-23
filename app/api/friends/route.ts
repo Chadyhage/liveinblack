@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listFriends } from '@/lib/server/friends'
+import { listFriends } from '@/lib/server/users/friends'
 
 // Liste des amis de l'appelant — voir lib/server/friends.ts (#43). La
 // suppression d'une amitié vit sous POST /api/friends/remove.

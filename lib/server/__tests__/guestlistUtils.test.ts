@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { normalizeGuestlistTicketCode, restockedAvailable, toGuestlistView } from '../guestlistUtils'
+import { normalizeGuestlistTicketCode, restockedAvailable, toGuestlistView } from '../events/guestlistUtils'
 
-vi.mock('../ticketToken', () => ({
+vi.mock('../events/ticketToken', () => ({
   signTicketToken: vi.fn(() => 'signed-token'),
 }))
 

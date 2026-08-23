@@ -1,10 +1,10 @@
-import { getDb } from '../db/mongoose'
-import EventInterest from '../models/EventInterest'
-import Event from '../models/Event'
-import Ticket from '../models/Ticket'
-import { notifyUserById } from './emails/notify'
-import { interestedEventReminderEmail } from './emails'
-import { eventStartMs } from '../shared/event-time'
+import { getDb } from '@/lib/db/mongoose'
+import EventInterest from '@/lib/models/EventInterest'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import { notifyUserById } from '@/lib/server/emails/notify'
+import { interestedEventReminderEmail } from '@/lib/server/emails'
+import { eventStartMs } from '@/lib/shared/event-time'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 

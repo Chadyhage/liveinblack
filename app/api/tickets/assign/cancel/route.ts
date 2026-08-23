@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { cancelSeatInvitation } from '@/lib/server/seatAssignment'
+import { cancelSeatInvitation } from '@/lib/server/events/seatAssignment'
 
 // Annulation par l'hôte d'une invitation de siège encore EN ATTENTE (avant
 // que la cible n'ait répondu) — voir lib/server/seatAssignment.ts (#37).

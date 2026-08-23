@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { setTyping, getTypingUsers } from '@/lib/server/messaging'
+import { setTyping, getTypingUsers } from '@/lib/server/messaging/messaging'
 
 // GET : qui d'autre est "en train d'écrire" (fenêtre glissante de 5s, jamais
 // de websocket — cf. lib/server/messaging.ts). POST : signale/efface le

@@ -1,6 +1,6 @@
-import { getDb } from '../db/mongoose'
-import Boost from '../models/Boost'
-import Event from '../models/Event'
+import { getDb } from '@/lib/db/mongoose'
+import Boost from '@/lib/models/Boost'
+import Event from '@/lib/models/Event'
 
 // Port en LECTURE SEULE de la section « Boosts » de src/pages/AgentPage.jsx
 // (tab === 'boosts', #9 phase agent/admin). Le legacy n'a AUCUNE action de

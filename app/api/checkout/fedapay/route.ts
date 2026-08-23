@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createOrder, releaseOrder } from '@/lib/server/orders'
+import { createOrder, releaseOrder } from '@/lib/server/events/orders'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import { createTransaction, createToken, getTransaction } from '@/lib/server/fedapayClient'
+import { createTransaction, createToken, getTransaction } from '@/lib/server/payments/fedapayClient'
 
 // Remplace la branche `action:'checkout'` de api/fedapay.js (rail XOF, mobile
 // money). Miroir de /api/checkout (Stripe) — mêmes corrections (C07 : les

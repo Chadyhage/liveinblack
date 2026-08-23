@@ -18,10 +18,10 @@ import {
   removeFriend,
   listFriends,
   listMyFriendRequests,
-} from '../friends'
-import User from '../../models/User'
-import FriendRequest from '../../models/FriendRequest'
-import Friendship from '../../models/Friendship'
+} from '../users/friends'
+import User from '@/lib/models/User'
+import FriendRequest from '@/lib/models/FriendRequest'
+import Friendship from '@/lib/models/Friendship'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

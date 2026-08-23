@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import User from '../../models/User'
-import { deliverMessageForConversation } from '../messagingDeliveryService'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import User from '@/lib/models/User'
+import { deliverMessageForConversation } from '../messaging/messagingDeliveryService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

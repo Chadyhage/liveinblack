@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveMemberMuteStatus } from '../messagingMuteUtils'
+import { resolveMemberMuteStatus } from '../messaging/messagingMuteUtils'
 
 describe('messagingMuteUtils', () => {
   it('traite mutedUserIds legacy comme une sourdine indéfinie', () => {

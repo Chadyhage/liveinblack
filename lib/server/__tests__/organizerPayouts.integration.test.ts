@@ -9,18 +9,18 @@ import mongoose from 'mongoose'
 const accountsCreate = vi.fn()
 const accountLinksCreate = vi.fn()
 
-vi.mock('../stripeClient', () => ({
+vi.mock('../payments/stripeClient', () => ({
   default: {
     accounts: { create: (...args: unknown[]) => accountsCreate(...args) },
     accountLinks: { create: (...args: unknown[]) => accountLinksCreate(...args) },
   },
 }))
 
-import { getPayoutStatus, startStripeConnectOnboarding, requestManualPayout } from '../organizerPayouts'
-import User from '../../models/User'
-import Application from '../../models/Application'
-import SellerBalance from '../../models/SellerBalance'
-import PayoutRequest from '../../models/PayoutRequest'
+import { getPayoutStatus, startStripeConnectOnboarding, requestManualPayout } from '../organizer/organizerPayouts'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
+import SellerBalance from '@/lib/models/SellerBalance'
+import PayoutRequest from '@/lib/models/PayoutRequest'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

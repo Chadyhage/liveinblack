@@ -5,8 +5,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 
-import { listReportsForAgent, markReportHandled, type AgentCaller } from '../agentReports'
-import Report from '../../models/Report'
+import { listReportsForAgent, markReportHandled, type AgentCaller } from '../agent/agentReports'
+import Report from '@/lib/models/Report'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

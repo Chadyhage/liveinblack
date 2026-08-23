@@ -4,7 +4,7 @@
 // rôle absent de `user.roles`, quoi que le corps de la requête prétende.
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
-import User, { ROLES } from '../../models/User'
+import User, { ROLES } from '@/lib/models/User'
 
 type TestRole = (typeof ROLES)[number]
 

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { listMyConversations, listBlockedUsers, listMyReports, listStarredMessages } from '@/lib/server/messaging'
-import { listMyFriendRequests, listFriends } from '@/lib/server/friends'
+import { listMyConversations, listBlockedUsers, listMyReports, listStarredMessages } from '@/lib/server/messaging/messaging'
+import { listMyFriendRequests, listFriends } from '@/lib/server/users/friends'
 import MessagesClient from './MessagesClient'
 
 // Server Component : charge l'état initial (conversations, demandes d'ami,

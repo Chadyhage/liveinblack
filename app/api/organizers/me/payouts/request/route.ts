@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requestManualPayout } from '@/lib/server/organizerPayouts'
+import { requestManualPayout } from '@/lib/server/organizer/organizerPayouts'
 
 function requireOrganizerRole(role: string | undefined) {
   return role === 'organisateur' || role === 'agent'

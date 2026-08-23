@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import Conversation from '../../models/Conversation'
-import User from '../../models/User'
-import { createDirectConversationForCaller } from '../messagingDirectConversationService'
+import Conversation from '@/lib/models/Conversation'
+import User from '@/lib/models/User'
+import { createDirectConversationForCaller } from '../messaging/messagingDirectConversationService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

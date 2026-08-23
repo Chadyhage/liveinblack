@@ -1,6 +1,6 @@
-import type { PlaylistSong } from '../models/EventPlaylist'
-import type { EventDoc } from '../models/Event'
-import type { StaffRoster } from './playlist'
+import type { PlaylistSong } from '@/lib/models/EventPlaylist'
+import type { EventDoc } from '@/lib/models/Event'
+import type { StaffRoster } from '@/lib/server/playlist'
 
 export interface PlaylistSongView {
   id: string

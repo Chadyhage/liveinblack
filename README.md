@@ -11,6 +11,15 @@ npm run dev
 
 Application disponible sur `http://localhost:3000`.
 
+## Documentation
+
+Toute la documentation fonctionnelle, architecturale et opérationnelle est regroupée dans le dossier [`docs/`](./docs/README.md) :
+- **[Architecture](./docs/architecture/ARCHITECTURE_COMPLETE.md)** — Découpage Next.js, Mongoose, Auth.js.
+- **[Design System](./docs/design/DESIGN_SYSTEM.md)** — Tokens de couleurs, styles TypeScript inline.
+- **[Spécifications & Use Cases](./docs/specs/USE_CASES.md)** — Guides fonctionnels et cas d'utilisation par rôle.
+- **[Assurance Qualité & QA](./docs/qa/QA_TEST_PLAN.md)** — Plan de recettes et statut API.
+- **[Opérations & Production](./docs/ops/production-readiness-100k.md)** — Preparation production & emails.
+
 ## Qualité et tests
 
 Le projet sépare désormais clairement trois niveaux de vérification :

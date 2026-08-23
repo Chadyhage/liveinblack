@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
-import { getEventBoostAvailability } from '@/lib/server/boostSlots'
+import { getEventBoostAvailability } from '@/lib/server/events/boostSlots'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ eventId: string }> }) {
   const session = await auth()

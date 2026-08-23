@@ -7,7 +7,7 @@ import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import Ticket from '@/lib/models/Ticket'
 import { isEventEnded, eventStartMs } from '@/lib/shared/event-time'
-import { listOrdersForTicket } from '@/lib/server/eventOrders'
+import { listOrdersForTicket } from '@/lib/server/events/eventOrders'
 import CommanderClient from './CommanderClient'
 import { type MenuItemView, type OrderItem } from './commanderUtils'
 

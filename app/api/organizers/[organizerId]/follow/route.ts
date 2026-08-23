@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { followOrganizer, unfollowOrganizer, isFollowing } from '@/lib/server/organizerFollows'
+import { followOrganizer, unfollowOrganizer, isFollowing } from '@/lib/server/organizer/organizerFollows'
 
 // Suivre / ne plus suivre le profil PUBLIC d'un organisateur — voir
 // lib/server/organizerFollows.ts pour le modèle (abonnement ASYMÉTRIQUE,

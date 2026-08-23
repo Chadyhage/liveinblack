@@ -10,18 +10,18 @@
 // un passage par le cache (sérialisation JSON de unstable_cache) — déjà géré
 // par tout le code appelant, qui fait systématiquement `new Date(x)`.
 import { unstable_cache } from 'next/cache'
-import { listPublicEvents, searchPublicEvents, listPublicEventsDirectory as listEventsDirectory } from './events'
-import { getBoostedEventIds } from './boosts'
-import { listPublicProviders, listPublicProvidersDirectory } from './providers'
+import { listPublicEvents, searchPublicEvents, listPublicEventsDirectory as listEventsDirectory } from './events/events'
+import { getBoostedEventIds } from './events/boosts'
+import { listPublicProviders, listPublicProvidersDirectory } from './provider/providers'
 import {
   type PublicOrganizerDirectoryParams,
   listPublicOrganizers,
   listPublicOrganizersDirectory,
   listPublicOrganizersWithNextEvent,
-} from './organizers'
-import type { PublicProviderDirectoryParams } from './providers'
-import { getPublicHomepageConfig } from './agentHomepageConfig'
-import { listPublishedPosts, getPostBySlug, listRelatedPosts, type ListPublishedPostsParams, type PublicBlogPost } from './blog'
+} from './organizer/organizers'
+import type { PublicProviderDirectoryParams } from './provider/providers'
+import { getPublicHomepageConfig } from './agent/agentHomepageConfig'
+import { listPublishedPosts, getPostBySlug, listRelatedPosts, type ListPublishedPostsParams, type PublicBlogPost } from '@/lib/server/blog'
 
 const REVALIDATE_SECONDS = 60
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getOrganizerBySlug, getOrganizerEvents } from '@/lib/server/organizers'
-import { isFollowing } from '@/lib/server/organizerFollows'
+import { getOrganizerBySlug, getOrganizerEvents } from '@/lib/server/organizer/organizers'
+import { isFollowing } from '@/lib/server/organizer/organizerFollows'
 
 // Profil public complet d'un organisateur (studio) en JSON — miroir de
 // app/(public)/organizers/[slug]/page.tsx, réutilise getOrganizerBySlug +

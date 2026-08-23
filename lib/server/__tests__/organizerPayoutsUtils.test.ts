@@ -5,7 +5,7 @@ import {
   derivePayoutMode,
   readManualPayoutAmounts,
   resolveConnectReturnPath,
-} from '../organizerPayoutsUtils'
+} from '../organizer/organizerPayoutsUtils'
 
 describe('organizerPayoutsUtils', () => {
   it('dérive correctement le mode de payout', () => {

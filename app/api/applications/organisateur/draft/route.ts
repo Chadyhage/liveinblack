@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { saveApplicationDraft } from '@/lib/server/applications'
+import { saveApplicationDraft } from '@/lib/server/provider/applications'
 
 // Autosave du dossier organisateur en mode connecté (pas de validation
 // stricte ici — un brouillon peut être partiel ; la validation réelle a

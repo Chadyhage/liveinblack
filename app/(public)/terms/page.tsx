@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import LegalPageLayout, { type LegalSection } from '@/app/components/LegalPageLayout'
+import LegalPageLayout, { type LegalSection } from '@/app/components/layout/LegalPageLayout'
 import { LEGAL } from '@/lib/shared/legal'
 
 export const metadata: Metadata = {

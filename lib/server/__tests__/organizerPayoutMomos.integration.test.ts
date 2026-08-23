@@ -3,10 +3,10 @@
 // versements FedaPay bloqués faute de numéro).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { listPayoutMomos, updatePayoutMomos, rearmFailedPayouts } from '../organizerPayoutMomos'
-import User from '../../models/User'
-import Event from '../../models/Event'
-import EventPayout from '../../models/EventPayout'
+import { listPayoutMomos, updatePayoutMomos, rearmFailedPayouts } from '../organizer/organizerPayoutMomos'
+import User from '@/lib/models/User'
+import Event from '@/lib/models/Event'
+import EventPayout from '@/lib/models/EventPayout'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

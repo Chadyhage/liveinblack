@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import User from '../../models/User'
-import { assertConversationSendAllowed } from '../messagingSendGuardService'
+import User from '@/lib/models/User'
+import { assertConversationSendAllowed } from '../messaging/messagingSendGuardService'
 
 vi.mock('../../models/User', () => ({
   default: {

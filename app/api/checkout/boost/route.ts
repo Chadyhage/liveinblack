@@ -7,9 +7,9 @@ import Boost from '@/lib/models/Boost'
 import PaymentAlert from '@/lib/models/PaymentAlert'
 import { getBoostPlan } from '@/lib/shared/boosts'
 import { getEventEndTimestamp } from '@/lib/shared/eventUrgency'
-import { reserveBoostSlot, releaseBoostSlotIfPending } from '@/lib/server/boostSlots'
+import { reserveBoostSlot, releaseBoostSlotIfPending } from '@/lib/server/events/boostSlots'
 import { boostSlotId, normalizeBoostRegion } from '@/lib/shared/boosts'
-import stripe from '@/lib/server/stripeClient'
+import stripe from '@/lib/server/payments/stripeClient'
 
 // Remplace api/checkout-boost.js — achat d'un créneau Top 1/2/3. Le prix
 // vient TOUJOURS de lib/shared/boosts.ts (BOOST_PLANS), jamais du client.

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { addMember } from '@/lib/server/groups'
+import { addMember } from '@/lib/server/messaging/groups'
 
 // Ajoute un membre à un groupe — réservé aux admins, voir
 // lib/server/groups.ts (addMember).

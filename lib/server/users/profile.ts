@@ -1,20 +1,20 @@
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import mongoose from 'mongoose'
-import { getDb } from '../db/mongoose'
-import User, { NAME_COOLDOWN_DAYS } from '../models/User'
-import { uploadDataUri } from './cloudinary'
+import { getDb } from '@/lib/db/mongoose'
+import User, { NAME_COOLDOWN_DAYS } from '@/lib/models/User'
+import { uploadDataUri } from '@/lib/server/cloudinary'
 import {
   issueVerificationToken,
   consumeVerificationToken,
   invalidateVerificationTokens,
-} from '../auth/verification-tokens'
-import { emailChangeVerificationEmail, passwordChangedEmail } from './emails'
-import { sendEmail } from './email'
-import { notifyUserById } from './emails/notify'
+} from '@/lib/auth/verification-tokens'
+import { emailChangeVerificationEmail, passwordChangedEmail } from '@/lib/server/emails'
+import { sendEmail } from '@/lib/server/email'
+import { notifyUserById } from '@/lib/server/emails/notify'
 import { scrubAccountPII } from './accountPurge'
-import { isValidPhone } from '../shared/applicationValidation'
-import { isPasswordPolicyCompliant } from '../shared/passwordPolicy'
+import { isValidPhone } from '@/lib/shared/applicationValidation'
+import { isPasswordPolicyCompliant } from '@/lib/shared/passwordPolicy'
 
 // Port de la section "Paramètres du compte" de ProfilePage.jsx (#6 phase
 // profil) — identité, démographie facultative, avatar, confidentialité,

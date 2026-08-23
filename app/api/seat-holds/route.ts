@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createSeatHold, releaseSeatHoldDepositOrder, listMySeatHolds } from '@/lib/server/seatHolds'
-import { releaseOrder } from '@/lib/server/orders'
+import { createSeatHold, releaseSeatHoldDepositOrder, listMySeatHolds } from '@/lib/server/events/seatHolds'
+import { releaseOrder } from '@/lib/server/events/orders'
 import Order from '@/lib/models/Order'
 import User from '@/lib/models/User'
-import stripe from '@/lib/server/stripeClient'
+import stripe from '@/lib/server/payments/stripeClient'
 
 // Blocage de place (acompte) — rail Stripe/EUR. Miroir de /api/checkout/resale :
 // crée le SeatHold + son Order d'acompte (lib/server/seatHolds.ts::createSeatHold),

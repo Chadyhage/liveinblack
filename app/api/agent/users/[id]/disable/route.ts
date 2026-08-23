@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { setUserDisabled } from '@/lib/server/agentUsers'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { setUserDisabled } from '@/lib/server/agent/agentUsers'
 
 const bodySchema = z.object({ disabled: z.boolean() })
 

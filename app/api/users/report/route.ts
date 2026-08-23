@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { reportUser, listMyReports } from '@/lib/server/messaging'
+import { reportUser, listMyReports } from '@/lib/server/messaging/messaging'
 
 // GET : mes propres signalements soumis — vue "Bloqués & signalés". Voir
 // lib/server/messaging.ts (listMyReports).

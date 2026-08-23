@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildTypingUsers, collectActiveTypingUserIds } from '../messagingTypingUtils'
+import { buildTypingUsers, collectActiveTypingUserIds } from '../messaging/messagingTypingUtils'
 
 describe('messagingTypingUtils', () => {
   it('garde seulement les utilisateurs actifs hors appelant', () => {

@@ -5,7 +5,7 @@ import {
   buildMessagePushPayload,
   OFFLINE_MESSAGE_DIGEST_THRESHOLD_MS,
   selectOfflineRecipientIds,
-} from '../messagingNotificationUtils'
+} from '../messaging/messagingNotificationUtils'
 
 describe('messagingNotificationUtils', () => {
   it('construit le chemin et l’URL de conversation', () => {

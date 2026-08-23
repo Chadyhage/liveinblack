@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { submitOrganizerApplication } from '@/lib/server/applications'
+import { submitOrganizerApplication } from '@/lib/server/provider/applications'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { applicationDocumentsSchema } from '@/lib/shared/applicationDocuments'
 

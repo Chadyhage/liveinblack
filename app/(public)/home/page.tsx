@@ -2,16 +2,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import { auth } from '@/auth'
-import { type PublicEvent } from '@/lib/server/events'
-import { type CatalogItem } from '@/lib/server/providers'
+import { type PublicEvent } from '@/lib/server/events/events'
+import { type CatalogItem } from '@/lib/server/provider/providers'
 import {
   getCachedPublicHomepageConfig as getPublicHomepageConfig,
   getCachedBoostedEventIds as getBoostedEventIds,
   getCachedPublicEventsDirectory,
   getCachedPublicProvidersDirectory,
 } from '@/lib/server/publicCache'
-import { getMyProfile } from '@/lib/server/profile'
-import { listActiveInterestSignals } from '@/lib/server/eventInterests'
+import { getMyProfile } from '@/lib/server/users/profile'
+import { listActiveInterestSignals } from '@/lib/server/events/eventInterests'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { eventStartMs } from '@/lib/shared/event-time'

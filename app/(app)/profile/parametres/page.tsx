@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getMyProfile } from '@/lib/server/profile'
+import { getMyProfile } from '@/lib/server/users/profile'
 import ParametresClient from './ParametresClient'
 
 // Ancien panneau interne "Paramètres du compte" de ProfilClient.tsx (état

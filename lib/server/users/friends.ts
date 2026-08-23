@@ -1,8 +1,8 @@
 import mongoose, { type HydratedDocument } from 'mongoose'
-import { getDb } from '../db/mongoose'
-import User, { type UserDoc } from '../models/User'
-import FriendRequest from '../models/FriendRequest'
-import Friendship from '../models/Friendship'
+import { getDb } from '@/lib/db/mongoose'
+import User, { type UserDoc } from '@/lib/models/User'
+import FriendRequest from '@/lib/models/FriendRequest'
+import Friendship from '@/lib/models/Friendship'
 
 // Remplace le cycle de demande d'ami de src/utils/messaging.js (Firestore,
 // `user_social/{uid}.friendRequests` — un tableau dupliqué des deux côtés).

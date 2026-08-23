@@ -9,7 +9,7 @@ import {
 import {
   applicationUploadOwner,
   createApplicationUploadSignature,
-} from '@/lib/server/applicationUpload'
+} from '@/lib/server/provider/applicationUpload'
 
 const bodySchema = z.object({
   name: z.string().trim().min(1).max(180),

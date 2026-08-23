@@ -6,12 +6,12 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 
-import { listTicketForResale, withdrawResaleListing, initiateResaleOrder, fulfillResaleOrder, releaseResaleOrder } from '../resale'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import Ticket from '../../models/Ticket'
-import ResaleListing from '../../models/ResaleListing'
-import SellerBalance from '../../models/SellerBalance'
+import { listTicketForResale, withdrawResaleListing, initiateResaleOrder, fulfillResaleOrder, releaseResaleOrder } from '../events/resale'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
+import ResaleListing from '@/lib/models/ResaleListing'
+import SellerBalance from '@/lib/models/SellerBalance'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

@@ -1,6 +1,6 @@
-import EventRefund from '../models/EventRefund'
-import SellerBalance from '../models/SellerBalance'
-import type { OrderDoc } from '../models/Order'
+import EventRefund from '@/lib/models/EventRefund'
+import SellerBalance from '@/lib/models/SellerBalance'
+import type { OrderDoc } from '@/lib/models/Order'
 import mongoose from 'mongoose'
 
 // FedaPay n'expose AUCUNE API de remboursement — contrairement à Stripe, on

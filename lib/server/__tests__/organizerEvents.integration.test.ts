@@ -4,11 +4,11 @@
 // seulement côté UI, cf. Gap #3/#4 du research) et à la propriété.
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
-import { createOrganizerEvent, updateOrganizerEvent, listMyOrganizerEvents, getMyOrganizerEventDetail, sendEventRecapReminders, type EventFormInput, type PlaceInput } from '../organizerEvents'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import Ticket from '../../models/Ticket'
-import EventStaff from '../../models/EventStaff'
+import { createOrganizerEvent, updateOrganizerEvent, listMyOrganizerEvents, getMyOrganizerEventDetail, sendEventRecapReminders, type EventFormInput, type PlaceInput } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
+import EventStaff from '@/lib/models/EventStaff'
 import { notifyUserById } from '../emails/notify'
 
 vi.mock('../emails/notify', () => ({

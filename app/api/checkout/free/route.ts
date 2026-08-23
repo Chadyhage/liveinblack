@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { freeCheckout } from '@/lib/server/freeCheckout'
+import { freeCheckout } from '@/lib/server/payments/freeCheckout'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 

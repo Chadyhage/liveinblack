@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import type { Email } from './emails'
+import type { Email } from '@/lib/server/emails'
 
 // Réutilise la même intégration Resend que le legacy (api/send-email.js,
 // api/send-password-reset.js) — même expéditeur brandé, même service.

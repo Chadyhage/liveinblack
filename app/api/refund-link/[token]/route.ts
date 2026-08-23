@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requestClientRefundByTicketToken } from '@/lib/server/clientRefunds'
+import { requestClientRefundByTicketToken } from '@/lib/server/payments/clientRefunds'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 // Public — pas de session requise, volontairement : c'est le point d'entrée

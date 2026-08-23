@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
 import {
   pinGroupMessageForCaller,
   renameGroupForCaller,
   setGroupAvatarForCaller,
   unpinGroupMessageForCaller,
   type GroupAdminDependencies,
-} from '../groupAdminToolsService'
+} from '../messaging/groupAdminToolsService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

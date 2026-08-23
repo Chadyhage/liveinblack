@@ -4,8 +4,8 @@
 // l'anti-spam par conversation de upsertMessageNotification.
 import { describe, it, expect } from 'vitest'
 import { createNotification, upsertMessageNotification, listNotifications, unreadCount, markRead, markAllRead } from '../notifications'
-import Notification from '../../models/Notification'
-import User from '../../models/User'
+import Notification from '@/lib/models/Notification'
+import User from '@/lib/models/User'
 import { RUN_INTEGRATION, seedUser as seedUserDocument, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

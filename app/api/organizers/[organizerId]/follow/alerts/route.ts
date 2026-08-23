@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateFollowAlerts } from '@/lib/server/organizerFollows'
+import { updateFollowAlerts } from '@/lib/server/organizer/organizerFollows'
 
 // Préférences d'alerte par type pour un abonnement existant — voir
 // lib/server/organizerFollows.ts (updateFollowAlerts) : nécessite un follow

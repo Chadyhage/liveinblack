@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { hideConversationForMe } from '@/lib/server/messaging'
+import { hideConversationForMe } from '@/lib/server/messaging/messaging'
 
 // Masque la conversation de la liste de l'appelant seul — voir
 // lib/server/messaging.ts (hideConversationForMe).

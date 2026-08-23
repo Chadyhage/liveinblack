@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getBoostedEventIds } from '@/lib/server/boosts'
-import { searchPublicEvents } from '@/lib/server/events'
+import { getBoostedEventIds } from '@/lib/server/events/boosts'
+import { searchPublicEvents } from '@/lib/server/events/events'
 import { getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
 import { createCacheHeaders } from '@/lib/server/cacheHeaders'
 import { parsePage, parsePageSize } from '@/lib/shared/pagination'

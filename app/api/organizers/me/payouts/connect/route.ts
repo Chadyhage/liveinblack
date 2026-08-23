@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { startStripeConnectOnboarding } from '@/lib/server/organizerPayouts'
+import { startStripeConnectOnboarding } from '@/lib/server/organizer/organizerPayouts'
 
 const bodySchema = z.object({ returnPath: z.enum(['/my-events', '/organizer-studio']).optional() })
 

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { getApplicationDocumentForAccess } from '@/lib/server/applications'
-import { createApplicationDocumentDownloadUrl } from '@/lib/server/applicationUpload'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { getApplicationDocumentForAccess } from '@/lib/server/provider/applications'
+import { createApplicationDocumentDownloadUrl } from '@/lib/server/provider/applicationUpload'
 
 export async function GET(
   _req: Request,

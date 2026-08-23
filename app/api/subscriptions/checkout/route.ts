@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { createStripeSubscriptionCheckout, confirmStripeSubscriptionCheckout } from '@/lib/server/providerSubscriptions'
+import { createStripeSubscriptionCheckout, confirmStripeSubscriptionCheckout } from '@/lib/server/provider/providerSubscriptions'
 
 function requireProviderRole(roles: string[] | undefined) {
   return Boolean(roles?.includes('prestataire'))

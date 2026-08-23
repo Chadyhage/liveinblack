@@ -4,11 +4,11 @@
 // atomiquement, exactement comme une réservation payante.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { addGuestlistEntry, removeGuestlistEntry, listGuestlistEntries } from '../guestlist'
-import { createOrganizerEvent } from '../organizerEvents'
-import { checkinTicket } from '../ticketCheckin'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
+import { addGuestlistEntry, removeGuestlistEntry, listGuestlistEntries } from '../events/guestlist'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import { checkinTicket } from '../events/ticketCheckin'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

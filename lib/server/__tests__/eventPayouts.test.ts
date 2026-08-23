@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classifyFedapayPayoutStatus } from '../eventPayouts'
+import { classifyFedapayPayoutStatus } from '../events/eventPayouts'
 
 describe('classifyFedapayPayoutStatus', () => {
   it.each(['sent', 'processed', 'transferred', 'paid', 'successful', 'succeeded'])(

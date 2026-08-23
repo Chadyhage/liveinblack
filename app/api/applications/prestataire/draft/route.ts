@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { saveApplicationDraft } from '@/lib/server/applications'
+import { saveApplicationDraft } from '@/lib/server/provider/applications'
 
 // Autosave du dossier prestataire en mode connecté — même convention que
 // /api/applications/organisateur/draft (pas de validation stricte ici, la

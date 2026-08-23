@@ -1,13 +1,13 @@
 .root {
-  --modal-viewport-margin: clamp(4px, 0.35vw, 8px);
-  --modal-inner-space: clamp(16px, 1vw, 20px);
+  --modal-viewport-margin: clamp(16px, 3vw, 32px);
+  --modal-inner-space: clamp(18px, 1.8vw, 24px);
   position: fixed;
   inset: 0;
   z-index: 3000;
   padding: var(--modal-viewport-margin);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  place-items: stretch;
+  place-items: center;
   pointer-events: none;
 }
 
@@ -19,7 +19,7 @@
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: rgba(0, 0, 0, .64) !important;
+  background: rgba(0, 0, 0, .72) !important;
   opacity: 0;
   pointer-events: auto;
   backdrop-filter: blur(18px) saturate(115%);
@@ -28,25 +28,27 @@
 
 .panel {
   position: relative;
-  display: grid;
-  align-content: start;
-  width: calc(100vw - (var(--modal-viewport-margin) * 2));
-  max-width: calc(100vw - (var(--modal-viewport-margin) * 2));
-  min-height: calc(100dvh - (var(--modal-viewport-margin) * 2));
-  max-height: calc(100dvh - (var(--modal-viewport-margin) * 2));
+  display: flex;
+  flex-direction: column;
+  width: min(52vw, var(--modal-max-width, 560px)) !important;
+  max-width: min(52vw, var(--modal-max-width, 560px)) !important;
+  min-width: min(340px, 92vw) !important;
+  min-height: auto !important;
+  height: auto !important;
+  max-height: min(52dvh, 540px) !important;
   padding: var(--modal-inner-space);
   overflow-x: hidden;
   overflow-y: auto;
   pointer-events: auto;
   color: #f5f5f7;
-  border: 1px solid rgba(255, 255, 255, .13) !important;
-  border-radius: 6px !important;
-  background: #1c1c1e !important;
-  box-shadow: 0 36px 110px rgba(0, 0, 0, .58), 0 1px 0 rgba(255, 255, 255, .05) inset !important;
+  border: 1px solid rgba(255, 255, 255, .15) !important;
+  border-radius: 20px !important;
+  background: #18181c !important;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, .75), 0 1px 0 rgba(255, 255, 255, .08) inset !important;
   opacity: 0;
-  transform: translateY(16px) scale(.965);
-  transform-origin: 50% 70%;
-  transition: transform .28s cubic-bezier(.2, .8, .2, 1), opacity .2s ease;
+  transform: translateY(14px) scale(.97);
+  transform-origin: 50% 50%;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), opacity .2s ease;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, .18) transparent;
@@ -140,19 +142,18 @@
 
 @media (max-width: 620px) {
   .root {
-    --modal-viewport-margin: 2px;
+    --modal-viewport-margin: 12px;
     --modal-inner-space: 16px;
     padding: var(--modal-viewport-margin);
-    place-items: stretch;
+    place-items: center;
   }
   .panel {
-    width: calc(100vw - (var(--modal-viewport-margin) * 2));
-    max-width: calc(100vw - (var(--modal-viewport-margin) * 2));
-    min-height: calc(100dvh - (var(--modal-viewport-margin) * 2));
-    max-height: calc(100dvh - (var(--modal-viewport-margin) * 2));
-    padding: var(--modal-inner-space) var(--modal-inner-space) calc(var(--modal-inner-space) + env(safe-area-inset-bottom));
-    border-radius: 4px !important;
-    transform: translateY(18px) scale(.985);
+    width: calc(100vw - (var(--modal-viewport-margin) * 2)) !important;
+    max-width: calc(100vw - (var(--modal-viewport-margin) * 2)) !important;
+    min-height: auto !important;
+    max-height: 60dvh !important;
+    border-radius: 18px !important;
+    transform: translateY(14px) scale(.985);
   }
   .visible .panel { transform: translateY(0) scale(1); }
   .grabber {

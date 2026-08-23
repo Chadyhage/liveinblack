@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { acceptFriendRequest } from '@/lib/server/friends'
+import { acceptFriendRequest } from '@/lib/server/users/friends'
 
 // Acceptation par le DESTINATAIRE d'une demande d'ami en attente — voir
 // lib/server/friends.ts (#43) pour le 404 générique (une demande adressée à

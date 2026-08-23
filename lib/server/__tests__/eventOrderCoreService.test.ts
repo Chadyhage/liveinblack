@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import Event from '../../models/Event'
-import EventStaff from '../../models/EventStaff'
-import EventOrder from '../../models/EventOrder'
-import EventOrderLog from '../../models/EventOrderLog'
-import User from '../../models/User'
+import Event from '@/lib/models/Event'
+import EventStaff from '@/lib/models/EventStaff'
+import EventOrder from '@/lib/models/EventOrder'
+import EventOrderLog from '@/lib/models/EventOrderLog'
+import User from '@/lib/models/User'
 import {
   appendEventOrderLog,
   buildSanitizedEventOrderItemId,
@@ -13,7 +13,7 @@ import {
   getOrCreateEventOrder,
   loadEventOrderContext,
   resolveEventOrderCallerName,
-} from '../eventOrderCoreService'
+} from '../events/eventOrderCoreService'
 
 vi.mock('../../models/Event', () => ({
   default: {

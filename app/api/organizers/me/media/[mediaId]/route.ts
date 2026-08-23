@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateOrganizerMediaItem, removeOrganizerMedia } from '@/lib/server/organizerProfile'
+import { updateOrganizerMediaItem, removeOrganizerMedia } from '@/lib/server/organizer/organizerProfile'
 
 const patchSchema = z.object({
   title: z.string().optional(),

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { editParticipantTextMessage } from '../messagingEditService'
+import { editParticipantTextMessage } from '../messaging/messagingEditService'
 
 describe('messagingEditService', () => {
   const caller = { id: 'u1' }

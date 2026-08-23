@@ -1,5 +1,5 @@
-import { getDb } from '../db/mongoose'
-import Report from '../models/Report'
+import { getDb } from '@/lib/db/mongoose'
+import Report from '@/lib/models/Report'
 
 // Port de la section « Signalements » de src/pages/AgentPage.jsx (#9 phase
 // agent/admin, tâche #103) — file de signalements d'utilisateurs, fidèle au

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collectDirectParticipantIds, withDirectConversationMembers } from '../messagingConversationUtils'
+import { collectDirectParticipantIds, withDirectConversationMembers } from '../messaging/messagingConversationUtils'
 
 describe('messagingConversationUtils', () => {
   it('collecte uniquement les participants des conversations directes, sans doublons', () => {

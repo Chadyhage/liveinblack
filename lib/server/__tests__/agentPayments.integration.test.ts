@@ -14,15 +14,15 @@ import {
   listPaymentAlertsForAgent,
   resolvePaymentAlert,
   type AgentCaller,
-} from '../agentPayments'
-import User from '../../models/User'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import EventPayout from '../../models/EventPayout'
-import EventRefund from '../../models/EventRefund'
-import PayoutRequest from '../../models/PayoutRequest'
-import SellerBalance from '../../models/SellerBalance'
-import PaymentAlert from '../../models/PaymentAlert'
+} from '../agent/agentPayments'
+import User from '@/lib/models/User'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import EventPayout from '@/lib/models/EventPayout'
+import EventRefund from '@/lib/models/EventRefund'
+import PayoutRequest from '@/lib/models/PayoutRequest'
+import SellerBalance from '@/lib/models/SellerBalance'
+import PaymentAlert from '@/lib/models/PaymentAlert'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

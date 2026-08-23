@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { forceVerifyEmail } from '@/lib/server/agentUsers'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { forceVerifyEmail } from '@/lib/server/agent/agentUsers'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

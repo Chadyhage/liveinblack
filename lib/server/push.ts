@@ -1,6 +1,6 @@
 import webpush from 'web-push'
-import { getDb } from '../db/mongoose'
-import User from '../models/User'
+import { getDb } from '@/lib/db/mongoose'
+import User from '@/lib/models/User'
 
 // Notifications push navigateur (Web Push API). Best-effort strict, comme
 // lib/server/emails/notify.ts : jamais d'exception qui remonte à l'appelant,

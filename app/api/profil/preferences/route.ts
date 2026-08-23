@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { updatePreferences } from '@/lib/server/profile'
+import { updatePreferences } from '@/lib/server/users/profile'
 
 export async function POST(req: Request) {
   const session = await auth()

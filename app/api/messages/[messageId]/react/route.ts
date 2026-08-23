@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { reactToMessage } from '@/lib/server/messaging'
+import { reactToMessage } from '@/lib/server/messaging/messaging'
 
 // Bascule single-select (toggle) d'une réaction emoji — voir
 // lib/server/messaging.ts (reactToMessage) pour la mise à jour atomique par

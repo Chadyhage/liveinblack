@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { loadGroupAsAdminForCaller, loadGroupConversationForCaller } from '../groupGuardService'
+import { loadGroupAsAdminForCaller, loadGroupConversationForCaller } from '../messaging/groupGuardService'
 
 describe('groupGuardService', () => {
   const loadParticipantConversation = vi.fn()

@@ -1,11 +1,11 @@
 import crypto from 'node:crypto'
 import mongoose from 'mongoose'
-import Ticket from '../models/Ticket'
-import type { EventDoc } from '../models/Event'
-import type { OrderItem } from '../models/EventOrder'
+import Ticket from '@/lib/models/Ticket'
+import type { EventDoc } from '@/lib/models/Event'
+import type { OrderItem } from '@/lib/models/EventOrder'
 import type { EventOrderItemView } from './eventOrders'
 import type { EventContextResult } from './eventOrderCoreService'
-import type { MessagingErrorResult } from './messagingServiceTypes'
+import type { MessagingErrorResult } from '../messaging/messagingServiceTypes'
 
 export interface OrderCaller {
   id: string

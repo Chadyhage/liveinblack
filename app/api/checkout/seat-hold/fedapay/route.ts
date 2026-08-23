@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { completeSeatHoldOrder } from '@/lib/server/seatHolds'
-import { releaseOrder } from '@/lib/server/orders'
+import { completeSeatHoldOrder } from '@/lib/server/events/seatHolds'
+import { releaseOrder } from '@/lib/server/events/orders'
 import Order from '@/lib/models/Order'
-import { createTransaction, createToken } from '@/lib/server/fedapayClient'
+import { createTransaction, createToken } from '@/lib/server/payments/fedapayClient'
 
 // Paiement du SOLDE d'un blocage de place actif — rail FedaPay/XOF.
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'

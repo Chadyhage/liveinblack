@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
-import { listPublicOrganizersDirectory } from '@/lib/server/organizers'
+import { listMyFollowedOrganizers } from '@/lib/server/organizer/organizerFollows'
+import { listPublicOrganizersDirectory } from '@/lib/server/organizer/organizers'
 import FollowedOrganizersClient from './FollowedOrganizersClient'
 
 // Port de src/pages/FollowedOrganizersPage.jsx (#6 phase profil). Server

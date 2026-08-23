@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updatePhone } from '@/lib/server/profile'
+import { updatePhone } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({
   dialCode: z.string().trim().min(1).max(6),

@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { canCreateEvent, getCreateEventBlockedReason } from '@/lib/server/permissions'
-import { getInitialOrganizerEventRegion, listMyOrganizerEvents } from '@/lib/server/organizerEvents'
-import { getPayoutStatus } from '@/lib/server/organizerPayouts'
-import { listPayoutMomos } from '@/lib/server/organizerPayoutMomos'
+import { getInitialOrganizerEventRegion, listMyOrganizerEvents } from '@/lib/server/organizer/organizerEvents'
+import { getPayoutStatus } from '@/lib/server/organizer/organizerPayouts'
+import { listPayoutMomos } from '@/lib/server/organizer/organizerPayoutMomos'
 import MesEvenementsClient from './MesEvenementsClient'
 
 // Port de src/pages/MesEvenementsPage.jsx (#7 phase organisateur) — tableau

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { moderateReview, type ReviewModerationOp } from '@/lib/server/providerReviews'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { moderateReview, type ReviewModerationOp } from '@/lib/server/provider/providerReviews'
 
 const OPS: ReviewModerationOp[] = ['hide', 'publish', 'delete', 'note']
 

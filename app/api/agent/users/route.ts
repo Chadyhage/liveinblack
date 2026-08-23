@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { listUsersForAgent, type UsersRoleFilter, type UsersStatusFilter } from '@/lib/server/agentUsers'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { listUsersForAgent, type UsersRoleFilter, type UsersStatusFilter } from '@/lib/server/agent/agentUsers'
 import { parsePage, parsePageSize } from '@/lib/shared/pagination'
 
 const ROLES: UsersRoleFilter[] = ['client', 'organisateur', 'prestataire', 'agent']

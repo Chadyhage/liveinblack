@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { initiateResaleOrder, releaseResaleOrder } from '@/lib/server/resale'
+import { initiateResaleOrder, releaseResaleOrder } from '@/lib/server/events/resale'
 import Order from '@/lib/models/Order'
-import { createTransaction, createToken } from '@/lib/server/fedapayClient'
+import { createTransaction, createToken } from '@/lib/server/payments/fedapayClient'
 
 // Miroir de /api/checkout/fedapay (achat neuf), pour l'achat d'un billet
 // REVENDU sur le rail XOF/mobile money.

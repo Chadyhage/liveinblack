@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { searchUsers } from '@/lib/server/friends'
+import { searchUsers } from '@/lib/server/users/friends'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 const MIN_QUERY_LENGTH = 2

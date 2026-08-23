@@ -1,21 +1,21 @@
 import crypto from 'node:crypto'
 import mongoose, { type HydratedDocument } from 'mongoose'
-import { getDb } from '../db/mongoose'
-import Event, { type EventDoc } from '../models/Event'
-import EventStaff from '../models/EventStaff'
-import EventPlaylist, { type EventPlaylistDoc, type PlaylistSong } from '../models/EventPlaylist'
-import Ticket from '../models/Ticket'
-import User from '../models/User'
-import { createNotification } from './notifications'
+import { getDb } from '@/lib/db/mongoose'
+import Event, { type EventDoc } from '@/lib/models/Event'
+import EventStaff from '@/lib/models/EventStaff'
+import EventPlaylist, { type EventPlaylistDoc, type PlaylistSong } from '@/lib/models/EventPlaylist'
+import Ticket from '@/lib/models/Ticket'
+import User from '@/lib/models/User'
+import { createNotification } from '@/lib/server/notifications'
 import {
   canModeratePlaylist,
   countMySpentLikes,
   formatDuration,
   toSongView,
   type PlaylistSongView,
-} from './playlistServerUtils'
+} from '@/lib/server/playlistServerUtils'
 
-export { canModeratePlaylist } from './playlistServerUtils'
+export { canModeratePlaylist } from '@/lib/server/playlistServerUtils'
 
 // Port de src/components/PlaylistSystem.jsx + PlaylistDJPanel.jsx vers un
 // modèle serveur-only. Ferme l'audit H16 (firestore.rules:367-385 laissait

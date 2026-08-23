@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { cancelOrganizerEvent } from '@/lib/server/organizerEventLifecycle'
+import { cancelOrganizerEvent } from '@/lib/server/organizer/organizerEventLifecycle'
 
 const bodySchema = z.object({ message: z.string().trim().max(500).default('') })
 

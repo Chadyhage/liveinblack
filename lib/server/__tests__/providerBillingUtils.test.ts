@@ -3,7 +3,7 @@ import {
   buildProviderBillingContext,
   canChangeProviderBillingRegion,
   deriveDefaultBillingRegionFromApplication,
-} from '../providerBillingUtils'
+} from '../provider/providerBillingUtils'
 
 describe('providerBillingUtils', () => {
   it("dérive un défaut 'france' si le pays d'application est absent ou inconnu", () => {

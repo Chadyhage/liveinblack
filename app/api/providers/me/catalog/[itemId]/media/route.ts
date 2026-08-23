@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { addCatalogItemMedia, removeCatalogItemMedia } from '@/lib/server/providerProfile'
+import { addCatalogItemMedia, removeCatalogItemMedia } from '@/lib/server/provider/providerProfile'
 import { publicMediaUploadReferenceSchema } from '@/lib/shared/publicMediaUploads'
 
 const addSchema = z.union([

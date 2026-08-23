@@ -9,11 +9,11 @@
 //  - la CONCURRENCE réelle : le correctif du bug legacy "last-write-wins"
 //    via le pipeline d'agrégation atomique (voir lib/server/polls.ts).
 import { describe, it, expect } from 'vitest'
-import { createPoll, createEventPoll, voteOnPoll } from '../polls'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import Event from '../../models/Event'
-import User from '../../models/User'
+import { createPoll, createEventPoll, voteOnPoll } from '../messaging/polls'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import Event from '@/lib/models/Event'
+import User from '@/lib/models/User'
 import { fakeObjectId, RUN_INTEGRATION, seedCatalogEvent, seedDirectConversation, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

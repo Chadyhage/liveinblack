@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { fmtMoney } from '@/lib/shared/money'
 import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport } from '@/app/components/ui'
-import AgentBoostsClient from '@/app/components/AgentBoostsClient'
+import AgentBoostsClient from '@/app/components/features/agent/AgentBoostsClient'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import styles from './AgentPaymentsClient.module.css'
 

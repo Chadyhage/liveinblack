@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findOtherParticipantId, hasBlockedEitherWay, toBlockedUserIdsMap } from '../messagingDirectBlockUtils'
+import { findOtherParticipantId, hasBlockedEitherWay, toBlockedUserIdsMap } from '../messaging/messagingDirectBlockUtils'
 
 describe('messagingDirectBlockUtils', () => {
   it('trouve l’autre participant dans une conversation directe', () => {

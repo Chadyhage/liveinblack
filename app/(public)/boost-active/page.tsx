@@ -1,4 +1,4 @@
-import BoostActiveClient from '@/app/components/BoostActiveClient'
+import BoostActiveClient from '@/app/components/features/account/BoostActiveClient'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Activation du boost — LIVEINBLACK', robots: { index: false, follow: false } }

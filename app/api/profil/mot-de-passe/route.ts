@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { changePassword } from '@/lib/server/profile'
+import { changePassword } from '@/lib/server/users/profile'
 import { isPasswordPolicyCompliant } from '@/lib/shared/passwordPolicy'
 
 const bodySchema = z.object({

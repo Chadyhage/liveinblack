@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getProviderByUserId } from '@/lib/server/providers'
+import { getProviderByUserId } from '@/lib/server/provider/providers'
 import ProviderDetailContent from './ProviderDetailContent'
 
 export const dynamic = 'force-dynamic'

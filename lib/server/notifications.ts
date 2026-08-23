@@ -1,5 +1,5 @@
-import { getDb } from '../db/mongoose'
-import Notification, { type NotificationDoc } from '../models/Notification'
+import { getDb } from '@/lib/db/mongoose'
+import Notification, { type NotificationDoc } from '@/lib/models/Notification'
 
 // Système de notifications in-app — voir lib/models/Notification.ts pour le
 // contexte (aucun système équivalent n'existait dans ce port, le legacy en

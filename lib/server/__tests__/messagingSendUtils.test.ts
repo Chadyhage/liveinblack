@@ -6,7 +6,7 @@ import {
   isSendableType,
   resolveLastMessageLabel,
   validateMessageContentLength,
-} from '../messagingSendUtils'
+} from '../messaging/messagingSendUtils'
 
 describe('messagingSendUtils', () => {
   it('reconnaît les types de message autorisés', () => {

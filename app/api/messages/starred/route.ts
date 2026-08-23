@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listStarredMessages } from '@/lib/server/messaging'
+import { listStarredMessages } from '@/lib/server/messaging/messaging'
 import { parsePage, parsePageSize } from '@/lib/shared/pagination'
 
 // Liste transversale des messages marqués "important" par l'appelant, toutes

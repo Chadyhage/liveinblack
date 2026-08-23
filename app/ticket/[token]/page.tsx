@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, LockKeyhole } from 'lucide-react'
-import { getTicketDisplay } from '@/lib/server/tickets'
+import { getTicketDisplay } from '@/lib/server/events/tickets'
 import { fmtMoney } from '@/lib/shared/money'
 import TicketQr from './TicketQr'
 import TicketRefundRequestButton from './TicketRefundRequestButton'

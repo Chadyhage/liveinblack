@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Message from '../../models/Message'
-import { listMessagesForCaller } from '../messagingMessagesService'
+import Message from '@/lib/models/Message'
+import { listMessagesForCaller } from '../messaging/messagingMessagesService'
 
 vi.mock('../../models/Message', () => ({
   default: {

@@ -6,11 +6,11 @@
 // couvre le comportement réel (visibilité publique, verrouillage privé).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { listPublicEvents, searchPublicEvents, getEventById } from '../events'
-import { createOrganizerEvent } from '../organizerEvents'
-import Event from '../../models/Event'
-import EventOrder from '../../models/EventOrder'
-import User from '../../models/User'
+import { listPublicEvents, searchPublicEvents, getEventById } from '../events/events'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import EventOrder from '@/lib/models/EventOrder'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

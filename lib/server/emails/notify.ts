@@ -10,7 +10,7 @@
 // (lib/server/notifications.ts) et, si `inApp.push:true`, une notification
 // push navigateur (lib/server/push.ts) — un seul site d'appel métier
 // alimente les trois canaux, jamais besoin de dupliquer l'appel ailleurs.
-import User from '../../models/User'
+import User from '@/lib/models/User'
 import { sendEmail } from '../email'
 import { createNotification } from '../notifications'
 import { sendPushToUser, sendPushToAgents } from '../push'

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { declineFriendRequest } from '@/lib/server/friends'
+import { declineFriendRequest } from '@/lib/server/users/friends'
 
 // Refus par le DESTINATAIRE d'une demande d'ami en attente — voir
 // lib/server/friends.ts (#43). Ne touche jamais à Friendship : contrairement

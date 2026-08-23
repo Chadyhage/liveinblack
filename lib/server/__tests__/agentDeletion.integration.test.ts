@@ -9,7 +9,7 @@ import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
 const subscriptionsCancel = vi.fn()
-vi.mock('../stripeClient', () => ({
+vi.mock('../payments/stripeClient', () => ({
   default: { subscriptions: { cancel: (...a: unknown[]) => subscriptionsCancel(...a) } },
 }))
 
@@ -20,27 +20,27 @@ import {
   rejectDeletion,
   createDeletionRequest,
   type AgentCaller,
-} from '../agentDeletion'
-import User from '../../models/User'
-import Application from '../../models/Application'
-import DeletionRequest from '../../models/DeletionRequest'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
-import OrganizerProfile from '../../models/OrganizerProfile'
-import ProviderProfile from '../../models/ProviderProfile'
-import GroupMembership from '../../models/GroupMembership'
-import Friendship from '../../models/Friendship'
-import FriendRequest from '../../models/FriendRequest'
-import OrganizerFollow from '../../models/OrganizerFollow'
-import EventInterest from '../../models/EventInterest'
-import SeatInvitation from '../../models/SeatInvitation'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import Report from '../../models/Report'
-import Review from '../../models/Review'
-import ReviewReport from '../../models/ReviewReport'
-import EventOrder from '../../models/EventOrder'
-import SellerBalance from '../../models/SellerBalance'
+} from '../agent/agentDeletion'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
+import DeletionRequest from '@/lib/models/DeletionRequest'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import GroupMembership from '@/lib/models/GroupMembership'
+import Friendship from '@/lib/models/Friendship'
+import FriendRequest from '@/lib/models/FriendRequest'
+import OrganizerFollow from '@/lib/models/OrganizerFollow'
+import EventInterest from '@/lib/models/EventInterest'
+import SeatInvitation from '@/lib/models/SeatInvitation'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import Report from '@/lib/models/Report'
+import Review from '@/lib/models/Review'
+import ReviewReport from '@/lib/models/ReviewReport'
+import EventOrder from '@/lib/models/EventOrder'
+import SellerBalance from '@/lib/models/SellerBalance'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

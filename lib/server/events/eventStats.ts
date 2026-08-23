@@ -1,11 +1,11 @@
-import { getDb } from '../db/mongoose'
-import Event from '../models/Event'
-import EventOrder from '../models/EventOrder'
-import Ticket from '../models/Ticket'
-import User from '../models/User'
-import ResaleListing from '../models/ResaleListing'
-import { computeEventStats, computeDemographics, buildEventInsights, type StatsFilters, type StatsTicket } from '../shared/eventStats'
-import { eventCurrency } from '../shared/money'
+import { getDb } from '@/lib/db/mongoose'
+import Event from '@/lib/models/Event'
+import EventOrder from '@/lib/models/EventOrder'
+import Ticket from '@/lib/models/Ticket'
+import User from '@/lib/models/User'
+import ResaleListing from '@/lib/models/ResaleListing'
+import { computeEventStats, computeDemographics, buildEventInsights, type StatsFilters, type StatsTicket } from '@/lib/shared/eventStats'
+import { eventCurrency } from '@/lib/shared/money'
 
 // Port de la partie DONNÉES de src/pages/EventStatsPage.jsx (#7 phase
 // organisateur) — les fonctions PURES de calcul vivent dans

@@ -8,10 +8,10 @@
 //    planter la liste.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { markEventInterested, unmarkEventInterested, isEventInterested, listMyEventInterests } from '../eventInterests'
-import EventInterest from '../../models/EventInterest'
-import Event from '../../models/Event'
-import User from '../../models/User'
+import { markEventInterested, unmarkEventInterested, isEventInterested, listMyEventInterests } from '../events/eventInterests'
+import EventInterest from '@/lib/models/EventInterest'
+import Event from '@/lib/models/Event'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

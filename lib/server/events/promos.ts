@@ -2,7 +2,7 @@
 // (un document par code — voir lib/models/PromoCode.ts). Logique de calcul
 // inchangée à l'identique ; seule la lecture/écriture change (requête directe
 // + $inc atomique au lieu d'une transaction sur un tableau).
-import type { PromoCodeModel, PromoCodeDoc } from '../models/PromoCode'
+import type { PromoCodeModel, PromoCodeDoc } from '@/lib/models/PromoCode'
 
 export type Promo = PromoCodeDoc
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { updateCatalogItem, deleteCatalogItem } from '@/lib/server/providerProfile'
+import { updateCatalogItem, deleteCatalogItem } from '@/lib/server/provider/providerProfile'
 
 const patchSchema = z.object({
   name: z.string().optional(),

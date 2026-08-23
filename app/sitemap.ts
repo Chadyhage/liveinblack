@@ -3,9 +3,9 @@ import {
   listPublicEventsDirectory,
   type PublicEvent,
   type PublicEventsDirectoryResult,
-} from '@/lib/server/events'
-import { listPublicProvidersDirectory, type PublicProvider } from '@/lib/server/providers'
-import { listPublicOrganizersDirectory, type PublicOrganizerDirectoryEntry } from '@/lib/server/organizers'
+} from '@/lib/server/events/events'
+import { listPublicProvidersDirectory, type PublicProvider } from '@/lib/server/provider/providers'
+import { listPublicOrganizersDirectory, type PublicOrganizerDirectoryEntry } from '@/lib/server/organizer/organizers'
 import { listAllPublishedPostsForSitemap } from '@/lib/server/blog'
 
 // Même convention que app/ticket/[token]/page.tsx et les routes checkout :

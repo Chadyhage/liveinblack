@@ -7,9 +7,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 
-import { listReviewsForAgent, moderateReview, type ReviewModerationCaller } from '../providerReviews'
-import Review from '../../models/Review'
-import ReviewReport from '../../models/ReviewReport'
+import { listReviewsForAgent, moderateReview, type ReviewModerationCaller } from '../provider/providerReviews'
+import Review from '@/lib/models/Review'
+import ReviewReport from '@/lib/models/ReviewReport'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

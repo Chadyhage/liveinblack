@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { approveDeletion } from '@/lib/server/agentDeletion'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { approveDeletion } from '@/lib/server/agent/agentDeletion'
 
 const bodySchema = z.object({ note: z.string().trim().max(2000).optional() })
 

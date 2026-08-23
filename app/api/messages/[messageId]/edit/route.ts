@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { editMessage } from '@/lib/server/messaging'
+import { editMessage } from '@/lib/server/messaging/messaging'
 
 // Édition d'un message texte — propriétaire seul, voir lib/server/messaging.ts
 // (editMessage).

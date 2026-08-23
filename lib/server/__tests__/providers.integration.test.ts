@@ -7,8 +7,8 @@
 // contre une vraie base.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { listPublicProviders, getProviderByUserId } from '../providers'
-import ProviderProfile from '../../models/ProviderProfile'
+import { listPublicProviders, getProviderByUserId } from '../provider/providers'
+import ProviderProfile from '@/lib/models/ProviderProfile'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

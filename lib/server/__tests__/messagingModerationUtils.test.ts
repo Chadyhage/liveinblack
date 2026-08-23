@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeBlockedTargetUserId, validateModerationTargetUserId, validateReportReason } from '../messagingModerationUtils'
+import { normalizeBlockedTargetUserId, validateModerationTargetUserId, validateReportReason } from '../messaging/messagingModerationUtils'
 
 describe('messagingModerationUtils', () => {
   const normalizeObjectId = (id: string) => `normalized:${id.toLowerCase()}`

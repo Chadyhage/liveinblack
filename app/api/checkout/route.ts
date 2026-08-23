@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createOrder, releaseOrder } from '@/lib/server/orders'
+import { createOrder, releaseOrder } from '@/lib/server/events/orders'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import User from '@/lib/models/User'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import stripe from '@/lib/server/stripeClient'
+import stripe from '@/lib/server/payments/stripeClient'
 
 // Remplace api/checkout.js (Stripe, rail EUR). Corrige :
 //  - C06 : les préco n'ont plus de prix côté client, résolues serveur dans

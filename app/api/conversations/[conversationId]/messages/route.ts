@@ -1,7 +1,7 @@
 import { after, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { getMessages, sendMessage } from '@/lib/server/messaging'
+import { getMessages, sendMessage } from '@/lib/server/messaging/messaging'
 import { canOrderServices } from '@/lib/server/permissions'
 
 // GET : pagination par curseur (`?before=<messageId>&limit=`) — voir

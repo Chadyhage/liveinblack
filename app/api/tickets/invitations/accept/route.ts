@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { acceptSeatInvitation } from '@/lib/server/seatAssignment'
+import { acceptSeatInvitation } from '@/lib/server/events/seatAssignment'
 
 // Acceptation par la CIBLE d'une invitation de siège — seul endroit où le
 // siège est réellement lié (Ticket.userId/assignedTo) et où le check "1

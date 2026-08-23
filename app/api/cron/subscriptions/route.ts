@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { runSubscriptionReminderCron } from '@/lib/server/providerSubscriptions'
-import { cleanupAbandonedApplicationUploads } from '@/lib/server/applicationUploadCleanup'
+import { runSubscriptionReminderCron } from '@/lib/server/provider/providerSubscriptions'
+import { cleanupAbandonedApplicationUploads } from '@/lib/server/provider/applicationUploadCleanup'
 
 // Remplace la partie "abonnements" de api/cron-subscriptions.js (rappels
 // J-7/J-3/J-1/J0/grâce/masquage, rail XOF uniquement). Même garde-fou que

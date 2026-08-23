@@ -26,10 +26,10 @@ import {
   deleteCatalogItem,
   addCatalogItemMedia,
   removeCatalogItemMedia,
-} from '../providerProfile'
-import ProviderProfile from '../../models/ProviderProfile'
-import Application from '../../models/Application'
-import User from '../../models/User'
+} from '../provider/providerProfile'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import Application from '@/lib/models/Application'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

@@ -4,9 +4,9 @@
 // séparée comme le legacy `provider_billing/{uid}`).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { getProviderBillingContext, setProviderBillingRegion } from '../providerBilling'
-import User from '../../models/User'
-import Application from '../../models/Application'
+import { getProviderBillingContext, setProviderBillingRegion } from '../provider/providerBilling'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

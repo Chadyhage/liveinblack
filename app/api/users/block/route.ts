@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { blockUser } from '@/lib/server/messaging'
+import { blockUser } from '@/lib/server/messaging/messaging'
 
 const bodySchema = z.object({ targetUserId: z.string().min(1) })
 

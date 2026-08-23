@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { pinConversationForMe, unpinConversationForMe } from '@/lib/server/messaging'
+import { pinConversationForMe, unpinConversationForMe } from '@/lib/server/messaging/messaging'
 
 // Épingler/désépingler UNE CONVERSATION dans la liste de l'appelant (jamais
 // partagé entre participants) — à ne pas confondre avec /pinned-message, qui

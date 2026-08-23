@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db/mongoose'
-import { releaseExpiredSeatHolds } from '@/lib/server/seatHolds'
-import { releaseOrder } from '@/lib/server/orders'
+import { releaseExpiredSeatHolds } from '@/lib/server/events/seatHolds'
+import { releaseOrder } from '@/lib/server/events/orders'
 import Order from '@/lib/models/Order'
 
 // Sweep des blocages de place ('active') dont le solde n'a jamais été payé

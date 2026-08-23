@@ -23,7 +23,7 @@ vi.mock('../BaseModal', () => ({
 }))
 
 describe('Modal', () => {
-  it('ignore maxWidth même quand un appelant legacy le fournit', () => {
+  it('transmets --modal-max-width quand un appelant le fournit', () => {
     renderToStaticMarkup(
       <Modal onClose={() => {}} maxWidth={420}>
         <p>Contenu</p>
@@ -31,7 +31,7 @@ describe('Modal', () => {
     )
 
     const call = baseModalSpy.mock.calls.at(-1)?.[0]
-    expect(call?.panelStyle).toEqual({})
+    expect(call?.panelStyle).toEqual({ '--modal-max-width': '420px' })
   })
 
   it('nettoie les contraintes de taille injectées par contentStyle', () => {

@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getMyApplication } from '@/lib/server/applications'
+import { getMyApplication } from '@/lib/server/provider/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 
 // Portrait éditorial créé sur mesure pour le parcours organisateur.
 const HERO_IMG = '/images/live-in-black/auth-organizer.jpg'
-import OrganizerOnboardingWizard from '@/app/components/OrganizerOnboardingWizard'
+import OrganizerOnboardingWizard from '@/app/components/features/organizer/OrganizerOnboardingWizard'
 
 // Route unique "Devenir organisateur" — publique (mode anonyme, pas de
 // session) ET connectée (reprise de dossier) : avant cette fusion,

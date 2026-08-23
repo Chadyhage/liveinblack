@@ -1,4 +1,4 @@
-import type { PublicEvent } from '@/lib/server/events'
+import type { PublicEvent } from '@/lib/server/events/events'
 import EventListCard from './EventListCard'
 
 // Rangée horizontale style Netflix (scroll natif CSS, pas de JS nécessaire).

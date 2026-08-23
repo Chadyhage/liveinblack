@@ -10,10 +10,10 @@
 //  - un événement supprimé après coup renvoie event:null sans planter.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { listMyTickets } from '../tickets'
-import Ticket from '../../models/Ticket'
-import Event from '../../models/Event'
-import User from '../../models/User'
+import { listMyTickets } from '../events/tickets'
+import Ticket from '@/lib/models/Ticket'
+import Event from '@/lib/models/Event'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { reportReview } from '@/lib/server/providerReviews'
+import { reportReview } from '@/lib/server/provider/providerReviews'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
 
 const REASON_IDS = REVIEW_REPORT_REASONS.map((r) => r.id) as [string, ...string[]]

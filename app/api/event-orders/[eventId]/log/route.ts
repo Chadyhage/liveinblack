@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getOrderLog } from '@/lib/server/eventOrders'
+import { getOrderLog } from '@/lib/server/events/eventOrders'
 
 // Lecture SEULE du journal d'audit (ferme l'audit H14 — aucune route
 // n'expose d'écriture directe dans ce journal, toute mutation passe par

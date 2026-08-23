@@ -5,26 +5,26 @@ import {
   editMessageWorkflow,
   starMessageWorkflow,
   unstarMessageWorkflow,
-} from '../messagingMessageWorkflowService'
+} from '../messaging/messagingMessageWorkflowService'
 
-vi.mock('../messagingEditService', () => ({
+vi.mock('../messaging/messagingEditService', () => ({
   editParticipantTextMessage: vi.fn(),
 }))
 
-vi.mock('../messagingMessageActionsService', () => ({
+vi.mock('../messaging/messagingMessageActionsService', () => ({
   deleteMessageForCaller: vi.fn(),
   deleteMessageForEveryone: vi.fn(),
   starMessageForCaller: vi.fn(),
   unstarMessageForCaller: vi.fn(),
 }))
 
-import { editParticipantTextMessage } from '../messagingEditService'
+import { editParticipantTextMessage } from '../messaging/messagingEditService'
 import {
   deleteMessageForCaller,
   deleteMessageForEveryone,
   starMessageForCaller,
   unstarMessageForCaller,
-} from '../messagingMessageActionsService'
+} from '../messaging/messagingMessageActionsService'
 
 describe('messagingMessageWorkflowService', () => {
   const caller = { id: 'u1' }

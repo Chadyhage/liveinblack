@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { initiateResaleOrder, releaseResaleOrder } from '@/lib/server/resale'
+import { initiateResaleOrder, releaseResaleOrder } from '@/lib/server/events/resale'
 import Order from '@/lib/models/Order'
-import stripe from '@/lib/server/stripeClient'
+import stripe from '@/lib/server/payments/stripeClient'
 
 // Miroir de /api/checkout (achat neuf), pour l'achat d'un billet REVENDU.
 // Aucun stock à décrémenter (lib/server/resale.ts::initiateResaleOrder gère

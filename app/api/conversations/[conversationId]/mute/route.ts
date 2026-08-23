@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { muteConversationForMe, unmuteConversationForMe } from '@/lib/server/messaging'
+import { muteConversationForMe, unmuteConversationForMe } from '@/lib/server/messaging/messaging'
 
 // Coupe/rétablit les NOTIFICATIONS d'une conversation pour l'appelant seul —
 // à ne pas confondre avec /members/[targetUserId]/mute, qui empêche un

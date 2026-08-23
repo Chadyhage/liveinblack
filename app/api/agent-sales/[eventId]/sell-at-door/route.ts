@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { sellTicketAtDoor } from '@/lib/server/agentSales'
+import { sellTicketAtDoor } from '@/lib/server/agent/agentSales'
 
 const bodySchema = z.object({
   placeId: z.string().min(1),

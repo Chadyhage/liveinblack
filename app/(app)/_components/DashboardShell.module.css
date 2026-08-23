@@ -30,7 +30,7 @@
     linear-gradient(115deg, rgba(7, 7, 10, .86), rgba(9, 9, 13, .78) 58%, rgba(9, 9, 13, .88));
 }
 
-.layout { min-height: 100dvh; display: flex; align-items: flex-start; }
+.layout { min-height: 100dvh; display: flex; align-items: flex-start; overflow-x: clip; }
 .sidebar {
   width: var(--dashboard-sidebar);
   height: 100dvh;
@@ -60,15 +60,13 @@
 .main {
   flex: 1;
   min-width: 0;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
   box-sizing: border-box;
   width: min(100%, calc(100vw - var(--dashboard-sidebar)));
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 8px clamp(6px, 0.7vw, 12px);
+  padding: 8px clamp(6px, 0.7vw, 12px) 48px;
 }
 .mainFull { padding: 0; }
 
@@ -114,7 +112,7 @@
   .sidebar { display: none; }
   .mobileBar { display: flex; }
   .mobileDrawer, .drawerBackdrop { display: block !important; }
-  .main { min-height: 100dvh; width: 100%; padding: 64px clamp(4px, .8vw, 8px) 14px; }
+  .main { min-height: 100dvh; width: 100%; padding: 64px clamp(4px, .8vw, 8px) 48px; }
   .mainFull { padding: 0; }
 }
 

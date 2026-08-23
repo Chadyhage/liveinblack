@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { addGuestlistEntry, listGuestlistEntries, removeGuestlistEntry } from '@/lib/server/guestlist'
+import { addGuestlistEntry, listGuestlistEntries, removeGuestlistEntry } from '@/lib/server/events/guestlist'
 
 const addSchema = z.object({ placeId: z.string().trim().min(1), guestName: z.string().trim().min(1) })
 const removeSchema = z.object({ ticketCode: z.string().trim().min(1) })

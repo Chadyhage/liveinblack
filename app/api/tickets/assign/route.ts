@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { inviteToSeat } from '@/lib/server/seatAssignment'
+import { inviteToSeat } from '@/lib/server/events/seatAssignment'
 
 // Remplace api/tickets.js (action 'assign'). Seul l'hôte d'une place de
 // groupe (table) peut INVITER un invité déjà inscrit à occuper l'un de ses

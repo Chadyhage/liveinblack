@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { serveOrderItem } from '@/lib/server/eventOrders'
+import { serveOrderItem } from '@/lib/server/events/eventOrders'
 
 // Remplace api/event-stock.js (marquage "servi"). Rang ≥ 1 (scan/serveur/
 // manager/propriétaire) requis — voir lib/server/eventOrders.ts.

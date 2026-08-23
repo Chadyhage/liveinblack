@@ -1,5 +1,5 @@
-import { getDb } from '../db/mongoose'
-import Boost from '../models/Boost'
+import { getDb } from '@/lib/db/mongoose'
+import Boost from '@/lib/models/Boost'
 
 // Utilisé par la rangée "À la une" d'EventsPage : un événement est mis en
 // avant s'il a au moins un boost actif (peu importe la région/position — la

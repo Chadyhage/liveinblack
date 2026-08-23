@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getOrganizerBySlug } from '@/lib/server/organizers'
+import { getOrganizerBySlug } from '@/lib/server/organizer/organizers'
 import OrganizerDetailContent from './OrganizerDetailContent'
 
 export const dynamic = 'force-dynamic'

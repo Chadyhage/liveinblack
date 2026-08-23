@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { reorderOrganizerMediaList, resolveOrganizerZones, toOrganizerProfileView, toOrganizerSocialLinks } from '../organizerProfileUtils'
+import { reorderOrganizerMediaList, resolveOrganizerZones, toOrganizerProfileView, toOrganizerSocialLinks } from '../organizer/organizerProfileUtils'
 
 describe('organizerProfileUtils', () => {
   it('reconstruit tous les social links sans référence circulaire ni trou', () => {

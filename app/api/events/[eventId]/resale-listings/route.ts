@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getActiveResaleListingsForEvent } from '@/lib/server/resale'
+import { getActiveResaleListingsForEvent } from '@/lib/server/events/resale'
 
 // Public — pas d'auth requise (affiché sur la page événement pour tout
 // visiteur, comme les places normales). Ne renvoie jamais l'identité du

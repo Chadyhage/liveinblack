@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { getAgentDashboardStats } from '@/lib/server/agentDashboard'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { getAgentDashboardStats } from '@/lib/server/agent/agentDashboard'
 
 export async function GET() {
   const session = await auth()

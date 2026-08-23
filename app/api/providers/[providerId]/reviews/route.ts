@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getProviderByUserId } from '@/lib/server/providers'
-import { getPublishedReviews, getMyReviewFor } from '@/lib/server/providerReviews'
+import { getProviderByUserId } from '@/lib/server/provider/providers'
+import { getPublishedReviews, getMyReviewFor } from '@/lib/server/provider/providerReviews'
 
 // Avis publics d'un prestataire + mon propre avis (s'il existe) — miroir de
 // app/(public)/providers/[id]/page.tsx (getPublishedReviews + getMyReviewFor),

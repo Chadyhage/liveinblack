@@ -1,8 +1,8 @@
 import mongoose from 'mongoose'
-import { getDb } from '../db/mongoose'
-import Event, { type EventDoc } from '../models/Event'
-import { isClientDiscoverableEvent } from '../shared/eventDiscovery'
-import { normalizeGeoText } from '../shared/locations'
+import { getDb } from '@/lib/db/mongoose'
+import Event, { type EventDoc } from '@/lib/models/Event'
+import { isClientDiscoverableEvent } from '@/lib/shared/eventDiscovery'
+import { normalizeGeoText } from '@/lib/shared/locations'
 
 const DEFAULT_PUBLIC_PAGE_SIZE = 24
 const MAX_PUBLIC_PAGE_SIZE = 96

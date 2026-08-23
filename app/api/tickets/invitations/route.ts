@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listMyPendingInvitations } from '@/lib/server/seatAssignment'
+import { listMyPendingInvitations } from '@/lib/server/events/seatAssignment'
 
 // Liste des invitations de siège EN ATTENTE adressées à l'appelant (vue
 // CIBLE) — voir lib/server/seatAssignment.ts (#37).

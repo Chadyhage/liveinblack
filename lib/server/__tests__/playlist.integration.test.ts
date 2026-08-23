@@ -29,11 +29,11 @@ import {
   getPlaylist,
   searchSongs,
 } from '../playlist'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
-import User from '../../models/User'
-import EventStaff from '../../models/EventStaff'
-import EventPlaylist from '../../models/EventPlaylist'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import User from '@/lib/models/User'
+import EventStaff from '@/lib/models/EventStaff'
+import EventPlaylist from '@/lib/models/EventPlaylist'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

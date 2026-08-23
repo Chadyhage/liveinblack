@@ -6,7 +6,7 @@ import {
   shouldSendEventRecap,
   toEventDates,
   validatePlaces,
-} from '../organizerEventUtils'
+} from '../organizer/organizerEventUtils'
 
 describe('organizerEventUtils', () => {
   it('génère un id stable pour une place sans id et initialise available', () => {

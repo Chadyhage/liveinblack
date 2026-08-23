@@ -3,7 +3,7 @@ import {
   buildConversationLookup,
   normalizeStarredPagination,
   resolveVisibleStarredConversations,
-} from '../messagingStarredUtils'
+} from '../messaging/messagingStarredUtils'
 
 describe('messagingStarredUtils', () => {
   it('normalise page, pageSize et skip avec garde-fous', () => {

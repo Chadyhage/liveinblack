@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { listReportsForAgent } from '@/lib/server/agentReports'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { listReportsForAgent } from '@/lib/server/agent/agentReports'
 
 export async function GET(req: Request) {
   const session = await auth()

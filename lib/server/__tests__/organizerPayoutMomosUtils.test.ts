@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canRearmPayout, isRearmableFailCode, momosToRecord, resolvePayoutMomoCountry, sanitizePayoutMomos } from '../organizerPayoutMomosUtils'
+import { canRearmPayout, isRearmableFailCode, momosToRecord, resolvePayoutMomoCountry, sanitizePayoutMomos } from '../organizer/organizerPayoutMomosUtils'
 
 describe('organizerPayoutMomosUtils', () => {
   it('convertit une Map ou un objet simple en record', () => {

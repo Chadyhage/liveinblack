@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs'
 import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
 import User from '@/lib/models/User'
-import { deleteAccount } from '@/lib/server/profile'
-import { createDeletionRequest } from '@/lib/server/agentDeletion'
+import { deleteAccount } from '@/lib/server/users/profile'
+import { createDeletionRequest } from '@/lib/server/agent/agentDeletion'
 
 const bodySchema = z.object({ currentPassword: z.string().min(1) })
 

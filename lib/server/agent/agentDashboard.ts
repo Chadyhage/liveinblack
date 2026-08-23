@@ -1,12 +1,12 @@
-import { getDb } from '../db/mongoose'
-import User from '../models/User'
-import Application from '../models/Application'
-import Event from '../models/Event'
-import Order from '../models/Order'
-import Ticket from '../models/Ticket'
-import Boost from '../models/Boost'
-import { getEventEndTimestamp } from '../shared/eventUrgency'
-import type { EventLike } from '../shared/event-types'
+import { getDb } from '@/lib/db/mongoose'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
+import Boost from '@/lib/models/Boost'
+import { getEventEndTimestamp } from '@/lib/shared/eventUrgency'
+import type { EventLike } from '@/lib/shared/event-types'
 
 // Port de l'onglet « Tableau de bord » de src/pages/AgentPage.jsx
 // (tab === 'dashboard', #101 phase agent/admin). Reproduit les métriques

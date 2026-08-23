@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { materializeTicketOrders } from '@/lib/server/eventOrders'
+import { materializeTicketOrders } from '@/lib/server/events/eventOrders'
 
 // Remplace legacy `ensurePreordersMaterialized`/`ensureIncludedMaterialized`.
 // Copie dans EventOrder.items les précommandes déjà payées au checkout et les

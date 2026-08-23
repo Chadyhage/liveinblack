@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight, CalendarDays, MapPin } from 'lucide-react'
-import type { PublicEvent } from '@/lib/server/events'
+import type { PublicEvent } from '@/lib/server/events/events'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'

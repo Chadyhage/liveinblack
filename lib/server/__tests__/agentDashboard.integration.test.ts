@@ -7,13 +7,13 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
-import { getAgentDashboardStats } from '../agentDashboard'
-import User from '../../models/User'
-import Application from '../../models/Application'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import Ticket from '../../models/Ticket'
-import Boost from '../../models/Boost'
+import { getAgentDashboardStats } from '../agent/agentDashboard'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
+import Boost from '@/lib/models/Boost'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

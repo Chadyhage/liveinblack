@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
-import { getDb } from '../db/mongoose'
-import RateLimit from '../models/RateLimit'
+import { getDb } from '@/lib/db/mongoose'
+import RateLimit from '@/lib/models/RateLimit'
 
 export interface RateLimitOptions {
   scope: string

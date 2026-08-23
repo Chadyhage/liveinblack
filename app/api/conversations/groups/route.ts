@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createGroup } from '@/lib/server/groups'
+import { createGroup } from '@/lib/server/messaging/groups'
 
 // Crée une conversation de groupe — voir lib/server/groups.ts (createGroup)
 // pour la validation complète (nom, bornes/déduplication des membres,

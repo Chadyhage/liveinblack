@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendSeatHoldExpiryReminders } from '@/lib/server/seatHolds'
+import { sendSeatHoldExpiryReminders } from '@/lib/server/events/seatHolds'
 
 // Rappel "ta place expire bientôt" (fenêtre J-2h/J-1h) — tourne plus souvent
 // que /api/cron/seat-holds (sweep quotidien d'expiration réelle) puisqu'une

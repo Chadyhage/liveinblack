@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ProviderProfile from '../../models/ProviderProfile'
-import User from '../../models/User'
-import { resolveConversationContactPhone } from '../messagingContactService'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import User from '@/lib/models/User'
+import { resolveConversationContactPhone } from '../messaging/messagingContactService'
 
 vi.mock('../../models/User', () => ({
   default: {

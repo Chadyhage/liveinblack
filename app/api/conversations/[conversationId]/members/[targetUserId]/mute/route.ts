@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { muteMember, unmuteMember } from '@/lib/server/groups'
+import { muteMember, unmuteMember } from '@/lib/server/messaging/groups'
 
 // Mise en sourdine / levée de sourdine d'un membre de groupe par un admin —
 // voir lib/server/groups.ts (muteMember/unmuteMember). La cible vient du

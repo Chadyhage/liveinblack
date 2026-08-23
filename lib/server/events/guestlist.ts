@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
-import { getDb } from '../db/mongoose'
-import Event from '../models/Event'
-import Ticket from '../models/Ticket'
+import { getDb } from '@/lib/db/mongoose'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
 import { generateUniqueTicketCode } from './ticketCode'
 import {
   normalizeGuestlistTicketCode,

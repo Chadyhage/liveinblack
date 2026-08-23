@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { deleteOwnReview } from '@/lib/server/providerReviews'
+import { deleteOwnReview } from '@/lib/server/provider/providerReviews'
 
 // Remplace api/provider-reviews.js { action:'delete_own' } — seul l'auteur
 // peut retirer son propre avis.

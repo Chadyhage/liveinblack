@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import { listStarredMessagesPage } from '../messagingStarredMessagesService'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import { listStarredMessagesPage } from '../messaging/messagingStarredMessagesService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {
@@ -16,7 +16,7 @@ vi.mock('../../models/Message', () => ({
   },
 }))
 
-vi.mock('../messagingViews', () => ({
+vi.mock('../messaging/messagingViews', () => ({
   toMessageView: vi.fn((message, ctx) => ({
     id: String(message._id ?? `${message.conversationId}:${message.createdAt}`),
     conversationId: message.conversationId,

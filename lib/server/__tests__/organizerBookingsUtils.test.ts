@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { listValidBuyerIds, toBookingView } from '../organizerBookingsUtils'
+import { listValidBuyerIds, toBookingView } from '../organizer/organizerBookingsUtils'
 
 describe('organizerBookingsUtils', () => {
   it('garde uniquement les userId valides et uniques', () => {

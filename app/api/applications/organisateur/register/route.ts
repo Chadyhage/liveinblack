@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { registerAndSubmitOrganizerApplication } from '@/lib/server/applications'
+import { registerAndSubmitOrganizerApplication } from '@/lib/server/provider/applications'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 import { isPasswordPolicyCompliant } from '@/lib/shared/passwordPolicy'
 import { applicationDocumentsSchema } from '@/lib/shared/applicationDocuments'

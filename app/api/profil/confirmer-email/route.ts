@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { confirmEmailChange } from '@/lib/server/profile'
+import { confirmEmailChange } from '@/lib/server/users/profile'
 
 // PAS de garde auth() ici — ce lien est cliqué depuis un email, potentiellement
 // hors session active (même convention que /api/auth/verify-email et

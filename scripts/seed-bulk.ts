@@ -19,7 +19,7 @@ import OrganizerProfile, { type OrganizerProfileDoc } from '../lib/models/Organi
 import Ticket from '../lib/models/Ticket'
 import Review from '../lib/models/Review'
 import Boost from '../lib/models/Boost'
-import { generateUniqueTicketCode } from '../lib/server/ticketCode'
+import { generateUniqueTicketCode } from '../lib/server/events/ticketCode'
 
 const BULK_DOMAIN = '@seed-bulk.dev'
 const DEV_PASSWORD = 'DevTest1234!'

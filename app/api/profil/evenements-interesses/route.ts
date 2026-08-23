@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listMyEventInterests } from '@/lib/server/eventInterests'
+import { listMyEventInterests } from '@/lib/server/events/eventInterests'
 
 // Liste "mes événements intéressés" — voir lib/server/eventInterests.ts
 // (listMyEventInterests). Le tri "à venir" / "passés ou indisponibles" est

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createPromoCode, listPromoCodes, togglePromoCodeActive, deletePromoCode } from '@/lib/server/organizerPromoCodes'
+import { createPromoCode, listPromoCodes, togglePromoCodeActive, deletePromoCode } from '@/lib/server/organizer/organizerPromoCodes'
 
 const createSchema = z.object({
   code: z.string().trim().min(1),

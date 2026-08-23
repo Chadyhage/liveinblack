@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { listApplicationsForAgent, type ApplicationStatus } from '@/lib/server/applications'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { listApplicationsForAgent, type ApplicationStatus } from '@/lib/server/provider/applications'
 
 const STATUSES: ApplicationStatus[] = ['draft', 'submitted', 'under_review', 'needs_changes', 'resubmitted', 'approved', 'rejected', 'suspended']
 

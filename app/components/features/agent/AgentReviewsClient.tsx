@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Eye, EyeOff, Flag, RefreshCw, Search, ShieldCheck, Star, StickyNote, Trash2 } from 'lucide-react'
-import { Stars } from '@/app/components/StarRating'
+import { Stars } from '@/app/components/ui/StarRating'
 import { REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
 import { Button, Card, Input, Modal, Pagination, SkeletonRow, pagedSlice, EmptyState, ToastViewport } from '@/app/components/ui'
 import { useQueryParamState, useSetQueryParams } from '@/lib/client/useQueryParamState'

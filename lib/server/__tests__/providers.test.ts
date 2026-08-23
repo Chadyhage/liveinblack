@@ -3,7 +3,7 @@
 // isNonGhost (filtrage "profil fantôme" de l'annuaire) n'est pas exportée :
 // couverte indirectement par listPublicProviders dans providers.integration.test.ts.
 import { describe, it, expect } from 'vitest'
-import { isProviderVisible } from '../providers'
+import { isProviderVisible } from '../provider/providers'
 
 describe('isProviderVisible', () => {
   it('refuse si aucun profil (provider null/undefined)', () => {

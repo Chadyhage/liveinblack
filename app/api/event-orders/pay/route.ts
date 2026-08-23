@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { payTicketOrders } from '@/lib/server/eventOrders'
+import { payTicketOrders } from '@/lib/server/events/eventOrders'
 
 // Remplace api/event-stock.js (encaissement au bar — cash/carte, PAS Stripe).
 // Rang ≥ 2 (serveur/manager/propriétaire) requis — voir lib/server/eventOrders.ts.

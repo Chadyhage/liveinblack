@@ -1,5 +1,5 @@
-import User from '../models/User'
-import { isStripeConnectCountry } from '../shared/fees'
+import User from '@/lib/models/User'
+import { isStripeConnectCountry } from '@/lib/shared/fees'
 
 export type SellerSettlementMode = {
   sellerUid: string | null

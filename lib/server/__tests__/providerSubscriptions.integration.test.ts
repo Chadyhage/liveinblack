@@ -11,7 +11,7 @@ const checkoutSessionsCreate = vi.fn()
 const checkoutSessionsRetrieve = vi.fn()
 const subscriptionsRetrieve = vi.fn()
 
-vi.mock('../stripeClient', () => ({
+vi.mock('../payments/stripeClient', () => ({
   default: {
     checkout: { sessions: { create: (...a: unknown[]) => checkoutSessionsCreate(...a), retrieve: (...a: unknown[]) => checkoutSessionsRetrieve(...a) } },
     subscriptions: { retrieve: (...a: unknown[]) => subscriptionsRetrieve(...a) },
@@ -21,7 +21,7 @@ vi.mock('../stripeClient', () => ({
 const createTransaction = vi.fn()
 const createToken = vi.fn()
 
-vi.mock('../fedapayClient', () => ({
+vi.mock('../payments/fedapayClient', () => ({
   createTransaction: (...a: unknown[]) => createTransaction(...a),
   createToken: (...a: unknown[]) => createToken(...a),
   transactionAmountMatches: (paid: unknown, expected: unknown) => {
@@ -44,13 +44,13 @@ import {
   createFedapaySubscriptionCheckout,
   handleFedapaySubscriptionPayment,
   runSubscriptionReminderCron,
-} from '../providerSubscriptions'
-import { PROVIDER_SUB } from '../../shared/providerSubscription'
-import User from '../../models/User'
-import ProviderProfile from '../../models/ProviderProfile'
-import PaymentAlert from '../../models/PaymentAlert'
-import CronLock from '../../models/CronLock'
-import SubscriptionPayment from '../../models/SubscriptionPayment'
+} from '../provider/providerSubscriptions'
+import { PROVIDER_SUB } from '@/lib/shared/providerSubscription'
+import User from '@/lib/models/User'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import PaymentAlert from '@/lib/models/PaymentAlert'
+import CronLock from '@/lib/models/CronLock'
+import SubscriptionPayment from '@/lib/models/SubscriptionPayment'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

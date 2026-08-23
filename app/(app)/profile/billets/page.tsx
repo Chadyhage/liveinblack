@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { listMyTickets } from '@/lib/server/tickets'
+import { listMyTickets } from '@/lib/server/events/tickets'
 import BilletsClient from './BilletsClient'
 
 // Ancien panneau interne "Mes billets" de ProfilClient.tsx (état local

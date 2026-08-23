@@ -5,8 +5,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
 
-vi.mock('../fedapayClient', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../fedapayClient')>()
+vi.mock('../payments/fedapayClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../payments/fedapayClient')>()
   return {
     ...actual,
     createTransaction: vi.fn(async () => ({ id: 'txn_test_1', status: 'pending', amount: 0 })),
@@ -15,15 +15,15 @@ vi.mock('../fedapayClient', async (importOriginal) => {
   }
 })
 
-import { sellTicketOnSite, sellTicketAtDoor, settleCashSale, fulfillAgentSaleOrder, releaseAgentSaleOrder, getAgentSalesDashboard } from '../agentSales'
-import { addEventStaff } from '../eventStaff'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import Ticket from '../../models/Ticket'
-import EventStaff from '../../models/EventStaff'
-import CashSaleSettlement from '../../models/CashSaleSettlement'
-import SellerBalance from '../../models/SellerBalance'
-import User from '../../models/User'
+import { sellTicketOnSite, sellTicketAtDoor, settleCashSale, fulfillAgentSaleOrder, releaseAgentSaleOrder, getAgentSalesDashboard } from '../agent/agentSales'
+import { addEventStaff } from '../events/eventStaff'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
+import EventStaff from '@/lib/models/EventStaff'
+import CashSaleSettlement from '@/lib/models/CashSaleSettlement'
+import SellerBalance from '@/lib/models/SellerBalance'
+import User from '@/lib/models/User'
 import bcrypt from 'bcryptjs'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)

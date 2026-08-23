@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getMyProfile } from '@/lib/server/profile'
-import { listActiveInterestSignals } from '@/lib/server/eventInterests'
+import { getMyProfile } from '@/lib/server/users/profile'
+import { listActiveInterestSignals } from '@/lib/server/events/eventInterests'
 import { getCachedBoostedEventIds as getBoostedEventIds } from '@/lib/server/publicCache'
 
 // Route JSON dédiée à LIB_Mobile — les 3 signaux nécessaires à

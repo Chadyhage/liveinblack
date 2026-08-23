@@ -5,7 +5,7 @@ import {
   normalizePromoPlaceIds,
   scopedPromoPlaces,
   toPromoCodeView,
-} from '../organizerPromoCodeUtils'
+} from '../organizer/organizerPromoCodeUtils'
 
 describe('organizerPromoCodeUtils', () => {
   it('normalise les placeIds promo', () => {

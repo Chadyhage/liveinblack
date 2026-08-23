@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createReview } from '@/lib/server/providerReviews'
+import { createReview } from '@/lib/server/provider/providerReviews'
 
 const bodySchema = z.object({
   providerId: z.string().min(1),

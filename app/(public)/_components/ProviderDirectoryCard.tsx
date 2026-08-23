@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight, MapPin, Package, Star } from 'lucide-react'
-import type { PublicProvider } from '@/lib/server/providers'
+import type { PublicProvider } from '@/lib/server/provider/providers'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './ProviderDirectoryCard.module.css'

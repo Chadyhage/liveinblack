@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { declineSeatInvitation } from '@/lib/server/seatAssignment'
+import { declineSeatInvitation } from '@/lib/server/events/seatAssignment'
 
 // Refus par la CIBLE d'une invitation de siège — ne touche jamais au
 // Ticket : le siège reste détenu par l'hôte — voir

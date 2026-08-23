@@ -4,12 +4,12 @@
 // terminé → check-in refusé, plus seulement une garde côté client legacy).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { checkinTicket } from '../ticketCheckin'
-import { signTicketToken } from '../ticketToken'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
-import EventStaff from '../../models/EventStaff'
-import User from '../../models/User'
+import { checkinTicket } from '../events/ticketCheckin'
+import { signTicketToken } from '../events/ticketToken'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import EventStaff from '@/lib/models/EventStaff'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

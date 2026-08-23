@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { adminCancelEvent } from '@/lib/server/agentEvents'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { adminCancelEvent } from '@/lib/server/agent/agentEvents'
 
 const bodySchema = z.object({ message: z.string().trim().max(500).default('') })
 

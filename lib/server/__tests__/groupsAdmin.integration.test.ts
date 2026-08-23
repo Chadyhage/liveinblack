@@ -5,11 +5,11 @@
 // capacité que ce fichier prétendait à tort absente du legacy.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { createGroup, addMember, removeMember, setMemberRole, renameGroup, pinMessage, unpinMessage } from '../groups'
-import { sendMessage } from '../messaging'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import User from '../../models/User'
+import { createGroup, addMember, removeMember, setMemberRole, renameGroup, pinMessage, unpinMessage } from '../messaging/groups'
+import { sendMessage } from '../messaging/messaging'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

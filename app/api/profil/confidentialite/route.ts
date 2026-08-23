@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updatePrivacy } from '@/lib/server/profile'
+import { updatePrivacy } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({
   showOnline: z.boolean().optional(),

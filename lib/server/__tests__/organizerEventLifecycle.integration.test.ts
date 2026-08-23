@@ -8,23 +8,23 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
 
-vi.mock('../eventRefunds', () => ({
+vi.mock('../events/eventRefunds', () => ({
   refundStripeOrder: vi.fn(async () => ({ ok: true })),
 }))
 
-import { cancelOrganizerEvent, postponeOrganizerEvent, deleteOrganizerEvent } from '../organizerEventLifecycle'
-import { createOrganizerEvent } from '../organizerEvents'
-import { listTicketForResale, initiateResaleOrder, fulfillResaleOrder } from '../resale'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import Ticket from '../../models/Ticket'
-import ResaleListing from '../../models/ResaleListing'
-import EventStaff from '../../models/EventStaff'
-import PromoCode from '../../models/PromoCode'
-import EventRefund from '../../models/EventRefund'
-import Boost from '../../models/Boost'
-import BoostSlot from '../../models/BoostSlot'
-import OrganizerProfile from '../../models/OrganizerProfile'
+import { cancelOrganizerEvent, postponeOrganizerEvent, deleteOrganizerEvent } from '../organizer/organizerEventLifecycle'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import { listTicketForResale, initiateResaleOrder, fulfillResaleOrder } from '../events/resale'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import Ticket from '@/lib/models/Ticket'
+import ResaleListing from '@/lib/models/ResaleListing'
+import EventStaff from '@/lib/models/EventStaff'
+import PromoCode from '@/lib/models/PromoCode'
+import EventRefund from '@/lib/models/EventRefund'
+import Boost from '@/lib/models/Boost'
+import BoostSlot from '@/lib/models/BoostSlot'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

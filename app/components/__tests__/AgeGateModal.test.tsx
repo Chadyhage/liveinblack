@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import AgeGateModal from '../AgeGateModal'
+import AgeGateModal from '../layout/AgeGateModal'
 
 const modalSpy = vi.fn()
 

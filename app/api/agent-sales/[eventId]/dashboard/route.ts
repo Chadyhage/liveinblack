@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getAgentSalesDashboard } from '@/lib/server/agentSales'
+import { getAgentSalesDashboard } from '@/lib/server/agent/agentSales'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ eventId: string }> }) {
   const session = await auth()

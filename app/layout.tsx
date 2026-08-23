@@ -4,8 +4,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Providers } from "./providers";
-import CookieConsentBanner from "./components/CookieConsentBanner";
-import GoogleAnalytics from "./components/GoogleAnalytics";
+import CookieConsentBanner from "./components/layout/CookieConsentBanner";
+import GoogleAnalytics from "./components/layout/GoogleAnalytics";
 
 // Police variable déjà distribuée avec la version verrouillée de Next.js.
 // Elle est auto-hébergée au build : aucune requête à Google Fonts, aucun

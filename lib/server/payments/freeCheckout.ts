@@ -1,6 +1,6 @@
-import { getDb } from '../db/mongoose'
-import Ticket from '../models/Ticket'
-import { createOrder, releaseOrder } from './orders'
+import { getDb } from '@/lib/db/mongoose'
+import Ticket from '@/lib/models/Ticket'
+import { createOrder, releaseOrder } from '../events/orders'
 import { fulfillOrder } from './fulfillOrder'
 
 // Ferme le trou "place gratuite jamais réservable" (le tunnel payant —

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { deleteGroup } from '@/lib/server/groups'
+import { deleteGroup } from '@/lib/server/messaging/groups'
 
 // Suppression d'un groupe par un de ses admins — voir lib/server/groups.ts
 // (deleteGroup). Réservé aux conversations de type 'group' : une conversation

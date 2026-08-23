@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { setMemberRole } from '@/lib/server/groups'
+import { setMemberRole } from '@/lib/server/messaging/groups'
 
 // Promeut/rétrograde un membre — réservé aux admins, voir lib/server/groups.ts
 // (setMemberRole). Refuse de retirer le DERNIER admin (garde ajoutée

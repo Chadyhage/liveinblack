@@ -15,10 +15,10 @@ import {
   updateUserEmail,
   updateUserFields,
   type AgentCaller,
-} from '../agentUsers'
-import User from '../../models/User'
-import OrganizerProfile from '../../models/OrganizerProfile'
-import ProviderProfile from '../../models/ProviderProfile'
+} from '../agent/agentUsers'
+import User from '@/lib/models/User'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
+import ProviderProfile from '@/lib/models/ProviderProfile'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

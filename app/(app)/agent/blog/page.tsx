@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import AgentBlogClient from '@/app/components/AgentBlogClient'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import AgentBlogClient from '@/app/components/features/agent/AgentBlogClient'
 
 // Voir app/(app)/agent/page.tsx pour le contexte du découpage en routes réelles.
 // Nouvelle section (pas de port legacy) : lib/models/BlogPost.ts + les pages

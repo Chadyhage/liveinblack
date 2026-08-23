@@ -12,11 +12,11 @@ import {
   getPublishedReviews,
   getMyProviderReviews,
   getMyReviewFor,
-} from '../providerReviews'
-import Review from '../../models/Review'
-import ReviewReport from '../../models/ReviewReport'
-import ProviderProfile from '../../models/ProviderProfile'
-import User from '../../models/User'
+} from '../provider/providerReviews'
+import Review from '@/lib/models/Review'
+import ReviewReport from '@/lib/models/ReviewReport'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

@@ -22,7 +22,7 @@ import Ticket from '../lib/models/Ticket'
 import Conversation from '../lib/models/Conversation'
 import Message from '../lib/models/Message'
 import Application from '../lib/models/Application'
-import { generateUniqueTicketCode } from '../lib/server/ticketCode'
+import { generateUniqueTicketCode } from '../lib/server/events/ticketCode'
 
 const DEV_PASSWORD = 'DevTest1234!'
 

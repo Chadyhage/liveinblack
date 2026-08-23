@@ -1,10 +1,10 @@
 import crypto from 'node:crypto'
 import mongoose, { type HydratedDocument } from 'mongoose'
-import { getDb } from '../db/mongoose'
-import Ticket, { type TicketDoc } from '../models/Ticket'
-import User from '../models/User'
-import GroupMembership from '../models/GroupMembership'
-import SeatInvitation, { type SeatInvitationDoc } from '../models/SeatInvitation'
+import { getDb } from '@/lib/db/mongoose'
+import Ticket, { type TicketDoc } from '@/lib/models/Ticket'
+import User from '@/lib/models/User'
+import GroupMembership from '@/lib/models/GroupMembership'
+import SeatInvitation, { type SeatInvitationDoc } from '@/lib/models/SeatInvitation'
 
 // Modèle de consentement pour les sièges de table (#37) : un hôte ne peut
 // plus lier directement le compte d'un invité à un siège ("bind" unilatéral).

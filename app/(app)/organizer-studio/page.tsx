@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getOrCreateMyOrganizerProfile } from '@/lib/server/organizerProfile'
-import { getPayoutStatus } from '@/lib/server/organizerPayouts'
-import { listPayoutMomos } from '@/lib/server/organizerPayoutMomos'
+import { getOrCreateMyOrganizerProfile } from '@/lib/server/organizer/organizerProfile'
+import { getPayoutStatus } from '@/lib/server/organizer/organizerPayouts'
+import { listPayoutMomos } from '@/lib/server/organizer/organizerPayoutMomos'
 import StudioClient from './StudioClient'
 
 // Port de OrganizerPublicStudio.jsx (#7 phase organisateur, tâche #81) — page

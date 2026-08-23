@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import EventOrder from '../../models/EventOrder'
-import { removeEventOrderItem, type RemoveOrderItemDependencies } from '../eventOrderRemoveItemService'
+import EventOrder from '@/lib/models/EventOrder'
+import { removeEventOrderItem, type RemoveOrderItemDependencies } from '../events/eventOrderRemoveItemService'
 
 vi.mock('../../models/EventOrder', () => ({
   default: {

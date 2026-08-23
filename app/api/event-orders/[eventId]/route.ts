@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listOrdersForEvent, listOrdersForTicket } from '@/lib/server/eventOrders'
+import { listOrdersForEvent, listOrdersForTicket } from '@/lib/server/events/eventOrders'
 
 // Lecture des commandes sur place. `?ticketId=` présent → commandes d'UN
 // billet (rang 0 autorisé si c'est le sien, ferme l'audit H15) ; absent →

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createPoll, createEventPoll } from '@/lib/server/polls'
+import { createPoll, createEventPoll } from '@/lib/server/messaging/polls'
 
 // Création d'un sondage ('poll') ou d'un sondage-événement ('event_poll')
 // dans une conversation. Union discriminée sur `kind` — chaque branche

@@ -2,8 +2,8 @@
 // cas, portés vers l'API Mongoose (findOne().lean() / updateOne $inc) au lieu
 // de l'API Firestore (doc().get() / transaction).
 import { describe, it, expect } from 'vitest'
-import { resolvePromo, promoUnitDiscount, normalizePromoCode } from '../promos'
-import type { PromoCodeModel } from '../../models/PromoCode'
+import { resolvePromo, promoUnitDiscount, normalizePromoCode } from '../events/promos'
+import type { PromoCodeModel } from '@/lib/models/PromoCode'
 
 type FakePromo = Record<string, unknown>
 

@@ -1,5 +1,5 @@
-import { getDb } from '../db/mongoose'
-import BlogPost, { type BlogPostDoc, type BlogCategoryId } from '../models/BlogPost'
+import { getDb } from '@/lib/db/mongoose'
+import BlogPost, { type BlogPostDoc, type BlogCategoryId } from '@/lib/models/BlogPost'
 
 export type PublicBlogPost = BlogPostDoc & { id: string }
 

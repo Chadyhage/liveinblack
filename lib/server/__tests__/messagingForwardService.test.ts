@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import { forwardMessageForCaller, forwardMessageToConversations, resolveForwardConversationLabel } from '../messagingForwardService'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import { forwardMessageForCaller, forwardMessageToConversations, resolveForwardConversationLabel } from '../messaging/messagingForwardService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

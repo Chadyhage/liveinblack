@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import Ticket from '../../models/Ticket'
-import { addEventOrderItem, type AddOrderItemDependencies } from '../eventOrderAddItemService'
+import Ticket from '@/lib/models/Ticket'
+import { addEventOrderItem, type AddOrderItemDependencies } from '../events/eventOrderAddItemService'
 
 vi.mock('../../models/Ticket', () => ({
   default: {

@@ -23,13 +23,13 @@ import {
   getTypingUsers,
   listMyConversations,
   getMessages,
-} from '../messaging'
-import { createPoll, voteOnPoll } from '../polls'
-import { createGroup, muteMember } from '../groups'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import User from '../../models/User'
-import Report from '../../models/Report'
+} from '../messaging/messaging'
+import { createPoll, voteOnPoll } from '../messaging/polls'
+import { createGroup, muteMember } from '../messaging/groups'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import User from '@/lib/models/User'
+import Report from '@/lib/models/Report'
 import { RUN_INTEGRATION, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

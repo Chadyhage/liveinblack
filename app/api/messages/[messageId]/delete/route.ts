@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { deleteMessageForMe, deleteMessageForAll } from '@/lib/server/messaging'
+import { deleteMessageForMe, deleteMessageForAll } from '@/lib/server/messaging/messaging'
 
 // scope 'me' : masque le message pour l'appelant seul (n'importe quel
 // participant). scope 'all' : remplace le message par "Message supprimé"

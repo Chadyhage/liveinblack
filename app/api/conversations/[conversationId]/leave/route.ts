@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { leaveGroup } from '@/lib/server/groups'
+import { leaveGroup } from '@/lib/server/messaging/groups'
 
 // Départ volontaire de l'appelant d'un groupe — voir lib/server/groups.ts
 // (leaveGroup) pour la suppression du groupe s'il devient vide et

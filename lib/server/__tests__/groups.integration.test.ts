@@ -10,10 +10,10 @@ vi.mock('../cloudinary', async (importOriginal) => ({
   uploadDataUri: vi.fn(async (_dataUri: string, folder: string) => ({ ok: true, url: `https://res.cloudinary.test/${folder}/mock.jpg` })),
 }))
 
-import { createGroup, leaveGroup, deleteGroup, muteMember, unmuteMember, setGroupAvatar } from '../groups'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import User from '../../models/User'
+import { createGroup, leaveGroup, deleteGroup, muteMember, unmuteMember, setGroupAvatar } from '../messaging/groups'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

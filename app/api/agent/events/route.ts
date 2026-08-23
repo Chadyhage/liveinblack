@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { listEventsForAgent, type AgentEventStatus } from '@/lib/server/agentEvents'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { listEventsForAgent, type AgentEventStatus } from '@/lib/server/agent/agentEvents'
 import { parsePage, parsePageSize } from '@/lib/shared/pagination'
 
 const STATUSES: AgentEventStatus[] = ['upcoming', 'past', 'cancelled']

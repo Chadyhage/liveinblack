@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateDemographics } from '@/lib/server/profile'
+import { updateDemographics } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({
   birthYear: z.number().int().nullable().optional(),

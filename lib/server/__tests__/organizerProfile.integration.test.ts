@@ -17,12 +17,12 @@ import {
   updateOrganizerMediaItem,
   removeOrganizerMedia,
   reorderOrganizerMedia,
-} from '../organizerProfile'
-import OrganizerProfile from '../../models/OrganizerProfile'
-import Application from '../../models/Application'
-import User from '../../models/User'
-import Event from '../../models/Event'
-import { SOCIAL_NETWORKS } from '../../shared/social'
+} from '../organizer/organizerProfile'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
+import Application from '@/lib/models/Application'
+import User from '@/lib/models/User'
+import Event from '@/lib/models/Event'
+import { SOCIAL_NETWORKS } from '@/lib/shared/social'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

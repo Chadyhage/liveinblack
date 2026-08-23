@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listMyTickets } from '@/lib/server/tickets'
+import { listMyTickets } from '@/lib/server/events/tickets'
 
 // Portefeuille de billets de l'appelant, groupé par événement — voir
 // lib/server/tickets.ts (listMyTickets). Utilisé pour rafraîchir le panneau

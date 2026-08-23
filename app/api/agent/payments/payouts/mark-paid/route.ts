@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { markPayoutPaid } from '@/lib/server/agentPayments'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { markPayoutPaid } from '@/lib/server/agent/agentPayments'
 
 const bodySchema = z.object({ eventId: z.string().trim().min(1) })
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { leaveSeat } from '@/lib/server/seatAssignment'
+import { leaveSeat } from '@/lib/server/events/seatAssignment'
 
 // Départ volontaire par la CIBLE d'un siège qu'elle détient déjà (miroir de
 // /api/tickets/revoke, mais déclenché par l'invité lui-même plutôt que par

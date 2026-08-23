@@ -8,15 +8,15 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import mongoose from 'mongoose'
 
-vi.mock('../eventRefunds', () => ({
+vi.mock('../events/eventRefunds', () => ({
   refundStripeOrder: vi.fn(async () => ({ ok: true })),
 }))
 
-import { listEventsForAgent, adminCancelEvent } from '../agentEvents'
-import { createOrganizerEvent } from '../organizerEvents'
-import Event from '../../models/Event'
-import Order from '../../models/Order'
-import EventRefund from '../../models/EventRefund'
+import { listEventsForAgent, adminCancelEvent } from '../agent/agentEvents'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import EventRefund from '@/lib/models/EventRefund'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

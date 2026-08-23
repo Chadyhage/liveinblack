@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateOrderItemQuantity } from '@/lib/server/eventOrders'
+import { updateOrderItemQuantity } from '@/lib/server/events/eventOrders'
 
 // Remplace api/event-stock.js (édition de quantité). Rang 0 : seulement sa
 // propre ligne, encore non servie/payée (sinon erreur dure `locked`). Staff :

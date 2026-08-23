@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Conversation from '../../models/Conversation'
-import { markConversationReadForCaller } from '../messagingReadService'
+import Conversation from '@/lib/models/Conversation'
+import { markConversationReadForCaller } from '../messaging/messagingReadService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

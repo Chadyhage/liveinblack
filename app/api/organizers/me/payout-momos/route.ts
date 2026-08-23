@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { listPayoutMomos, updatePayoutMomos } from '@/lib/server/organizerPayoutMomos'
+import { listPayoutMomos, updatePayoutMomos } from '@/lib/server/organizer/organizerPayoutMomos'
 
 const bodySchema = z.object({ momos: z.record(z.string(), z.string()) })
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { listMyEventInterests } from '@/lib/server/eventInterests'
+import { listMyEventInterests } from '@/lib/server/events/eventInterests'
 import InterestedEventsClient from './InterestedEventsClient'
 
 // Port de src/pages/InterestedEventsPage.jsx (#6 phase profil).

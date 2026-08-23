@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateName } from '@/lib/server/profile'
+import { updateName } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({
   firstName: z.string().trim().min(1).max(80),

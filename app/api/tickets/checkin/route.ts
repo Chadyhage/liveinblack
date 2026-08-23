@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { checkinTicket } from '@/lib/server/ticketCheckin'
+import { checkinTicket } from '@/lib/server/events/ticketCheckin'
 
 // Remplace api/tickets.js (action 'checkin'). Le scanner envoie SOIT le jeton
 // décodé depuis l'URL du QR (`token`), SOIT un code saisi manuellement

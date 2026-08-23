@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { removeFriend } from '@/lib/server/friends'
+import { removeFriend } from '@/lib/server/users/friends'
 
 // Retrait d'une amitié existante — voir lib/server/friends.ts (#43). Idempotent
 // dans l'intention mais pas dans la réponse : appeler cette route alors

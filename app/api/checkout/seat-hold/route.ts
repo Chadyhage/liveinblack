@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { completeSeatHoldOrder } from '@/lib/server/seatHolds'
-import { releaseOrder } from '@/lib/server/orders'
+import { completeSeatHoldOrder } from '@/lib/server/events/seatHolds'
+import { releaseOrder } from '@/lib/server/events/orders'
 import Order from '@/lib/models/Order'
 import User from '@/lib/models/User'
-import stripe from '@/lib/server/stripeClient'
+import stripe from '@/lib/server/payments/stripeClient'
 
 // Paiement du SOLDE d'un blocage de place actif — rail Stripe/EUR. Miroir de
 // /api/checkout/resale : lib/server/seatHolds.ts::completeSeatHoldOrder gère

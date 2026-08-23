@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import LegalPageLayout, { type LegalSection } from '@/app/components/LegalPageLayout'
-import ResetCookieConsentButton from '@/app/components/ResetCookieConsentButton'
+import LegalPageLayout, { type LegalSection } from '@/app/components/layout/LegalPageLayout'
+import ResetCookieConsentButton from '@/app/components/layout/ResetCookieConsentButton'
 import { LEGAL } from '@/lib/shared/legal'
 
 export const metadata: Metadata = {

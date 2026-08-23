@@ -9,16 +9,16 @@
 // de paiement réelle.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { createOrder, releaseOrder } from '../orders'
-import { fulfillOrder } from '../fulfillOrder'
-import { reserveBoostSlot } from '../boostSlots'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
-import Order from '../../models/Order'
-import PromoCode from '../../models/PromoCode'
-import SellerBalance from '../../models/SellerBalance'
-import BoostSlot from '../../models/BoostSlot'
-import User from '../../models/User'
+import { createOrder, releaseOrder } from '../events/orders'
+import { fulfillOrder } from '../payments/fulfillOrder'
+import { reserveBoostSlot } from '../events/boostSlots'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import Order from '@/lib/models/Order'
+import PromoCode from '@/lib/models/PromoCode'
+import SellerBalance from '@/lib/models/SellerBalance'
+import BoostSlot from '@/lib/models/BoostSlot'
+import User from '@/lib/models/User'
 
 // Ce fichier exige un MongoDB réel (replica set, pour les transactions) — il
 // ne tourne que si MONGODB_URI est explicitement fourni à `vitest`, pour ne

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { getOrCreateMyOrganizerProfile, updateOrganizerProfile } from '@/lib/server/organizerProfile'
+import { getOrCreateMyOrganizerProfile, updateOrganizerProfile } from '@/lib/server/organizer/organizerProfile'
 import { SOCIAL_NETWORKS } from '@/lib/shared/social'
 
 const socialLinksSchema = z

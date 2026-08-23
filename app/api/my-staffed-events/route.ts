@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listMyStaffedEvents } from '@/lib/server/staffEvents'
+import { listMyStaffedEvents } from '@/lib/server/organizer/staffEvents'
 
 // Miroir JSON de app/(app)/my-shifts/page.tsx (« Mes soirées ») — le web
 // appelle listMyStaffedEvents directement depuis un composant serveur ; cette

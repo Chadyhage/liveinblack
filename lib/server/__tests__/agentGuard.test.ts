@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { requireAgent } from '../agentGuard'
+import { requireAgent } from '../agent/agentGuard'
 
 describe('requireAgent', () => {
   it('refuse un appelant non connecté', () => {

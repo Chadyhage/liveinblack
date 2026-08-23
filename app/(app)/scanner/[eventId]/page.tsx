@@ -6,7 +6,7 @@ import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
-import { getCallerEventRank } from '@/lib/server/eventOrders'
+import { getCallerEventRank } from '@/lib/server/events/eventOrders'
 import ScannerClient from './ScannerClient'
 import { type MenuItemView } from './scannerUtils'
 

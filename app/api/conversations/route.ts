@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createDirectConversation, listMyConversations } from '@/lib/server/messaging'
+import { createDirectConversation, listMyConversations } from '@/lib/server/messaging/messaging'
 
 // POST : ouvre (ou retrouve) une conversation directe avec `otherUserId` —
 // voir lib/server/messaging.ts pour le find-or-create et le check de

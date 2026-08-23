@@ -6,7 +6,7 @@ import {
   toProviderCatalogView,
   toProviderProfileView,
   toProviderSocialLinks,
-} from '../providerProfileUtils'
+} from '../provider/providerProfileUtils'
 
 describe('providerProfileUtils', () => {
   it('reconstruit tous les social links en chaînes sûres', () => {

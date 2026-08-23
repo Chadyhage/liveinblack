@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
 import { getPostByIdForAgent, updatePostForAgent, deletePostForAgent } from '@/lib/server/blog'
 import { BLOG_CATEGORY_IDS } from '@/lib/models/BlogPost'
 

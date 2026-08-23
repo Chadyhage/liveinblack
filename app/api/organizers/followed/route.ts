@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listMyFollowedOrganizers } from '@/lib/server/organizerFollows'
+import { listMyFollowedOrganizers } from '@/lib/server/organizer/organizerFollows'
 
 // Liste des organisateurs suivis par l'appelant, avec les infos d'affichage
 // de base jointes en une seule requête batch — voir

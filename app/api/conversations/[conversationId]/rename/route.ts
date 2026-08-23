@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { renameGroup } from '@/lib/server/groups'
+import { renameGroup } from '@/lib/server/messaging/groups'
 
 // Renomme un groupe — réservé aux admins, voir lib/server/groups.ts (renameGroup).
 const bodySchema = z.object({ name: z.string().min(1).max(100) })

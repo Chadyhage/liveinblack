@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { addEventStaff, listEventStaff, removeEventStaff } from '@/lib/server/eventStaff'
+import { addEventStaff, listEventStaff, removeEventStaff } from '@/lib/server/events/eventStaff'
 
 const addSchema = z.object({ targetUserId: z.string().trim().min(1), role: z.enum(['scan', 'serveur', 'dj', 'vendeur']) })
 const removeSchema = z.object({ targetUserId: z.string().trim().min(1) })

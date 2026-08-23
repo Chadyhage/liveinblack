@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import mongoose from 'mongoose'
-import User from '../../models/User'
+import User from '@/lib/models/User'
 import {
   addGroupMemberForCaller,
   removeGroupMemberForCaller,
   setGroupMemberRoleForCaller,
   type GroupMemberDependencies,
-} from '../groupMemberService'
+} from '../messaging/groupMemberService'
 
 vi.mock('../../models/User', () => ({
   default: {

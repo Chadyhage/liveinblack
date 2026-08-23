@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { settleCashSale } from '@/lib/server/agentSales'
+import { settleCashSale } from '@/lib/server/agent/agentSales'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ settlementId: string }> }) {
   const session = await auth()

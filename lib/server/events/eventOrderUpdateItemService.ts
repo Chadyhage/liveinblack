@@ -1,8 +1,8 @@
 import mongoose from 'mongoose'
-import EventOrder, { type OrderItem } from '../models/EventOrder'
+import EventOrder, { type OrderItem } from '@/lib/models/EventOrder'
 import type { EventOrderItemView } from './eventOrders'
 import type { EventContextResult } from './eventOrderCoreService'
-import type { MessagingErrorResult } from './messagingServiceTypes'
+import type { MessagingErrorResult } from '../messaging/messagingServiceTypes'
 
 export interface OrderCaller {
   id: string

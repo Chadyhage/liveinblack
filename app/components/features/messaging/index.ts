@@ -1,5 +1,5 @@
 export { default as MessagesClient } from '@/app/(app)/messages/MessagesClient'
-export { default as AmbientMusicPlayer } from '@/app/components/AmbientMusicPlayer'
+export { default as AmbientMusicPlayer } from '@/app/components/layout/AmbientMusicPlayer'
 export { ModalShell, ModalActions, ConfirmModal } from './MessagingModals'
 export { default as ReportModal } from './ReportModal'
 export { default as ForwardModal } from './ForwardModal'

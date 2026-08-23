@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { listActiveBoostsForAgent } from '@/lib/server/agentBoosts'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { listActiveBoostsForAgent } from '@/lib/server/agent/agentBoosts'
 
 // Panneau agent « Boosts » — LECTURE SEULE (#106 phase agent/admin), voir
 // lib/server/agentBoosts.ts. Pas de PATCH/POST : le legacy n'a aucune action

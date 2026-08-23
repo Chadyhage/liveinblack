@@ -16,19 +16,19 @@ import {
   confirmEmailChange,
   changePassword,
   deleteAccount,
-} from '../profile'
-import { issueVerificationToken } from '../../auth/verification-tokens'
-import User from '../../models/User'
-import Application from '../../models/Application'
-import OrganizerProfile from '../../models/OrganizerProfile'
-import ProviderProfile from '../../models/ProviderProfile'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import FriendRequest from '../../models/FriendRequest'
-import Friendship from '../../models/Friendship'
-import OrganizerFollow from '../../models/OrganizerFollow'
-import EventInterest from '../../models/EventInterest'
-import Review from '../../models/Review'
+} from '../users/profile'
+import { issueVerificationToken } from '@/lib/auth/verification-tokens'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import FriendRequest from '@/lib/models/FriendRequest'
+import Friendship from '@/lib/models/Friendship'
+import OrganizerFollow from '@/lib/models/OrganizerFollow'
+import EventInterest from '@/lib/models/EventInterest'
+import Review from '@/lib/models/Review'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

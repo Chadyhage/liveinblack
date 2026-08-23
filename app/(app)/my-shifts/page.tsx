@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { listMyStaffedEvents } from '@/lib/server/staffEvents'
+import { listMyStaffedEvents } from '@/lib/server/organizer/staffEvents'
 import { Card, Mascot } from '@/app/components/ui'
 
 // Port de src/pages/MesSoireesPage.jsx — point d'entrée du MEMBRE STAFF

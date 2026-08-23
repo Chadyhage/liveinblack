@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { createOrganizerEvent, listMyOrganizerEvents } from '@/lib/server/organizerEvents'
+import { createOrganizerEvent, listMyOrganizerEvents } from '@/lib/server/organizer/organizerEvents'
 import { canCreateEvent } from '@/lib/server/permissions'
 
 const placeSchema = z.object({

@@ -2,8 +2,8 @@
 // métier, mêmes cas, portés vers l'API Mongoose (find().lean()) au lieu de
 // l'API Firestore (collection().where().get()).
 import { describe, it, expect } from 'vitest'
-import { findGroupTieForEvent, groupTieBuyMessage } from '../groupTicketGuard'
-import type { TicketModel } from '../../models/Ticket'
+import { findGroupTieForEvent, groupTieBuyMessage } from '../messaging/groupTicketGuard'
+import type { TicketModel } from '@/lib/models/Ticket'
 
 type FakeTicket = Record<string, unknown>
 

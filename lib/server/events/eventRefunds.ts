@@ -1,8 +1,8 @@
-import stripe from './stripeClient'
-import EventRefund from '../models/EventRefund'
-import SellerBalance from '../models/SellerBalance'
-import PaymentAlert from '../models/PaymentAlert'
-import type { OrderDoc } from '../models/Order'
+import stripe from '../payments/stripeClient'
+import EventRefund from '@/lib/models/EventRefund'
+import SellerBalance from '@/lib/models/SellerBalance'
+import PaymentAlert from '@/lib/models/PaymentAlert'
+import type { OrderDoc } from '@/lib/models/Order'
 import mongoose from 'mongoose'
 
 // Remboursement Stripe — idempotent via EventRefund (clé eventId+paymentRef).

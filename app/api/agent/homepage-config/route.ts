@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
 import {
   getHomepageConfig,
   updateHomepageConfig,
   listCandidateEventsForActualite,
   resolveActualiteEventLabels,
-} from '@/lib/server/agentHomepageConfig'
+} from '@/lib/server/agent/agentHomepageConfig'
 
 const ACCENTS = ['teal', 'gold', 'pink'] as const
 

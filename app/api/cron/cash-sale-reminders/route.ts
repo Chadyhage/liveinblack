@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendPendingCashSaleReminders } from '@/lib/server/agentSales'
+import { sendPendingCashSaleReminders } from '@/lib/server/agent/agentSales'
 
 // Rappel agent "règlement en attente depuis 2 jours" — même garde secret que
 // les autres crons (échec fermé si absent).

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import User from '../../models/User'
-import { blockUserForCaller, unblockUserForCaller } from '../messagingBlockService'
+import User from '@/lib/models/User'
+import { blockUserForCaller, unblockUserForCaller } from '../messaging/messagingBlockService'
 
 vi.mock('../../models/User', () => ({
   default: {

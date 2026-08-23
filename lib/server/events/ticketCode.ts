@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import Ticket from '../models/Ticket'
+import Ticket from '@/lib/models/Ticket'
 
 // Génère un code billet unique. Le legacy utilisait Math.random() sans
 // vérification de collision avant écriture (audit H20, adjacent à C05) — ici

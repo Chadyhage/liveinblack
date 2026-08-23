@@ -1,3 +1,5 @@
-export { default as EventCheckoutPanel } from '@/app/components/EventCheckoutPanel'
-export { default as EventInterestButtonClient } from '@/app/components/EventInterestButtonClient'
-export { default as ResaleListingsSection } from '@/app/components/ResaleListingsSection'
+export { default as EventCheckoutPanel } from './EventCheckoutPanel'
+export { default as EventInterestButtonClient } from './EventInterestButtonClient'
+export { default as EventStaffModal } from './EventStaffModal'
+export { default as PromoCodesPanel } from './PromoCodesPanel'
+export { default as ResaleListingsSection } from './ResaleListingsSection'

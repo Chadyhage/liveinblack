@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { addOrderItem } from '@/lib/server/eventOrders'
+import { addOrderItem } from '@/lib/server/events/eventOrders'
 
 // Remplace api/event-stock.js (action 'order', création de ligne). Voir
 // lib/server/eventOrders.ts pour le modèle d'autorisation par rang complet et

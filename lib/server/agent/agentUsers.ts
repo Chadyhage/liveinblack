@@ -1,15 +1,15 @@
-import { getDb } from '../db/mongoose'
-import User from '../models/User'
-import OrganizerProfile from '../models/OrganizerProfile'
-import ProviderProfile from '../models/ProviderProfile'
-import type { Role, AccountStatus } from './permissions'
+import { getDb } from '@/lib/db/mongoose'
+import User from '@/lib/models/User'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import type { Role, AccountStatus } from '@/lib/server/permissions'
 import {
   issueVerificationToken,
   invalidateAllVerificationTokens,
   invalidateVerificationTokens,
-} from '../auth/verification-tokens'
-import { emailVerificationEmail, passwordResetEmail } from './emails'
-import { sendEmail } from './email'
+} from '@/lib/auth/verification-tokens'
+import { emailVerificationEmail, passwordResetEmail } from '@/lib/server/emails'
+import { sendEmail } from '@/lib/server/email'
 
 // Gestion des comptes utilisateurs côté agent (#9 phase agent/admin), port de
 // la section « Comptes » de src/pages/AgentPage.jsx (tab === 'users') et des

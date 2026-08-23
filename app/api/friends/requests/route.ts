@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { sendFriendRequest, listMyFriendRequests } from '@/lib/server/friends'
+import { sendFriendRequest, listMyFriendRequests } from '@/lib/server/users/friends'
 
 // Envoi d'une demande d'ami (POST) et lecture des demandes en attente,
 // reçues comme envoyées (GET) — voir lib/server/friends.ts pour le cycle

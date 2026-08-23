@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateAvatar } from '@/lib/server/profile'
+import { updateAvatar } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({ dataUri: z.string().min(1) })
 

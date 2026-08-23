@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '@/lib/shared/fees'
 import type { ShowOption } from '@/lib/shared/showOptions'
-import AgeGateModal from './AgeGateModal'
+import AgeGateModal from '@/app/components/layout/AgeGateModal'
 import { Check, X } from 'lucide-react'
 import { Button, Card, Input, Textarea, Checkbox, Modal } from '@/app/components/ui'
 

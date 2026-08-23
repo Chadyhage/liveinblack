@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getMyProfile } from '@/lib/server/profile'
+import { getMyProfile } from '@/lib/server/users/profile'
 
 // Profil complet en JSON — app/(app)/profile/page.tsx appelle getMyProfile()
 // directement depuis un composant serveur (pas besoin de hop API pour le

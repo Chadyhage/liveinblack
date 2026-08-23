@@ -26,12 +26,12 @@ import {
   listBlockedUsers,
   listMyReports,
   getContactPhone,
-} from '../messaging'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
-import User from '../../models/User'
-import Report from '../../models/Report'
-import ProviderProfile from '../../models/ProviderProfile'
+} from '../messaging/messaging'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
+import User from '@/lib/models/User'
+import Report from '@/lib/models/Report'
+import ProviderProfile from '@/lib/models/ProviderProfile'
 import { fakeObjectId, RUN_INTEGRATION, seedUser, setupMongoIntegrationSuite } from './integrationTestHelpers'
 
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

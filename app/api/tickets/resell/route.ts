@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { listTicketForResale } from '@/lib/server/resale'
+import { listTicketForResale } from '@/lib/server/events/resale'
 
 const bodySchema = z.object({ ticketCode: z.string().trim().min(1), resalePrice: z.number().positive() })
 

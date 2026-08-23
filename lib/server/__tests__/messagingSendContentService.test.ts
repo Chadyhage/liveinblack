@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { resolveSendMessageContent } from '../messagingSendContentService'
-import ProviderProfile from '../../models/ProviderProfile'
-import Event from '../../models/Event'
+import { resolveSendMessageContent } from '../messaging/messagingSendContentService'
+import ProviderProfile from '@/lib/models/ProviderProfile'
+import Event from '@/lib/models/Event'
 
 vi.mock('../../models/ProviderProfile', () => ({
   default: {

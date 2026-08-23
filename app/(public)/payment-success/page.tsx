@@ -1,4 +1,4 @@
-import PaymentSuccessClient from '@/app/components/PaymentSuccessClient'
+import PaymentSuccessClient from '@/app/components/features/account/PaymentSuccessClient'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'État du paiement — LIVEINBLACK', robots: { index: false, follow: false } }

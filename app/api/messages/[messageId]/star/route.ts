@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { starMessage, unstarMessage } from '@/lib/server/messaging'
+import { starMessage, unstarMessage } from '@/lib/server/messaging/messaging'
 
 // Marquer/retirer un message des "Importants" — voir lib/server/messaging.ts.
 export async function POST(_req: Request, { params }: { params: Promise<{ messageId: string }> }) {

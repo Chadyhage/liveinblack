@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Stars, StarInput } from './StarRating'
+import { Stars, StarInput } from '@/app/components/ui/StarRating'
 import { computeReviewStats, REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
 import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 

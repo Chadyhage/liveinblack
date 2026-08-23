@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { voteOnPoll } from '@/lib/server/polls'
+import { voteOnPoll } from '@/lib/server/messaging/polls'
 
 // Vote (ou dé-vote / changement de vote) sur un message de type 'poll' OU
 // 'event_poll' — même endpoint pour les deux, voteOnPoll applique le garde

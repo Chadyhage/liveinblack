@@ -13,9 +13,9 @@ import {
   listCandidateEventsForActualite,
   resolveActualiteEventLabels,
   type AgentCaller,
-} from '../agentHomepageConfig'
-import HomepageConfig from '../../models/HomepageConfig'
-import Event from '../../models/Event'
+} from '../agent/agentHomepageConfig'
+import HomepageConfig from '@/lib/models/HomepageConfig'
+import Event from '@/lib/models/Event'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

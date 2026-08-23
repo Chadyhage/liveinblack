@@ -4,11 +4,11 @@
 // tests unitaires purs de lib/shared/eventStats.ts.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { getEventStats } from '../eventStats'
-import { createOrganizerEvent } from '../organizerEvents'
-import Event from '../../models/Event'
-import EventOrder from '../../models/EventOrder'
-import Ticket from '../../models/Ticket'
+import { getEventStats } from '../events/eventStats'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import EventOrder from '@/lib/models/EventOrder'
+import Ticket from '@/lib/models/Ticket'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

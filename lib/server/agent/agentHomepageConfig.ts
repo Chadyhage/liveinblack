@@ -1,6 +1,6 @@
-import { getDb } from '../db/mongoose'
-import HomepageConfig, { HOMEPAGE_ACTUALITE_ID, ACTUALITE_ACCENTS, type ActualiteAccent } from '../models/HomepageConfig'
-import { listPublicEvents } from './events'
+import { getDb } from '@/lib/db/mongoose'
+import HomepageConfig, { HOMEPAGE_ACTUALITE_ID, ACTUALITE_ACCENTS, type ActualiteAccent } from '@/lib/models/HomepageConfig'
+import { listPublicEvents } from '../events/events'
 import { listEventsForAgent } from './agentEvents'
 import { revalidateTag } from 'next/cache'
 

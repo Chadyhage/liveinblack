@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { getOrCreateMyProviderProfile, updateProviderProfile } from '@/lib/server/providerProfile'
+import { getOrCreateMyProviderProfile, updateProviderProfile } from '@/lib/server/provider/providerProfile'
 import { SOCIAL_NETWORKS } from '@/lib/shared/social'
 
 const socialLinksSchema = z

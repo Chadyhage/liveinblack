@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { removeOrderItem } from '@/lib/server/eventOrders'
+import { removeOrderItem } from '@/lib/server/events/eventOrders'
 
 // Remplace api/event-stock.js (suppression d'une ligne). Rang 0 : seulement
 // sa propre ligne, encore non servie/payée (sinon erreur dure). Staff :

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { sendEventRecapReminders } from '@/lib/server/organizerEvents'
+import { sendEventRecapReminders } from '@/lib/server/organizer/organizerEvents'
 
 // Récap organisateur "c'est dans 2 jours" — même garde secret que les
 // autres crons (échec fermé si absent).

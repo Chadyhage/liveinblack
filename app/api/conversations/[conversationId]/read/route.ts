@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { markConversationRead } from '@/lib/server/messaging'
+import { markConversationRead } from '@/lib/server/messaging/messaging'
 
 // Marque la conversation comme lue par l'appelant jusqu'à maintenant — aucun
 // corps de requête, tout vient de la session + du paramètre de route.

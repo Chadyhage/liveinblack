@@ -3,10 +3,10 @@
 // par le BoostModal côté tableau de bord organisateur).
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { getEventBoostAvailability, reserveBoostSlot, releaseBoostSlotIfPending } from '../boostSlots'
-import Event from '../../models/Event'
-import BoostSlot from '../../models/BoostSlot'
-import { boostSlotId, normalizeBoostRegion } from '../../shared/boosts'
+import { getEventBoostAvailability, reserveBoostSlot, releaseBoostSlotIfPending } from '../events/boostSlots'
+import Event from '@/lib/models/Event'
+import BoostSlot from '@/lib/models/BoostSlot'
+import { boostSlotId, normalizeBoostRegion } from '@/lib/shared/boosts'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

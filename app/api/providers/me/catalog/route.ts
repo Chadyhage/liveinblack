@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { addCatalogItem } from '@/lib/server/providerProfile'
+import { addCatalogItem } from '@/lib/server/provider/providerProfile'
 
 const addSchema = z.object({
   name: z.string().min(1),

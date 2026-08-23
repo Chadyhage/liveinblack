@@ -6,7 +6,7 @@ import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
-import { getAgentSalesDashboard } from '@/lib/server/agentSales'
+import { getAgentSalesDashboard } from '@/lib/server/agent/agentSales'
 import AgentSalesClient, { type PlaceView } from './AgentSalesClient'
 
 // Espace agent DE VENTE (#C — rôle EventStaff 'vendeur') — route renommée

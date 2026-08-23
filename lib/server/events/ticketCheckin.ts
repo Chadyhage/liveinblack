@@ -1,11 +1,11 @@
 import mongoose from 'mongoose'
-import { getDb } from '../db/mongoose'
-import Ticket from '../models/Ticket'
-import Event from '../models/Event'
-import EventStaff from '../models/EventStaff'
-import User from '../models/User'
+import { getDb } from '@/lib/db/mongoose'
+import Ticket from '@/lib/models/Ticket'
+import Event from '@/lib/models/Event'
+import EventStaff from '@/lib/models/EventStaff'
+import User from '@/lib/models/User'
 import { verifyTicketToken, extractTicketCode } from './ticketToken'
-import { isEventEnded } from '../shared/event-time'
+import { isEventEnded } from '@/lib/shared/event-time'
 
 // Port de api/tickets.js (checkinTicket) + de la partie serveur de
 // ScannerPage.jsx (processCode). Dans le legacy, l'essentiel de la

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { uploadProviderProfileMedia } from '@/lib/server/providerProfile'
+import { uploadProviderProfileMedia } from '@/lib/server/provider/providerProfile'
 
 const uploadSchema = z.object({
   kind: z.enum(['avatar', 'cover']),

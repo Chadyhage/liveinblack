@@ -45,6 +45,7 @@ function getPanelContentStyle(contentStyle: CSSProperties | undefined): CSSPrope
 export default function Modal({
   onClose,
   children,
+  maxWidth,
   hideClose,
   contentStyle,
   ariaLabel = 'Fenêtre de dialogue',
@@ -57,6 +58,10 @@ export default function Modal({
   const titleId = useId()
   const subtitleId = useId()
   const panelContentStyle = getPanelContentStyle(contentStyle)
+
+  if (maxWidth) {
+    ;(panelContentStyle as Record<string, unknown>)['--modal-max-width'] = `${maxWidth}px`
+  }
 
   return (
     <BaseModal

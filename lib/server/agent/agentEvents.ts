@@ -1,7 +1,7 @@
-import { getDb } from '../db/mongoose'
-import Event from '../models/Event'
-import { getEventEndTimestamp } from '../shared/eventUrgency'
-import { cancelOrganizerEvent, type CancelEventResult } from './organizerEventLifecycle'
+import { getDb } from '@/lib/db/mongoose'
+import Event from '@/lib/models/Event'
+import { getEventEndTimestamp } from '@/lib/shared/eventUrgency'
+import { cancelOrganizerEvent, type CancelEventResult } from '../organizer/organizerEventLifecycle'
 
 // Port de la vue admin « Événements » de src/pages/AgentPage.jsx
 // (tab === 'events', #9 phase agent/admin) — liste TOUS les événements

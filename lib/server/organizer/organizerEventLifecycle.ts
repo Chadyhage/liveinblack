@@ -1,0 +1,307 @@
+import { getDb } from '@/lib/db/mongoose'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import EventStaff from '@/lib/models/EventStaff'
+import PromoCode from '@/lib/models/PromoCode'
+import ResaleListing from '@/lib/models/ResaleListing'
+import Boost from '@/lib/models/Boost'
+import BoostSlot from '@/lib/models/BoostSlot'
+import OrganizerProfile from '@/lib/models/OrganizerProfile'
+import Ticket from '@/lib/models/Ticket'
+import GroupMembership from '@/lib/models/GroupMembership'
+import EventOrder from '@/lib/models/EventOrder'
+import EventOrderLog from '@/lib/models/EventOrderLog'
+import EventPlaylist from '@/lib/models/EventPlaylist'
+import SeatHold from '@/lib/models/SeatHold'
+import EventInterest from '@/lib/models/EventInterest'
+import EventRefund from '@/lib/models/EventRefund'
+import { refundStripeOrder } from '../events/eventRefunds'
+import { recordFedapayRefund } from '../payments/fedapayRefunds'
+import { notifyScheduleChange } from './organizerFollowNotifications'
+import { notifyUserById } from '@/lib/server/emails/notify'
+import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from '@/lib/server/emails'
+import { fmtMoney } from '@/lib/shared/money'
+import { revalidateTag } from 'next/cache'
+import {
+  buildRefundWindowCloseDate,
+  grossRefundMajor,
+  isPastOrInvalidEventDate,
+  resolveRefundWindowDays,
+} from './organizerEventLifecycleUtils'
+
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
+// Port des flux "annuler" / "reporter" / "supprimer" de
+// src/pages/MesEvenementsPage.jsx (#7 phase organisateur). Seul le
+// PROPRIÉTAIRE (organizerId/createdBy — jamais un simple manager d'équipe
+// EventStaff, qui n'a d'autorité que SUR PLACE le soir de l'événement) peut
+// déclencher ces trois actions.
+
+export interface LifecycleCaller {
+  id: string
+}
+
+type ErrResult = { ok: false; status: number; error: string }
+
+// `bypassOwnership` (#9 phase agent/admin — annulation admin d'un événement
+// quelconque, jamais implémentée en legacy comme un flux distinct : l'admin
+// tapait directement le MÊME endpoint 'cancel_event' que l'organisateur,
+// simplement autorisé côté serveur pour tout appelant admin) laisse passer
+// n'importe quel eventId sans revérifier organizerId/createdBy — réservé à
+// l'appelant agent (lib/server/agentEvents.ts), jamais exposé à l'organisateur.
+async function assertOwner(eventId: string, callerId: string, bypassOwnership = false) {
+  const event = await Event.findById(eventId)
+  if (!event) return { ok: false as const, status: 404, error: 'event_not_found' }
+  if (!bypassOwnership && event.organizerId !== callerId && event.createdBy !== callerId) return { ok: false as const, status: 403, error: 'forbidden' }
+  return { ok: true as const, event }
+}
+
+// ────────────────────────────────── cancelEvent ──────────────────────────────
+
+export type CancelEventResult = ErrResult | { ok: true; refundedCount: number; refundFailedCount: number }
+
+// Annule l'événement et déclenche le remboursement de CHAQUE commande payée
+// (Stripe : remboursement réel immédiat ; FedaPay : aucune API de
+// remboursement n'existe, une entrée `pending_manual` est consignée pour un
+// traitement humain — voir lib/server/fedapayRefunds.ts). Un échec de
+// remboursement individuel n'annule jamais la décision d'annulation de
+// l'événement elle-même (déjà actée avant la boucle) — il est seulement
+// consigné (PaymentAlert, dans refundStripeOrder) pour intervention manuelle.
+export async function cancelOrganizerEvent(
+  caller: LifecycleCaller,
+  eventId: string,
+  message: string,
+  opts?: { bypassOwnership?: boolean }
+): Promise<CancelEventResult> {
+  await getDb()
+
+  const guard = await assertOwner(eventId, caller.id, opts?.bypassOwnership)
+  if (!guard.ok) return guard
+  const { event } = guard
+
+  if (!event.cancelled) {
+    event.cancelled = true
+    event.cancellationMessage = message?.trim().slice(0, 500) || ''
+    event.cancelledAt = new Date()
+    await event.save()
+
+    // Alerte `scheduleChanges` aux abonnés — dans le `if (!event.cancelled)`
+    // pour ne partir qu'UNE fois (un rappel de cancelOrganizerEvent sur un
+    // événement déjà annulé ne doit jamais renotifier, même logique
+    // d'idempotence que notifyEventBuyers côté legacy pour l'annulation).
+    // Jamais bloquant pour l'annulation elle-même (déjà actée ci-dessus).
+    try {
+      await notifyScheduleChange(
+        event.organizerId,
+        event.organizerName || '',
+        { id: String(event._id), name: event.name, dateDisplay: event.dateDisplay, date: event.date, time: event.time, location: event.location, city: event.city },
+        'cancelled'
+      )
+    } catch (err) {
+      console.error('[organizerEventLifecycle] notifyScheduleChange (cancelled) failed:', err)
+    }
+    revalidateTag('public-events', 'default')
+    revalidateTag('public-organizers', 'default')
+  }
+
+  const paidOrders = await Order.find({ eventId, status: 'paid' })
+  let refundedCount = 0
+  let refundFailedCount = 0
+  let totalRefundedMajor = 0
+  for (const order of paidOrders) {
+    // Garde explicite contre un second passage : le statut Order reste
+    // volontairement `paid` pour préserver l'historique financier, donc le
+    // simple filtre de la requête ne suffit pas à garantir l'idempotence.
+    // EventRefund est la trace canonique, commune aux rails Stripe/FedaPay.
+    const paymentRef = order.rail === 'stripe' ? order.stripeSessionId : order.fedapayTxnId
+    if (paymentRef) {
+      const alreadyRefunded = await EventRefund.exists({
+        eventId,
+        paymentRef,
+        status: { $in: ['refunded', 'pending_manual'] },
+      })
+      if (alreadyRefunded) continue
+    }
+    const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
+    if (result.ok) {
+      refundedCount++
+      const amountMajor = grossRefundMajor(order)
+      totalRefundedMajor += amountMajor
+      // Email best-effort par acheteur remboursé — ne bloque jamais la boucle
+      // (voir lib/server/emails/notify.ts). Délai indicatif générique (le rail
+      // exact — Stripe carte vs FedaPay pending_manual — n'est pas exposé par
+      // refundStripeOrder/recordFedapayRefund, on reste volontairement vague).
+      await notifyUserById(order.userId, () =>
+        eventCancelledRefundEmail(event.name, fmtMoney(amountMajor, order.currency), 'quelques jours ouvrés', event.cancellationMessage || null, SITE)
+      )
+    } else {
+      refundFailedCount++
+    }
+  }
+
+  // Récap à l'organisateur — un seul email, même si aucun remboursement n'a
+  // eu lieu (event sans vente) : il sait que l'annulation a bien été traitée.
+  // Devise : toutes les commandes d'un même événement partagent la même
+  // devise (event.currency) — fmtMoney sur le total agrégé est donc valide.
+  if (paidOrders.length > 0) {
+    await notifyUserById(event.organizerId, () =>
+      cancellationFinancialImpactEmail(
+        event.name,
+        fmtMoney(totalRefundedMajor, paidOrders[0].currency),
+        refundFailedCount > 0 ? `${refundFailedCount} remboursement(s) ont échoué et nécessitent un suivi manuel.` : 'Tous les remboursements ont été traités avec succès.',
+        SITE
+      )
+    )
+  }
+
+  return { ok: true, refundedCount, refundFailedCount }
+}
+
+// ────────────────────────────────── postponeEvent ────────────────────────────
+
+export interface PostponeInput {
+  date: string
+  time?: string
+  // Nombre de jours pendant lesquels un client peut demander le remboursement
+  // de son billet plutôt que de garder sa place pour la nouvelle date (défaut
+  // 7 jours — cf. politique d'annulation/remboursement, "fenêtre communiquée").
+  refundWindowDays?: number
+}
+
+export type PostponeEventResult = ErrResult | { ok: true }
+
+// Les billets/QR déjà émis restent valables tels quels — aucun remboursement
+// automatique, aucune modification de billet : le contrôle d'entrée
+// (isEventEnded) relit `Event.date`/`time` en direct, donc reporter prolonge
+// naturellement la fenêtre de check-in sans rien toucher côté Ticket. Un
+// client qui refuse la nouvelle date peut demander un remboursement dans la
+// fenêtre ci-dessous (lib/server/clientRefunds.ts).
+export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: string, input: PostponeInput): Promise<PostponeEventResult> {
+  await getDb()
+
+  const guard = await assertOwner(eventId, caller.id)
+  if (!guard.ok) return guard
+  const { event } = guard
+  if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled' }
+  if (!input.date?.trim()) return { ok: false, status: 400, error: 'date_required' }
+  const nextTime = input.time?.trim() || '00:00'
+  if (isPastOrInvalidEventDate(input.date, input.time, Date.now())) return { ok: false, status: 400, error: 'date_in_past' }
+  if (input.date.trim() === event.date && nextTime === (event.time || '00:00')) return { ok: false, status: 409, error: 'same_date' }
+
+  // Ne garde que la date/heure D'ORIGINE (premier report) — un second report
+  // ne doit jamais écraser "depuis quand" l'événement a réellement bougé.
+  if (!event.postponedFrom) {
+    event.postponedFrom = { date: event.date, time: event.time }
+  }
+  const windowDays = resolveRefundWindowDays(input.refundWindowDays)
+  event.refundWindowClosesAt = buildRefundWindowCloseDate(Date.now(), windowDays)
+  const previousWhen = [event.date, event.time].filter(Boolean).join(' · ')
+  event.date = input.date
+  if (input.time?.trim()) event.time = input.time
+  const newWhen = [event.date, event.time].filter(Boolean).join(' · ')
+  // Nouvelle date ⇒ nouvelle fenêtre J-2 pertinente pour le récap organisateur.
+  event.recapEmailSentAt = null
+
+  await event.save()
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
+
+  // Revente suspendue pendant un report (politique d'annulation/remboursement
+  // §2) — bloque toute nouvelle mise en vente/achat tant que le détenteur
+  // n'a pas décidé de garder son billet ou de demander un remboursement.
+  // Réactivation manuelle par le vendeur non gérée ici (limitation connue,
+  // v1) : il devra recréer un listing après résolution du report.
+  await ResaleListing.updateMany({ eventId: String(event._id), status: 'active' }, { $set: { status: 'suspended' } })
+
+  // Email aux détenteurs de billet PAYÉ (distinct de notifyScheduleChange
+  // ci-dessous, qui ne notifie que les ABONNÉS — voir en-tête de
+  // lib/server/emails/templates/followers.ts). Best-effort, jamais bloquant.
+  const paidOrders = await Order.find({ eventId: String(event._id), status: 'paid' })
+  for (const order of paidOrders) {
+    await notifyUserById(order.userId, () =>
+      eventPostponedTicketHolderEmail(event.name, previousWhen, newWhen, `${SITE}/profile/billets`, SITE)
+    )
+  }
+
+  // Alerte `scheduleChanges` aux abonnés — un report se renotifie à CHAQUE
+  // appel (jamais idempotent comme l'annulation) : un 2e report vers une
+  // autre date est une NOUVELLE information pour l'abonné, exactement comme
+  // notifyEventBuyers côté legacy pour le report des acheteurs. Jamais
+  // bloquant pour le report lui-même (déjà acté ci-dessus).
+  try {
+    await notifyScheduleChange(
+      event.organizerId,
+      event.organizerName || '',
+      { id: String(event._id), name: event.name, dateDisplay: event.dateDisplay, date: event.date, time: event.time, location: event.location, city: event.city },
+      'postponed',
+      { previousWhen, newWhen }
+    )
+  } catch (err) {
+    console.error('[organizerEventLifecycle] notifyScheduleChange (postponed) failed:', err)
+  }
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
+
+  return { ok: true }
+}
+
+// ────────────────────────────────── deleteEvent ──────────────────────────────
+
+export type DeleteEventResult = ErrResult | { ok: true; deleted: true } | { ok: false; status: 409; error: 'has_bookings'; bookingCount: number }
+
+// Suppression FERMÉE dès qu'une réservation existe (même logique que legacy :
+// un événement avec des billets vendus ne se supprime plus jamais — il doit
+// être ANNULÉ à la place, pour que les acheteurs soient remboursés et
+// prévenus). Le client reçoit `bookingCount` pour basculer automatiquement
+// vers le flux d'annulation, exactement comme MesEvenementsPage.jsx.
+export async function deleteOrganizerEvent(caller: LifecycleCaller, eventId: string): Promise<DeleteEventResult> {
+  await getDb()
+
+  const guard = await assertOwner(eventId, caller.id)
+  if (!guard.ok) return guard
+
+  // Somme de `qty` (billets réellement vendus), pas un simple compte de
+  // commandes — une commande de groupe peut représenter plusieurs billets en
+  // une seule ligne, et c'est ce nombre-là que legacy affiche ("N
+  // réservation(s) ont/a déjà eu lieu").
+  const [{ bookingCount = 0 } = {}] = await Order.aggregate([
+    { $match: { eventId, status: 'paid' } },
+    { $group: { _id: null, bookingCount: { $sum: '$qty' } } },
+  ])
+  if (bookingCount > 0) return { ok: false, status: 409, error: 'has_bookings', bookingCount }
+
+  await Promise.all([
+    Event.deleteOne({ _id: eventId }),
+    EventStaff.deleteOne({ eventId }),
+    PromoCode.deleteMany({ eventId }),
+    // BoostSlot n'est qu'un verrou de position (position+région), sans valeur
+    // d'audit propre — supprimé entièrement pour libérer la position. Boost
+    // est le VRAI enregistrement d'achat (paiement réel) : conservé mais
+    // marqué 'cancelled', jamais supprimé, pour garder une trace comptable.
+    BoostSlot.deleteMany({ eventId }),
+    Boost.updateMany({ eventId }, { $set: { status: 'cancelled' } }),
+    // Un média de galerie organisateur peut être tagué avec l'événement
+    // supprimé (StudioClient) — le média lui-même reste (photo/vidéo réelle),
+    // seule la référence orpheline vers l'événement disparu est effacée.
+    OrganizerProfile.updateMany({ 'media.eventId': eventId }, { $set: { 'media.$[m].eventId': null } }, { arrayFilters: [{ 'm.eventId': eventId }] }),
+    // Collections restantes pouvant exister même quand bookingCount===0 (ex.
+    // billets guestlist sans Order payé, intérêt/playlist sans aucune vente) —
+    // sans ce nettoyage elles restent orphelines, référençant un eventId qui
+    // n'existe plus (bug confirmé le 11/08/2026 : un event supprimé restait
+    // visible via une entrée fantôme ailleurs dans l'app). Aucune de ces
+    // collections n'a de valeur comptable propre une fois l'event supprimé
+    // (contrairement à Boost/EventPayout/EventRefund, jamais touchés ici).
+    Ticket.deleteMany({ eventId }),
+    GroupMembership.deleteMany({ eventId }),
+    EventOrder.deleteOne({ eventId }),
+    EventOrderLog.deleteOne({ eventId }),
+    EventPlaylist.deleteOne({ eventId }),
+    SeatHold.deleteMany({ eventId }),
+    EventInterest.deleteMany({ eventId }),
+    ResaleListing.deleteMany({ eventId }),
+  ])
+  revalidateTag('public-events', 'default')
+  revalidateTag('public-organizers', 'default')
+
+  return { ok: true, deleted: true }
+}

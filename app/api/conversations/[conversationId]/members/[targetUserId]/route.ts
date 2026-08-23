@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { removeMember } from '@/lib/server/groups'
+import { removeMember } from '@/lib/server/messaging/groups'
 
 // Retire un membre d'un groupe — réservé aux admins, voir lib/server/groups.ts
 // (removeMember). Se retirer SOI-MÊME passe par POST /leave, pas cette route.

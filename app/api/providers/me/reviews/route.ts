@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { getMyProviderReviews } from '@/lib/server/providerReviews'
+import { getMyProviderReviews } from '@/lib/server/provider/providerReviews'
 
 // Dashboard prestataire — tous les avis REÇUS (publiés + masqués), voir
 // MyProviderReviews (#92).

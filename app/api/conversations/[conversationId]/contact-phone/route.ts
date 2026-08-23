@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { getContactPhone } from '@/lib/server/messaging'
+import { getContactPhone } from '@/lib/server/messaging/messaging'
 
 // Numéro PRO de l'interlocuteur d'une conversation directe — voir
 // lib/server/messaging.ts:getContactPhone. Affiché (lien `tel:`) dans le

@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { canProposeServices } from '@/lib/server/permissions'
-import { getOrCreateMyProviderProfile } from '@/lib/server/providerProfile'
-import { getMySubscriptionOverview } from '@/lib/server/providerSubscriptions'
-import { getMyProviderReviews } from '@/lib/server/providerReviews'
+import { getOrCreateMyProviderProfile } from '@/lib/server/provider/providerProfile'
+import { getMySubscriptionOverview } from '@/lib/server/provider/providerSubscriptions'
+import { getMyProviderReviews } from '@/lib/server/provider/providerReviews'
 import ProposerServicesClient from './ProposerServicesClient'
 
 // Port de ProposerServicesPage.jsx (#8 phase prestataire, tâche #91) — "Mon

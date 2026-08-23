@@ -1,11 +1,11 @@
 import crypto from 'node:crypto'
 import mongoose, { type HydratedDocument } from 'mongoose'
-import Event, { type EventDoc } from '../models/Event'
-import EventStaff from '../models/EventStaff'
-import EventOrder, { type EventOrderDoc } from '../models/EventOrder'
-import EventOrderLog from '../models/EventOrderLog'
-import User from '../models/User'
-import type { MessagingErrorResult } from './messagingServiceTypes'
+import Event, { type EventDoc } from '@/lib/models/Event'
+import EventStaff from '@/lib/models/EventStaff'
+import EventOrder, { type EventOrderDoc } from '@/lib/models/EventOrder'
+import EventOrderLog from '@/lib/models/EventOrderLog'
+import User from '@/lib/models/User'
+import type { MessagingErrorResult } from '../messaging/messagingServiceTypes'
 
 export type StaffRoster = Record<string, { role: string }>
 

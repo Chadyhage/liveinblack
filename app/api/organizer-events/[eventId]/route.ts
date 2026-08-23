@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { updateOrganizerEvent, getMyOrganizerEventDetail } from '@/lib/server/organizerEvents'
-import { deleteOrganizerEvent } from '@/lib/server/organizerEventLifecycle'
+import { updateOrganizerEvent, getMyOrganizerEventDetail } from '@/lib/server/organizer/organizerEvents'
+import { deleteOrganizerEvent } from '@/lib/server/organizer/organizerEventLifecycle'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ eventId: string }> }) {
   const session = await auth()

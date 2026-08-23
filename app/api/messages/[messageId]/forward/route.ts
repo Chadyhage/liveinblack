@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { forwardMessage } from '@/lib/server/messaging'
+import { forwardMessage } from '@/lib/server/messaging/messaging'
 
 // Transfère un message vers une ou plusieurs conversations — voir
 // lib/server/messaging.ts (forwardMessage) pour les gardes (appartenance,

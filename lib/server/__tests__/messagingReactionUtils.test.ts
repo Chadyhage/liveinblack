@@ -4,7 +4,7 @@ import {
   MAX_REACTION_EMOJI_LENGTH,
   normalizeReactionMap,
   validateReactionEmoji,
-} from '../messagingReactionUtils'
+} from '../messaging/messagingReactionUtils'
 
 describe('messagingReactionUtils', () => {
   it('valide un emoji non vide et borne sa longueur', () => {

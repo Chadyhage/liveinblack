@@ -1,8 +1,8 @@
 import mongoose from 'mongoose'
 import { beforeAll, afterAll, beforeEach } from 'vitest'
-import Conversation from '../../models/Conversation'
-import Event from '../../models/Event'
-import User from '../../models/User'
+import Conversation from '@/lib/models/Conversation'
+import Event from '@/lib/models/Event'
+import User from '@/lib/models/User'
 
 export const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 export const TEST_URI = process.env.MONGODB_URI || ''

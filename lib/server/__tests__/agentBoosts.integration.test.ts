@@ -4,9 +4,9 @@
 // src/pages/AgentPage.jsx : actifs/conflits/expirés + revenu net.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { listActiveBoostsForAgent } from '../agentBoosts'
-import Boost from '../../models/Boost'
-import Event from '../../models/Event'
+import { listActiveBoostsForAgent } from '../agent/agentBoosts'
+import Boost from '@/lib/models/Boost'
+import Event from '@/lib/models/Event'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

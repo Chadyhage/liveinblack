@@ -11,9 +11,9 @@ import bcrypt from 'bcryptjs'
 const sendEmail = vi.fn()
 vi.mock('../email', () => ({ sendEmail: (...a: unknown[]) => sendEmail(...a) }))
 
-import { listApplicationsForAgent, getApplicationForAgent, moderateApplication, setApplicationAdminNote, type AgentCaller } from '../applications'
-import User from '../../models/User'
-import Application from '../../models/Application'
+import { listApplicationsForAgent, getApplicationForAgent, moderateApplication, setApplicationAdminNote, type AgentCaller } from '../provider/applications'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

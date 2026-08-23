@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { requestClientRefund } from '@/lib/server/clientRefunds'
+import { requestClientRefund } from '@/lib/server/payments/clientRefunds'
 
 export async function POST(_req: Request, { params }: { params: Promise<{ orderId: string }> }) {
   const session = await auth()

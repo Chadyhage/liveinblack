@@ -1,12 +1,12 @@
 import crypto from 'node:crypto'
-import cloudinary from './cloudinary'
+import cloudinary from '@/lib/server/cloudinary'
 import {
   PUBLIC_MEDIA_FORMATS,
   PUBLIC_MEDIA_IMAGE_MAX_BYTES,
   PUBLIC_MEDIA_VIDEO_MAX_BYTES,
   type PublicMediaPurpose,
   type PublicMediaUploadReference,
-} from '../shared/publicMediaUploads'
+} from '@/lib/shared/publicMediaUploads'
 
 const INTENT_TTL_SECONDS = 60 * 60
 const UPLOAD_FOLDER_PREFIX = 'media/pending'

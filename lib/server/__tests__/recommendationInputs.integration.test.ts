@@ -5,14 +5,14 @@
 // route assemble, aucune de ces 3 fonctions n'ayant de test dédié jusqu'ici.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { getMyProfile, updatePreferences } from '../profile'
-import { listActiveInterestSignals, markEventInterested } from '../eventInterests'
-import { getBoostedEventIds } from '../boosts'
-import { createOrganizerEvent } from '../organizerEvents'
-import Event from '../../models/Event'
-import EventInterest from '../../models/EventInterest'
-import Boost from '../../models/Boost'
-import User from '../../models/User'
+import { getMyProfile, updatePreferences } from '../users/profile'
+import { listActiveInterestSignals, markEventInterested } from '../events/eventInterests'
+import { getBoostedEventIds } from '../events/boosts'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import EventInterest from '@/lib/models/EventInterest'
+import Boost from '@/lib/models/Boost'
+import User from '@/lib/models/User'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

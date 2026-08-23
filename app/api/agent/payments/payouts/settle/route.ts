@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { markSellerBalancePaid } from '@/lib/server/agentPayments'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { markSellerBalancePaid } from '@/lib/server/agent/agentPayments'
 
 const bodySchema = z.object({
   sellerUid: z.string().trim().min(1),

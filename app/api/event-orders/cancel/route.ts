@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { cancelOrderItem } from '@/lib/server/eventOrders'
+import { cancelOrderItem } from '@/lib/server/events/eventOrders'
 
 // Remplace api/event-stock.js (annulation d'une ligne). Rang = 3 exactement
 // (propriétaire/créateur de l'événement ou rôle roster 'manager') requis, et

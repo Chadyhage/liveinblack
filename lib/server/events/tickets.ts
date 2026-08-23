@@ -1,8 +1,8 @@
-import { getDb } from '../db/mongoose'
-import Ticket from '../models/Ticket'
-import Event from '../models/Event'
-import Order from '../models/Order'
-import ResaleListing from '../models/ResaleListing'
+import { getDb } from '@/lib/db/mongoose'
+import Ticket from '@/lib/models/Ticket'
+import Event from '@/lib/models/Event'
+import Order from '@/lib/models/Order'
+import ResaleListing from '@/lib/models/ResaleListing'
 import { verifyTicketToken, extractTicketCode, signTicketToken } from './ticketToken'
 
 // Contrairement au legacy (payload d'affichage embarqué dans le jeton, pensé

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Message from '../../models/Message'
+import Message from '@/lib/models/Message'
 import {
   deleteMessageForCaller,
   deleteMessageForEveryone,
   starMessageForCaller,
   unstarMessageForCaller,
-} from '../messagingMessageActionsService'
+} from '../messaging/messagingMessageActionsService'
 
 vi.mock('../../models/Message', () => ({
   default: {

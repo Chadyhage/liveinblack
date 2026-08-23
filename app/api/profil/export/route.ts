@@ -1,5 +1,5 @@
 import { auth } from '@/auth'
-import { buildMyDataExport } from '@/lib/server/dataExport'
+import { buildMyDataExport } from '@/lib/server/users/dataExport'
 
 // Art. 15 (droit d'accès) + Art. 20 (droit à la portabilité) RGPD —
 // "Télécharger mes données", voir lib/server/dataExport.ts pour la portée

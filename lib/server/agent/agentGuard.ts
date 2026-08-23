@@ -1,4 +1,4 @@
-import { canAdminister, type Role, type AccountStatus } from './permissions'
+import { canAdminister, type Role, type AccountStatus } from '@/lib/server/permissions'
 
 // Garde partagée pour les Route Handlers /api/agent/* (#9 phase agent/admin).
 // Port de lib/adminGuard.js — MAIS sans l'échappatoire "email super-admin"

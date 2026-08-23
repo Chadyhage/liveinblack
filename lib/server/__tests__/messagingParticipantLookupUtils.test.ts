@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import User from '../../models/User'
-import { resolveDirectMemberNames, resolveReadReceiptsAllowed } from '../messagingParticipantLookupUtils'
+import User from '@/lib/models/User'
+import { resolveDirectMemberNames, resolveReadReceiptsAllowed } from '../messaging/messagingParticipantLookupUtils'
 
 vi.mock('../../models/User', () => ({
   default: {

@@ -18,13 +18,13 @@ import {
   listOrdersForTicket,
   listOrdersForEvent,
   getOrderLog,
-} from '../eventOrders'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
-import User from '../../models/User'
-import EventStaff from '../../models/EventStaff'
-import EventOrder from '../../models/EventOrder'
-import EventOrderLog from '../../models/EventOrderLog'
+} from '../events/eventOrders'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import User from '@/lib/models/User'
+import EventStaff from '@/lib/models/EventStaff'
+import EventOrder from '@/lib/models/EventOrder'
+import EventOrderLog from '@/lib/models/EventOrderLog'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

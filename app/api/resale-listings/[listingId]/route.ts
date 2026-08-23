@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { withdrawResaleListing } from '@/lib/server/resale'
+import { withdrawResaleListing } from '@/lib/server/events/resale'
 
 // DELETE = retirer sa propre mise en vente (encore active) — jamais annuler
 // une vente déjà conclue.

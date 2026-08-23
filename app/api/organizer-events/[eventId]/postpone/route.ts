@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { postponeOrganizerEvent } from '@/lib/server/organizerEventLifecycle'
+import { postponeOrganizerEvent } from '@/lib/server/organizer/organizerEventLifecycle'
 
 const bodySchema = z.object({ date: z.string().trim().min(1), time: z.string().trim().optional() })
 

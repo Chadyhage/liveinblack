@@ -4,7 +4,7 @@ import {
   grossRefundMajor,
   isPastOrInvalidEventDate,
   resolveRefundWindowDays,
-} from '../organizerEventLifecycleUtils'
+} from '../organizer/organizerEventLifecycleUtils'
 
 describe('organizerEventLifecycleUtils', () => {
   it('calcule le remboursement brut hors frais pour EUR et XOF', () => {

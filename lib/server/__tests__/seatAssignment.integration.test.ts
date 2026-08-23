@@ -13,12 +13,12 @@
 //  - les races leave/revoke et invite/invite concurrents.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { inviteToSeat, acceptSeatInvitation, declineSeatInvitation, cancelSeatInvitation, leaveSeat, revokeSeat, listMyPendingInvitations } from '../seatAssignment'
-import Event from '../../models/Event'
-import Ticket from '../../models/Ticket'
-import User from '../../models/User'
-import GroupMembership from '../../models/GroupMembership'
-import SeatInvitation from '../../models/SeatInvitation'
+import { inviteToSeat, acceptSeatInvitation, declineSeatInvitation, cancelSeatInvitation, leaveSeat, revokeSeat, listMyPendingInvitations } from '../events/seatAssignment'
+import Event from '@/lib/models/Event'
+import Ticket from '@/lib/models/Ticket'
+import User from '@/lib/models/User'
+import GroupMembership from '@/lib/models/GroupMembership'
+import SeatInvitation from '@/lib/models/SeatInvitation'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

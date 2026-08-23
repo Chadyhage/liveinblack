@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getMyApplication, type ApplicationView } from '@/lib/server/applications'
+import { getMyApplication, type ApplicationView } from '@/lib/server/provider/applications'
 import { Card } from '@/app/components/ui'
 
 // Port de src/pages/MonDossierPage.jsx. Legacy ne montre qu'UN dossier à la

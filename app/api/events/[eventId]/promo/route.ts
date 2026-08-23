@@ -5,7 +5,7 @@ import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import PromoCode from '@/lib/models/PromoCode'
 import { checkRateLimit } from '@/lib/server/rateLimit'
-import { resolvePromo, promoLabel, promoUnitDiscount } from '@/lib/server/promos'
+import { resolvePromo, promoLabel, promoUnitDiscount } from '@/lib/server/events/promos'
 import { isEventEnded } from '@/lib/shared/event-time'
 
 const schema = z.object({

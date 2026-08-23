@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getMyApplication } from '@/lib/server/applications'
+import { getMyApplication } from '@/lib/server/provider/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 
 // Portrait éditorial créé sur mesure pour le parcours prestataire.
 const HERO_IMG = '/images/live-in-black/auth-provider.jpg'
-import PrestataireOnboardingWizard from '@/app/components/PrestataireOnboardingWizard'
+import PrestataireOnboardingWizard from '@/app/components/features/provider/PrestataireOnboardingWizard'
 
 // Route unique "Devenir prestataire" — publique (mode anonyme, pas de
 // session) ET connectée (reprise de dossier), même fusion que

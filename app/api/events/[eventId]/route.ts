@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getEventById } from '@/lib/server/events'
-import { getPublicOrganizerByUserId } from '@/lib/server/organizers'
+import { getEventById } from '@/lib/server/events/events'
+import { getPublicOrganizerByUserId } from '@/lib/server/organizer/organizers'
 
 // Détail d'un événement en JSON — miroir de resolveEvent() dans
 // app/(public)/events/[id]/page.tsx.

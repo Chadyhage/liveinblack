@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import { setApplicationAdminNote } from '@/lib/server/applications'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import { setApplicationAdminNote } from '@/lib/server/provider/applications'
 
 const bodySchema = z.object({ note: z.string().trim().max(2000) })
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { revokeSeat } from '@/lib/server/seatAssignment'
+import { revokeSeat } from '@/lib/server/events/seatAssignment'
 
 // Remplace api/tickets.js (action 'revoke'). Rend un siège de table
 // précédemment attribué à un invité — voir lib/server/seatAssignment.ts pour

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { replyToReview } from '@/lib/server/providerReviews'
+import { replyToReview } from '@/lib/server/provider/providerReviews'
 
 const bodySchema = z.object({ text: z.string().min(1) })
 

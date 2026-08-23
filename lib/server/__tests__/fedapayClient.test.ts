@@ -1,7 +1,7 @@
 // Port du sous-ensemble signature/webhook de scripts/fedapay.test.mjs
 import { describe, it, expect } from 'vitest'
 import crypto from 'node:crypto'
-import { verifyWebhookSignature, isApprovedTransactionEvent, transactionAmountMatches, isFedapayConfigured } from '../fedapayClient'
+import { verifyWebhookSignature, isApprovedTransactionEvent, transactionAmountMatches, isFedapayConfigured } from '../payments/fedapayClient'
 
 function signedHeader(payload: string, secret: string, timestamp = Math.floor(Date.now() / 1000)): string {
   const sig = crypto.createHmac('sha256', secret).update(`${timestamp}.${payload}`, 'utf8').digest('hex')

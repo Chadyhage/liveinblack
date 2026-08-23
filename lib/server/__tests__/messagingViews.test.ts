@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readLastReadAt, toConversationView, toMessageView, type ConversationSource, type MessageSource } from '../messagingViews'
+import { readLastReadAt, toConversationView, toMessageView, type ConversationSource, type MessageSource } from '../messaging/messagingViews'
 
 describe('messagingViews', () => {
   it('projette une conversation en DTO stable', () => {

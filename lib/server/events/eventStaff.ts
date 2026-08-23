@@ -1,11 +1,11 @@
 import mongoose from 'mongoose'
-import { getDb } from '../db/mongoose'
-import Event from '../models/Event'
-import EventStaff from '../models/EventStaff'
-import EventOrder from '../models/EventOrder'
-import User from '../models/User'
-import { notifyUserById } from './emails/notify'
-import { staffAddedEmail, staffRemovedEmail } from './emails'
+import { getDb } from '@/lib/db/mongoose'
+import Event from '@/lib/models/Event'
+import EventStaff from '@/lib/models/EventStaff'
+import EventOrder from '@/lib/models/EventOrder'
+import User from '@/lib/models/User'
+import { notifyUserById } from '@/lib/server/emails/notify'
+import { staffAddedEmail, staffRemovedEmail } from '@/lib/server/emails'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Conversation from '../../models/Conversation'
-import Message from '../../models/Message'
+import Conversation from '@/lib/models/Conversation'
+import Message from '@/lib/models/Message'
 import {
   clearConversationHistoryForCaller,
   hideConversationForCaller,
@@ -8,7 +8,7 @@ import {
   pinConversationForCaller,
   unmuteConversationForCaller,
   unpinConversationForCaller,
-} from '../messagingConversationPreferencesService'
+} from '../messaging/messagingConversationPreferencesService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

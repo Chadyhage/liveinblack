@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { cancelFriendRequest } from '@/lib/server/friends'
+import { cancelFriendRequest } from '@/lib/server/users/friends'
 
 // Annulation par l'EXPÉDITEUR de sa propre demande sortante encore en
 // attente — capacité absente du legacy (cf. en-tête de

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { Button, Card } from '@/app/components/ui'
 import { regions } from '@/lib/shared/regions'
 import { subPresentation, subPriceLabel, type SubWindow } from '@/lib/shared/providerSubscription'
-import type { ProviderProfileView } from '@/lib/server/providerProfile'
-import type { getMySubscriptionOverview } from '@/lib/server/providerSubscriptions'
+import type { ProviderProfileView } from '@/lib/server/provider/providerProfile'
+import type { getMySubscriptionOverview } from '@/lib/server/provider/providerSubscriptions'
 
 // Port détaillé de MonAbonnementPage.jsx — même mise en page (statut, grille
 // d'infos, note du mode de paiement, historique des paiements) que le

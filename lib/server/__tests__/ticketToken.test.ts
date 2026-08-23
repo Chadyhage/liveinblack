@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest'
-import { signTicketToken, verifyTicketToken, extractTicketCode } from '../ticketToken'
+import { signTicketToken, verifyTicketToken, extractTicketCode } from '../events/ticketToken'
 
 describe('ticketToken', () => {
   const prevSecret = process.env.AUTH_SECRET

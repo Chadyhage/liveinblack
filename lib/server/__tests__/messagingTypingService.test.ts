@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Conversation from '../../models/Conversation'
-import { listConversationTypingUsers, setConversationTypingState } from '../messagingTypingService'
+import Conversation from '@/lib/models/Conversation'
+import { listConversationTypingUsers, setConversationTypingState } from '../messaging/messagingTypingService'
 
 vi.mock('../../models/Conversation', () => ({
   default: {

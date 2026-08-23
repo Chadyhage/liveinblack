@@ -5,10 +5,10 @@
 // gestion organisateur : création, activation/désactivation, suppression.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-import { createPromoCode, listPromoCodes, togglePromoCodeActive, deletePromoCode } from '../organizerPromoCodes'
-import { createOrganizerEvent } from '../organizerEvents'
-import Event from '../../models/Event'
-import PromoCode from '../../models/PromoCode'
+import { createPromoCode, listPromoCodes, togglePromoCodeActive, deletePromoCode } from '../organizer/organizerPromoCodes'
+import { createOrganizerEvent } from '../organizer/organizerEvents'
+import Event from '@/lib/models/Event'
+import PromoCode from '@/lib/models/PromoCode'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

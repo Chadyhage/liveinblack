@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db/mongoose'
-import { processEventPayouts } from '@/lib/server/eventPayouts'
+import { processEventPayouts } from '@/lib/server/events/eventPayouts'
 
 // Remplace la partie "versements" de api/cron-subscriptions.js. FERME L'AUDIT
 // C09 : contrairement au legacy (qui continuait sans secret si la variable

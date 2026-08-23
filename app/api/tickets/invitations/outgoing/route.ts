@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { listOutgoingSeatInvitations } from '@/lib/server/seatAssignment'
+import { listOutgoingSeatInvitations } from '@/lib/server/events/seatAssignment'
 
 // Invitations de siège EN ATTENTE émises par l'appelant en tant qu'hôte, pour
 // les tickets passés en query (?ticketCodes=A,B,C) — alimente le 3ème état

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import { pinMessage, unpinMessage } from '@/lib/server/groups'
+import { pinMessage, unpinMessage } from '@/lib/server/messaging/groups'
 
 // Épingle/désépingle un MESSAGE dans un groupe — réservé aux admins, voir
 // lib/server/groups.ts (pinMessage/unpinMessage).

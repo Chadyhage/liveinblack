@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import Message from '../../models/Message'
-import { appendGroupSystemMessage } from '../groupSystemMessageService'
+import Message from '@/lib/models/Message'
+import { appendGroupSystemMessage } from '../messaging/groupSystemMessageService'
 
 vi.mock('../../models/Message', () => ({
   default: {

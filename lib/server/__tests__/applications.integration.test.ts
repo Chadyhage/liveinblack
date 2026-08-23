@@ -20,11 +20,11 @@ import {
   submitOrganizerApplication,
   registerAndSubmitOrganizerApplication,
   type DocumentEntryInput,
-} from '../applications'
-import { validateOrganizerFormData, isValidSiret } from '../../shared/applicationValidation'
-import User from '../../models/User'
-import Application from '../../models/Application'
-import type { OrganizerFormData } from '../../shared/applicationValidation'
+} from '../provider/applications'
+import { validateOrganizerFormData, isValidSiret } from '@/lib/shared/applicationValidation'
+import User from '@/lib/models/User'
+import Application from '@/lib/models/Application'
+import type { OrganizerFormData } from '@/lib/shared/applicationValidation'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)

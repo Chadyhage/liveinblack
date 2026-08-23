@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { sendMessageForCaller, type SendMessageDependencies } from '../messagingSendMessageService'
+import { sendMessageForCaller, type SendMessageDependencies } from '../messaging/messagingSendMessageService'
 
 describe('messagingSendMessageService', () => {
   const conversation = { _id: 'conv-1', participantIds: ['u1', 'u2'] } as never

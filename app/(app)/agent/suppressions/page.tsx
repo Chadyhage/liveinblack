@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { requireAgent } from '@/lib/server/agentGuard'
-import AgentDeletionClient from '@/app/components/AgentDeletionClient'
+import { requireAgent } from '@/lib/server/agent/agentGuard'
+import AgentDeletionClient from '@/app/components/features/agent/AgentDeletionClient'
 
 // Voir app/(app)/agent/page.tsx pour le contexte du découpage en routes réelles.
 export const metadata: Metadata = {

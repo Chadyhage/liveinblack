@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import LegalBackButton from '@/app/components/LegalBackButton'
+import LegalBackButton from '@/app/components/layout/LegalBackButton'
 import { Button, Card, Input, Textarea, Label, Mascot } from '@/app/components/ui'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
