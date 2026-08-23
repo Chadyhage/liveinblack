@@ -1,6 +1,7 @@
 import mongoose, { type HydratedDocument } from 'mongoose'
 import { getDb } from '@/lib/db/mongoose'
 import EventOrder, { type EventOrderDoc, type OrderItem } from '@/lib/models/EventOrder'
+import EventOrderLog from '@/lib/models/EventOrderLog'
 import Ticket from '@/lib/models/Ticket'
 import { addEventOrderItem, type AddOrderItemInput, type AddOrderItemResult } from './eventOrderAddItemService'
 import {
