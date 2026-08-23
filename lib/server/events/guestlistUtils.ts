@@ -30,6 +30,7 @@ export function restockedAvailable(total: number | null | undefined, available: 
 }
 
 export function toGuestlistView(ticket: GuestlistTicketLike): GuestlistEntryView {
+  const site = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
   const token = signTicketToken({
     ticketCode: ticket.ticketCode,
     seatVersion: ticket.seatVersion ?? 0,
@@ -41,6 +42,6 @@ export function toGuestlistView(ticket: GuestlistTicketLike): GuestlistEntryView
     guestName: ticket.guestName ?? null,
     bookedAt: ticket.bookedAt ? new Date(ticket.bookedAt).toISOString() : null,
     checkedInAt: ticket.checkedInAt ? new Date(ticket.checkedInAt).toISOString() : null,
-    ticketUrl: `${SITE}/ticket/${token}`,
+    ticketUrl: `${site}/ticket/${token}`,
   }
 }
