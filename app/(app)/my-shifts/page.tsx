@@ -88,7 +88,7 @@ export default async function MesSoireesPage() {
             </p>
           </div>
         ) : (
-          <div className="lb-dashboard-card-grid" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="lb-dashboard-card-grid">
             {events.map((ev) => {
               const meta = ROLE_META[ev.role] ? ROLE_META[ev.role] : { ...FALLBACK_ROLE_META, label: ev.role }
               const dateLine = [ev.dateDisplay, ev.city].filter(Boolean).join(' · ')

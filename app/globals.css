@@ -399,7 +399,7 @@ button:hover > .lb-card {
 
 .lb-dashboard-card-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 16px !important;
 }
 
@@ -407,7 +407,7 @@ button:hover > .lb-card {
    à 220/240 px et les faux panneaux transparents repérés pendant l'audit. */
 .lb-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: clamp(18px, 2vw, 26px);
   align-items: stretch;
 }
@@ -418,7 +418,7 @@ button:hover > .lb-card {
 }
 
 .lb-card-grid:has(> .lb-card:only-child) {
-  grid-template-columns: minmax(min(100%, 360px), 560px);
+  grid-template-columns: minmax(min(100%, 280px), 560px);
 }
 
 /* Grille compacte pour des listes secondaires (ex. événements à venir/passés

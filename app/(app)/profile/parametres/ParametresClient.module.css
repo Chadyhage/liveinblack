@@ -54,7 +54,7 @@
 .root :global(.settings-results-heading h2) { margin:5px 0 0; color:#fff; font-size:24px; letter-spacing:-.03em; }
 .root :global(.settings-group) { min-width:0; }
 .root :global(.settings-group>h3) { margin:0 0 12px 2px; color:rgba(245,245,247,.66); font-size:13px; font-weight:700; }
-.root :global(.settings-card-grid) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:start; }
+.root :global(.settings-card-grid) { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); gap:14px; align-items:start; }
 .root :global(.settings-card-grid>div) { min-width:0; }
 .root :global(.settings-card-grid .lb-card) { height:100%; padding:21px!important; border:1px solid rgba(255,255,255,.09)!important; border-radius:21px!important; background:rgba(255,255,255,.035)!important; box-shadow:none!important; }
 .root :global(.settings-card-grid .lb-card:hover) { border-color:rgba(255,255,255,.14)!important; }

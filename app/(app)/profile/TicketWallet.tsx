@@ -287,7 +287,7 @@ function Section({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 420px), 1fr))', gap: 10, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 10, alignItems: 'start' }}>
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
         ))}
