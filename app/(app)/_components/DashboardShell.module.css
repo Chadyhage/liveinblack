@@ -4,6 +4,7 @@
   min-height: 100dvh;
   isolation: isolate;
   overflow-x: clip;
+  overflow-y: visible;
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
   background: rgba(9, 9, 12, .34);
@@ -30,7 +31,7 @@
     linear-gradient(115deg, rgba(7, 7, 10, .86), rgba(9, 9, 13, .78) 58%, rgba(9, 9, 13, .88));
 }
 
-.layout { min-height: 100dvh; display: flex; align-items: flex-start; overflow-x: clip; }
+.layout { min-height: 100dvh; display: flex; align-items: flex-start; overflow-x: clip; overflow-y: visible; }
 .sidebar {
   width: var(--dashboard-sidebar);
   height: 100dvh;

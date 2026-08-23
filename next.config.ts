@@ -133,7 +133,16 @@ const nextConfig: NextConfig = {
       // les autres alias de route ci-dessus.
       { source: '/admin', destination: '/agent', permanent: true },
       { source: '/admin/:path*', destination: '/agent/:path*', permanent: true },
+      // Aliases /dashboard/*
+      { source: '/dashboard', destination: '/my-events', permanent: false },
+      { source: '/dashboard/:path*', destination: '/:path*', permanent: false },
     ]
+  },
+  async rewrites() {
+    return [
+      { source: '/dashboard', destination: '/my-events' },
+      { source: '/dashboard/:path*', destination: '/:path*' },
+    ];
   },
 };
 

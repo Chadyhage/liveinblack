@@ -55,6 +55,8 @@
 html {
   scroll-padding-top: 84px;
   background: #07070a;
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -71,6 +73,8 @@ body {
   position: relative;
   isolation: isolate;
   background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--foreground);
   font-family: var(--font-open-sans), "Open Sans", Arial, sans-serif;
   line-height: 1.5;
