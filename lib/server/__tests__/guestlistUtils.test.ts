@@ -1,9 +1,17 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest'
 import { normalizeGuestlistTicketCode, restockedAvailable, toGuestlistView } from '../events/guestlistUtils'
 
 vi.mock('../events/ticketToken', () => ({
   signTicketToken: vi.fn(() => 'signed-token'),
 }))
+
+beforeAll(() => {
+  process.env.PUBLIC_SITE_URL = 'https://liveinblack.com'
+})
+
+afterAll(() => {
+  delete process.env.PUBLIC_SITE_URL
+})
 
 describe('guestlistUtils', () => {
   it('normalise le code billet invité', () => {

@@ -65,7 +65,6 @@ import {
   persistNewFriendIds,
 } from '@/app/components/features/messaging/messagingUtils'
 import type {
-  ConversationListResponse,
   ConversationMember,
   ConversationView,
   EventSearchResult,

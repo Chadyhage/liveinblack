@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import Conversation from '@/lib/models/Conversation'
 import Message from '@/lib/models/Message'
 import { listConversationsForCaller } from '../messaging/messagingConversationListService'
@@ -36,6 +36,14 @@ describe('messagingConversationListService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Figer le temps avant la date de mute (2026-08-21) pour que
+    // resolveMemberMuteStatus considère toujours u2 comme sourdine active.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-20T00:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('hydrate les membres directs, unreadCount et drapeaux personnels', async () => {
