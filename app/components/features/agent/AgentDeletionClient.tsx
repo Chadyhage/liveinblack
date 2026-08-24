@@ -228,7 +228,7 @@ export default function AgentDeletionClient() {
         {requests.length > 0 && <Input placeholder="Rechercher par nom, email, raison…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />}
 
         {listLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="lb-agent-card-grid">
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />
             ))}
@@ -239,7 +239,7 @@ export default function AgentDeletionClient() {
             description={search ? `Aucune demande ne correspond à « ${search} ».` : 'Aucun compte n’a demandé sa suppression pour le moment.'}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="lb-agent-card-grid">
             {pageItems.map((r) => (
               <RequestCard key={r.id} request={r} onClick={() => setSelectedId(r.id)} />
             ))}

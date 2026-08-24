@@ -235,7 +235,7 @@ function EventRow({ event, onCancel }: { event: AgentEvent; onCancel: () => void
     <Card className={styles.eventCard}>
       <div className={styles.visual}>
         {event.imageUrl ? (
-          <Image src={event.imageUrl} alt="" fill className={styles.image} sizes="(max-width: 980px) 100vw, 50vw" />
+          <Image src={event.imageUrl} alt="" fill className={styles.image} sizes="(max-width: 760px) 100vw, 33vw" />
         ) : (
           <span className={styles.placeholder}><CalendarDays size={42} strokeWidth={1.25} aria-hidden="true" /></span>
         )}

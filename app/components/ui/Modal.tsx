@@ -9,10 +9,8 @@ import styles from './Modal.module.css'
 export interface ModalProps {
   onClose: () => void
   children: ReactNode
-  // Héritage compat: les modales LIVEINBLACK occupent désormais tout l'écran
-  // utile avec une marge minimale commune. La largeur du panneau n'est donc
-  // plus pilotée par les appelants, mais on garde la prop pour éviter de
-  // casser les nombreux usages existants.
+  // Largeur maximale de la carte centrée. L'overlay reste plein écran, mais
+  // le panneau conserve une taille adaptée à son contenu sur ordinateur.
   maxWidth?: number
   hideClose?: boolean
   contentStyle?: CSSProperties
@@ -23,6 +21,8 @@ export interface ModalProps {
   subtitle?: string
   actions?: ReactNode
 }
+
+const MAX_MODAL_WIDTH = 760
 
 function getPanelContentStyle(contentStyle: CSSProperties | undefined): CSSProperties {
   if (!contentStyle) return {}
@@ -60,7 +60,7 @@ export default function Modal({
   const panelContentStyle = getPanelContentStyle(contentStyle)
 
   if (maxWidth) {
-    ;(panelContentStyle as Record<string, unknown>)['--modal-max-width'] = `${maxWidth}px`
+    ;(panelContentStyle as Record<string, unknown>)['--modal-max-width'] = `${Math.min(maxWidth, MAX_MODAL_WIDTH)}px`
   }
 
   return (

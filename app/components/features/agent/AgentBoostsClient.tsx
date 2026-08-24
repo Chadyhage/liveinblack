@@ -109,7 +109,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
         )}
 
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="lb-agent-card-grid">
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonRow key={i} columns={2} />
             ))}
@@ -130,36 +130,36 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
             </div>
 
             {data.conflicts.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8c8c', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Conflits — action requise</p>
+              <div className="lb-agent-card-grid">
+                <p className="lb-agent-grid-heading" style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8c8c', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Conflits — action requise</p>
                 {data.conflicts.map((b) => (
                   <BoostCard key={b.id} b={b} />
                 ))}
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
+            <div className="lb-agent-card-grid">
+              <p className="lb-agent-grid-heading" style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
               {activeList.length === 0 ? (
-                <EmptyState title="Aucun boost actif" description="Aucun événement n’a de boost en cours actuellement." />
+                <div className="lb-agent-grid-wide"><EmptyState title="Aucun boost actif" description="Aucun événement n’a de boost en cours actuellement." /></div>
               ) : (
                 <>
                   {pageItems.map((b) => <BoostCard key={b.id} b={b} />)}
-                  <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={activeList.length} pageSize={PAGE_SIZE} />
+                  <div className="lb-agent-grid-wide"><Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={activeList.length} pageSize={PAGE_SIZE} /></div>
                 </>
               )}
             </div>
 
             {data.expired.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-faint)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Expirés ({data.expired.length})</p>
+              <div className="lb-agent-card-grid">
+                <p className="lb-agent-grid-heading" style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-faint)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Expirés ({data.expired.length})</p>
                 {data.expired.slice(0, 10).map((b) => (
                   <div key={b.id} style={{ opacity: 0.55 }}>
                     <BoostCard b={b} />
                   </div>
                 ))}
                 {data.expired.length > 10 && (
-                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+                  <p className="lb-agent-grid-wide" style={{ fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
                     + {data.expired.length - 10} boost{data.expired.length - 10 > 1 ? 's' : ''} expiré{data.expired.length - 10 > 1 ? 's' : ''} supplémentaire{data.expired.length - 10 > 1 ? 's' : ''} non affiché{data.expired.length - 10 > 1 ? 's' : ''}
                   </p>
                 )}

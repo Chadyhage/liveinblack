@@ -7,3 +7,4 @@
 .email { display:block; margin:13px 0 5px; overflow-wrap:anywhere; color:#fff; font-size:13.5px; }
 .mailLink { min-height:44px; display:inline-flex; align-items:center; color:#b8f34a; font-size:13px; font-weight:650; text-decoration:none; }
 @media(max-width:780px){.grid{grid-template-columns:1fr}.contact{position:relative;top:0;grid-row:1}.faq{padding:20px!important}}
+.grid{gap:12px}.faq,.contact{padding:16px!important;border-radius:17px!important}.faqTitle{margin-bottom:11px;font-size:17px}.contact{top:18px}.contact h2{font-size:19px}.contact p{margin-bottom:12px;font-size:13px;line-height:1.45}

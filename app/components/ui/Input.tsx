@@ -13,11 +13,25 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { minHeight: 50, padding: '15px 18px', fontSize: 15, lineHeight: 1.35, borderRadius: 'var(--radius-md)' },
-  md: { minHeight: 56, padding: '18px 20px', fontSize: 16, lineHeight: 1.4, borderRadius: 'var(--radius-md)' },
+  sm: { minHeight: 42, padding: '9px 12px', fontSize: 13.5, lineHeight: 1.3, borderRadius: 'var(--radius-md)' },
+  md: { minHeight: 46, padding: '11px 14px', fontSize: 14.5, lineHeight: 1.35, borderRadius: 'var(--radius-md)' },
 }
 
-const ICON_OFFSET = 52
+const ICON_OFFSET = 44
+
+function horizontalPadding(style: CSSProperties | undefined, size: 'sm' | 'md', side: 'left' | 'right') {
+  const explicit = side === 'left' ? style?.paddingLeft : style?.paddingRight
+  if (explicit !== undefined) return explicit
+
+  const padding = style?.padding ?? SIZE_STYLES[size].padding
+  if (typeof padding === 'number') return padding
+  if (typeof padding !== 'string') return 14
+
+  const values = padding.trim().split(/\s+/)
+  if (values.length === 1) return values[0]
+  if (values.length === 2 || values.length === 3) return values[1]
+  return side === 'left' ? values[3] : values[1]
+}
 
 const PLACEHOLDER_STYLE_ID = 'lb-input-placeholder-comfort'
 
@@ -75,7 +89,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', ...containerStyle }}>
-      {leftIcon && <span style={{ position: 'absolute', left: 15, display: 'flex', color: 'var(--text-faint)', pointerEvents: 'none' }}>{leftIcon}</span>}
+      {leftIcon && <span style={{ position: 'absolute', left: 13, display: 'flex', color: 'var(--text-faint)', pointerEvents: 'none' }}>{leftIcon}</span>}
       <input
         className={`lb-input-control${className ? ` ${className}` : ''}`}
         ref={ref}
@@ -112,14 +126,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           boxShadow: focused ? 'var(--focus-ring)' : undefined,
           ...SIZE_STYLES[size],
           ...style,
-          paddingLeft: leftIcon ? ICON_OFFSET : style?.paddingLeft ?? (typeof style?.padding === 'string' || typeof style?.padding === 'number' ? style.padding : SIZE_STYLES[size].padding?.toString().split(' ')[1] || '18px'),
-          paddingRight: rightIcon ? ICON_OFFSET : style?.paddingRight ?? (typeof style?.padding === 'string' || typeof style?.padding === 'number' ? style.padding : SIZE_STYLES[size].padding?.toString().split(' ')[1] || '18px'),
+          paddingLeft: leftIcon ? ICON_OFFSET : horizontalPadding(style, size, 'left'),
+          paddingRight: rightIcon ? ICON_OFFSET : horizontalPadding(style, size, 'right'),
           opacity: disabled ? 0.55 : 1,
           cursor: disabled ? 'not-allowed' : 'text',
         }}
         {...rest}
       />
-      {rightIcon && <span style={{ position: 'absolute', right: 15, display: 'flex', color: 'var(--text-faint)' }}>{rightIcon}</span>}
+      {rightIcon && <span style={{ position: 'absolute', right: 13, display: 'flex', color: 'var(--text-faint)' }}>{rightIcon}</span>}
     </div>
   )
 })

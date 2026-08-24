@@ -5,9 +5,9 @@
   inset: 0;
   z-index: 3000;
   padding: var(--modal-viewport-margin);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 
@@ -30,12 +30,13 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(52vw, var(--modal-max-width, 560px)) !important;
-  max-width: min(52vw, var(--modal-max-width, 560px)) !important;
-  min-width: min(340px, 92vw) !important;
+  width: min(100%, var(--modal-max-width, 560px)) !important;
+  max-width: min(var(--modal-max-width, 560px), calc(100vw - (var(--modal-viewport-margin) * 2))) !important;
+  min-width: 0 !important;
   min-height: auto !important;
   height: auto !important;
-  max-height: min(52dvh, 540px) !important;
+  max-height: min(72svh, 680px, calc(100vh - (var(--modal-viewport-margin) * 2))) !important;
+  margin: auto !important;
   padding: var(--modal-inner-space);
   overflow-x: hidden;
   overflow-y: auto;
@@ -151,7 +152,7 @@
     width: calc(100vw - (var(--modal-viewport-margin) * 2)) !important;
     max-width: calc(100vw - (var(--modal-viewport-margin) * 2)) !important;
     min-height: auto !important;
-    max-height: 60dvh !important;
+    max-height: min(78svh, 680px, calc(100vh - (var(--modal-viewport-margin) * 2))) !important;
     border-radius: 18px !important;
     transform: translateY(14px) scale(.985);
   }

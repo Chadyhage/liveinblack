@@ -151,7 +151,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
   const arrivedCount = entries.filter((entry) => entry.checkedInAt).length
 
   return (
-    <Modal onClose={onClose} ariaLabel="Liste des invités">
+    <Modal onClose={onClose} maxWidth={680} ariaLabel="Liste des invités">
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.5}>
@@ -362,7 +362,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
 
       {/* Confirmation de retrait */}
       {confirmRemove && (
-        <Modal onClose={() => setConfirmRemove(null)} hideClose ariaLabel="Retirer un invité" contentStyle={{ padding: 22, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Modal onClose={() => setConfirmRemove(null)} maxWidth={440} hideClose ariaLabel="Retirer un invité" contentStyle={{ padding: 22, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer cet invité ?</p>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
               <strong style={{ color: '#fff' }}>{confirmRemove.guestName}</strong> n&apos;aura plus accès à ce billet. Tu pourras le réinviter à tout moment.

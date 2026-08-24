@@ -6,8 +6,8 @@ import { Card, EmptyState, ImmersiveDialog, SkeletonList } from '@/app/component
 import styles from './BookingsPanel.module.css'
 
 // Port de BookingsPanel (MesEvenementsPage.jsx lignes 3727-3884) — panneau
-// plein écran (pas une petite modale) de détail des réservations d'un
-// événement.
+// centré de détail des réservations d'un événement. Le contenu interne scrolle
+// pour rester utilisable même avec des listes de billets longues.
 interface BookingTicket {
   ticketCode: string
   place: string

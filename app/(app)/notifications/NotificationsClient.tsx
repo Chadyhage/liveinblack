@@ -71,8 +71,8 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   const shellStyle = `
     .lb-notifications-page {
       display: grid;
-      grid-template-columns: minmax(0, minmax(780px, 1.55fr)) minmax(320px, 0.7fr);
-      gap: 12px;
+      grid-template-columns: minmax(0, 1fr) minmax(230px, 280px);
+      gap: 14px;
       width: 100%;
       min-height: 100%;
       min-width: 0;
@@ -92,6 +92,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
     .lb-notifications-list {
       width: 100%;
       display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       min-width: 0;
     }
@@ -99,7 +100,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
     .lb-notifications-main {
       width: 100%;
       display: grid;
-      gap: 14px;
+      gap: 12px;
       min-width: 0;
       align-content: start;
     }
@@ -109,8 +110,8 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 18px;
-      padding: 4px 0 6px;
+      gap: 12px;
+      padding: 2px 0 4px;
       flex-wrap: wrap;
     }
 
@@ -123,7 +124,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       width: 100%;
       min-width: 0;
       display: grid;
-      gap: 12px;
+      gap: 10px;
       align-content: start;
       position: sticky;
       top: 10px;
@@ -132,13 +133,13 @@ export default function NotificationsClient({ initialNotifications }: { initialN
     .lb-notifications-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 8px;
     }
 
     .lb-notifications-stat,
     .lb-notifications-push {
-      border-radius: 16px;
-      padding: 18px 18px 16px;
+      border-radius: 13px;
+      padding: 13px 12px;
     }
 
     .lb-notifications-stat {
@@ -149,6 +150,12 @@ export default function NotificationsClient({ initialNotifications }: { initialN
     .lb-notifications-push {
       border: 1px solid rgba(184,243,74,.2);
       background: rgba(184,243,74,.05);
+    }
+
+    @media (max-width: 1400px) {
+      .lb-notifications-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 1120px) {
@@ -163,17 +170,20 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       .lb-notifications-side {
         position: static !important;
       }
-    }
 
-    @media (max-width: 860px) {
-      .lb-notifications-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      .lb-notifications-side {
+        grid-template-columns: minmax(0, 1fr) minmax(260px, .45fr);
       }
     }
 
     @media (max-width: 720px) {
+      .lb-notifications-list,
       .lb-notifications-grid {
         grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      .lb-notifications-side {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -202,11 +212,11 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       <section className="lb-notifications-main">
         <header className="lb-notifications-header">
           <div className="lb-notifications-copy">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#b8f34a', fontSize: 13, fontWeight: 750, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-              <BellRing size={17} aria-hidden="true" /> Centre d’alertes
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 6, color: '#b8f34a', fontSize: 11.5, fontWeight: 750, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+              <BellRing size={15} aria-hidden="true" /> Centre d’alertes
             </span>
-            <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,4.4vw,56px)', fontWeight: 720, letterSpacing: '-.045em' }}>Notifications</h1>
-            <p style={{ margin: '10px 0 0', maxWidth: 'none', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
+            <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(28px,3vw,42px)', fontWeight: 720, letterSpacing: '-.04em' }}>Notifications</h1>
+            <p style={{ margin: '6px 0 0', maxWidth: 680, color: 'rgba(245,245,247,.62)', fontSize: 13.5, lineHeight: 1.45 }}>Retrouve les informations importantes concernant ton compte et ton activité.</p>
           </div>
 
           <div className="lb-notifications-actions">
@@ -217,13 +227,13 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                 disabled={pushSubscribing}
                 loading={pushSubscribing}
                 loadingText="…"
-                style={{ minWidth: 220 }}
+                style={{ minWidth: 180 }}
               >
                 Activer les notifications push
               </Button>
             ) : null}
             {unreadCount > 0 ? (
-              <Button variant="secondary" onClick={markAllRead} style={{ minWidth: 190 }}>
+              <Button variant="secondary" onClick={markAllRead} style={{ minWidth: 150 }}>
                 Tout marquer lu
               </Button>
             ) : null}
@@ -241,20 +251,20 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                 fullWidth
                 onClick={() => handleClick(n)}
                 style={{
-                  minHeight: 116,
+                  minHeight: 82,
                   display: 'grid',
-                  alignContent: 'center',
+                  alignContent: 'start',
                   width: '100%',
                   background: n.read ? 'var(--surface)' : 'rgba(184, 243, 74,0.06)',
                   border: n.read ? '1px solid var(--border)' : '1px solid rgba(184, 243, 74,0.28)',
-                  borderRadius: 16,
-                  padding: '22px 24px',
+                  borderRadius: 13,
+                  padding: '14px 15px',
                   textAlign: 'left',
                 }}
               >
-                <span style={{ display: 'block', fontSize: 15, fontWeight: n.read ? 620 : 760, color: 'var(--text)' }}>{n.title}</span>
-                {n.body ? <span style={{ display: 'block', marginTop: 5, fontSize: 14, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.45 }}>{n.body}</span> : null}
-                <span style={{ display: 'block', marginTop: 7, fontSize: 13, fontWeight: 550, color: 'var(--text-faint)' }}>{timeAgo(n.createdAt)}</span>
+                <span style={{ display: 'block', overflow: 'hidden', fontSize: 13.5, fontWeight: n.read ? 620 : 760, color: 'var(--text)', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</span>
+                {n.body ? <span style={{ display: '-webkit-box', overflow: 'hidden', marginTop: 4, fontSize: 12.5, fontWeight: 500, color: 'var(--text-muted)', lineHeight: 1.4, WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>{n.body}</span> : null}
+                <span style={{ display: 'block', marginTop: 6, fontSize: 11.5, fontWeight: 550, color: 'var(--text-faint)' }}>{timeAgo(n.createdAt)}</span>
               </Button>
             ))
           )}
@@ -266,23 +276,23 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       >
         <div className="lb-notifications-grid">
           <div className="lb-notifications-stat">
-            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{unreadCount}</span>
-            <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Non lues</span>
+            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 22, fontWeight: 760 }}>{unreadCount}</span>
+            <span style={{ display: 'block', marginTop: 2, color: 'rgba(245,245,247,.6)', fontSize: 10.5 }}>Non lues</span>
           </div>
           <div className="lb-notifications-stat">
-            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{readCount}</span>
-            <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Lues</span>
+            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 22, fontWeight: 760 }}>{readCount}</span>
+            <span style={{ display: 'block', marginTop: 2, color: 'rgba(245,245,247,.6)', fontSize: 10.5 }}>Lues</span>
           </div>
           <div className="lb-notifications-stat">
-            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 28, fontWeight: 760 }}>{notifications.length}</span>
-            <span style={{ display: 'block', marginTop: 4, color: 'rgba(245,245,247,.6)', fontSize: 12 }}>Total</span>
+            <span style={{ display: 'block', color: '#f5f5f7', fontSize: 22, fontWeight: 760 }}>{notifications.length}</span>
+            <span style={{ display: 'block', marginTop: 2, color: 'rgba(245,245,247,.6)', fontSize: 10.5 }}>Total</span>
           </div>
         </div>
 
         {showPushCta ? (
           <div className="lb-notifications-push">
-            <p style={{ margin: 0, color: '#f5f5f7', fontSize: 15, fontWeight: 700 }}>Alertes instantanées</p>
-            <p style={{ margin: '8px 0 0', color: 'rgba(245,245,247,.64)', fontSize: 13.5, lineHeight: 1.5 }}>Active les notifications push pour recevoir les nouveautés importantes sans repasser par la page.</p>
+            <p style={{ margin: 0, color: '#f5f5f7', fontSize: 13.5, fontWeight: 700 }}>Alertes instantanées</p>
+            <p style={{ margin: '5px 0 0', color: 'rgba(245,245,247,.64)', fontSize: 12, lineHeight: 1.4 }}>Active les notifications push pour recevoir les nouveautés importantes sans repasser par la page.</p>
             <Button
               variant="secondary"
               onClick={handleEnablePush}
@@ -290,7 +300,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
               loading={pushSubscribing}
               loadingText="…"
               fullWidth
-              style={{ marginTop: 14 }}
+              style={{ marginTop: 10 }}
             >
               Activer les notifications push
             </Button>

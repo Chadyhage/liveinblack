@@ -19,7 +19,7 @@ export default function AgeGateModal({
   onCancel: () => void
 }) {
   return (
-    <Modal onClose={onCancel} zIndex={999} ariaLabel={`Réservé aux ${minAge} ans et plus`}>
+    <Modal onClose={onCancel} maxWidth={440} zIndex={999} ariaLabel={`Réservé aux ${minAge} ans et plus`}>
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{ width: 28, height: 1, background: 'var(--gold)', flexShrink: 0 }} />

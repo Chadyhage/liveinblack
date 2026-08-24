@@ -26,15 +26,15 @@ vi.mock('../BaseModal', () => ({
 }))
 
 describe('SlideOverModal', () => {
-  it('ignore maxWidth quand un appelant historique le passe encore', () => {
+  it('transmet une largeur plafonnée quand un appelant historique passe une taille trop large', () => {
     renderToStaticMarkup(
-      <SlideOverModal maxWidth={620}>
+      <SlideOverModal maxWidth={1180}>
         <p>Contenu</p>
       </SlideOverModal>
     )
 
     const call = baseModalSpy.mock.calls.at(-1)?.[0]
-    expect(call?.panelStyle).toBeUndefined()
+    expect(call?.panelStyle).toEqual({ '--modal-max-width': '760px' })
   })
 
   it('utilise router.back par défaut quand aucun onClose n’est fourni', () => {

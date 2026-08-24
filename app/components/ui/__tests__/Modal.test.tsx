@@ -34,6 +34,17 @@ describe('Modal', () => {
     expect(call?.panelStyle).toEqual({ '--modal-max-width': '420px' })
   })
 
+  it('plafonne une largeur excessive pour empêcher une modale plein écran', () => {
+    renderToStaticMarkup(
+      <Modal onClose={() => {}} maxWidth={1400}>
+        <p>Contenu</p>
+      </Modal>
+    )
+
+    const call = baseModalSpy.mock.calls.at(-1)?.[0]
+    expect(call?.panelStyle).toEqual({ '--modal-max-width': '760px' })
+  })
+
   it('nettoie les contraintes de taille injectées par contentStyle', () => {
     renderToStaticMarkup(
       <Modal

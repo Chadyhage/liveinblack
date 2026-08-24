@@ -28,7 +28,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ children, sty
         background: 'var(--surface)',
         border: `1px solid ${accent || 'var(--border)'}`,
         borderRadius: 'var(--radius-lg)',
-        padding: 20,
+        padding: 14,
         ...style,
       }}
     >

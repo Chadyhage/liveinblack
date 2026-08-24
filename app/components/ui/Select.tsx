@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { minHeight: 48, padding: '13px 16px', fontSize: 15 } : { minHeight: 54, padding: '16px 18px', fontSize: 16 }
+  const sizeStyle = size === 'sm' ? { minHeight: 42, padding: '9px 12px', fontSize: 13.5 } : { minHeight: 46, padding: '11px 14px', fontSize: 14.5 }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
@@ -140,7 +140,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
             top: 'calc(100% + 6px)',
             left: 0,
             right: 0,
-            maxHeight: 240,
+            maxHeight: 220,
             overflowY: 'auto',
             margin: 0,
             padding: 6,
@@ -168,9 +168,9 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
                   minHeight: 44,
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '10px 12px',
+                  padding: '8px 10px',
                   borderRadius: 'var(--radius-md)',
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: isSelected ? 700 : 500,
                   color: opt.disabled ? 'var(--text-faint)' : isSelected ? 'var(--teal)' : 'var(--text)',
                   background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',

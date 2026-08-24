@@ -407,7 +407,7 @@ export default function AgentUsersClient() {
         ) : users.length === 0 ? (
           <EmptyState title="Aucun compte trouvé" description="Aucun compte ne correspond aux filtres actuels." />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className={styles.userList}>
             {users.map((u) => {
               const st = statusLabel(u)
               return (

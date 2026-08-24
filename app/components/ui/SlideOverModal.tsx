@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import Button from './Button'
@@ -9,8 +9,9 @@ import styles from './SlideOverModal.module.css'
 
 export interface SlideOverModalProps {
   children: ReactNode
-  // Héritage compat: le tiroir détail est maintenant plein écran utile,
-  // ancré bord à bord avec une marge viewport uniforme.
+  // Largeur maximale du panneau centré. Les anciennes routes détail pouvaient
+  // passer des tailles très larges ; elles sont plafonnées côté composant pour
+  // rester de vraies modales et ne plus couvrir toute la page.
   maxWidth?: number
   // Par défaut router.back() (routes interceptées @modal) — un appelant qui
   // pilote sa propre navigation (état local, paramètre d'URL applicatif type
@@ -22,19 +23,23 @@ export interface SlideOverModalProps {
   variant?: 'default' | 'event'
 }
 
-// Coquille de modal "tiroir" glissant depuis la droite, utilisée par les
+const DEFAULT_PANEL_WIDTH = 620
+const MAX_PANEL_WIDTH = 760
+
+function getPanelWidth(maxWidth?: number) {
+  return Math.min(maxWidth ?? DEFAULT_PANEL_WIDTH, MAX_PANEL_WIDTH)
+}
+
+// Coquille de modal détail centrée, utilisée par les
 // routes interceptées (app/(public)/@modal/(.)events/[id]/page.tsx et
 // équivalents providers/organizers) pour afficher une carte cliquée depuis
 // une liste sans quitter la page en cours, tout en gardant chaque page de
 // détail link-based (voir ces page.tsx pour la version pleine page utilisée
-// en visite directe / refresh / nouvel onglet). Contrairement à Modal.tsx
-// (carte centrée, sans animation), cette coquille anime un panneau
-// plein-hauteur ancré à droite — pas de lib d'animation dans ce repo, donc
-// transition CSS pure pilotée par un état "monté" pour déclencher le
-// slide-in au prochain frame.
-export default function SlideOverModal({ children, onClose, ariaLabel = 'Panneau de détails', variant = 'default' }: SlideOverModalProps) {
+// en visite directe / refresh / nouvel onglet).
+export default function SlideOverModal({ children, maxWidth, onClose, ariaLabel = 'Panneau de détails', variant = 'default' }: SlideOverModalProps) {
   const router = useRouter()
   const eventSheet = variant === 'event'
+  const panelWidth = getPanelWidth(maxWidth)
 
   return (
     <BaseModal
@@ -45,6 +50,7 @@ export default function SlideOverModal({ children, onClose, ariaLabel = 'Panneau
       backdropClassName={`${styles.backdrop}${eventSheet ? ` ${styles.eventBackdrop}` : ''}`}
       backdropLabel="Fermer le panneau"
       panelClassName={`${styles.panel}${eventSheet ? ` ${styles.eventPanel}` : ''}`}
+      panelStyle={{ '--modal-max-width': `${panelWidth}px` } as CSSProperties}
       ariaLabel={ariaLabel}
     >
       {({ close }) => (

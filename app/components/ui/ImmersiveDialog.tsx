@@ -37,6 +37,8 @@ export default function ImmersiveDialog({
       rootClassName={`${styles.root}${media ? ` ${styles.media}` : ''}`}
       visibleClassName={styles.visible}
       closingClassName={styles.closing}
+      backdropClassName={styles.backdrop}
+      panelClassName={`${styles.panel}${media ? ` ${styles.mediaPanel}` : ''}`}
       rootStyle={{ zIndex, '--immersive-width': `${maxWidth}px` } as CSSProperties}
     >
       {({ close }) => (

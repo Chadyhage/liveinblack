@@ -29,8 +29,13 @@
 }
 
 .cameraCard {
-  min-height: 520px;
+  min-height: 420px;
 }
+
+.shell { padding: 18px clamp(12px, 1.8vw, 24px) 88px; }
+.workspace { gap: 13px; }
+.scanGrid,.serviceGrid { gap: 13px; }
+.servicePrimary { gap: 12px; }
 
 .manualCard {
   position: sticky;

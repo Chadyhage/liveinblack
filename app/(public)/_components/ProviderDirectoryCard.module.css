@@ -84,3 +84,4 @@
   .card:hover { transform: none; }
   .card:hover .cover { transform: none; }
 }
+.card{border-radius:17px;box-shadow:0 12px 34px rgba(0,0,0,.18)}.visual{aspect-ratio:16/8.4}.category{top:11px;left:11px;max-width:calc(100% - 22px);min-height:28px;padding:0 9px;font-size:12px}.identity{left:14px;bottom:12px;width:52px;height:52px;border-radius:15px;font-size:20px}.content{padding:14px}.content h3{font-size:clamp(18px,1.5vw,22px)}.headline{margin-top:6px;font-size:13.5px}.location{gap:6px;margin-top:9px;font-size:13px}.description{margin-top:10px;font-size:13px;line-height:1.45;-webkit-line-clamp:2}.meta{gap:9px;padding-top:14px;font-size:12.5px}.discover{min-height:39px;margin-top:11px;padding-top:9px;font-size:13px}

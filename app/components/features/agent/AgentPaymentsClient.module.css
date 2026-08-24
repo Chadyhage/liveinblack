@@ -50,7 +50,7 @@
 .queueHeader h3 { margin: 0; color: #fff; font-size: 17px; font-weight: 710; letter-spacing: -.02em; }
 .queueHeader p { margin: 4px 0 0; color: rgba(245,245,247,.76); font-size: 13.5px; line-height: 1.45; }
 .queueHeader > span { min-width: 32px; height: 32px; display: grid; place-items: center; padding: 0 9px; border-radius: 999px; background: rgba(255,255,255,.08); color: #fff; font-size: 13px; font-weight: 750; }
-.cardGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; align-items: start; }
+.cardGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; align-items: start; }
 .moneyCard { min-width: 0; display: flex !important; flex-direction: column; gap: 14px; padding: 19px !important; border-radius: 22px !important; border-left-width: 1px !important; }
 .dangerCard { border-color: rgba(255,143,178,.2) !important; box-shadow: inset 3px 0 0 rgba(255,143,178,.58),0 18px 50px rgba(0,0,0,.14) !important; }
 .cardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -94,7 +94,7 @@
 .alertContext span { min-width: 0; overflow-wrap: anywhere; color: rgba(245,245,247,.92); }
 .details { margin-top: 4px; }
 .boosts { min-width: 0; overflow: hidden; }
-.loadingGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.loadingGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
 
 .confirmIcon { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 16px; border-radius: 17px; background: rgba(245,201,106,.12); color: #f5c96a; }
 .confirmTitle { margin: 0; color: #fff; font-size: 19px; font-weight: 740; line-height: 1.32; text-align: center; letter-spacing: -.025em; }
@@ -109,6 +109,6 @@
 @media (forced-colors: active) { .metricActive,.status,.actionPill,.sectionCount { border: 2px solid ButtonText !important; } .metricIcon,.guideIcon,.identityIcon { forced-color-adjust: auto; } }
 
 @media (max-width: 1050px) { .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 900px) { .cardGrid,.loadingGrid { grid-template-columns: 1fr; } }
-@media (max-width: 700px) { .hero { min-height: 0; align-items: flex-start; flex-direction: column; padding: 24px 20px; } .heroActions { width: 100%; flex-wrap: wrap; } .heroActions > * { flex: 1; } .actionPill { justify-content: center; } .workspace { padding: 19px; } }
+@media (max-width: 700px) { .hero { min-height: 0; align-items: flex-start; flex-direction: column; padding: 24px 20px; } .heroActions { width: 100%; flex-wrap: wrap; } .heroActions > * { flex: 1; } .actionPill { justify-content: center; } .workspace { padding: 19px; } .cardGrid,.loadingGrid { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .metrics { grid-template-columns: 1fr; } .metric { min-height: 108px !important; } .sectionHeader { align-items: flex-start; flex-direction: column; } .cardTop { flex-direction: column; } .status { align-self: flex-start; } .amountRow { align-items: flex-start; flex-direction: column; gap: 5px; } .amounts,.metaGrid,.confirmActions { grid-template-columns: 1fr; } .queueHeader { grid-template-columns: auto minmax(0,1fr); } .queueHeader > span { display: none; } }
+.stack{gap:16px}.hero{min-height:146px;gap:18px;padding:20px;border-radius:20px}.kicker{margin-bottom:7px}.description{margin-top:7px!important}.metrics{gap:10px}.metric{min-height:92px!important;gap:7px!important;padding:13px!important;border-radius:15px!important}.metricIcon{width:32px;height:32px}.metricValue{font-size:24px}.workspace{gap:12px;padding:15px;border-radius:18px}.cardGrid,.loadingGrid{gap:10px}.paymentCard{gap:10px!important;padding:14px!important;border-radius:16px!important}

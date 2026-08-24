@@ -25,7 +25,7 @@ vi.mock('../Modal', () => ({
 }))
 
 describe('ConfirmDialog', () => {
-  it('ignore maxWidth legacy mais conserve les autres props utiles', () => {
+  it('conserve les props utiles de présentation', () => {
     renderToStaticMarkup(
       <ConfirmDialog
         open
