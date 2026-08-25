@@ -92,6 +92,26 @@ export async function listAllPublishedPostsForSitemap(params: { pageSize?: numbe
   return docs.map((d) => ({ ...d, id: String(d._id) })) as PublicBlogPost[]
 }
 
+export type BlogSitemapEntry = Pick<PublicBlogPost, 'slug' | 'publishedAt' | 'updatedAt'>
+
+export async function countPublishedPostsForSitemap(): Promise<number> {
+  await getDb()
+  return BlogPost.countDocuments(publishedFilter())
+}
+
+export async function listPublishedPostsForSitemapPage(params: { offset: number; limit: number }): Promise<BlogSitemapEntry[]> {
+  await getDb()
+  const offset = Math.max(0, Math.floor(params.offset))
+  const limit = Math.min(5_000, Math.max(1, Math.floor(params.limit)))
+  const docs = await BlogPost.find(publishedFilter())
+    .select('slug publishedAt updatedAt')
+    .sort({ publishedAt: -1, _id: 1 })
+    .skip(offset)
+    .limit(limit)
+    .lean()
+  return docs as BlogSitemapEntry[]
+}
+
 // --- Gestion agent (comblement de lacune) ---------------------------------
 // Le modèle BlogPost n'avait aucune surface de gestion (ni page agent, ni
 // route API) : le contenu ne pouvait être créé/modifié que par script/seed

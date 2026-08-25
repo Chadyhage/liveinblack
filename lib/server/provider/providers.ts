@@ -204,6 +204,26 @@ export async function listPublicProviders(): Promise<PublicProvider[]> {
   return docs as PublicProvider[]
 }
 
+export type ProviderSitemapEntry = { userId: string; updatedAt?: Date | string | null }
+
+export async function countPublicProvidersForSitemap(): Promise<number> {
+  await getDb()
+  return ProviderProfile.countDocuments(withNonGhostFilter({ subscriptionActive: true }))
+}
+
+export async function listPublicProvidersForSitemapPage(params: { offset: number; limit: number }): Promise<ProviderSitemapEntry[]> {
+  await getDb()
+  const offset = Math.max(0, Math.floor(params.offset))
+  const limit = Math.min(5_000, Math.max(1, Math.floor(params.limit)))
+  const docs = await ProviderProfile.find(withNonGhostFilter({ subscriptionActive: true }))
+    .select('userId updatedAt')
+    .sort({ updatedAt: -1, _id: 1 })
+    .skip(offset)
+    .limit(limit)
+    .lean()
+  return docs.map((doc) => ({ userId: String(doc.userId), updatedAt: doc.updatedAt }))
+}
+
 export async function listPublicProvidersDirectory(
   params: PublicProviderDirectoryParams = {}
 ): Promise<PublicProviderDirectoryResult> {

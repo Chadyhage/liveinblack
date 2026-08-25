@@ -193,6 +193,26 @@ export async function listPublicEvents(): Promise<PublicEvent[]> {
   return result.events
 }
 
+export type EventSitemapEntry = { id: string; updatedAt?: Date | string | null }
+
+export async function countPublicEventsForSitemap(): Promise<number> {
+  await getDb()
+  return Event.countDocuments(buildDiscoverableFilters())
+}
+
+export async function listPublicEventsForSitemapPage(params: { offset: number; limit: number }): Promise<EventSitemapEntry[]> {
+  await getDb()
+  const offset = Math.max(0, Math.floor(params.offset))
+  const limit = Math.min(5_000, Math.max(1, Math.floor(params.limit)))
+  const docs = await Event.find(buildDiscoverableFilters())
+    .select('_id updatedAt')
+    .sort({ date: 1, _id: 1 })
+    .skip(offset)
+    .limit(limit)
+    .lean()
+  return docs.map((doc) => ({ id: String(doc._id), updatedAt: doc.updatedAt }))
+}
+
 export async function searchPublicEvents(query: string): Promise<PublicEvent[]> {
   const safeQuery = (query || '').trim()
   const normalizedQuery = normalizeGeoText(safeQuery)

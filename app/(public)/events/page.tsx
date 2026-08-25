@@ -4,8 +4,8 @@ import { cookies } from 'next/headers'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { auth } from '@/auth'
 import { type PublicEvent } from '@/lib/server/events/events'
-import { getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
-import { getBoostedEventIds } from '@/lib/server/events/boosts'
+import { getCachedBoostedEventIds, getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
+import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import { getMyProfile } from '@/lib/server/users/profile'
 import { listActiveInterestSignals } from '@/lib/server/events/eventInterests'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
@@ -37,9 +37,7 @@ export default async function EventsPage({
   const category = (categoryParam || '').trim()
   const requestedPage = Math.max(1, Number(pageParam) || 1)
   const cookieStore = await cookies()
-  const hasSessionCookie = cookieStore.getAll().some((cookie) =>
-    cookie.name.startsWith('next-auth.session-token') || cookie.name.startsWith('__Secure-next-auth.session-token')
-  )
+  const hasSessionCookie = hasAuthSessionCookie(cookieStore.getAll())
 
   const [{ events: pageEvents, total, pageSize, totalPages, page: safePage }, boostedIds, session] = await Promise.all([
     getCachedPublicEventsDirectory({
@@ -49,7 +47,7 @@ export default async function EventsPage({
       pageSize: PAGE_SIZE,
       includeTotal: true,
     }),
-    getBoostedEventIds(),
+    getCachedBoostedEventIds(),
     hasSessionCookie ? auth() : Promise.resolve(null),
   ])
 

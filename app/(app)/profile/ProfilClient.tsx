@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { ArrowLeft, ChevronRight, Database, Heart, KeyRound, LifeBuoy, Search, Settings, ShieldCheck, Ticket, UserRound } from 'lucide-react'
+import { ArrowLeft, Heart, KeyRound, LifeBuoy, Search, Settings, ShieldCheck, Ticket, UserRound } from 'lucide-react'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
@@ -13,7 +13,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Button, Input, Select, Switch, Badge, Label, Slider, Card, Accordion, ConfirmDialog, Modal } from '@/app/components/ui'
 import overviewStyles from './ProfileOverview.module.css'
 import helpStyles from './HelpPanel.module.css'
-import { filterSettingEntries, normalizeSettingsQuery, settingsInitials, splitPhone } from './profileSettingsUtils'
+import { filterSettingEntries, normalizeSettingsQuery, splitPhone } from './profileSettingsUtils'
 
 // Port de src/pages/ProfilePage.jsx (#6 phase profil) — portée CLIENT
 // uniquement : les panneaux "Interface Prestataire/Organisateur",
@@ -119,6 +119,11 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
 
   return (
     <main className={`profile-main lb-dashboard-page ${overviewStyles.root}`}>
+      <style>{`
+        .profile-quick-grid-density { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+        @media (max-width: 780px) { .profile-quick-grid-density { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+        @media (max-width: 480px) { .profile-quick-grid-density { grid-template-columns: minmax(0, 1fr) !important; } }
+      `}</style>
       <div className={overviewStyles.grid}>
         <Card className={overviewStyles.identity}>
           <AvatarUpload user={user} setUser={setUser} />
@@ -153,7 +158,7 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             </Card>
           )}
 
-          <div className={overviewStyles.quickGrid}>
+          <div className={`${overviewStyles.quickGrid} profile-quick-grid-density`}>
             <QuickAccessCard href="/profile/parametres" icon={<Settings size={18} />} label="Paramètres du compte" />
             <QuickAccessCard href="/profile/billets" icon={<Ticket size={18} />} label="Mes billets" />
             <QuickAccessCard href="/profile/interested-events" icon={<Heart size={18} />} label="Mes favoris" />
@@ -403,8 +408,6 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
     { id: 'security', title: 'Connexion et sécurité', shortTitle: 'Sécurité', description: 'E-mail, mot de passe et compte', ids: ['email', 'mot de passe', 'danger'], icon: KeyRound, color: '#c4a7ff' },
   ]
   const visibleGroups = tokens.length > 0 ? settingGroups : settingGroups.filter((group) => group.id === activeGroup)
-  const activeGroupInfo = settingGroups.find((group) => group.id === activeGroup) ?? settingGroups[0]
-  const ActiveGroupIcon = activeGroupInfo.icon
 
   return (
     <main className="profile-settings lb-dashboard-page">
@@ -415,49 +418,29 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
         }
       `}</style>
       <div className="settings-page-stack">
-        <header className="settings-hero">
-          <div className="settings-hero-copy">
-            <Button onClick={onBack} variant="ghost" className="settings-back" icon={<ArrowLeft size={17} aria-hidden="true" />}>
-              Mon profil
-            </Button>
-            <p className="settings-kicker"><Settings size={16} aria-hidden="true" /> Centre du compte</p>
-            <h1>Paramètres</h1>
-            <p>Gère ton identité, tes préférences, ta confidentialité et la sécurité de ton compte depuis un seul endroit.</p>
+        <div className="settings-toolbar">
+          <Button onClick={onBack} variant="ghost" className="settings-back" icon={<ArrowLeft size={17} aria-hidden="true" />}>
+            Profil
+          </Button>
+          <div className="settings-search">
+            <Search size={18} aria-hidden="true" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher dans les paramètres" aria-label="Rechercher dans les paramètres" />
+            {query && <Button onClick={() => setQuery('')} variant="ghost" aria-label="Effacer la recherche">Effacer</Button>}
           </div>
-          <div className="settings-account-summary">
-            <span className="settings-account-avatar" aria-hidden="true">{settingsInitials([user.firstName, user.lastName].filter(Boolean).join(' ') || user.email)}</span>
-            <div><strong>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Mon compte'}</strong><span>{user.email}</span></div>
-            <Badge tone="teal">Actif</Badge>
-          </div>
-        </header>
-
-        <div className="settings-search">
-          <Search size={19} aria-hidden="true" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un réglage"
-            aria-label="Rechercher dans les paramètres"
-          />
-          {query && <Button onClick={() => setQuery('')} variant="ghost" aria-label="Effacer la recherche">Effacer</Button>}
         </div>
 
-        <div className="settings-layout">
-          <nav className="settings-sidebar" aria-label="Catégories de paramètres">
-            <p>Réglages</p>
+        <nav className="settings-tabs" aria-label="Catégories de paramètres">
             {settingGroups.map((group) => {
               const Icon = group.icon
               const active = group.id === activeGroup && tokens.length === 0
               return <Button key={group.id} variant="ghost" onClick={() => { setActiveGroup(group.id); setQuery('') }} className={active ? 'settings-nav-item settings-nav-item--active' : 'settings-nav-item'} aria-current={active ? 'page' : undefined} style={{ '--setting-color': group.color } as React.CSSProperties}>
                 <span className="settings-nav-icon"><Icon size={18} aria-hidden="true" /></span>
                 <span><strong>{group.shortTitle}</strong><small>{group.description}</small></span>
-                <ChevronRight size={16} aria-hidden="true" />
               </Button>
             })}
-            <div className="settings-sidebar-note"><Database size={17} aria-hidden="true" /><p><strong>Tes données restent sous ton contrôle.</strong><span>Exporte-les ou modifie tes choix à tout moment.</span></p></div>
-          </nav>
+        </nav>
 
-          <section className="settings-content" aria-live="polite">
+        <section className="settings-content" aria-live="polite">
             {filtered.length === 0 ? (
               <div className="settings-empty">
                 <Search size={25} aria-hidden="true" />
@@ -467,7 +450,6 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
               </div>
             ) : (
               <div className="settings-groups">
-                {!tokens.length && <div className="settings-content-heading" style={{ '--setting-color': activeGroupInfo.color } as React.CSSProperties}><span><ActiveGroupIcon size={22} aria-hidden="true" /></span><div><p>{activeGroupInfo.shortTitle}</p><h2>{activeGroupInfo.title}</h2><small>{activeGroupInfo.description}</small></div></div>}
                 {tokens.length > 0 && <div className="settings-results-heading"><p>Résultats de recherche</p><h2>{filtered.length} réglage{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}</h2></div>}
                 {visibleGroups.map((group) => {
                   const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
@@ -479,8 +461,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
                 })}
               </div>
             )}
-          </section>
-        </div>
+        </section>
       </div>
     </main>
   )

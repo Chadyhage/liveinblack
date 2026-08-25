@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getBoostedEventIds } from '@/lib/server/events/boosts'
 import { searchPublicEvents } from '@/lib/server/events/events'
-import { getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
+import { getCachedBoostedEventIds, getCachedPublicEventsDirectory } from '@/lib/server/publicCache'
 import { createCacheHeaders } from '@/lib/server/cacheHeaders'
 import { parsePage, parsePageSize } from '@/lib/shared/pagination'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
@@ -43,7 +42,7 @@ export async function GET(req: Request) {
   if (q) {
     const [events, boostedIds] = await Promise.all([
       searchPublicEvents(q),
-      getBoostedEventIds(),
+      getCachedBoostedEventIds(),
     ])
     const mappedEvents = events.map((e) => ({
       ...e,
@@ -61,7 +60,7 @@ export async function GET(req: Request) {
         pageSize: safePageSize,
         includeTotal: true,
       }),
-      getBoostedEventIds(),
+      getCachedBoostedEventIds(),
     ])
 
   const withBoosted = eventsPage.events.map((e) => ({ ...e, boosted: boostedIds.has(e.id) }))

@@ -97,8 +97,19 @@
 .root :global(.lb-page-shell) {
   padding-inline: clamp(8px, 0.95vw, 18px) !important;
 }
-.root :global(.lb-dashboard-title) { font-family: inherit !important; font-size: clamp(28px, 3vw, 42px); font-weight: 720; line-height: 1.03; letter-spacing: -.04em; text-transform: none; }
-.root :global(.lb-dashboard-description) { max-width: 720px; color: rgba(245, 245, 247, .62); font-size: 13.5px; line-height: 1.45; }
+.root :global(.lb-dashboard-page-header) { margin-bottom: 0; }
+.root :global(.lb-dashboard-title) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.root :global(.lb-dashboard-description) { display: none !important; }
 .root :global(.lb-dashboard-main) :where(h1, h2, h3) { font-family: inherit !important; text-transform: none !important; }
 .root :global(.lb-dashboard-main) :where(input, textarea, select) { min-height: 44px; border-radius: 11px !important; font-size: 14px !important; }
 .root :global(.lb-dashboard-main) button { min-height: 40px; border-radius: 10px; }
@@ -122,8 +133,6 @@
   .mainFull { padding: 0; }
   .root :global(.lb-dashboard-page),
   .root :global(.lb-page-shell) { padding-inline: 4px !important; }
-  .root :global(.lb-dashboard-title) { font-size: 30px; }
-  .root :global(.lb-dashboard-description) { font-size: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

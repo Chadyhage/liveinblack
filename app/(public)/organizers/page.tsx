@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { ArrowUpRight, MapPin, Search, SlidersHorizontal, Users, X } from 'lucide-react'
 import { auth } from '@/auth'
 import { getCachedPublicOrganizersDirectory } from '@/lib/server/publicCache'
+import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import { listMyFollowedOrganizers } from '@/lib/server/organizer/organizerFollows'
 import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
@@ -29,9 +30,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
   const search = (q || '').trim()
   const upcomingOnly = upcoming === '1'
   const requestedPage = Math.max(1, Number(pageParam) || 1)
-  const hasSessionCookie = cookieStore.getAll().some((cookie) =>
-    cookie.name.startsWith('next-auth.session-token') || cookie.name.startsWith('__Secure-next-auth.session-token')
-  )
+  const hasSessionCookie = hasAuthSessionCookie(cookieStore.getAll())
   const session = hasSessionCookie ? await auth() : null
 
   const { organizers, total, totalPages, pageSize } = await getCachedPublicOrganizersDirectory({

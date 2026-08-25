@@ -296,6 +296,26 @@ export async function listPublicOrganizers(): Promise<PublicOrganizer[]> {
     .lean()
 }
 
+export type OrganizerSitemapEntry = { slug: string; updatedAt?: Date | string | null }
+
+export async function countPublicOrganizersForSitemap(): Promise<number> {
+  await getDb()
+  return OrganizerProfile.countDocuments(buildOrganizerFilters({}))
+}
+
+export async function listPublicOrganizersForSitemapPage(params: { offset: number; limit: number }): Promise<OrganizerSitemapEntry[]> {
+  await getDb()
+  const offset = Math.max(0, Math.floor(params.offset))
+  const limit = Math.min(5_000, Math.max(1, Math.floor(params.limit)))
+  const docs = await OrganizerProfile.find(buildOrganizerFilters({}))
+    .select('slug updatedAt')
+    .sort({ updatedAt: -1, _id: 1 })
+    .skip(offset)
+    .limit(limit)
+    .lean()
+  return docs.map((doc) => ({ slug: String(doc.slug), updatedAt: doc.updatedAt }))
+}
+
 export async function listPublicOrganizersWithNextEvent(): Promise<PublicOrganizerDirectoryEntry[]> {
   const data = await listPublicOrganizersDirectory()
   return data.organizers

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { auth } from '@/auth'
 import { getCachedPublicOrganizersDirectory } from '@/lib/server/publicCache'
+import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import { listMyFollowedOrganizers } from '@/lib/server/organizer/organizerFollows'
 import { createCacheHeaders } from '@/lib/server/cacheHeaders'
 import { parsePage, parsePageSize } from '@/lib/shared/pagination'
@@ -22,9 +23,7 @@ export async function GET(req: Request) {
   }
 
   const cookieStore = await cookies()
-  const hasSessionCookie = cookieStore.getAll().some((cookie) =>
-    cookie.name.startsWith('next-auth.session-token') || cookie.name.startsWith('__Secure-next-auth.session-token')
-  )
+  const hasSessionCookie = hasAuthSessionCookie(cookieStore.getAll())
   const session = hasSessionCookie ? await auth() : null
 
   const rateLimit = await checkRateLimit({
