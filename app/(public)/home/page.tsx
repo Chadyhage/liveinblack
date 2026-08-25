@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { auth } from '@/auth'
 import { type PublicEvent } from '@/lib/server/events/events'
 import { type CatalogItem } from '@/lib/server/provider/providers'
@@ -17,6 +18,7 @@ import { getProviderCategories, getProviderCategory } from '@/lib/shared/provide
 import { eventStartMs } from '@/lib/shared/event-time'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import HomeGreeting from './HomeGreeting'
 import HeroScrollIndicator from './HeroScrollIndicator'
 import { ActionLink, Card, EditorialImageCard, Mascot } from '@/app/components/ui'
@@ -70,12 +72,14 @@ function DateBadge({ dateISO }: { dateISO: string }) {
 }
 
 export default async function AccueilPage() {
+  const cookieStore = await cookies()
+  const hasSessionCookie = hasAuthSessionCookie(cookieStore.getAll())
   const [allEventsResult, providerDirectory, actualiteConfig, boostedIds, session] = await Promise.all([
     getCachedPublicEventsDirectory({ page: 1, pageSize: 30, includeTotal: false }),
     getCachedPublicProvidersDirectory({ page: 1, pageSize: 4, includeTotal: false }),
     getPublicHomepageConfig(),
     getBoostedEventIds(),
-    auth(),
+    hasSessionCookie ? auth() : Promise.resolve(null),
   ])
   const allEvents = allEventsResult.events
   const providers = providerDirectory.providers
