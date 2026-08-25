@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { EventActionKey, OrganizerEventView } from './types'
 import { formatMoney } from './types'
 import { computePayoutGapLabel } from '@/lib/shared/organizerPayoutGaps'
@@ -43,6 +44,7 @@ type ModalState =
   | { type: 'delete'; event: OrganizerEventView }
 
 export default function MesEvenementsClient({ initialEvents, initialStripeChargesEnabled, initialMomos, initialRegion }: MesEvenementsClientProps) {
+  const router = useRouter()
   const [events, setEvents] = useState(initialEvents)
   // Vue tableau de bord vs. wizard plein écran (création/édition), reflétée
   // dans l'URL (?event=new pour créer, ?event=<id> pour éditer, absent pour
@@ -154,7 +156,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
   function handleAction(action: EventActionKey, event: OrganizerEventView) {
     switch (action) {
       case 'stats':
-        window.location.href = `/my-events/${event.id}/statistiques`
+        router.push(`/my-events/${event.id}/statistiques`)
         return
       case 'bookings':
         setModal({ type: 'bookings', event })
@@ -207,9 +209,9 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
   return (
     <main className="lb-dashboard-page">
-      <header style={{ marginBottom: 24 }}>
-        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes événements</h1>
-        <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Crée, publie et pilote toutes tes soirées depuis un même espace.</p>
+      <header className="lb-dashboard-page-header">
+        <h1 className="lb-dashboard-title">Mes événements</h1>
+        <p className="lb-dashboard-description">Crée, publie et pilote toutes tes soirées depuis un même espace.</p>
       </header>
       {message && (
         <div
@@ -246,7 +248,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <Button
           variant="ghost"
           onClick={startCreate}
-          style={{ minHeight: 142, textAlign: 'left', padding: 22, borderRadius: 'var(--radius-lg)', border: '1px solid rgba(184,243,74,0.4)', background: 'linear-gradient(135deg,rgba(184,243,74,.14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 16px 38px rgba(0,0,0,.2)' }}
+          style={{ minHeight: 96, textAlign: 'left', padding: 14, borderRadius: 15, border: '1px solid rgba(184,243,74,0.4)', background: 'linear-gradient(135deg,rgba(184,243,74,.14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
           <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Créer un événement</p>
@@ -254,7 +256,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         </Button>
         <Link
           href="/organizer-studio"
-          style={{ minHeight: 142, textAlign: 'left', padding: 22, borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 16px 38px rgba(0,0,0,.2)' }}
+          style={{ minHeight: 96, textAlign: 'left', padding: 14, borderRadius: 15, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Audience</p>
           <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Ma page publique</p>
@@ -262,7 +264,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         </Link>
         <Link
           href="/my-shifts"
-          style={{ minHeight: 142, textAlign: 'left', padding: 22, borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 16px 38px rgba(0,0,0,.2)' }}
+          style={{ minHeight: 96, textAlign: 'left', padding: 14, borderRadius: 15, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Entrée</p>
           <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Scanner les billets</p>

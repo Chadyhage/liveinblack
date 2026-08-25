@@ -45,6 +45,12 @@ const apiDefaultHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  // Next 16.3 vérifie l'intégralité du projet sélectionné par le tsconfig,
+  // y compris les mocks de tests. Vitest contrôle les tests séparément ; le
+  // build de production type-check uniquement le code livré.
+  typescript: {
+    tsconfigPath: isDev ? 'tsconfig.json' : 'tsconfig.build.json',
+  },
   // Le navigateur de prévisualisation local utilise 127.0.0.1 alors que
   // Next démarre sur localhost. Autoriser explicitement cette origine évite
   // le blocage des assets de développement et garantit que les navigations

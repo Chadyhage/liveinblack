@@ -1,7 +1,5 @@
 import { signTicketToken } from './ticketToken'
 
-const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
-
 export interface GuestlistTicketLike {
   ticketCode: string
   place?: string | null

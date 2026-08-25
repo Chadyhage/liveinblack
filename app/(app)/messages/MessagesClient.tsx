@@ -49,6 +49,7 @@ import { useMessagingPresence } from '@/app/components/features/messaging/useMes
 import { useDesktopThreadView } from '@/app/components/features/messaging/useDesktopThreadView'
 import { useMessagingMedia } from '@/app/components/features/messaging/useMessagingMedia'
 import { Avatar, GroupAvatar, MessageRow, ThreadHeaderSection, TypingDots, messageTypeLabel } from '@/app/components/features/messaging/MessageThreadParts'
+import type { EventSearchResult } from '@/app/components/features/messaging/EventPickerModal'
 import MessagingEmptyState from '@/app/components/features/messaging/MessagingEmptyState'
 import {
   applyMentionSelection,
@@ -67,7 +68,6 @@ import {
 import type {
   ConversationMember,
   ConversationView,
-  EventSearchResult,
   MessageView,
   MessagesClientProps,
   PollOption,

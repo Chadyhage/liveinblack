@@ -35,7 +35,7 @@ describe('NotificationsClient', () => {
 
     expect(html).toContain('lb-notifications-page')
     expect(html).toContain('Notifications')
-    expect(html).toContain('Centre d’alertes')
+    expect(html).toContain('Retrouve les informations importantes concernant ton compte et ton activité.')
     expect(html).toContain('Tout marquer lu')
     expect(html).toContain('Non lues')
     expect(html).toContain('Lues')

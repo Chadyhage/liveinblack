@@ -1,6 +1,6 @@
 import Conversation from '@/lib/models/Conversation'
 import Message from '@/lib/models/Message'
-import { collectDirectParticipantIds, withDirectConversationMembers } from './messagingConversationUtils'
+import { collectDirectParticipantIds } from './messagingConversationUtils'
 import { resolveMemberMuteStatus } from './messagingMuteUtils'
 
 export interface ConversationListCaller {
@@ -92,6 +92,7 @@ export async function listConversationsForCaller<
         name: 1,
         avatar: 1,
         mutedUserIds: 1,
+        memberMuteUntil: 1,
         lastMessage: 1,
         lastMessageAt: 1,
         lastSenderId: 1,
@@ -145,7 +146,12 @@ export async function listConversationsForCaller<
       const view = toConversationView(conv)
       if (view.type === 'direct') {
         return {
-          ...withDirectConversationMembers(view as any, directNames),
+          ...view,
+          members: view.participantIds.map((userId) => ({
+            userId,
+            name: directNames.get(userId) ?? '',
+            role: 'member' as const,
+          })),
           unreadCount: unreadByConversation.get(String(conv._id)) ?? 0,
           pinned: (conv.pinnedByUserIds ?? []).includes(caller.id),
           mutedForMe: (conv.mutedConversationByUserIds ?? []).includes(caller.id),

@@ -4,6 +4,7 @@ import User from '@/lib/models/User'
 import type { ConversationSource, MessageSource } from './messagingViews'
 import type { HydratedDocument } from 'mongoose'
 import type { ConversationDoc } from '@/lib/models/Conversation'
+import type { Email } from '@/lib/server/emails/types'
 import type { SendableType } from './messagingSendUtils'
 import { resolveLastMessageLabel } from './messagingSendUtils'
 import {
@@ -38,14 +39,14 @@ export interface DeliverMessageDependencies<TMessageView> {
   ) => Promise<void>
   notifyUserById: (
     userId: string,
-    buildEmail: () => any,
+    buildEmail: () => Email,
   ) => Promise<void>
   newMessageDigestEmail: (
     senderName: string,
     preview: string,
     conversationUrl: string,
     site: string,
-  ) => any
+  ) => Email
   sendPushToUser: (
     userId: string,
     payload: { title: string; body: string; url: string },
