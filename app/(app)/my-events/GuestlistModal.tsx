@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Input, Label, Modal, Select, Spinner } from '@/app/components/ui'
+import { Button, Input, Label, Modal, Select, SlideOverModal, Spinner } from '@/app/components/ui'
 
 interface EventPlace {
   id: string
@@ -151,7 +151,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
   const arrivedCount = entries.filter((entry) => entry.checkedInAt).length
 
   return (
-    <Modal onClose={onClose} maxWidth={680} ariaLabel="Liste des invités">
+    <SlideOverModal onClose={onClose} ariaLabel="Liste des invités" padded>
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.5}>
@@ -385,6 +385,6 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
             </div>
         </Modal>
       )}
-    </Modal>
+    </SlideOverModal>
   )
 }

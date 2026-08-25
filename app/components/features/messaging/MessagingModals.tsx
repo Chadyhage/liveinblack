@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { Button, Modal } from '@/app/components/ui'
+import { Button, Modal, SlideOverModal } from '@/app/components/ui'
 import styles from '@/app/(app)/messages/MessagesClient.module.css'
 
 export function ModalShell({
@@ -17,8 +17,16 @@ export function ModalShell({
   children: ReactNode
   wide?: boolean
 }) {
+  if (wide) {
+    return (
+      <SlideOverModal onClose={onClose} zIndex={200} title={title} subtitle={subtitle}>
+        {children}
+      </SlideOverModal>
+    )
+  }
+
   return (
-    <Modal onClose={onClose} maxWidth={wide ? 680 : 480} zIndex={200} title={title} subtitle={subtitle}>
+    <Modal onClose={onClose} maxWidth={480} zIndex={200} title={title} subtitle={subtitle}>
       {children}
     </Modal>
   )

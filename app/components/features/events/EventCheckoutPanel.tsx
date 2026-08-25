@@ -8,7 +8,7 @@ import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtecti
 import type { ShowOption } from '@/lib/shared/showOptions'
 import AgeGateModal from '@/app/components/layout/AgeGateModal'
 import { Check, X } from 'lucide-react'
-import { Button, Card, Input, Textarea, Checkbox, Modal } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Checkbox, Modal, SlideOverModal } from '@/app/components/ui'
 
 // Port INTERACTIF de la section « Réservation » de src/pages/EventDetailPage.jsx
 // (sélecteur de place + table/groupe, stepper de quantité, précommande, code
@@ -872,7 +872,7 @@ export default function EventCheckoutPanel({
       )}
 
       {photoGallery && (
-        <Modal onClose={() => setPhotoGallery(null)} ariaLabel={`Photos de la place ${photoGallery.type}`} contentStyle={{ padding: 18 }}>
+        <SlideOverModal onClose={() => setPhotoGallery(null)} ariaLabel={`Photos de la place ${photoGallery.type}`} contentStyle={{ padding: 18 }}>
             <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: '#090a10', border: '1px solid var(--border-strong)' }}>
               <Image src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type}, photo ${photoGallery.index + 1}`} fill style={{ objectFit: 'contain' }} sizes="(max-width: 768px) 100vw, 760px" />
             </div>
@@ -881,11 +881,11 @@ export default function EventCheckoutPanel({
               <p style={{ margin: 0, color: '#fff', fontSize: 13, fontWeight: 700 }}>{photoGallery.type} · {photoGallery.index + 1}/{photoGallery.photos.length}</p>
               <Button type="button" variant="secondary" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index + 1) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Suivante</Button>
             </div>
-        </Modal>
+        </SlideOverModal>
       )}
 
       {includedModal && (
-        <Modal onClose={() => setIncludedModal(null)} ariaLabel={`Inclus dans ${includedModal.type}`}>
+        <SlideOverModal onClose={() => setIncludedModal(null)} ariaLabel={`Inclus dans ${includedModal.type}`}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
             </div>
@@ -897,7 +897,7 @@ export default function EventCheckoutPanel({
               })}
             </div>
             <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 12, lineHeight: 1.55 }}>Ces options seront servies sur place et validées par le staff depuis ton billet.</p>
-        </Modal>
+        </SlideOverModal>
       )}
 
       {showInfoModal && (

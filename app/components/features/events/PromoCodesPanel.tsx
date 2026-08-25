@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from 'react'
 import { fmtMoney, currencySymbol } from '@/lib/shared/money'
-import { Button, Input, Select, Label, Modal, Skeleton } from '@/app/components/ui'
+import { Button, Input, Select, Label, Modal, SlideOverModal, Skeleton } from '@/app/components/ui'
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
@@ -253,10 +253,10 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
 
   return (
     <>
-    <Modal
+    <SlideOverModal
       onClose={onClose}
-      maxWidth={680}
       ariaLabel="Codes promo"
+      padded
       contentStyle={{ border: '1px solid rgba(255,255,255,.11)', boxShadow: '0 24px 64px rgba(0,0,0,.6)' }}
     >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
@@ -467,7 +467,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             </p>
           </>
         )}
-    </Modal>
+    </SlideOverModal>
     {/* Confirmation de suppression */}
       {confirmRemove && (
         <Modal onClose={() => setConfirmRemove(null)} maxWidth={440} hideClose zIndex={3010} ariaLabel="Supprimer le code promo" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

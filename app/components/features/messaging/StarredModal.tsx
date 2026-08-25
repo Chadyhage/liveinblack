@@ -37,7 +37,7 @@ export default function StarredModal({
   messageTypeLabel: (type: 'text' | 'image' | 'voice' | 'poll' | 'event_poll' | 'story' | 'event' | 'catalog_item' | 'system') => string
 }) {
   return (
-    <ModalShell title="Messages importants" onClose={onClose}>
+    <ModalShell title="Messages importants" onClose={onClose} wide>
       {messages.length === 0 ? (
         <MessagingEmptyState icon={<Star size={32} />} title="Aucun message important" subtitle="Appui long (ou clic droit) sur un message → « Marquer important »" />
       ) : null}

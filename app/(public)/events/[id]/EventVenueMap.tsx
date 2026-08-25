@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { MapPin } from 'lucide-react'
-import Modal from '@/app/components/ui/Modal'
+import SlideOverModal from '@/app/components/ui/SlideOverModal'
 import Button from '@/app/components/ui/Button'
 
 // Carte interactive du lieu (retour client) — pas de lib de cartographie
@@ -29,7 +29,7 @@ export default function EventVenueMap({ address }: { address: string }) {
       </Button>
 
       {open && (
-        <Modal onClose={() => setOpen(false)} maxWidth={560} hideClose ariaLabel="Localisation de l’événement" contentStyle={{ padding: 0, overflow: 'hidden' }}>
+        <SlideOverModal onClose={() => setOpen(false)} ariaLabel="Localisation de l’événement" contentStyle={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{address}</p>
           </div>
@@ -64,7 +64,7 @@ export default function EventVenueMap({ address }: { address: string }) {
               Fermer
             </Button>
           </div>
-        </Modal>
+        </SlideOverModal>
       )}
     </>
   )

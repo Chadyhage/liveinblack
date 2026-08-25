@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Stars, StarInput } from '@/app/components/ui/StarRating'
 import { computeReviewStats, REVIEW_COMMENT_MIN, REVIEW_COMMENT_MAX, REVIEW_REPORT_REASONS } from '@/lib/shared/reviews'
-import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, Modal, SlideOverModal } from '@/app/components/ui'
 
 // Port de src/components/ProviderReviews.jsx — section "Avis clients" d'une
 // page publique prestataire. Contrairement au legacy (modale d'auth inline
@@ -29,8 +29,9 @@ function fmtDate(iso: string): string {
   }
 }
 
-function Sheet({ onClose, title, subtitle, children }: { onClose: () => void; title: string; subtitle?: string; children: React.ReactNode }) {
-  return <Modal onClose={onClose} zIndex={3200} title={title} subtitle={subtitle}>{children}</Modal>
+function Sheet({ onClose, title, subtitle, children, compact = false }: { onClose: () => void; title: string; subtitle?: string; children: React.ReactNode; compact?: boolean }) {
+  if (compact) return <Modal onClose={onClose} zIndex={3200} title={title} subtitle={subtitle}>{children}</Modal>
+  return <SlideOverModal onClose={onClose} zIndex={3200} title={title} subtitle={subtitle}>{children}</SlideOverModal>
 }
 
 export interface PublicReviewView {
@@ -386,7 +387,7 @@ export default function ProviderReviewsClient({
       )}
 
       {confirmRemove && (
-        <Sheet onClose={() => !removeBusy && setConfirmRemove(false)} title="Retirer votre avis ?">
+        <Sheet compact onClose={() => !removeBusy && setConfirmRemove(false)} title="Retirer votre avis ?">
           <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={removeBusy} style={{ ...ghostBtn, flex: 1 }}>

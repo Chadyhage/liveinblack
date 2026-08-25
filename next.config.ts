@@ -63,12 +63,18 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    const productionStaticCacheRoutes = isDev
+      ? []
+      : [
+          { source: '/_next/static/:path*', headers: staticCacheHeaders },
+          { source: '/_next/image/:path*', headers: staticCacheHeaders },
+          { source: '/favicon.ico', headers: staticCacheHeaders },
+          { source: '/images/:path*', headers: staticCacheHeaders },
+        ];
+
     return [
       { source: '/(.*)', headers: securityHeaders },
-      { source: '/_next/static/:path*', headers: staticCacheHeaders },
-      { source: '/_next/image/:path*', headers: staticCacheHeaders },
-      { source: '/favicon.ico', headers: staticCacheHeaders },
-      { source: '/images/:path*', headers: staticCacheHeaders },
+      ...productionStaticCacheRoutes,
       { source: '/api/:path*', headers: apiDefaultHeaders },
     ];
   },

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { formatMoney } from './types'
-import { Card, EmptyState, ImmersiveDialog, SkeletonList } from '@/app/components/ui'
+import { Card, EmptyState, SlideOverModal, SkeletonList } from '@/app/components/ui'
 import styles from './BookingsPanel.module.css'
 
 // Port de BookingsPanel (MesEvenementsPage.jsx lignes 3727-3884) — panneau
-// centré de détail des réservations d'un événement. Le contenu interne scrolle
+// latéral de détail des réservations d'un événement. Le contenu interne scrolle
 // pour rester utilisable même avec des listes de billets longues.
 interface BookingTicket {
   ticketCode: string
@@ -50,11 +50,10 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
   }, [event.id])
 
   return (
-    <ImmersiveDialog
+    <SlideOverModal
       title={event.name}
       subtitle={`Réservations · ${data?.ticketCount ?? 0} billet${data?.ticketCount === 1 ? '' : 's'}`}
       onClose={onClose}
-      maxWidth={920}
     >
         {error && <p className={styles.error}>{error}</p>}
         {!data && !error && <SkeletonList rows={3} columns={2} />}
@@ -120,6 +119,6 @@ export default function BookingsPanel({ event, onClose }: { event: { id: string;
             </section>
           </>
         )}
-    </ImmersiveDialog>
+    </SlideOverModal>
   )
 }

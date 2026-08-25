@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BOOST_PLANS, getBoostPlan } from '@/lib/shared/boosts'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Modal } from '@/app/components/ui'
+import { Button, SlideOverModal } from '@/app/components/ui'
 
 interface BoostModalProps {
   event: { id: string; name: string; region: string }
@@ -158,7 +158,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
   }
 
   return (
-    <Modal onClose={onClose} maxWidth={620} ariaLabel="Promouvoir l’événement">
+    <SlideOverModal onClose={onClose} ariaLabel="Promouvoir l’événement" padded>
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
           <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
           <p
@@ -405,6 +405,6 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             </Button>
           </div>
         )}
-    </Modal>
+    </SlideOverModal>
   )
 }

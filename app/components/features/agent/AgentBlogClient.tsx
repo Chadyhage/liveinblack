@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
-import { Button, Card, Input, Textarea, Select, Modal, Skeleton, EmptyState } from '@/app/components/ui'
+import { Button, Card, Input, Textarea, Select, Modal, SlideOverModal, Skeleton, EmptyState } from '@/app/components/ui'
 
 // BLOG_CATEGORY_IDS n'est PAS importé depuis lib/models/BlogPost.ts ici :
 // ce fichier est un composant client, et lib/models/BlogPost.ts importe
@@ -284,7 +284,7 @@ export default function AgentBlogClient() {
       </div>
 
       {modalOpen && (
-      <Modal onClose={() => setModalOpen(false)} ariaLabel={editingId ? "Modifier l’article" : "Créer un article"}>
+      <SlideOverModal onClose={() => setModalOpen(false)} ariaLabel={editingId ? "Modifier l’article" : "Créer un article"} padded>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#fff' }}>{editingId ? "Modifier l'article" : 'Nouvel article'}</h3>
           <div>
@@ -360,7 +360,7 @@ export default function AgentBlogClient() {
             </Button>
           </div>
         </div>
-      </Modal>
+      </SlideOverModal>
       )}
 
       {confirmDeleteId && (

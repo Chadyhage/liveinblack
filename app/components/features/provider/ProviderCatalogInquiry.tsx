@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, SlideOverModal } from '@/app/components/ui'
 
 // Port de src/pages/PublicPrestatairePage.jsx (openServiceInquiry /
 // sendServiceInquiry) — "Demander ce service" par item de catalogue, sur la
@@ -197,7 +197,7 @@ export default function ProviderCatalogInquiry({
       </Button>
 
       {open && (
-        <Modal onClose={closeSheet} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
+        <SlideOverModal onClose={closeSheet} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
 
             <Card
               style={{
@@ -269,7 +269,7 @@ export default function ProviderCatalogInquiry({
                 Envoyer la demande
               </Button>
             </div>
-        </Modal>
+        </SlideOverModal>
       )}
     </>
   )

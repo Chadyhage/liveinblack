@@ -18,7 +18,7 @@ const SERVICE_ACCESS_PREFIXES = ['/offer-services']
 const AGENT_ONLY_PREFIXES = ['/agent']
 
 const ALLOWED_API_ORIGIN_PATTERNS = [
-  /^https:\/\/liveinblack(?:-dev)?\.vercel\.app$/,
+  /^https:\/\/liveinblack(?:-[a-z0-9-]+)?\.vercel\.app$/,
   /^https:\/\/liveinblack\.com$/,
   /^http:\/\/localhost(?::\d+)?$/,
   /^http:\/\/127\.0\.0\.1(?::\d+)?$/,

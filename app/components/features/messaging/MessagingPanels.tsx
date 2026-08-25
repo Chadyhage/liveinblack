@@ -154,7 +154,7 @@ export function ContactPanelModal({ conversationId, member, online, lastSeenAt, 
   const [phone, setPhone] = useState<string | null>(null)
   useEffect(() => { let cancelled = false; onLoadPhone(conversationId).then((value) => { if (!cancelled) setPhone(value) }); return () => { cancelled = true } }, [conversationId, onLoadPhone])
   return (
-    <ModalShell title="Contact" onClose={onClose}>
+    <ModalShell title="Contact" onClose={onClose} wide>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         {renderAvatar(member.userId, member.name, 64, online, true)}
         <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>

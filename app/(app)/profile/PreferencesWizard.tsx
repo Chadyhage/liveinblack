@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Input, Modal, Avatar } from '@/app/components/ui'
+import { Button, Input, SlideOverModal, Avatar } from '@/app/components/ui'
 import { stripDiacritics } from '@/lib/shared/diacritics'
 
 // Port de src/components/PreferencesEditor.jsx ("Mes goûts", #6 phase
@@ -412,7 +412,7 @@ export default function PreferencesModal({
   }
 
   return (
-    <Modal onClose={onClose} ariaLabel="Personnaliser mes préférences">
+    <SlideOverModal onClose={onClose} ariaLabel="Personnaliser mes préférences" padded>
         {done ? (
           <div style={{ textAlign: 'center', padding: '30px 10px 20px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(184, 243, 74,0.12)', border: '1px solid rgba(184, 243, 74,0.4)' }}>
@@ -509,6 +509,6 @@ export default function PreferencesModal({
             </div>
           </>
         )}
-    </Modal>
+    </SlideOverModal>
   )
 }

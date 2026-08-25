@@ -19,7 +19,7 @@
 //      recherche affiche nom + email.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Input, Modal, Skeleton } from '@/app/components/ui'
+import { Button, Input, Modal, SlideOverModal, Skeleton } from '@/app/components/ui'
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
 // hex locales pour permettre la composition alpha (`${color}24` etc.), ce que
 // `var(--teal)` ne permet pas en concaténation de chaîne.
@@ -313,11 +313,11 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
 
   return (
     <>
-    <Modal
+    <SlideOverModal
       onClose={onClose}
-      maxWidth={680}
       dismissible={!busy}
       ariaLabel="Équipe de la soirée"
+      padded
       contentStyle={{ background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 16 }}
     >
         {/* Header */}
@@ -538,7 +538,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             </p>
           </>
         )}
-    </Modal>
+    </SlideOverModal>
     {/* Confirmation de retrait */}
       {confirmRemove && (
         <Modal onClose={() => setConfirmRemove(null)} maxWidth={440} hideClose dismissible={!busy} zIndex={3010} ariaLabel="Retirer le membre de l’équipe" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
