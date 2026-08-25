@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import type { HydratedDocument } from 'mongoose'
 import User from '@/lib/models/User'
 import type { ConversationDoc } from '@/lib/models/Conversation'
+import type { Email } from '@/lib/server/emails/types'
 import type { MessagingCaller } from './messagingCoreService'
 import type { MessagingErrorResult } from './messagingServiceTypes'
 import type { ConversationView } from './messagingViews'
@@ -52,14 +53,14 @@ export interface GroupMemberDependencies {
   ) => Promise<void>
   notifyUserById: (
     userId: string,
-    buildEmail: () => any,
+    buildEmail: () => Email,
   ) => Promise<void>
   addedToGroupEmail: (
     groupName: string,
     callerName: string,
     groupUrl: string,
     site: string,
-  ) => any
+  ) => Email
   toConversationView: (conversation: ConversationDoc) => ConversationView
   maxMembersTotal: number
   site: string

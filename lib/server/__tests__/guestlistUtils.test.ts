@@ -1,16 +1,16 @@
-import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { normalizeGuestlistTicketCode, restockedAvailable, toGuestlistView } from '../events/guestlistUtils'
 
 vi.mock('../events/ticketToken', () => ({
   signTicketToken: vi.fn(() => 'signed-token'),
 }))
 
-beforeAll(() => {
-  process.env.PUBLIC_SITE_URL = 'https://liveinblack.com'
+beforeEach(() => {
+  vi.stubEnv('PUBLIC_SITE_URL', 'https://liveinblack.com')
 })
 
-afterAll(() => {
-  delete process.env.PUBLIC_SITE_URL
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 describe('guestlistUtils', () => {

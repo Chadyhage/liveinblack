@@ -23,6 +23,7 @@ import {
   isSendableType,
   validateMessageContentLength,
 } from './messagingSendUtils'
+import type { SendGuardConversation } from './messagingSendGuardService'
 import { resolveDirectMemberNames, resolveReadReceiptsAllowed } from './messagingParticipantLookupUtils'
 import {
   listStarredMessagesPage,
@@ -242,7 +243,7 @@ export async function getMessages(caller: MessagingCaller, input: GetMessagesInp
 // blocage) avant ce correctif, ce qui permettait à un compte bloqué de créer
 // des sondages ou d'y voter dans une conversation directe malgré le blocage.
 export async function assertCanSendInConversation(
-  conversation: any,
+  conversation: SendGuardConversation,
   callerId: string
 ): Promise<{ ok: true } | ErrResult> {
   return assertConversationSendAllowed(conversation, callerId)

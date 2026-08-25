@@ -10,7 +10,7 @@ export function normalizeForwardTargetIds(rawIds: unknown, maxTargets = MAX_FORW
   return { ok: true, targetIds }
 }
 
-export function canForwardMessageType(message: Pick<MessageDoc, 'deletedForAll' | 'type'>): { ok: true } | { ok: false; error: 'message_deleted' | 'invalid_type' } {
+export function canForwardMessageType(message: Pick<MessageDoc, 'type'> & { deletedForAll?: boolean }): { ok: true } | { ok: false; error: 'message_deleted' | 'invalid_type' } {
   if (message.deletedForAll) return { ok: false, error: 'message_deleted' }
   if (message.type === 'system') return { ok: false, error: 'invalid_type' }
   return { ok: true }
@@ -20,12 +20,14 @@ export function buildForwardedPoll(
   poll: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> | null {
   if (!poll) return null
-  const p = poll as any
+  const options = Array.isArray(poll.options) ? poll.options : []
   return {
-    pollType: p.pollType,
-    question: p.question,
-    options: (p.options ?? []).map((option: any) => ({ id: option.id, text: option.text, voterIds: [] as string[] })),
-    event: p.event ? { ...p.event } : null,
+    pollType: poll.pollType,
+    question: poll.question,
+    options: options
+      .filter((option): option is { id?: unknown; text?: unknown } => Boolean(option) && typeof option === 'object')
+      .map((option) => ({ id: String(option.id ?? ''), text: String(option.text ?? ''), voterIds: [] as string[] })),
+    event: poll.event && typeof poll.event === 'object' ? { ...poll.event } : null,
   }
 }
 

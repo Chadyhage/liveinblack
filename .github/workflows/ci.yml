@@ -9,28 +9,34 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
 
     env:
       CI: true
       NEXT_TELEMETRY_DISABLED: '1'
       AUTH_SECRET: ci-auth-secret
       PUBLIC_SITE_URL: http://127.0.0.1:3000
-      MONGODB_URI: mongodb://127.0.0.1:27017/liveinblack_ci_app
-      MONGODB_TEST_URI: mongodb://127.0.0.1:27017/liveinblack_ci_test
+      MONGODB_URI: mongodb://127.0.0.1:27017/liveinblack_ci_app?replicaSet=rs0
+      MONGODB_TEST_URI: mongodb://127.0.0.1:27017/liveinblack_ci_test?replicaSet=rs0
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Start MongoDB replica set
+        run: |
+          docker run -d \
+            --name liveinblack-mongo \
+            -p 27017:27017 \
+            mongo:7 \
+            --replSet rs0 \
+            --bind_ip_all
+          until docker exec liveinblack-mongo mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep -q 1; do
+            sleep 1
+          done
+          docker exec liveinblack-mongo mongosh --quiet --eval 'rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "127.0.0.1:27017" }] })'
+          until docker exec liveinblack-mongo mongosh --quiet --eval 'rs.status().members.some((member) => member.self && member.stateStr === "PRIMARY")' | grep -q true; do
+            sleep 1
+          done
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

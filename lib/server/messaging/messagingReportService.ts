@@ -1,5 +1,6 @@
 import Report from '@/lib/models/Report'
 import User from '@/lib/models/User'
+import type { Email } from '@/lib/server/emails/types'
 import { validateModerationTargetUserId, validateReportReason } from './messagingModerationUtils'
 
 export interface ReportUserCaller {
@@ -15,21 +16,21 @@ export interface ReportUserDependencies {
   normalizeObjectId: (id: string) => string
   notifyUserById: (
     userId: string,
-    buildEmail: () => any,
+    buildEmail: () => Email,
   ) => Promise<void>
   notifyAllAgents: (
-    buildEmail: () => any,
+    buildEmail: () => Email,
   ) => Promise<void>
   reportReceivedAgainstAccountEmail: (
     reason: string,
     helpUrl: string,
     site: string,
-  ) => any
+  ) => Email
   newReportToReviewEmail: (
     subject: string,
     moderationUrl: string,
     site: string,
-  ) => any
+  ) => Email
 }
 
 export async function reportUserForCaller(

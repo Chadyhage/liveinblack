@@ -25,7 +25,6 @@ import {
   renameGroupForCaller,
   setGroupAvatarForCaller,
   unpinGroupMessageForCaller,
-  GroupConversationIdInput,
   type PinMessageInput,
   type PinMessageResult,
   type RenameGroupInput,

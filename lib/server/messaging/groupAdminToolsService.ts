@@ -1,6 +1,8 @@
 import mongoose from 'mongoose'
+import type { HydratedDocument } from 'mongoose'
 import Conversation from '@/lib/models/Conversation'
 import Message from '@/lib/models/Message'
+import type { ConversationDoc } from '@/lib/models/Conversation'
 import type { MessagingCaller } from './messagingCoreService'
 import type { MessagingErrorResult } from './messagingServiceTypes'
 
@@ -26,12 +28,7 @@ export type PinMessageResult = MessagingErrorResult | { ok: true }
 
 export interface GroupAdminConversationGuard {
   ok: true
-  conversation: {
-    _id: unknown
-    name?: string | null
-    pinnedMessageId?: string | null
-    save?: () => Promise<unknown>
-  }
+  conversation: HydratedDocument<ConversationDoc>
 }
 
 export interface GroupAdminDependencies {
@@ -41,7 +38,7 @@ export interface GroupAdminDependencies {
   ) => Promise<MessagingErrorResult | GroupAdminConversationGuard>
   resolveDisplayName: (userId: string) => Promise<string>
   appendGroupSystemMessage: (
-    conversation: any,
+    conversation: GroupAdminConversationGuard['conversation'],
     input: {
       senderId: string
       senderName: string
@@ -84,7 +81,7 @@ export async function renameGroupForCaller(
     senderName: callerName,
     content: `${callerName} a renommé le groupe en "${name}"`,
   })
-  await conversation.save?.()
+  await conversation.save()
   return { ok: true, name }
 }
 

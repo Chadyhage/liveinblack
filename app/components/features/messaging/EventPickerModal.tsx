@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { Button, Input } from '@/app/components/ui'
 import { ModalShell } from './MessagingModals'
 
-interface EventSearchResult {
+export interface EventSearchResult {
   id: string
   name: string
   date: string
