@@ -208,7 +208,7 @@ export type ProviderSitemapEntry = { userId: string; updatedAt?: Date | string |
 
 export async function countPublicProvidersForSitemap(): Promise<number> {
   await getDb()
-  return ProviderProfile.countDocuments(withNonGhostFilter({ subscriptionActive: true }))
+  return ProviderProfile.estimatedDocumentCount().maxTimeMS(2_000)
 }
 
 export async function listPublicProvidersForSitemapPage(params: { offset: number; limit: number }): Promise<ProviderSitemapEntry[]> {

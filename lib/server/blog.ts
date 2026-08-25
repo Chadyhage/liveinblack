@@ -96,7 +96,10 @@ export type BlogSitemapEntry = Pick<PublicBlogPost, 'slug' | 'publishedAt' | 'up
 
 export async function countPublishedPostsForSitemap(): Promise<number> {
   await getDb()
-  return BlogPost.countDocuments(publishedFilter())
+  // Un compte exact filtré devient une opération O(n) à très grand volume.
+  // Le nombre total de documents est une borne supérieure sûre : il peut
+  // créer un dernier sitemap vide, mais ne peut jamais masquer une URL.
+  return BlogPost.estimatedDocumentCount().maxTimeMS(2_000)
 }
 
 export async function listPublishedPostsForSitemapPage(params: { offset: number; limit: number }): Promise<BlogSitemapEntry[]> {

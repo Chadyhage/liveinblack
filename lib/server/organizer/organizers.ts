@@ -300,7 +300,7 @@ export type OrganizerSitemapEntry = { slug: string; updatedAt?: Date | string | 
 
 export async function countPublicOrganizersForSitemap(): Promise<number> {
   await getDb()
-  return OrganizerProfile.countDocuments(buildOrganizerFilters({}))
+  return OrganizerProfile.estimatedDocumentCount().maxTimeMS(2_000)
 }
 
 export async function listPublicOrganizersForSitemapPage(params: { offset: number; limit: number }): Promise<OrganizerSitemapEntry[]> {

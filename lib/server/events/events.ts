@@ -197,7 +197,7 @@ export type EventSitemapEntry = { id: string; updatedAt?: Date | string | null }
 
 export async function countPublicEventsForSitemap(): Promise<number> {
   await getDb()
-  return Event.countDocuments(buildDiscoverableFilters())
+  return Event.estimatedDocumentCount().maxTimeMS(2_000)
 }
 
 export async function listPublicEventsForSitemapPage(params: { offset: number; limit: number }): Promise<EventSitemapEntry[]> {
