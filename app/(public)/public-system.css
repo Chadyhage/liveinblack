@@ -88,7 +88,7 @@
 .lb-auth-split__form p { font-size: 14px !important; line-height: 1.5 !important; }
 .lb-auth-split__form label { margin-bottom: 7px !important; color: rgba(245, 245, 247, .76) !important; font-size: 13px !important; font-weight: 600 !important; }
 .lb-auth-split__form :where(input, textarea) {
-  min-height: 48px !important;
+  min-height: 40px !important;
   padding-inline: 13px !important;
   border: 1px solid rgba(255, 255, 255, .15) !important;
   border-radius: 13px !important;
@@ -100,7 +100,7 @@
 .lb-auth-split__form :where(input, textarea)::placeholder { color: rgba(245, 245, 247, .34); }
 .lb-auth-split__form :where(input, textarea):focus { border-color: rgba(184, 243, 74, .75) !important; box-shadow: 0 0 0 4px rgba(184, 243, 74, .12) !important; }
 .lb-auth-split__form button,
-.lb-auth-split__form a[style*="primaryBtn"] { min-height: 42px; border-radius: 12px !important; font-size: 14px !important; font-weight: 650 !important; }
+.lb-auth-split__form a[style*="primaryBtn"] { min-height: 38px; border-radius: 12px !important; font-size: 13px !important; font-weight: 650 !important; }
 .lb-auth-form > div:first-of-type { margin-bottom: 20px !important; }
 .lb-auth-form form { gap: 14px !important; }
 .lb-auth-form .lb-role-card {
@@ -110,10 +110,10 @@
   background: rgba(255, 255, 255, .055) !important;
   box-shadow: 0 12px 30px rgba(0, 0, 0, .14);
 }
-.lb-auth-form .lb-role-card button { min-height: 76px !important; padding: 13px !important; }
+.lb-auth-form .lb-role-card button { min-height: 64px !important; padding: 10px !important; }
 .lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(184, 243, 74, .48) !important; background: rgba(184, 243, 74, .065) !important; }
-.lb-auth-form [role="tablist"] { min-height: 42px; padding: 4px !important; border-radius: 11px !important; background: rgba(255, 255, 255, .075) !important; }
-.lb-auth-form [role="tab"] { min-height: 36px; border-radius: 9px !important; }
+.lb-auth-form [role="tablist"] { min-height: 38px; padding: 3px !important; border-radius: 11px !important; background: rgba(255, 255, 255, .075) !important; }
+.lb-auth-form [role="tab"] { min-height: 32px; border-radius: 9px !important; }
 .lb-auth-state {
   padding: clamp(24px, 4.2vw, 40px) !important;
   border: 1px solid rgba(255, 255, 255, .11);

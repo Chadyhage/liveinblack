@@ -72,7 +72,7 @@ function DateBadge({ dateISO }: { dateISO: string }) {
   const d = new Date(dateISO)
   if (Number.isNaN(d.getTime())) return null
   return (
-    <div style={{ position: 'absolute', top: 12, left: 12, minWidth: 44, background: 'rgba(18,18,20,.82)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 12, padding: '6px 9px', textAlign: 'center', lineHeight: 1.1 }}>
+    <div style={{ position: 'absolute', top: 12, left: 12, minWidth: 38, background: 'rgba(18,18,20,.82)', backdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,.16)', borderRadius: 12, padding: '5px 8px', textAlign: 'center', lineHeight: 1.1 }}>
       <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.72)', letterSpacing: '.04em' }}>{MONTHS_FR[d.getMonth()]}</p>
       <p style={{ margin: '2px 0 0', fontSize: 17, fontWeight: 700, color: '#fff' }}>{d.getDate()}</p>
     </div>
@@ -224,9 +224,9 @@ export default async function AccueilPage() {
                       </span>
                     )}
                   </div>
-                  <div style={{ minHeight: 76, padding: '10px 11px 12px' }}>
-                    <p style={{ fontSize: 16, lineHeight: 1.2, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
-                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '5px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+                  <div style={{ minHeight: 64, padding: '8px 10px 9px' }}>
+                    <p style={{ fontSize: 15, lineHeight: 1.18, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
                   </div>
                 </Link>
               )
@@ -238,7 +238,7 @@ export default async function AccueilPage() {
       {session?.user && recommendations.length > 0 && (
         <Section eyebrow="Rien que pour toi" title="Nos recommandations pour toi" sub="Selon tes goûts, tes favoris et tes réservations.">
           <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-18px 0 16px' }}>
-            <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
+            <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
           </div>
           <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
             {recommendations.map(({ event, reason }) => <HomeEventCard key={event.id} event={event} reason={reason} />)}
@@ -253,7 +253,7 @@ export default async function AccueilPage() {
             style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,rgba(184, 243, 74,.12),rgba(159, 224, 34,.04)),var(--surface)' }}
           >
             <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
-            <h2 style={{ margin: '7px 0 5px', fontSize: 21 }}>Des soirées vraiment faites pour toi</h2>
+            <h2 style={{ margin: '7px 0 5px', fontSize: 16 }}>Des soirées vraiment faites pour toi</h2>
             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5, lineHeight: 1.55 }}>Indique tes styles, tes villes et ton budget. Cela prend moins d&apos;une minute et reste modifiable.</p>
             <Link href="/profile" style={{ ...btnPrimary, marginTop: 14, padding: '10px 17px', fontSize: 12.5 }}>Régler mes goûts</Link>
           </Card>
@@ -295,7 +295,7 @@ export default async function AccueilPage() {
                         {pc.label}
                         {categories.length > 1 ? ` +${categories.length - 1}` : ''}
                       </span>
-                      <div style={{ position: 'absolute', left: 18, bottom: -28, width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 22, color: 'var(--obsidian)', boxShadow: '0 10px 24px rgba(0,0,0,.3)' }}>
+                      <div style={{ position: 'absolute', left: 18, bottom: -24, width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 17, color: 'var(--obsidian)', boxShadow: '0 10px 24px rgba(0,0,0,.3)' }}>
                         {p.photoUrl ? (
                           <Image src={p.photoUrl} alt={p.name} width={64} height={64} style={{ objectFit: 'cover' }} />
                         ) : (
@@ -303,8 +303,8 @@ export default async function AccueilPage() {
                         )}
                       </div>
                     </div>
-                    <div style={{ minHeight: 132, padding: '36px 14px 15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <p style={{ fontSize: 20, lineHeight: 1.2, fontWeight: 800, margin: 0 }}>{p.name}</p>
+                    <div style={{ minHeight: 124, padding: '32px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <p style={{ fontSize: 17, lineHeight: 1.2, fontWeight: 800, margin: 0 }}>{p.name}</p>
                       {(p.city || p.location || p.country) && (
                         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>
                       )}
@@ -362,7 +362,7 @@ export default async function AccueilPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
           <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid var(--primary)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: 0 }}>Organisateur</p>
-            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
             <ul style={featList}>
               {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
                 <li key={f} style={featItem}><span style={{ color: 'var(--primary)' }}>◆</span> {f}</li>
@@ -372,7 +372,7 @@ export default async function AccueilPage() {
           </Card>
           <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
-            <h3 style={{ fontSize: 22, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
             <ul style={featList}>
               {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
                 <li key={f} style={featItem}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
@@ -387,7 +387,7 @@ export default async function AccueilPage() {
       {/* CTA FINAL */}
       <section className={styles.finalSection}>
         <div className={styles.finalCard}>
-          <h2 style={{ fontSize: 'clamp(30px,7vw,48px)', letterSpacing: '-.04em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
+          <h2 style={{ fontSize: 'clamp(28px,6vw,42px)', letterSpacing: '-.04em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
             {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
           </p>
@@ -396,11 +396,11 @@ export default async function AccueilPage() {
             <Link href="/events" className={styles.secondaryButton}>Découvrir les événements</Link>
           </div>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 18 }}>
-            <Link href="/organizer-signup" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
-            <Link href="/provider-signup" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
+            <Link href="/organizer-signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
+            <Link href="/provider-signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
           </div>
           {!session?.user && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
-            Déjà un compte ? <Link href="/login" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
+            Déjà un compte ? <Link href="/login" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
           </p>}
         </div>
       </section>
@@ -432,7 +432,7 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false }:
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
         {badge ? (
-          <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 30, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
+                      <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 16, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
         ) : (
           <DateBadge dateISO={event.date} />
         )}
@@ -482,8 +482,8 @@ const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1
 // pour les usages sur <Link>, que Card (toujours un <div>) ne peut pas
 // remplacer sans étendre son API avec un prop `as` (hors scope ici).
 const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
-const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '10px 20px', borderRadius: 13, fontSize: 14, fontWeight: 650, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnGhost: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 13, fontSize: 14, fontWeight: 650, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnSolid: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 13, fontSize: 14, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
+const btnPrimary: React.CSSProperties = { minHeight: 34, padding: '7px 14px', borderRadius: 13, fontSize: 12.5, fontWeight: 650, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnGhost: React.CSSProperties = { minHeight: 34, padding: '7px 14px', borderRadius: 13, fontSize: 12.5, fontWeight: 650, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnSolid: React.CSSProperties = { minHeight: 34, padding: '7px 14px', borderRadius: 13, fontSize: 12.5, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
 const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }
 const featItem: React.CSSProperties = { fontSize: 14, lineHeight: 1.42, color: 'var(--text-muted)', display: 'flex', gap: 8, alignItems: 'baseline' }

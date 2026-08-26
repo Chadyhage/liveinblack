@@ -94,7 +94,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <Link href="/my-events" aria-label="Retour" style={{ width: 44, height: 44, color: '#fff', fontSize: 20, textDecoration: 'none', padding: 0, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: 'rgba(255,255,255,.06)' }}>
+        <Link href="/my-events" aria-label="Retour" style={{ width: 38, height: 38, color: '#fff', fontSize: 18, textDecoration: 'none', padding: 0, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: 'rgba(255,255,255,.06)' }}>
           <ArrowLeft size={20} />
         </Link>
         <div>
@@ -174,11 +174,11 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
         ) : (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 18 }}>
-              <Card style={{ padding: '14px 16px' }}>
+              <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billets vendus</p>
                 <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }}>{stats.assignedTickets}</p>
               </Card>
-              <Card style={{ padding: '14px 16px' }}>
+              <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billetterie + consommations</p>
                 <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: '0 0 8px' }}>{formatMoney(stats.totalEstimatedRevenue, view.event.currency)}</p>
                 <div style={{ display: 'grid', gap: 4, paddingLeft: 10, borderLeft: '2px solid var(--border)' }}>
@@ -192,13 +192,13 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                   </div>
                 </div>
               </Card>
-              <Card style={{ padding: '14px 16px' }}>
+              <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de remplissage</p>
                 <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }} title={stats.fillRate == null ? 'Pas encore de capacité renseignée pour ce calcul.' : undefined}>
                   {pct(stats.fillRate)}
                 </p>
               </Card>
-              <Card style={{ padding: '14px 16px' }}>
+              <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de présence</p>
                 <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }} title={stats.attendanceRate == null ? "Disponible une fois l'événement passé et les entrées scannées." : undefined}>
                   {pct(stats.attendanceRate)}
@@ -243,15 +243,15 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                 </p>
                 <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
+                    <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>
                   </Card>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
+                    <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Terminées</p>
                   </Card>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{view.resaleStats.suspended}</p>
+                    <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{view.resaleStats.suspended}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Suspendues</p>
                   </Card>
                 </div>

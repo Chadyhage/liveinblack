@@ -121,24 +121,24 @@ export default function AgentSalesClient({
 
   return (
     <main style={{ width: '100%', padding: '28px clamp(14px, 2vw, 28px) 72px' }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 4px' }}>Vente sur place</h1>
+      <h1 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 4px' }}>Vente sur place</h1>
       <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '0 0 20px' }}>{eventName}</p>
 
       <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash en attente</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash réglé</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Mobile Money</p>
         </Card>
       </div>

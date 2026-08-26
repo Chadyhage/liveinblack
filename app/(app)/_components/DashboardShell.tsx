@@ -338,7 +338,7 @@ function SidebarNavigation({ groups, upsell, isActive, hasActiveDescendant, badg
                 return (
                   <div key={item.href}>
                     <SidebarLink item={item} active={isActive(item.href)} badge={badges[item.href]} onClick={onNavigate} />
-                    <div style={{ paddingLeft: 14 }}>{item.children.map((child) => <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact onClick={onNavigate} />)}</div>
+                    <div style={{ paddingLeft: 12 }}>{item.children.map((child) => <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact onClick={onNavigate} />)}</div>
                   </div>
                 )
               }
@@ -401,9 +401,9 @@ function SidebarItem({
             flex: 1,
             minWidth: 0,
             alignItems: 'center',
-            gap: 10,
-            minHeight: 48,
-            padding: '11px 8px 11px 12px',
+            gap: 9,
+            minHeight: 38,
+            padding: '8px 7px 8px 10px',
             color: active ? 'var(--text)' : 'var(--text-muted)',
             fontSize: 14.5,
             fontWeight: active ? 700 : 600,
@@ -423,7 +423,7 @@ function SidebarItem({
         />
       </div>
       {expanded && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, paddingLeft: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, paddingLeft: 12 }}>
           {item.children.map((child) => (
             <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact />
           ))}
@@ -444,19 +444,19 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        minHeight: compact ? 44 : 48,
-        padding: compact ? '9px 12px' : '11px 13px',
+        gap: 9,
+        minHeight: compact ? 42 : 46,
+        padding: compact ? '8px 11px' : '10px 12px',
         borderRadius: 13,
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
         background: active ? 'rgba(184, 243, 74,.13)' : 'transparent',
         border: active ? '1px solid rgba(184,243,74,.22)' : '1px solid transparent',
-        fontSize: compact ? 13.5 : 14.5,
+        fontSize: compact ? 13 : 14,
         fontWeight: active ? 700 : 600,
         textDecoration: 'none',
       }}
     >
-      <Icon size={compact ? 15 : 17} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
+      <Icon size={compact ? 14 : 16} strokeWidth={active ? 2.2 : 1.8} color={active ? 'var(--primary)' : 'currentColor'} />
       <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
       {!!badge && (
         <span
@@ -467,7 +467,7 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
             color: '#fff',
             background: 'rgba(224,90,170,0.85)',
             borderRadius: 999,
-            padding: '1px 7px',
+            padding: '1px 6px',
             flexShrink: 0,
           }}
         >

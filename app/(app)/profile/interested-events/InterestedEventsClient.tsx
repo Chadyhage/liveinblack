@@ -68,7 +68,7 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
@@ -76,8 +76,8 @@ export default function InterestedEventsClient({ initialItems }: { initialItems:
         </div>
 
         <header>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes favoris</h1>
-          <p style={{ maxWidth: 620, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Retrouve les événements sauvegardés et prépare ta prochaine sortie.</p>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes favoris</h1>
+          <p style={{ maxWidth: 620, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Retrouve les événements sauvegardés et prépare ta prochaine sortie.</p>
         </header>
 
         {items.length === 0 ? (
@@ -163,7 +163,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         </div>
         {ev && (
           <div style={{ position: 'absolute', left: 12, right: 12, bottom: 10 }}>
-            <p style={{ fontSize: 19, fontWeight: 850, margin: 0, color: ev.color || '#fff' }}>{ev.name}</p>
+            <p style={{ fontSize: 16, fontWeight: 850, margin: 0, color: ev.color || '#fff' }}>{ev.name}</p>
             <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.65)', margin: '2px 0 0' }}>
               {[ev.dateDisplay || ev.date, ev.time, ev.city].filter(Boolean).join(' · ') || 'Date à confirmer'}
             </p>

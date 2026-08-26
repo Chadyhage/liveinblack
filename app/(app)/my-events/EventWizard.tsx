@@ -799,14 +799,14 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
           variant="ghost"
           aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
-          style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
+          style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </Button>
         <div>
-          <p className="font-display" style={{ fontSize: 22, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
+          <p className="font-display" style={{ fontSize: 17, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
             {eventId ? "Modifier l'événement" : 'Créer un événement'}
           </p>
           <p style={{ fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
@@ -980,7 +980,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={S.label}>Description courte</label>
               <Textarea
-                style={{ ...S.inputBase, resize: 'none', height: 80 }}
+                style={{ ...S.inputBase, resize: 'none', height: 64 }}
                 placeholder="Décris ta soirée en deux ou trois phrases…"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -1023,10 +1023,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           }}
                           style={{
                             flexShrink: 0,
-                            width: 44,
-                            height: 44,
-                            minHeight: 44,
-                            minWidth: 44,
+                            width: 38,
+                            height: 38,
+                            minHeight: 38,
+                            minWidth: 38,
                             borderRadius: 12,
                             padding: 0,
                             display: 'flex',
@@ -1518,7 +1518,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                             variant="ghost"
                             onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
                             title="Retirer cette option"
-                            style={{ flexShrink: 0, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 18, lineHeight: 1, padding: 0 }}
+                            style={{ flexShrink: 0, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 16, lineHeight: 1, padding: 0 }}
                           >
                             ×
                           </Button>

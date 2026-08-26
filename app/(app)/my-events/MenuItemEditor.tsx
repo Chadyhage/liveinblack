@@ -68,8 +68,8 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
       aria-checked={value}
       tabIndex={disabled ? -1 : 0}
       style={{
-        width: 44,
-        height: 24,
+        width: 40,
+        height: 22,
         borderRadius: 12,
         background: value ? 'var(--teal)' : 'rgba(255,255,255,0.08)',
         position: 'relative',
@@ -152,13 +152,13 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {item.imageUrl ? (
-          <div style={{ position: 'relative', width: 56, height: 46, flexShrink: 0 }}>
+          <div style={{ position: 'relative', width: 52, height: 42, flexShrink: 0 }}>
             <Image src={item.imageUrl} alt="" fill style={{ borderRadius: 9, objectFit: 'cover' }} sizes="56px" />
             <Button
               variant="ghost"
               onClick={() => set('imageUrl', null)}
               aria-label="Retirer la photo"
-              style={{ position: 'absolute', top: -12, right: -12, width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', border: '8px solid var(--surface)', background: 'var(--pink)', color: '#fff', padding: 0, fontSize: 18 }}
+              style={{ position: 'absolute', top: -10, right: -10, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', border: '7px solid var(--surface)', background: 'var(--pink)', color: '#fff', padding: 0, fontSize: 16 }}
             >
               ×
             </Button>
@@ -176,7 +176,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         </div>
       </div>
       {onUploadImage && (
-        <label style={{ alignSelf: 'flex-start', padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 700, cursor: disabled || imageUploading ? 'not-allowed' : 'pointer' }}>
+        <label style={{ alignSelf: 'flex-start', padding: '6px 9px', borderRadius: 8, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', color: 'var(--text-muted)', fontSize: 10.5, fontWeight: 700, cursor: disabled || imageUploading ? 'not-allowed' : 'pointer' }}>
           {imageUploading ? 'Envoi de la photo…' : item.imageUrl ? 'Changer la photo' : 'Ajouter une photo'}
           <input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || imageUploading} style={{ display: 'none' }} onChange={async (event) => {
             const file = event.target.files?.[0]

@@ -367,8 +367,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               href="/login"
               className="lb-navlink-mobile lb-mobile-login"
               style={{
-                minHeight: 44,
-                padding: '10px 15px',
+                minHeight: 38,
+                padding: '8px 12px',
                 borderRadius: 12,
                 background: 'var(--teal-solid)',
                 color: '#04120e',
@@ -435,8 +435,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? 'page' : undefined}
                     style={{
-                      minHeight: 48,
-                      padding: '13px 16px',
+                      minHeight: 40,
+                      padding: '10px 14px',
                       margin: '2px 8px',
                       borderRadius: 12,
                       color: active ? '#f5f5f7' : 'rgba(255,255,255,.76)',
@@ -464,8 +464,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 onClick={() => setMobileOpen(false)}
                 aria-current={active ? 'page' : undefined}
                 style={{
-                  minHeight: 48,
-                  padding: '13px 16px',
+                  minHeight: 40,
+                  padding: '10px 14px',
                   margin: '2px 8px',
                   borderRadius: 12,
                   color: active ? '#f5f5f7' : 'rgba(255,255,255,.76)',
@@ -506,7 +506,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-public-nav__inner {
           width: 100%;
           max-width: 1380px;
-          min-height: 48px;
+          min-height: 40px;
           margin: 0 auto;
           padding: 4px 6px 4px 10px;
           display: flex;
@@ -630,7 +630,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
-          .lb-public-nav__inner { min-height: 48px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
+          .lb-public-nav__inner { min-height: 40px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
           .lb-public-nav__brand-mark { display: none; }
           .lb-public-nav__brand { font-size: 12.5px; }
           .lb-header-search, .lb-header-search form { width: 100% !important; }

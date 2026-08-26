@@ -136,7 +136,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
               size="sm"
               icon={<CheckCheck size={17} aria-hidden="true" />}
               onClick={markAllRead}
-              style={{ minWidth: 154 }}
+              style={{ minWidth: 136 }}
             >
               Tout marquer lu
             </Button>

@@ -279,8 +279,8 @@ export default function StudioClient({
       `}</style>
       <main className="lb-dashboard-page">
       <header style={{ marginBottom: 22 }}>
-        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
-        <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Présente ton univers, publie tes médias et configure tes encaissements.</p>
+        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
+        <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Présente ton univers, publie tes médias et configure tes encaissements.</p>
       </header>
       <div role="tablist" aria-label="Sections du studio" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
         {(['page', 'paiements'] as const).map((t) => (
@@ -353,7 +353,7 @@ export default function StudioClient({
           {linkCopied ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Copié <Check size={13} /></span> : 'Copier le lien'}
         </Button>
         {profile.status === 'public' && (
-          <Link href={`/organizers/${slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href={`/organizers/${slug}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '7px 12px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
             Voir ma page
           </Link>
         )}
@@ -370,10 +370,10 @@ export default function StudioClient({
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={100} height={100} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 32, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 18, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <label style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
+              <label style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '7px 11px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>
                 {uploading === 'avatar' ? 'Envoi…' : 'Changer le logo'}
                 <input
                   type="file"
@@ -395,7 +395,7 @@ export default function StudioClient({
                   <NextImage src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
                 )}
               </div>
-              <label style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
+              <label style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '7px 11px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>
                 {uploading === 'banner' ? 'Envoi…' : 'Changer la bannière'}
                 <input
                   type="file"
@@ -514,7 +514,7 @@ export default function StudioClient({
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt="" width={64} height={64} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 26, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 18, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
               <h3 style={{ font: '600 22px var(--font-open-sans)', color: '#fff', margin: '10px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
@@ -644,7 +644,7 @@ export default function StudioClient({
       )}
       {pendingConfirm && (
         <Modal onClose={() => setPendingConfirm(null)} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 style={{ fontSize: 20, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
+          <h3 style={{ fontSize: 18, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
           <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setPendingConfirm(null)} style={{ flex: 1 }}>
@@ -671,7 +671,7 @@ export default function StudioClient({
 function saveButtonStyle(saving: boolean): React.CSSProperties {
   return {
     width: '100%',
-    minHeight: 46,
+    minHeight: 40,
     padding: 13,
     background: 'var(--gold)',
     border: '1px solid var(--gold)',

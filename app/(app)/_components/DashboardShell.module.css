@@ -1,5 +1,5 @@
 .root {
-  --dashboard-sidebar: 224px;
+  --dashboard-sidebar: 212px;
   position: relative;
   min-height: 100dvh;
   isolation: isolate;
@@ -46,18 +46,18 @@
   box-shadow: 18px 0 54px rgba(0, 0, 0, .2);
 }
 
-.sidebarHeader { padding: 13px 13px 10px; border-bottom: 1px solid rgba(255, 255, 255, .085); }
-.brand { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.brandName { color: #f5f5f7; font-size: 15px; font-weight: 780; letter-spacing: -.035em; }
+.sidebarHeader { padding: 11px 11px 9px; border-bottom: 1px solid rgba(255, 255, 255, .085); }
+.brand { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+.brandName { color: #f5f5f7; font-size: 14px; font-weight: 780; letter-spacing: -.035em; }
 .brandName span { color: #b8f34a; }
-.workspace { margin-top: 7px; color: rgba(245, 245, 247, .55); font-size: 11px; font-weight: 600; }
+.workspace { margin-top: 6px; color: rgba(245, 245, 247, .55); font-size: 10.5px; font-weight: 600; }
 .account { margin-top: 8px; }
-.nav { flex: 1; min-height: 0; overflow-y: auto; padding: 9px 8px 14px; scrollbar-width: thin; }
-.section + .section { margin-top: 12px; }
-.sectionLabel { margin: 0 9px 5px; color: rgba(245, 245, 247, .68); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.nav { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 7px 12px; scrollbar-width: thin; }
+.section + .section { margin-top: 10px; }
+.sectionLabel { margin: 0 8px 4px; color: rgba(245, 245, 247, .68); font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .navList { display: flex; flex-direction: column; gap: 2px; }
-.footer { padding: 8px; border-top: 1px solid rgba(255, 255, 255, .085); }
-.publicLink { min-height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 10px; background: rgba(255, 255, 255, .045); color: rgba(245, 245, 247, .72); font-size: 12px; font-weight: 600; text-decoration: none; }
+.footer { padding: 7px; border-top: 1px solid rgba(255, 255, 255, .085); }
+.publicLink { min-height: 38px; display: flex; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 10px; background: rgba(255, 255, 255, .045); color: rgba(245, 245, 247, .72); font-size: 11.5px; font-weight: 600; text-decoration: none; }
 .main {
   flex: 1;
   min-width: 0;
@@ -67,12 +67,12 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 2px clamp(2px, 0.35vw, 6px) 22px;
+  padding: 2px clamp(2px, 0.25vw, 4px) 14px;
 }
 .mainFull { padding: 0; }
 
 .mobileBar { display: none; position: fixed; top: 12px; left: 12px; z-index: 50; }
-.mobileBar button { width: 44px; height: 44px; min-height: 44px !important; background: rgba(22,23,27,.92) !important; backdrop-filter: blur(24px); }
+.mobileBar button { width: 40px; height: 40px; min-height: 40px !important; background: rgba(22,23,27,.92) !important; backdrop-filter: blur(24px); }
 .mobileDrawer { display: none; position: fixed; inset: 62px 8px 8px; z-index: 49; overflow-y: auto; padding: 11px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 17px; background: rgba(25, 25, 29, .95); backdrop-filter: blur(30px) saturate(160%); box-shadow: 0 28px 80px rgba(0, 0, 0, .5); }
 .mobileAccount { margin-bottom: 12px; padding: 4px 4px 13px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .drawerBackdrop { display: none !important; position: fixed; inset: 0; z-index: 48; width: 100%; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: rgba(0, 0, 0, .48) !important; backdrop-filter: blur(4px); }
@@ -91,8 +91,8 @@
   margin-inline: 0 !important;
 }
 
-.root :global(.lb-dashboard-page) { padding-inline: clamp(4px, 0.7vw, 12px) !important; }
-.root :global(.lb-page-shell) { padding-inline: clamp(4px, 0.7vw, 12px) !important; }
+.root :global(.lb-dashboard-page) { padding-inline: clamp(2px, 0.45vw, 8px) !important; }
+.root :global(.lb-page-shell) { padding-inline: clamp(2px, 0.45vw, 8px) !important; }
 .root :global(.lb-dashboard-page-header) { margin-bottom: 0; }
 .root :global(.lb-dashboard-title) {
   position: absolute !important;
@@ -107,20 +107,20 @@
 }
 .root :global(.lb-dashboard-description) { display: none !important; }
 .root :global(.lb-dashboard-main) :where(h1, h2, h3) { font-family: inherit !important; text-transform: none !important; }
-.root :global(.lb-dashboard-main) :where(input, textarea, select) { min-height: 38px; border-radius: 10px !important; font-size: 13px !important; }
-.root :global(.lb-dashboard-main) button { min-height: 36px; border-radius: 10px; }
+.root :global(.lb-dashboard-main) :where(input, textarea, select) { min-height: 34px; border-radius: 10px !important; font-size: 12px !important; }
+.root :global(.lb-dashboard-main) button { min-height: 32px; border-radius: 10px; }
 .root :global(.lb-dashboard-main) :where(section, article, aside, div) {
   min-width: 0;
 }
 .root :global(.lb-card),
 .root :global(.lb-detail-section),
-.root :global(.lb-loading-panel) { border-color: rgba(255, 255, 255, .11) !important; border-radius: 11px !important; background: rgba(24, 24, 28, .72) !important; backdrop-filter: blur(22px) saturate(130%); box-shadow: 0 14px 36px rgba(0, 0, 0, .18) !important; }
+.root :global(.lb-loading-panel) { border-color: rgba(255, 255, 255, .11) !important; border-radius: 10px !important; background: rgba(24, 24, 28, .72) !important; backdrop-filter: blur(22px) saturate(130%); box-shadow: 0 12px 32px rgba(0, 0, 0, .16) !important; }
 
 @media (max-width: 1099px) {
   .sidebar { display: none; }
   .mobileBar { display: flex; }
   .mobileDrawer, .drawerBackdrop { display: block !important; }
-  .main { min-height: 100dvh; width: 100%; padding: 54px clamp(3px, .55vw, 6px) 32px; }
+  .main { min-height: 100dvh; width: 100%; padding: 54px clamp(3px, .5vw, 5px) 30px; }
   .mainFull { padding: 0; }
 }
 

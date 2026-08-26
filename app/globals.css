@@ -361,7 +361,7 @@ button:hover > .lb-card {
   max-width: none;
   min-height: calc(100vh - 120px);
   margin: 0;
-  padding: 0 0 48px;
+  padding: 0 0 36px;
 }
 
 .lb-dashboard-page--medium {
@@ -376,15 +376,15 @@ button:hover > .lb-card {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
 .lb-dashboard-title {
   margin: 0;
   color: var(--text);
-  font-size: clamp(28px, 3vw, 42px);
+  font-size: clamp(26px, 2.7vw, 38px);
   line-height: 1;
   letter-spacing: .01em;
 }
@@ -393,8 +393,8 @@ button:hover > .lb-card {
   max-width: 720px;
   margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 13.5px;
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.4;
 }
 
 .lb-responsive-metrics {
@@ -403,16 +403,16 @@ button:hover > .lb-card {
 
 .lb-dashboard-card-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-  gap: 12px !important;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 10px !important;
 }
 
 /* Primitives de composition partagées. Elles remplacent les grilles locales
    à 220/240 px et les faux panneaux transparents repérés pendant l'audit. */
 .lb-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 10px;
   align-items: stretch;
 }
 
@@ -422,7 +422,7 @@ button:hover > .lb-card {
 }
 
 .lb-card-grid:has(> .lb-card:only-child) {
-  grid-template-columns: minmax(min(100%, 220px), 480px);
+  grid-template-columns: minmax(min(100%, 200px), 480px);
 }
 
 /* Grille compacte pour des listes secondaires (ex. événements à venir/passés

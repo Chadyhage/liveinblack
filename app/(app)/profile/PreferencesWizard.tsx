@@ -420,7 +420,7 @@ export default function PreferencesModal({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 23, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>C&apos;est noté !</h2>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>C&apos;est noté !</h2>
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
             <Button
               onClick={onClose}
@@ -432,7 +432,7 @@ export default function PreferencesModal({
         ) : (
           <>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: VIOLET, fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Personnalisation</p>
-            <h2 className="font-display" style={{ fontSize: 23, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 18px' }}>Dis-nous ce que tu aimes</h2>
+            <h2 className="font-display" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 16px' }}>Dis-nous ce que tu aimes</h2>
 
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -446,7 +446,7 @@ export default function PreferencesModal({
               </div>
             </div>
 
-            <h3 style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 4px' }}>{current.title}</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 4px' }}>{current.title}</h3>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '0 0 20px', lineHeight: 1.5 }}>{current.subtitle}</p>
 
             <div style={{ minHeight: 120 }}>
@@ -493,7 +493,7 @@ export default function PreferencesModal({
                   variant="secondary"
                   onClick={goBack}
                   aria-label="Précédent"
-                  style={{ width: 46, height: 46, padding: 0, borderRadius: 12, flexShrink: 0, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}
+                  style={{ width: 38, height: 38, padding: 0, borderRadius: 12, flexShrink: 0, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 16 }}
                 >
                   ‹
                 </Button>

@@ -18,7 +18,7 @@ export default function PublicAboutPage() {
     <PageShell style={{ maxWidth: 'none', padding: 0 }}>
       <div className={styles.page}>
       <section className={styles.hero} style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
-        <p style={{ fontSize: 24, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
+        <p style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
           L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
         </p>
         <h1 className="font-display" style={{ fontSize: 'clamp(32px,7vw,54px)', letterSpacing: '.01em', lineHeight: 1.04, margin: '18px 0 0' }}>

@@ -110,7 +110,7 @@ export default function TabsSection() {
       >
         <div>
           <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: current.color }}>{current.roleName}</span>
-          <h3 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0 10px', letterSpacing: '-0.6px' }}>{current.label}</h3>
+          <h3 style={{ fontSize: 17, fontWeight: 800, margin: '6px 0 10px', letterSpacing: '-0.6px' }}>{current.label}</h3>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55, margin: '0 0 18px' }}>{current.description}</p>
           <ActionLink href={current.href} style={{ color: current.id === 'organizer' ? '#fff' : 'var(--primary-ink)', background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color }}>
             {current.cta}

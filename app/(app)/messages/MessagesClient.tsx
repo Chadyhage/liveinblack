@@ -1051,12 +1051,12 @@ export default function MessagesClient({
                   onClick={scrollToBottom}
                   style={{
                     position: 'absolute',
-                    right: isDesktop ? 32 : 16,
-                    bottom: 96,
-                    width: 44,
-                    height: 44,
-                    minWidth: 44,
-                    minHeight: 44,
+                    right: isDesktop ? 28 : 14,
+                    bottom: 88,
+                    width: 38,
+                    height: 38,
+                    minWidth: 38,
+                    minHeight: 38,
                     padding: 0,
                     borderRadius: '50%',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
@@ -1067,13 +1067,13 @@ export default function MessagesClient({
               )}
 
               {myGroupMute ? (
-                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+                <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
                   <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0 }}>
                     Un administrateur t&apos;a mis en sourdine {formatMuteUntil(myGroupMute.untilAt)}.
                   </p>
                 </div>
               ) : isBlockedByMe ? (
-                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+                <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
                   <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>
                     Tu as bloqué ce contact —{' '}
                     <Button

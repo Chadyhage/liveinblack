@@ -134,7 +134,7 @@ export default async function EventsPage({
           <Button
             type="submit"
             className={styles.searchButton}
-            style={{ minWidth: 154, minHeight: 52, borderRadius: 15, background: '#b8f34a', color: '#142000', fontSize: 17 }}
+            style={{ minWidth: 144, minHeight: 36, borderRadius: 15, background: '#b8f34a', color: '#142000', fontSize: 14 }}
           >
             <Search size={19} strokeWidth={2.2} aria-hidden="true" />
             <span>Rechercher</span>

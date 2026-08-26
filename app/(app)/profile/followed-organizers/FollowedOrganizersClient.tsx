@@ -99,7 +99,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
@@ -107,8 +107,8 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
         </div>
 
         <header>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
-          <p style={{ maxWidth: 620, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
+          <p style={{ maxWidth: 620, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
         </header>
 
         {follows.length === 0 ? (
@@ -118,7 +118,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
             action={
               <Link
                 href="/organizers"
-                style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '11px 22px', borderRadius: 12, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
+                style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 11, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
               >
                 Découvrir les organisateurs
               </Link>
@@ -144,7 +144,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
                 .map((s) => (
                   <Card key={s.organizerId} style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div>
-                      <Link href={`/organizers/${s.slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 15, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                      <Link href={`/organizers/${s.slug}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
                         {s.name}
                       </Link>
                       {(s.city || s.country) && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
@@ -200,16 +200,16 @@ function FollowCard({
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <Avatar src={follow.organizerAvatarUrl} name={follow.organizerName} size="lg" style={{ width: 54, height: 54 }} />
+        <Avatar src={follow.organizerAvatarUrl} name={follow.organizerName} size="lg" style={{ width: 48, height: 48 }} />
         <div style={{ flex: 1, minWidth: 160 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
+          <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
           {(follow.organizerCity || follow.organizerCountry) && (
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>
           )}
         </div>
         <Link
           href={`/organizers/${follow.organizerSlug}`}
-          style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '9px 16px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}
+          style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
         >
           Voir la page
         </Link>

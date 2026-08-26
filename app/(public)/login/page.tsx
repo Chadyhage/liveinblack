@@ -33,7 +33,7 @@ export default function LoginPage() {
 function AuthFormFallback() {
   return (
     <div aria-label="Chargement du formulaire" style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
-      <h1 className="font-display" style={{ fontSize: 28, color: 'var(--teal)', margin: '0 0 12px' }}>Connexion</h1>
+      <h1 className="font-display" style={{ fontSize: 18, color: 'var(--teal)', margin: '0 0 10px' }}>Connexion</h1>
       <div className="lb-loading-panel" style={{ minHeight: 340 }}>
         <span>Préparation du formulaire…</span>
       </div>

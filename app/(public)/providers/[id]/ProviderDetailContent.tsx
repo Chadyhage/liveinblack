@@ -120,14 +120,14 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
       </div>
 
       <div style={{ padding: '0 18px', marginTop: -28, position: 'relative' }}>
-        <div style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800 }}>
+        <div style={{ width: 52, height: 52, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800 }}>
           {provider.photoUrl ? (
             <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
           ) : (
             provider.name[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 26, letterSpacing: '.01em', margin: '10px 0 0' }}>{provider.name}</h1>
+        <h1 className="font-display" style={{ fontSize: 18, letterSpacing: '.01em', margin: '10px 0 0' }}>{provider.name}</h1>
         {provider.headline && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '3px 0 0' }}>{provider.headline}</p>}
         <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
@@ -248,7 +248,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}
                 >
                   {ev.imageUrl && (
-                    <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
                       <Image src={ev.imageUrl} alt="" fill sizes="44px" style={{ objectFit: 'cover' }} />
                     </div>
                   )}

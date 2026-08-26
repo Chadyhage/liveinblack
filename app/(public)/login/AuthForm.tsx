@@ -40,7 +40,7 @@ function checkPasswordStrength(pwd: string) {
 }
 
 const btnPrimary: React.CSSProperties = {
-  padding: '15px 24px',
+  padding: '10px 18px',
   background: 'var(--teal-solid)',
   border: '1px solid var(--border-strong)',
   borderRadius: 3,
@@ -52,7 +52,7 @@ const btnPrimary: React.CSSProperties = {
   boxShadow: '0 6px 20px rgba(184, 243, 74,0.18)',
 }
 const btnGold: React.CSSProperties = {
-  padding: '15px 24px',
+  padding: '10px 18px',
   background: 'var(--gold)',
   border: '1px solid var(--border-strong)',
   borderRadius: 3,
@@ -82,7 +82,7 @@ function IconEye({ open, size = 15 }: { open: boolean; size?: number }) {
   )
 }
 
-function RoleIcon({ role, size = 21 }: { role: RegRole; size?: number }) {
+function RoleIcon({ role, size = 18 }: { role: RegRole; size?: number }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   if (role === 'client')
     return (
@@ -379,7 +379,7 @@ export default function AuthForm() {
               <path d="M2 7l10 7 10-7" />
             </svg>
           </div>
-          <h2 style={{ fontWeight: 700, fontSize: 22, color: 'var(--text)', margin: 0 }}>Confirme ton inscription</h2>
+          <h2 style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', margin: 0 }}>Confirme ton inscription</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, overflowWrap: 'break-word' }}>
             Un lien de confirmation a été envoyé à <span style={{ color: 'var(--text)' }}>{registeredEmail}</span>.
           </p>
@@ -443,7 +443,7 @@ export default function AuthForm() {
       `}</style>
 
       <div style={{ marginBottom: 26 }}>
-        <h1 className="font-display" style={{ fontSize: 28, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
+        <h1 className="font-display" style={{ fontSize: 18, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0' }}>
@@ -554,29 +554,29 @@ export default function AuthForm() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 15,
-                    padding: '17px 18px',
-                    minHeight: 92,
-                    borderRadius: 16,
+                    gap: 12,
+                    padding: '10px 12px',
+                    minHeight: 62,
+                    borderRadius: 14,
                     textAlign: 'left',
                     justifyContent: 'flex-start',
                   }}
                 >
-                  <div style={{ width: 46, height: 46, borderRadius: 13, background: `${accent}1a`, border: `1px solid ${accent}3a`, color: accent, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 11, background: `${accent}1a`, border: `1px solid ${accent}3a`, color: accent, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <RoleIcon role={role} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                      <p style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2, flexWrap: 'wrap' }}>
+                      <p style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
                       {badge && (
-                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.12)' }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', padding: '2px 7px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.12)' }}>
                           {badge}
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{desc}</p>
+                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.35 }}>{desc}</p>
                   </div>
-                  <svg className="lb-role-chevron" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={2} strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <svg className="lb-role-chevron" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={2} strokeLinecap="round" style={{ flexShrink: 0 }}>
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </Button>
@@ -764,7 +764,7 @@ export default function AuthForm() {
         <Modal onClose={closeForgotModal} maxWidth={400} zIndex={100} ariaLabel="Mot de passe oublié" contentStyle={{ padding: '32px 28px' }}>
             {!forgotSubmitted ? (
               <>
-                <h2 id="forgot-modal-title" style={{ fontSize: 19, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
+                <h2 id="forgot-modal-title" style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                   Entre ton adresse email, on t&apos;envoie un lien pour choisir un nouveau mot de passe.
                 </p>
@@ -806,7 +806,7 @@ export default function AuthForm() {
                     <path d="M2 7l10 7 10-7" />
                   </svg>
                 </div>
-                <h2 id="forgot-modal-title" style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Vérifie ta boîte mail</h2>
+                <h2 id="forgot-modal-title" style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Vérifie ta boîte mail</h2>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                   Si un compte existe avec cette adresse, tu vas recevoir un email avec un lien pour réinitialiser ton mot de passe.
                 </p>

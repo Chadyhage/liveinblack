@@ -98,7 +98,7 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Partager ${eventName}`}
-        style={{ minHeight: 44, padding: '8px 13px', borderRadius: 999, border: '1px solid rgba(255,255,255,.24)', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(10px)', color: '#fff', fontSize: 12 }}
+        style={{ minHeight: 38, padding: '7px 12px', borderRadius: 999, border: '1px solid rgba(255,255,255,.24)', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(10px)', color: '#fff', fontSize: 11.5 }}
       >
         {copied ? 'Lien copié' : 'Partager'}
       </Button>

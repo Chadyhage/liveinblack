@@ -237,7 +237,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           </p>
           <Link
             href="/organizer-studio?tab=paiements"
-            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12.5, textDecoration: 'none' }}
+            style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12, textDecoration: 'none' }}
           >
             Configurer mon encaissement
           </Link>
@@ -248,27 +248,27 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <Button
           variant="ghost"
           onClick={startCreate}
-          style={{ minHeight: 96, textAlign: 'left', padding: 14, borderRadius: 15, border: '1px solid rgba(184,243,74,0.4)', background: 'linear-gradient(135deg,rgba(184,243,74,.14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid rgba(184,243,74,0.4)', background: 'linear-gradient(135deg,rgba(184,243,74,.14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
-          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Créer un événement</p>
-          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Configure le lieu, les billets et toutes les options.</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Créer un événement</p>
+          <p style={{ fontSize: 13, lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Configure le lieu, les billets et toutes les options.</p>
         </Button>
         <Link
           href="/organizer-studio"
-          style={{ minHeight: 96, textAlign: 'left', padding: 14, borderRadius: 15, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Audience</p>
-          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Ma page publique</p>
-          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Présente ton univers et configure tes encaissements.</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Ma page publique</p>
+          <p style={{ fontSize: 13, lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Présente ton univers et configure tes encaissements.</p>
         </Link>
         <Link
           href="/my-shifts"
-          style={{ minHeight: 96, textAlign: 'left', padding: 14, borderRadius: 15, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Entrée</p>
-          <p style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: '0 0 7px' }}>Scanner les billets</p>
-          <p style={{ fontSize: 13.5, lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Contrôle les QR codes et suis les entrées en direct.</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Scanner les billets</p>
+          <p style={{ fontSize: 13, lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Contrôle les QR codes et suis les entrées en direct.</p>
         </Link>
       </div>
 

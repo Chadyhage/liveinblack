@@ -140,7 +140,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {related.length > 0 && (
           <section style={{ maxWidth: 1220, margin: '44px auto 0' }}>
-            <h2 className="font-display" style={{ fontSize: 21, letterSpacing: '.01em', margin: '0 0 14px' }}>À lire aussi</h2>
+            <h2 className="font-display" style={{ fontSize: 17, letterSpacing: '.01em', margin: '0 0 14px' }}>À lire aussi</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,250px),1fr))', gap: 14 }}>
               {related.map((r) => (
                 <Link

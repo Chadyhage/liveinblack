@@ -75,15 +75,15 @@ export default async function MesSoireesPage() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div>
-        <header style={{ marginBottom: 24 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes soirées</h1>
-          <p style={{ maxWidth: 650, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Accède aux événements pour lesquels tu fais partie de l’équipe.</p>
+        <header style={{ marginBottom: 18 }}>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(26px,3.2vw,34px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes soirées</h1>
+          <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13, lineHeight: 1.42 }}>Accède aux événements pour lesquels tu fais partie de l’équipe.</p>
         </header>
         {events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          <div style={{ textAlign: 'center', padding: '40px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <Mascot mood="sleeping" size={154} />
-            <p style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
-            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.55 }}>
+            <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.45 }}>
               Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), ou dès que tu crées toi-même un événement, elle apparaît ici.
             </p>
           </div>
@@ -97,13 +97,13 @@ export default async function MesSoireesPage() {
                 <Card
                   key={ev.eventId}
                   accent={ev.live ? meta.border : undefined}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 18, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ minWidth: 0 }}>
                       <p
                         style={{
-                          fontSize: 18,
+                      fontSize: 16,
                           fontWeight: 800,
                           letterSpacing: '-0.4px',
                           color: 'var(--text)',
@@ -152,10 +152,10 @@ export default async function MesSoireesPage() {
                     style={{
                       width: '100%',
                       padding: '14px',
-                      minHeight: 48,
+                      minHeight: 40,
                       borderRadius: 3,
                       border: '1px solid var(--border-strong)',
-                      fontSize: 15,
+                      fontSize: 13,
                       fontWeight: 500,
                       textTransform: 'none',
                       letterSpacing: 'normal',

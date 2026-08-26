@@ -284,11 +284,11 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
         aria-label="Changer la photo de profil"
         onClick={() => fileInputRef.current?.click()}
         style={{
-          width: 80,
-          height: 80,
+          width: 60,
+          height: 60,
           borderRadius: '50%',
           background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'rgba(184, 243, 74,0.18)',
-          fontSize: 28,
+          fontSize: 18,
           fontWeight: 800,
           color: 'var(--gold)',
           position: 'relative',
@@ -348,7 +348,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                   variant="secondary"
                   aria-label={control.label}
                   onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
-                  style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 12, fontSize: 18 }}
+                  style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 11, fontSize: 16 }}
                 >
                   {control.glyph}
                 </Button>
@@ -359,10 +359,10 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                 comme indiqué dans la consigne de swap. */}
             <Slider accent="gold" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ marginBottom: 18 }} />
             <div style={{ display: 'flex', gap: 10 }}>
-              <Button onClick={() => setCropSrc(null)} variant="secondary" style={{ flex: 1, padding: '11px 0', borderRadius: 10 }}>
+              <Button onClick={() => setCropSrc(null)} variant="secondary" style={{ flex: 1, padding: '9px 0', borderRadius: 10 }}>
                 Annuler
               </Button>
-              <Button onClick={saveAvatar} disabled={saving} loading={saving} loadingText="Enregistrement…" variant="primary" style={{ flex: 1, padding: '11px 0', ...goldButtonStyle }}>
+              <Button onClick={saveAvatar} disabled={saving} loading={saving} loadingText="Enregistrement…" variant="primary" style={{ flex: 1, padding: '9px 0', ...goldButtonStyle }}>
                 Valider
               </Button>
             </div>
@@ -1157,14 +1157,14 @@ export function SupportPanel() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           <ArrowLeft size={17} aria-hidden="true" />
           Profil
         </Link>
 
         <header style={{ marginBottom: 10 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
-          <p style={{ maxWidth: 620, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
+          <p style={{ maxWidth: 620, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
         </header>
 
         <div className={helpStyles.grid}>

@@ -123,7 +123,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 14, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
@@ -131,8 +131,8 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
         </div>
 
         <header style={{ marginBottom: 8 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(34px,5vw,48px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
-          <p style={{ maxWidth: 760, margin: '10px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 15, lineHeight: 1.55 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(28px,3.6vw,38px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
+          <p style={{ maxWidth: 760, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13, lineHeight: 1.42 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
         </header>
 
         <SeatHoldsPanel />
@@ -145,7 +145,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <TicketGlyph />
                 <div>
-                  <p style={{ fontWeight: 800, fontSize: 19, color: '#fff', margin: 0 }}>
+                  <p style={{ fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>
                     {upcomingSeatCount > 0 ? `${upcomingSeatCount} place${upcomingSeatCount > 1 ? 's' : ''} à venir` : 'Aucune place à venir'}
                   </p>
                   <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '2px 0 0' }}>
@@ -155,19 +155,19 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
                   </p>
                 </div>
               </div>
-              <Link
+                <Link
                 href="/events"
                 style={{
-                  minHeight: 44,
+                  minHeight: 38,
                   display: 'inline-flex',
                   alignItems: 'center',
                   alignSelf: 'flex-start',
-                  padding: '9px 16px',
+                  padding: '8px 14px',
                   borderRadius: 10,
                   background: 'var(--teal-solid)',
                   color: '#04120e',
                   fontWeight: 700,
-                  fontSize: 13,
+                  fontSize: 12.5,
                   textDecoration: 'none',
                 }}
               >
@@ -301,8 +301,8 @@ function TicketGlyph() {
   return (
     <div
       style={{
-        width: 44,
-        height: 44,
+        width: 38,
+        height: 38,
         borderRadius: 12,
         background: 'rgba(184, 243, 74,0.12)',
         display: 'flex',
@@ -944,7 +944,7 @@ function PremiumTicketCard({
               </span>
             )}
           </div>
-          <p style={{ fontWeight: 800, fontSize: 18, color: '#fff', margin: '0 0 12px' }}>{event?.name ?? 'Événement'}</p>
+          <p style={{ fontWeight: 800, fontSize: 16, color: '#fff', margin: '0 0 12px' }}>{event?.name ?? 'Événement'}</p>
           <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
             <MetaCell label="Place" value={ticket.place} />
             <MetaCell label="Date" value={event?.dateDisplay || event?.date || ''} />

@@ -216,16 +216,16 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: 12,
-                  padding: '14px 0 8px',
-                  fontSize: 13,
+                  gap: 10,
+                  padding: '12px 0 6px',
+                  fontSize: 12.5,
                   color: 'rgba(255,255,255,0.55)',
                   borderTop: '1px solid rgba(255,255,255,0.08)',
-                  marginTop: 5,
+                  marginTop: 4,
                 }}
               >
                 <span>Total</span>
-                <strong style={{ fontWeight: 700, fontSize: 25, color: 'var(--gold)' }}>{formatPrice(chosenTier.price)}</strong>
+                <strong style={{ fontWeight: 700, fontSize: 18, color: 'var(--gold)' }}>{formatPrice(chosenTier.price)}</strong>
               </div>
             </div>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0 }}>
@@ -236,7 +236,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 variant="secondary"
                 onClick={() => setStep('pick')}
                 style={{
-                  minHeight: 50,
+                  minHeight: 40,
                   borderRadius: 12,
                   fontSize: 13,
                   fontWeight: 600,
@@ -252,7 +252,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 loadingText="Redirection vers Stripe…"
                 fullWidth
                 style={{
-                  minHeight: 52,
+                  minHeight: 40,
                   borderRadius: 3,
                   background: paying ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                   color: paying ? 'rgba(255,255,255,0.35)' : '#181206',
@@ -273,7 +273,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 1. Choisis ta position
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 {BOOST_PLANS.map((plan) => {
                   const blocked = positionBlocked(plan.position)
                   const active = activePosition === plan.position
@@ -286,9 +286,9 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         setSelectedPlan(null)
                       }}
                       style={{
-                        minHeight: 76,
-                        padding: '12px 11px',
-                        borderRadius: 12,
+                        minHeight: 56,
+                        padding: '9px 9px',
+                        borderRadius: 11,
                         justifyContent: 'flex-start',
                         textAlign: 'left',
                         display: 'block',
@@ -298,7 +298,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         opacity: blocked ? 0.78 : 1,
                       }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 13 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 12.5 }}>
                         <RankIcon position={plan.position} />
                         {plan.label}
                       </span>
@@ -322,7 +322,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10, marginBottom: 9 }}>
                 <div>
                   <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
                     2. Choisis la durée
@@ -344,7 +344,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   </span>
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {activePlan.tiers.map((tier, index) => {
                   const selected = selectedPlan?.position === activePosition && selectedPlan?.tierIdx === index
                   const disabled = positionBlocked(activePosition)
@@ -356,9 +356,9 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                       title={disabled ? 'Emplacement indisponible pour le moment' : ''}
                       onClick={() => setSelectedPlan({ position: activePosition, tierIdx: index })}
                       style={{
-                        minHeight: 96,
-                        padding: '14px 12px',
-                        borderRadius: 12,
+                        minHeight: 60,
+                        padding: '9px 9px',
+                        borderRadius: 11,
                         justifyContent: 'flex-start',
                         textAlign: 'left',
                         display: 'block',
@@ -370,7 +370,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                       <span style={{ display: 'block', fontWeight: 600, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--teal)' : 'rgba(255,255,255,0.48)' }}>
                         {tier.label}
                       </span>
-                      <strong style={{ display: 'block', fontWeight: 700, fontSize: 22, marginTop: 10, whiteSpace: 'nowrap', color: selected ? '#fff' : activePlan.color }}>
+                      <strong style={{ display: 'block', fontWeight: 700, fontSize: 17, marginTop: 8, whiteSpace: 'nowrap', color: selected ? '#fff' : activePlan.color }}>
                         {formatPrice(tier.price)}
                       </strong>
                     </Button>
@@ -390,7 +390,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
               onClick={() => selectedPlan && setStep('pay')}
               fullWidth
               style={{
-                minHeight: 52,
+                minHeight: 40,
                 borderRadius: 3,
                 fontWeight: 500,
                 textTransform: 'none',

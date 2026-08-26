@@ -217,7 +217,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
             Service sur place
           </p>
-          <h1 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Commander</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Commander</h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
             {eventName} · Billet {ticketCode}
           </p>
@@ -294,7 +294,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                             boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                           }}
                         >
-                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 10, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 21 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={44} height={44} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
+                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 18 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
                             {menuItem.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
@@ -353,12 +353,12 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
             zIndex: 40,
             background: 'var(--surface-2)',
             borderTop: '1px solid var(--border-strong)',
-            padding: '14px 16px',
+            padding: '12px 14px',
           }}
         >
           <div className="lb-operational-paybar">
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>À régler au bar</span>
-            <span style={{ fontSize: 19, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
           </div>
         </div>
       )}
@@ -424,10 +424,10 @@ function StepButton({ label, disabled, onClick }: { label: string; disabled: boo
       disabled={disabled}
       onClick={onClick}
       style={{
-        width: 44,
-        height: 44,
-        minWidth: 44,
-        minHeight: 44,
+        width: 38,
+        height: 38,
+        minWidth: 38,
+        minHeight: 38,
         padding: 0,
         borderRadius: '50%',
         border: '1px solid var(--border-strong)',

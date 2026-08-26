@@ -94,7 +94,7 @@ export default function ContactClient() {
           <div>
             <h1
               className="font-display"
-              style={{ fontSize: 22, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
+              style={{ fontSize: 17, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
             >
               Contact
             </h1>
