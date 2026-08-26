@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Mascot } from '@/app/components/ui'
 
@@ -29,6 +29,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
   // libellé "lien invalide ou expiré".
   const noParamsAtAll = !email && !token
   const [state, setState] = useState<State>(noParamsAtAll ? 'missing' : missingParams ? 'error' : 'loading')
+  const didSubmitRef = useRef(false)
 
   // Renvoyer l'email de vérification depuis cet écran d'erreur — même
   // route/pattern anti-énumération que celui de AuthForm.tsx (écran "vérifie
@@ -61,7 +62,8 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
 
   useEffect(() => {
     if (missingParams) return
-    let cancelled = false
+    if (didSubmitRef.current) return
+    didSubmitRef.current = true
     ;(async () => {
       try {
         const res = await fetch('/api/auth/verify-email', {
@@ -70,15 +72,11 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
           body: JSON.stringify({ email, token }),
         })
         const data = await res.json().catch(() => ({}))
-        if (cancelled) return
         setState(res.ok && data.ok ? 'success' : 'error')
       } catch {
-        if (!cancelled) setState('error')
+        setState('error')
       }
     })()
-    return () => {
-      cancelled = true
-    }
   }, [email, token, missingParams])
 
   return (

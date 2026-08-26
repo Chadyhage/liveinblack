@@ -28,6 +28,14 @@ export const metadata: Metadata = {
   title: 'LIVEINBLACK — La marketplace de la nuit et de l’événementiel',
   description:
     "Découvrez les soirées, prestataires et organisateurs du moment et réservez votre billet en quelques clics sur LIVEINBLACK.",
+  alternates: { canonical: '/home' },
+  openGraph: {
+    url: '/home',
+    siteName: 'LIVEINBLACK',
+    locale: 'fr_BJ',
+    title: 'LIVEINBLACK — Événements et sorties au Bénin',
+    description: 'Découvrez les événements, organisateurs et prestataires qui font vivre la scène au Bénin.',
+  },
 }
 
 // Événements/prestataires changent en continu (nouvelles publications,
@@ -216,7 +224,7 @@ export default async function AccueilPage() {
                       </span>
                     )}
                   </div>
-                  <div style={{ minHeight: 108, padding: '18px 20px 20px' }}>
+                  <div style={{ minHeight: 88, padding: '13px 14px 15px' }}>
                     <p style={{ fontSize: 19, lineHeight: 1.22, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
                     <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
                   </div>
@@ -281,7 +289,7 @@ export default async function AccueilPage() {
                 const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl || placeholderPhotoUrl(p.userId, 440, 248)
                 return (
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ position: 'relative', minHeight: 180, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', minHeight: 150, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
                       <Image src={coverImage} alt="" fill loading={index === 0 ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
                       <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
                         {pc.label}
@@ -295,7 +303,7 @@ export default async function AccueilPage() {
                         )}
                       </div>
                     </div>
-                    <div style={{ minHeight: 160, padding: '40px 20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ minHeight: 132, padding: '36px 14px 15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                       <p style={{ fontSize: 20, lineHeight: 1.2, fontWeight: 800, margin: 0 }}>{p.name}</p>
                       {(p.city || p.location || p.country) && (
                         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>
@@ -431,10 +439,10 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false }:
         {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: isRanking ? 10.5 : 9.5, fontWeight: 900 }}>À LA UNE</span>}
         {reason && <span style={{ position: 'absolute', left: 10, bottom: 10, maxWidth: 'calc(100% - 20px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '5px 9px', fontSize: 10.5, fontWeight: 700 }}>{reason}</span>}
       </div>
-      <div style={{ minHeight: 138, padding: '20px 20px 22px', display: 'flex', flexDirection: 'column' }}>
-        <p style={{ margin: 0, color: '#fff', fontSize: isRanking ? 22 : 19, lineHeight: 1.22, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
-        <p style={{ margin: '9px 0 0', color: 'var(--text-muted)', fontSize: isRanking ? 15.5 : 14 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
-        <p style={{ margin: 'auto 0 0', paddingTop: 14, color: 'var(--gold)', fontSize: isRanking ? 15 : 13.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
+      <div style={{ minHeight: 112, padding: '14px 14px 15px', display: 'flex', flexDirection: 'column' }}>
+        <p style={{ margin: 0, color: '#fff', fontSize: isRanking ? 19 : 17, lineHeight: 1.2, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
+        <p style={{ margin: '7px 0 0', color: 'var(--text-muted)', fontSize: isRanking ? 13.5 : 13 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+        <p style={{ margin: 'auto 0 0', paddingTop: 9, color: 'var(--gold)', fontSize: isRanking ? 13.5 : 12.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
       </div>
     </Link>
   )
@@ -467,7 +475,7 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
 // site de référence (chillandgroovefestival.com : "PRENDRE MON PASS",
 // "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
 // mise en page oui, palette non).
-const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 24, boxShadow: '0 20px 60px rgba(0,0,0,.22)' }
+const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 17, boxShadow: '0 16px 42px rgba(0,0,0,.2)' }
 // Overrides passés à <Card> pour les usages non-<Link> ci-dessus : mêmes
 // tokens que `card` (fond dégradé, rayon xl, ombre), mais composés via le
 // primitif partagé plutôt que dupliqués — `card` reste nécessaire tel quel

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agent/agentGuard'
@@ -40,6 +41,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const post = await updatePostForAgent(id, parsed.data)
   if (!post) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+  revalidateTag('public-blog', { expire: 0 })
   return NextResponse.json({ ok: true, post })
 }
 
@@ -50,5 +52,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const deleted = await deletePostForAgent(id)
   if (!deleted) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+  revalidateTag('public-blog', { expire: 0 })
   return NextResponse.json({ ok: true })
 }

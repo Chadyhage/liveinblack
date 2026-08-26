@@ -105,7 +105,6 @@ export default function ProfilClient({ initialUser }: { initialUser: ProfilUser 
 }
 
 function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser) => void }) {
-  const router = useRouter()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const roleInfo = ROLE_LABELS[user.role]
@@ -113,16 +112,16 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
 
   async function confirmLogout() {
     setLoggingOut(true)
-    await signOut({ redirect: false })
-    router.push('/')
+    await signOut({ redirectTo: '/home' })
   }
 
   return (
     <main className={`profile-main lb-dashboard-page ${overviewStyles.root}`}>
       <style>{`
         .profile-quick-grid-density { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+        .profile-settings { padding-bottom: 96px; }
         @media (max-width: 780px) { .profile-quick-grid-density { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
-        @media (max-width: 480px) { .profile-quick-grid-density { grid-template-columns: minmax(0, 1fr) !important; } }
+        @media (max-width: 480px) { .profile-quick-grid-density { grid-template-columns: minmax(0, 1fr) !important; } .profile-settings { padding-bottom: 72px; } }
       `}</style>
       <div className={overviewStyles.grid}>
         <Card className={overviewStyles.identity}>

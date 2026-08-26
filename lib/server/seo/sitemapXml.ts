@@ -7,6 +7,7 @@ export const STATIC_SITEMAP_ROUTES = [
   { path: '/organizers', changeFrequency: 'daily', priority: 0.8 },
   { path: '/blog', changeFrequency: 'daily', priority: 0.7 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/contact', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/organizer-signup', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/provider-signup', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },

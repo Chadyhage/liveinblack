@@ -5,6 +5,7 @@ import { LEGAL, LEGAL_DISPLAY } from '@/lib/shared/legal'
 export const metadata: Metadata = {
   title: `Mentions légales — ${LEGAL.brand}`,
   description: `Mentions légales de ${LEGAL.brand}.`,
+  alternates: { canonical: '/legal-notice' },
 }
 
 // Port de src/pages/MentionsLegalesPage.jsx — obligatoires en France : LCEN

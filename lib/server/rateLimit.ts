@@ -74,6 +74,10 @@ async function cleanupMemoryBuckets() {
 }
 
 export async function checkRateLimit(options: RateLimitOptions): Promise<RateLimitResult> {
+  if (process.env.LIB_E2E_DISABLE_RATE_LIMIT === '1' && process.env.MONGODB_URI?.includes('e2e')) {
+    return { allowed: true, retryAfterSeconds: 0 }
+  }
+
   try {
     await getDb()
   } catch {

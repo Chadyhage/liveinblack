@@ -6,6 +6,7 @@ import { LEGAL } from '@/lib/shared/legal'
 export const metadata: Metadata = {
   title: `Politique de cookies — ${LEGAL.brand}`,
   description: `Politique de cookies de ${LEGAL.brand}.`,
+  alternates: { canonical: '/cookies' },
 }
 
 // Port de src/pages/PolitiqueCookiesPage.jsx — conforme directive ePrivacy +

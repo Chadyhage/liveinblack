@@ -13,6 +13,15 @@ import { getCachedPublicProvidersDirectory } from '@/lib/server/publicCache'
 export const metadata: Metadata = {
   title: 'Prestataires — LIVEINBLACK',
   description: 'Trouvez DJ, lieux, traiteurs et autres prestataires événementiels et contactez-les directement sur LIVEINBLACK.',
+  alternates: { canonical: '/providers' },
+  robots: { index: true, follow: true },
+  openGraph: {
+    url: '/providers',
+    siteName: 'LIVEINBLACK',
+    locale: 'fr_BJ',
+    title: 'Prestataires événementiels au Bénin — LIVEINBLACK',
+    description: 'Trouvez DJ, lieux, photographes, traiteurs et équipes techniques pour vos événements au Bénin.',
+  },
 }
 
 export const revalidate = 45

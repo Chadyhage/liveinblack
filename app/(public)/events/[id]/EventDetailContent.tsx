@@ -18,6 +18,8 @@ import EventVenueMap from './EventVenueMap'
 import { Card } from '@/app/components/ui'
 import styles from './EventDetailContent.module.css'
 
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
 // Contenu partagé entre la page dédiée (app/(public)/events/[id]/page.tsx) et
 // la route interceptée qui l'affiche en modal glissante depuis les listes
 // (app/(public)/@modal/(.)events/[id]/page.tsx). Le fetch de données et le
@@ -61,6 +63,54 @@ export default async function EventDetailContent({
 
   const soldOut = (event.places?.length ?? 0) > 0 && event.places!.every((p) => (p.available ?? 0) === 0)
   const bookingDisabledReason = event.cancelled ? 'Événement annulé' : soldOut ? 'Complet' : isEventEnded(event) ? 'Réservations closes' : null
+  const publicUrl = `${SITE}/events/${event.id}`
+  const prices = (event.places || []).map((place) => Number(place.price)).filter(Number.isFinite)
+  const minimumPrice = prices.length > 0 ? Math.min(...prices) : null
+  const eventJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Event',
+        '@id': `${publicUrl}#event`,
+        name: event.name,
+        description: event.description || event.subtitle || undefined,
+        image: event.imageUrl ? [event.imageUrl] : undefined,
+        url: publicUrl,
+        startDate: event.date ? `${event.date}T${event.time || '00:00'}:00` : undefined,
+        eventStatus: event.cancelled ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: event.location || event.city || event.region ? {
+          '@type': 'Place',
+          name: event.location || event.city || event.region,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: event.city || undefined,
+            addressRegion: event.region || undefined,
+          },
+        } : undefined,
+        organizer: {
+          '@type': 'Organization',
+          name: organizerProfile?.publicName || event.organizerName || event.organizer || 'LIVEINBLACK',
+          url: organizerProfile?.slug ? `${SITE}/organizers/${organizerProfile.slug}` : undefined,
+        },
+        offers: minimumPrice != null ? {
+          '@type': 'Offer',
+          url: publicUrl,
+          price: minimumPrice,
+          priceCurrency: currency,
+          availability: soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+        } : undefined,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${SITE}/home` },
+          { '@type': 'ListItem', position: 2, name: 'Événements', item: `${SITE}/events` },
+          { '@type': 'ListItem', position: 3, name: event.name, item: publicUrl },
+        ],
+      },
+    ],
+  }
 
   const checkoutPlaces = (event.places || []).map((p) => ({
     id: p.id,
@@ -90,6 +140,7 @@ export default async function EventDetailContent({
 
   return (
     <div className={isModal ? styles.modalRoot : styles.pageRoot}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replace(/</g, '\\u003c') }} />
       {isModal ? (
         <div className={styles.modalToolbar}>
           <div>

@@ -17,6 +17,9 @@ import OrganizerOnboardingWizard from '@/app/components/features/organizer/Organ
 // redirection /login pour toute visite anonyme.
 export const metadata: Metadata = {
   title: 'Devenir organisateur — LIVEINBLACK',
+  description: 'Créez votre profil organisateur, publiez vos événements et vendez vos billets en ligne au Bénin avec LIVEINBLACK.',
+  alternates: { canonical: '/organizer-signup' },
+  robots: { index: true, follow: true },
 }
 
 const LOCKED_STATUSES = ['submitted', 'under_review', 'resubmitted', 'approved', 'rejected']

@@ -4,13 +4,15 @@
 // lib/server/organizerEventLifecycle.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, note, button, infoCard, infoRow, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, button, infoCard, infoRow, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('event')
 
 export function eventPublishedEmail(eventName: string, publicUrl: string, site: string = DEFAULT_SITE): Email {
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading('Ton événement est en ligne 🎉', 'accent')}
-    ${paragraph(`<strong style="color:inherit;">${evName}</strong> est maintenant visible sur LIVEINBLACK.`)}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> est maintenant visible sur LIVE IN BLACK.`)}
     ${button(publicUrl, "Voir la page de l'événement")}
     ${note('Pense à ajouter ton équipe et tes codes promo depuis ton espace organisateur.')}
   `
@@ -61,18 +63,18 @@ export function eventRecapBeforeEventEmail(r: EventRecapSummary, site: string = 
   const rows = [
     infoRow('Quand', escapeHtml(r.eventWhen)),
     infoRow('Billets vendus', String(r.ticketsSold)),
-    infoRow('Staff assigné', String(r.staffCount)),
+    infoRow('Membres de l’équipe', String(r.staffCount)),
   ].join('')
   const inner = `
     ${heading(`${r.eventName} c'est dans 2 jours`)}
     ${infoCard(rows)}
     ${button(r.dashboardUrl, 'Voir le tableau de bord événement', 'outline')}
-    ${note("Vérifie que ton staff a bien accès à l'app scanner avant le jour J.")}
+    ${note("Vérifie que chaque membre de l'équipe a bien accès au scanner avant le jour J.")}
   `
   return {
-    subject: `${r.eventName} c'est dans 2 jours`,
-    html: wrap(inner, { site, preheader: `${r.ticketsSold} billets vendus, staff assigné.` }),
-    inApp: { type: 'organizer_activity', title: `${r.eventName} c'est dans 2 jours`, body: `${r.ticketsSold} billets vendus, ${r.staffCount} staff assigné(s).`, link: r.dashboardUrl, push: true },
+    subject: `${r.eventName}, c’est dans 2 jours`,
+    html: wrap(inner, { site, preheader: `${r.ticketsSold} billets vendus, équipe assignée.` }),
+    inApp: { type: 'organizer_activity', title: `${r.eventName}, c’est dans 2 jours`, body: `${r.ticketsSold} billets vendus, ${r.staffCount} membre(s) dans l’équipe.`, link: r.dashboardUrl, push: true },
   }
 }
 
@@ -98,7 +100,7 @@ export function boostConflictEmail(eventName: string, reason: string, alternativ
     ${button(alternativeUrl, 'Choisir un autre créneau', 'danger')}
   `
   return {
-    subject: `Ton boost pour ${eventName} n'a pas pu être activé`,
+    subject: `Ton boost pour ${eventName} n’a pas pu être activé`,
     html: wrap(inner, { site, preheader: reason }),
     inApp: { type: 'boost', title: 'Boost non activé', body: `${eventName} — ${reason}`, link: alternativeUrl, push: true },
   }
@@ -112,7 +114,7 @@ export function cancellationFinancialImpactEmail(eventName: string, totalRefunde
     ${note(payoutImpactLabel)}
   `
   return {
-    subject: `Impact financier de l'annulation de ${eventName}`,
+    subject: `Impact financier de l’annulation de ${eventName}`,
     html: wrap(inner, { site, preheader: `${totalRefundedLabel} remboursés.` }),
     inApp: { type: 'refund', title: "Impact financier de l'annulation", body: `${eventName} — ${totalRefundedLabel} remboursés.`, link: dashboardUrl ?? `${site}/my-events`, push: true },
   }

@@ -114,7 +114,7 @@ export async function updateHomepageConfig(agent: AgentCaller, input: UpdateHome
     { $set: { ...clean, updatedAt: now, updatedBy: agent.id } },
     { upsert: true, returnDocument: 'after' }
   ).lean()
-  revalidateTag('homepage-config', 'default')
+  revalidateTag('homepage-config', { expire: 0 })
   return normalize(updated as RawConfig)
 }
 

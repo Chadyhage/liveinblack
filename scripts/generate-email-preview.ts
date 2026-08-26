@@ -16,9 +16,9 @@ const event = {
 }
 
 const items: PreviewItem[] = [
-  { group: 'Compte & sécurité', label: 'Vérification email', email: emails.emailVerificationEmail(`${site}/verify-email?token=demo`) },
+  { group: 'Compte & sécurité', label: 'Vérification de l’e-mail', email: emails.emailVerificationEmail(`${site}/verify-email?token=demo`) },
   { group: 'Compte & sécurité', label: 'Réinitialisation mot de passe', email: emails.passwordResetEmail(`${site}/reset-password?token=demo`) },
-  { group: 'Compte & sécurité', label: 'Changement email', email: emails.emailChangeVerificationEmail(`${site}/confirmer-email?token=demo`) },
+  { group: 'Compte & sécurité', label: 'Changement d’e-mail', email: emails.emailChangeVerificationEmail(`${site}/confirmer-email?token=demo`) },
   { group: 'Compte & sécurité', label: 'Nouvelle connexion', email: emails.newDeviceLoginEmail({ deviceLabel: 'Safari sur iPhone', approxLocation: 'Lomé, Togo', when: 'Aujourd’hui à 18:42' }, `${site}/profile/parametres`) },
   { group: 'Compte & sécurité', label: 'Mot de passe modifié', email: emails.passwordChangedEmail(`${site}/profile/parametres`) },
   { group: 'Compte & sécurité', label: 'Compte supprimé', email: emails.accountDeletedEmail() },
@@ -43,9 +43,9 @@ const items: PreviewItem[] = [
   { group: 'Billets & paiements', label: 'Paiement échoué', email: emails.paymentFailedEmail(event.name, `${site}/events/${event.id}`, 'La transaction a été refusée') },
   { group: 'Billets & paiements', label: 'Place bientôt expirée', email: emails.seatHoldExpiringEmail(event.name, `${site}/events/${event.id}`, '8 minutes') },
   { group: 'Billets & paiements', label: 'Place libérée', email: emails.seatHoldExpiredEmail(event.name, `${site}/events/${event.id}`) },
-  { group: 'Billets & paiements', label: 'Payout initié', email: emails.payoutInitiatedEmail(event.name, '425 000 FCFA', '2 à 3 jours ouvrés') },
-  { group: 'Billets & paiements', label: 'Payout confirmé', email: emails.payoutConfirmedEmail('425 000 FCFA', 'PAY-LIB-2026-0842') },
-  { group: 'Billets & paiements', label: 'Payout échoué', email: emails.payoutFailedEmail('425 000 FCFA', 'Coordonnées bancaires invalides', `${site}/organizer-studio`) },
+  { group: 'Billets & paiements', label: 'Versement initié', email: emails.payoutInitiatedEmail(event.name, '425 000 FCFA', '2 à 3 jours ouvrés') },
+  { group: 'Billets & paiements', label: 'Versement confirmé', email: emails.payoutConfirmedEmail('425 000 FCFA', 'PAY-LIB-2026-0842') },
+  { group: 'Billets & paiements', label: 'Échec du versement', email: emails.payoutFailedEmail('425 000 FCFA', 'Coordonnées bancaires invalides', `${site}/organizer-studio`) },
 
   { group: 'Remboursements & revente', label: 'Annulation remboursée', email: emails.eventCancelledRefundEmail(event.name, '30 000 FCFA', '5 à 10 jours ouvrés', 'Contraintes techniques indépendantes de l’organisateur') },
   { group: 'Remboursements & revente', label: 'Report avec remboursement', email: emails.eventPostponedTicketHolderEmail(event.name, '22 août 2026', '5 septembre 2026', `${site}/profile/billets`) },
@@ -63,8 +63,8 @@ const items: PreviewItem[] = [
   { group: 'Organisateur', label: 'Boost actif', email: emails.boostActivatedEmail(event.name, '7 jours', `${site}/my-events/${event.id}/statistiques`) },
   { group: 'Organisateur', label: 'Boost en conflit', email: emails.boostConflictEmail(event.name, 'Ce créneau est déjà occupé par une campagne prioritaire', `${site}/my-events/${event.id}`) },
   { group: 'Organisateur', label: 'Impact annulation', email: emails.cancellationFinancialImpactEmail(event.name, '1 240 000 FCFA', 'Le montant sera déduit du prochain versement disponible.') },
-  { group: 'Organisateur', label: 'Staff ajouté', email: emails.staffAddedEmail(event.name, 'Manager accès', `${site}/scanner/${event.id}`) },
-  { group: 'Organisateur', label: 'Staff retiré', email: emails.staffRemovedEmail(event.name) },
+  { group: 'Organisateur', label: 'Membre ajouté à l’équipe', email: emails.staffAddedEmail(event.name, 'Responsable des accès', `${site}/scanner/${event.id}`) },
+  { group: 'Organisateur', label: 'Membre retiré de l’équipe', email: emails.staffRemovedEmail(event.name) },
   { group: 'Organisateur', label: 'Nouvel avis', email: emails.newReviewReceivedEmail(event.name, 5, 'Une organisation impeccable et une ambiance incroyable.', `${site}/organizer-studio`) },
 
   { group: 'Communauté', label: 'Nouvel événement suivi', email: emails.organizerNewEventEmail(event, 'Black Moon Events') },
@@ -73,7 +73,14 @@ const items: PreviewItem[] = [
   { group: 'Communauté', label: 'Message', email: emails.newMessageDigestEmail('Amina', 'Salut ! Est-ce que tu viens toujours samedi soir ?', `${site}/messages`) },
   { group: 'Communauté', label: 'Ajout groupe', email: emails.addedToGroupEmail('Moonlight Crew', 'Koffi', `${site}/messages`) },
   { group: 'Communauté', label: 'Intéressé demain', email: emails.interestedEventReminderEmail(event.name, 'Demain à 22:00', `${site}/events/${event.id}`, false) },
-  { group: 'Communauté', label: 'Rappel abonnement', email: emails.subscriptionReminderEmail('j3', `${site}/offer-services`) },
+  { group: 'Communauté', label: 'Intéressé demain — billet déjà acheté', email: emails.interestedEventReminderEmail(event.name, 'Demain à 22:00', `${site}/events/${event.id}`, true) },
+
+  { group: 'Prestataire & abonnement', label: 'Abonnement — J-7', email: emails.subscriptionReminderEmail('j7', `${site}/offer-services`) },
+  { group: 'Prestataire & abonnement', label: 'Abonnement — J-3', email: emails.subscriptionReminderEmail('j3', `${site}/offer-services`) },
+  { group: 'Prestataire & abonnement', label: 'Abonnement — J-1', email: emails.subscriptionReminderEmail('j1', `${site}/offer-services`) },
+  { group: 'Prestataire & abonnement', label: 'Abonnement — aujourd’hui', email: emails.subscriptionReminderEmail('j0', `${site}/offer-services`) },
+  { group: 'Prestataire & abonnement', label: 'Abonnement — période de grâce', email: emails.subscriptionReminderEmail('grace', `${site}/offer-services`) },
+  { group: 'Prestataire & abonnement', label: 'Profil prestataire masqué', email: emails.subscriptionReminderEmail('hidden', `${site}/offer-services`) },
 ]
 
 function escapeAttribute(value: string): string {
@@ -85,7 +92,7 @@ function escapeAttribute(value: string): string {
 }
 
 function localizeImages(html: string): string {
-  return html.replace(/src="https:\/\/liveinblack\.com\/images\//g, 'src="public/images/')
+  return html.replace(/src="https:\/\/liveinblack\.com\/images\//g, 'src="../../public/images/')
 }
 
 const groups = [...new Set(items.map((item) => item.group))]
@@ -94,7 +101,7 @@ const sections = groups.map((group) => {
   const id = group.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   const cards = items.filter((item) => item.group === group).map((item) => {
     const html = escapeAttribute(localizeImages(item.email.html))
-    return `<article class="item"><div class="meta"><span>Aperçu email</span><h3>${item.label}</h3><p><strong>Sujet :</strong> ${item.email.subject}</p></div><iframe title="${item.label}" srcdoc="${html}" loading="lazy"></iframe></article>`
+    return `<article class="item"><div class="meta"><span>Aperçu e-mail</span><h3>${item.label}</h3><p><strong>Sujet :</strong> ${item.email.subject}</p></div><iframe title="${item.label}" srcdoc="${html}" loading="lazy"></iframe></article>`
   }).join('')
   return `<section id="${id}"><div class="section-title"><p>Collection</p><h2>${group}</h2></div>${cards}</section>`
 }).join('')
@@ -104,31 +111,44 @@ const document = `<!doctype html>
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Aperçu emails LIVEINBLACK</title>
+  <title>Catalogue des e-mails LIVE IN BLACK</title>
   <style>
-    :root{--ink:#0a0810;--lime:#b8f34a;--page:#f5f5f7;--line:#dedee3;--text:#161617;--muted:#5f6368}
+    :root{--ink:#0a0810;--lime:#b8f34a;--page:#0a0810;--panel:#14101c;--panel-2:#0d0a14;--line:#30283d;--text:#fff;--muted:#aaa4b4}
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
     body{margin:0;background:var(--page);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
-    .hero{background:#f1ffda;color:var(--text);padding:52px max(24px,calc((100vw - 1080px)/2));border-bottom:1px solid var(--line)}
-    .brand{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:850;letter-spacing:-.035em}.brand-mark{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--lime);color:#10210a;font-size:15px}.brand em{font-style:normal;color:#4b6f00}
+    .hero{background:var(--panel-2);color:var(--text);padding:52px max(24px,calc((100vw - 1080px)/2));border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:850;letter-spacing:.08em}.brand-mark{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--lime);color:#10210a;font-size:15px}.brand em{font-style:normal;color:var(--lime)}
     .hero h1{max-width:760px;font-size:clamp(38px,6vw,70px);line-height:.98;letter-spacing:-.045em;margin:48px 0 18px}.hero p{max-width:700px;color:var(--muted);font-size:17px;line-height:1.6;margin:0}
-    .nav{display:flex;gap:8px;overflow:auto;padding:18px max(20px,calc((100vw - 1080px)/2));position:sticky;top:0;z-index:2;background:rgba(245,245,247,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
-    .chip{flex:0 0 auto;padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--text);font-size:13px;font-weight:650;text-decoration:none}
+    .nav{display:flex;gap:8px;overflow:auto;padding:18px max(20px,calc((100vw - 1080px)/2));position:sticky;top:0;z-index:2;background:rgba(13,10,20,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+    .chip{flex:0 0 auto;padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);font-size:13px;font-weight:650;text-decoration:none}
     main{max-width:1080px;margin:0 auto;padding:52px 20px 100px}
-    section{scroll-margin-top:90px;margin:0 0 74px}.section-title p{margin:0 0 6px;color:#67910f;font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}.section-title h2{font-size:34px;letter-spacing:-.03em;margin:0 0 22px}
-    .item{background:#fff;border:1px solid var(--line);border-radius:24px;margin:0 0 28px;overflow:hidden;box-shadow:0 12px 34px rgba(10,8,16,.06)}
-    .meta{padding:22px 24px;border-bottom:1px solid var(--line)}.meta>span{display:inline-block;padding:5px 9px;border-radius:999px;background:#efffd3;color:#395500;font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.05em}.meta h3{font-size:22px;letter-spacing:-.02em;margin:10px 0 5px}.meta p{margin:0;color:var(--muted);font-size:14px}
-    iframe{display:block;width:100%;height:850px;border:0;background:var(--page)}
+    section{scroll-margin-top:90px;margin:0 0 74px}.section-title p{margin:0 0 6px;color:var(--lime);font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}.section-title h2{font-size:34px;letter-spacing:-.03em;margin:0 0 22px}
+    .item{background:var(--panel);border:1px solid var(--line);border-radius:20px;margin:0 0 28px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.22)}
+    .meta{padding:22px 24px;border-bottom:1px solid var(--line)}.meta>span{display:inline-block;padding:5px 9px;border-radius:999px;background:#1b2513;color:var(--lime);font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.05em}.meta h3{font-size:22px;letter-spacing:-.02em;margin:10px 0 5px}.meta p{margin:0;color:var(--muted);font-size:14px}
+    iframe{display:block;width:100%;height:720px;border:0;background:var(--panel-2)}
     @media(max-width:680px){.hero{padding-top:28px;padding-bottom:36px}.hero h1{margin-top:34px}.nav{padding-left:14px}main{padding:36px 10px 70px}.item{border-radius:18px}.meta{padding:18px}iframe{height:900px}}
   </style>
 </head>
 <body>
-  <header class="hero"><div class="brand"><span class="brand-mark">LB</span><span>LIVE<em>IN</em>BLACK</span></div><h1>Des emails clairs, visuels et immédiatement reconnaissables.</h1><p>Une composition éditoriale inspirée d’Apple, construite avec la palette LIVEINBLACK : blanc, noir et vert lime. ${items.length} scénarios sont réunis ici.</p></header>
+  <header class="hero"><div class="brand"><span class="brand-mark">LB</span><span>LIVE <em>IN</em> BLACK</span></div><h1>Chaque e-mail, revu et harmonisé.</h1><p>Fond des modales, surfaces sombres, vert de la marque et véritables icônes métier : les ${items.length} scénarios envoyés par la plateforme sont listés et prévisualisés ici, un par un.</p></header>
   <nav class="nav" aria-label="Catégories">${nav}</nav>
   <main>${sections}</main>
 </body>
 </html>`
 
-writeFileSync(resolve(process.cwd(), 'emails-preview.html'), document)
-console.log(`Aperçu généré : ${items.length} emails dans ${groups.length} catégories.`)
+writeFileSync(resolve(process.cwd(), 'docs/design/emails-preview.html'), document)
+
+let position = 0
+const catalogSections = groups.map((group) => {
+  const rows = items.filter((item) => item.group === group).map((item) => {
+    position += 1
+    return `| ${position} | ${item.label} | ${item.email.subject} |`
+  }).join('\n')
+  return `## ${group}\n\n| # | E-mail | Objet |\n|---:|---|---|\n${rows}`
+}).join('\n\n')
+
+const catalog = `# Catalogue des e-mails LIVE IN BLACK\n\nInventaire généré depuis les modèles réellement utilisés par la plateforme. **${items.length} scénarios** sont recensés dans **${groups.length} catégories**.\n\n${catalogSections}\n`
+writeFileSync(resolve(process.cwd(), 'docs/design/EMAIL_CATALOG.md'), catalog)
+
+console.log(`Aperçu et catalogue générés : ${items.length} e-mails dans ${groups.length} catégories.`)

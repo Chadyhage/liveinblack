@@ -2,7 +2,9 @@
 // Branchés depuis lib/server/eventPayouts.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, note, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('payout')
 
 export function payoutInitiatedEmail(context: string, amountLabel: string, delayLabel: string, site: string = DEFAULT_SITE): Email {
   const inner = `

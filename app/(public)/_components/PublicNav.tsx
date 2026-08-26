@@ -110,13 +110,13 @@ function HeaderSearch() {
           aria-label="Recherche globale (événements, organisateurs, prestataires)"
           containerStyle={{ flex: 1, minWidth: 0 }}
           style={{
-            width: 188,
-            minHeight: 44,
-            padding: '0 8px 0 15px',
+            width: 172,
+            minHeight: 42,
+            padding: '0 8px 0 13px',
             border: 0,
             background: 'transparent',
             color: '#f5f5f7',
-            fontSize: 14,
+            fontSize: 13.5,
             fontFamily: 'inherit',
             boxShadow: 'none',
           }}
@@ -137,16 +137,16 @@ function HeaderSearch() {
           aria-label="Résultats de recherche"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 10px)',
+            top: 'calc(100% + 8px)',
             right: 0,
-            width: 340,
+            width: 320,
             maxWidth: '90vw',
-            maxHeight: 420,
+            maxHeight: 400,
             overflowY: 'auto',
             background: 'rgba(24,24,27,.96)',
             backdropFilter: 'blur(24px) saturate(160%)',
             border: '1px solid rgba(255,255,255,.12)',
-            borderRadius: 18,
+            borderRadius: 16,
             boxShadow: '0 24px 64px rgba(0,0,0,.42)',
             zIndex: 60,
           }}
@@ -166,11 +166,11 @@ function HeaderSearch() {
                   href={`/events/${e.id}`}
                   onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', textDecoration: 'none', color: 'inherit' }}
                 >
                   <span style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
-                    <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
+                    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                    <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
                   </span>
                 </Link>
               ))}
@@ -185,10 +185,10 @@ function HeaderSearch() {
                   href={`/organizers/${o.slug}`}
                   onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', textDecoration: 'none', color: 'inherit' }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{o.publicName}</span>
-                  {o.city && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{o.city}</span>}
+                  <span style={{ fontSize: 12.5, fontWeight: 700 }}>{o.publicName}</span>
+                  {o.city && <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>{o.city}</span>}
                 </Link>
               ))}
             </QuickResultGroup>
@@ -202,10 +202,10 @@ function HeaderSearch() {
                   href={`/providers/${encodeURIComponent(p.userId)}`}
                   onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', textDecoration: 'none', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', textDecoration: 'none', color: 'inherit' }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</span>
-                  {p.city && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{p.city}</span>}
+                  <span style={{ fontSize: 12.5, fontWeight: 700 }}>{p.name}</span>
+                  {p.city && <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>{p.city}</span>}
                 </Link>
               ))}
             </QuickResultGroup>
@@ -219,7 +219,7 @@ function HeaderSearch() {
 function QuickResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p style={{ padding: '10px 14px 4px', margin: 0, fontSize: 10.5, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
+      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 10, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
       {children}
     </div>
   )

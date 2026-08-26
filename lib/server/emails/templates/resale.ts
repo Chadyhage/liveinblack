@@ -2,7 +2,9 @@
 // Branchés depuis lib/server/resale.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, button, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('resale')
 
 export function resaleListingCreatedEmail(eventName: string, priceLabel: string, manageUrl: string, site: string = DEFAULT_SITE): Email {
   const evName = escapeHtml(eventName)

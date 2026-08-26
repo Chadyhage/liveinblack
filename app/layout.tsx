@@ -34,7 +34,7 @@ const structuredData = {
       "@id": `${siteUrl}/#website`,
       url: siteUrl,
       name: "LIVEINBLACK",
-      inLanguage: "fr",
+      inLanguage: "fr-BJ",
       publisher: { "@id": `${siteUrl}/#organization` },
       potentialAction: {
         "@type": "SearchAction",
@@ -97,7 +97,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${interfaceFont.variable} h-full antialiased`}>
+    <html lang="fr-BJ" className={`${interfaceFont.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"

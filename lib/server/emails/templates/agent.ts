@@ -7,7 +7,9 @@
 // / bloquées).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, button, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('agent')
 
 export function newApplicationToReviewEmail(candidateName: string, type: 'organisateur' | 'prestataire', backofficeUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `

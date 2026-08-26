@@ -5,6 +5,7 @@ import { LEGAL } from '@/lib/shared/legal'
 export const metadata: Metadata = {
   title: `Conditions Générales d'Utilisation et de Vente — ${LEGAL.brand}`,
   description: "Conditions Générales d'Utilisation et de Vente (CGU/CGV) de LIVEINBLACK.",
+  alternates: { canonical: '/terms' },
 }
 
 // Port de src/pages/CGUPage.jsx — CGU + CGV — marketplace billetterie &

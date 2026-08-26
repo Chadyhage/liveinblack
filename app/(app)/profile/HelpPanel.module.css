@@ -1,10 +1,10 @@
-.grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(260px,.75fr); gap:18px; align-items:start; }
-.faq { padding:24px!important; border-radius:24px!important; }
-.faqTitle { margin:0 0 16px; color:#fff; font-size:19px; font-weight:720; letter-spacing:-.025em; }
-.contact { position:sticky; top:28px; padding:24px!important; overflow:hidden; border-radius:24px!important; border-color:rgba(184,243,74,.22)!important; background:linear-gradient(145deg,rgba(184,243,74,.105),rgba(255,255,255,.035))!important; }
-.contact h2 { margin:0 0 8px; color:#fff; font-size:22px; letter-spacing:-.03em; }
-.contact p { margin:0 0 18px; color:rgba(245,245,247,.6); font-size:14px; line-height:1.55; }
-.email { display:block; margin:13px 0 5px; overflow-wrap:anywhere; color:#fff; font-size:13.5px; }
-.mailLink { min-height:44px; display:inline-flex; align-items:center; color:#b8f34a; font-size:13px; font-weight:650; text-decoration:none; }
-@media(max-width:780px){.grid{grid-template-columns:1fr}.contact{position:relative;top:0;grid-row:1}.faq{padding:20px!important}}
-.grid{gap:12px}.faq,.contact{padding:16px!important;border-radius:17px!important}.faqTitle{margin-bottom:11px;font-size:17px}.contact{top:18px}.contact h2{font-size:19px}.contact p{margin-bottom:12px;font-size:13px;line-height:1.45}
+.grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(240px,.7fr); gap:12px; align-items:start; }
+.faq { padding:16px!important; border-radius:16px!important; }
+.faqTitle { margin:0 0 10px; color:#fff; font-size:16px; font-weight:720; letter-spacing:-.025em; }
+.contact { position:sticky; top:20px; padding:16px!important; overflow:hidden; border-radius:16px!important; border-color:rgba(184,243,74,.22)!important; background:linear-gradient(145deg,rgba(184,243,74,.105),rgba(255,255,255,.035))!important; }
+.contact h2 { margin:0 0 6px; color:#fff; font-size:18px; letter-spacing:-.03em; }
+.contact p { margin:0 0 12px; color:rgba(245,245,247,.6); font-size:13px; line-height:1.45; }
+.email { display:block; margin:10px 0 4px; overflow-wrap:anywhere; color:#fff; font-size:12px; }
+.mailLink { min-height:38px; display:inline-flex; align-items:center; color:#b8f34a; font-size:12px; font-weight:650; text-decoration:none; }
+@media(max-width:780px){.grid{grid-template-columns:1fr}.contact{position:relative;top:0;grid-row:1}.faq{padding:14px!important}}
+.grid{gap:10px}.faq,.contact{padding:14px!important;border-radius:14px!important}.faqTitle{margin-bottom:9px;font-size:15px}.contact{top:14px}.contact h2{font-size:17px}.contact p{margin-bottom:10px;font-size:12px;line-height:1.42}

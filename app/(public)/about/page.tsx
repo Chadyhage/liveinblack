@@ -8,6 +8,7 @@ import styles from './about.module.css'
 export const metadata: Metadata = {
   title: "C'est quoi LIVEINBLACK ? — LIVEINBLACK",
   description: "Live in Black est la marketplace de la nuit et de l'événementiel.",
+  alternates: { canonical: '/about' },
 }
 
 // Port de src/pages/PublicAbout.jsx — contenu statique (aucune donnée),

@@ -4,7 +4,9 @@
 // lib/server/providerSubscriptions.ts::runSubscriptionReminderCron).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, button, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, button, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('interest')
 
 export function interestedEventReminderEmail(eventName: string, eventWhen: string, eventUrl: string, alreadyBought: boolean, site: string = DEFAULT_SITE): Email {
   const evName = escapeHtml(eventName)
@@ -14,8 +16,8 @@ export function interestedEventReminderEmail(eventName: string, eventWhen: strin
     ${button(eventUrl, alreadyBought ? 'Voir mon billet' : 'Réserver maintenant', alreadyBought ? 'outline' : 'primary')}
   `
   return {
-    subject: `${eventName} c'est demain !`,
+    subject: `${eventName}, c’est demain !`,
     html: wrap(inner, { site, preheader: eventWhen }),
-    inApp: { type: 'reminder', title: `${eventName} c'est demain !`, body: eventWhen, link: eventUrl, push: true },
+    inApp: { type: 'reminder', title: `${eventName}, c’est demain !`, body: eventWhen, link: eventUrl, push: true },
   }
 }

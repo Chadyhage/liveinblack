@@ -14,12 +14,12 @@ const contentSecurityPolicy = [
   // que si l'utilisateur a accepté les cookies, mais la CSP doit
   // l'autoriser en amont sinon le navigateur bloque la requête même quand
   // le composant décide de le charger.
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://www.googletagmanager.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://www.googletagmanager.com https://va.vercel-scripts.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com https://firebasestorage.googleapis.com https://images.unsplash.com https://e-cdns-images.dzcdn.net https://*.mzstatic.com https://www.googletagmanager.com",
   "media-src 'self' blob: https://res.cloudinary.com https://audio-ssl.itunes.apple.com",
   // google-analytics.com : envoi des hits gtag (mesure) une fois le script chargé.
-  "connect-src 'self' https://itunes.apple.com https://api.cloudinary.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com",
+  "connect-src 'self' https://itunes.apple.com https://api.cloudinary.com https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
   "font-src 'self' data:",
 ].join('; ');
 

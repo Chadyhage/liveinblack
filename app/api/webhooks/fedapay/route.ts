@@ -1,5 +1,6 @@
 export const maxDuration = 60;
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { getDb } from '@/lib/db/mongoose'
 import { verifyWebhookSignature, isApprovedTransactionEvent } from '@/lib/server/payments/fedapayClient'
 import { fulfillOrder } from '@/lib/server/payments/fulfillOrder'
@@ -74,6 +75,7 @@ export async function POST(req: Request) {
       const pendingSubUser = await User.findOne({ pendingFedapaySubTxnId: String(entity.id) }).select('_id').lean()
       if (pendingSubUser) {
         await handleFedapaySubscriptionPayment(pendingSubUser._id.toString(), entity)
+        revalidateTag('public-providers', { expire: 0 })
         return NextResponse.json({ received: true })
       }
 

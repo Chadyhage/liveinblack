@@ -7,7 +7,9 @@
 // reste à ajouter au bon endroit.
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, note, button, infoCard, infoRow, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, button, infoCard, infoRow, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('ticket')
 
 export interface TicketPurchaseSummary {
   eventId: string
@@ -58,16 +60,16 @@ export function groupPurchaseConfirmedEmail(t: GroupPurchaseSummary, site: strin
     infoRow('Total payé', t.totalLabel),
   ].join('')
   const inner = `
-    ${heading(`Vos ${t.seatCount} billets sont prêts`, 'accent')}
+    ${heading(`Tes ${t.seatCount} billets sont prêts`, 'accent')}
     ${paragraph(`Ta réservation groupe pour <strong style="color:inherit;">${evName}</strong> est confirmée.`)}
     ${infoCard(rows)}
     ${button(t.ticketUrl, 'Voir les billets du groupe')}
-    ${note("En tant qu'hôte du groupe, c'est à toi de redistribuer les billets à tes invités depuis l'app.")}
+    ${note("En tant qu'hôte du groupe, tu peux distribuer les billets à tes invités depuis l'application.")}
   `
   return {
-    subject: `Vos ${t.seatCount} billets pour ${t.eventName}`,
+    subject: `Tes ${t.seatCount} billets pour ${t.eventName}`,
     html: wrap(inner, { site, preheader: `Réservation groupe confirmée pour ${t.eventName}.` }),
-    inApp: { type: 'payment', title: `Vos ${t.seatCount} billets sont prêts`, body: `Réservation groupe confirmée pour ${t.eventName}.`, link: t.ticketUrl, push: true },
+    inApp: { type: 'payment', title: `Tes ${t.seatCount} billets sont prêts`, body: `Réservation de groupe confirmée pour ${t.eventName}.`, link: t.ticketUrl, push: true },
   }
 }
 
@@ -80,7 +82,7 @@ export function paymentFailedEmail(eventName: string, retryUrl: string, reason: 
     ${button(retryUrl, 'Réessayer le paiement', 'danger')}
   `
   return {
-    subject: `Ton paiement pour ${eventName} n'a pas abouti`,
+    subject: `Ton paiement pour ${eventName} n’a pas abouti`,
     html: wrap(inner, { site, preheader: 'Réessaie ton paiement pour garder ta place.' }),
     inApp: { type: 'payment', title: 'Ton paiement n’a pas abouti', body: `Réessaie pour garder ta place à ${eventName}.`, link: retryUrl, push: true },
   }

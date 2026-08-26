@@ -18,6 +18,15 @@ import styles from './organizers.module.css'
 export const metadata: Metadata = {
   title: 'Organisateurs — LIVEINBLACK',
   description: "Découvrez les organisateurs d'événements et suivez ceux qui font vivre la scène sur LIVEINBLACK.",
+  alternates: { canonical: '/organizers' },
+  robots: { index: true, follow: true },
+  openGraph: {
+    url: '/organizers',
+    siteName: 'LIVEINBLACK',
+    locale: 'fr_BJ',
+    title: 'Organisateurs d’événements au Bénin — LIVEINBLACK',
+    description: 'Découvrez les organisateurs qui font vivre la scène événementielle au Bénin.',
+  },
 }
 
 type DirectoryParams = { q?: string; region?: string; upcoming?: string; sort?: string; page?: string }

@@ -89,12 +89,12 @@ export default function ContactClient() {
       }}
     >
       <div style={{ maxWidth: 1560, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
           <LegalBackButton />
           <div>
             <h1
               className="font-display"
-              style={{ fontSize: 24, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.2 }}
+              style={{ fontSize: 22, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
             >
               Contact
             </h1>
@@ -104,11 +104,11 @@ export default function ContactClient() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
-        <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', maxWidth: 860 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18, alignItems: 'start' }}>
+        <Card style={{ boxShadow: CARD.boxShadow, padding: '22px 20px', maxWidth: 860 }}>
           {status === 'success' ? (
-            <div style={{ textAlign: 'center', padding: '24px 8px' }}>
-              <Mascot mood="message" size={148} />
+            <div style={{ textAlign: 'center', padding: '18px 8px' }}>
+              <Mascot mood="message" size={128} />
               <h2 style={{ fontSize: 17, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
@@ -119,7 +119,7 @@ export default function ContactClient() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate>
-              <div style={{ display: 'grid', gap: 16 }}>
+              <div style={{ display: 'grid', gap: 12 }}>
                 <div>
                   <Label htmlFor="contact-name">Nom</Label>
                   <Input
@@ -184,25 +184,25 @@ export default function ContactClient() {
           )}
         </Card>
 
-        <Card style={{ boxShadow: CARD.boxShadow, padding: '28px 24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Card style={{ boxShadow: CARD.boxShadow, padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <h2 style={{ fontSize: 15, color: 'var(--text)', margin: '0 0 6px', fontWeight: 800 }}>Un délai de réponse rapide</h2>
-            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+            <h2 style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Un délai de réponse rapide</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               L&apos;équipe LIVEINBLACK répond généralement sous 24 à 48h ouvrées. Pour une urgence liée à un
               événement en cours, précise-le dans l&apos;objet de ton message.
             </p>
           </div>
           <div>
-            <h2 style={{ fontSize: 15, color: 'var(--text)', margin: '0 0 6px', fontWeight: 800 }}>Avant d&apos;écrire</h2>
-            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+            <h2 style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Avant d&apos;écrire</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               La plupart des questions sur les billets, remboursements ou ton compte trouvent une réponse plus
               rapide directement depuis ton espace « Mon profil » ou la page{' '}
               <a href="/about" style={{ color: 'var(--teal)' }}>C&apos;est quoi</a>.
             </p>
           </div>
           <div>
-            <h2 style={{ fontSize: 15, color: 'var(--text)', margin: '0 0 6px', fontWeight: 800 }}>Tu es organisateur ou prestataire ?</h2>
-            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+            <h2 style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Tu es organisateur ou prestataire ?</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               Pour une question sur ton dossier ou tes paiements, passe plutôt par la messagerie intégrée depuis
               ton espace connecté — la réponse y sera plus rapide et centralisée avec ton compte.
             </p>

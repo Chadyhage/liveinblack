@@ -204,33 +204,33 @@
 }
 
 /* Échelle compacte commune aux écrans publics. */
-.lb-editorial-card{border-radius:17px;box-shadow:0 12px 34px rgba(0,0,0,.18)}
+.lb-editorial-card{border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.18)}
 .lb-editorial-card__media{aspect-ratio:16/9}
-.lb-editorial-card__badge{top:11px;left:11px;min-width:34px;min-height:34px;padding-inline:9px;border-radius:10px;font-size:13px}
-.lb-editorial-card__body{padding:14px}
-.lb-editorial-card__body h3{font-size:19px!important}
-.lb-editorial-card__body h3+p{margin-top:7px;font-size:13.5px!important;line-height:1.45}
-.lb-public-detail-page{padding:16px clamp(10px,1.5vw,20px) 48px!important}
-.lb-public-detail-page h1{font-size:clamp(32px,4.4vw,50px)!important}
-.lb-public-detail-page .lb-detail-section{margin-top:12px;padding:16px;border-radius:17px}
-.lb-public-detail-page .lb-detail-section>h2{margin-bottom:10px!important;font-size:15px!important}
-.lb-public-detail-page .lb-detail-section p{font-size:14px!important;line-height:1.5!important}
-.lb-auth-split__form h1{font-size:clamp(30px,3.5vw,40px)!important}
-.lb-auth-split__form p{font-size:14px!important;line-height:1.48!important}
-.lb-auth-split__form label{margin-bottom:6px!important;font-size:13px!important}
-.lb-auth-split__form :where(input,textarea){min-height:46px!important;padding-inline:13px!important;border-radius:11px!important;font-size:14.5px!important}
-.lb-auth-split__form button,.lb-auth-split__form a[style*="primaryBtn"]{min-height:44px;font-size:14px!important}
-.lb-auth-form>div:first-of-type{margin-bottom:20px!important}.lb-auth-form form{gap:12px!important}
-.lb-auth-form .lb-role-card button{min-height:74px!important;padding:13px!important}
-.lb-auth-form [role="tablist"]{min-height:42px}.lb-auth-form [role="tab"]{min-height:38px}
-.lb-auth-state{padding:24px!important;border-radius:19px}.lb-auth-wizard>div{gap:18px!important}
-.lb-auth-wizard>div>div:nth-child(3){padding:18px!important;border-radius:17px!important}
-.lb-auth-wizard form,.lb-auth-wizard>div>div:nth-child(3)>div{gap:13px!important}
-.lb-legal-page,.lb-contact-page{padding:24px clamp(10px,1.5vw,20px) 48px!important}
-.lb-legal-page h1,.lb-contact-page h1{font-size:clamp(32px,4.3vw,48px)!important}
-.lb-legal-page p,.lb-legal-page li,.lb-contact-page p{font-size:14px!important;line-height:1.5!important}
-.lb-contact-page input,.lb-contact-page textarea{min-height:46px!important;font-size:14px!important}
-.lb-blog-article{padding:22px clamp(10px,1.5vw,20px) 48px!important}
-.lb-blog-article h1{font-size:clamp(34px,5vw,58px)!important}
-.lb-blog-article article{font-size:16px!important;line-height:1.65!important}
-.lb-status-page{padding:36px 16px!important}.lb-status-page>div{padding:24px!important;border-radius:19px!important}
+.lb-editorial-card__badge{top:10px;left:10px;min-width:32px;min-height:32px;padding-inline:8px;border-radius:10px;font-size:12px}
+.lb-editorial-card__body{padding:12px}
+.lb-editorial-card__body h3{font-size:18px!important}
+.lb-editorial-card__body h3+p{margin-top:6px;font-size:13px!important;line-height:1.42}
+.lb-public-detail-page{padding:12px clamp(10px,1.2vw,18px) 40px!important}
+.lb-public-detail-page h1{font-size:clamp(30px,4vw,46px)!important}
+.lb-public-detail-page .lb-detail-section{margin-top:10px;padding:14px;border-radius:16px}
+.lb-public-detail-page .lb-detail-section>h2{margin-bottom:8px!important;font-size:14px!important}
+.lb-public-detail-page .lb-detail-section p{font-size:13px!important;line-height:1.46!important}
+.lb-auth-split__form h1{font-size:clamp(28px,3.2vw,36px)!important}
+.lb-auth-split__form p{font-size:13px!important;line-height:1.42!important}
+.lb-auth-split__form label{margin-bottom:5px!important;font-size:12px!important}
+.lb-auth-split__form :where(input,textarea){min-height:42px!important;padding-inline:12px!important;border-radius:10px!important;font-size:13.5px!important}
+.lb-auth-split__form button,.lb-auth-split__form a[style*="primaryBtn"]{min-height:40px;font-size:13px!important}
+.lb-auth-form>div:first-of-type{margin-bottom:16px!important}.lb-auth-form form{gap:10px!important}
+.lb-auth-form .lb-role-card button{min-height:68px!important;padding:12px!important}
+.lb-auth-form [role="tablist"]{min-height:38px}.lb-auth-form [role="tab"]{min-height:34px}
+.lb-auth-state{padding:20px!important;border-radius:17px}.lb-auth-wizard>div{gap:14px!important}
+.lb-auth-wizard>div>div:nth-child(3){padding:16px!important;border-radius:16px!important}
+.lb-auth-wizard form,.lb-auth-wizard>div>div:nth-child(3)>div{gap:11px!important}
+.lb-legal-page,.lb-contact-page{padding:20px clamp(10px,1.2vw,18px) 40px!important}
+.lb-legal-page h1,.lb-contact-page h1{font-size:clamp(30px,4vw,44px)!important}
+.lb-legal-page p,.lb-legal-page li,.lb-contact-page p{font-size:13px!important;line-height:1.46!important}
+.lb-contact-page input,.lb-contact-page textarea{min-height:42px!important;font-size:13px!important}
+.lb-blog-article{padding:18px clamp(10px,1.2vw,18px) 40px!important}
+.lb-blog-article h1{font-size:clamp(30px,4.3vw,50px)!important}
+.lb-blog-article article{font-size:15px!important;line-height:1.58!important}
+.lb-status-page{padding:30px 16px!important}.lb-status-page>div{padding:20px!important;border-radius:18px!important}

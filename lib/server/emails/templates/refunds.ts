@@ -6,7 +6,9 @@
 // /report), lib/server/eventRefunds.ts + fedapayRefunds.ts (remboursement).
 import type { Email } from '../types'
 import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
-import { wrap, heading, paragraph, note, button, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, button, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('refund')
 
 export function eventCancelledRefundEmail(eventName: string, amountLabel: string, delayLabel: string, reason: string | null, site: string = DEFAULT_SITE): Email {
   const evName = escapeHtml(eventName)

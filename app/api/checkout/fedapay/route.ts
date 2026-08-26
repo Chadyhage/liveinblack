@@ -7,7 +7,8 @@ import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import { createTransaction, createToken, getTransaction } from '@/lib/server/payments/fedapayClient'
+import { fulfillOrder } from '@/lib/server/payments/fulfillOrder'
+import { createTransaction, createToken, getTransaction, isFedapayConfigured } from '@/lib/server/payments/fedapayClient'
 
 // Remplace la branche `action:'checkout'` de api/fedapay.js (rail XOF, mobile
 // money). Miroir de /api/checkout (Stripe) — mêmes corrections (C07 : les
@@ -37,6 +38,9 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
+  const requestHost = req.headers.get('x-forwarded-host') || req.headers.get('host')
+  const requestProto = req.headers.get('x-forwarded-proto') || (process.env.NODE_ENV === 'production' ? 'https' : 'http')
+  const site = process.env.NODE_ENV === 'production' ? SITE : requestHost ? `${requestProto}://${requestHost}` : new URL(req.url).origin
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
@@ -76,11 +80,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'amount_below_minimum' }, { status: 400 })
   }
 
+  if (!isFedapayConfigured() && process.env.NODE_ENV !== 'production') {
+    const transactionId = `dev_fedapay_${orderId}`
+    await Order.updateOne({ _id: orderId }, { $set: { fedapayTxnId: transactionId } })
+    const fulfillment = await fulfillOrder(orderId, { rail: 'fedapay', paidAmountMinor: amountTotal })
+    if (fulfillment.status !== 'ok' && fulfillment.status !== 'already_processed') {
+      console.error('[checkout/fedapay][dev] simulated fulfillment failed:', fulfillment.status)
+      await releaseOrder(orderId, session.user.id)
+      return NextResponse.json({ error: 'fedapay_error' }, { status: 502 })
+    }
+    return NextResponse.json({
+      url: `${site}/payment-success?order_id=${encodeURIComponent(orderId)}&dev_payment=1`,
+      transactionId,
+      amountTotal,
+      currency: 'XOF',
+      simulated: true,
+    })
+  }
+
   try {
     const txn = await createTransaction({
       description: `${event.name} — ${order.placeType}`.slice(0, 200),
       amount: amountTotal,
-      callbackUrl: `${SITE}/payment-success`,
+      callbackUrl: `${site}/payment-success`,
       customer: session.user.email ? { email: session.user.email } : null,
       metadata: { orderId },
       reference: orderId,

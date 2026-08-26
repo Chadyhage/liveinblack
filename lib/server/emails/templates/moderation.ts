@@ -2,7 +2,9 @@
 // ⚠️ Pas encore branché — voir lib/server/reports.ts (modération agent).
 import type { Email } from '../types'
 import { DEFAULT_SITE } from '../theme'
-import { wrap, heading, paragraph, note, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('moderation')
 
 export function reportReceivedAgainstAccountEmail(natureLabel: string, supportUrl: string, site: string = DEFAULT_SITE): Email {
   const inner = `

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agent/agentGuard'
 import { getDb } from '@/lib/db/mongoose'
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
       upsert: true,
     },
   })), { ordered: false })
+  revalidateTag('public-blog', 'max')
 
   return NextResponse.json({
     ok: true,

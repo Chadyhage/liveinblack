@@ -2,7 +2,9 @@
 // Branché depuis lib/server/providerReviews.ts (via notifyUserById).
 import type { Email } from '../types'
 import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
-import { wrap, heading, paragraph, button, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, button, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('review')
 
 function starsLabel(rating: number): string {
   return '★'.repeat(Math.max(0, Math.min(5, Math.round(rating)))) + '☆'.repeat(5 - Math.max(0, Math.min(5, Math.round(rating))))

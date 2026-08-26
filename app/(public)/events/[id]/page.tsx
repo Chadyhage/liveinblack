@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import EventDetailContent, { resolveEvent } from './EventDetailContent'
 
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
 // Port de src/pages/EventDetailPage.jsx (2861 lignes côté legacy). La sélection
 // de place + paiement (#119) est portée par
 // EventCheckoutPanel. Ce que ce fichier ajoute par rapport au
@@ -15,16 +17,26 @@ import EventDetailContent, { resolveEvent } from './EventDetailContent'
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   const result = await resolveEvent(id)
-  if (result.status !== 'ok') return { title: 'Événement — LIVEINBLACK' }
+  if (result.status !== 'ok') return { title: 'Événement introuvable — LIVEINBLACK', robots: { index: false, follow: false } }
   const { event } = result
+  const description = event.description?.slice(0, 160) || event.subtitle || `Découvrez ${event.name} sur LIVEINBLACK.`
+  const canonical = `${SITE}/events/${event.id}`
+  const image = event.imageUrl || `${SITE}/opengraph-image`
   return {
     title: `${event.name} — LIVEINBLACK`,
-    description: event.description?.slice(0, 160) || event.subtitle || undefined,
+    description,
+    alternates: { canonical },
+    robots: { index: true, follow: true },
     openGraph: {
+      type: 'website',
+      url: canonical,
+      siteName: 'LIVEINBLACK',
+      locale: 'fr_BJ',
       title: event.name,
-      description: event.subtitle || undefined,
-      images: event.imageUrl ? [event.imageUrl] : undefined,
+      description,
+      images: [{ url: image, alt: event.name }],
     },
+    twitter: { card: 'summary_large_image', title: event.name, description, images: [image] },
   }
 }
 

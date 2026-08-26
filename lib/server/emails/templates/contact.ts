@@ -2,7 +2,9 @@
 // formulaire public /contact.
 import type { Email } from '../types'
 import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
-import { wrap, heading, paragraph, note, escapeHtml } from '../layout'
+import { scopedWrap, heading, paragraph, note, escapeHtml } from '../layout'
+
+const wrap = scopedWrap('support')
 
 export function contactRequestEmail(
   data: { name: string; email: string; subject: string; message: string },

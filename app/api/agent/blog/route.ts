@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { requireAgent } from '@/lib/server/agent/agentGuard'
@@ -38,5 +39,6 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
 
   const post = await createPostForAgent(parsed.data)
+  revalidateTag('public-blog', { expire: 0 })
   return NextResponse.json({ ok: true, post })
 }

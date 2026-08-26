@@ -1,5 +1,5 @@
 .root {
-  --dashboard-sidebar: 248px;
+  --dashboard-sidebar: 232px;
   position: relative;
   min-height: 100dvh;
   isolation: isolate;
@@ -67,7 +67,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 6px clamp(4px, 0.55vw, 9px) 32px;
+  padding: 4px clamp(3px, 0.45vw, 7px) 26px;
 }
 .mainFull { padding: 0; }
 
@@ -92,10 +92,10 @@
 }
 
 .root :global(.lb-dashboard-page) {
-  padding-inline: clamp(8px, 0.95vw, 18px) !important;
+  padding-inline: clamp(6px, 0.8vw, 14px) !important;
 }
 .root :global(.lb-page-shell) {
-  padding-inline: clamp(8px, 0.95vw, 18px) !important;
+  padding-inline: clamp(6px, 0.8vw, 14px) !important;
 }
 .root :global(.lb-dashboard-page-header) { margin-bottom: 0; }
 .root :global(.lb-dashboard-title) {
@@ -118,21 +118,21 @@
 }
 .root :global(.lb-card),
 .root :global(.lb-detail-section),
-.root :global(.lb-loading-panel) { border-color: rgba(255, 255, 255, .11) !important; border-radius: 16px !important; background: rgba(24, 24, 28, .72) !important; backdrop-filter: blur(22px) saturate(130%); box-shadow: 0 16px 42px rgba(0, 0, 0, .2) !important; }
+.root :global(.lb-loading-panel) { border-color: rgba(255, 255, 255, .11) !important; border-radius: 14px !important; background: rgba(24, 24, 28, .72) !important; backdrop-filter: blur(22px) saturate(130%); box-shadow: 0 16px 42px rgba(0, 0, 0, .2) !important; }
 
 @media (max-width: 1099px) {
   .sidebar { display: none; }
   .mobileBar { display: flex; }
   .mobileDrawer, .drawerBackdrop { display: block !important; }
-  .main { min-height: 100dvh; width: 100%; padding: 64px clamp(4px, .8vw, 8px) 48px; }
+  .main { min-height: 100dvh; width: 100%; padding: 60px clamp(3px, .65vw, 7px) 40px; }
   .mainFull { padding: 0; }
 }
 
 @media (max-width: 620px) {
-  .main { padding: 62px 2px 12px; }
+  .main { padding: 58px 2px 10px; }
   .mainFull { padding: 0; }
   .root :global(.lb-dashboard-page),
-  .root :global(.lb-page-shell) { padding-inline: 4px !important; }
+  .root :global(.lb-page-shell) { padding-inline: 3px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

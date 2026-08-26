@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Mascot } from '@/app/components/ui'
 
@@ -27,10 +27,12 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
   const router = useRouter()
   const missingParams = !email || !token
   const [state, setState] = useState<State>(missingParams ? 'error' : 'loading')
+  const didSubmitRef = useRef(false)
 
   useEffect(() => {
     if (missingParams) return
-    let cancelled = false
+    if (didSubmitRef.current) return
+    didSubmitRef.current = true
     ;(async () => {
       try {
         const res = await fetch('/api/profil/confirmer-email', {
@@ -39,15 +41,11 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
           body: JSON.stringify({ email, token }),
         })
         const data = await res.json().catch(() => ({}))
-        if (cancelled) return
         setState(res.ok && data.ok ? 'success' : 'error')
       } catch {
-        if (!cancelled) setState('error')
+        setState('error')
       }
     })()
-    return () => {
-      cancelled = true
-    }
   }, [email, token, missingParams])
 
   return (

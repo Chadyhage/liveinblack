@@ -22,7 +22,9 @@ import Ticket from '../lib/models/Ticket'
 import Conversation from '../lib/models/Conversation'
 import Message from '../lib/models/Message'
 import Application from '../lib/models/Application'
+import BlogPost from '../lib/models/BlogPost'
 import { generateUniqueTicketCode } from '../lib/server/events/ticketCode'
+import { buildBeninCampaign } from './blog-benin-campaign'
 
 const DEV_PASSWORD = 'DevTest1234!'
 
@@ -38,17 +40,44 @@ function inDays(n: number): string {
 async function main() {
   await getDb()
 
-  await Promise.all([
-    User.deleteMany({ email: { $regex: /@liveinblack\.dev$/ } }),
-    Event.deleteMany({}),
-    ProviderProfile.deleteMany({}),
-    OrganizerProfile.deleteMany({}),
-    Boost.deleteMany({}),
-    Ticket.deleteMany({}),
-    Conversation.deleteMany({}),
-    Message.deleteMany({}),
-    Application.deleteMany({}),
-  ])
+  if (process.env.LIB_E2E_SCOPED_SEED === '1') {
+    const seedUsers = await User.find({ email: { $regex: /@liveinblack\.dev$/ } }).select('_id').lean()
+    const seedUserIds = seedUsers.map((user) => String(user._id))
+    const seedEvents = await Event.find({
+      $or: [
+        { createdBy: { $in: seedUserIds } },
+        { organizerId: { $in: seedUserIds } },
+        { name: { $in: ['AFRO NATION LOMÉ', 'SOIRÉE PRIVÉE — ANNIVERSAIRE', 'HOUSE SESSION PARIS'] } },
+      ],
+    }).select('_id').lean()
+    const seedEventIds = seedEvents.map((event) => String(event._id))
+    const seedConversations = await Conversation.find({ participantIds: { $in: seedUserIds } }).select('_id').lean()
+    const seedConversationIds = seedConversations.map((conversation) => String(conversation._id))
+
+    await Promise.all([
+      Message.deleteMany({ conversationId: { $in: seedConversationIds } }),
+      Conversation.deleteMany({ _id: { $in: seedConversationIds } }),
+      Ticket.deleteMany({ $or: [{ userId: { $in: seedUserIds } }, { eventId: { $in: seedEventIds } }] }),
+      Boost.deleteMany({ $or: [{ userId: { $in: seedUserIds } }, { eventId: { $in: seedEventIds } }, { boostId: 'SEED_BOOST_1' }] }),
+      Application.deleteMany({ userId: { $in: seedUserIds } }),
+      ProviderProfile.deleteMany({ userId: { $in: seedUserIds } }),
+      OrganizerProfile.deleteMany({ userId: { $in: seedUserIds } }),
+      Event.deleteMany({ _id: { $in: seedEventIds } }),
+      User.deleteMany({ email: { $regex: /@liveinblack\.dev$/ } }),
+    ])
+  } else {
+    await Promise.all([
+      User.deleteMany({ email: { $regex: /@liveinblack\.dev$/ } }),
+      Event.deleteMany({}),
+      ProviderProfile.deleteMany({}),
+      OrganizerProfile.deleteMany({}),
+      Boost.deleteMany({}),
+      Ticket.deleteMany({}),
+      Conversation.deleteMany({}),
+      Message.deleteMany({}),
+      Application.deleteMany({}),
+    ])
+  }
 
   const passwordHash = await bcrypt.hash(DEV_PASSWORD, 12)
   const now = new Date()
@@ -371,6 +400,15 @@ async function main() {
     submittedAt: now,
   })
 
+  const blogCampaign = buildBeninCampaign(now)
+  const blogResult = await BlogPost.bulkWrite(blogCampaign.map((post) => ({
+    updateOne: {
+      filter: { slug: post.slug },
+      update: { $set: post },
+      upsert: true,
+    },
+  })), { ordered: false })
+
   console.log('Seed OK — mot de passe commun pour tous les comptes ci-dessous :', DEV_PASSWORD)
   console.log('  - client:', client.email)
   console.log('  - organisateur:', organizerUser.email, '(organizer profile:', organizer.slug + ')')
@@ -381,6 +419,7 @@ async function main() {
   console.log('  - conversation client <-> organisateur avec 2 messages')
   console.log('  - candidature organisateur en attente:', orgCandidate.email)
   console.log('  - candidature prestataire en attente:', prestCandidate.email)
+  console.log(`  - campagne blog SEO: ${blogCampaign.length} articles upsertés (${blogResult.upsertedCount} créés, ${blogResult.modifiedCount} mis à jour)`)
   process.exit(0)
 }
 

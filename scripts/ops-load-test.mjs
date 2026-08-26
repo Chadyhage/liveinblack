@@ -74,8 +74,8 @@ async function request(path) {
       }
     }
 
-    const elapsedMs = nowMs() - started
     const text = await response.text()
+    const elapsedMs = nowMs() - started
     const isProtectedRedirect = !vercelBypassToken && response.status === 302 && /vercel\.com\/sso-api/i.test(text)
     return {
       path,
@@ -83,9 +83,18 @@ async function request(path) {
       status: response.status,
       ms: elapsedMs,
       text,
+      vercelId: response.headers.get('x-vercel-id') || '',
+      vercelCache: response.headers.get('x-vercel-cache') || '',
     }
   } catch (error) {
-    return { path, ok: false, status: 0, ms: Number.NaN, error: error?.message ?? 'network_error' }
+    return {
+      path,
+      ok: false,
+      status: 0,
+      ms: nowMs() - started,
+      error: error?.message ?? 'network_error',
+      errorName: error?.name ?? 'Error',
+    }
   } finally {
     clearTimeout(timeout)
   }
@@ -149,6 +158,30 @@ async function main() {
       `${path} -> ${okRows.length}/${rows.length} OK | p95 ${p95.toFixed(0)}ms | avg ${avg}ms | errors ${errors}` +
       (perfBreach ? ` | p95> ${p95MaxMs}ms KO` : '')
     )
+    const regions = new Map()
+    const cacheStates = new Map()
+    for (const row of okRows) {
+      const vercelRoute = row.vercelId
+        ? row.vercelId.split('::').slice(0, -1).join(' -> ')
+        : 'unknown'
+      regions.set(vercelRoute, (regions.get(vercelRoute) || 0) + 1)
+      const cacheState = row.vercelCache || 'none'
+      cacheStates.set(cacheState, (cacheStates.get(cacheState) || 0) + 1)
+    }
+    console.log(
+      `  regions: ${[...regions].map(([key, count]) => `${key} x${count}`).join(' | ')}` +
+      ` | cache: ${[...cacheStates].map(([key, count]) => `${key} x${count}`).join(' | ')}`
+    )
+    if (errors > 0) {
+      const errorSummary = new Map()
+      for (const row of rows.filter((item) => !item.ok)) {
+        const key = row.status > 0
+          ? `HTTP ${row.status}`
+          : `${row.errorName || 'Error'}: ${row.error || 'network_error'}`
+        errorSummary.set(key, (errorSummary.get(key) || 0) + 1)
+      }
+      console.log(`  details: ${[...errorSummary].map(([key, count]) => `${key} x${count}`).join(' | ')}`)
+    }
   }
 
   if (failed > 0 && hadProtectedDeployment && isBypassTokenMissing) {

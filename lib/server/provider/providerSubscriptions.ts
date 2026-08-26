@@ -290,7 +290,7 @@ export async function handleStripeSubscriptionInvoicePaid(invoice: Stripe.Invoic
 }
 
 // ── Rail XOF (FedaPay, renouvellement manuel) ──
-export type FedapayCheckoutResult = { ok: true; url: string; transactionId: string } | { ok: false; status: number; error: string }
+export type FedapayCheckoutResult = { ok: true; url: string; transactionId: string; simulated?: boolean } | { ok: false; status: number; error: string }
 
 export async function createFedapaySubscriptionCheckout(caller: { id: string; email?: string | null }): Promise<FedapayCheckoutResult> {
   await getDb()
@@ -298,6 +298,12 @@ export async function createFedapaySubscriptionCheckout(caller: { id: string; em
   if (billing.currency !== 'XOF') return { ok: false, status: 409, error: 'wrong_rail_use_stripe' }
 
   const ref = `sub_${caller.id}_${Date.now().toString(36)}`
+  if (!process.env.FEDAPAY_SECRET_KEY && process.env.NODE_ENV !== 'production') {
+    const transactionId = `dev_fedapay_${ref}`
+    await User.updateOne({ _id: caller.id }, { $set: { pendingFedapaySubTxnId: transactionId } })
+    return { ok: true, url: `${SITE}/offer-services?sub=retour&dev_payment=1`, transactionId, simulated: true }
+  }
+
   let txn
   let payUrl: string | null
   try {

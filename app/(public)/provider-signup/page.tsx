@@ -13,6 +13,9 @@ import PrestataireOnboardingWizard from '@/app/components/features/provider/Pres
 // /organizer-signup (voir commentaire là-bas).
 export const metadata: Metadata = {
   title: 'Devenir prestataire — LIVEINBLACK',
+  description: 'Présentez vos services événementiels, développez votre visibilité et trouvez de nouveaux clients au Bénin avec LIVEINBLACK.',
+  alternates: { canonical: '/provider-signup' },
+  robots: { index: true, follow: true },
 }
 
 const LOCKED_STATUSES = ['submitted', 'under_review', 'resubmitted', 'approved', 'rejected']

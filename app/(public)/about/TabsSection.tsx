@@ -76,22 +76,22 @@ export default function TabsSection() {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 18, flexWrap: 'wrap' }}>
         {TABS.map((t) => (
           <Button
             key={t.id}
-            variant="ghost"
-            onClick={() => setActiveTab(t.id)}
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              padding: '10px 20px',
-              borderRadius: 999,
-              color: activeTab === t.id ? '#fff' : 'var(--text-muted)',
-              background: activeTab === t.id ? `${t.color}22` : 'transparent',
-              border: `1px solid ${activeTab === t.id ? `${t.color}66` : 'var(--border)'}`,
-            }}
-          >
+              variant="ghost"
+              onClick={() => setActiveTab(t.id)}
+              style={{
+                fontSize: 13.5,
+                fontWeight: 700,
+                padding: '8px 16px',
+                borderRadius: 999,
+                color: activeTab === t.id ? '#fff' : 'var(--text-muted)',
+                background: activeTab === t.id ? `${t.color}22` : 'transparent',
+                border: `1px solid ${activeTab === t.id ? `${t.color}66` : 'var(--border)'}`,
+              }}
+            >
             {t.label}
           </Button>
         ))}
@@ -99,37 +99,37 @@ export default function TabsSection() {
 
       <Card
         style={{
-          padding: '36px 30px',
+          padding: '24px 22px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 32,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: 18,
           alignItems: 'center',
           textAlign: 'left',
-          minHeight: 260,
+          minHeight: 220,
         }}
       >
         <div>
           <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: current.color }}>{current.roleName}</span>
-          <h3 style={{ fontSize: 26, fontWeight: 800, margin: '6px 0 12px', letterSpacing: '-0.6px' }}>{current.label}</h3>
-          <p style={{ fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 24px' }}>{current.description}</p>
+          <h3 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0 10px', letterSpacing: '-0.6px' }}>{current.label}</h3>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55, margin: '0 0 18px' }}>{current.description}</p>
           <ActionLink href={current.href} style={{ color: current.id === 'organizer' ? '#fff' : 'var(--primary-ink)', background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color }}>
             {current.cta}
           </ActionLink>
         </div>
         <div style={{ overflow: 'hidden', borderRadius: 18, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.09)' }}>
-          <div style={{ position: 'relative', minHeight: 190 }}>
+          <div style={{ position: 'relative', minHeight: 160 }}>
             <Image src={current.image} alt={current.imageAlt} fill sizes="(max-width: 700px) calc(100vw - 80px), 42vw" style={{ objectFit: 'cover' }} />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 42%, rgba(5,5,8,.82))' }} />
           </div>
-          <div style={{ padding: '20px 18px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+          <div style={{ padding: '14px 14px 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
             {JOURNEYS[activeTab].map(([number, title, detail]) => (
               <div key={title} style={{ textAlign: 'center' }}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    margin: '0 auto 10px',
+                    width: 34,
+                    height: 34,
+                    margin: '0 auto 8px',
                     borderRadius: '50%',
                     display: 'grid',
                     placeItems: 'center',
@@ -137,13 +137,13 @@ export default function TabsSection() {
                     border: `1px solid ${current.color}66`,
                     color: current.color,
                     fontWeight: 700,
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                   }}
                 >
                   {number}
                 </div>
-                <p style={{ fontSize: 12, fontWeight: 700, margin: 0, color: 'rgba(255,255,255,.75)' }}>{title}</p>
-                <span style={{ display: 'block', fontSize: 10.5, lineHeight: 1.4, color: 'var(--text-faint)', marginTop: 4 }}>{detail}</span>
+                <p style={{ fontSize: 11.5, fontWeight: 700, margin: 0, color: 'rgba(255,255,255,.75)' }}>{title}</p>
+                <span style={{ display: 'block', fontSize: 10, lineHeight: 1.35, color: 'var(--text-faint)', marginTop: 3 }}>{detail}</span>
               </div>
             ))}
           </div>

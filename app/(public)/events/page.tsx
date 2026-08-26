@@ -18,6 +18,15 @@ const PAGE_SIZE = 24
 export const metadata: Metadata = {
   title: 'Événements — LIVEINBLACK',
   description: 'Découvrez les prochains concerts, soirées et rendez-vous culturels sur LIVEINBLACK.',
+  alternates: { canonical: '/events' },
+  robots: { index: true, follow: true },
+  openGraph: {
+    url: '/events',
+    siteName: 'LIVEINBLACK',
+    locale: 'fr_BJ',
+    title: 'Événements au Bénin — LIVEINBLACK',
+    description: 'Concerts, soirées et rendez-vous culturels à découvrir et réserver au Bénin.',
+  },
 }
 
 export const revalidate = 45

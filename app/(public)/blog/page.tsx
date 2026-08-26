@@ -14,9 +14,22 @@ const PAGE_SIZE = 12
 export const metadata: Metadata = {
   title: 'Blog — LIVEINBLACK',
   description: "Actualités, guides et conseils pour organiser et vivre les meilleures expériences culturelles d'Afrique de l'Ouest.",
+  alternates: {
+    canonical: '/blog',
+    types: { 'application/rss+xml': '/blog/feed.xml' },
+  },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: 'Blog — LIVEINBLACK',
+    description: "Guides, actualités et conseils sur les événements au Bénin et en Afrique de l'Ouest.",
+    type: 'website',
+    url: '/blog',
+    locale: 'fr_BJ',
+    siteName: 'LIVEINBLACK',
+  },
 }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 const CATEGORY_LABELS: Record<BlogCategoryId, string> = {
   ...(Object.fromEntries(regions.map((region) => [region.id, `${region.flag} ${region.name}`])) as Record<string, string>),

@@ -5,6 +5,7 @@ import { LEGAL } from '@/lib/shared/legal'
 export const metadata: Metadata = {
   title: `Politique de confidentialité — ${LEGAL.brand}`,
   description: `Politique de confidentialité de ${LEGAL.brand} — traitement des données personnelles.`,
+  alternates: { canonical: '/privacy' },
 }
 
 // Port de src/pages/PolitiqueConfidentialitePage.jsx — conforme RGPD (UE

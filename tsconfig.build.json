@@ -7,6 +7,7 @@
     "**/*.test.tsx",
     "**/*.integration.test.ts",
     "**/*.integration.test.tsx",
+    "e2e/**",
     "playwright.config.ts",
     "vitest.config.ts",
     "vitest.integration.config.ts",
