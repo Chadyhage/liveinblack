@@ -4,7 +4,7 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 24px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, .055);
   color: #f5f5f7;
   text-decoration: none;
@@ -13,17 +13,17 @@
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   border-color: rgba(255, 255, 255, .22);
   background: rgba(255, 255, 255, .075);
-  box-shadow: 0 28px 72px rgba(0, 0, 0, .3);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .26);
 }
 
 .card:focus-visible { outline: 3px solid #b8f34a; outline-offset: 4px; }
 
 .visual {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9.6;
   overflow: hidden;
 }
 
@@ -34,16 +34,16 @@
 .topBadges,
 .bottomBadges {
   position: absolute;
-  left: 16px;
-  right: 16px;
+  left: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
-.topBadges { top: 16px; }
-.bottomBadges { bottom: 16px; justify-content: flex-start; }
+.topBadges { top: 11px; }
+.bottomBadges { bottom: 11px; justify-content: flex-start; }
 
 .badge,
 .urgentBadge,
@@ -52,14 +52,14 @@
 .reason {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 0 11px;
+  min-height: 26px;
+  padding: 0 8px;
   border: 1px solid rgba(255, 255, 255, .15);
   border-radius: 999px;
   background: rgba(15, 15, 17, .78);
   backdrop-filter: blur(14px);
   color: #fff;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 750;
   letter-spacing: .01em;
   white-space: nowrap;
@@ -74,20 +74,20 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px 24px 22px;
+  padding: 12px 13px 11px;
 }
 
 .category {
   margin: 0;
   color: #b8f34a;
-  font-size: 15px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
 .content h3 {
-  margin: 9px 0 0;
+  margin: 6px 0 0;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(22px, 2vw, 27px);
+  font-size: clamp(17px, 1.55vw, 21px);
   font-weight: 700;
   line-height: 1.16;
   letter-spacing: -.035em;
@@ -98,11 +98,11 @@
 .meta {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  margin-top: 20px;
+  gap: 6px;
+  margin-top: 10px;
   color: rgba(245, 245, 247, .68);
-  font-size: 16px;
-  line-height: 1.35;
+  font-size: 11.5px;
+  line-height: 1.34;
 }
 
 .meta span { display: flex; align-items: flex-start; gap: 9px; }
@@ -112,22 +112,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 18px;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 9px;
   border-top: 1px solid rgba(255, 255, 255, .1);
   color: rgba(245, 245, 247, .5);
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.discover { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; color: #f5f5f7; font-size: 15px; font-weight: 650; }
+.discover { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; color: #f5f5f7; font-size: 12px; font-weight: 650; }
 
 @media (max-width: 640px) {
-  .card { border-radius: 22px; }
-  .content { padding: 22px 20px 20px; }
-  .content h3 { font-size: 25px; }
-  .meta { font-size: 16px; }
+  .card { border-radius: 18px; }
+  .content { padding: 12px 12px 10px; }
+  .content h3 { font-size: 19px; }
+  .meta { font-size: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -135,4 +135,4 @@
   .card:hover { transform: none; }
   .card:hover .image { transform: none; }
 }
-.card{border-radius:17px;box-shadow:0 12px 34px rgba(0,0,0,.18)}.visual{aspect-ratio:16/8.4}.topBadges,.bottomBadges{left:11px;right:11px}.topBadges{top:11px}.bottomBadges{bottom:11px}.badge,.urgentBadge,.price,.stock,.reason{min-height:27px;padding:0 8px;font-size:11.5px}.content{padding:14px}.category{font-size:12.5px}.content h3{margin-top:6px;font-size:clamp(17px,1.45vw,21px)}.meta{gap:6px;margin-top:12px;font-size:13px}.footer{gap:10px;margin-top:14px;padding-top:11px;font-size:12px}.discover{font-size:13px}
+.card{border-radius:16px;box-shadow:0 12px 34px rgba(0,0,0,.18)}.visual{aspect-ratio:16/8.2}.topBadges,.bottomBadges{left:10px;right:10px}.topBadges{top:10px}.bottomBadges{bottom:10px}.badge,.urgentBadge,.price,.stock,.reason{min-height:25px;padding:0 7px;font-size:11px}.content{padding:12px}.category{font-size:12px}.content h3{margin-top:5px;font-size:clamp(16px,1.35vw,19px)}.meta{gap:5px;margin-top:10px;font-size:11.5px}.footer{gap:8px;margin-top:10px;padding-top:8px;font-size:11px}.discover{font-size:11.5px}

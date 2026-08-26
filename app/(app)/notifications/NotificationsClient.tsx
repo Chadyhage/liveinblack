@@ -221,11 +221,8 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                       {notification.title}
                     </span>
                     {notification.body ? <span className={styles.notificationBody}>{notification.body}</span> : null}
-                    <span className={styles.notificationFooter}>
-                      <span className={styles.notificationState}>{notification.read ? 'Lue' : 'Non lue'}</span>
-                      {notification.link ? <span className={styles.notificationAction}>Ouvrir</span> : null}
-                    </span>
                   </span>
+                  {notification.link ? <span className={styles.notificationAction}>Ouvrir</span> : null}
                 </Button>
               ))}
             </div>

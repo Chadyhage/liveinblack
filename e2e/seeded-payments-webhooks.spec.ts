@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { expect, test, type Page } from 'playwright/test'
+import Stripe from 'stripe'
 import { loginSeededUser } from './helpers/auth'
 
 test.skip(process.env.LIB_RUN_SEEDED_E2E !== '1', 'Seeded E2E requires npm run seed:e2e and LIB_RUN_SEEDED_E2E=1')
@@ -38,8 +39,11 @@ function fedapaySignature(payload: string, secret: string) {
 
 function stripeSignature(payload: string, secret: string) {
   const timestamp = Math.floor(Date.now() / 1000)
-  const signature = crypto.createHmac('sha256', secret).update(`${timestamp}.${payload}`, 'utf8').digest('hex')
-  return `t=${timestamp},v1=${signature}`
+  return new Stripe('sk_test_liveinblack_e2e', { apiVersion: '2026-06-24.dahlia' }).webhooks.generateTestHeaderString({
+    payload,
+    secret,
+    timestamp,
+  })
 }
 
 type WalletTicket = {
@@ -66,6 +70,16 @@ async function publicEvent(page: Page) {
   const response = await api<{ event: { places: Array<{ id: string; available: number }> } }>(page, `/api/events/${ids.event}`)
   expect(response.status).toBe(200)
   return response.body.event
+}
+
+async function selectAvailablePlaceId(page: Page, preferred: string[] = ['p1', 'p2', 'p3']) {
+  const event = await publicEvent(page)
+  const place = [
+    ...preferred.map((id) => event.places.find((candidate) => candidate.id === id && (candidate.available ?? 0) > 0)),
+    ...event.places.filter((candidate) => (candidate.available ?? 0) > 0),
+  ].find(Boolean)
+  expect(place?.id).toBeTruthy()
+  return place!.id
 }
 
 test.describe.serial('seeded payments and webhook contracts', () => {
@@ -142,18 +156,19 @@ test.describe.serial('seeded payments and webhook contracts', () => {
     await loginSeededUser(page, 'checkout-buyer@liveinblack.dev')
 
     const previousCodes = new Set((await walletTickets(page)).map((ticket) => ticket.ticketCode))
+    const placeId = await selectAvailablePlaceId(page)
 
     const preview = await api<{ ok: boolean; code: string; unitDiscount: number }>(page, `/api/events/${ids.event}/promo`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: 'e2e promo', placeId: 'p1', qty: 1 }),
+      body: JSON.stringify({ code: 'e2e promo', placeId, qty: 1 }),
     })
     expect(preview).toMatchObject({ status: 200, body: { ok: true, code: 'E2EPROMO', unitDiscount: 1000 } })
 
     const checkout = await api<{ url: string; amountTotal: number; currency: string; simulated?: boolean }>(page, '/api/checkout/fedapay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventId: ids.event, placeId: 'p1', qty: 1, isTable: false, promoCode: 'e2e promo' }),
+      body: JSON.stringify({ eventId: ids.event, placeId, qty: 1, isTable: false, promoCode: 'e2e promo' }),
     })
     expect(checkout.status).toBe(200)
     expect(checkout.body).toMatchObject({ amountTotal: 4200, currency: 'XOF', simulated: true })

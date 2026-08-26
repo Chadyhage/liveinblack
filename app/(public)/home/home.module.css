@@ -24,10 +24,10 @@
 
 .hero {
   position: relative;
-  min-height: min(460px, calc(100svh - 64px));
+  min-height: min(396px, calc(100svh - 64px));
   display: grid;
   align-items: center;
-  padding: clamp(26px, 3.8vh, 42px) max(var(--page-gutter), calc((100vw - 1280px) / 2)) 24px;
+  padding: clamp(18px, 2.6vh, 30px) max(var(--page-gutter), calc((100vw - 1280px) / 2)) 18px;
   overflow: hidden;
   isolation: isolate;
   text-align: left;
@@ -64,10 +64,10 @@
 
 .heroTitle {
   max-width: 680px;
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(34px, 3.8vw, 52px);
+  font-size: clamp(32px, 3.4vw, 48px);
   line-height: 1;
   font-weight: 720;
   letter-spacing: -.055em;
@@ -80,18 +80,18 @@
 
 .heroDescription {
   max-width: 640px;
-  margin: 16px 0 0;
+  margin: 10px 0 0;
   color: rgba(255, 255, 255, .74);
-  font-size: clamp(14px, 1.05vw, 16px);
-  line-height: 1.42;
+  font-size: clamp(13px, .96vw, 15px);
+  line-height: 1.38;
   text-wrap: balance;
 }
 
 .heroActions {
   display: flex;
   justify-content: flex-start;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 10px;
   flex-wrap: wrap;
 }
 
@@ -176,18 +176,15 @@
 .newsSection {
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: clamp(20px, 2.4vw, 32px) var(--page-gutter);
+  padding: clamp(14px, 1.8vw, 24px) var(--page-gutter);
 }
 
 .newsSection {
-  padding-top: 16px;
-  padding-bottom: 26px;
+  padding-top: 10px;
+  padding-bottom: 16px;
 }
 
-.sectionHeader {
-  max-width: 720px;
-  margin-bottom: 10px;
-}
+.sectionHeader { max-width: 720px; margin-bottom: 6px; }
 
 .sectionEyebrow {
   margin: 0 0 6px;
@@ -202,7 +199,7 @@
   margin: 0;
   color: #f5f5f7;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(24px, 2.7vw, 34px);
+  font-size: clamp(22px, 2.4vw, 30px);
   line-height: 1.04;
   font-weight: 700;
   letter-spacing: -.045em;
@@ -211,17 +208,17 @@
 
 .sectionDescription {
   max-width: 620px;
-  margin: 9px 0 0;
+  margin: 6px 0 0;
   color: rgba(255, 255, 255, .62);
-  font-size: 12px;
-  line-height: 1.48;
+  font-size: 11.5px;
+  line-height: 1.42;
 }
 
 .contentGrid,
 .benefitGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: 10px;
+  gap: 8px;
   align-items: stretch;
 }
 
@@ -231,23 +228,23 @@
 
 .horizontalRail {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding: 2px 2px 12px;
+  padding: 2px 2px 10px;
   scroll-snap-type: x proximity;
   scrollbar-color: rgba(255, 255, 255, .22) transparent;
 }
 
 .finalSection {
-  padding: 18px var(--page-gutter) clamp(36px, 4vw, 52px);
+  padding: 14px var(--page-gutter) clamp(28px, 3.4vw, 44px);
 }
 
 .finalCard {
   max-width: 860px;
   margin: 0 auto;
-  padding: clamp(16px, 2.2vw, 24px) clamp(14px, 2.2vw, 24px);
+  padding: clamp(14px, 2vw, 20px) clamp(12px, 2vw, 20px);
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 20px;
+  border-radius: 18px;
   text-align: center;
   background:
     radial-gradient(circle at 50% 0%, rgba(184, 243, 74, .1), transparent 58%),
@@ -257,7 +254,7 @@
 
 .home :global(.lb-card) {
   border-color: rgba(255, 255, 255, .12) !important;
-  border-radius: 14px !important;
+  border-radius: 13px !important;
   background: rgba(24, 24, 27, .92) !important;
   box-shadow: 0 16px 48px rgba(0, 0, 0, .18) !important;
 }
@@ -275,8 +272,8 @@
 
 @media (max-width: 640px) {
   .hero {
-    min-height: min(440px, calc(100svh - 58px));
-    padding: 36px 16px 30px;
+    min-height: min(384px, calc(100svh - 58px));
+    padding: 26px 16px 22px;
     align-items: end;
   }
 
@@ -290,19 +287,19 @@
   }
 
   .heroTitle {
-    font-size: clamp(32px, 9.2vw, 42px);
+    font-size: clamp(30px, 8.4vw, 40px);
     line-height: .98;
     letter-spacing: -.052em;
   }
 
   .heroDescription {
-    margin-top: 12px;
-    font-size: 13px;
-    line-height: 1.45;
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.38;
   }
 
   .heroActions {
-    margin-top: 14px;
+    margin-top: 10px;
   }
 
   .primaryButton,
@@ -312,7 +309,7 @@
 
   .heroProof {
     gap: 6px 14px;
-    margin-top: 12px;
+    margin-top: 10px;
     font-size: 12px;
   }
 
@@ -323,18 +320,18 @@
   }
 
   .sectionHeader {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .sectionDescription {
-    font-size: 12px;
+    font-size: 11.5px;
   }
 
   .mobileRail {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin-inline: -16px;
-    padding: 2px 16px 12px;
+    padding: 2px 16px 10px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
@@ -351,7 +348,7 @@
   }
 
   .benefitGrid {
-    gap: 10px;
+    gap: 7px;
   }
 }
 

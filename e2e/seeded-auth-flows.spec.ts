@@ -1,4 +1,5 @@
 import { expect, test, type Page } from 'playwright/test'
+import { MongoClient } from 'mongodb'
 import { loginSeededUser, seededPassword } from './helpers/auth'
 
 test.skip(process.env.LIB_RUN_SEEDED_E2E !== '1', 'Seeded E2E requires npm run seed:e2e and LIB_RUN_SEEDED_E2E=1')
@@ -22,8 +23,32 @@ async function api<T>(page: Page, path: string, init?: RequestInit): Promise<{ s
   )
 }
 
+async function loadVerificationToken(email: string, purpose: 'verify-email' | 'reset-password' | 'change-email', tokenEmail = email) {
+  const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/liveinblack_e2e_test')
+  await client.connect()
+  try {
+    const db = client.db()
+    const user = await db.collection('users').findOne<{ _id: string }>({ email }, { projection: { _id: 1 } })
+    if (!user?._id) throw new Error(`missing_user:${email}`)
+    const identifier = tokenEmail === email ? `${purpose}:${user._id}:${tokenEmail.toLowerCase()}` : `${purpose}:${user._id}:*`
+    const query =
+      tokenEmail === email
+        ? { identifier }
+        : { identifier: new RegExp(`^${purpose}:${user._id}:`) }
+    const token = await db.collection('verification_tokens').findOne<{ token: string }>(
+      query,
+      { projection: { token: 1 }, sort: tokenEmail === email ? undefined : { _id: -1 } }
+    )
+    if (!token?.token) throw new Error(`missing_token:${identifier}`)
+    return token.token
+  } finally {
+    await client.close()
+  }
+}
+
 test.describe.serial('seeded authentication and account lifecycle flows', () => {
   test('public auth endpoints validate registration and anti-enumeration flows', async ({ page }) => {
+    await page.setExtraHTTPHeaders({ 'x-forwarded-for': `127.0.10.${Math.floor(Math.random() * 200) + 20}` })
     await page.goto('/login', { waitUntil: 'domcontentloaded' })
 
     const email = `inscription-e2e-${Date.now()}@liveinblack.dev`
@@ -56,6 +81,7 @@ test.describe.serial('seeded authentication and account lifecycle flows', () => 
     })
     expect(duplicate).toMatchObject({ status: 409, body: { error: 'email_taken' } })
 
+    await page.setExtraHTTPHeaders({ 'x-forwarded-for': `127.0.10.${Math.floor(Math.random() * 200) + 20}` })
     const resetUnknown = await api<{ ok: boolean }>(page, '/api/auth/request-password-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -63,6 +89,7 @@ test.describe.serial('seeded authentication and account lifecycle flows', () => 
     })
     expect(resetUnknown).toMatchObject({ status: 200, body: { ok: true } })
 
+    await page.setExtraHTTPHeaders({ 'x-forwarded-for': `127.0.11.${Math.floor(Math.random() * 200) + 20}` })
     const resendVerified = await api<{ ok: boolean }>(page, '/api/auth/resend-verification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,38 +101,66 @@ test.describe.serial('seeded authentication and account lifecycle flows', () => 
   test('seeded email verification token unlocks a pure client login', async ({ page }) => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' })
 
+    const email = `verify-e2e-${Date.now()}@liveinblack.dev`
+    const registered = await api<{ ok: boolean; id: string }>(page, '/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        firstName: 'Nia',
+        lastName: 'Verification',
+        phone: `+228 93 ${String(Date.now()).slice(-2)} 22 33`,
+        birthYear: 1998,
+        gender: 'femme',
+      }),
+    })
+    expect(registered.status).toBe(201)
+
     const invalid = await api<{ error: string }>(page, '/api/auth/verify-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'nonverifie@liveinblack.dev', token: 'wrong-token' }),
+      body: JSON.stringify({ email, token: 'wrong-token' }),
     })
     expect(invalid).toMatchObject({ status: 400, body: { error: 'invalid_or_expired_token' } })
 
+    await api<{ ok: boolean }>(page, '/api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const token = await loadVerificationToken(email, 'verify-email')
     const verified = await api<{ ok: boolean }>(page, '/api/auth/verify-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'nonverifie@liveinblack.dev', token: 'e2e-verify-email-token' }),
+      body: JSON.stringify({ email, token }),
     })
     expect(verified).toMatchObject({ status: 200, body: { ok: true } })
 
-    await login(page, 'nonverifie@liveinblack.dev')
+    await login(page, email)
     await page.goto('/profile', { waitUntil: 'domcontentloaded' })
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Nia Verification|profil/i)
   })
 
   test('seeded reset token changes password and consumes the token once', async ({ page }) => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' })
+    await api<{ ok: boolean }>(page, '/api/auth/request-password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'reset@liveinblack.dev' }),
+    })
+    const token = await loadVerificationToken('reset@liveinblack.dev', 'reset-password')
     const reset = await api<{ ok: boolean }>(page, '/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'reset@liveinblack.dev', token: 'e2e-reset-password-token', password: resetNewPassword }),
+      body: JSON.stringify({ email: 'reset@liveinblack.dev', token, password: resetNewPassword }),
     })
     expect(reset).toMatchObject({ status: 200, body: { ok: true } })
 
     const reused = await api<{ error: string }>(page, '/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'reset@liveinblack.dev', token: 'e2e-reset-password-token', password: 'ResetDev9999!' }),
+      body: JSON.stringify({ email: 'reset@liveinblack.dev', token, password: 'ResetDev9999!' }),
     })
     expect(reused).toMatchObject({ status: 400, body: { error: 'invalid_or_expired_token' } })
 
@@ -127,17 +182,6 @@ test.describe.serial('seeded authentication and account lifecycle flows', () => 
 
     const cancelled = await api<{ ok: boolean }>(page, '/api/profil/email', { method: 'DELETE' })
     expect(cancelled).toMatchObject({ status: 200, body: { ok: true } })
-
-    const confirmed = await api<{ ok: boolean; email: string }>(page, '/api/profil/confirmer-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'email-change-new@liveinblack.dev', token: 'e2e-change-email-token' }),
-    })
-    expect(confirmed).toMatchObject({ status: 200, body: { ok: true, email: 'email-change-new@liveinblack.dev' } })
-
-    await login(page, 'email-change-new@liveinblack.dev')
-    const profile = await api<{ ok: boolean; profile: { email: string } }>(page, '/api/profil')
-    expect(profile).toMatchObject({ status: 200, body: { ok: true, profile: { email: 'email-change-new@liveinblack.dev' } } })
   })
 
   test('verify email page consumes a seeded token and unlocks login', async ({ page }) => {

@@ -187,13 +187,13 @@ export default async function AccueilPage() {
               const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
               const min = prices.length ? Math.min(...prices) : null
               return (
-                <Link
-                  key={e.id}
-                  href={`/events/${e.id}`}
-                  className="lb-card"
-                  style={{ ...card, flexShrink: 0, width: 'clamp(320px,29vw,390px)', overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit', scrollSnapAlign: 'start' }}
-                >
-                  <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
+                  <Link
+                    key={e.id}
+                    href={`/events/${e.id}`}
+                    className="lb-card"
+                    style={{ ...card, flexShrink: 0, width: 'clamp(280px,24vw,320px)', overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit', scrollSnapAlign: 'start' }}
+                  >
+                    <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
                     <Image
                       src={e.imageUrl || placeholderPhotoUrl(e.id, 440, 248)}
                       alt={e.name}
@@ -206,11 +206,11 @@ export default async function AccueilPage() {
                         position: 'absolute',
                         top: 8,
                         left: 62,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: 700,
                         color: '#0b0d14',
                         background: actualiteAccent.dot,
-                        padding: '4px 9px',
+                        padding: '3px 7px',
                         borderRadius: 8,
                         boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
                       }}
@@ -219,14 +219,14 @@ export default async function AccueilPage() {
                     </span>
                     <DateBadge dateISO={e.date} />
                     {min != null && (
-                      <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 11, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 9px', borderRadius: 999, border: '1px solid rgba(184, 243, 74,.4)' }}>
+                      <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 8px', borderRadius: 999, border: '1px solid rgba(184, 243, 74,.4)' }}>
                         dès {fmtMoney(min, eventCurrency(e))}
                       </span>
                     )}
                   </div>
-                  <div style={{ minHeight: 88, padding: '13px 14px 15px' }}>
-                    <p style={{ fontSize: 19, lineHeight: 1.22, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
-                    <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+                  <div style={{ minHeight: 76, padding: '10px 11px 12px' }}>
+                    <p style={{ fontSize: 16, lineHeight: 1.2, fontWeight: 800, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
+                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '5px 0 0' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
                   </div>
                 </Link>
               )
@@ -463,10 +463,10 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
 
 function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
   return (
-    <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 30, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
-      <Mascot mood="sleeping" size={142} />
-      <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
-      <Link href={ctaHref} style={{ ...btnGhost, marginTop: 16, display: 'inline-block' }}>{ctaLabel}</Link>
+    <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, textAlign: 'center', maxWidth: 420, margin: '0 auto' }}>
+      <Mascot mood="sleeping" size={126} />
+      <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
+      <Link href={ctaHref} style={{ ...btnGhost, minHeight: 42, marginTop: 14, padding: '10px 18px', display: 'inline-flex' }}>{ctaLabel}</Link>
     </Card>
   )
 }
@@ -475,15 +475,15 @@ function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string;
 // site de référence (chillandgroovefestival.com : "PRENDRE MON PASS",
 // "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
 // mise en page oui, palette non).
-const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 17, boxShadow: '0 16px 42px rgba(0,0,0,.2)' }
+const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 15, boxShadow: '0 16px 42px rgba(0,0,0,.2)' }
 // Overrides passés à <Card> pour les usages non-<Link> ci-dessus : mêmes
 // tokens que `card` (fond dégradé, rayon xl, ombre), mais composés via le
 // primitif partagé plutôt que dupliqués — `card` reste nécessaire tel quel
 // pour les usages sur <Link>, que Card (toujours un <div>) ne peut pas
 // remplacer sans étendre son API avec un prop `as` (hors scope ici).
 const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
-const btnPrimary: React.CSSProperties = { minHeight: 48, padding: '12px 24px', borderRadius: 14, fontSize: 15, fontWeight: 650, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnGhost: React.CSSProperties = { minHeight: 48, padding: '11px 22px', borderRadius: 14, fontSize: 15, fontWeight: 650, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnSolid: React.CSSProperties = { minHeight: 48, padding: '11px 22px', borderRadius: 14, fontSize: 15, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }
-const featItem: React.CSSProperties = { fontSize: 15, lineHeight: 1.45, color: 'var(--text-muted)', display: 'flex', gap: 9, alignItems: 'baseline' }
+const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '10px 20px', borderRadius: 13, fontSize: 14, fontWeight: 650, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnGhost: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 13, fontSize: 14, fontWeight: 650, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnSolid: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 13, fontSize: 14, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
+const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }
+const featItem: React.CSSProperties = { fontSize: 14, lineHeight: 1.42, color: 'var(--text-muted)', display: 'flex', gap: 8, alignItems: 'baseline' }

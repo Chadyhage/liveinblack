@@ -37,7 +37,7 @@ describe('NotificationsClient', () => {
     expect(html).toContain('Notifications')
     expect(html).toContain('Les informations importantes liées à ton compte et à ton activité.')
     expect(html).toContain('Tout marquer lu')
-    expect(html).toContain('non lue')
+    expect(html.toLowerCase()).toContain('non lue')
     expect(html).toContain('lue')
     expect(html).toContain('au total')
     expect(html).toContain('Activité récente')

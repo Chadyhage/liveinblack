@@ -1,26 +1,26 @@
 .shell {
   min-height: 100vh;
-  padding: 28px clamp(18px, 2.4vw, 36px) 118px;
+  padding: 22px clamp(16px, 2vw, 30px) 104px;
 }
 
 .workspace {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 18px;
+  gap: 14px;
 }
 
 .scanGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(380px, 0.9fr);
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -28,29 +28,27 @@
   grid-column: 1 / -1;
 }
 
-.cameraCard {
-  min-height: 420px;
-}
+.cameraCard { min-height: 360px; }
 
-.shell { padding: 18px clamp(12px, 1.8vw, 24px) 88px; }
-.workspace { gap: 13px; }
-.scanGrid,.serviceGrid { gap: 13px; }
-.servicePrimary { gap: 12px; }
+.shell { padding: 16px clamp(10px, 1.6vw, 22px) 82px; }
+.workspace { gap: 12px; }
+.scanGrid,.serviceGrid { gap: 12px; }
+.servicePrimary { gap: 10px; }
 
 .manualCard {
   position: sticky;
-  top: 24px;
+  top: 20px;
 }
 
 .manualForm {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .serviceGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) minmax(400px, 0.82fr);
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -58,21 +56,21 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .resultCard {
   display: grid;
   grid-template-columns: minmax(220px, .55fr) minmax(0, 1fr);
-  gap: 18px;
+  gap: 14px;
   align-items: center;
 }
 
 .menuPanel {
   min-width: 0;
   position: sticky;
-  top: 24px;
-  max-height: calc(100vh - 48px);
+  top: 20px;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -82,12 +80,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 @media (max-width: 1020px) {
   .shell {
-    padding: 28px 16px 110px;
+    padding: 24px 14px 100px;
   }
 
   .scanGrid,
@@ -110,7 +108,7 @@
 
 @media (max-width: 620px) {
   .shell {
-    padding: 22px 14px 104px;
+    padding: 20px 12px 96px;
   }
 
   .header,

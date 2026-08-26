@@ -111,12 +111,12 @@ function HeaderSearch() {
           containerStyle={{ flex: 1, minWidth: 0 }}
           style={{
             width: 172,
-            minHeight: 42,
-            padding: '0 8px 0 13px',
+            minHeight: 40,
+            padding: '0 7px 0 12px',
             border: 0,
             background: 'transparent',
             color: '#f5f5f7',
-            fontSize: 13.5,
+            fontSize: 13,
             fontFamily: 'inherit',
             boxShadow: 'none',
           }}
@@ -139,9 +139,9 @@ function HeaderSearch() {
             position: 'absolute',
             top: 'calc(100% + 8px)',
             right: 0,
-            width: 320,
+            width: 280,
             maxWidth: '90vw',
-            maxHeight: 400,
+            maxHeight: 320,
             overflowY: 'auto',
             background: 'rgba(24,24,27,.96)',
             backdropFilter: 'blur(24px) saturate(160%)',
@@ -166,11 +166,11 @@ function HeaderSearch() {
                   href={`/events/${e.id}`}
                   onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', textDecoration: 'none', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 9px', textDecoration: 'none', color: 'inherit' }}
                 >
                   <span style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
-                    <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
+                    <span style={{ display: 'block', fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
                   </span>
                 </Link>
               ))}
@@ -185,10 +185,10 @@ function HeaderSearch() {
                   href={`/organizers/${o.slug}`}
                   onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', textDecoration: 'none', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 9px', textDecoration: 'none', color: 'inherit' }}
                 >
-                  <span style={{ fontSize: 12.5, fontWeight: 700 }}>{o.publicName}</span>
-                  {o.city && <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>{o.city}</span>}
+                  <span style={{ fontSize: 12, fontWeight: 700 }}>{o.publicName}</span>
+                  {o.city && <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{o.city}</span>}
                 </Link>
               ))}
             </QuickResultGroup>
@@ -202,10 +202,10 @@ function HeaderSearch() {
                   href={`/providers/${encodeURIComponent(p.userId)}`}
                   onClick={() => { setDropdownOpen(false); setValue('') }}
                   className="lb-menu-row"
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 12px', textDecoration: 'none', color: 'inherit' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 9px', textDecoration: 'none', color: 'inherit' }}
                 >
-                  <span style={{ fontSize: 12.5, fontWeight: 700 }}>{p.name}</span>
-                  {p.city && <span style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>{p.city}</span>}
+                  <span style={{ fontSize: 12, fontWeight: 700 }}>{p.name}</span>
+                  {p.city && <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{p.city}</span>}
                 </Link>
               ))}
             </QuickResultGroup>
@@ -506,15 +506,15 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-public-nav__inner {
           width: 100%;
           max-width: 1380px;
-          min-height: 58px;
+          min-height: 48px;
           margin: 0 auto;
-          padding: 6px 8px 6px 14px;
+          padding: 4px 6px 4px 10px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: clamp(16px, 2vw, 30px);
+          gap: clamp(8px, 1.2vw, 14px);
           border: 1px solid rgba(255,255,255,.14);
-          border-radius: 22px;
+          border-radius: 17px;
           background: rgba(22,22,25,.7);
           -webkit-backdrop-filter: blur(30px) saturate(170%);
           backdrop-filter: blur(30px) saturate(170%);
@@ -522,27 +522,27 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
         .lb-public-nav__brand {
-          min-height: 44px;
+          min-height: 36px;
           display: inline-flex;
           align-items: center;
-          gap: 10px;
+          gap: 7px;
           flex-shrink: 0;
           color: #f5f5f7;
           text-decoration: none;
-          font-size: 15px;
+          font-size: 13px;
           font-weight: 700;
           letter-spacing: -.025em;
-          border-radius: 14px;
+          border-radius: 12px;
         }
         .lb-public-nav__brand-mark {
-          width: 34px;
-          height: 34px;
+          width: 28px;
+          height: 28px;
           display: grid;
           place-items: center;
-          border-radius: 11px;
+          border-radius: 10px;
           background: rgba(184,243,74,.94);
           color: #101500;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 820;
           box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
         }
@@ -553,28 +553,28 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-mobile-login { gap: 7px; white-space: nowrap; }
         .lb-navlink-primary {
           position: relative;
-          min-height: 44px;
+          min-height: 36px;
           align-items: center;
-          padding: 0 13px;
-          border-radius: 14px;
+          padding: 0 10px;
+          border-radius: 11px;
           color: rgba(245,245,247,.68);
           text-decoration: none;
-          font-size: 13.5px;
+          font-size: 12px;
           font-weight: 520;
           letter-spacing: -.01em;
         }
         .lb-navlink-active { color: #f5f5f7; background: rgba(255,255,255,.11); box-shadow: inset 0 0 0 1px rgba(255,255,255,.055); }
         .lb-nav-auth {
-          min-height: 44px;
+          min-height: 36px;
           align-items: center;
           justify-content: center;
           gap: 7px;
-          padding: 0 15px;
-          border-radius: 14px;
+          padding: 0 11px;
+          border-radius: 11px;
           line-height: 1;
           white-space: nowrap;
           text-decoration: none;
-          font-size: 13.5px;
+          font-size: 12px;
           font-weight: 650;
         }
         .lb-nav-auth--secondary { margin-left: 5px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.065); }
@@ -595,13 +595,13 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-navlink:not(.lb-nav-search):hover { color: #fff; background: rgba(255,255,255,.1); }
         .lb-navlink:not(.lb-nav-search):active { transform: scale(.97); }
         .lb-header-search__form {
-          width: clamp(190px, 16vw, 244px);
+          width: clamp(156px, 12vw, 206px);
           display: flex;
           align-items: center;
-          min-height: 44px;
+          min-height: 38px;
           padding: 1px 2px 1px 1px;
           border: 1px solid rgba(255,255,255,.14);
-          border-radius: 15px;
+          border-radius: 11px;
           background: rgba(255,255,255,.065);
           transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
         }
@@ -612,15 +612,15 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
         .lb-header-search__button {
-          width: 44px;
-          height: 44px;
-          flex: 0 0 44px;
+          width: 36px;
+          height: 36px;
+          flex: 0 0 36px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           padding: 0 !important;
           border: 0;
-          border-radius: 13px;
+          border-radius: 10px;
           background: rgba(255,255,255,.085);
           color: #f5f5f7;
           cursor: pointer;
@@ -629,15 +629,15 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-header-search__button:hover { color: var(--primary); background: rgba(255,255,255,.15); }
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
-          .lb-public-nav { padding: 8px 8px 0 !important; }
-          .lb-public-nav__inner { min-height: 56px; padding: 5px 6px 5px 12px; gap: 8px; border-radius: 19px; }
+          .lb-public-nav { padding: 7px 8px 0 !important; }
+          .lb-public-nav__inner { min-height: 48px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
           .lb-public-nav__brand-mark { display: none; }
-          .lb-public-nav__brand { font-size: 14px; }
+          .lb-public-nav__brand { font-size: 12.5px; }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }
-        .lb-mobile-auth-actions { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 14px 16px 16px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,.09); }
-        .lb-mobile-auth-button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 650; }
+        .lb-mobile-auth-actions { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px 10px 10px; margin-top: 5px; border-top: 1px solid rgba(255,255,255,.09); }
+        .lb-mobile-auth-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border-radius: 10px; text-decoration: none; font-size: 12px; font-weight: 650; }
         .lb-mobile-auth-button--primary { color: var(--primary-ink); background: var(--primary); }
         .lb-mobile-auth-button--secondary { color: #f5f5f7; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); }
         .lb-menu-row { transition: background 0.15s ease; }

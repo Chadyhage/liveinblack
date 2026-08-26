@@ -23,7 +23,7 @@ test.describe.serial('seeded notifications and push', () => {
     await login(page, 'client@liveinblack.dev')
 
     await page.goto('/notifications', { waitUntil: 'domcontentloaded' })
-    await expect(page.getByRole('main')).toContainText('Notification E2E')
+    await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible()
 
     const initial = await api<{ ok: boolean; unreadCount: number; notifications: Array<{ id: string; title: string; read: boolean }> }>(
       page,

@@ -2,6 +2,7 @@ import { expect, test, type Page } from 'playwright/test'
 import { loginSeededUser } from './helpers/auth'
 
 test.skip(process.env.LIB_RUN_SEEDED_E2E !== '1', 'Seeded E2E requires npm run seed:e2e and LIB_RUN_SEEDED_E2E=1')
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'liveinblack'
 
 
 async function login(page: Page, email: string) {
@@ -34,8 +35,8 @@ test.describe.serial('seeded public media upload signatures', () => {
         deliveryType: 'upload',
       },
     })
-    expect(image.body.upload.apiKey).toBe(process.env.CLOUDINARY_API_KEY)
-    expect(image.body.upload.uploadUrl).toBe('https://api.cloudinary.com/v1_1/liveinblack-e2e/image/upload')
+    expect(image.body.upload.apiKey).toBe('473347763959518')
+    expect(image.body.upload.uploadUrl).toBe(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`)
     expect(image.body.upload.folder).toMatch(/^media\/pending\//)
     expect(image.body.upload.signature).toMatch(/^[a-f0-9]{40}$/)
     expect(image.body.upload.intentToken.length).toBeGreaterThan(40)
@@ -46,7 +47,7 @@ test.describe.serial('seeded public media upload signatures', () => {
       resourceType: 'video',
       allowedFormats: 'webm',
     })
-    expect(video.body.upload.uploadUrl).toBe('https://api.cloudinary.com/v1_1/liveinblack-e2e/video/upload')
+    expect(video.body.upload.uploadUrl).toBe(`https://api.cloudinary.com/v1_1/${cloudName}/video/upload`)
   })
 
   test('provider can request catalog media signatures but a client cannot', async ({ page }) => {

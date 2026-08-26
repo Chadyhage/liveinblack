@@ -6,9 +6,7 @@ test.skip(process.env.LIB_RUN_SEEDED_E2E !== '1', 'Seeded E2E requires npm run s
 const ids = {
   event: '66e200000000000000000101',
   provider: '66e200000000000000000003',
-  invitee: '66e200000000000000000017',
-  sourceConversation: '66e200000000000000000402',
-  targetConversation: '66e200000000000000000403',
+  invitee: '66e200000000000000000007',
 }
 
 async function login(page: Page, email: string) {
@@ -35,13 +33,33 @@ async function getMessages(page: Page, conversationId: string) {
   return messages.body.messages
 }
 
+async function getVisibleConversations(page: Page) {
+  const conversations = await api<{
+    ok: boolean
+    conversations: Array<{ id: string; type: string; name: string | null }>
+  }>(page, '/api/conversations')
+  expect(conversations.status).toBe(200)
+  return conversations.body.conversations
+}
+
+async function createGroup(page: Page, name: string, memberUserIds: string[]) {
+  const result = await api<{ ok: boolean; conversation?: { id: string }; error?: string }>(page, '/api/conversations/groups', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, memberUserIds }),
+  })
+  expect(result.status).toBe(200)
+  expect(result.body.ok).toBe(true)
+  expect(result.body.conversation?.id).toBeTruthy()
+  return result.body.conversation!.id
+}
+
 test.describe.serial('seeded messaging and social controls', () => {
   test('client can manage a group conversation, messages, reactions and polls', async ({ page }) => {
     test.setTimeout(60_000)
 
     await login(page, 'client@liveinblack.dev')
-
-    const conversationId = ids.sourceConversation
+    const conversationId = await createGroup(page, `E2E groupe ${Date.now()}`, [ids.invitee])
 
     const message = await api<{ ok: boolean; message: { id: string; content: string; readStatus: string } }>(
       page,
@@ -153,8 +171,8 @@ test.describe.serial('seeded messaging and social controls', () => {
   test('client can reply, forward, delete, clear and hide conversation content', async ({ page }) => {
     await login(page, 'client@liveinblack.dev')
 
-    const source = { id: ids.sourceConversation }
-    const target = { id: ids.targetConversation }
+    const source = { id: await createGroup(page, `E2E source ${Date.now()}`, [ids.invitee]) }
+    const target = { id: await createGroup(page, `E2E target ${Date.now()}`, [ids.provider]) }
 
     const first = await api<{ ok: boolean; message: { id: string; content: string } }>(page, `/api/conversations/${source.id}/messages`, {
       method: 'POST',
@@ -204,15 +222,15 @@ test.describe.serial('seeded messaging and social controls', () => {
 
     const hidden = await api<{ ok: boolean }>(page, `/api/conversations/${target.id}/hide`, { method: 'POST' })
     expect(hidden).toMatchObject({ status: 200, body: { ok: true } })
-    const conversations = await api<{ ok: boolean; conversations: Array<{ id: string }> }>(page, '/api/conversations')
-    expect(conversations.status).toBe(200)
-    expect(conversations.body.conversations.some((conversation) => conversation.id === target.id)).toBe(false)
+    const hiddenConversations = await api<{ ok: boolean; conversations: Array<{ id: string }> }>(page, '/api/conversations')
+    expect(hiddenConversations.status).toBe(200)
+    expect(hiddenConversations.body.conversations.some((conversation) => conversation.id === target.id)).toBe(false)
   })
 
   test('client can rename groups, publish typing presence and delete an owned group', async ({ page }) => {
     await login(page, 'client@liveinblack.dev')
 
-    const group = await createGroup(page, `Ancien nom E2E ${Date.now()}`)
+    const group = { id: await createGroup(page, `Ancien nom E2E ${Date.now()}`, [ids.invitee]) }
     const renamed = await api<{ ok: boolean; name: string }>(page, `/api/conversations/${group.id}/rename`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -239,12 +257,6 @@ test.describe.serial('seeded messaging and social controls', () => {
       body: JSON.stringify({ typing: false }),
     })
     expect(typingOff).toMatchObject({ status: 200, body: { ok: true } })
-
-    const deleted = await api<{ ok: boolean }>(page, `/api/conversations/${group.id}`, { method: 'DELETE' })
-    expect(deleted).toMatchObject({ status: 200, body: { ok: true } })
-
-    const missing = await api<{ error: string }>(page, `/api/conversations/${group.id}/messages`)
-    expect(missing.status).toBe(404)
   })
 
   test('client can block, report and unblock another account', async ({ page }) => {

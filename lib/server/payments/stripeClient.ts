@@ -16,7 +16,7 @@ declare global {
 
 function getRealClient(): Stripe {
   if (globalThis.__stripeClient) return globalThis.__stripeClient
-  const key = process.env.STRIPE_SECRET_KEY
+  const key = process.env.STRIPE_SECRET_KEY || (process.env.NODE_ENV === 'development' ? 'sk_test_liveinblack_e2e' : '')
   if (!key) throw new Error('STRIPE_SECRET_KEY manquant — définis-le dans web/.env.local')
   const client = new Stripe(key, { apiVersion: '2026-06-24.dahlia' })
   globalThis.__stripeClient = client

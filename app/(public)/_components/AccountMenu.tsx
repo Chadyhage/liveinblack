@@ -131,16 +131,16 @@ export default function AccountMenu({
           }}
           aria-label={user.name ? `Mon compte — ${user.name}` : 'Mon compte'}
           aria-expanded={accountOpen}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            width: 'auto',
-            height: 44,
-            minWidth: 44,
-            minHeight: 44,
-            padding: '0 10px 0 3px',
-            borderRadius: 999,
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          width: 'auto',
+          height: 42,
+          minWidth: 44,
+          minHeight: 42,
+          padding: '0 9px 0 3px',
+          borderRadius: 999,
             border: '1px solid var(--border-strong)',
             background: 'var(--surface)',
             color: 'var(--text)',
@@ -157,12 +157,12 @@ export default function AccountMenu({
 
         {accountOpen && (
           <div
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 10px)',
-              ...(menuAlign === 'left' ? { left: 0 } : { right: 0 }),
-              width: 220,
-              maxWidth: 'calc(100vw - 24px)',
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 10px)',
+            ...(menuAlign === 'left' ? { left: 0 } : { right: 0 }),
+            width: 208,
+            maxWidth: 'calc(100vw - 24px)',
               background: 'var(--surface-2)',
               border: '1px solid var(--border)',
               borderRadius: 14,
@@ -173,7 +173,7 @@ export default function AccountMenu({
             }}
           >
             {user.name && (
-              <p style={{ margin: 0, padding: '10px 12px 8px', fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p style={{ margin: 0, padding: '8px 10px 6px', fontSize: 12.5, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user.name}
               </p>
             )}
@@ -195,20 +195,20 @@ export default function AccountMenu({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 9,
+                  gap: 8,
                   width: '100%',
-                  padding: '10px 12px',
+                  padding: '8px 10px',
                   borderRadius: 8,
                   color: 'var(--text)',
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: 600,
                   justifyContent: 'flex-start',
                   textAlign: 'left',
                 }}
               >
-                <LayoutDashboard size={15} />
+                <LayoutDashboard size={14} />
                 <span style={{ flex: 1 }}>{d.label}</span>
-                {d.role === user.activeRole && <Check size={14} color="var(--teal)" />}
+                {d.role === user.activeRole && <Check size={13} color="var(--teal)" />}
               </Button>
             ))}
             {/* Point de sortie explicite vers le site public — la nav
@@ -226,18 +226,18 @@ export default function AccountMenu({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 9,
+                gap: 8,
                 width: '100%',
-                padding: '10px 12px',
+                padding: '8px 10px',
                 borderRadius: 8,
                 color: 'var(--pink)',
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: 700,
                 justifyContent: 'flex-start',
                 textAlign: 'left',
               }}
             >
-              <LogOut size={15} /> Déconnexion
+              <LogOut size={14} /> Déconnexion
             </Button>
           </div>
         )}
@@ -262,30 +262,30 @@ function MenuLink({ href, onClick, icon, label, badge }: { href: string; onClick
     <Link
       href={href}
       onClick={onClick}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 9,
-        padding: '10px 12px',
-        borderRadius: 8,
-        color: 'var(--text)',
-        fontSize: 13,
-        fontWeight: 600,
-        textDecoration: 'none',
-      }}
-    >
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 10px',
+          borderRadius: 8,
+          color: 'var(--text)',
+          fontSize: 12.5,
+          fontWeight: 600,
+          textDecoration: 'none',
+        }}
+      >
       {icon} {label}
       {!!badge && (
         <span
           style={{
             marginLeft: 'auto',
             minWidth: 18,
-            height: 18,
-            padding: '0 5px',
+            height: 17,
+            padding: '0 4px',
             borderRadius: 999,
             background: 'var(--pink)',
             color: '#fff',
-            fontSize: 10.5,
+            fontSize: 10,
             fontWeight: 800,
             display: 'flex',
             alignItems: 'center',

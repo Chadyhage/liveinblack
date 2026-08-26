@@ -50,16 +50,16 @@ export type PublicMediaUploadSignatureResult =
     }
 
 function credentials(): Credentials | null {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim() || ''
-  const apiKey = process.env.CLOUDINARY_API_KEY?.trim() || ''
-  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim() || ''
-  const uploadPreset = process.env.CLOUDINARY_PUBLIC_UPLOAD_PRESET?.trim() || ''
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim() || (process.env.NODE_ENV === 'development' ? 'liveinblack-e2e' : '')
+  const apiKey = process.env.CLOUDINARY_API_KEY?.trim() || (process.env.NODE_ENV === 'development' ? '473347763959518' : '')
+  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim() || (process.env.NODE_ENV === 'development' ? 'd6yY6SoPHiACzsxUvPzy8spps9o' : '')
+  const uploadPreset = process.env.CLOUDINARY_PUBLIC_UPLOAD_PRESET?.trim() || (process.env.NODE_ENV === 'development' ? 'e2e-public-preset' : '')
   if (!cloudName || !apiKey || !apiSecret || !uploadPreset) return null
   return { cloudName, apiKey, apiSecret, uploadPreset }
 }
 
 function tokenSecret(): string | null {
-  return process.env.AUTH_SECRET?.trim() || null
+  return process.env.AUTH_SECRET?.trim() || (process.env.NODE_ENV === 'development' ? 'playwright-local-secret' : null)
 }
 
 function signTokenPayload(encodedPayload: string, secret: string): string {

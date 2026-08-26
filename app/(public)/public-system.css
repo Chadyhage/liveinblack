@@ -48,151 +48,151 @@
   font-size: 15px;
   font-weight: 750;
 }
-.lb-editorial-card__body { padding: 24px; }
-.lb-editorial-card__body > p:first-child { margin: 0 0 8px; color: #b8f34a; font-size: 13px !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.lb-editorial-card__body h3 { margin: 0; color: #f5f5f7; font-size: 24px !important; line-height: 1.16; letter-spacing: -.03em; }
-.lb-editorial-card__body h3 + p { margin: 11px 0 0; color: rgba(245, 245, 247, .65); font-size: 16px !important; line-height: 1.58; }
+.lb-editorial-card__body { padding: 18px; }
+.lb-editorial-card__body > p:first-child { margin: 0 0 7px; color: #b8f34a; font-size: 12px !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.lb-editorial-card__body h3 { margin: 0; color: #f5f5f7; font-size: 22px !important; line-height: 1.16; letter-spacing: -.03em; }
+.lb-editorial-card__body h3 + p { margin: 9px 0 0; color: rgba(245, 245, 247, .65); font-size: 15px !important; line-height: 1.54; }
 
 /* Pages de détail publiques */
 .lb-public-detail-page {
   max-width: 1320px !important;
-  padding: 22px clamp(10px, 2vw, 28px) 72px !important;
+  padding: 20px clamp(10px, 2vw, 24px) 64px !important;
   background: transparent;
 }
 
 .lb-public-detail-page > :first-child > div:first-child,
 .lb-public-detail-page > div:first-child { font-size: 15px !important; }
-.lb-public-detail-page h1 { font-size: clamp(38px, 5.5vw, 62px) !important; line-height: 1.02 !important; letter-spacing: -.045em !important; }
+.lb-public-detail-page h1 { font-size: clamp(30px, 4.2vw, 48px) !important; line-height: 1.02 !important; letter-spacing: -.045em !important; }
 .lb-public-detail-page .lb-detail-section {
-  margin-top: 18px;
-  padding: clamp(20px, 2.4vw, 28px);
+  margin-top: 16px;
+  padding: clamp(18px, 2vw, 24px);
   border-color: rgba(255, 255, 255, .12);
   border-radius: 24px;
   background: rgba(255, 255, 255, .055);
   box-shadow: 0 18px 52px rgba(0, 0, 0, .2);
 }
-.lb-public-detail-page .lb-detail-section > h2 { margin-bottom: 16px !important; color: #b8f34a !important; font-size: 17px !important; font-weight: 700 !important; letter-spacing: -.01em !important; text-transform: none !important; }
-.lb-public-detail-page .lb-detail-section p { font-size: 16px !important; line-height: 1.62 !important; }
+.lb-public-detail-page .lb-detail-section > h2 { margin-bottom: 14px !important; color: #b8f34a !important; font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.01em !important; text-transform: none !important; }
+.lb-public-detail-page .lb-detail-section p { font-size: 15px !important; line-height: 1.58 !important; }
 .lb-public-detail-page .lb-detail-section a { font-size: 15px !important; }
 
 /* Authentification, inscriptions et écrans de confirmation */
 .lb-auth-split { color-scheme: dark; }
 .lb-auth-split__form h1 {
   color: #f5f5f7 !important;
-  font-size: clamp(36px, 4vw, 48px) !important;
+  font-size: clamp(30px, 3.1vw, 38px) !important;
   font-weight: 720 !important;
   line-height: 1.04 !important;
   letter-spacing: -.045em !important;
 }
 .lb-auth-split__form h2 { color: #f5f5f7 !important; font-size: 20px !important; font-weight: 700 !important; letter-spacing: -.02em !important; }
-.lb-auth-split__form p { font-size: 16px !important; line-height: 1.58 !important; }
-.lb-auth-split__form label { margin-bottom: 9px !important; color: rgba(245, 245, 247, .76) !important; font-size: 15px !important; font-weight: 600 !important; }
+.lb-auth-split__form p { font-size: 14px !important; line-height: 1.5 !important; }
+.lb-auth-split__form label { margin-bottom: 7px !important; color: rgba(245, 245, 247, .76) !important; font-size: 13px !important; font-weight: 600 !important; }
 .lb-auth-split__form :where(input, textarea) {
-  min-height: 56px !important;
-  padding-inline: 16px !important;
+  min-height: 48px !important;
+  padding-inline: 13px !important;
   border: 1px solid rgba(255, 255, 255, .15) !important;
-  border-radius: 14px !important;
+  border-radius: 13px !important;
   background: rgba(255, 255, 255, .065) !important;
   color: #f5f5f7 !important;
-  font-size: 17px !important;
+  font-size: 15px !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
 }
 .lb-auth-split__form :where(input, textarea)::placeholder { color: rgba(245, 245, 247, .34); }
 .lb-auth-split__form :where(input, textarea):focus { border-color: rgba(184, 243, 74, .75) !important; box-shadow: 0 0 0 4px rgba(184, 243, 74, .12) !important; }
 .lb-auth-split__form button,
-.lb-auth-split__form a[style*="primaryBtn"] { min-height: 50px; border-radius: 14px !important; font-size: 16px !important; font-weight: 650 !important; }
-.lb-auth-form > div:first-of-type { margin-bottom: 32px !important; }
-.lb-auth-form form { gap: 18px !important; }
+.lb-auth-split__form a[style*="primaryBtn"] { min-height: 42px; border-radius: 12px !important; font-size: 14px !important; font-weight: 650 !important; }
+.lb-auth-form > div:first-of-type { margin-bottom: 20px !important; }
+.lb-auth-form form { gap: 14px !important; }
 .lb-auth-form .lb-role-card {
   overflow: hidden;
   border-color: rgba(255, 255, 255, .12) !important;
-  border-radius: 18px !important;
+  border-radius: 16px !important;
   background: rgba(255, 255, 255, .055) !important;
   box-shadow: 0 12px 30px rgba(0, 0, 0, .14);
 }
-.lb-auth-form .lb-role-card button { min-height: 104px !important; padding: 20px !important; }
+.lb-auth-form .lb-role-card button { min-height: 76px !important; padding: 13px !important; }
 .lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(184, 243, 74, .48) !important; background: rgba(184, 243, 74, .065) !important; }
-.lb-auth-form [role="tablist"] { min-height: 48px; padding: 4px !important; border-radius: 13px !important; background: rgba(255, 255, 255, .075) !important; }
-.lb-auth-form [role="tab"] { min-height: 44px; border-radius: 11px !important; }
+.lb-auth-form [role="tablist"] { min-height: 42px; padding: 4px !important; border-radius: 11px !important; background: rgba(255, 255, 255, .075) !important; }
+.lb-auth-form [role="tab"] { min-height: 36px; border-radius: 9px !important; }
 .lb-auth-state {
-  padding: clamp(28px, 5vw, 48px) !important;
+  padding: clamp(24px, 4.2vw, 40px) !important;
   border: 1px solid rgba(255, 255, 255, .11);
   border-radius: 28px;
   background: rgba(255, 255, 255, .052);
   box-shadow: 0 24px 70px rgba(0, 0, 0, .25);
 }
 .lb-auth-state > div:first-child { box-shadow: 0 14px 42px rgba(0, 0, 0, .22); }
-.lb-auth-wizard > div { gap: 28px !important; }
+.lb-auth-wizard > div { gap: 16px !important; }
 .lb-auth-wizard > div > div:first-child p:first-child { margin-bottom: 10px !important; color: #b8f34a !important; font-size: 13px !important; font-weight: 700 !important; letter-spacing: .12em !important; }
 .lb-auth-wizard > div > div:first-child h1 { margin-bottom: 10px !important; }
 .lb-auth-wizard > div > div:nth-child(2) > div:last-child { height: 8px !important; }
 .lb-auth-wizard > div > div:nth-child(3) {
-  padding: clamp(24px, 4vw, 38px) !important;
+  padding: clamp(16px, 2.6vw, 24px) !important;
   border: 1px solid rgba(255, 255, 255, .11) !important;
-  border-radius: 24px !important;
+  border-radius: 20px !important;
   background: rgba(255, 255, 255, .05) !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, .22) !important;
 }
 .lb-auth-wizard h2,
-.lb-auth-wizard h3 { color: #f5f5f7 !important; font-size: 20px !important; font-weight: 700 !important; letter-spacing: -.02em !important; text-transform: none !important; }
+.lb-auth-wizard h3 { color: #f5f5f7 !important; font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.02em !important; text-transform: none !important; }
 .lb-auth-wizard form,
-.lb-auth-wizard > div > div:nth-child(3) > div { gap: 20px !important; }
+.lb-auth-wizard > div > div:nth-child(3) > div { gap: 12px !important; }
 
 /* Pages légales et contact */
 .lb-legal-page,
 .lb-contact-page {
-  padding: clamp(30px, 4vw, 54px) clamp(10px, 2vw, 28px) 72px !important;
+  padding: clamp(24px, 3vw, 42px) clamp(10px, 2vw, 22px) 56px !important;
   background: rgba(10, 10, 13, .72) !important;
 }
 .lb-legal-page > div,
 .lb-contact-page > div { max-width: 1200px !important; }
 .lb-legal-page h1,
-.lb-contact-page h1 { font-size: clamp(38px, 5vw, 58px) !important; line-height: 1.04 !important; letter-spacing: -.045em !important; }
+.lb-contact-page h1 { font-size: clamp(28px, 3.4vw, 42px) !important; line-height: 1.04 !important; letter-spacing: -.045em !important; }
 .lb-legal-page h2,
-.lb-contact-page h2 { font-size: 20px !important; line-height: 1.25 !important; letter-spacing: -.02em !important; }
+.lb-contact-page h2 { font-size: 16px !important; line-height: 1.25 !important; letter-spacing: -.02em !important; }
 .lb-legal-page p,
 .lb-legal-page li,
-.lb-contact-page p { font-size: 16px !important; line-height: 1.65 !important; }
+.lb-contact-page p { font-size: 13px !important; line-height: 1.52 !important; }
 .lb-legal-page [class*="Card"],
 .lb-contact-page [class*="Card"] { border-radius: 22px !important; }
 .lb-legal-page details { border-radius: 20px !important; background: rgba(255, 255, 255, .055) !important; }
 .lb-legal-page summary,
 .lb-legal-page nav a { font-size: 15px !important; }
 .lb-contact-page input,
-.lb-contact-page textarea { min-height: 54px !important; border-radius: 14px !important; font-size: 16px !important; }
-.lb-contact-page label { font-size: 14px !important; }
-.lb-contact-page button { min-height: 50px; border-radius: 14px !important; font-size: 16px !important; }
+.lb-contact-page textarea { min-height: 42px !important; border-radius: 12px !important; font-size: 13px !important; }
+.lb-contact-page label { font-size: 12px !important; }
+.lb-contact-page button { min-height: 38px; border-radius: 12px !important; font-size: 13px !important; }
 
 /* Lecture du blog */
-.lb-blog-article { padding: 34px clamp(10px, 2vw, 28px) 72px !important; background: rgba(10, 10, 13, .72); }
-.lb-blog-article h1 { font-size: clamp(42px, 6vw, 72px) !important; line-height: 1.02 !important; letter-spacing: -.05em !important; }
-.lb-blog-article article { max-width: 820px !important; color: rgba(245, 245, 247, .72) !important; font-size: 18px !important; line-height: 1.78 !important; }
+.lb-blog-article { padding: 22px clamp(10px, 2vw, 18px) 48px !important; background: rgba(10, 10, 13, .72); }
+.lb-blog-article h1 { font-size: clamp(30px, 4vw, 50px) !important; line-height: 1.02 !important; letter-spacing: -.05em !important; }
+.lb-blog-article article { max-width: 820px !important; color: rgba(245, 245, 247, .72) !important; font-size: 15px !important; line-height: 1.62 !important; }
 .lb-blog-article article :where(h2, h3) { margin-top: 1.45em; color: #f5f5f7; font-size: 1.45em !important; letter-spacing: -.025em !important; }
 .lb-blog-article article a { color: #b8f34a; }
 
 /* Retours de paiement et d'activation */
-.lb-status-page { padding: clamp(54px, 8vw, 96px) 20px !important; background: rgba(10, 10, 13, .72); }
-.lb-status-page > div { max-width: 760px !important; padding: clamp(34px, 5vw, 52px) !important; border-radius: 28px !important; background: rgba(255, 255, 255, .06) !important; }
-.lb-status-page h1 { font-size: clamp(32px, 4vw, 44px) !important; line-height: 1.08 !important; letter-spacing: -.04em !important; }
-.lb-status-page p { font-size: 16px !important; line-height: 1.65 !important; }
+.lb-status-page { padding: clamp(40px, 5vw, 64px) 16px !important; background: rgba(10, 10, 13, .72); }
+.lb-status-page > div { max-width: 760px !important; padding: clamp(20px, 3vw, 28px) !important; border-radius: 18px !important; background: rgba(255, 255, 255, .06) !important; }
+.lb-status-page h1 { font-size: clamp(24px, 2.8vw, 32px) !important; line-height: 1.08 !important; letter-spacing: -.04em !important; }
+.lb-status-page p { font-size: 13px !important; line-height: 1.52 !important; }
 .lb-status-page button,
-.lb-status-page a { min-height: 50px; border-radius: 14px !important; font-size: 16px !important; }
+.lb-status-page a { min-height: 38px; border-radius: 11px !important; font-size: 13px !important; }
 
 @media (max-width: 900px) {
   .lb-auth-state { padding: 34px 24px !important; }
 }
 
 @media (max-width: 640px) {
-  .lb-public-detail-page { padding: 16px 14px 64px !important; }
-  .lb-public-detail-page h1 { font-size: 38px !important; }
-  .lb-public-detail-page .lb-detail-section { padding: 22px 18px; border-radius: 20px; }
+  .lb-public-detail-page { padding: 14px 12px 56px !important; }
+  .lb-public-detail-page h1 { font-size: 32px !important; }
+  .lb-public-detail-page .lb-detail-section { padding: 18px 16px; border-radius: 18px; }
   .lb-legal-page,
-  .lb-contact-page { padding: 28px 16px 64px !important; }
-  .lb-blog-article { padding: 26px 16px 64px !important; }
-  .lb-blog-article article { font-size: 17px !important; }
-  .lb-auth-split__form h1 { font-size: 36px !important; }
+  .lb-contact-page { padding: 20px 12px 48px !important; }
+  .lb-blog-article { padding: 20px 12px 48px !important; }
+  .lb-blog-article article { font-size: 14px !important; }
+  .lb-auth-split__form h1 { font-size: 28px !important; }
   .lb-auth-form [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-  .lb-auth-wizard > div > div:nth-child(3) { padding: 22px 18px !important; border-radius: 20px !important; }
+  .lb-auth-wizard > div > div:nth-child(3) { padding: 16px 12px !important; border-radius: 16px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -204,33 +204,33 @@
 }
 
 /* Échelle compacte commune aux écrans publics. */
-.lb-editorial-card{border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.18)}
+.lb-editorial-card{border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.18)}
 .lb-editorial-card__media{aspect-ratio:16/9}
-.lb-editorial-card__badge{top:10px;left:10px;min-width:32px;min-height:32px;padding-inline:8px;border-radius:10px;font-size:12px}
-.lb-editorial-card__body{padding:12px}
+.lb-editorial-card__badge{top:9px;left:9px;min-width:30px;min-height:30px;padding-inline:7px;border-radius:9px;font-size:11px}
+.lb-editorial-card__body{padding:10px}
 .lb-editorial-card__body h3{font-size:18px!important}
-.lb-editorial-card__body h3+p{margin-top:6px;font-size:13px!important;line-height:1.42}
-.lb-public-detail-page{padding:12px clamp(10px,1.2vw,18px) 40px!important}
-.lb-public-detail-page h1{font-size:clamp(30px,4vw,46px)!important}
-.lb-public-detail-page .lb-detail-section{margin-top:10px;padding:14px;border-radius:16px}
-.lb-public-detail-page .lb-detail-section>h2{margin-bottom:8px!important;font-size:14px!important}
-.lb-public-detail-page .lb-detail-section p{font-size:13px!important;line-height:1.46!important}
-.lb-auth-split__form h1{font-size:clamp(28px,3.2vw,36px)!important}
+.lb-editorial-card__body h3+p{margin-top:5px;font-size:12.5px!important;line-height:1.38}
+.lb-public-detail-page{padding:10px clamp(10px,1.1vw,16px) 36px!important}
+.lb-public-detail-page h1{font-size:clamp(28px,3.8vw,44px)!important}
+.lb-public-detail-page .lb-detail-section{margin-top:9px;padding:12px;border-radius:15px}
+.lb-public-detail-page .lb-detail-section>h2{margin-bottom:7px!important;font-size:13px!important}
+.lb-public-detail-page .lb-detail-section p{font-size:12.5px!important;line-height:1.42!important}
+.lb-auth-split__form h1{font-size:clamp(26px,3vw,34px)!important}
 .lb-auth-split__form p{font-size:13px!important;line-height:1.42!important}
 .lb-auth-split__form label{margin-bottom:5px!important;font-size:12px!important}
-.lb-auth-split__form :where(input,textarea){min-height:42px!important;padding-inline:12px!important;border-radius:10px!important;font-size:13.5px!important}
-.lb-auth-split__form button,.lb-auth-split__form a[style*="primaryBtn"]{min-height:40px;font-size:13px!important}
-.lb-auth-form>div:first-of-type{margin-bottom:16px!important}.lb-auth-form form{gap:10px!important}
-.lb-auth-form .lb-role-card button{min-height:68px!important;padding:12px!important}
-.lb-auth-form [role="tablist"]{min-height:38px}.lb-auth-form [role="tab"]{min-height:34px}
-.lb-auth-state{padding:20px!important;border-radius:17px}.lb-auth-wizard>div{gap:14px!important}
-.lb-auth-wizard>div>div:nth-child(3){padding:16px!important;border-radius:16px!important}
-.lb-auth-wizard form,.lb-auth-wizard>div>div:nth-child(3)>div{gap:11px!important}
+.lb-auth-split__form :where(input,textarea){min-height:40px!important;padding-inline:12px!important;border-radius:10px!important;font-size:13px!important}
+.lb-auth-split__form button,.lb-auth-split__form a[style*="primaryBtn"]{min-height:38px;font-size:13px!important}
+.lb-auth-form>div:first-of-type{margin-bottom:14px!important}.lb-auth-form form{gap:10px!important}
+.lb-auth-form .lb-role-card button{min-height:64px!important;padding:11px!important}
+.lb-auth-form [role="tablist"]{min-height:36px}.lb-auth-form [role="tab"]{min-height:32px}
+.lb-auth-state{padding:18px!important;border-radius:16px}.lb-auth-wizard>div{gap:12px!important}
+.lb-auth-wizard>div>div:nth-child(3){padding:15px!important;border-radius:15px!important}
+.lb-auth-wizard form,.lb-auth-wizard>div>div:nth-child(3)>div{gap:10px!important}
 .lb-legal-page,.lb-contact-page{padding:20px clamp(10px,1.2vw,18px) 40px!important}
-.lb-legal-page h1,.lb-contact-page h1{font-size:clamp(30px,4vw,44px)!important}
+.lb-legal-page h1,.lb-contact-page h1{font-size:clamp(28px,3.8vw,42px)!important}
 .lb-legal-page p,.lb-legal-page li,.lb-contact-page p{font-size:13px!important;line-height:1.46!important}
-.lb-contact-page input,.lb-contact-page textarea{min-height:42px!important;font-size:13px!important}
+.lb-contact-page input,.lb-contact-page textarea{min-height:40px!important;font-size:13px!important}
 .lb-blog-article{padding:18px clamp(10px,1.2vw,18px) 40px!important}
-.lb-blog-article h1{font-size:clamp(30px,4.3vw,50px)!important}
-.lb-blog-article article{font-size:15px!important;line-height:1.58!important}
-.lb-status-page{padding:30px 16px!important}.lb-status-page>div{padding:20px!important;border-radius:18px!important}
+.lb-blog-article h1{font-size:clamp(28px,4vw,46px)!important}
+.lb-blog-article article{font-size:14px!important;line-height:1.56!important}
+.lb-status-page{padding:30px 16px!important}.lb-status-page>div{padding:18px!important;border-radius:18px!important}
