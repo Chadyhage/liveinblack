@@ -94,7 +94,7 @@ export default function ContactClient() {
           <div>
             <h1
               className="font-display"
-              style={{ fontSize: 17, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
+              style={{ fontSize: 16, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
             >
               Contact
             </h1>
@@ -109,7 +109,7 @@ export default function ContactClient() {
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '18px 8px' }}>
               <Mascot mood="message" size={128} />
-              <h2 style={{ fontSize: 17, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
+              <h2 style={{ fontSize: 16, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
               </p>

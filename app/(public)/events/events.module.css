@@ -13,7 +13,7 @@
 .hero {
   max-width: 1240px;
   margin: 0 auto;
-  padding: clamp(18px, 2.4vw, 34px) clamp(12px, 1.4vw, 18px) clamp(14px, 1.8vw, 22px);
+  padding: clamp(16px, 2.1vw, 30px) clamp(12px, 1.4vw, 18px) clamp(12px, 1.6vw, 18px);
   text-align: center;
 }
 
@@ -28,9 +28,9 @@
 
 .hero h1 {
   max-width: 980px;
-  margin: 6px auto 0;
+  margin: 5px auto 0;
   font-family: var(--events-font);
-  font-size: clamp(28px, 3.2vw, 40px);
+  font-size: clamp(26px, 3vw, 36px);
   font-weight: 700;
   line-height: .98;
   letter-spacing: -.055em;
@@ -40,9 +40,9 @@
 
 .intro {
   max-width: 820px;
-  margin: 6px auto 0;
+  margin: 5px auto 0;
   color: rgba(245, 245, 247, .7);
-  font-size: clamp(13px, .95vw, 15px);
+  font-size: clamp(12px, .9vw, 14px);
   line-height: 1.36;
   letter-spacing: -.02em;
   text-wrap: balance;
@@ -57,8 +57,8 @@
      n'avaient jamais de gap déclaré entre eux. */
   gap: 6px;
   width: min(100%, 760px);
-  min-height: 42px;
-  margin: 12px auto 0;
+  min-height: 40px;
+  margin: 10px auto 0;
   padding: 3px 3px 3px 10px;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 17px;
@@ -81,7 +81,7 @@
 .searchInput {
   min-width: 0;
   flex: 1;
-  height: 36px;
+  height: 34px;
   padding: 0 10px;
   border: 0;
   outline: 0;
@@ -94,8 +94,8 @@
 .searchInput::-webkit-search-cancel-button { filter: invert(1); opacity: .65; }
 
 .searchButton {
-  min-width: 98px;
-  min-height: 36px;
+  min-width: 92px;
+  min-height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -105,7 +105,7 @@
   border-radius: 11px;
   background: #b8f34a;
   color: #142000;
-  font: 700 12px/1 var(--events-font);
+  font: 700 11px/1 var(--events-font);
   cursor: pointer;
   transition: transform 160ms ease, filter 160ms ease;
 }
@@ -131,9 +131,9 @@
 .sectionKicker { display: flex; align-items: center; gap: 8px; }
 
 .filterHeader h2 {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   font-family: var(--events-font);
-  font-size: clamp(24px, 2.4vw, 32px);
+  font-size: clamp(22px, 2.1vw, 30px);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -.045em;

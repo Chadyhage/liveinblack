@@ -78,8 +78,8 @@ function GateScreen({
       <div style={{ textAlign: 'center', maxWidth: 420 }}>
         <div
           style={{
-            width: 72,
-            height: 64,
+            width: 56,
+            height: 48,
             borderRadius: '50%',
             margin: '0 auto 22px',
             background: accentBg,
@@ -99,7 +99,7 @@ function GateScreen({
             </svg>
           )}
         </div>
-        <h1 style={{ fontWeight: 800, fontSize: 18, color: accent, margin: '0 0 10px', letterSpacing: '-.03em' }}>{title}</h1>
+        <h1 style={{ fontWeight: 800, fontSize: 16, color: accent, margin: '0 0 10px', letterSpacing: '-.03em' }}>{title}</h1>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
         <Link href={backHref} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
           ← {backLabel}

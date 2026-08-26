@@ -17,16 +17,16 @@ export default function PublicAboutPage() {
   return (
     <PageShell style={{ maxWidth: 'none', padding: 0 }}>
       <div className={styles.page}>
-      <section className={styles.hero} style={{ maxWidth: 1120, margin: '0 auto', padding: '48px 22px 20px', textAlign: 'center' }}>
-        <p style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
+      <section className={styles.hero} style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 22px 18px', textAlign: 'center' }}>
+        <p style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
           L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
         </p>
-        <h1 className="font-display" style={{ fontSize: 'clamp(32px,7vw,54px)', letterSpacing: '.01em', lineHeight: 1.04, margin: '18px 0 0' }}>
+        <h1 className="font-display" style={{ fontSize: 'clamp(28px,6vw,48px)', letterSpacing: '.01em', lineHeight: 1.04, margin: '14px 0 0' }}>
           Toute la nuit,
           <br />
           <span style={{ color: 'var(--teal)' }}>au même endroit.</span>
         </h1>
-        <p style={{ fontSize: 'clamp(15px,4vw,18px)', color: 'var(--text-muted)', margin: '20px auto 0', maxWidth: 760, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 'clamp(14px,3vw,16px)', color: 'var(--text-muted)', margin: '14px auto 0', maxWidth: 760, lineHeight: 1.55 }}>
           Live in Black est la marketplace de la nuit et de l&apos;événementiel. On réunit ceux qui font la fête, ceux qui l&apos;organisent et ceux qui la rendent
           inoubliable — sur une seule plateforme, simple et sécurisée.
         </p>
@@ -74,10 +74,10 @@ export default function PublicAboutPage() {
         </div>
       </Section>
 
-      <section className={styles.ctaWrap} style={{ padding: '20px 22px 0' }}>
-          <div className={styles.cta} style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 26px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
-          <h2 className="font-display" style={{ fontSize: 'clamp(26px,6vw,40px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
-          <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 720, lineHeight: 1.5 }}>
+      <section className={styles.ctaWrap} style={{ padding: '18px 22px 0' }}>
+          <div className={styles.cta} style={{ maxWidth: 1120, margin: '0 auto', padding: '34px 24px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
+          <h2 className="font-display" style={{ fontSize: 'clamp(24px,5vw,36px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '10px auto 0', maxWidth: 720, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>

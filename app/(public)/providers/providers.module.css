@@ -13,7 +13,7 @@
 .hero {
   max-width: 1280px;
   margin: 0 auto;
-  padding: clamp(24px, 3.2vw, 48px) clamp(12px, 2vw, 22px) clamp(18px, 2.2vw, 30px);
+  padding: clamp(20px, 2.8vw, 40px) clamp(12px, 2vw, 22px) clamp(16px, 2vw, 24px);
   text-align: center;
 }
 
@@ -29,9 +29,9 @@
 
 .hero h1 {
   max-width: 1040px;
-  margin: 10px auto 0;
+  margin: 8px auto 0;
   font-family: var(--providers-font);
-  font-size: clamp(32px, 3.8vw, 46px);
+  font-size: clamp(30px, 3.4vw, 42px);
   font-weight: 700;
   line-height: .98;
   letter-spacing: -.055em;
@@ -41,9 +41,9 @@
 
 .intro {
   max-width: 790px;
-  margin: 10px auto 0;
+  margin: 8px auto 0;
   color: rgba(245, 245, 247, .7);
-  font-size: clamp(14px, 1.05vw, 16px);
+  font-size: clamp(13px, 1vw, 15px);
   line-height: 1.42;
   letter-spacing: -.02em;
   text-wrap: balance;
@@ -51,7 +51,7 @@
 
 .searchPanel {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(190px, 240px) auto;
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 220px) auto;
   align-items: center;
   gap: 8px;
   width: min(100%, 1080px);
@@ -65,7 +65,7 @@
 
 .searchField {
   min-width: 0;
-  min-height: 42px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   padding-left: 15px;
@@ -77,12 +77,12 @@
 
 .searchField:focus-within { background: rgba(255, 255, 255, .1); box-shadow: 0 0 0 3px rgba(184, 243, 74, .13); }
 .searchField > svg { flex: 0 0 auto; }
-	.searchField input { min-width: 0; flex: 1; height: 42px; padding: 0 10px; border: 0; outline: 0; background: transparent; color: #f5f5f7; font: 500 14px/1.2 var(--providers-font); }
+.searchField input { min-width: 0; flex: 1; height: 40px; padding: 0 10px; border: 0; outline: 0; background: transparent; color: #f5f5f7; font: 500 13px/1.2 var(--providers-font); }
 .searchField input::placeholder { color: rgba(245, 245, 247, .44); }
 
 .searchButton {
-  min-width: 118px;
-  min-height: 40px;
+  min-width: 112px;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -93,20 +93,20 @@
   border-radius: 12px;
   background: #b8f34a;
   color: #142000;
-  font: 700 14px/1 var(--providers-font);
+  font: 700 13px/1 var(--providers-font);
   cursor: pointer;
 }
 
 .regionField { min-width: 0; }
 
 .filterButton {
-  min-height: 42px;
-  padding: 0 16px;
+  min-height: 40px;
+  padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 13px;
   background: rgba(255, 255, 255, .08);
   color: #f5f5f7;
-  font: 650 14px/1 var(--providers-font);
+  font: 650 13px/1 var(--providers-font);
   cursor: pointer;
 }
 

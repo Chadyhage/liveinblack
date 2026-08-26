@@ -370,7 +370,7 @@ export default function StudioClient({
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={100} height={100} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 18, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
               <label style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '7px 11px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>
@@ -458,7 +458,7 @@ export default function StudioClient({
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(184,243,74,0.28)', background: 'rgba(184,243,74,0.06)' }}>
-                <span aria-hidden="true" style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={18} /> : <CreditCard size={18} />}</span>
+                <span aria-hidden="true" style={{ fontSize: 17, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={17} /> : <CreditCard size={17} />}</span>
                 <div>
                   <p style={{ font: '700 12.5px var(--font-open-sans)', color: 'var(--gold)', margin: 0 }}>
                     {getRegionName(profile.regionId) || profile.country || '—'} · {regionCurrency === 'XOF' ? 'FCFA (XOF)' : 'Euro (€)'}
@@ -510,14 +510,14 @@ export default function StudioClient({
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
             <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
             <div style={{ padding: 16 }}>
-              <div style={{ width: 64, height: 64, marginTop: -32, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 56, height: 56, marginTop: -28, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
-                  <NextImage src={profile.avatarUrl} alt="" width={64} height={64} style={{ objectFit: 'cover' }} />
+                  <NextImage src={profile.avatarUrl} alt="" width={56} height={56} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 18, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <h3 style={{ font: '600 22px var(--font-open-sans)', color: '#fff', margin: '10px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
+              <h3 style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: '10px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
               <p style={{ font: '600 11px var(--font-open-sans)', color: 'var(--gold)', margin: '4px 0 0' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Ville · Pays'}</p>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, margin: '8px 0 0' }}>{profile.shortDescription || 'Ta description apparaîtra ici.'}</p>
             </div>
@@ -644,7 +644,7 @@ export default function StudioClient({
       )}
       {pendingConfirm && (
         <Modal onClose={() => setPendingConfirm(null)} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 style={{ fontSize: 18, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
+          <h3 style={{ fontSize: 17, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
           <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setPendingConfirm(null)} style={{ flex: 1 }}>
@@ -881,7 +881,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                       else if (window.confirm(`Le numéro Mobile Money saisi pour ${region.name} sera perdu sur cet écran.`)) removeCountry(code)
                     }}
                     aria-label="Retirer"
-                    style={{ color: 'var(--text-faint)', fontSize: 18, padding: 0 }}
+                    style={{ color: 'var(--text-faint)', fontSize: 16, padding: 0 }}
                   >
                     ×
                   </Button>

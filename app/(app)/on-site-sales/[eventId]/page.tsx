@@ -32,8 +32,8 @@ function GateScreen({ title, message }: { title: string; message: string }) {
       <div style={{ textAlign: 'center', maxWidth: 420 }}>
         <div
           style={{
-            width: 72,
-            height: 64,
+            width: 56,
+            height: 48,
             borderRadius: '50%',
             margin: '0 auto 22px',
             background: 'rgba(224,90,170,0.08)',
@@ -45,7 +45,7 @@ function GateScreen({ title, message }: { title: string; message: string }) {
         >
           <AlertCircle size={32} strokeWidth={1.8} color="var(--pink)" aria-hidden="true" />
         </div>
-        <p style={{ fontWeight: 800, fontSize: 18, color: 'var(--pink)', margin: '0 0 8px' }}>{title}</p>
+        <p style={{ fontWeight: 800, fontSize: 16, color: 'var(--pink)', margin: '0 0 8px' }}>{title}</p>
         <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
         <Link href="/home" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Accueil

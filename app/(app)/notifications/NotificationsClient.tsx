@@ -130,38 +130,40 @@ export default function NotificationsClient({ initialNotifications }: { initialN
             </div>
           </div>
 
-          {unreadCount > 0 ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<CheckCheck size={17} aria-hidden="true" />}
-              onClick={markAllRead}
-              style={{ minWidth: 136 }}
-            >
-              Tout marquer lu
-            </Button>
-          ) : null}
-        </header>
+          <div className={styles.headerAside}>
+            {unreadCount > 0 ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<CheckCheck size={17} aria-hidden="true" />}
+                onClick={markAllRead}
+                style={{ minWidth: 156 }}
+              >
+                Tout marquer lu
+              </Button>
+            ) : null}
 
-        <section className={styles.statsGrid} aria-label="Résumé des notifications">
-          <article className={styles.statCard}>
-            <span className={styles.statLabel}>Non lues</span>
-            <strong className={styles.statValue}>{unreadCount}</strong>
-            <span className={styles.statHint}>
-              {unreadCount > 0 ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} à traiter` : 'Tout est à jour'}
-            </span>
-          </article>
-          <article className={styles.statCard}>
-            <span className={styles.statLabel}>Lues</span>
-            <strong className={styles.statValue}>{readCount}</strong>
-            <span className={styles.statHint}>Déjà consultées dans ton espace</span>
-          </article>
-          <article className={styles.statCard}>
-            <span className={styles.statLabel}>Total</span>
-            <strong className={styles.statValue}>{notifications.length}</strong>
-            <span className={styles.statHint}>Dernières alertes reçues</span>
-          </article>
-        </section>
+            <section className={styles.statsGrid} aria-label="Résumé des notifications">
+              <article className={styles.statCard}>
+                <span className={styles.statLabel}>Non lues</span>
+                <strong className={styles.statValue}>{unreadCount}</strong>
+                <span className={styles.statHint}>
+                  {unreadCount > 0 ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} à traiter` : 'Tout est à jour'}
+                </span>
+              </article>
+              <article className={styles.statCard}>
+                <span className={styles.statLabel}>Lues</span>
+                <strong className={styles.statValue}>{readCount}</strong>
+                <span className={styles.statHint}>Déjà consultées dans ton espace</span>
+              </article>
+              <article className={styles.statCard}>
+                <span className={styles.statLabel}>Total</span>
+                <strong className={styles.statValue}>{notifications.length}</strong>
+                <span className={styles.statHint}>Dernières alertes reçues</span>
+              </article>
+            </section>
+          </div>
+        </header>
 
         {showPushCta ? (
           <section className={styles.pushCard} aria-label="Notifications push">
@@ -222,7 +224,6 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                     </span>
                     {notification.body ? <span className={styles.notificationBody}>{notification.body}</span> : null}
                   </span>
-                  {notification.link ? <span className={styles.notificationAction}>Ouvrir</span> : null}
                 </Button>
               ))}
             </div>

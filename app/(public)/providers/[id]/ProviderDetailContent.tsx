@@ -120,14 +120,14 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
       </div>
 
       <div style={{ padding: '0 18px', marginTop: -28, position: 'relative' }}>
-        <div style={{ width: 52, height: 52, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800 }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800 }}>
           {provider.photoUrl ? (
-            <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
+            <Image src={provider.photoUrl} alt={provider.name} width={48} height={48} style={{ objectFit: 'cover' }} />
           ) : (
             provider.name[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 18, letterSpacing: '.01em', margin: '10px 0 0' }}>{provider.name}</h1>
+        <h1 className="font-display" style={{ fontSize: 16, letterSpacing: '.01em', margin: '10px 0 0' }}>{provider.name}</h1>
         {provider.headline && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '3px 0 0' }}>{provider.headline}</p>}
         <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
