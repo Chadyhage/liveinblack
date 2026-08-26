@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { minHeight: 42, padding: '9px 12px', fontSize: 13.5 } : { minHeight: 46, padding: '11px 14px', fontSize: 14.5 }
+  const sizeStyle = size === 'sm' ? { minHeight: 36, padding: '7px 10px', fontSize: 12.75 } : { minHeight: 40, padding: '8px 12px', fontSize: 13.5 }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
@@ -109,7 +109,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 8,
+          gap: 6,
           background: 'var(--surface-2)',
           color: selected ? 'var(--text)' : 'var(--text-faint)',
           border: `1px solid ${invalid ? '#ff5b5b' : open ? 'var(--teal)' : 'var(--border-strong)'}`,
@@ -140,10 +140,10 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
             top: 'calc(100% + 6px)',
             left: 0,
             right: 0,
-            maxHeight: 220,
+            maxHeight: 196,
             overflowY: 'auto',
             margin: 0,
-            padding: 6,
+            padding: 5,
             listStyle: 'none',
             background: 'var(--surface-2)',
             border: '1px solid var(--border-strong)',
@@ -151,7 +151,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
             boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
           }}
         >
-          {options.length === 0 && <li style={{ padding: '12px', fontSize: 14, color: 'var(--text-faint)' }}>Aucune option</li>}
+          {options.length === 0 && <li style={{ padding: '9px 10px', fontSize: 13, color: 'var(--text-faint)' }}>Aucune option</li>}
           {options.map((opt, i) => {
             const isSelected = opt.value === value
             const isActive = i === activeIndex
@@ -165,12 +165,12 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() => commit(i)}
                 style={{
-                  minHeight: 44,
+                  minHeight: 34,
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '8px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 14,
+                  padding: '6px 9px',
+                  borderRadius: 9,
+                  fontSize: 13,
                   fontWeight: isSelected ? 700 : 500,
                   color: opt.disabled ? 'var(--text-faint)' : isSelected ? 'var(--teal)' : 'var(--text)',
                   background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',

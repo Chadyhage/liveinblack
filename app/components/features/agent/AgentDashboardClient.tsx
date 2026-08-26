@@ -211,11 +211,11 @@ export default function AgentDashboardClient() {
               <div className={styles.insightsGrid}>
                 <Card className={styles.chartCard}>
                   <div className={styles.chartHeading}><div><span>Acquisition</span><strong>Nouveaux comptes</strong></div><span className={styles.delta}>+{stats.community.newAccountsThisMonth} ce mois</span></div>
-                  <LineChartCard data={stats.signupsLast30Days.map((d) => ({ date: d.date, value: d.count }))} formatDate={fmtDay} height={220} />
+                  <LineChartCard data={stats.signupsLast30Days.map((d) => ({ date: d.date, value: d.count }))} formatDate={fmtDay} height={180} />
                 </Card>
                 <Card className={styles.chartCard}>
                   <div className={styles.chartHeading}><div><span>Répartition</span><strong>Profils de la communauté</strong></div><span className={styles.totalPill}>{stats.community.totalUsers} total</span></div>
-                  <DonutChart data={stats.roleBreakdown.map((r) => ({ label: ROLE_LABEL[r.role], value: r.count, color: ROLE_COLOR[r.role] }))} size={190} />
+                  <DonutChart data={stats.roleBreakdown.map((r) => ({ label: ROLE_LABEL[r.role], value: r.count, color: ROLE_COLOR[r.role] }))} size={160} />
                 </Card>
               </div>
             </section>

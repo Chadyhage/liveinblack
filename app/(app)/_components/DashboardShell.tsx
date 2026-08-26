@@ -308,7 +308,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
             </Link>
             <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
             <div className={styles.account}>
-              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="left" dashboardMode /> : null}
+              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="left" menuDirection="auto" dashboardMode /> : null}
             </div>
           </div>
           <nav className={styles.nav} aria-label="Navigation de l’espace privé">

@@ -15,6 +15,8 @@ import FilterSelect from '../_components/FilterSelect'
 import { Button, Checkbox, Input, Mascot, PageLinks } from '@/app/components/ui'
 import styles from './organizers.module.css'
 
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
 export const metadata: Metadata = {
   title: 'Organisateurs — LIVEINBLACK',
   description: "Découvrez les organisateurs d'événements et suivez ceux qui font vivre la scène sur LIVEINBLACK.",
@@ -55,6 +57,31 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
   const followedIds = new Set(followResult.ok ? followResult.follows.map((follow) => follow.organizerId) : [])
 
   const hasFilters = Boolean(search || region || upcomingOnly || sort !== 'popular')
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': `${SITE}/organizers#itemlist`,
+    name: 'Organisateurs d’événements au Bénin sur LIVEINBLACK',
+    inLanguage: 'fr-BJ',
+    numberOfItems: organizers.length,
+    itemListElement: organizers.map((organizer, index) => ({
+      '@type': 'ListItem',
+      position: (requestedPage - 1) * pageSize + index + 1,
+      url: `${SITE}/organizers/${organizer.slug}`,
+      name: organizer.publicName,
+      item: {
+        '@type': 'Organization',
+        '@id': `${SITE}/organizers/${organizer.slug}`,
+        name: organizer.publicName,
+        url: `${SITE}/organizers/${organizer.slug}`,
+        address: organizer.city || organizer.country ? {
+          '@type': 'PostalAddress',
+          addressLocality: organizer.city,
+          addressCountry: organizer.country || 'BJ',
+        } : undefined,
+      },
+    })),
+  }
 
   function makeHref(page: number) {
     const params = new URLSearchParams()
@@ -69,6 +96,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
 
   return (
     <main className={styles.page}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="organizers-title">
         <p className={styles.eyebrow}>L’annuaire LIVEINBLACK</p>
         <h1 id="organizers-title">Suivez celles et ceux qui créent l’émotion.</h1>

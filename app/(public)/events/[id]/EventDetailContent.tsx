@@ -66,6 +66,30 @@ export default async function EventDetailContent({
   const publicUrl = `${SITE}/events/${event.id}`
   const prices = (event.places || []).map((place) => Number(place.price)).filter(Number.isFinite)
   const minimumPrice = prices.length > 0 ? Math.min(...prices) : null
+  const keywordSet = new Set(
+    [
+      event.category,
+      event.eventType,
+      event.city,
+      event.region,
+      ...(event.tags || []),
+      ...(event.musicStyles || []),
+      ...(event.ambiances || []),
+      'événement au Bénin',
+      'soirée au Bénin',
+      'billetterie LIVEINBLACK',
+    ].filter((value): value is string => Boolean(value?.trim()))
+  )
+  const performerNames = [
+    ...(event.artists || []).map((artist) => artist.name),
+    event.dj,
+    ...(event.performers || []),
+  ].filter((value): value is string => Boolean(value?.trim()))
+  const performerSet = new Set(performerNames)
+  const startDateTime = event.date ? `${event.date}T${event.time || '00:00'}:00` : undefined
+  const endDateTime = event.date && event.endTime
+    ? `${event.endTime <= (event.time || '00:00') ? new Date(new Date(`${event.date}T00:00:00`).getTime() + 86_400_000).toISOString().slice(0, 10) : event.date}T${event.endTime}:00`
+    : undefined
   const eventJsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -74,9 +98,11 @@ export default async function EventDetailContent({
         '@id': `${publicUrl}#event`,
         name: event.name,
         description: event.description || event.subtitle || undefined,
+        keywords: [...keywordSet].join(', '),
         image: event.imageUrl ? [event.imageUrl] : undefined,
         url: publicUrl,
-        startDate: event.date ? `${event.date}T${event.time || '00:00'}:00` : undefined,
+        startDate: startDateTime,
+        endDate: endDateTime,
         eventStatus: event.cancelled ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
         eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
         location: event.location || event.city || event.region ? {
@@ -86,6 +112,7 @@ export default async function EventDetailContent({
             '@type': 'PostalAddress',
             addressLocality: event.city || undefined,
             addressRegion: event.region || undefined,
+            addressCountry: 'BJ',
           },
         } : undefined,
         organizer: {
@@ -93,6 +120,7 @@ export default async function EventDetailContent({
           name: organizerProfile?.publicName || event.organizerName || event.organizer || 'LIVEINBLACK',
           url: organizerProfile?.slug ? `${SITE}/organizers/${organizerProfile.slug}` : undefined,
         },
+        performer: [...performerSet].map((name) => ({ '@type': 'Person', name })),
         offers: minimumPrice != null ? {
           '@type': 'Offer',
           url: publicUrl,
@@ -160,7 +188,7 @@ export default async function EventDetailContent({
       {/* Hauteur fixe (~1/3 de l'ancien aspectRatio 16/9, retour client) au
           lieu d'un aspectRatio qui poussait description/line-up/organisateur/
           lieu trop bas sur desktop comme mobile. */}
-      <div className={styles.hero} style={{ position: 'relative', margin: '14px 0 0', borderRadius: 18, overflow: 'hidden', height: 130, background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
+      <div className={styles.hero} style={{ position: 'relative', margin: '8px 0 0', borderRadius: 14, overflow: 'hidden', height: 118, background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
           alt={event.name}
@@ -171,23 +199,23 @@ export default async function EventDetailContent({
           sizes="(max-width: 768px) 100vw, 880px"
         />
         <div className={styles.heroOverlay} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.92), transparent 55%)' }} />
-        <div className={styles.heroActions} style={{ position: 'absolute', top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.heroActions} style={{ position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
           <EventShareButton eventName={event.name} />
           <EventInterestButtonClient eventId={event.id} initialInterested={interestState.interested} isAuthenticated={Boolean(session?.user)} floating />
         </div>
-        <div className={styles.heroCopy} style={{ position: 'absolute', left: 20, right: 20, bottom: 16 }}>
+        <div className={styles.heroCopy} style={{ position: 'absolute', left: 14, right: 14, bottom: 11 }}>
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 11, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '4px 10px', borderRadius: 999 }}>ANNULÉ</span>
           )}
           {/* Ombre resserrée (6px vs 12px) : un flou large sur une police
               condensée à traits fins, posée sur une photo, se lisait comme un
               double contour fantôme plutôt qu'une vraie ombre portée. */}
-          <h1 className={`font-display ${styles.title}`} style={{ fontSize: 'clamp(26px, 6vw, 44px)', margin: 0, letterSpacing: '.01em', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{event.name}</h1>
-          {event.subtitle && <p className={styles.subtitle} style={{ fontSize: 14, color: 'var(--text-muted)', margin: '6px 0 0' }}>{event.subtitle}</p>}
+          <h1 className={`font-display ${styles.title}`} style={{ fontSize: 'clamp(23px, 5vw, 36px)', margin: 0, letterSpacing: '.01em', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{event.name}</h1>
+          {event.subtitle && <p className={styles.subtitle} style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>{event.subtitle}</p>}
           {event.tags?.length ? (
-            <div className={styles.tags} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+            <div className={styles.tags} style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 6 }}>
               {event.tags.map((tag) => (
-                <span key={tag} style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text)', background: 'rgba(255,255,255,.1)', padding: '3px 9px', borderRadius: 999 }}>
+                <span key={tag} style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text)', background: 'rgba(255,255,255,.1)', padding: '2px 7px', borderRadius: 999 }}>
                   {tag}
                 </span>
               ))}
@@ -197,7 +225,7 @@ export default async function EventDetailContent({
       </div>
 
       {/* QUICK INFO STRIP */}
-      <div className={styles.quickInfo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 22px 0' }}>
+      <div className={styles.quickInfo} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '8px 14px 0' }}>
         {countdown && <Chip label={countdown} tone={urgent ? 'urgent' : 'default'} />}
         {stock && <Chip label={stock.label} color={stock.color} ink={stock.ink} />}
         <Chip label={[event.dateDisplay, event.time].filter(Boolean).join(' · ')} />
@@ -206,10 +234,10 @@ export default async function EventDetailContent({
       </div>
 
       {event.playlist && (
-        <div style={{ padding: '14px 22px 0' }}>
+        <div style={{ padding: '8px 14px 0' }}>
           <Link
             href={session?.user ? `/playlist/${event.id}` : `/login?next=${encodeURIComponent(`/playlist/${event.id}`)}`}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 15px', borderRadius: 999, border: '1px solid rgba(224,90,170,.35)', background: 'rgba(224,90,170,.1)', color: 'var(--pink)', fontSize: 12.5, fontWeight: 800, textDecoration: 'none' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 11px', borderRadius: 999, border: '1px solid rgba(224,90,170,.35)', background: 'rgba(224,90,170,.1)', color: 'var(--pink)', fontSize: 11.5, fontWeight: 800, textDecoration: 'none' }}
           >
             Playlist interactive · Proposer un son
           </Link>
@@ -223,11 +251,11 @@ export default async function EventDetailContent({
           (voir app/globals.css et ex. app/(app)/profile/ProfilClient.tsx). */}
       {/* L'Organisateur est toujours rendu (fallback texte), donc cette
           grille est toujours affichée — pas de condition supplémentaire ici. */}
-      <div className={styles.contentGrid} style={{ padding: '0 22px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: 8, alignItems: 'start' }}>
+      <div className={styles.contentGrid} style={{ padding: '0 14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 6, alignItems: 'start' }}>
           {/* DESCRIPTION */}
           {event.description && (
             <Section title="Description">
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{event.description}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{event.description}</p>
             </Section>
           )}
 
@@ -235,15 +263,15 @@ export default async function EventDetailContent({
           {(event.artists?.length || event.dj) ? (
             <Section title="Line-up">
               {event.artists?.length ? (
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {event.artists.map((a) => (
-                    <li key={a.name} style={{ fontSize: 13.5, color: 'var(--text)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px' }}>
+                    <li key={a.name} style={{ fontSize: 11.5, color: 'var(--text)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 9, padding: '6px 9px' }}>
                       <strong>{a.name}</strong> <span style={{ color: 'var(--text-faint)' }}>· {a.role}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{event.dj}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{event.dj}</p>
               )}
             </Section>
           ) : null}
@@ -251,11 +279,11 @@ export default async function EventDetailContent({
           {/* ORGANIZER */}
           <Section title="Organisateur">
             {organizerProfile ? (
-              <Link href={`/organizers/${organizerProfile.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
+              <Link href={`/organizers/${organizerProfile.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: 'inherit' }}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: 34,
+                    height: 34,
                     borderRadius: '50%',
                     overflow: 'hidden',
                     background: 'var(--surface)',
@@ -264,33 +292,33 @@ export default async function EventDetailContent({
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 800,
-                    fontSize: 15,
+                    fontSize: 13,
                     color: 'var(--text-muted)',
                   }}
                 >
                   {organizerProfile.avatarUrl ? (
-                    <Image src={organizerProfile.avatarUrl} alt="" width={40} height={40} style={{ objectFit: 'cover' }} />
+                    <Image src={organizerProfile.avatarUrl} alt="" width={34} height={34} style={{ objectFit: 'cover' }} />
                   ) : (
                     organizerProfile.publicName?.[0]?.toUpperCase() || '?'
                   )}
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 700 }}>{organizerProfile.publicName}</span>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>{organizerProfile.publicName}</span>
               </Link>
             ) : (
-              <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{event.organizerName || event.organizer || 'Organisateur'}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{event.organizerName || event.organizer || 'Organisateur'}</p>
             )}
           </Section>
 
           {/* VENUE */}
           {(event.location || event.city) && (
             <Section title="Lieu">
-              <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>{[event.location, event.city, event.region].filter(Boolean).join(', ')}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{[event.location, event.city, event.region].filter(Boolean).join(', ')}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
                 <a
                   href={`https://www.google.com/maps/search/${encodeURIComponent([event.location, event.city].filter(Boolean).join(', '))}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--teal)', textDecoration: 'none' }}
+                  style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 11.5, color: 'var(--teal)', textDecoration: 'none' }}
                 >
                   Ouvrir dans Google Maps →
                 </a>
@@ -306,26 +334,26 @@ export default async function EventDetailContent({
       {!session?.user && event.places?.length ? (
         <Section title="Places">
           {bookingDisabledReason && (
-            <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--pink)', margin: '0 0 12px' }}>Réservations fermées — {bookingDisabledReason}</p>
+            <p style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--pink)', margin: '0 0 8px' }}>Réservations fermées — {bookingDisabledReason}</p>
           )}
           <div className="lb-card-grid">
             {event.places.map((place) => {
               const fillPct = place.total > 0 ? Math.round(((place.total - place.available) / place.total) * 100) : 0
               return (
-                <Card key={place.id} style={{ padding: 16 }}>
+                <Card key={place.id} style={{ padding: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700 }}>{place.type}</span>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(place.price, currency)}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{place.type}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(place.price, currency)}</span>
                   </div>
                   {place.groupType === 'group' && (
                     <span style={{ display: 'inline-block', marginTop: 6, fontSize: 10.5, fontWeight: 700, color: 'var(--violet)', background: 'rgba(139,92,246,.14)', padding: '2px 8px', borderRadius: 999 }}>
                       Place de groupe · {place.groupMin}-{place.groupMax} pers.
                     </span>
                   )}
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '8px 0 0' }}>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '5px 0 0' }}>
                     {place.available > 0 ? `${place.available}/${place.total} restantes` : 'Complet'}
                   </p>
-                  <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,.08)', marginTop: 6, overflow: 'hidden' }}>
+                  <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,.08)', marginTop: 4, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${fillPct}%`, background: 'var(--gold)' }} />
                   </div>
                 </Card>
@@ -342,15 +370,15 @@ export default async function EventDetailContent({
         <Section title="Carte / précommande">
           <div className="lb-card-grid">
             {event.menu.filter((item) => item.available !== false).map((item) => (
-              <Card key={item.name} style={{ padding: '10px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, fontSize: 13, fontWeight: 700 }}>
-                    {item.imageUrl ? <Image src={item.imageUrl} alt="" width={34} height={34} style={{ borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} /> : item.emoji ? <span aria-hidden="true">{item.emoji}</span> : null}
+              <Card key={item.name} style={{ padding: '8px 9px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, fontSize: 11.5, fontWeight: 700 }}>
+                    {item.imageUrl ? <Image src={item.imageUrl} alt="" width={28} height={28} style={{ borderRadius: 7, objectFit: 'cover', flexShrink: 0 }} /> : item.emoji ? <span aria-hidden="true">{item.emoji}</span> : null}
                     {item.name}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.price, currency)}</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.price, currency)}</span>
                 </div>
-                {item.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '4px 0 0' }}>{item.description}</p>}
+                {item.description && <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '3px 0 0' }}>{item.description}</p>}
               </Card>
             ))}
           </div>
@@ -375,9 +403,9 @@ export default async function EventDetailContent({
           paymentCancelled={paiement === 'annule'}
         />
       ) : checkoutPlaces.length > 0 ? (
-        <div style={{ padding: '24px 22px 0', textAlign: 'center' }}>
+        <div style={{ padding: '14px 14px 0', textAlign: 'center' }}>
           {bookingDisabledReason ? (
-            <p style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 999, fontSize: 14, fontWeight: 700, color: 'var(--text-faint)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+            <p style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 999, fontSize: 12, fontWeight: 700, color: 'var(--text-faint)', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
               {bookingDisabledReason}
             </p>
           ) : (event.minAge || 0) >= 18 ? (
@@ -385,18 +413,18 @@ export default async function EventDetailContent({
           ) : (
             <Link
               href={loginHref}
-              style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--teal-solid)', textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '11px 20px', borderRadius: 3, fontSize: 12.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: 'var(--primary-ink)', background: 'var(--teal-solid)', textDecoration: 'none' }}
             >
               Se connecter pour réserver
             </Link>
           )}
           {!bookingDisabledReason && (
-            <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 10 }}>Connecte-toi avec un compte client pour réserver une place.</p>
+            <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Connecte-toi avec un compte client pour réserver une place.</p>
           )}
         </div>
       ) : !session?.user ? (
-        <div style={{ padding: '24px 22px 0', textAlign: 'center' }}>
-          <p style={{ fontSize: 13, color: 'var(--text-faint)' }}>La billetterie n&apos;est pas encore disponible pour cet événement.</p>
+        <div style={{ padding: '14px 14px 0', textAlign: 'center' }}>
+          <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>La billetterie n&apos;est pas encore disponible pour cet événement.</p>
         </div>
       ) : null}
     </div>
@@ -406,7 +434,7 @@ export default async function EventDetailContent({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="lb-detail-section">
-      <h2 style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>{title}</h2>
+      <h2 style={{ fontSize: 11, fontWeight: 400, letterSpacing: '2.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 5px' }}>{title}</h2>
       {children}
     </section>
   )
@@ -416,9 +444,9 @@ function Chip({ label, tone, color, ink }: { label: string; tone?: 'urgent' | 'd
   return (
     <span
       style={{
-        fontSize: 11.5,
+        fontSize: 10,
         fontWeight: 700,
-        padding: '5px 11px',
+        padding: '3px 8px',
         borderRadius: 999,
         color: ink || (tone === 'urgent' ? '#fff' : 'var(--text)'),
         background: color ? color : tone === 'urgent' ? 'var(--pink)' : 'var(--surface)',

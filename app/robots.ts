@@ -12,6 +12,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      other: {
+        'LLMs.txt': `${SITE}/llms.txt`,
+      },
       disallow: [
         '/api/',
         '/profile',

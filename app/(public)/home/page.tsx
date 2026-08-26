@@ -152,8 +152,8 @@ export default async function AccueilPage() {
             Découvre les événements qui te ressemblent et réserve ton billet en quelques secondes.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/events" className={styles.primaryButton}>Voir les événements</Link>
-            <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.secondaryButton}>{session?.user ? 'Mes billets' : 'Créer un compte'}</Link>
+            <Link href="/events" className={styles.primaryButton} data-growth-event="cta_click" data-growth-surface="home_hero" data-growth-target="events">Voir les événements</Link>
+            <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.secondaryButton} data-growth-event="cta_click" data-growth-surface="home_hero" data-growth-target={session?.user ? 'tickets' : 'signup'}>{session?.user ? 'Mes billets' : 'Créer un compte'}</Link>
           </div>
           <ul className={styles.heroProof} aria-label="Avantages">
             <li>Compte gratuit</li>
@@ -392,12 +392,12 @@ export default async function AccueilPage() {
             {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
-            <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.primaryButton}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
-            <Link href="/events" className={styles.secondaryButton}>Découvrir les événements</Link>
+            <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.primaryButton} data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target={session?.user ? 'tickets' : 'signup'}>{session?.user ? 'Voir mes billets' : 'Créer mon compte'}</Link>
+            <Link href="/events" className={styles.secondaryButton} data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="events">Découvrir les événements</Link>
           </div>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 18 }}>
-            <Link href="/organizer-signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
-            <Link href="/provider-signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
+            <Link href="/organizer-signup" data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="organizer_signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
+            <Link href="/provider-signup" data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="provider_signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
           </div>
           {!session?.user && <p style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 24 }}>
             Déjà un compte ? <Link href="/login" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>

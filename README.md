@@ -202,6 +202,9 @@ Copier `.env.example` vers `.env.local`, puis renseigner les valeurs.
 | `VAPID_PUBLIC_KEY` | Push web cote serveur |
 | `VAPID_PRIVATE_KEY` | Push web cote serveur |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Push web cote navigateur |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4, charge seulement apres consentement cookies |
+| `GOOGLE_SITE_VERIFICATION` | Verification Google Search Console |
+| `BING_SITE_VERIFICATION` | Verification Bing Webmaster Tools |
 
 ### Tests et developpement
 
@@ -209,9 +212,6 @@ Copier `.env.example` vers `.env.local`, puis renseigner les valeurs.
 | --- | --- |
 | `MONGODB_TEST_URI` | Base jetable dediee aux tests d'integration |
 | `SUPER_ADMIN_EMAILS` | Allowlist temporaire super-admin |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | GA4, charge seulement apres consentement cookies |
-| `GOOGLE_SITE_VERIFICATION` | Verification Search Console |
-| `BING_SITE_VERIFICATION` | Verification Bing Webmaster Tools |
 
 Important : `MONGODB_TEST_URI` doit cibler une base dont le nom contient `test`. La configuration Vitest refuse les noms non conformes pour eviter de vider une base applicative.
 
@@ -247,7 +247,10 @@ Important : `MONGODB_TEST_URI` doit cibler une base dont le nom contient `test`.
 | `npm run seed` | Seed de developpement |
 | `npm run seed:blog` | Seed blog standard |
 | `npm run seed:blog:benin` | Seed campagne blog Benin |
+| `npm run audit:growth` | Audit croissance : SEO, campagne blog Benin, densite UI dashboard et analytics |
+| `npm run audit:growth-analytics` | Audit des evenements de conversion publics et checkout |
 | `npm run audit:blog:benin` | Audit de la campagne blog Benin |
+| `npm run audit:ui-density` | Audit des grilles/cartes compactes sur les pages dashboard critiques |
 | `npm run seed:bulk` | Seed volumineux |
 | `npm run seed:bulk:clean` | Nettoyage seed volumineux |
 | `npm run cloudinary:setup` | Creation/config preset prive Cloudinary |
@@ -272,7 +275,8 @@ Important : `MONGODB_TEST_URI` doit cibler une base dont le nom contient `test`.
 | `npm run check:mobile-agent-flow` | Parcours agent mobile |
 | `npm run check:mobile-password-flow` | Parcours mot de passe mobile |
 | `npm run check:services` | Verification services de production |
-| `npm run ops:readiness` | Checklist readiness ops |
+| `npm run check:seo:prod` | Verification SEO production : URL canonique HTTPS, GA4, Search Console et Bing |
+| `npm run ops:readiness` | Checklist readiness ops, incluant `audit:growth` avant les smoke/load |
 | `npm run ops:deploy:prod` | Script de deploiement production |
 | `npm run ops:smoke` | Smoke test production |
 | `npm run ops:load` | Test de charge |
@@ -319,6 +323,7 @@ MONGODB_TEST_URI=mongodb://127.0.0.1:27017/liveinblack_test?replicaSet=rs0
 ```bash
 npm run lint:core
 npm run test:unit
+npm run audit:growth
 npm run build
 ```
 
@@ -372,7 +377,8 @@ Etapes :
 4. `npm ci` ;
 5. installation Chromium Playwright ;
 6. `npm run test:ci` ;
-7. upload du rapport Playwright si present.
+7. avant de publier, `npm run ops:readiness` relance aussi `audit:growth` pour bloquer une regression SEO, contenu Benin ou densite UI ;
+8. upload du rapport Playwright si present.
 
 Variables CI principales :
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { CalendarPlus, Download, ExternalLink, Gift, HandCoins, ListChecks, QrCode, Share2, Sparkles, Ticket, X } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { fmtMoney } from '@/lib/shared/money'
 import { downloadTicketPNG, shareOrCopy, shareStory, downloadICS, countdownLabel } from '@/lib/shared/ticketExtras'
@@ -116,23 +116,27 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
     <main className="lb-dashboard-page">
       <style>{`
         @media (max-width: 480px) {
-          .ticket-wallet-face { flex-direction: column; }
-          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 2px dashed rgba(255,255,255,0.15); }
+          .ticket-wallet-face { grid-template-columns: 1fr !important; }
+          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed rgba(255,255,255,0.15); }
           .ticket-wallet-meta { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)) !important; }
+          .ticket-wallet-rail { min-height: 104px !important; }
+          .ticket-wallet-summary { grid-template-columns: 1fr !important; }
+          .ticket-wallet-summary-action { justify-content: flex-start !important; }
+          .ticket-wallet-summary-action a { min-height: 32px !important; padding: 6px 10px !important; font-size: 11px !important; }
         }
       `}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
-            <ArrowLeft size={17} aria-hidden="true" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <Link href="/profile" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+            <ArrowLeft size={16} aria-hidden="true" />
             Profil
           </Link>
           <ActionLink href="/events">Trouver une soirée</ActionLink>
         </div>
 
-        <header style={{ marginBottom: 8 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(28px,3.6vw,38px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
-          <p style={{ maxWidth: 760, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13, lineHeight: 1.42 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
+        <header style={{ marginBottom: 6 }}>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(26px,3.2vw,34px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
+          <p style={{ maxWidth: 720, margin: '5px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12, lineHeight: 1.38 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
         </header>
 
         <SeatHoldsPanel />
@@ -141,38 +145,42 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
           <EmptyWallet />
         ) : (
           <>
-            <Card style={{ maxWidth: 620, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Card className="ticket-wallet-summary" style={{ maxWidth: 760, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', alignItems: 'center', gap: 10, padding: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <TicketGlyph />
                 <div>
-                  <p style={{ fontWeight: 800, fontSize: 16, color: '#fff', margin: 0 }}>
+                  <p style={{ fontWeight: 800, fontSize: 15, color: '#fff', margin: 0 }}>
                     {upcomingSeatCount > 0 ? `${upcomingSeatCount} place${upcomingSeatCount > 1 ? 's' : ''} à venir` : 'Aucune place à venir'}
                   </p>
-                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
                     {buckets.upcoming.length > 0
                       ? `Sur ${buckets.upcoming.length} événement${buckets.upcoming.length > 1 ? 's' : ''} — QR codes prêts à scanner`
                       : 'Trouve ta prochaine soirée dans les événements'}
                   </p>
                 </div>
-              </div>
-                <Link
+                </div>
+              <div className="ticket-wallet-summary-action" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <Link
                 href="/events"
                 style={{
-                  minHeight: 38,
+                  minHeight: 34,
                   display: 'inline-flex',
                   alignItems: 'center',
                   alignSelf: 'flex-start',
-                  padding: '8px 14px',
-                  borderRadius: 10,
+                  padding: '7px 12px',
+                  borderRadius: 999,
                   background: 'var(--teal-solid)',
                   color: '#04120e',
                   fontWeight: 700,
-                  fontSize: 12.5,
+                  fontSize: 12,
                   textDecoration: 'none',
+                  gap: 6,
                 }}
               >
+                <Sparkles size={13} aria-hidden="true" />
                 Trouver une soirée
               </Link>
+              </div>
             </Card>
 
             {buckets.upcoming.length > 0 && <Section label={`À venir (${buckets.upcoming.length})`} groups={buckets.upcoming} currentUserId={currentUserId} paramName="page" />}
@@ -287,7 +295,7 @@ function Section({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 10, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 12, alignItems: 'start' }}>
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
         ))}
@@ -311,9 +319,7 @@ function TicketGlyph() {
         flexShrink: 0,
       }}
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6M4 6h16a1 1 0 011 1v3a2 2 0 000 4v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3a2 2 0 000-4V7a1 1 0 011-1z" />
-      </svg>
+      <Ticket size={22} color="var(--gold)" strokeWidth={1.8} aria-hidden="true" />
     </div>
   )
 }
@@ -923,7 +929,7 @@ function PremiumTicketCard({
   }
 
   return (
-    <div style={{ borderRadius: 14, background: 'linear-gradient(135deg,#15161f,#0d0e15)', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ borderRadius: 18, background: 'linear-gradient(145deg,rgba(28,30,39,.96),rgba(9,10,16,.98))', border: '1px solid rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative', boxShadow: '0 18px 45px rgba(0,0,0,.28)' }}>
       {flashMsg && (
         <div
           style={{ position: 'absolute', top: 8, right: 8, padding: '5px 12px', borderRadius: 999, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 11, zIndex: 5 }}
@@ -931,24 +937,34 @@ function PremiumTicketCard({
           {flashMsg}
         </div>
       )}
-      <div className="ticket-wallet-face" style={{ display: 'flex' }}>
-        <div style={{ flex: 1, padding: 16, minWidth: 0 }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>
-            Live in Black · Billet officiel
-          </p>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-            {countdown && !inactive && <Pill color="#04120e" bg="var(--teal-solid)">{countdown}</Pill>}
-            {(event?.minAge ?? 0) >= 18 && (
-              <span title="Pièce d'identité pouvant être demandée à l'entrée">
-                <Pill color="var(--gold)" bg="rgba(184, 243, 74,0.14)">18+</Pill>
-              </span>
-            )}
+      <div className="ticket-wallet-face" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 138px' }}>
+        <div style={{ minWidth: 0 }}>
+          <div className="ticket-wallet-rail" style={{ minHeight: 132, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,rgba(8,9,14,.92),rgba(8,9,14,.58)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'rgba(184,243,74,.18)'},rgba(13,14,21,.96))` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 10.5, fontWeight: 800, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 7px' }}>
+                  Live in Black · Billet officiel
+                </p>
+                <p style={{ fontWeight: 850, fontSize: 18, color: '#fff', lineHeight: 1.12, margin: 0, maxWidth: 270 }}>{event?.name ?? 'Événement'}</p>
+              </div>
+              <Pill color={inactive ? 'var(--text-faint)' : '#04120e'} bg={inactive ? 'rgba(255,255,255,0.08)' : 'var(--teal-solid)'}>
+                {inactive ? inactiveLabel : countdown || 'Valide'}
+              </Pill>
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              {(event?.minAge ?? 0) >= 18 && (
+                <span title="Pièce d'identité pouvant être demandée à l'entrée">
+                  <Pill color="var(--gold)" bg="rgba(184, 243, 74,0.14)">18+</Pill>
+                </span>
+              )}
+              <Pill color="#fff" bg="rgba(0,0,0,.34)">{ticket.place}</Pill>
+              <Pill color="var(--text-muted)" bg="rgba(0,0,0,.28)">#{String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')}</Pill>
+            </div>
           </div>
-          <p style={{ fontWeight: 800, fontSize: 16, color: '#fff', margin: '0 0 12px' }}>{event?.name ?? 'Événement'}</p>
-          <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-            <MetaCell label="Place" value={ticket.place} />
+          <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,.06)' }}>
             <MetaCell label="Date" value={event?.dateDisplay || event?.date || ''} />
-            <MetaCell label="Billet" value={String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')} />
+            <MetaCell label="Ville" value={event?.city || '-'} />
+            <MetaCell label="Réf." value={ticket.ticketCode} />
           </div>
         </div>
 
@@ -957,7 +973,7 @@ function PremiumTicketCard({
           style={{
             width: 140,
             flexShrink: 0,
-            borderLeft: '2px dashed rgba(255,255,255,0.15)',
+            borderLeft: '1px dashed rgba(255,255,255,0.18)',
             padding: 16,
             display: 'flex',
             flexDirection: 'column',
@@ -1044,7 +1060,7 @@ function PremiumTicketCard({
           <p style={{ fontSize: 12, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel} · aucune action disponible</p>
         ) : (
           <>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <Button
                 variant="secondary"
                 size="sm"
@@ -1052,25 +1068,23 @@ function PremiumTicketCard({
                 disabled={downloadState === 'busy'}
                 loading={downloadState === 'busy'}
                 loadingText="Préparation…"
+                icon={downloadState === 'ok' ? <QrCode size={15} aria-hidden="true" /> : <Download size={15} aria-hidden="true" />}
                 style={actionBtnStyle(false)}
               >
-                {downloadState === 'ok' ? 'Billet téléchargé' : 'Télécharger le billet'}
+                {downloadState === 'ok' ? 'Prêt' : 'PDF'}
               </Button>
-              <ActionBtn onClick={toggleIncluded}>{showIncluded ? 'Masquer les options' : 'Voir les options incluses'}</ActionBtn>
-            </div>
-            {downloadState === 'err' && (
-              <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>Le téléchargement n&apos;a pas pu démarrer. Réessaie dans quelques secondes.</p>
-            )}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <ActionBtn onClick={toggleIncluded} icon={<ListChecks size={15} aria-hidden="true" />}>{showIncluded ? 'Options' : 'Options'}</ActionBtn>
               {event && (
                 <Link
                   href={`/order/${event.id}/${ticket.ticketCode}`}
-                  style={{ ...actionBtnStyle(false), background: 'var(--teal-solid)', color: '#04120e', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                  style={{ ...actionBtnStyle(false), background: 'var(--teal-solid)', color: '#04120e', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  title="Commander sur place"
                 >
-                  Commander sur place
+                  <ExternalLink size={15} aria-hidden="true" />
+                  Commander
                 </Link>
               )}
-              <ActionBtn onClick={handleShare}>Partager</ActionBtn>
+              <ActionBtn onClick={handleShare} icon={<Share2 size={15} aria-hidden="true" />}>Partager</ActionBtn>
               <Button
                 variant="danger"
                 size="sm"
@@ -1079,11 +1093,12 @@ function PremiumTicketCard({
                 loading={storyState === 'busy'}
                 loadingText="Création…"
                 title="Une belle image 9:16 pour Instagram — sans le QR code"
+                icon={<Sparkles size={15} aria-hidden="true" />}
                 style={actionBtnStyle(false, 'rgba(224,90,170,0.14)', '#e05aaa')}
               >
-                Partager en story
+                Story
               </Button>
-              <ActionBtn onClick={handleCalendar}>Calendrier</ActionBtn>
+              <ActionBtn onClick={handleCalendar} icon={<CalendarPlus size={15} aria-hidden="true" />}>Agenda</ActionBtn>
               {(event?.postponed || ticket.cancellationProtectionPurchased) && ticket.orderId && (
                 <Button
                   variant="danger"
@@ -1092,14 +1107,15 @@ function PremiumTicketCard({
                   disabled={refundState === 'busy' || refundState === 'done'}
                   loading={refundState === 'busy'}
                   loadingText="Envoi…"
+                  icon={<HandCoins size={15} aria-hidden="true" />}
                   style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'rgba(224,90,170,0.14)', '#e05aaa')}
                 >
-                  {refundState === 'done' ? 'Remboursement demandé' : 'Demander un remboursement'}
+                  {refundState === 'done' ? 'Demandé' : 'Rembourser'}
                 </Button>
               )}
               {ticket.resellable && !activeListing && (
-                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
-                  Revendre mon billet
+                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={15} aria-hidden="true" />} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
+                  Revendre
                 </Button>
               )}
               {activeListing && (
@@ -1110,12 +1126,16 @@ function PremiumTicketCard({
                   disabled={withdrawState === 'busy'}
                   loading={withdrawState === 'busy'}
                   loadingText="Retrait…"
+                  icon={<Gift size={15} aria-hidden="true" />}
                   style={actionBtnStyle(withdrawState === 'busy', 'rgba(255,255,255,0.06)', 'var(--text-muted)')}
                 >
-                  {`En vente — ${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
+                  {`${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
                 </Button>
               )}
             </div>
+            {downloadState === 'err' && (
+              <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>Le téléchargement n&apos;a pas pu démarrer. Réessaie dans quelques secondes.</p>
+            )}
             {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
 
             {withdrawConfirmOpen && (
@@ -1211,20 +1231,21 @@ function PremiumTicketCard({
 
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p style={{ fontSize: 12.5, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px' }}>{label}</p>
-      <p style={{ fontSize: 14, color: '#fff', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
+    <div style={{ minWidth: 0, padding: '11px 12px', background: 'rgba(10,11,17,.74)' }}>
+      <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 4px' }}>{label}</p>
+      <p style={{ fontSize: 13, color: '#fff', fontWeight: 750, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
     </div>
   )
 }
 
 function actionBtnStyle(disabled: boolean, bg = 'rgba(255,255,255,0.06)', color = 'var(--text)'): React.CSSProperties {
   return {
-    padding: '8px 12px',
-    borderRadius: 9,
+    minHeight: 36,
+    padding: '7px 11px',
+    borderRadius: 999,
     background: bg,
     color,
-    border: 'none',
+    border: '1px solid rgba(255,255,255,.10)',
     fontSize: 12,
     fontWeight: 700,
     cursor: disabled ? 'default' : 'pointer',
@@ -1232,9 +1253,9 @@ function actionBtnStyle(disabled: boolean, bg = 'rgba(255,255,255,0.06)', color 
   }
 }
 
-function ActionBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+function ActionBtn({ children, onClick, disabled, icon }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; icon?: React.ReactNode }) {
   return (
-    <Button variant="secondary" size="sm" onClick={onClick} disabled={disabled} style={actionBtnStyle(Boolean(disabled))}>
+    <Button variant="secondary" size="sm" onClick={onClick} disabled={disabled} icon={icon} style={actionBtnStyle(Boolean(disabled))}>
       {children}
     </Button>
   )

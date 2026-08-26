@@ -1,26 +1,26 @@
 .shell {
   min-height: 100vh;
-  padding: 22px clamp(16px, 2vw, 30px) 104px;
+  padding: 16px clamp(12px, 1.6vw, 22px) 88px;
 }
 
 .workspace {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .scanGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(380px, 0.9fr);
-  gap: 16px;
+  gap: 12px;
   align-items: start;
 }
 
@@ -28,27 +28,27 @@
   grid-column: 1 / -1;
 }
 
-.cameraCard { min-height: 360px; }
+.cameraCard { min-height: 320px; }
 
-.shell { padding: 16px clamp(10px, 1.6vw, 22px) 82px; }
-.workspace { gap: 12px; }
-.scanGrid,.serviceGrid { gap: 12px; }
-.servicePrimary { gap: 10px; }
+.shell { padding: 14px clamp(10px, 1.4vw, 18px) 76px; }
+.workspace { gap: 10px; }
+.scanGrid,.serviceGrid { gap: 10px; }
+.servicePrimary { gap: 8px; }
 
 .manualCard {
   position: sticky;
-  top: 20px;
+  top: 16px;
 }
 
 .manualForm {
   display: flex;
-  gap: 8px;
+  gap: 7px;
 }
 
 .serviceGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) minmax(400px, 0.82fr);
-  gap: 16px;
+  gap: 12px;
   align-items: start;
 }
 
@@ -62,15 +62,15 @@
 .resultCard {
   display: grid;
   grid-template-columns: minmax(220px, .55fr) minmax(0, 1fr);
-  gap: 14px;
+  gap: 12px;
   align-items: center;
 }
 
 .menuPanel {
   min-width: 0;
   position: sticky;
-  top: 20px;
-  max-height: calc(100vh - 40px);
+  top: 16px;
+  max-height: calc(100vh - 32px);
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -80,12 +80,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 @media (max-width: 1020px) {
   .shell {
-    padding: 24px 14px 100px;
+    padding: 18px 12px 88px;
   }
 
   .scanGrid,
@@ -108,7 +108,7 @@
 
 @media (max-width: 620px) {
   .shell {
-    padding: 20px 12px 96px;
+    padding: 16px 10px 84px;
   }
 
   .header,

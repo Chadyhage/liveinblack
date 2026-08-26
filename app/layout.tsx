@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Providers } from "./providers";
 import CookieConsentBanner from "./components/layout/CookieConsentBanner";
 import GoogleAnalytics from "./components/layout/GoogleAnalytics";
+import GrowthAnalytics from "./components/layout/GrowthAnalytics";
 
 // Police variable déjà distribuée avec la version verrouillée de Next.js.
 // Elle est auto-hébergée au build : aucune requête à Google Fonts, aucun
@@ -28,6 +30,12 @@ const structuredData = {
       url: siteUrl,
       logo: `${siteUrl}/opengraph-image`,
       areaServed: ["BJ", "TG", "CI", "SN", "BF", "ML", "NE", "GW", "FR"],
+      knowsAbout: [
+        "événements au Bénin",
+        "billetterie en ligne au Bénin",
+        "prestataires événementiels à Cotonou",
+        "sorties et concerts en Afrique de l’Ouest",
+      ],
     },
     {
       "@type": "WebSite",
@@ -40,6 +48,36 @@ const structuredData = {
         "@type": "SearchAction",
         target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/search?q={search_term_string}` },
         "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "WebApplication",
+      "@id": `${siteUrl}/#webapp`,
+      name: "LIVEINBLACK",
+      url: siteUrl,
+      applicationCategory: "LifestyleApplication",
+      operatingSystem: "Web",
+      inLanguage: "fr-BJ",
+      isAccessibleForFree: true,
+      publisher: { "@id": `${siteUrl}/#organization` },
+      audience: {
+        "@type": "Audience",
+        geographicArea: {
+          "@type": "Country",
+          name: "Bénin",
+        },
+      },
+      featureList: [
+        "Découverte d’événements au Bénin",
+        "Billetterie en ligne",
+        "Recherche de prestataires événementiels",
+        "Profils organisateurs",
+        "Actualités et guides événementiels",
+      ],
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "XOF",
       },
     },
   ],
@@ -58,6 +96,15 @@ export const metadata: Metadata = {
   referrer: "origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
   manifest: "/manifest.webmanifest",
+  icons: {
+    other: [
+      {
+        rel: "search",
+        url: "/opensearch.xml",
+        type: "application/opensearchdescription+xml",
+      },
+    ],
+  },
   openGraph: {
     type: "website",
     locale: "fr_BJ",
@@ -105,6 +152,9 @@ export default function RootLayout({
         />
         <Providers>{children}</Providers>
         <CookieConsentBanner />
+        <Suspense fallback={null}>
+          <GrowthAnalytics />
+        </Suspense>
         <GoogleAnalytics />
         <Analytics />
         <SpeedInsights />

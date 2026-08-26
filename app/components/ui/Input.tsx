@@ -13,11 +13,11 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { minHeight: 42, padding: '9px 12px', fontSize: 13.5, lineHeight: 1.3, borderRadius: 'var(--radius-md)' },
-  md: { minHeight: 46, padding: '11px 14px', fontSize: 14.5, lineHeight: 1.35, borderRadius: 'var(--radius-md)' },
+  sm: { minHeight: 36, padding: '7px 10px', fontSize: 12.75, lineHeight: 1.28, borderRadius: 10 },
+  md: { minHeight: 40, padding: '8px 12px', fontSize: 13.5, lineHeight: 1.32, borderRadius: 10 },
 }
 
-const ICON_OFFSET = 44
+const ICON_OFFSET = 38
 
 function horizontalPadding(style: CSSProperties | undefined, size: 'sm' | 'md', side: 'left' | 'right') {
   const explicit = side === 'left' ? style?.paddingLeft : style?.paddingRight
@@ -89,7 +89,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', ...containerStyle }}>
-      {leftIcon && <span style={{ position: 'absolute', left: 13, display: 'flex', color: 'var(--text-faint)', pointerEvents: 'none' }}>{leftIcon}</span>}
+      {leftIcon && <span style={{ position: 'absolute', left: 11, display: 'flex', color: 'var(--text-faint)', pointerEvents: 'none' }}>{leftIcon}</span>}
       <input
         className={`lb-input-control${className ? ` ${className}` : ''}`}
         ref={ref}
@@ -133,7 +133,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         }}
         {...rest}
       />
-      {rightIcon && <span style={{ position: 'absolute', right: 13, display: 'flex', color: 'var(--text-faint)' }}>{rightIcon}</span>}
+      {rightIcon && <span style={{ position: 'absolute', right: 11, display: 'flex', color: 'var(--text-faint)' }}>{rightIcon}</span>}
     </div>
   )
 })

@@ -33,7 +33,7 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
   const { slug } = await params
 
   return (
-    <main className="lb-public-detail-page" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 clamp(14px, 3vw, 42px) 80px', width: '100%' }}>
+    <main className="lb-public-detail-page" style={{ maxWidth: 1260, margin: '0 auto', padding: '8px clamp(8px, 1vw, 14px) 30px', width: '100%' }}>
       <OrganizerDetailContent slug={slug} />
     </main>
   )

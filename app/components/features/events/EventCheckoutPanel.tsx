@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '@/lib/shared/fees'
 import type { ShowOption } from '@/lib/shared/showOptions'
+import { GROWTH_EVENT_NAMES, trackGrowthEvent } from '@/lib/client/growthAnalytics'
 import AgeGateModal from '@/app/components/layout/AgeGateModal'
 import { Check, X } from 'lucide-react'
 import { Button, Card, Input, Textarea, Checkbox, Modal, SlideOverModal } from '@/app/components/ui'
@@ -206,6 +207,16 @@ export default function EventCheckoutPanel({
   const disabled = Boolean(bookingDisabledReason)
 
   function selectPlace(id: string) {
+    const place = places.find((item) => item.id === id)
+    if (place && selectedPlaceId !== id) {
+      trackGrowthEvent(GROWTH_EVENT_NAMES.eventSelectTicket, {
+        event_id: eventId,
+        ticket_type: place.type,
+        currency,
+        price: place.price,
+        group: place.groupType === 'group',
+      })
+    }
     setSelectedPlaceId((cur) => (cur === id ? null : id))
     setQty(1)
     setPreordersByTicket({ 0: {} })
@@ -292,6 +303,16 @@ export default function EventCheckoutPanel({
 
   function handleBuyClick() {
     if (!selectedPlace || disabled || !canBook || submitting) return
+    trackGrowthEvent(GROWTH_EVENT_NAMES.checkoutStart, {
+      event_id: eventId,
+      ticket_type: selectedPlace.type,
+      currency,
+      amount: grandTotal,
+      quantity: lineQty,
+      preorder: preorderTotal > 0,
+      promo: Boolean(promoApplied),
+      protection: cancellationProtection,
+    })
     if (eventMinAge >= 18 && !ageVerified) {
       setShowAgeModal(true)
       return
@@ -386,6 +407,13 @@ export default function EventCheckoutPanel({
 
   async function handleSeatHold(tier: 'short' | 'long') {
     if (!selectedPlace) return
+    trackGrowthEvent(GROWTH_EVENT_NAMES.seatHoldStart, {
+      event_id: eventId,
+      ticket_type: selectedPlace.type,
+      currency,
+      tier,
+      amount: discountedPlacePrice,
+    })
     setSeatHoldBusy(tier)
     setSeatHoldError('')
     const endpoint = currency === 'XOF' ? '/api/seat-holds/fedapay' : '/api/seat-holds'

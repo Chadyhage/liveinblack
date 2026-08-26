@@ -65,24 +65,24 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizerJsonLd).replace(/</g, '\\u003c') }} />
-      <div style={{ padding: '14px 0 0' }}>
-        <Link href="/organizers" style={{ minHeight: 40, fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <div style={{ padding: '8px 0 0' }}>
+        <Link href="/organizers" style={{ minHeight: 32, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <ArrowLeft size={14} /> Organisateurs
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 198, margin: '12px 0 0', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(139,92,246,.22))' }}>
+      <div style={{ position: 'relative', height: 162, margin: '7px 0 0', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(139,92,246,.22))' }}>
         <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
       </div>
 
-      <div style={{ padding: '0 18px', marginTop: -28, position: 'relative' }}>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800 }}>
+      <div style={{ padding: '0 12px', marginTop: -22, position: 'relative' }}>
+        <div style={{ width: 42, height: 42, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
           {organizer.avatarUrl ? (
-            <Image src={organizer.avatarUrl} alt={organizer.publicName} width={48} height={48} style={{ objectFit: 'cover' }} />
+            <Image src={organizer.avatarUrl} alt={organizer.publicName} width={42} height={42} style={{ objectFit: 'cover' }} />
           ) : (
             organizer.publicName[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 16, letterSpacing: '.01em', margin: '10px 0 0' }}>
+        <h1 className="font-display" style={{ fontSize: 15, letterSpacing: '.01em', margin: '7px 0 0' }}>
           {organizer.publicName}
           {organizer.isVerified && (
             <span style={{ fontFamily: 'var(--font-open-sans), sans-serif', textTransform: 'none', fontWeight: 700, marginLeft: 8, fontSize: 12, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -90,11 +90,11 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
             </span>
           )}
         </h1>
-        {(organizer.city || zones.length > 0) && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '3px 0 0' }}>{[organizer.city, ...zones].filter(Boolean).join(' · ')}</p>}
+        {(organizer.city || zones.length > 0) && <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '2px 0 0' }}>{[organizer.city, ...zones].filter(Boolean).join(' · ')}</p>}
         <PublicProfileActions targetUserId={organizer.userId} displayName={organizer.publicName} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
 
         {!isSelf && (
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 8 }}>
             <OrganizerFollowButtonClient
               organizerId={organizer.userId}
               organizerName={organizer.publicName}
@@ -102,7 +102,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
               isAuthenticated={Boolean(session?.user)}
               appearance="outline"
             />
-            <p style={{ fontSize: 11, color: 'var(--text-faint)', lineHeight: 1.45, margin: '8px 0 0', maxWidth: 620 }}>
+            <p style={{ fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.35, margin: '5px 0 0', maxWidth: 620 }}>
               En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux personnaliser tes alertes ou
               te désabonner à tout moment depuis{' '}
               <Link href="/profile/followed-organizers" style={{ color: 'var(--teal)' }}>
@@ -113,7 +113,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 18, marginTop: 14 }}>
+        <div style={{ display: 'flex', gap: 12, marginTop: 9 }}>
           <KPI value={organizer.followersCount} label="Abonnés" />
           <KPI value={Math.max(organizer.totalEventsCount, upcoming.length + past.length)} label="Événements" />
         </div>
@@ -121,8 +121,8 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
         <Section title="Événements à venir">
           {upcoming.length === 0 ? (
             <div style={{ padding: '10px 0', textAlign: 'center' }}>
-              <Mascot mood="sleeping" size={104} />
-              <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 0 }}>Aucun événement à venir pour le moment.</p>
+              <Mascot mood="sleeping" size={82} />
+              <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Aucun événement à venir pour le moment.</p>
             </div>
           ) : (
             <div className="lb-card-grid-compact">
@@ -163,7 +163,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         {visibleMedia.length > 0 && (
           <Section title="Photos & vidéos">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))', gap: 7 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', gap: 6 }}>
               {visibleMedia.map((m) => (
                 <div key={m.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', background: 'var(--surface)' }}>
                   {m.type === 'video' ? (
@@ -179,15 +179,15 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         {showLongDescription && (
           <Section title="À propos">
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.58, whiteSpace: 'pre-wrap' }}>{organizer.longDescription}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.42, whiteSpace: 'pre-wrap' }}>{organizer.longDescription}</p>
           </Section>
         )}
 
         {(organizer.city || organizer.proPhone) && (
           <Section title="Contact">
-            {organizer.city && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
+            {organizer.city && <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
             {organizer.proPhone && (
-              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--teal)', marginTop: 5, textDecoration: 'none' }}>
+              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', fontSize: 11.5, color: 'var(--teal)', marginTop: 3, textDecoration: 'none' }}>
                 {organizer.proPhone}
               </a>
             )}
@@ -201,8 +201,8 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 function KPI({ value, label }: { value: number; label: string }) {
   return (
     <div>
-      <p style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{value}</p>
-      <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>{value}</p>
+      <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: 0 }}>{label}</p>
     </div>
   )
 }
@@ -210,7 +210,7 @@ function KPI({ value, label }: { value: number; label: string }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="lb-detail-section">
-      <h2 style={{ fontSize: 12, fontWeight: 400, margin: '0 0 8px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
+      <h2 style={{ fontSize: 11, fontWeight: 400, margin: '0 0 5px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '2.2px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>
   )

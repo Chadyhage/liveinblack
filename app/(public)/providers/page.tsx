@@ -10,6 +10,8 @@ import ProviderDirectoryCard from '../_components/ProviderDirectoryCard'
 import styles from './providers.module.css'
 import { getCachedPublicProvidersDirectory } from '@/lib/server/publicCache'
 
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
+
 export const metadata: Metadata = {
   title: 'Prestataires — LIVEINBLACK',
   description: 'Trouvez DJ, lieux, traiteurs et autres prestataires événementiels et contactez-les directement sur LIVEINBLACK.',
@@ -53,6 +55,32 @@ export default async function PublicPrestatairesPage({
 
   const safePage = requestedPage
   const hasFilters = Boolean(search || category || region)
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': `${SITE}/providers#itemlist`,
+    name: 'Prestataires événementiels au Bénin sur LIVEINBLACK',
+    inLanguage: 'fr-BJ',
+    numberOfItems: filtered.length,
+    itemListElement: filtered.map((provider, index) => ({
+      '@type': 'ListItem',
+      position: (safePage - 1) * pageSize + index + 1,
+      url: `${SITE}/providers/${encodeURIComponent(provider.userId)}`,
+      name: provider.name,
+      item: {
+        '@type': 'ProfessionalService',
+        '@id': `${SITE}/providers/${encodeURIComponent(provider.userId)}`,
+        name: provider.name,
+        url: `${SITE}/providers/${encodeURIComponent(provider.userId)}`,
+        areaServed: provider.country || 'Bénin',
+        address: provider.city || provider.location ? {
+          '@type': 'PostalAddress',
+          addressLocality: provider.city || provider.location,
+          addressCountry: provider.country || 'BJ',
+        } : undefined,
+      },
+    })),
+  }
 
   function makeHref(page: number) {
     const params = new URLSearchParams()
@@ -75,6 +103,7 @@ export default async function PublicPrestatairesPage({
 
   return (
     <main className={styles.page}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="providers-title">
         <p className={styles.eyebrow}>L’annuaire LIVEINBLACK</p>
         <h1 id="providers-title">Les talents derrière chaque expérience.</h1>

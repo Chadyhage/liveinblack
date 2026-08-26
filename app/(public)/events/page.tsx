@@ -14,6 +14,7 @@ import EventListCard from '../_components/EventListCard'
 import styles from './events.module.css'
 
 const PAGE_SIZE = 24
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 export const metadata: Metadata = {
   title: 'Événements — LIVEINBLACK',
@@ -99,6 +100,30 @@ export default async function EventsPage({
     )
   ).sort((a, b) => a.localeCompare(b, 'fr'))
   const hasFilters = Boolean(search || category)
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': `${SITE}/events#itemlist`,
+    name: 'Événements au Bénin sur LIVEINBLACK',
+    inLanguage: 'fr-BJ',
+    numberOfItems: pageEvents.length,
+    itemListElement: pageEvents.map((event, index) => ({
+      '@type': 'ListItem',
+      position: (safePage - 1) * pageSize + index + 1,
+      url: `${SITE}/events/${event.id}`,
+      name: event.name,
+      item: {
+        '@type': 'Event',
+        '@id': `${SITE}/events/${event.id}`,
+        name: event.name,
+        url: `${SITE}/events/${event.id}`,
+        startDate: event.date,
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: event.city ? { '@type': 'Place', name: event.city } : undefined,
+        organizer: { '@type': 'Organization', name: event.organizer || 'LIVEINBLACK' },
+      },
+    })),
+  }
 
   function makePageHref(page: number) {
     const params = new URLSearchParams()
@@ -111,6 +136,7 @@ export default async function EventsPage({
 
   return (
     <main className={styles.page}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="events-title">
         <p className={styles.eyebrow}>La programmation</p>
         <h1 id="events-title">Trouvez votre prochaine expérience.</h1>

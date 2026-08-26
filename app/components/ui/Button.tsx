@@ -17,9 +17,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { minHeight: 40, padding: '7px 11px', fontSize: 13, borderRadius: 10, gap: 6 },
-  md: { minHeight: 44, padding: '9px 14px', fontSize: 14, borderRadius: 11, gap: 7 },
-  lg: { minHeight: 46, padding: '11px 17px', fontSize: 14, borderRadius: 12, gap: 7 },
+  sm: { minHeight: 34, padding: '6px 10px', fontSize: 12.5, borderRadius: 9, gap: 5 },
+  md: { minHeight: 38, padding: '8px 12px', fontSize: 13.25, borderRadius: 10, gap: 6 },
+  lg: { minHeight: 42, padding: '9px 15px', fontSize: 13.5, borderRadius: 11, gap: 6 },
 }
 
 function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties {
@@ -87,7 +87,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       onMouseUp={(e) => { setPressed(false); rest.onMouseUp?.(e) }}
       aria-busy={loading || undefined}
       style={{
-        minHeight: size === 'sm' ? 40 : 44,
+        minHeight: size === 'sm' ? 34 : size === 'lg' ? 42 : 38,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

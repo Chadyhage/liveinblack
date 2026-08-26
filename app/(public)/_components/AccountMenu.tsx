@@ -17,10 +17,12 @@ import { DASHBOARD_BY_ROLE } from '@/lib/shared/dashboardRoutes'
 export default function AccountMenu({
   user,
   menuAlign = 'right',
+  menuDirection = 'auto',
   dashboardMode = false,
 }: {
   user: { id: string; name?: string | null; email?: string | null; image?: string | null; activeRole?: string | null; roles?: string[] | null }
   menuAlign?: 'left' | 'right'
+  menuDirection?: 'auto' | 'up' | 'down'
   dashboardMode?: boolean
 }) {
   const router = useRouter()
@@ -29,7 +31,18 @@ export default function AccountMenu({
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [switchingRole, setSwitchingRole] = useState(false)
   const [notifUnread, setNotifUnread] = useState(0)
+  const [resolvedDirection, setResolvedDirection] = useState<'up' | 'down'>(menuDirection === 'up' ? 'up' : 'down')
   const rootRef = useRef<HTMLDivElement>(null)
+
+  function resolveMenuDirection() {
+    if (menuDirection !== 'auto') return menuDirection
+    if (!rootRef.current) return 'down'
+    const rect = rootRef.current.getBoundingClientRect()
+    const estimatedMenuHeight = dashboardMode ? 210 : 270
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceAbove = rect.top
+    return spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow ? 'up' : 'down'
+  }
 
   // Compteur non-lu pour le lien "Notifications" du menu compte — la cloche
   // dédiée a été retirée du header (elle vit maintenant dans la sidebar de
@@ -127,7 +140,10 @@ export default function AccountMenu({
         <Button
           variant="ghost"
           onClick={() => {
-            setAccountOpen((v) => !v)
+            setAccountOpen((v) => {
+              if (!v) setResolvedDirection(resolveMenuDirection())
+              return !v
+            })
           }}
           aria-label={user.name ? `Mon compte — ${user.name}` : 'Mon compte'}
           aria-expanded={accountOpen}
@@ -159,7 +175,7 @@ export default function AccountMenu({
           <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 10px)',
+            ...(resolvedDirection === 'up' ? { bottom: 'calc(100% + 10px)' } : { top: 'calc(100% + 10px)' }),
             ...(menuAlign === 'left' ? { left: 0 } : { right: 0 }),
             width: 208,
             maxWidth: 'calc(100vw - 24px)',
@@ -170,6 +186,7 @@ export default function AccountMenu({
               overflow: 'hidden',
               zIndex: 60,
               padding: 6,
+              transformOrigin: resolvedDirection === 'up' ? 'bottom right' : 'top right',
             }}
           >
             {user.name && (

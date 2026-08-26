@@ -30,18 +30,18 @@ export function Skeleton({ width = '100%', height = 14, radius = 6, style }: Ske
   )
 }
 
-const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }
+const cardStyle: CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 14 }
 
 export function SkeletonRow({ columns = 3 }: { columns?: number }) {
   return (
-    <div style={{ ...cardStyle, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
-      <Skeleton width={36} height={36} radius={99} style={{ flexShrink: 0 }} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+    <div style={{ ...cardStyle, padding: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+      <Skeleton width={30} height={30} radius={99} style={{ flexShrink: 0 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
         <Skeleton width="40%" height={12} />
         <Skeleton width="65%" height={10} />
       </div>
       {Array.from({ length: Math.max(0, columns - 1) }).map((_, i) => (
-        <Skeleton key={i} width={70} height={12} style={{ flexShrink: 0 }} />
+        <Skeleton key={i} width={62} height={10} style={{ flexShrink: 0 }} />
       ))}
     </div>
   )
@@ -49,7 +49,7 @@ export function SkeletonRow({ columns = 3 }: { columns?: number }) {
 
 export function SkeletonCard() {
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Skeleton width="50%" height={14} />
       <Skeleton width="90%" height={10} />
       <Skeleton width="75%" height={10} />
@@ -59,7 +59,7 @@ export function SkeletonCard() {
 
 export function SkeletonList({ rows = 5, columns = 3 }: { rows?: number; columns?: number }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {Array.from({ length: rows }).map((_, i) => (
         <SkeletonRow key={i} columns={columns} />
       ))}

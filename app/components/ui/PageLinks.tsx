@@ -24,7 +24,7 @@ export default function PageLinks({ page, pageCount, makeHref, totalItems, pageS
       : null
 
   return (
-    <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 24 }}>
+    <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
       {rangeLabel && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{rangeLabel}</span>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
         <PageLink href={page > 1 ? makeHref(page - 1) : null} label="‹" ariaLabel="Page précédente" />
@@ -45,11 +45,11 @@ export default function PageLinks({ page, pageCount, makeHref, totalItems, pageS
 
 function PageLink({ href, label, ariaLabel, active }: { href: string | null; label: string; ariaLabel?: string; active?: boolean }) {
   const style: React.CSSProperties = {
-    minWidth: 30,
-    padding: '6px 10px',
-    borderRadius: 8,
+    minWidth: 26,
+    padding: '5px 8px',
+    borderRadius: 7,
     textAlign: 'center',
-    fontSize: 12.5,
+    fontSize: 11.5,
     fontWeight: active ? 800 : 600,
     textDecoration: 'none',
     color: active ? 'var(--primary-ink)' : href ? 'var(--text-muted)' : 'var(--text-faint)',

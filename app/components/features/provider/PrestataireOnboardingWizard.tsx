@@ -11,6 +11,7 @@ import { validatePrestataireStep0, validatePrestataireStep2, getRequiredDocs, ty
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
+import { GROWTH_EVENT_NAMES, trackGrowthEvent } from '@/lib/client/growthAnalytics'
 import { Globe } from 'lucide-react'
 import { Button, Card, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
@@ -262,6 +263,14 @@ export default function PrestataireOnboardingWizard({
           }
           return
         }
+        trackGrowthEvent(GROWTH_EVENT_NAMES.professionalApplicationSubmit, {
+          role: 'prestataire',
+          mode,
+          country: cleanedForm.pays || null,
+          has_city: Boolean(cleanedForm.ville),
+          provider_type: cleanedForm.prestataireType || null,
+          has_documents: Object.values(documents).some((entries) => entries.length > 0),
+        })
         setSubmitted({ email: cleanRegEmail })
       } else {
         const res = await fetch('/api/applications/prestataire/submit', {
@@ -274,6 +283,14 @@ export default function PrestataireOnboardingWizard({
           setError('Impossible d’envoyer ton dossier. Réessaie.')
           return
         }
+        trackGrowthEvent(GROWTH_EVENT_NAMES.professionalApplicationSubmit, {
+          role: 'prestataire',
+          mode,
+          country: cleanedForm.pays || null,
+          has_city: Boolean(cleanedForm.ville),
+          provider_type: cleanedForm.prestataireType || null,
+          has_documents: Object.values(documents).some((entries) => entries.length > 0),
+        })
         router.push('/my-application')
       }
     } finally {

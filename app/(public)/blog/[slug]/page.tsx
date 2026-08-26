@@ -64,6 +64,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const publishedIso = new Date(post.publishedAt as unknown as string).toISOString()
   const modifiedIso = post.updatedAt ? new Date(post.updatedAt as unknown as string).toISOString() : publishedIso
   const publishedDisplay = new Date(post.publishedAt as unknown as string).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const articleSection = categoryLabel(post.category)
+  const articleText = post.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const wordCount = articleText ? articleText.split(' ').length : undefined
+  const aboutTopics = Array.from(new Set(['événements au Bénin', 'culture au Bénin', 'sorties au Bénin', ...post.tags]))
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -71,10 +75,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {
         '@type': 'BlogPosting',
         '@id': `${SITE}/blog/${post.slug}#article`,
+        url: `${SITE}/blog/${post.slug}`,
         headline: post.title,
         description: post.metaDescription,
+        articleSection,
+        wordCount,
         keywords: post.tags.join(', '),
         inLanguage: 'fr-BJ',
+        about: aboutTopics.map((name) => ({ '@type': 'Thing', name })),
         author: { '@type': 'Person', name: post.authorName },
         publisher: { '@type': 'Organization', name: 'LIVEINBLACK', url: SITE },
         datePublished: publishedIso,
@@ -95,43 +103,43 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <main className="lb-blog-article" style={{ padding: '28px clamp(14px, 2.2vw, 32px) 72px', width: '100%', minHeight: '100vh' }}>
+    <main className="lb-blog-article" style={{ padding: '18px clamp(10px, 1.6vw, 24px) 44px', width: '100%', minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
 
-      <div style={{ maxWidth: 1220, margin: '0 auto' }}>
-        <nav aria-label="Fil d'ariane" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 12, color: 'var(--text-faint)' }}>
+      <div style={{ maxWidth: 1160, margin: '0 auto' }}>
+        <nav aria-label="Fil d'ariane" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 10.5, color: 'var(--text-faint)' }}>
           <Link href="/blog" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Blog</Link>
           <span>/</span>
           <span style={{ color: 'var(--text-faint)' }}>{post.title}</span>
         </nav>
 
-        <header style={{ marginBottom: 22 }}>
-          <span style={{ display: 'inline-block', fontSize: 10.5, fontWeight: 800, color: '#04120e', background: 'var(--gold)', padding: '4px 10px', borderRadius: 999, marginBottom: 12 }}>
-            {categoryLabel(post.category)}
+        <header style={{ marginBottom: 14 }}>
+          <span style={{ display: 'inline-block', fontSize: 9.5, fontWeight: 800, color: '#04120e', background: 'var(--gold)', padding: '3px 8px', borderRadius: 999, marginBottom: 8 }}>
+            {articleSection}
           </span>
-          <h1 className="font-display" style={{ fontSize: 'clamp(26px, 4.6vw, 40px)', lineHeight: 1.08, letterSpacing: '.01em', margin: 0, maxWidth: 860 }}>
+          <h1 className="font-display" style={{ fontSize: 'clamp(23px, 3.4vw, 34px)', lineHeight: 1.02, letterSpacing: '.01em', margin: 0, maxWidth: 820 }}>
             {post.title}
           </h1>
-          <p style={{ margin: '12px 0 0', fontSize: 12.5, color: 'var(--text-muted)' }}>
+          <p style={{ margin: '7px 0 0', fontSize: 11.5, color: 'var(--text-muted)' }}>
             Par {post.authorName} · {publishedDisplay} · {post.readingTimeMinutes} min de lecture
           </p>
         </header>
 
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/8', borderRadius: 'var(--radius-xl)', overflow: 'hidden', marginBottom: 28, background: 'var(--obsidian)' }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/6.8', borderRadius: 14, overflow: 'hidden', marginBottom: 18, background: 'var(--obsidian)' }}>
           <Image src={coverImageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="100vw" priority />
         </div>
 
         {/* Colonne de lecture ~720px, pattern LegalPageLayout.tsx */}
         <article
-          style={{ maxWidth: 780, margin: '0 auto', fontSize: 15, lineHeight: 1.68, color: 'var(--text-muted)' }}
+          style={{ maxWidth: 740, margin: '0 auto', fontSize: 13.75, lineHeight: 1.56, color: 'var(--text-muted)' }}
           // Contenu 100% interne (seed/agent éditorial), jamais saisi par un visiteur — voir lib/models/BlogPost.ts.
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {post.tags.length > 0 && (
-          <div style={{ maxWidth: 780, margin: '26px auto 0', display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          <div style={{ maxWidth: 740, margin: '16px auto 0', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {post.tags.map((tag) => (
-              <span key={tag} style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '4px 10px', borderRadius: 999 }}>
+              <span key={tag} style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '3px 8px', borderRadius: 999 }}>
                 #{tag}
               </span>
             ))}
@@ -139,17 +147,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {related.length > 0 && (
-          <section style={{ maxWidth: 1220, margin: '44px auto 0' }}>
-            <h2 className="font-display" style={{ fontSize: 17, letterSpacing: '.01em', margin: '0 0 14px' }}>À lire aussi</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,250px),1fr))', gap: 14 }}>
+          <section style={{ maxWidth: 1160, margin: '28px auto 0' }}>
+            <h2 className="font-display" style={{ fontSize: 15, letterSpacing: '.01em', margin: '0 0 10px' }}>À lire aussi</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,220px),1fr))', gap: 8 }}>
               {related.map((r) => (
                 <Link
                   key={r.id}
                   href={`/blog/${r.slug}`}
-                  style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 14 }}
+                  style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 10 }}
                 >
-                  <p style={{ fontSize: 14, fontWeight: 800, margin: 0, lineHeight: 1.32 }}>{r.title}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '6px 0 0', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.excerpt}</p>
+                  <p style={{ fontSize: 12.5, fontWeight: 800, margin: 0, lineHeight: 1.28 }}>{r.title}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '5px 0 0', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.excerpt}</p>
                 </Link>
               ))}
             </div>

@@ -411,8 +411,8 @@ button:hover > .lb-card {
    à 220/240 px et les faux panneaux transparents repérés pendant l'audit. */
 .lb-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: 8px;
   align-items: stretch;
 }
 
@@ -422,7 +422,7 @@ button:hover > .lb-card {
 }
 
 .lb-card-grid:has(> .lb-card:only-child) {
-  grid-template-columns: minmax(min(100%, 200px), 480px);
+  grid-template-columns: minmax(min(100%, 180px), 420px);
 }
 
 /* Grille compacte pour des listes secondaires (ex. événements à venir/passés
@@ -431,8 +431,8 @@ button:hover > .lb-card {
    principale. Colonnes bien plus petites, densité proche d'une liste. */
 .lb-card-grid-compact {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 7px;
 }
 
 .lb-detail-section {

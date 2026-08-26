@@ -95,12 +95,12 @@ const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: s
 let toastSeq = 0
 
 const sectionTitleStyle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 12,
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   color: 'var(--text-muted)',
-  margin: '0 0 12px',
+  margin: '0 0 10px',
 }
 
 // <label> visuellement masqué mais lu par les lecteurs d'écran — le
@@ -531,7 +531,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       <div className={styles.workspace}>
         <div className={styles.header}>
           <div>
-            <Link href="/my-shifts" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-faint)', textDecoration: 'none' }}>
+            <Link href="/my-shifts" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
               ← Événements
             </Link>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
@@ -540,10 +540,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   d'accès, jamais aux commandes (voir D4). */}
               {mode === 'service' && rank >= 2 ? 'Service sur place' : 'Contrôle des entrées'}
             </p>
-            <h1 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>
+            <h1 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 5px', letterSpacing: '-0.3px' }}>
               {mode === 'service' && rank >= 2 ? `Billet ${ticketCode}` : mode === 'service' ? 'Billet scanné' : 'Scanner'}
             </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{eventName}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>{eventName}</p>
           </div>
           {mode === 'service' && (
             <Button type="button" variant="secondary" size="sm" onClick={resetToScan}>
@@ -553,18 +553,18 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         </div>
 
         {notice && (
-          <div role="status" aria-live="polite" style={{ background: 'rgba(184,243,74,0.12)', border: '1px solid rgba(184,243,74,0.35)', borderRadius: 16, padding: '10px 14px' }}>
-            <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{notice}</p>
+          <div role="status" aria-live="polite" style={{ background: 'rgba(184,243,74,0.12)', border: '1px solid rgba(184,243,74,0.35)', borderRadius: 14, padding: '8px 12px' }}>
+            <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0 }}>{notice}</p>
           </div>
         )}
 
         {mode === 'scan' ? (
           <div className={styles.scanGrid}>
             {checkinError && (
-              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 16, padding: '10px 14px' }}>
-                <p style={{ fontSize: 13, color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 8px' : 0 }}>{checkinError}</p>
+              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 14, padding: '8px 12px' }}>
+                <p style={{ fontSize: 12.5, color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 6px' : 0 }}>{checkinError}</p>
                 {checkinErrorCode === 'auth_required' && (
-                  <Link href="/login" style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+                  <Link href="/login" style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
                     Se reconnecter
                   </Link>
                 )}
@@ -572,7 +572,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             )}
 
             <Card className={styles.cameraCard} style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <h2 style={{ ...sectionTitleStyle, margin: 0 }}>Caméra</h2>
                 <Button type="button" variant="secondary" size="sm" onClick={() => setScanning((s) => !s)}>
                   {scanning ? 'Désactiver' : 'Activer'} la caméra
@@ -630,13 +630,13 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     GateScreen de commander/scanner (rôle refusé) — repris ici
                     à une échelle adaptée au contexte de carte inline plutôt
                     qu'à une page plein écran. */}
-                <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                <div style={{ textAlign: 'center', marginBottom: 8 }}>
                   <div
                     style={{
-                      width: 60,
-                      height: 56,
+                      width: 54,
+                      height: 52,
                       borderRadius: '50%',
-                      margin: '0 auto 10px',
+                      margin: '0 auto 8px',
                       background: checkinResult.alreadyCheckedIn ? 'rgba(184,243,74,0.10)' : 'rgba(184, 243, 74,0.10)',
                       border: checkinResult.alreadyCheckedIn ? '2px solid rgba(184,243,74,0.50)' : '2px solid rgba(184, 243, 74,0.50)',
                       display: 'flex',
@@ -645,18 +645,18 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     }}
                   >
                     {checkinResult.alreadyCheckedIn ? (
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={2}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5-6a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     ) : (
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal-solid)" strokeWidth={2.5}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-solid)" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                     )}
                   </div>
                   <p
                     style={{
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: 800,
                       margin: 0,
                       letterSpacing: '-0.3px',
@@ -672,22 +672,22 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 13.5, color: 'var(--text)', margin: '0 0 4px' }}>
+                  <p style={{ fontSize: 12.5, color: 'var(--text)', margin: '0 0 4px' }}>
                     {checkinResult.ticket.place} · {fmtMoney(checkinResult.ticket.totalPrice, checkinResult.ticket.currency)}
                   </p>
                   {checkinResult.ticket.holderName && (
-                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
+                    <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
                   )}
                   {checkinResult.ticket.guestName && (
-                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
+                    <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
                   )}
                   {checkinResult.ticket.preorders.length > 0 && (
-                    <div style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 6px' }}>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 6px' }}>
                       <p style={{ margin: '0 0 3px' }}>Précommandes :</p>
-                      {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '2px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
+                      {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '1px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
                     </div>
                   )}
-                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
+                  <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>
                     {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
                   </p>
                 </div>
@@ -704,7 +704,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               {items.length === 0 ? (
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Aucun article pour l&apos;instant.</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {items.map((item) => {
                     const meta = STATUS_META[item.status]
                     const canServe = item.status === 'sent'
@@ -723,19 +723,19 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     return (
                       <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                          <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                             {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
-                            {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
+                            {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2, fontSize: 11 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                           </p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
-                            <span style={{ fontSize: 10.5, fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>
                               {meta.label}
                             </span>
                             {item.paidAt && (
                               <span
                                 style={{
-                                  fontSize: 10.5,
+                                  fontSize: 10,
                                   fontWeight: 700,
                                   color: 'var(--teal-solid)',
                                   background: 'rgba(159,224,34,0.16)',
@@ -806,7 +806,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                 Confirmer
                               </Button>
                             </div>
-                            <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Motif obligatoire.</p>
+                            <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>Motif obligatoire.</p>
                           </div>
                         )}
                       </div>
@@ -820,20 +820,20 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
             {rank >= 2 && (
             <section className={styles.menuPanel}>
-              <h2 style={{ ...sectionTitleStyle, marginBottom: 18 }}>Ajouter au menu</h2>
+              <h2 style={{ ...sectionTitleStyle, marginBottom: 12 }}>Ajouter au menu</h2>
               {menu.length === 0 ? (
-                <Card style={{ padding: '40px 20px', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucune carte disponible</p>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>L&apos;organisateur n&apos;a pas publié de menu pour cet événement.</p>
+                <Card style={{ padding: '28px 18px', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 4px' }}>Aucune carte disponible</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>L&apos;organisateur n&apos;a pas publié de menu pour cet événement.</p>
                 </Card>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {groups.map(([category, catItems]) => (
                     <div key={category}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         {category}
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {catItems.map((menuItem) => {
                           const key = `add:${menuItem.name}`
                           const busy = busyKey === key
@@ -842,20 +842,20 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                             <Card
                               key={menuItem.name}
                               style={{
-                                borderRadius: 12,
+                                borderRadius: 11,
                                 boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-                                padding: '12px 14px',
+                                padding: '10px 12px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
-                                gap: 12,
+                                gap: 10,
                               }}
                             >
-                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 9, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 18 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
+                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 9, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 17 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={34} height={34} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
                               <div style={{ minWidth: 0, flex: 1 }}>
-                                <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
-                                {menuItem.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
-                                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '4px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
+                                <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
+                                {menuItem.description && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
+                                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)', margin: '3px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
                               </div>
                               {editable ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -897,8 +897,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         >
           <div className={styles.payBarInner}>
             <div>
-              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>À encaisser</span>
-              <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>
+              <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>À encaisser</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>
             </div>
             {rank >= 2 && (
               <Button

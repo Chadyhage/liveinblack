@@ -6,44 +6,44 @@
 }
 
 .workspace :global(.lb-dashboard-page) { width: 100%; max-width: none; margin-inline: 0; }
-.workspace :global(.lb-dashboard-page) > div { gap: 12px !important; }
+.workspace :global(.lb-dashboard-page) > div { gap: 10px !important; }
 .workspace :global(.lb-dashboard-page) > div > div:first-child:has(h1),
 .workspace :global(.lb-dashboard-page) > div > h1:first-child {
-  padding: 2px 0 14px;
+  padding: 2px 0 8px;
   border-bottom: 1px solid rgba(255, 255, 255, .1);
 }
 
 .workspace :global(.lb-dashboard-title) {
   color: #f5f5f7;
-  font-size: clamp(22px, 2.1vw, 28px) !important;
+  font-size: 22px !important;
   font-weight: 700 !important;
-  letter-spacing: -.045em !important;
+  letter-spacing: 0 !important;
 }
 
 .workspace :global(.lb-card) {
   border-color: var(--agent-border) !important;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   background: rgba(24, 25, 29, .94) !important;
   backdrop-filter: none;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .16) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .13) !important;
 }
 
 .workspace :global(.lb-card):hover { transform: none; border-color: color-mix(in srgb, var(--screen-accent, #b8f34a) 24%, transparent) !important; }
-.workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)) !important; gap: 6px !important; }
-.workspace :global(.lb-responsive-metrics) { padding: 4px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: rgba(18,19,22,.76); }
+.workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important; gap: 4px !important; }
+.workspace :global(.lb-responsive-metrics) { padding: 3px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(18,19,22,.76); }
 .workspace :global(.lb-responsive-metrics) > :global(.lb-card),
-.workspace :global(.lb-responsive-metrics) > button { min-height: 62px; padding: 8px !important; border-radius: 10px !important; box-shadow: none !important; }
-.workspace :global(.lb-dashboard-card-grid) { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 7px !important; }
+.workspace :global(.lb-responsive-metrics) > button { min-height: 54px; padding: 6px !important; border-radius: 8px !important; box-shadow: none !important; }
+.workspace :global(.lb-dashboard-card-grid) { grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 5px !important; }
 
-.workspace :where(input, textarea) { min-height: 40px !important; border-radius: 10px !important; border-color: rgba(255,255,255,.12) !important; background: rgba(30,31,35,.96) !important; font-size: 13px !important; }
-.workspace textarea { min-height: 80px !important; }
-.workspace button { min-height: 34px; border-radius: 9px !important; font-size: 12px !important; }
-.workspace label { color: rgba(245, 245, 247, .72) !important; font-size: 12px !important; }
-.workspace :global(.lb-modal-panel) { border-color: rgba(255, 255, 255, .13) !important; border-radius: 18px !important; background: rgba(27, 27, 32, .92) !important; backdrop-filter: blur(30px) saturate(150%); }
+.workspace :where(input, textarea) { min-height: 32px !important; border-radius: 8px !important; border-color: rgba(255,255,255,.12) !important; background: rgba(30,31,35,.96) !important; font-size: 11.5px !important; }
+.workspace textarea { min-height: 64px !important; }
+.workspace button { min-height: 30px; border-radius: 8px !important; font-size: 11px !important; }
+.workspace label { color: rgba(245, 245, 247, .72) !important; font-size: 11px !important; }
+.workspace :global(.lb-modal-panel) { border-color: rgba(255, 255, 255, .13) !important; border-radius: 12px !important; background: rgba(27, 27, 32, .92) !important; backdrop-filter: blur(30px) saturate(150%); }
 
-.workspace section > p:first-child[style*="text-transform: uppercase"] { color: rgba(245, 245, 247, .52) !important; font-size: 11.5px !important; font-weight: 700 !important; letter-spacing: .08em !important; }
-.workspace [style*="overflow-x: auto"] { padding-bottom: 8px !important; scrollbar-width: thin; }
-.workspace [role="alert"] { border-radius: 16px !important; }
+.workspace section > p:first-child[style*="text-transform: uppercase"] { color: rgba(245, 245, 247, .52) !important; font-size: 10.5px !important; font-weight: 700 !important; letter-spacing: .06em !important; }
+.workspace [style*="overflow-x: auto"] { padding-bottom: 6px !important; scrollbar-width: thin; }
+.workspace [role="alert"] { border-radius: 12px !important; }
 
 /* Chaque outil conserve une identité fonctionnelle sans casser le système commun. */
 .workspace :global(.lb-agent-screen) { --screen-accent: #b8f34a; }
@@ -64,49 +64,49 @@
 }
 .workspace :global(.lb-agent-screen) :global(.lb-dashboard-title)::before {
   content: "";
-  width: 34px;
-  height: 5px;
+  width: 26px;
+  height: 4px;
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 7px;
   border-radius: 999px;
   background: var(--screen-accent);
   box-shadow: 0 0 28px color-mix(in srgb, var(--screen-accent) 46%, transparent);
 }
-.workspace :global(.lb-agent-screen) :global(.lb-dashboard-description) { max-width: 680px; margin-top: 5px; color: rgba(245,245,247,.48); font-size: 12.5px; line-height: 1.4; }
-.workspace :global(.lb-agent-kicker) { display: block; margin-bottom: 6px; color: var(--screen-accent); font-size: 9.5px; font-weight: 760; letter-spacing: .11em; text-transform: uppercase; }
+.workspace :global(.lb-agent-screen) :global(.lb-dashboard-description) { max-width: 640px; margin-top: 4px; color: rgba(245,245,247,.48); font-size: 11.5px; line-height: 1.35; }
+.workspace :global(.lb-agent-kicker) { display: block; margin-bottom: 5px; color: var(--screen-accent); font-size: 9px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
 .workspace :global(.lb-agent-page-header):has(:global(.lb-agent-kicker)) :global(.lb-dashboard-title)::before { display: none; }
-.workspace :global(.lb-agent-page-header) { min-height: 52px; gap: 8px !important; }
+.workspace :global(.lb-agent-page-header) { min-height: 42px; gap: 6px !important; }
 .workspace :global(.lb-agent-page-header) > div:first-child { min-width: 0; flex: 1; }
-.workspace :global(.lb-agent-page-header) > span { min-height: 30px; padding: 0 10px !important; display: inline-flex; align-items: center; border: 1px solid color-mix(in srgb, var(--screen-accent) 30%, transparent); border-radius: 999px !important; background: color-mix(in srgb, var(--screen-accent) 10%, transparent) !important; color: var(--screen-accent) !important; }
-.workspace :global(.lb-agent-page-header) > button { min-height: 34px; padding-inline: 11px !important; border-radius: 9px !important; }
+.workspace :global(.lb-agent-page-header) > span { min-height: 26px; padding: 0 8px !important; display: inline-flex; align-items: center; border: 1px solid color-mix(in srgb, var(--screen-accent) 30%, transparent); border-radius: 999px !important; background: color-mix(in srgb, var(--screen-accent) 10%, transparent) !important; color: var(--screen-accent) !important; }
+.workspace :global(.lb-agent-page-header) > button { min-height: 30px; padding-inline: 9px !important; border-radius: 8px !important; }
 .workspace :global(.lb-agent-screen) :where(input, textarea):focus { border-color: var(--screen-accent) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--screen-accent) 13%, transparent) !important; }
 
 /* Barres de recherche et de filtres : une seule zone de contrôle, distincte
    des résultats. Le matériau translucide reste réservé à cette couche
    interactive, tandis que les cartes de contenu restent opaques. */
 .workspace :global(.lb-agent-screen) > div > div[style*="position: relative"]:has(input) {
-  padding: 5px;
+  padding: 4px;
   border: 1px solid rgba(255,255,255,.09);
-  border-radius: 17px;
+  border-radius: 10px;
   background: rgba(255,255,255,.035);
   backdrop-filter: blur(18px);
 }
 .workspace :global(.lb-agent-screen) > div > div[style*="position: relative"]:has(input) input { border: 0 !important; background: rgba(255,255,255,.055) !important; }
 .workspace :global(.lb-agent-screen) > div > div[style*="overflow-x: auto"],
 .workspace :global(.lb-agent-screen) > div > div[style*="flex-wrap: wrap"]:has(button) {
-  gap: 5px !important;
-  padding: 5px !important;
+  gap: 4px !important;
+  padding: 4px !important;
   border: 1px solid rgba(255,255,255,.085);
-  border-radius: 15px;
+  border-radius: 10px;
   background: rgba(20,21,24,.76);
 }
 .workspace :global(.lb-agent-screen) > div > div[style*="flex-wrap: wrap"]:has(button) button,
-.workspace :global(.lb-agent-screen) > div > div[style*="overflow-x: auto"] button { min-height: 36px; padding-inline: 10px !important; }
+.workspace :global(.lb-agent-screen) > div > div[style*="overflow-x: auto"] button { min-height: 30px; padding-inline: 8px !important; }
 
 /* Les rangées de résultats se lisent comme une liste groupée macOS : larges
    zones tactiles, séparation calme et survol discret. */
 .workspace :global(.lb-agent-screen) button[style*="width: 100%"] {
-  min-height: 42px;
+  min-height: 34px;
   border-color: rgba(255,255,255,.09) !important;
   background: rgba(24,25,29,.94) !important;
   transition: background .16s ease, border-color .16s ease, transform .16s ease;
@@ -123,11 +123,11 @@
 
 /* Comptes : recherche centrale et filtres compacts façon barre d’outils. */
 .workspace :global(.lb-agent-screen--users) > div > div[style*="position: relative"] { max-width: none; }
-.workspace :global(.lb-agent-screen--users) > div > div[style*="overflow-x: auto"] { padding: 6px; border: 1px solid var(--agent-border); border-radius: 14px; background: rgba(255, 255, 255, .035); }
+.workspace :global(.lb-agent-screen--users) > div > div[style*="overflow-x: auto"] { padding: 4px; border: 1px solid var(--agent-border); border-radius: 10px; background: rgba(255, 255, 255, .035); }
 
 /* Événements : visuels plus généreux, lignes lisibles comme un catalogue de contrôle. */
-.workspace :global(.lb-agent-screen--events) :global(.lb-card)[style*="align-items: center"] { min-height: 70px; padding: 12px !important; }
-.workspace :global(.lb-agent-screen--events) :global(.lb-card)[style*="align-items: center"] > div:first-child { width: 50px !important; height: 50px !important; border-radius: 10px !important; }
+.workspace :global(.lb-agent-screen--events) :global(.lb-card)[style*="align-items: center"] { min-height: 62px; padding: 9px !important; }
+.workspace :global(.lb-agent-screen--events) :global(.lb-card)[style*="align-items: center"] > div:first-child { width: 42px !important; height: 42px !important; border-radius: 8px !important; }
 
 /* Files de traitement : onglets-métriques dominants et détail en feuille latérale. */
 .workspace :global(.lb-agent-screen--applications) :global(.lb-responsive-metrics) button,
@@ -142,57 +142,57 @@
 /* Modération : davantage d’air entre les dossiers sensibles. */
 .workspace :global(.lb-agent-screen--deletions) > div > div:last-of-type,
 .workspace :global(.lb-agent-screen--reports) > div > div:last-of-type,
-.workspace :global(.lb-agent-screen--reviews) > div > div:last-of-type { gap: 16px !important; }
+.workspace :global(.lb-agent-screen--reviews) > div > div:last-of-type { gap: 10px !important; }
 .workspace :global(.lb-agent-screen--reports) :global(.lb-card) { border-left-color: var(--screen-accent) !important; }
 
 /* Les espaces de confiance privilégient le contenu et les décisions : les
    alertes sont regroupées en cartes plus généreuses, sans empiler du verre. */
 .workspace :global(.lb-agent-screen--deletions) :global(.lb-card),
 .workspace :global(.lb-agent-screen--reports) :global(.lb-card),
-.workspace :global(.lb-agent-screen--reviews) :global(.lb-card) { padding: 12px !important; }
+.workspace :global(.lb-agent-screen--reviews) :global(.lb-card) { padding: 9px !important; }
 
 /* Contenus : zone de composition plus claire et formulaires éditoriaux plus larges. */
 .workspace :global(.lb-agent-screen--homepage) > div > :global(.lb-card),
-.workspace :global(.lb-agent-screen--blog) > div > :global(.lb-card) { padding: 14px !important; }
-.workspace :global(.lb-agent-homepage-stack) { display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 12px !important; }
+.workspace :global(.lb-agent-screen--blog) > div > :global(.lb-card) { padding: 10px !important; }
+.workspace :global(.lb-agent-homepage-stack) { display: grid !important; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); align-items: start; gap: 8px !important; }
 .workspace :global(.lb-agent-homepage-stack) > :global(.lb-agent-page-header),
 .workspace :global(.lb-agent-homepage-stack) > [style*="flex-wrap: wrap"],
 .workspace :global(.lb-agent-homepage-stack) > :global(.lb-card):first-of-type { grid-column: 1 / -1; }
 .workspace :global(.lb-agent-homepage-stack) > :global(.lb-card) { min-width: 0; }
 .workspace :global(.lb-agent-blog-grid),
-.workspace :global(.lb-agent-card-grid) { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px !important; }
+.workspace :global(.lb-agent-card-grid) { display: grid !important; grid-template-columns: repeat(auto-fill,minmax(235px,1fr)); gap: 6px !important; }
 .workspace :global(.lb-agent-card-grid) > :global(.lb-agent-grid-heading),
 .workspace :global(.lb-agent-card-grid) > :global(.lb-agent-grid-wide) { grid-column: 1 / -1; }
-.workspace :global(.lb-agent-blog-grid) > :global(.lb-card) { min-height: 68px; padding: 11px !important; }
+.workspace :global(.lb-agent-blog-grid) > :global(.lb-card) { min-height: 62px; padding: 10px !important; }
 .workspace :global(.lb-agent-screen--blog) :global(.lb-modal-panel) { max-width: min(680px, calc(100vw - 32px)) !important; }
-.workspace :global(.lb-agent-screen--blog) textarea { min-height: 104px !important; }
+.workspace :global(.lb-agent-screen--blog) textarea { min-height: 78px !important; }
 .workspace div[style*="position: fixed"][style*="align-items: flex-end"] {
   align-items: center !important;
   justify-content: center !important;
-  padding: 16px !important;
+  padding: 12px !important;
 }
 .workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child {
   width: min(620px, calc(100vw - 32px)) !important;
   height: auto;
-  max-height: min(74dvh, calc(100dvh - 32px)) !important;
+  max-height: min(72dvh, calc(100dvh - 24px)) !important;
   border-color: rgba(255, 255, 255, .13) !important;
-  border-radius: 18px !important;
+  border-radius: 12px !important;
   background: rgba(27, 27, 32, .94) !important;
   backdrop-filter: blur(30px) saturate(150%);
   box-shadow: 0 26px 80px rgba(0, 0, 0, .45) !important;
 }
 .workspace div[style*="position: fixed"][style*="justify-content: center"] > div:last-child {
-  border-radius: 24px !important;
+  border-radius: 16px !important;
   background: rgba(27, 27, 32, .94) !important;
   backdrop-filter: blur(30px) saturate(150%);
 }
 
 @media (max-width: 760px) {
-  .workspace :global(.lb-dashboard-page) > div { gap: 12px !important; }
-  .workspace :global(.lb-dashboard-title) { font-size: 26px !important; }
+  .workspace :global(.lb-dashboard-page) > div { gap: 9px !important; }
+  .workspace :global(.lb-dashboard-title) { font-size: 21px !important; }
   .workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .workspace :global(.lb-responsive-metrics) > :global(.lb-card),
-  .workspace :global(.lb-responsive-metrics) > button { min-height: 68px; padding: 9px !important; }
+  .workspace :global(.lb-responsive-metrics) > button { min-height: 56px; padding: 6px !important; }
   .workspace :global(.lb-agent-screen) > div > div[style*="flex-wrap: wrap"]:has(button) { overflow-x: auto; flex-wrap: nowrap !important; }
   .workspace :global(.lb-agent-page-header) { min-height: auto; align-items: flex-start !important; flex-direction: column; }
   .workspace :global(.lb-agent-homepage-stack),
@@ -200,12 +200,12 @@
   .workspace :global(.lb-agent-card-grid) { grid-template-columns: 1fr !important; }
   .workspace :global(.lb-agent-homepage-stack) > :global(.lb-card) { grid-column: auto !important; }
   .workspace div[style*="position: fixed"][style*="align-items: flex-end"] { align-items: center !important; justify-content: center !important; padding: 10px !important; }
-  .workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child { width: calc(100vw - 20px) !important; height: auto; max-height: min(78dvh, calc(100dvh - 20px)) !important; border-radius: 18px !important; box-shadow: 0 26px 80px rgba(0,0,0,.45) !important; }
+  .workspace div[style*="position: fixed"][style*="align-items: flex-end"] > div:last-child { width: calc(100vw - 20px) !important; height: auto; max-height: min(76dvh, calc(100dvh - 20px)) !important; border-radius: 12px !important; box-shadow: 0 22px 70px rgba(0,0,0,.42) !important; }
 }
 
 @media (min-width: 761px) and (max-width: 1180px) {
   .workspace :global(.lb-agent-blog-grid),
-  .workspace :global(.lb-agent-card-grid) { grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
+  .workspace :global(.lb-agent-card-grid) { grid-template-columns: repeat(auto-fill,minmax(220px,1fr)) !important; }
 }
 
 @media (max-width: 460px) {

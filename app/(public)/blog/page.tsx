@@ -10,13 +10,17 @@ import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './blog.module.css'
 
 const PAGE_SIZE = 12
+const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 export const metadata: Metadata = {
   title: 'Blog — LIVEINBLACK',
   description: "Actualités, guides et conseils pour organiser et vivre les meilleures expériences culturelles d'Afrique de l'Ouest.",
   alternates: {
     canonical: '/blog',
-    types: { 'application/rss+xml': '/blog/feed.xml' },
+    types: {
+      'application/rss+xml': '/blog/feed.xml',
+      'application/feed+json': '/blog/feed.json',
+    },
   },
   robots: { index: true, follow: true },
   openGraph: {
@@ -44,6 +48,29 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const category = (categorie || '') as BlogCategoryId | ''
   const requestedPage = Math.max(1, Number(pageParam) || 1)
   const { posts, page, pageCount, totalCount } = await listPublishedPosts({ category, page: requestedPage, pageSize: PAGE_SIZE })
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': `${SITE}/blog#itemlist`,
+    name: 'Articles LIVEINBLACK sur les événements au Bénin',
+    inLanguage: 'fr-BJ',
+    numberOfItems: posts.length,
+    itemListElement: posts.map((post, index) => ({
+      '@type': 'ListItem',
+      position: (page - 1) * PAGE_SIZE + index + 1,
+      url: `${SITE}/blog/${post.slug}`,
+      name: post.title,
+      item: {
+        '@type': 'BlogPosting',
+        '@id': `${SITE}/blog/${post.slug}`,
+        headline: post.title,
+        url: `${SITE}/blog/${post.slug}`,
+        description: post.excerpt,
+        inLanguage: 'fr-BJ',
+        author: { '@type': 'Organization', name: post.authorName || 'LIVEINBLACK' },
+      },
+    })),
+  }
 
   function makeHref(nextPage: number) {
     const params = new URLSearchParams()
@@ -54,6 +81,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
   return (
     <main className={styles.page}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero}>
         <p className={styles.eyebrow}>Le journal LIVEINBLACK</p>
         <h1>Les idées qui font vivre la scène.</h1>

@@ -8,6 +8,7 @@ import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
 import { validateOrganizerStep0, validateOrganizerStep1, type OrganizerFormData } from '@/lib/shared/applicationValidation'
 import { uploadApplicationDocument } from '@/lib/client/applicationDocumentUpload'
 import type { ApplicationDocumentUploadReference } from '@/lib/shared/applicationDocuments'
+import { GROWTH_EVENT_NAMES, trackGrowthEvent } from '@/lib/client/growthAnalytics'
 import { Button, Card, Input, Textarea, Select, Checkbox, Label } from '@/app/components/ui'
 
 // Port de src/pages/OnboardingOrganisateur.jsx (#7 phase organisateur) — 4
@@ -205,6 +206,13 @@ export default function OrganizerOnboardingWizard({
           }
           return
         }
+        trackGrowthEvent(GROWTH_EVENT_NAMES.professionalApplicationSubmit, {
+          role: 'organisateur',
+          mode,
+          country: cleanedForm.pays || null,
+          has_city: Boolean(cleanedForm.ville),
+          has_documents: Object.values(documents).some((entries) => entries.length > 0),
+        })
         setSubmitted({ emailPro: cleanedForm.emailPro })
       } else {
         const res = await fetch('/api/applications/organisateur/submit', {
@@ -217,6 +225,13 @@ export default function OrganizerOnboardingWizard({
           setError('Impossible d’envoyer ton dossier. Réessaie.')
           return
         }
+        trackGrowthEvent(GROWTH_EVENT_NAMES.professionalApplicationSubmit, {
+          role: 'organisateur',
+          mode,
+          country: cleanedForm.pays || null,
+          has_city: Boolean(cleanedForm.ville),
+          has_documents: Object.values(documents).some((entries) => entries.length > 0),
+        })
         router.push('/my-application')
       }
     } finally {

@@ -9,6 +9,9 @@ function run(name, command, args = []) {
   return { name, code: res.status ?? 1 }
 }
 
+const growth = run('growth', 'npm', ['run', 'audit:growth'])
+if (growth.code !== 0) process.exit(growth.code)
+
 const services = run('services', 'npm', ['run', 'check:services'])
 if (services.code !== 0 && strictServices) {
   console.error('Readiness arrêté: services manquants (STRICT_SERVICES=true)')
