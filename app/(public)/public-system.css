@@ -203,34 +203,38 @@
   .lb-editorial-card:hover .lb-editorial-card__media img { transform: none; }
 }
 
-/* Échelle compacte commune aux écrans publics, très légèrement agrandie. */
-.lb-editorial-card{border-radius:15px;box-shadow:0 11px 30px rgba(0,0,0,.19)}
-.lb-editorial-card__media{aspect-ratio:16/9}
-.lb-editorial-card__badge{top:9px;left:9px;min-width:32px;min-height:32px;padding-inline:8px;border-radius:10px;font-size:11.5px}
-.lb-editorial-card__body{padding:11px}
-.lb-editorial-card__body h3{font-size:18.5px!important}
-.lb-editorial-card__body h3+p{margin-top:5px;font-size:12.875px!important;line-height:1.42}
-.lb-public-detail-page{padding:10px clamp(9px,1.1vw,16px) 34px!important}
-.lb-public-detail-page h1{font-size:clamp(24px,2.9vw,36px)!important}
-.lb-public-detail-page .lb-detail-section{margin-top:8px;padding:12px;border-radius:14px}
-.lb-public-detail-page .lb-detail-section>h2{margin-bottom:6px!important;font-size:12px!important}
-.lb-public-detail-page .lb-detail-section p{font-size:12.25px!important;line-height:1.4!important}
-.lb-auth-split__form h1{font-size:clamp(25px,2.8vw,32px)!important}
-.lb-auth-split__form p{font-size:13.5px!important;line-height:1.45!important}
-.lb-auth-split__form label{margin-bottom:5px!important;font-size:12.5px!important}
-.lb-auth-split__form :where(input,textarea){min-height:42px!important;padding-inline:13px!important;border-radius:11px!important;font-size:13.5px!important}
-.lb-auth-split__form button,.lb-auth-split__form a[style*="primaryBtn"]{min-height:40px;font-size:13.5px!important}
-.lb-auth-form>div:first-of-type{margin-bottom:15px!important}.lb-auth-form form{gap:11px!important}
-.lb-auth-form .lb-role-card button{min-height:51px!important;padding:9px!important}
-.lb-auth-form [role="tablist"]{min-height:37px}.lb-auth-form [role="tab"]{min-height:33px}
-.lb-auth-state{padding:20px!important;border-radius:17px}.lb-auth-wizard>div{gap:13px!important}
-.lb-auth-wizard>div>div:nth-child(3){padding:16px!important;border-radius:16px!important}
-.lb-auth-wizard form,.lb-auth-wizard>div>div:nth-child(3)>div{gap:11px!important}
-.lb-legal-page,.lb-contact-page{padding:22px clamp(11px,1.3vw,20px) 43px!important}
-.lb-legal-page h1,.lb-contact-page h1{font-size:clamp(27px,3.3vw,40px)!important}
-.lb-legal-page p,.lb-legal-page li,.lb-contact-page p{font-size:13.5px!important;line-height:1.49!important}
-.lb-contact-page input,.lb-contact-page textarea{min-height:42px!important;font-size:13.5px!important}
-.lb-blog-article{padding:20px clamp(11px,1.3vw,20px) 43px!important}
-.lb-blog-article h1{font-size:clamp(27px,3.5vw,42px)!important}
-.lb-blog-article article{font-size:14.5px!important;line-height:1.59!important}
-.lb-status-page{padding:33px 17px!important}.lb-status-page>div{padding:20px!important;border-radius:19px!important}
+/* Échelle uniforme et très lisible pour les cartes et contenus publics. */
+.lb-editorial-card { border-radius: 24px; background: rgba(255, 255, 255, .055); border: 1px solid rgba(255, 255, 255, .12); box-shadow: 0 20px 56px rgba(0, 0, 0, .22); }
+.lb-editorial-card__media { aspect-ratio: 16 / 9; }
+.lb-editorial-card__badge { top: 12px; left: 12px; min-width: 38px; min-height: 38px; padding-inline: 10px; border-radius: 12px; font-size: 14px; font-weight: 800; }
+.lb-editorial-card__body { padding: 18px 20px 20px; }
+.lb-editorial-card__body h3 { font-size: 22px !important; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+.lb-editorial-card__body h3 + p { margin-top: 8px; font-size: 15.5px !important; line-height: 1.5; color: rgba(245, 245, 247, 0.72); }
+.lb-public-detail-page { padding: 20px clamp(12px, 2vw, 24px) 48px !important; }
+.lb-public-detail-page h1 { font-size: clamp(28px, 3.5vw, 44px) !important; }
+.lb-public-detail-page .lb-detail-section { margin-top: 16px; padding: 20px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .055); box-shadow: 0 20px 56px rgba(0, 0, 0, .22); }
+.lb-public-detail-page .lb-detail-section > h2 { margin-bottom: 10px !important; font-size: 16px !important; }
+.lb-public-detail-page .lb-detail-section p { font-size: 15px !important; line-height: 1.55 !important; }
+.lb-auth-split__form h1 { font-size: clamp(28px, 3.2vw, 38px) !important; }
+.lb-auth-split__form p { font-size: 15.5px !important; line-height: 1.5 !important; }
+.lb-auth-split__form label { margin-bottom: 6px !important; font-size: 14px !important; font-weight: 700 !important; }
+.lb-auth-split__form :where(input, textarea) { min-height: 46px !important; padding-inline: 14px !important; border-radius: 13px !important; font-size: 15px !important; }
+.lb-auth-split__form button, .lb-auth-split__form a[style*="primaryBtn"] { min-height: 46px; font-size: 15.5px !important; }
+.lb-auth-form > div:first-of-type { margin-bottom: 18px !important; }
+.lb-auth-form form { gap: 14px !important; }
+.lb-auth-form .lb-role-card button { min-height: 60px !important; padding: 12px 14px !important; border-radius: 18px !important; }
+.lb-auth-form [role="tablist"] { min-height: 44px; }
+.lb-auth-form [role="tab"] { min-height: 38px; font-size: 15px !important; }
+.lb-auth-state { padding: 24px !important; border-radius: 24px !important; }
+.lb-auth-wizard > div { gap: 16px !important; }
+.lb-auth-wizard > div > div:nth-child(3) { padding: 20px !important; border-radius: 20px !important; }
+.lb-auth-wizard form, .lb-auth-wizard > div > div:nth-child(3) > div { gap: 14px !important; }
+.lb-legal-page, .lb-contact-page { padding: 28px clamp(14px, 2vw, 28px) 56px !important; }
+.lb-legal-page h1, .lb-contact-page h1 { font-size: clamp(30px, 4vw, 48px) !important; }
+.lb-legal-page p, .lb-legal-page li, .lb-contact-page p { font-size: 15.5px !important; line-height: 1.55 !important; }
+.lb-contact-page input, .lb-contact-page textarea { min-height: 46px !important; font-size: 15px !important; }
+.lb-blog-article { padding: 28px clamp(14px, 2vw, 28px) 56px !important; }
+.lb-blog-article h1 { font-size: clamp(30px, 4vw, 48px) !important; }
+.lb-blog-article article { font-size: 16.5px !important; line-height: 1.65 !important; }
+.lb-status-page { padding: 40px 20px !important; }
+.lb-status-page > div { padding: 28px !important; border-radius: 24px !important; }

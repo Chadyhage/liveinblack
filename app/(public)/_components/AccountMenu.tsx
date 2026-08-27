@@ -152,17 +152,17 @@ export default function AccountMenu({
           alignItems: 'center',
           gap: 8,
           width: 'auto',
-          height: 38,
-          minWidth: 38,
-          minHeight: 38,
-          padding: '0 8px 0 2px',
+          height: 42,
+          minWidth: 42,
+          minHeight: 42,
+          padding: '0 12px 0 4px',
           borderRadius: 999,
-            border: '1px solid var(--border-strong)',
-            background: 'var(--surface)',
-            color: 'var(--text)',
-          }}
+          border: '1px solid var(--border-strong)',
+          background: 'var(--surface)',
+          color: 'var(--text)',
+        }}
         >
-          <Avatar src={user.image} name={user.name || user.email || '?'} size="sm" style={{ width: 30, height: 30 }} />
+          <Avatar src={user.image} name={user.name || user.email || '?'} size="sm" style={{ width: 34, height: 34 }} />
           {user.name && (
             <span className="lb-acct-name" style={{ fontSize: 13, fontWeight: 700, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.name.split(' ')[0]}

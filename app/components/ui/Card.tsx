@@ -25,10 +25,12 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ children, sty
       className={`lb-card${className ? ` ${className}` : ''}`}
       {...rest}
       style={{
-        background: 'var(--surface)',
-        border: `1px solid ${accent || 'var(--border)'}`,
-        borderRadius: 'var(--radius-lg)',
-        padding: 14,
+        background: 'rgba(255, 255, 255, 0.055)',
+        border: `1px solid ${accent || 'rgba(255, 255, 255, 0.12)'}`,
+        borderRadius: 24,
+        padding: 20,
+        boxShadow: '0 20px 56px rgba(0, 0, 0, 0.22)',
+        overflow: 'hidden',
         ...style,
       }}
     >

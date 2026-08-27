@@ -289,26 +289,26 @@ export default async function AccueilPage() {
                 const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl || placeholderPhotoUrl(p.userId, 440, 248)
                 return (
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ position: 'relative', minHeight: 150, background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
-                      <Image src={coverImage} alt="" fill loading={index === 0 ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
-                      <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 10.5, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '4px 9px', borderRadius: 999 }}>
+                    <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
+                      <Image src={coverImage} alt="" fill loading={index === 0 ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 280px" />
+                      <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 13, fontWeight: 800, color: '#fff', background: `${pc.color}cc`, padding: '5px 11px', borderRadius: 999 }}>
                         {pc.label}
                         {categories.length > 1 ? ` +${categories.length - 1}` : ''}
                       </span>
-                      <div style={{ position: 'absolute', left: 18, bottom: -24, width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 17, color: 'var(--obsidian)', boxShadow: '0 10px 24px rgba(0,0,0,.3)' }}>
+                      <div style={{ position: 'absolute', left: 18, bottom: 12, width: 44, height: 44, borderRadius: '50%', border: '3px solid var(--surface)', overflow: 'hidden', background: pc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 17, color: 'var(--obsidian)', boxShadow: '0 10px 24px rgba(0,0,0,.4)' }}>
                         {p.photoUrl ? (
-                          <Image src={p.photoUrl} alt={p.name} width={64} height={64} style={{ objectFit: 'cover' }} />
+                          <Image src={p.photoUrl} alt={p.name} width={56} height={56} style={{ objectFit: 'cover' }} />
                         ) : (
                           p.name?.[0]?.toUpperCase() || '?'
                         )}
                       </div>
                     </div>
-                    <div style={{ minHeight: 124, padding: '32px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <p style={{ fontSize: 17, lineHeight: 1.2, fontWeight: 800, margin: 0 }}>{p.name}</p>
+                    <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <p style={{ fontSize: 22, lineHeight: 1.16, fontWeight: 800, margin: 0, color: '#f5f5f7' }}>{p.name}</p>
                       {(p.city || p.location || p.country) && (
-                        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '8px 0 0' }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>
+                        <p style={{ fontSize: 15.5, color: 'rgba(245, 245, 247, .72)', margin: '8px 0 0', lineHeight: 1.45 }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>
                       )}
-                      <span style={{ marginTop: 'auto', paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 13.5, fontWeight: 800, color: 'var(--teal)' }}>Voir le profil →</span>
+                      <span style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.12)', fontSize: 15.5, fontWeight: 800, color: 'var(--teal)' }}>Voir le profil →</span>
                     </div>
                   </Link>
                 )
@@ -343,7 +343,7 @@ export default async function AccueilPage() {
 
       {/* COMMENT ÇA MARCHE */}
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 14 }}>
+        <div className={styles.contentGrid}>
           {[
             ['01', '/images/live-in-black/journey-discover.jpg', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
             ['02', '/images/live-in-black/journey-reserve.jpg', 'Deux amies réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
@@ -412,12 +412,6 @@ export default async function AccueilPage() {
 function HomeEventCard({ event, badge, boosted = false, reason, eager = false }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string; eager?: boolean }) {
   const prices = (event.places || []).map((place) => Number(place.price)).filter((price) => Number.isFinite(price) && price >= 0)
   const minPrice = prices.length ? Math.min(...prices) : null
-  // Cartes du "Top 3 du classement" (badge 01/02/03) avec des tailles de
-  // texte plus grandes que les autres grilles d'événements de la home —
-  // retour client : titres/labels du classement trop petits pour du contenu
-  // mis en avant. Le titre à 22px reste cohérent avec la hiérarchie du
-  // reste de la home (proche des 20-22px utilisés pour les titres de carte
-  // prestataires/section juste en dessous).
   const isRanking = Boolean(badge)
   return (
     <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
@@ -432,17 +426,17 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false }:
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
         {badge ? (
-                      <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 16, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
+          <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 18, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
         ) : (
           <DateBadge dateISO={event.date} />
         )}
-        {boosted && <span style={{ position: 'absolute', top: 10, right: 10, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '4px 8px', fontSize: isRanking ? 10.5 : 9.5, fontWeight: 900 }}>À LA UNE</span>}
-        {reason && <span style={{ position: 'absolute', left: 10, bottom: 10, maxWidth: 'calc(100% - 20px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '5px 9px', fontSize: 10.5, fontWeight: 700 }}>{reason}</span>}
+        {boosted && <span style={{ position: 'absolute', top: 12, right: 12, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '5px 10px', fontSize: 12, fontWeight: 900 }}>À LA UNE</span>}
+        {reason && <span style={{ position: 'absolute', left: 12, bottom: 12, maxWidth: 'calc(100% - 24px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '6px 12px', fontSize: 13, fontWeight: 700 }}>{reason}</span>}
       </div>
-      <div style={{ minHeight: 112, padding: '14px 14px 15px', display: 'flex', flexDirection: 'column' }}>
-        <p style={{ margin: 0, color: '#fff', fontSize: isRanking ? 19 : 17, lineHeight: 1.2, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
-        <p style={{ margin: '7px 0 0', color: 'var(--text-muted)', fontSize: isRanking ? 13.5 : 13 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
-        <p style={{ margin: 'auto 0 0', paddingTop: 9, color: 'var(--gold)', fontSize: isRanking ? 13.5 : 12.5, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
+      <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <p style={{ margin: 0, color: '#fff', fontSize: isRanking ? 24 : 22, lineHeight: 1.16, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>
+        <p style={{ margin: '8px 0 0', color: 'rgba(245, 245, 247, .72)', fontSize: 15.5, fontWeight: 500, lineHeight: 1.45 }}>{[event.dateDisplay, event.city].filter(Boolean).join(' · ') || 'Bientôt'}</p>
+        <p style={{ margin: 'auto 0 0', paddingTop: 14, color: 'var(--gold)', fontSize: 16, fontWeight: 800 }}>{minPrice == null || minPrice <= 0 ? 'Gratuit' : `Dès ${fmtMoney(minPrice, eventCurrency(event))}`}</p>
       </div>
     </Link>
   )
@@ -463,27 +457,18 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
 
 function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
   return (
-    <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, textAlign: 'center', maxWidth: 420, margin: '0 auto' }}>
+    <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
       <Mascot mood="sleeping" size={126} />
-      <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
-      <Link href={ctaHref} style={{ ...btnGhost, minHeight: 42, marginTop: 14, padding: '10px 18px', display: 'inline-flex' }}>{ctaLabel}</Link>
+      <p style={{ fontSize: 16, color: 'var(--text-muted)', margin: 0 }}>{text}</p>
+      <Link href={ctaHref} style={{ ...btnGhost, minHeight: 44, marginTop: 16, padding: '12px 20px', display: 'inline-flex' }}>{ctaLabel}</Link>
     </Card>
   )
 }
 
-// Boutons rectangulaires, texte MAJUSCULES + tracking — langage visuel du
-// site de référence (chillandgroovefestival.com : "PRENDRE MON PASS",
-// "Acheter"), couleurs LIVEINBLACK inchangées (décision client : polices/
-// mise en page oui, palette non).
-const card: React.CSSProperties = { background: 'rgba(24,24,27,.92)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 15, boxShadow: '0 16px 42px rgba(0,0,0,.2)' }
-// Overrides passés à <Card> pour les usages non-<Link> ci-dessus : mêmes
-// tokens que `card` (fond dégradé, rayon xl, ombre), mais composés via le
-// primitif partagé plutôt que dupliqués — `card` reste nécessaire tel quel
-// pour les usages sur <Link>, que Card (toujours un <div>) ne peut pas
-// remplacer sans étendre son API avec un prop `as` (hors scope ici).
+const card: React.CSSProperties = { maxWidth: 360, width: '100%', background: 'rgba(255, 255, 255, 0.055)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: 24, boxShadow: '0 20px 56px rgba(0, 0, 0, 0.22)', overflow: 'hidden' }
 const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
-const btnPrimary: React.CSSProperties = { minHeight: 34, padding: '7px 14px', borderRadius: 13, fontSize: 12.5, fontWeight: 650, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnGhost: React.CSSProperties = { minHeight: 34, padding: '7px 14px', borderRadius: 13, fontSize: 12.5, fontWeight: 650, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnSolid: React.CSSProperties = { minHeight: 34, padding: '7px 14px', borderRadius: 13, fontSize: 12.5, fontWeight: 650, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }
-const featItem: React.CSSProperties = { fontSize: 14, lineHeight: 1.42, color: 'var(--text-muted)', display: 'flex', gap: 8, alignItems: 'baseline' }
+const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 14, fontSize: 15, fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnGhost: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.18)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnSolid: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 14, fontSize: 15, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
+const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }
+const featItem: React.CSSProperties = { fontSize: 16, lineHeight: 1.45, color: 'var(--text-muted)', display: 'flex', gap: 8, alignItems: 'baseline' }

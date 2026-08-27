@@ -17,9 +17,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { minHeight: 34, padding: '6px 10px', fontSize: 12.5, borderRadius: 9, gap: 5 },
-  md: { minHeight: 38, padding: '8px 12px', fontSize: 13.25, borderRadius: 10, gap: 6 },
-  lg: { minHeight: 42, padding: '9px 15px', fontSize: 13.5, borderRadius: 11, gap: 6 },
+  sm: { minHeight: 38, padding: '8px 14px', fontSize: 14, borderRadius: 11, gap: 6 },
+  md: { minHeight: 44, padding: '10px 18px', fontSize: 15.5, borderRadius: 13, gap: 8 },
+  lg: { minHeight: 50, padding: '12px 24px', fontSize: 17, borderRadius: 15, gap: 8 },
 }
 
 function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties {

@@ -111,12 +111,13 @@ function HeaderSearch() {
           containerStyle={{ flex: 1, minWidth: 0 }}
           style={{
             width: 172,
-            minHeight: 40,
+            minHeight: 38,
+            height: 38,
             padding: '0 7px 0 12px',
             border: 0,
             background: 'transparent',
             color: '#f5f5f7',
-            fontSize: 13,
+            fontSize: 13.5,
             fontFamily: 'inherit',
             boxShadow: 'none',
           }}
@@ -506,7 +507,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-public-nav__inner {
           width: 100%;
           max-width: 1380px;
-          min-height: 40px;
+          min-height: 48px;
           margin: 0 auto;
           padding: 4px 6px 4px 10px;
           display: flex;
@@ -522,63 +523,69 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
         .lb-public-nav__brand {
-          min-height: 36px;
+          min-height: 42px;
+          height: 42px;
           display: inline-flex;
           align-items: center;
           gap: 7px;
           flex-shrink: 0;
           color: #f5f5f7;
           text-decoration: none;
-          font-size: 13px;
+          font-size: 13.5px;
           font-weight: 700;
           letter-spacing: -.025em;
           border-radius: 12px;
         }
         .lb-public-nav__brand-mark {
-          width: 28px;
-          height: 28px;
+          width: 30px;
+          height: 30px;
           display: grid;
           place-items: center;
           border-radius: 10px;
-          background: var(--primary-a.94);
-          color: #101500;
-          font-size: 11px;
-          font-weight: 820;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+          background: var(--primary);
+          color: var(--primary-ink);
+          font-size: 12px;
+          font-weight: 850;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
         }
         .lb-public-nav__brand-muted { color: rgba(245,245,247,.48); font-weight: 520; }
-        .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+        .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
         .lb-navlink { display: none }
         .lb-navlink-mobile { display: inline-flex; align-items: center; justify-content: center; }
         .lb-mobile-login { gap: 7px; white-space: nowrap; }
         .lb-navlink-primary {
           position: relative;
-          min-height: 36px;
+          min-height: 42px;
+          height: 42px;
+          display: inline-flex;
           align-items: center;
-          padding: 0 10px;
-          border-radius: 11px;
-          color: rgba(245,245,247,.68);
+          padding: 0 12px;
+          border-radius: 12px;
+          color: rgba(245,245,247,.72);
           text-decoration: none;
-          font-size: 12px;
-          font-weight: 520;
+          font-size: 13.5px;
+          font-weight: 600;
           letter-spacing: -.01em;
         }
         .lb-navlink-active { color: #f5f5f7; background: rgba(255,255,255,.11); box-shadow: inset 0 0 0 1px rgba(255,255,255,.055); }
         .lb-nav-auth {
-          min-height: 36px;
+          min-height: 42px;
+          height: 42px;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 7px;
-          padding: 0 11px;
-          border-radius: 11px;
+          padding: 0 14px;
+          border-radius: 12px;
           line-height: 1;
           white-space: nowrap;
           text-decoration: none;
-          font-size: 12px;
-          font-weight: 650;
+          font-size: 13.5px;
+          font-weight: 700;
         }
-        .lb-nav-auth--secondary { margin-left: 5px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.065); }
-        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(209,255,118,.72); background: linear-gradient(180deg, #c8fa68, var(--primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 7px 18px rgba(126,181,27,.18); }
+        .lb-nav-auth--secondary { margin-left: 4px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.07); }
+        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(245,61,141,.6); background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 6px 18px rgba(245,61,141,.3); }
+        .lb-nav-auth--primary:hover { background: var(--primary-strong); filter: brightness(1.08); }
         @media (min-width: 1100px) and (max-width: 1399px) {
           .lb-navlink-primary, .lb-nav-search { display: inline-flex }
           .lb-nav-auth { display: inline-flex }
@@ -595,33 +602,34 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-navlink:not(.lb-nav-search):hover { color: #fff; background: rgba(255,255,255,.1); }
         .lb-navlink:not(.lb-nav-search):active { transform: scale(.97); }
         .lb-header-search__form {
-          width: clamp(156px, 12vw, 206px);
+          width: clamp(160px, 13vw, 216px);
           display: flex;
           align-items: center;
-          min-height: 38px;
-          padding: 1px 2px 1px 1px;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: 11px;
-          background: rgba(255,255,255,.065);
+          min-height: 42px;
+          height: 42px;
+          padding: 2px 2px 2px 2px;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 12px;
+          background: rgba(255,255,255,.07);
           transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
         }
         .lb-header-search__form:focus-within {
-          border-color: var(--primary-a65);
-          background: rgba(255,255,255,.1);
-          box-shadow: 0 0 0 4px var(--primary-a10);
+          border-color: rgba(245,61,141,.7);
+          background: rgba(255,255,255,.11);
+          box-shadow: 0 0 0 4px rgba(245,61,141,.12);
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
         .lb-header-search__button {
-          width: 36px;
-          height: 36px;
-          flex: 0 0 36px;
+          width: 38px;
+          height: 38px;
+          flex: 0 0 38px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           padding: 0 !important;
           border: 0;
           border-radius: 10px;
-          background: rgba(255,255,255,.085);
+          background: rgba(255,255,255,.09);
           color: #f5f5f7;
           cursor: pointer;
           transition: color 160ms ease, background 160ms ease;
@@ -630,14 +638,14 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
-          .lb-public-nav__inner { min-height: 40px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
+          .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
           .lb-public-nav__brand-mark { display: none; }
-          .lb-public-nav__brand { font-size: 12.5px; }
+          .lb-public-nav__brand { font-size: 12.5px; height: 38px; min-height: 38px; }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }
         .lb-mobile-auth-actions { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px 10px 10px; margin-top: 5px; border-top: 1px solid rgba(255,255,255,.09); }
-        .lb-mobile-auth-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border-radius: 10px; text-decoration: none; font-size: 12px; font-weight: 650; }
+        .lb-mobile-auth-button { min-height: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border-radius: 12px; text-decoration: none; font-size: 13.5px; font-weight: 700; }
         .lb-mobile-auth-button--primary { color: var(--primary-ink); background: var(--primary); }
         .lb-mobile-auth-button--secondary { color: #f5f5f7; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); }
         .lb-menu-row { transition: background 0.15s ease; }

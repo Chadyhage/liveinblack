@@ -57,55 +57,56 @@
 .heroEyebrow {
   margin: 0;
   color: var(--primary);
-  font-size: clamp(12px, 1.1vw, 14px);
-  font-weight: 600;
-  letter-spacing: -.01em;
+  font-size: clamp(14px, 1.2vw, 16px);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
 .heroTitle {
-  max-width: 680px;
-  margin: 5px 0 0;
+  max-width: 720px;
+  margin: 6px 0 0;
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(26px, 2.8vw, 38px);
-  line-height: 1;
-  font-weight: 720;
-  letter-spacing: -.055em;
+  font-size: clamp(32px, 3.8vw, 50px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -.04em;
   text-wrap: balance;
 }
 
 .heroTitle span {
-  color: rgba(255, 255, 255, .72);
+  color: rgba(255, 255, 255, .82);
 }
 
 .heroDescription {
-  max-width: 640px;
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, .74);
-  font-size: clamp(11.5px, .85vw, 13px);
-  line-height: 1.3;
+  max-width: 660px;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, .8);
+  font-size: clamp(14px, 1.1vw, 16.5px);
+  line-height: 1.45;
   text-wrap: balance;
 }
 
 .heroActions {
   display: flex;
   justify-content: flex-start;
-  gap: 7px;
-  margin-top: 7px;
+  gap: 10px;
+  margin-top: 16px;
   flex-wrap: wrap;
 }
 
 .primaryButton,
 .secondaryButton {
-  min-height: 38px;
+  min-height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 13px;
+  padding: 10px 20px;
   border: 1px solid transparent;
-  border-radius: 11px;
-  font-size: 12.5px;
-  font-weight: 650;
+  border-radius: 14px;
+  font-size: 15.5px;
+  font-weight: 700;
   letter-spacing: -.01em;
   line-height: 1.2;
   text-decoration: none;
@@ -130,7 +131,7 @@
 }
 
 .primaryButton:hover {
-  background: #c6ff5b;
+  background: var(--primary-strong);
 }
 
 .secondaryButton:hover {
@@ -147,14 +148,14 @@
 .heroProof {
   display: flex;
   justify-content: flex-start;
-  gap: 5px 12px;
-  margin: 8px 0 0;
+  gap: 6px 16px;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
   flex-wrap: wrap;
-  color: rgba(255, 255, 255, .62);
-  font-size: 10.5px;
-  font-weight: 500;
+  color: rgba(255, 255, 255, .72);
+  font-size: 13.5px;
+  font-weight: 600;
 }
 
 .heroProof li {
@@ -165,8 +166,8 @@
 
 .heroProof li::before {
   content: '';
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--primary);
@@ -176,87 +177,92 @@
 .newsSection {
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: clamp(10px, 1.2vw, 18px) var(--page-gutter);
+  padding: clamp(16px, 2vw, 28px) var(--page-gutter);
 }
 
 .newsSection {
-  padding-top: 6px;
-  padding-bottom: 10px;
+  padding-top: 10px;
+  padding-bottom: 16px;
 }
 
-.sectionHeader { max-width: 720px; margin-bottom: 6px; }
+.sectionHeader { max-width: 760px; margin-bottom: 14px; }
 
 .sectionEyebrow {
   margin: 0 0 6px;
   color: var(--primary);
-  font-size: 10.5px;
+  font-size: 13px;
   line-height: 1.3;
-  font-weight: 600;
-  letter-spacing: -.01em;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
 .sectionTitle {
   margin: 0;
   color: #f5f5f7;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(18px, 1.9vw, 26px);
-  line-height: 1.04;
-  font-weight: 700;
-  letter-spacing: -.045em;
+  font-size: clamp(22px, 2.5vw, 32px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -.03em;
   text-wrap: balance;
 }
 
 .sectionDescription {
-  max-width: 620px;
-  margin: 6px 0 0;
-  color: rgba(255, 255, 255, .62);
-  font-size: 10.5px;
-  line-height: 1.34;
+  max-width: 680px;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, .72);
+  font-size: 15.5px;
+  line-height: 1.45;
 }
 
-.contentGrid,
-.benefitGrid {
+.contentGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px));
+  gap: 16px;
   align-items: stretch;
 }
 
 .benefitGrid {
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
 }
 
 .horizontalRail {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   overflow-x: auto;
-  padding: 2px 2px 10px;
+  padding: 4px 4px 14px;
   scroll-snap-type: x proximity;
   scrollbar-color: rgba(255, 255, 255, .22) transparent;
 }
 
 .finalSection {
-  padding: 10px var(--page-gutter) clamp(20px, 2.6vw, 34px);
+  padding: 16px var(--page-gutter) clamp(24px, 3vw, 42px);
 }
 
 .finalCard {
   max-width: 860px;
   margin: 0 auto;
-  padding: clamp(11px, 1.5vw, 16px) clamp(9px, 1.5vw, 16px);
+  padding: clamp(20px, 3vw, 32px);
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 15px;
+  border-radius: 24px;
   text-align: center;
   background:
     radial-gradient(circle at 50% 0%, var(--primary-a10), transparent 58%),
-    rgba(24, 24, 27, .92);
-  box-shadow: 0 22px 58px rgba(0, 0, 0, .2);
+    rgba(255, 255, 255, .055);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, .22);
 }
 
 .home :global(.lb-card) {
+  max-width: 360px !important;
+  width: 100% !important;
   border-color: rgba(255, 255, 255, .12) !important;
-  border-radius: 12px !important;
-  background: rgba(24, 24, 27, .92) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, .15) !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, .055) !important;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, .22) !important;
 }
 
 .home :global(.lb-card:hover) {

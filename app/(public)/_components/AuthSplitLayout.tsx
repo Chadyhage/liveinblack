@@ -10,7 +10,7 @@ export default function AuthSplitLayout({ children, tagline, heroImage, wide = f
     <main className={`lb-auth-split ${styles.shell}${wide ? ` lb-auth-split--wide ${styles.wide}` : ''}`}>
       <aside className={`lb-auth-split__visual ${styles.visual}`} aria-label="Live in Black">
         <div className={styles.imageFrame} aria-hidden="true">
-          <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="(max-width: 900px) 0px, 42vw" className={styles.image} />
+          <Image src={heroImage || HERO_IMG} alt="" fill priority sizes="(max-width: 900px) 0px, 50vw" className={styles.image} />
         </div>
         <div className={styles.overlay} />
         <Link href="/home" className={styles.brand} aria-label="Live in Black — accueil">
@@ -32,10 +32,7 @@ export default function AuthSplitLayout({ children, tagline, heroImage, wide = f
             <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
             Retour au site
           </Link>
-          <span className={styles.secure}>
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-            Sécurisé
-          </span>
+
         </div>
         <div className={styles.content}>{children}</div>
         <p className={styles.privacy}>LIVE IN BLACK protège tes informations et ne les partage jamais sans ton accord.</p>
