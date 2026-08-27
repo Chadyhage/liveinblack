@@ -61,19 +61,19 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
       </header>
       <div className={styles.content} aria-live="polite">
         {initialQuery.length < 2 ? <div className={styles.empty}><Search size={25} aria-hidden="true" /><h2>Lance une recherche</h2><p>Saisis au moins deux caractères pour découvrir les résultats.</p></div>
-        : loading ? <div className={styles.loadingGrid} aria-label="Recherche en cours">{Array.from({ length: 6 }).map((_, index) => <span key={index} />)}</div>
+        : loading ? <div className={styles.loadingGrid} aria-label="Recherche en cours">{Array.from({ length: 8 }).map((_, index) => <span key={index} />)}</div>
         : error ? <div className={styles.empty} role="alert"><h2>Impossible de rechercher</h2><p>{error}</p></div>
         : total === 0 ? <div className={styles.empty}><Search size={25} aria-hidden="true" /><h2>Aucun résultat pour « {initialQuery} »</h2><p>Essaie une ville, un type de soirée ou un service plus général.</p></div>
         : <>
           <div className={styles.summary}><strong>{total}</strong> résultat{total > 1 ? 's' : ''} pour « {initialQuery} »</div>
-          {results.events.length > 0 && <ResultSection title="Événements" kicker="Agenda" icon={<CalendarDays size={18} />} href={`/events?q=${encodeURIComponent(initialQuery)}`}>
-            {results.events.map((item) => <ResultCard key={item.id} href={`/events/${encodeURIComponent(item.id)}`} image={item.imageUrl} icon={<CalendarDays size={23} />} title={item.name} detail={[item.dateDisplay, item.city].filter(Boolean).join(' · ') || 'Voir les informations'} />)}
+          {results.events.length > 0 && <ResultSection title="Événements" kicker="Agenda" target="search_all_events" icon={<CalendarDays size={18} />} href={`/events?q=${encodeURIComponent(initialQuery)}`}>
+            {results.events.map((item) => <ResultCard key={item.id} href={`/events/${encodeURIComponent(item.id)}`} image={item.imageUrl} icon={<CalendarDays size={23} />} title={item.name} detail={[item.dateDisplay, item.city].filter(Boolean).join(' · ') || 'Voir les informations'} target="search_result_event" />)}
           </ResultSection>}
-          {results.organizers.length > 0 && <ResultSection title="Organisateurs" kicker="Créateurs" icon={<UsersRound size={18} />} href={`/organizers?q=${encodeURIComponent(initialQuery)}`}>
-            {results.organizers.map((item) => <ResultCard key={item.userId} href={`/organizers/${encodeURIComponent(item.slug || item.userId)}`} image={item.avatarUrl} icon={<UsersRound size={23} />} title={item.publicName} detail={item.city || item.shortDescription || 'Découvrir le profil'} />)}
+          {results.organizers.length > 0 && <ResultSection title="Organisateurs" kicker="Créateurs" target="search_all_organizers" icon={<UsersRound size={18} />} href={`/organizers?q=${encodeURIComponent(initialQuery)}`}>
+            {results.organizers.map((item) => <ResultCard key={item.userId} href={`/organizers/${encodeURIComponent(item.slug || item.userId)}`} image={item.avatarUrl} icon={<UsersRound size={23} />} title={item.publicName} detail={item.city || item.shortDescription || 'Découvrir le profil'} target="search_result_organizer" />)}
           </ResultSection>}
-          {results.providers.length > 0 && <ResultSection title="Prestataires" kicker="Services" icon={<Store size={18} />} href={`/providers?q=${encodeURIComponent(initialQuery)}`}>
-            {results.providers.map((item) => <ResultCard key={item.userId} href={`/providers/${encodeURIComponent(item.userId)}`} image={item.photoUrl} icon={<Store size={23} />} title={item.name} detail={item.city || item.location || item.description || 'Découvrir le profil'} location />)}
+          {results.providers.length > 0 && <ResultSection title="Prestataires" kicker="Services" target="search_all_providers" icon={<Store size={18} />} href={`/providers?q=${encodeURIComponent(initialQuery)}`}>
+            {results.providers.map((item) => <ResultCard key={item.userId} href={`/providers/${encodeURIComponent(item.userId)}`} image={item.photoUrl} icon={<Store size={23} />} title={item.name} detail={item.city || item.location || item.description || 'Découvrir le profil'} target="search_result_provider" location />)}
           </ResultSection>}
         </>}
       </div>
@@ -81,10 +81,10 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
   )
 }
 
-function ResultSection({ title, kicker, icon, href, children }: { title: string; kicker: string; icon: ReactNode; href: string; children: ReactNode }) {
-  return <section className={styles.section}><div className={styles.sectionHeading}><span>{icon}</span><div><p>{kicker}</p><h2>{title}</h2></div><Link href={href}>Tout voir</Link></div><div className={styles.grid}>{children}</div></section>
+function ResultSection({ title, kicker, icon, href, target, children }: { title: string; kicker: string; icon: ReactNode; href: string; target: string; children: ReactNode }) {
+  return <section className={styles.section}><div className={styles.sectionHeading}><span>{icon}</span><div><p>{kicker}</p><h2>{title}</h2></div><Link href={href} data-growth-event="cta_click" data-growth-surface="public_search_results" data-growth-target={target}>Tout voir</Link></div><div className={styles.grid}>{children}</div></section>
 }
 
-function ResultCard({ href, image, icon, title, detail, location = false }: { href: string; image?: string | null; icon: ReactNode; title: string; detail: string; location?: boolean }) {
-  return <Link className={styles.card} href={href}><span className={styles.visual} style={visualStyle(image)} aria-hidden="true">{icon}</span><span className={styles.cardBody}><strong>{title}</strong><small>{location && <MapPin size={12} aria-hidden="true" />}{detail}</small></span></Link>
+function ResultCard({ href, image, icon, title, detail, target, location = false }: { href: string; image?: string | null; icon: ReactNode; title: string; detail: string; target: string; location?: boolean }) {
+  return <Link className={styles.card} href={href} data-growth-event="cta_click" data-growth-surface="public_search_results" data-growth-target={target}><span className={styles.visual} style={visualStyle(image)} aria-hidden="true">{icon}</span><span className={styles.cardBody}><strong>{title}</strong><small>{location && <MapPin size={12} aria-hidden="true" />}{detail}</small></span></Link>
 }

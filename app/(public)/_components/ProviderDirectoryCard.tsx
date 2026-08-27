@@ -31,7 +31,7 @@ export default function ProviderDirectoryCard({ provider, eager = false }: { pro
           fill
           loading={eager ? 'eager' : undefined}
           className={styles.cover}
-          sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1020px) 46vw, 30vw"
+          sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1020px) 46vw, (max-width: 1440px) 24vw, 210px"
         />
         <div className={styles.scrim} aria-hidden="true" />
         <span className={styles.category} style={{ background: `${primaryCategory.color}e6` }}>

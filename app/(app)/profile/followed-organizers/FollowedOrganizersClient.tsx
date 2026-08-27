@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { ActionLink, Avatar, Button, Card, Checkbox, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 24
 
 // Port de src/pages/FollowedOrganizersPage.jsx (#6 phase profil).
 
@@ -97,9 +97,9 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
 
   return (
     <main className="lb-dashboard-page">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
@@ -107,8 +107,8 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
         </div>
 
         <header>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
-          <p style={{ maxWidth: 620, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
+          <p style={{ maxWidth: 620, margin: '5px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12, lineHeight: 1.35 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
         </header>
 
         {follows.length === 0 ? (
@@ -126,7 +126,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 8, alignItems: 'start' }}>
               {pagedFollows.map((f) => (
                 <FollowCard key={f.organizerId} follow={f} onUnfollowed={() => remove(f.organizerId)} onPatch={(next) => patch(f.organizerId, next)} />
               ))}
@@ -137,14 +137,14 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
 
         {suggestions.length > 0 && (
           <div>
-            <h2 style={{ fontSize: 'clamp(22px,4vw,34px)', fontWeight: 800, margin: '0 0 12px' }}>Organisateurs à suivre</h2>
+            <h2 style={{ fontSize: 'clamp(18px,2.6vw,26px)', fontWeight: 800, margin: '0 0 8px' }}>Organisateurs à suivre</h2>
             <div className="lb-card-grid">
               {suggestions
                 .filter((s) => !follows.some((f) => f.organizerId === s.organizerId))
                 .map((s) => (
-                  <Card key={s.organizerId} style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Card key={s.organizerId} style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
                     <div>
-                      <Link href={`/organizers/${s.slug}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                      <Link href={`/organizers/${s.slug}`} style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
                         {s.name}
                       </Link>
                       {(s.city || s.country) && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
@@ -198,46 +198,46 @@ function FollowCard({
   }
 
   return (
-    <Card>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <Avatar src={follow.organizerAvatarUrl} name={follow.organizerName} size="lg" style={{ width: 48, height: 48 }} />
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
+    <Card style={{ padding: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <Avatar src={follow.organizerAvatarUrl} name={follow.organizerName} size="md" style={{ width: 40, height: 40 }} />
+        <div style={{ flex: 1, minWidth: 120 }}>
+          <h2 style={{ fontSize: 14.5, fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
           {(follow.organizerCity || follow.organizerCountry) && (
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>
+            <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '1px 0 0' }}>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>
           )}
         </div>
         <Link
           href={`/organizers/${follow.organizerSlug}`}
-          style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
+          style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', padding: '6px 10px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
         >
           Voir la page
         </Link>
         <OrganizerFollowButtonClient organizerId={follow.organizerId} organizerName={follow.organizerName} initialFollowing onUnfollow={onUnfollowed} isAuthenticated compact />
       </div>
 
-      <div style={{ borderTop: '1px solid var(--border)', marginTop: 14, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+      <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <Checkbox
           label="Notifications de cet organisateur"
           checked={follow.notificationsEnabled}
           onChange={toggleMaster}
           disabled={savingMaster}
-          style={{ fontSize: 13, color: '#fff' }}
+          style={{ fontSize: 12, color: '#fff' }}
         />
-        <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 12.5 }}>
+        <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 11.5 }}>
           {expanded ? 'Masquer les réglages' : 'Personnaliser les alertes'}
         </Button>
       </div>
 
       {expanded && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 8, marginTop: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px,1fr))', gap: 6, marginTop: 8 }}>
           {ALERT_LABELS.map(({ key, label }) => (
             <Checkbox
               key={key}
               label={label}
               checked={follow.alerts[key]}
               onChange={() => toggleAlert(key)}
-              style={{ fontSize: 12.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '9px 12px' }}
+              style={{ fontSize: 11.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 9, padding: '7px 9px' }}
             />
           ))}
         </div>

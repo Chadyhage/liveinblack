@@ -22,7 +22,7 @@ export interface AgentSalesDashboardView {
   momoSales: number
 }
 
-const CARD_STYLE: React.CSSProperties = { padding: '16px 18px', background: 'var(--surface-2)' }
+const CARD_STYLE: React.CSSProperties = { padding: '10px 12px', background: 'var(--surface-2)' }
 
 export default function AgentSalesClient({
   eventId,
@@ -120,30 +120,30 @@ export default function AgentSalesClient({
   }
 
   return (
-    <main style={{ width: '100%', padding: '28px clamp(14px, 2vw, 28px) 72px' }}>
-      <h1 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 4px' }}>Vente sur place</h1>
-      <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '0 0 20px' }}>{eventName}</p>
+    <main style={{ width: '100%', padding: '14px clamp(10px, 1.4vw, 18px) 56px' }}>
+      <h1 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 3px' }}>Vente sur place</h1>
+      <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 10px' }}>{eventName}</p>
 
-      <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+      <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, marginBottom: 10 }}>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
+          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
+          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash en attente</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
+          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash réglé</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
+          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Mobile Money</p>
         </Card>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
         <Button
           variant={mode === 'onsite' ? 'primary' : 'secondary'}
           onClick={() => setMode('onsite')}
@@ -162,7 +162,7 @@ export default function AgentSalesClient({
         </Button>
       </div>
 
-      <Card style={{ ...CARD_STYLE, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <Card style={{ ...CARD_STYLE, display: 'flex', flexDirection: 'column', gap: 9 }}>
         <div>
           <Label>Type de place</Label>
           <Select
@@ -192,7 +192,7 @@ export default function AgentSalesClient({
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 7 }}>
           <div>
             <Label>Nom (optionnel)</Label>
             <Input aria-label="Nom du client" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nom du client" />
@@ -245,7 +245,7 @@ export default function AgentSalesClient({
         )}
 
         {method === 'momo' && (
-          <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 7 }}>
             <div>
               <Label>Opérateur</Label>
               <Select

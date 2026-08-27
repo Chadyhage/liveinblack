@@ -20,6 +20,7 @@ const lines = [
   `- Organisateurs : ${SITE}/organizers`,
   `- Prestataires : ${SITE}/providers`,
   `- Blog et guides : ${SITE}/blog`,
+  `- Hub guides Bénin : ${SITE}/blog/benin`,
   `- Recherche : ${SITE}/search`,
   '',
   '## Flux et index',

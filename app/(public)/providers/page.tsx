@@ -42,7 +42,7 @@ export default async function PublicPrestatairesPage({
     categorie: category,
     region,
     page: requestedPage,
-    pageSize: 12,
+    pageSize: 24,
     includeTotal: true,
   })
 
@@ -184,7 +184,7 @@ export default async function PublicPrestatairesPage({
         {filtered.length > 0 ? (
           <div className={styles.grid}>
             {filtered.map((provider, index) => (
-              <ProviderDirectoryCard key={provider.userId} provider={provider} eager={index < 3} />
+              <ProviderDirectoryCard key={provider.userId} provider={provider} eager={index < 4} />
             ))}
           </div>
         ) : (

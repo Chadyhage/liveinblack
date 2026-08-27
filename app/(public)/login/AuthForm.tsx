@@ -372,7 +372,7 @@ export default function AuthForm() {
   if (registeredEmail) {
     return (
       <div style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -383,7 +383,7 @@ export default function AuthForm() {
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, overflowWrap: 'break-word' }}>
             Un lien de confirmation a été envoyé à <span style={{ color: 'var(--text)' }}>{registeredEmail}</span>.
           </p>
-          <div style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 14 }}>
+          <div style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 12 }}>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8, marginTop: 0 }}>
               Comment ça marche
             </p>
@@ -442,7 +442,7 @@ export default function AuthForm() {
         .lb-banner-fade { animation: lb-fade-in 0.22s ease }
       `}</style>
 
-      <div style={{ marginBottom: 26 }}>
+      <div style={{ marginBottom: 16 }}>
         <h1 className="font-display" style={{ fontSize: 18, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
@@ -460,28 +460,28 @@ export default function AuthForm() {
             { value: 'login', label: 'Connexion' },
             { value: 'register', label: 'Inscription' },
           ]}
-          style={{ marginBottom: 28 }}
+          style={{ marginBottom: 16 }}
         />
 
         {mode === 'login' && loginError && (
-          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 13, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.5 }}>
+          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
             {loginError}
           </div>
         )}
         {mode === 'login' && !loginError && loginInfo && (
-          <div className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(184, 243, 74,0.10)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 10, fontSize: 13, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.5 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(184, 243, 74,0.10)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 10, fontSize: 12.5, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.45 }}>
             {loginInfo}
           </div>
         )}
         {mode === 'register' && regError && (
-          <div className="lb-banner-fade" style={{ marginBottom: 16, padding: '11px 14px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 13, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.5 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
             {regError}
           </div>
         )}
 
         {/* LOGIN */}
         {mode === 'login' && (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div>
               <Label htmlFor="login-email">Email</Label>
               <Input
@@ -541,7 +541,7 @@ export default function AuthForm() {
 
         {/* REGISTER — STEP 1 : choix du rôle */}
         {mode === 'register' && regStep === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center', margin: '2px 0 6px' }}>
               Quel type de compte veux-tu créer&nbsp;?
             </p>
@@ -554,9 +554,9 @@ export default function AuthForm() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 12px',
-                    minHeight: 62,
+                    gap: 10,
+                    padding: '9px 11px',
+                    minHeight: 56,
                     borderRadius: 14,
                     textAlign: 'left',
                     justifyContent: 'flex-start',
@@ -592,8 +592,8 @@ export default function AuthForm() {
 
         {/* REGISTER — STEP 2 : formulaire client */}
         {mode === 'register' && regStep === 2 && (
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
               <Button
                 variant="ghost"
                 onClick={() => { setRegStep(1); setRegError('') }}
@@ -604,7 +604,7 @@ export default function AuthForm() {
                 </svg>
                 Retour
               </Button>
-              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '4px 10px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'rgba(255,255,255,0.06)' }}>
+              <span style={{ marginLeft: 'auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '3px 8px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'rgba(255,255,255,0.06)' }}>
                 Client
               </span>
             </div>
@@ -761,14 +761,14 @@ export default function AuthForm() {
       </div>
 
       {showForgotModal && (
-        <Modal onClose={closeForgotModal} maxWidth={400} zIndex={100} ariaLabel="Mot de passe oublié" contentStyle={{ padding: '32px 28px' }}>
+        <Modal onClose={closeForgotModal} maxWidth={400} zIndex={100} ariaLabel="Mot de passe oublié" contentStyle={{ padding: '22px 20px' }}>
             {!forgotSubmitted ? (
               <>
                 <h2 id="forgot-modal-title" style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
                   Entre ton adresse email, on t&apos;envoie un lien pour choisir un nouveau mot de passe.
                 </p>
-                <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div>
                     <Label htmlFor="forgot-email">Email</Label>
                     <Input
@@ -789,7 +789,7 @@ export default function AuthForm() {
                   </div>
                   {forgotError && <p id="forgot-email-error" role="alert" style={errorText}>{forgotError}</p>}
                   <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                    <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '13px 16px', borderRadius: 12, fontSize: 13.5 }}>
+                    <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '10px 13px', borderRadius: 12, fontSize: 13 }}>
                       Annuler
                     </Button>
                     <Button type="submit" variant="primary" disabled={forgotLoading} loading={forgotLoading} loadingText="Envoi…" style={{ ...btnPrimary, flex: 1, fontSize: 13.5 }}>

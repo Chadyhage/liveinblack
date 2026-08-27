@@ -272,17 +272,17 @@ export default function StudioClient({
   return (
     <>
       <style>{`
-        .studio-profile-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr); gap: 16px; margin-bottom: 16px; }
+        .studio-profile-grid { display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(240px, 0.62fr); gap: 10px; margin-bottom: 10px; }
         @media (max-width: 720px) {
           .studio-profile-grid { grid-template-columns: 1fr; }
         }
       `}</style>
       <main className="lb-dashboard-page">
-      <header style={{ marginBottom: 22 }}>
-        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
+      <header style={{ marginBottom: 14 }}>
+        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
         <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Présente ton univers, publie tes médias et configure tes encaissements.</p>
       </header>
-      <div role="tablist" aria-label="Sections du studio" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16 }}>
+      <div role="tablist" aria-label="Sections du studio" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 10 }}>
         {(['page', 'paiements'] as const).map((t) => (
           <Button
             key={t}
@@ -291,7 +291,7 @@ export default function StudioClient({
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             style={{
-              padding: '12px 14px',
+              padding: '10px 12px',
               borderRadius: 12,
               border: `1px solid ${tab === t ? 'var(--gold)' : 'var(--border)'}`,
               background: tab === t ? 'rgba(184,243,74,0.14)' : 'var(--surface)',
@@ -312,8 +312,8 @@ export default function StudioClient({
           role="status"
           aria-live="polite"
           style={{
-            padding: '12px 14px',
-            marginBottom: 14,
+            padding: '10px 12px',
+            marginBottom: 10,
             borderRadius: 12,
             border: `1px solid ${message.type === 'success' ? 'rgba(184,243,74,0.5)' : 'rgba(224,90,170,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
@@ -327,18 +327,18 @@ export default function StudioClient({
 
       {tab === 'page' && (
       <>
-      <Card style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, padding: 0, marginBottom: 16, overflow: 'hidden' }}>
-        <div style={{ padding: 18, borderRight: '1px solid var(--border)' }}>
-          <p style={{ font: '600 28px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
+      <Card style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, padding: 0, marginBottom: 10, overflow: 'hidden' }}>
+        <div style={{ padding: 12, borderRight: '1px solid var(--border)' }}>
+          <p style={{ font: '600 24px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Abonnés</p>
         </div>
-        <div style={{ padding: 18 }}>
-          <p style={{ font: '600 28px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.viewsCount}</p>
+        <div style={{ padding: 12 }}>
+          <p style={{ font: '600 24px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.viewsCount}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Vues de la page</p>
         </div>
       </Card>
 
-      <Card style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '12px 14px', marginBottom: 16, flexWrap: 'wrap' }}>
+      <Card style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 12px', marginBottom: 10, flexWrap: 'wrap' }}>
         <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
         <Button
           variant="secondary"
@@ -362,13 +362,13 @@ export default function StudioClient({
       <div className="studio-profile-grid">
         {/* Informations publiques */}
         <Card>
-          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Informations publiques</h2>
+          <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Informations publiques</h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 14, marginBottom: 18 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '112px 1fr', gap: 10, marginBottom: 12 }}>
             <div>
-              <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', background: '#12151d', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 88, height: 88, borderRadius: '50%', overflow: 'hidden', background: '#12151d', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
-                  <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={100} height={100} style={{ objectFit: 'cover' }} />
+                  <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={88} height={88} style={{ objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
@@ -390,7 +390,7 @@ export default function StudioClient({
               <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
             </div>
             <div>
-              <div style={{ height: 100, borderRadius: 8, overflow: 'hidden', background: '#10131d', position: 'relative' }}>
+              <div style={{ height: 88, borderRadius: 8, overflow: 'hidden', background: '#10131d', position: 'relative' }}>
                 {profile.bannerUrl && (
                   <NextImage src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
                 )}
@@ -413,7 +413,7 @@ export default function StudioClient({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
             <div>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 6 }}>Nom public</Label>
               <Input aria-label="Nom public" value={profile.publicName} onChange={(e) => update({ publicName: e.target.value })} />
@@ -429,7 +429,7 @@ export default function StudioClient({
             <div />
             <div style={{ gridColumn: '1 / -1' }}>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Pays / régions d&rsquo;intervention</Label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                 {ZONE_OPTIONS.map((r) => {
                   const sel = zones.includes(r.id)
                   return (
@@ -438,7 +438,7 @@ export default function StudioClient({
                       variant="ghost"
                       onClick={() => toggleZone(r.id)}
                       style={{
-                        padding: '8px 14px',
+                        padding: '7px 11px',
                         borderRadius: 20,
                         border: `1px solid ${sel ? 'var(--teal)' : 'var(--border)'}`,
                         background: sel ? 'rgba(184,243,74,0.14)' : 'rgba(255,255,255,0.06)',
@@ -457,7 +457,7 @@ export default function StudioClient({
               </p>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(184,243,74,0.28)', background: 'rgba(184,243,74,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', borderRadius: 12, border: '1px solid rgba(184,243,74,0.28)', background: 'rgba(184,243,74,0.06)' }}>
                 <span aria-hidden="true" style={{ fontSize: 17, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={17} /> : <CreditCard size={17} />}</span>
                 <div>
                   <p style={{ font: '700 12.5px var(--font-open-sans)', color: 'var(--gold)', margin: 0 }}>
@@ -483,7 +483,7 @@ export default function StudioClient({
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Réseaux sociaux</Label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginTop: 6 }}>
                 {SOCIAL_NETWORKS.map((net) => (
                   <div key={net.key} style={{ display: 'grid', gap: 5 }}>
                     <Label style={{ font: '600 10.5px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>{net.label}</Label>
@@ -506,23 +506,23 @@ export default function StudioClient({
 
         {/* Aperçu + statut */}
         <Card>
-          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 16px' }}>Aperçu de ma page</h2>
+          <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
-            <div style={{ height: 100, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
-            <div style={{ padding: 16 }}>
-              <div style={{ width: 56, height: 56, marginTop: -28, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
+            <div style={{ height: 84, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
+            <div style={{ padding: 12 }}>
+              <div style={{ width: 48, height: 48, marginTop: -24, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
-                  <NextImage src={profile.avatarUrl} alt="" width={56} height={56} style={{ objectFit: 'cover' }} />
+                  <NextImage src={profile.avatarUrl} alt="" width={48} height={48} style={{ objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <h3 style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: '10px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
+              <h3 style={{ font: '600 18px var(--font-open-sans)', color: '#fff', margin: '8px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
               <p style={{ font: '600 11px var(--font-open-sans)', color: 'var(--gold)', margin: '4px 0 0' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Ville · Pays'}</p>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, margin: '8px 0 0' }}>{profile.shortDescription || 'Ta description apparaîtra ici.'}</p>
             </div>
           </div>
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 10 }}>
             <p style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 8px' }}>Statut de la page</p>
             {(['draft', 'public'] as const).map((status) => (
               <Radio
@@ -542,13 +542,13 @@ export default function StudioClient({
       </div>
 
       {/* Galerie */}
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+      <Card style={{ marginBottom: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
           <div>
-            <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
+            <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
             <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
           </div>
-          <label style={{ padding: '10px 16px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', cursor: 'pointer' }}>
+          <label style={{ padding: '8px 13px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', cursor: 'pointer' }}>
             {uploading === 'gallery' ? 'Envoi…' : '+ Ajouter un média'}
             <input
               type="file"
@@ -566,10 +566,10 @@ export default function StudioClient({
         {profile.media.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Tu n&rsquo;as encore ajouté aucun média.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
             {profile.media.map((item, index) => (
               <article key={item.id} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 9, background: 'rgba(255,255,255,0.04)' }}>
-                <div style={{ height: 125, background: '#111', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                <div style={{ height: 108, background: '#111', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
                   {item.type === 'video' ? (
                     <video src={item.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -671,8 +671,8 @@ export default function StudioClient({
 function saveButtonStyle(saving: boolean): React.CSSProperties {
   return {
     width: '100%',
-    minHeight: 40,
-    padding: 13,
+    minHeight: 38,
+    padding: 11,
     background: 'var(--gold)',
     border: '1px solid var(--gold)',
     borderRadius: 3,
@@ -682,7 +682,7 @@ function saveButtonStyle(saving: boolean): React.CSSProperties {
     textTransform: 'none',
     letterSpacing: 'normal',
     cursor: saving ? 'wait' : 'pointer',
-    marginTop: 16,
+    marginTop: 12,
   }
 }
 
@@ -808,10 +808,10 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
   }
 
   return (
-    <Card style={{ display: 'grid', gap: 16 }} id="encaissement">
-      <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
+    <Card style={{ display: 'grid', gap: 10 }} id="encaissement">
+      <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
 
-      <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
+      <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
         {status.mode === 'manual' ? (
           <>
             <p style={{ fontSize: 13, color: '#fff', margin: '0 0 8px' }}>Réglé par virement / mobile money (hors Stripe Connect).</p>
@@ -825,7 +825,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                   onClick={requestPayout}
                   loading={requesting}
                   loadingText="Envoi…"
-                  style={{ ...saveButtonStyle(requesting), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)', width: 'auto', padding: '10px 18px', marginTop: 0 }}
+                  style={{ ...saveButtonStyle(requesting), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)', width: 'auto', padding: '8px 14px', marginTop: 0 }}
                 >
                   Demander un reversement
                 </Button>
@@ -848,7 +848,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
               onClick={connect}
               loading={connecting}
               loadingText="Redirection…"
-              style={{ ...saveButtonStyle(connecting), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)', width: 'auto', padding: '10px 18px', marginTop: 0 }}
+              style={{ ...saveButtonStyle(connecting), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)', width: 'auto', padding: '8px 14px', marginTop: 0 }}
             >
               Connecter mon compte bancaire
             </Button>
@@ -859,18 +859,18 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
 
       <div>
         <p style={{ font: '600 12px var(--font-open-sans)', color: '#fff', margin: '0 0 4px' }}>Mobile Money — un numéro par pays</p>
-        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 12px' }}>
+        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 10px' }}>
           Chaque événement est payé automatiquement sur le numéro du <strong style={{ color: 'var(--gold)' }}>pays de l&rsquo;événement</strong>. Ajoute un numéro pour chaque pays où tu organises.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
           {openCountries.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)', gridColumn: '1 / -1' }}>Aucun pays encore. Ajoute-en un ci-dessous.</p>}
           {openCountries.map((code) => {
             const region = MOMO_REGIONS.find((r) => r.momoCountry === code)
             if (!region) return null
             const hasError = momoErrorCountry === code
             return (
-              <div key={code} style={{ border: hasError ? '1px solid var(--pink)' : '1px solid var(--border)', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div key={code} style={{ border: hasError ? '1px solid var(--pink)' : '1px solid var(--border)', borderRadius: 12, padding: 10, background: 'rgba(255,255,255,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
                     {region.flag} {region.name}
                   </span>
@@ -898,7 +898,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           })}
         </div>
         {remaining.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <div style={{ flex: 1 }}>
               <Select
                 value={addSel}
@@ -907,7 +907,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                 options={remaining.map((r) => ({ value: r.momoCountry ?? '', label: `${r.flag} ${r.name}` }))}
               />
             </div>
-            <Button variant="secondary" onClick={() => addCountry(addSel)} disabled={!addSel} style={{ padding: '0 16px', borderRadius: 10, fontSize: 13 }}>
+            <Button variant="secondary" onClick={() => addCountry(addSel)} disabled={!addSel} style={{ padding: '0 14px', borderRadius: 10, fontSize: 13 }}>
               Ajouter
             </Button>
           </div>

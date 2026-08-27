@@ -17,8 +17,8 @@ import { Button, Card, Textarea, Label, Modal, SlideOverModal } from '@/app/comp
 const GOLD = 'var(--primary)'
 const TEAL = 'var(--primary)'
 
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12.5, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
-const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, padding: '11px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontSize: 13, fontWeight: 600 }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
+const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
 
 function fmtDate(iso: string): string {
@@ -165,13 +165,13 @@ export default function ProviderReviewsClient({
   const hiddenMine = myReview?.status === 'hidden'
 
   return (
-    <section style={{ marginTop: 28 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
+    <section style={{ marginTop: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 9, flexWrap: 'wrap' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
         {count > 0 && <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{count} avis</span>}
       </div>
 
-      <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
+      <Card style={{ padding: 14, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
         {count === 0 ? (
           <div>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: 0 }}>
@@ -185,18 +185,18 @@ export default function ProviderReviewsClient({
           </div>
         ) : (
           <>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ textAlign: 'center', minWidth: 110 }}>
-                <p style={{ fontSize: 40, fontWeight: 800, letterSpacing: '-1.5px', color: '#fff', margin: 0, lineHeight: 1 }}>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center', minWidth: 88 }}>
+                <p style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1.5px', color: '#fff', margin: 0, lineHeight: 1 }}>
                   {String(avg).replace('.', ',')}
-                  <span style={{ fontSize: 17, fontWeight: 600, color: 'rgba(255,255,255,.4)' }}> / 5</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.4)' }}> / 5</span>
                 </p>
-                <div style={{ marginTop: 7 }}>
-                  <Stars value={avg} size={17} />
+                <div style={{ marginTop: 5 }}>
+                  <Stars value={avg} size={15} />
                 </div>
-                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.45)', margin: '6px 0 0' }}>Basée sur {count} avis</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '4px 0 0' }}>Basée sur {count} avis</p>
               </div>
-              <div style={{ flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <div style={{ flex: '1 1 190px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {([5, 4, 3, 2, 1] as const).map((n) => (
                   <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,.55)', width: 10, textAlign: 'right' }}>{n}</span>
@@ -218,14 +218,14 @@ export default function ProviderReviewsClient({
               </Button>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 8, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, marginTop: 8, alignItems: 'start' }}>
               {reviews.map((review) => {
                 const isMine = Boolean(myReview) && myReview!.id === review.id
                 return (
-                  <article key={review.id} style={{ padding: 16, borderRadius: 14, border: '1px solid rgba(255,255,255,.07)', background: 'rgba(255,255,255,.02)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <Stars value={review.rating} size={14} />
-                      <span style={{ fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
+                  <article key={review.id} style={{ padding: 12, borderRadius: 11, border: '1px solid rgba(255,255,255,.07)', background: 'rgba(255,255,255,.02)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+                      <Stars value={review.rating} size={13} />
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
                       {review.verified && (
                         <span style={{ fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.35)', borderRadius: 999, padding: '2px 8px' }}>
                           Avis vérifié
@@ -236,16 +236,16 @@ export default function ProviderReviewsClient({
                         {review.edited ? ' · modifié' : ''}
                       </span>
                     </div>
-                    <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: '9px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
+                    <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: '7px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
 
                     {review.reply?.text && (
-                      <div style={{ marginTop: 11, padding: '10px 13px', borderRadius: 12, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)' }}>
+                      <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)' }}>
                         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: GOLD, margin: '0 0 5px' }}>Réponse de {providerName || 'du prestataire'}</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,.66)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
+                        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.66)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: 14, marginTop: 9 }}>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 7 }}>
                       {isMine ? (
                         <>
                           <Button variant="link" onClick={openForm} style={{ fontSize: 11.5, fontWeight: 700, color: TEAL, textDecoration: 'none' }}>

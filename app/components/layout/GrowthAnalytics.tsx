@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { GROWTH_EVENT_NAMES, trackGrowthEvent, type GrowthEventName } from '@/lib/client/growthAnalytics'
+import { captureGrowthAttribution, GROWTH_EVENT_NAMES, trackGrowthEvent, type GrowthEventName } from '@/lib/client/growthAnalytics'
 
 function readDataset(element: Element, key: string): string | undefined {
   const value = element.getAttribute(`data-growth-${key}`)
@@ -13,6 +13,10 @@ export default function GrowthAnalytics() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const query = searchParams.get('q')?.trim() || ''
+
+  useEffect(() => {
+    captureGrowthAttribution(searchParams, pathname || '/')
+  }, [pathname, searchParams])
 
   useEffect(() => {
     if (pathname !== '/search' || query.length < 2) return
@@ -32,7 +36,7 @@ export default function GrowthAnalytics() {
       trackGrowthEvent(eventName, {
         surface: readDataset(target, 'surface') || 'unknown',
         target: readDataset(target, 'target') || null,
-        href: target instanceof HTMLAnchorElement ? target.href : null,
+        target_path: target instanceof HTMLAnchorElement ? target.pathname : null,
       })
     }
 

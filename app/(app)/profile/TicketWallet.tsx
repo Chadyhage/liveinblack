@@ -20,7 +20,7 @@ import {
   type GroupBucket,
 } from './ticketWalletUtils'
 
-const GROUP_PAGE_SIZE = 12
+const GROUP_PAGE_SIZE = 18
 
 // Port du panneau "Mes billets" de ProfilePage.jsx (#6 phase profil) — copies
 // mirroir des DTO JSON de lib/server/tickets.ts (même convention que
@@ -115,6 +115,15 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
   return (
     <main className="lb-dashboard-page">
       <style>{`
+        .ticket-wallet-section-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important; gap: 8px !important; }
+        .ticket-wallet-event-link { gap: 8px !important; padding: 10px !important; }
+        .ticket-wallet-event-thumb { width: 44px !important; height: 44px !important; border-radius: 9px !important; }
+        .ticket-wallet-event-title { font-size: 13.5px !important; }
+        .ticket-wallet-face { grid-template-columns: minmax(0,1fr) 112px !important; }
+        .ticket-wallet-rail { min-height: 112px !important; padding: 12px !important; }
+        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: 0 12px 30px rgba(0,0,0,.24) !important; }
+        .ticket-wallet-card-body { padding-inline: 12px !important; }
+        .ticket-wallet-card-actions { padding: 8px 12px 12px !important; gap: 6px !important; }
         @media (max-width: 480px) {
           .ticket-wallet-face { grid-template-columns: 1fr !important; }
           .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed rgba(255,255,255,0.15); }
@@ -125,7 +134,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
           .ticket-wallet-summary-action a { min-height: 32px !important; padding: 6px 10px !important; font-size: 11px !important; }
         }
       `}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Link href="/profile" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={16} aria-hidden="true" />
@@ -145,7 +154,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
           <EmptyWallet />
         ) : (
           <>
-            <Card className="ticket-wallet-summary" style={{ maxWidth: 760, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', alignItems: 'center', gap: 10, padding: 14 }}>
+            <Card className="ticket-wallet-summary" style={{ maxWidth: 760, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', alignItems: 'center', gap: 8, padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <TicketGlyph />
                 <div>
@@ -293,9 +302,9 @@ function Section({
   const setPage = (n: number) => setPageParam(String(n))
   const { pageItems, pageCount } = pagedSlice(groups, page, GROUP_PAGE_SIZE)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 12, alignItems: 'start' }}>
+      <div className="ticket-wallet-section-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: 8, alignItems: 'start' }}>
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
         ))}
@@ -379,13 +388,15 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
     <Card style={{ padding: 0, overflow: 'hidden' }}>
       <Link
         href={event ? `/events/${event.id}` : '#'}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, textDecoration: 'none', color: 'inherit' }}
+        className="ticket-wallet-event-link"
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, textDecoration: 'none', color: 'inherit' }}
       >
         <div
+          className="ticket-wallet-event-thumb"
           style={{
-            width: 52,
-            height: 52,
-            borderRadius: 10,
+            width: 44,
+            height: 44,
+            borderRadius: 9,
             background: event?.imageUrl ? `url(${event.imageUrl}) center/cover` : 'rgba(184, 243, 74,0.12)',
             flexShrink: 0,
             display: 'flex',
@@ -397,9 +408,10 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p
+            className="ticket-wallet-event-title"
             style={{
               fontWeight: 700,
-              fontSize: 15,
+              fontSize: 13.5,
               margin: '0 0 2px',
               color: cancelled ? '#e05aaa' : past ? 'var(--text-muted)' : '#fff',
               textDecoration: cancelled ? 'line-through' : 'none',
@@ -929,7 +941,7 @@ function PremiumTicketCard({
   }
 
   return (
-    <div style={{ borderRadius: 18, background: 'linear-gradient(145deg,rgba(28,30,39,.96),rgba(9,10,16,.98))', border: '1px solid rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative', boxShadow: '0 18px 45px rgba(0,0,0,.28)' }}>
+    <div className="ticket-wallet-card-shell" style={{ borderRadius: 14, background: 'linear-gradient(145deg,rgba(28,30,39,.96),rgba(9,10,16,.98))', border: '1px solid rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative', boxShadow: '0 12px 30px rgba(0,0,0,.24)' }}>
       {flashMsg && (
         <div
           style={{ position: 'absolute', top: 8, right: 8, padding: '5px 12px', borderRadius: 999, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 11, zIndex: 5 }}
@@ -937,9 +949,9 @@ function PremiumTicketCard({
           {flashMsg}
         </div>
       )}
-      <div className="ticket-wallet-face" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 138px' }}>
+      <div className="ticket-wallet-face" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 112px' }}>
         <div style={{ minWidth: 0 }}>
-          <div className="ticket-wallet-rail" style={{ minHeight: 132, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,rgba(8,9,14,.92),rgba(8,9,14,.58)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'rgba(184,243,74,.18)'},rgba(13,14,21,.96))` }}>
+          <div className="ticket-wallet-rail" style={{ minHeight: 112, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,rgba(8,9,14,.92),rgba(8,9,14,.58)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'rgba(184,243,74,.18)'},rgba(13,14,21,.96))` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
               <div style={{ minWidth: 0 }}>
                 <p style={{ fontSize: 10.5, fontWeight: 800, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 7px' }}>
@@ -1011,7 +1023,7 @@ function PremiumTicketCard({
       )}
 
       {preorderTotal > 0 && (
-        <div style={{ padding: '0 16px 16px' }}>
+        <div className="ticket-wallet-card-body" style={{ padding: '0 12px 12px' }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Consommations incluses</p>
           {ticket.preorders.map((item, i) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 4 }}>
@@ -1030,7 +1042,7 @@ function PremiumTicketCard({
       )}
 
       {showIncluded && (
-        <div style={{ padding: '0 16px 16px' }}>
+        <div className="ticket-wallet-card-body" style={{ padding: '0 12px 12px' }}>
           {included === null ? (
             <Skeleton width="72%" height={13} />
           ) : included.length === 0 ? (
@@ -1055,7 +1067,7 @@ function PremiumTicketCard({
         </div>
       )}
 
-      <div style={{ padding: '10px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="ticket-wallet-card-actions" style={{ padding: '8px 12px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {inactive ? (
           <p style={{ fontSize: 12, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel} · aucune action disponible</p>
         ) : (

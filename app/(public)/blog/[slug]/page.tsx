@@ -20,6 +20,15 @@ function categoryLabel(id: string): string {
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
+const articleGrowthLinks = [
+  { href: '/events', title: 'Trouver un événement', text: 'Découvre les sorties, concerts et expériences disponibles au Bénin.', target: 'events' },
+  { href: '/providers', title: 'Comparer les prestataires', text: 'Repère DJ, photographes, lieux, traiteurs et équipes terrain.', target: 'providers' },
+  { href: '/organizers', title: 'Voir les organisateurs', text: 'Suis les acteurs qui publient les événements près de toi.', target: 'organizers' },
+  { href: '/blog/benin', title: 'Explorer le hub Bénin', text: 'Lis les guides locaux pour sortir, réserver et organiser mieux.', target: 'blog_benin' },
+  { href: '/organizer-signup', title: 'Publier un événement', text: 'Crée ton espace organisateur et mets ta billetterie en ligne.', target: 'organizer_signup' },
+  { href: '/provider-signup', title: 'Proposer un service', text: 'Présente ton activité et gagne en visibilité auprès des organisateurs.', target: 'provider_signup' },
+]
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const post = await getPostBySlug(slug)
@@ -59,7 +68,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getPostBySlug(slug)
   if (!post) notFound()
 
-  const related = await listRelatedPosts(post, 3)
+  const related = await listRelatedPosts(post, 6)
   const coverImageUrl = reliablePhotoUrl(post.coverImageUrl, post.slug, 1200, 675)
   const publishedIso = new Date(post.publishedAt as unknown as string).toISOString()
   const modifiedIso = post.updatedAt ? new Date(post.updatedAt as unknown as string).toISOString() : publishedIso
@@ -98,6 +107,17 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE}/blog` },
           { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE}/blog/${post.slug}` },
         ],
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${SITE}/blog/${post.slug}#growth-links`,
+        name: 'Continuer sur LIVEINBLACK',
+        itemListElement: articleGrowthLinks.map((link, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: link.title,
+          url: `${SITE}${link.href}`,
+        })),
       },
     ],
   }
@@ -146,6 +166,34 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        <section style={{ maxWidth: 1160, margin: '22px auto 0' }} aria-labelledby="blog-growth-links-title">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'end', flexWrap: 'wrap', marginBottom: 9 }}>
+            <div>
+              <p style={{ margin: 0, color: '#b8f34a', fontSize: 10.5, fontWeight: 850, letterSpacing: '.12em', textTransform: 'uppercase' }}>Passer à l’action</p>
+              <h2 id="blog-growth-links-title" className="font-display" style={{ fontSize: 16, letterSpacing: '.01em', margin: '3px 0 0' }}>Continuer sur LIVEINBLACK</h2>
+            </div>
+            <Link href="/blog/benin" style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', padding: '0 9px', borderRadius: 999, border: '1px solid rgba(184,243,74,.32)', color: '#b8f34a', fontSize: 10.5, fontWeight: 800, textDecoration: 'none' }}>
+              Hub Bénin →
+            </Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,190px),1fr))', gap: 7 }}>
+            {articleGrowthLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                data-growth-event="cta_click"
+                data-growth-surface="blog_article_growth_links"
+                data-growth-target={link.target}
+                style={{ minHeight: 92, display: 'flex', flexDirection: 'column', gap: 5, padding: 10, borderRadius: 12, border: '1px solid var(--border)', background: 'linear-gradient(135deg,rgba(184,243,74,.08),rgba(255,255,255,.035))', color: 'inherit', textDecoration: 'none' }}
+              >
+                <strong style={{ color: '#fff', fontSize: 12.5, lineHeight: 1.15 }}>{link.title}</strong>
+                <span style={{ color: 'var(--text-faint)', fontSize: 10.75, lineHeight: 1.35 }}>{link.text}</span>
+                <span style={{ marginTop: 'auto', color: '#b8f34a', fontSize: 10.5, fontWeight: 800 }}>Ouvrir →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {related.length > 0 && (
           <section style={{ maxWidth: 1160, margin: '28px auto 0' }}>
             <h2 className="font-display" style={{ fontSize: 15, letterSpacing: '.01em', margin: '0 0 10px' }}>À lire aussi</h2>
@@ -154,6 +202,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 <Link
                   key={r.id}
                   href={`/blog/${r.slug}`}
+                  data-growth-event="cta_click"
+                  data-growth-surface="blog_article_related"
+                  data-growth-target="related_post"
                   style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 10 }}
                 >
                   <p style={{ fontSize: 12.5, fontWeight: 800, margin: 0, lineHeight: 1.28 }}>{r.title}</p>

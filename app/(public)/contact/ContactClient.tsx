@@ -104,11 +104,11 @@ export default function ContactClient() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18, alignItems: 'start' }}>
-        <Card style={{ boxShadow: CARD.boxShadow, padding: '22px 20px', maxWidth: 860 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 12, alignItems: 'start' }}>
+        <Card style={{ boxShadow: CARD.boxShadow, padding: '16px 14px', maxWidth: 860 }}>
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '18px 8px' }}>
-              <Mascot mood="message" size={128} />
+              <Mascot mood="message" size={104} />
               <h2 style={{ fontSize: 16, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
@@ -119,7 +119,7 @@ export default function ContactClient() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate>
-              <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 10 }}>
                 <div>
                   <Label htmlFor="contact-name">Nom</Label>
                   <Input

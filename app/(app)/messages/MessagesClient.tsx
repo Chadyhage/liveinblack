@@ -840,6 +840,7 @@ export default function MessagesClient({
     ? messages.filter((m) => (m.content || '').toLowerCase().includes(inThreadSearchQuery.trim().toLowerCase()))
     : messages
 
+  const conversationAvatarSize = 34
   const showListPane = isDesktop || mobileView === 'list'
   const showThreadPane = isDesktop || mobileView === 'thread'
 
@@ -874,8 +875,8 @@ export default function MessagesClient({
             conversationLabel={conversationLabel}
             renderAvatar={(conv, label, online) =>
               conv.type === 'group'
-                ? <GroupAvatar conv={conv} size={42} />
-                : <Avatar userId={conv.members.find((m) => m.userId !== currentUserId)?.userId ?? ''} name={label} size={42} online={online} showOnline />
+                ? <GroupAvatar conv={conv} size={conversationAvatarSize} />
+                : <Avatar userId={conv.members.find((m) => m.userId !== currentUserId)?.userId ?? ''} name={label} size={conversationAvatarSize} online={online} showOnline />
             }
             presenceOnlineFor={(userId) => (userId ? Boolean(presence[userId]?.online) : false)}
             formatTime={formatTime}
@@ -932,13 +933,13 @@ export default function MessagesClient({
               />
 
               {inThreadSearchOpen && (
-                <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
                   <Input
                     autoFocus
                     value={inThreadSearchQuery}
                     onChange={(e) => setInThreadSearchQuery(e.target.value)}
                     placeholder="Rechercher dans la conversation…"
-                    style={{ ...inputStyle, marginBottom: 4 }}
+                    style={{ ...inputStyle, marginBottom: 3 }}
                   />
                   <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>
                     {inThreadSearchQuery.trim() ? `${visibleMessages.length} résultat${visibleMessages.length !== 1 ? 's' : ''}` : 'Tape pour rechercher'}
@@ -949,12 +950,12 @@ export default function MessagesClient({
               {activeConversation.pinnedMessageId && pinnedMessage && (
                 <div
                   style={{
-                    padding: '8px 20px',
+                    padding: '6px 12px',
                     borderBottom: '1px solid var(--border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: 10,
+                    gap: 8,
                     background: 'var(--surface)',
                     cursor: 'pointer',
                   }}
@@ -981,9 +982,9 @@ export default function MessagesClient({
                 </div>
               )}
 
-              <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', position: 'relative' }}>
+              <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', position: 'relative' }}>
                 {loadingOlder && (
-                  <div style={{ textAlign: 'center', padding: '4px 0 10px' }}>
+                  <div style={{ textAlign: 'center', padding: '2px 0 6px' }}>
                     <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Chargement des messages précédents…</span>
                   </div>
                 )}
@@ -999,7 +1000,7 @@ export default function MessagesClient({
                     return (
                       <div key={msg.id} data-msg-id={msg.id}>
                         {showDateSep && (
-                          <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
+                          <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
                             <span
                               style={{
                                 fontSize: 10.5,
@@ -1035,7 +1036,7 @@ export default function MessagesClient({
                   })}
                 </div>
                 {typingUsers.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 3px' }}>
                     <TypingDots />
                     <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                       {typingUsers.map((u) => u.name).join(', ')} écri{typingUsers.length > 1 ? 'vent' : 't'}…
@@ -1067,19 +1068,19 @@ export default function MessagesClient({
               )}
 
               {myGroupMute ? (
-                <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0 }}>
+                <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+                  <p style={{ fontSize: 12, color: 'var(--pink)', margin: 0 }}>
                     Un administrateur t&apos;a mis en sourdine {formatMuteUntil(myGroupMute.untilAt)}.
                   </p>
                 </div>
               ) : isBlockedByMe ? (
-                <div style={{ padding: '12px 18px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>
+                <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>
                     Tu as bloqué ce contact —{' '}
                     <Button
                       variant="link"
                       onClick={() => otherDirectMember && handleUnblock(otherDirectMember.userId)}
-                      style={{ fontSize: 13 }}
+                      style={{ fontSize: 12 }}
                     >
                       débloquer
                     </Button>

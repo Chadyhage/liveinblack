@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button, Card, Mascot } from '@/app/components/ui'
+import { GROWTH_EVENT_NAMES, trackGrowthEvent } from '@/lib/client/growthAnalytics'
 
 // Port de src/pages/PaiementReussiPage.jsx + src/pages/PaiementAnnulePage.jsx.
 // Architecture différente du legacy : ici l'émission des billets est
@@ -89,6 +90,7 @@ export default function PaymentSuccessClient({
   const [errorMsg, setErrorMsg] = useState(missingParams ? "Impossible de retrouver ta commande. Vérifie tes billets ou réessaie depuis l'événement." : '')
   const [copied, setCopied] = useState(false)
   const [attempt, setAttempt] = useState(0)
+  const conversionKey = sessionId || fedapayTxnId || freeOrderId || ''
 
   function copySupport() {
     const done = () => { setCopied(true); setTimeout(() => setCopied(false), 2200) }
@@ -175,6 +177,22 @@ export default function PaymentSuccessClient({
     const t = setTimeout(() => setAttempt((a) => a + 1), POLL_INTERVAL_MS)
     return () => clearTimeout(t)
   }, [state, attempt])
+
+  useEffect(() => {
+    if (state !== 'success' || !conversionKey) return
+    const storageKey = `lib_growth_purchase_${conversionKey}`
+    try {
+      if (sessionStorage.getItem(storageKey)) return
+      sessionStorage.setItem(storageKey, '1')
+    } catch {}
+
+    trackGrowthEvent(GROWTH_EVENT_NAMES.purchaseConfirmed, {
+      event_id: eventId || null,
+      ticket_count: ticketCount,
+      rail: isFedapay ? 'fedapay' : isFree ? 'free' : 'stripe',
+      free: isFree,
+    })
+  }, [conversionKey, eventId, isFedapay, isFree, state, ticketCount])
 
   const successMsg = ticketCount > 0
     ? `${ticketCount} billet${ticketCount > 1 ? 's' : ''} pour ${eventName ? '« ' + eventName + ' »' : 'ton événement'} ${ticketCount > 1 ? 'sont disponibles' : 'est disponible'} dans ton compte.`

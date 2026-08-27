@@ -343,7 +343,7 @@ export default async function AccueilPage() {
 
       {/* COMMENT ÇA MARCHE */}
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 14 }}>
           {[
             ['01', '/images/live-in-black/journey-discover.jpg', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
             ['02', '/images/live-in-black/journey-reserve.jpg', 'Deux amies réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
@@ -359,8 +359,8 @@ export default async function AccueilPage() {
 
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16 }}>
-          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid var(--primary)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 12 }}>
+          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 18, borderLeft: '3px solid var(--primary)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: 0 }}>Organisateur</p>
             <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
             <ul style={featList}>
@@ -370,7 +370,7 @@ export default async function AccueilPage() {
             </ul>
             <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: 'var(--primary-ink)' }}>Créer un espace organisateur</Link>
           </Card>
-          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
+          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 18, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
             <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
             <ul style={featList}>

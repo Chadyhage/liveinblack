@@ -15,6 +15,7 @@ Le projet couvre la decouverte d'evenements, la billetterie, les paiements, les 
 - [Scripts npm](#scripts-npm)
 - [Base de donnees](#base-de-donnees)
 - [Tests et qualite](#tests-et-qualite)
+- [Densite UI](#densite-ui)
 - [CI/CD](#cicd)
 - [Deploiement](#deploiement)
 - [SEO, routes et redirections](#seo-routes-et-redirections)
@@ -69,6 +70,17 @@ Le projet est prive (`private: true`) et utilise `npm` comme gestionnaire de ref
 | Ventes terrain | Scanner, caisse sur place, ventes agent, settlements |
 | Blog / SEO | Blog public, campagne de contenu Benin, sitemap index, sitemaps pagines, OpenGraph |
 | Mobile | Scripts de verification des contrats API, auth, CORS, parcours client/agent |
+
+## Densite UI
+
+L'interface LIVEINBLACK doit rester compacte : les pages dashboard/listes doivent afficher plusieurs elements utiles sans cartes geantes ni grands blancs inutiles.
+
+Les primitives globales dans `app/globals.css` servent de contrat :
+
+- `--density-card-min`, `--density-dashboard-card-min` et `--density-card-min-compact` definissent les largeurs de cartes/listes.
+- `.lb-dashboard-card-grid`, `.lb-card-grid`, `.lb-card-grid-compact` et `.lb-organizer-event-grid` doivent etre privilegiees pour les nouvelles listes.
+- `npm run audit:ui-density` verifie les zones sensibles : notifications, dashboard agent, dossiers, comptes, evenements et tokens globaux.
+- Le meme audit scanne aussi les CSS prives/dashboards et refuse les nouvelles grilles `auto-fit/auto-fill` dont le minimum depasse `260px`, pour eviter les listes a une ou deux cartes par ligne sur grand ecran.
 
 ## Architecture
 
@@ -190,6 +202,7 @@ Copier `.env.example` vers `.env.local`, puis renseigner les valeurs.
 | `AUTH_SECRET` | Secret Auth.js |
 | `PUBLIC_SITE_URL` | URL canonique publique |
 | `CRON_SECRET` | Protection des routes cron sensibles |
+| `EXPECTED_PUBLIC_SITE_HOST` | Domaine attendu par l'audit SEO production, par defaut `liveinblack.com` |
 | `STRIPE_SECRET_KEY` | API Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Verification webhook Stripe |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Cle publique Stripe |
@@ -205,6 +218,25 @@ Copier `.env.example` vers `.env.local`, puis renseigner les valeurs.
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4, charge seulement apres consentement cookies |
 | `GOOGLE_SITE_VERIFICATION` | Verification Google Search Console |
 | `BING_SITE_VERIFICATION` | Verification Bing Webmaster Tools |
+| `YANDEX_SITE_VERIFICATION` | Verification Yandex Webmaster optionnelle |
+| `PINTEREST_SITE_VERIFICATION` | Verification Pinterest Domain optionnelle |
+
+### Referencement production
+
+Avant un deploiement SEO important, verifier que Vercel Production contient :
+
+- `PUBLIC_SITE_URL=https://liveinblack.com` sans chemin, sans query string et sans domaine preview Vercel.
+- `EXPECTED_PUBLIC_SITE_HOST=liveinblack.com`.
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` avec l'identifiant GA4 au format `G-...`.
+- `GOOGLE_SITE_VERIFICATION` avec uniquement la valeur `content` de la balise Google Search Console.
+- `BING_SITE_VERIFICATION` avec uniquement la valeur `content` de la balise Bing Webmaster Tools.
+- Optionnel mais pret : `YANDEX_SITE_VERIFICATION` et `PINTEREST_SITE_VERIFICATION`, toujours avec uniquement la valeur `content`.
+
+Puis lancer `npm run check:seo:prod`. Ce check refuse les placeholders, les domaines preview et les balises HTML collees en entier.
+
+Apres deploiement, lancer `npm run check:seo:live` pour verifier le site public reel : `robots.txt`, `sitemap.xml`, `llms.txt`, OpenSearch, flux RSS/JSON, balises de verification sur `/home` et hub `/blog/benin`. Les balises Google/Bing sont obligatoires via `check:seo:prod`; Yandex/Pinterest sont verifiees automatiquement si leurs variables sont renseignees.
+
+La checklist operationnelle de lancement SEO/croissance se trouve dans `docs/ops/seo-growth-launch-checklist.md`. Elle couvre Search Console, Bing Webmaster Tools, GA4, les sitemaps a soumettre et les criteres go/no-go.
 
 ### Tests et developpement
 
@@ -275,11 +307,20 @@ Important : `MONGODB_TEST_URI` doit cibler une base dont le nom contient `test`.
 | `npm run check:mobile-agent-flow` | Parcours agent mobile |
 | `npm run check:mobile-password-flow` | Parcours mot de passe mobile |
 | `npm run check:services` | Verification services de production |
+| `npm run check:growth:launch` | Checklist croissance : audits locaux, puis SEO prod/live/build si actives |
+| `npm run check:growth:launch:full` | Checklist lancement complete : audits locaux, SEO prod, SEO live et build |
 | `npm run check:seo:prod` | Verification SEO production : URL canonique HTTPS, GA4, Search Console et Bing |
+| `npm run check:seo:live` | Verification live post-deploiement : robots, sitemap, llms, OpenSearch, feeds, balises et hub Bénin |
 | `npm run ops:readiness` | Checklist readiness ops, incluant `audit:growth` avant les smoke/load |
 | `npm run ops:deploy:prod` | Script de deploiement production |
 | `npm run ops:smoke` | Smoke test production |
 | `npm run ops:load` | Test de charge |
+
+Pour une validation de lancement complète après avoir renseigné les variables Vercel Production et déployé :
+
+```bash
+npm run check:growth:launch:full
+```
 
 ## Base de donnees
 
@@ -431,6 +472,8 @@ Verifier que `CRON_SECRET` est configure en production avant activation.
 | `/robots.txt` | Robots public |
 | `/opengraph-image` | Image OpenGraph dynamique |
 | `/manifest.webmanifest` | Manifest PWA/public |
+
+Checklist lancement : `docs/ops/seo-growth-launch-checklist.md`.
 
 Collections sitemap :
 

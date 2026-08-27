@@ -20,6 +20,10 @@ const interfaceFont = localFont({
 });
 
 const siteUrl = process.env.PUBLIC_SITE_URL || "https://liveinblack.com";
+const webmasterVerificationOther: Record<string, string> = {
+  ...(process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : {}),
+  ...(process.env.PINTEREST_SITE_VERIFICATION ? { "p:domain_verify": process.env.PINTEREST_SITE_VERIFICATION } : {}),
+};
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
@@ -122,7 +126,8 @@ export const metadata: Metadata = {
   },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
-    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+    yandex: process.env.YANDEX_SITE_VERIFICATION || undefined,
+    other: Object.keys(webmasterVerificationOther).length > 0 ? webmasterVerificationOther : undefined,
   },
   robots: {
     index: true,

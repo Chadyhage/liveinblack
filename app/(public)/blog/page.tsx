@@ -9,7 +9,7 @@ import { Mascot, PageLinks } from '@/app/components/ui'
 import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './blog.module.css'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 24
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 export const metadata: Metadata = {
@@ -86,6 +86,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         <p className={styles.eyebrow}>Le journal LIVEINBLACK</p>
         <h1>Les idées qui font vivre la scène.</h1>
         <p>Guides, conseils et actualités pour organiser, soutenir et vivre des événements mémorables.</p>
+        <Link href="/blog/benin" className={styles.hubLink}>Explorer le hub événementiel Bénin <ArrowUpRight size={16} aria-hidden="true" /></Link>
       </section>
 
       <section className={styles.content} aria-labelledby="articles-title">
@@ -104,7 +105,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             {posts.map((post, index) => (
               <Link key={post.id} href={`/blog/${post.slug}`} className={styles.card}>
                 <div className={styles.visual}>
-                  <Image src={reliablePhotoUrl(post.coverImageUrl, post.slug, 1200, 675)} alt="" fill loading={index < 3 ? 'eager' : undefined} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, 30vw" />
+                  <Image src={reliablePhotoUrl(post.coverImageUrl, post.slug, 1200, 675)} alt="" fill loading={index < 4 ? 'eager' : undefined} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, (max-width:1440px) 24vw, 210px" />
                   <span>{categoryLabel(post.category)}</span>
                 </div>
                 <div className={styles.cardBody}>

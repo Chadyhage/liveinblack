@@ -6,6 +6,7 @@ import { pageCount, sitemapIndexXml, xmlResponse, type SitemapCollection } from 
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
+export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
 export async function GET() {
