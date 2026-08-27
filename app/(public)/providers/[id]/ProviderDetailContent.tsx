@@ -115,7 +115,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 162, margin: '7px 0 0', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 14, background: 'linear-gradient(135deg, var(--surface-2), rgba(184,243,74,.18))' }}>
+      <div style={{ position: 'relative', height: 162, margin: '7px 0 0', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 14, background: 'linear-gradient(135deg, var(--surface-2), var(--border))' }}>
         <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
       </div>
 

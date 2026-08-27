@@ -54,7 +54,7 @@ function formatPrice(price: number): string {
 }
 
 function RankIcon({ position, size = 20 }: { position: number; size?: number }) {
-  const color = position === 1 ? 'var(--gold)' : position === 2 ? 'rgba(255,255,255,0.72)' : 'rgba(184,243,74,0.65)'
+  const color = position === 1 ? 'var(--gold)' : position === 2 ? 'rgba(255,255,255,0.72)' : 'var(--primary-a65)'
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={color} />
@@ -196,7 +196,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
           </div>
         ) : step === 'pay' && chosen && chosenTier ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-            <div style={{ padding: 18, border: '1px solid rgba(184,243,74,0.3)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
+            <div style={{ padding: 18, border: '1px solid var(--primary-a32)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
               <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
@@ -260,7 +260,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   fontWeight: 500,
                   textTransform: 'none',
                   letterSpacing: 'normal',
-                  boxShadow: paying ? 'none' : '0 6px 20px rgba(184,243,74,0.25)',
+                  boxShadow: paying ? 'none' : '0 6px 20px var(--primary-a24)',
                 }}
               >
                 {`Payer ${formatPrice(chosenTier.price)}`}
@@ -293,8 +293,8 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         textAlign: 'left',
                         display: 'block',
                         color: '#fff',
-                        border: active ? '1px solid rgba(184,243,74,0.65)' : '1px solid rgba(255,255,255,0.08)',
-                        background: active ? 'rgba(184,243,74,0.14)' : 'rgba(255,255,255,0.04)',
+                        border: active ? '1px solid var(--primary-a65)' : '1px solid rgba(255,255,255,0.08)',
+                        background: active ? 'var(--primary-a14)' : 'rgba(255,255,255,0.04)',
                         opacity: blocked ? 0.78 : 1,
                       }}
                     >
@@ -362,8 +362,8 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         justifyContent: 'flex-start',
                         textAlign: 'left',
                         display: 'block',
-                        border: selected ? '1px solid rgba(184,243,74,0.7)' : '1px solid rgba(255,255,255,0.08)',
-                        background: selected ? 'rgba(184,243,74,0.12)' : 'rgba(255,255,255,0.04)',
+                        border: selected ? '1px solid var(--primary-a75)' : '1px solid rgba(255,255,255,0.08)',
+                        background: selected ? 'var(--primary-a12)' : 'rgba(255,255,255,0.04)',
                         opacity: disabled ? 0.38 : 1,
                       }}
                     >
@@ -398,7 +398,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 fontSize: 14,
                 background: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
                 color: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.35)' : '#181206',
-                boxShadow: !selectedPlan || positionBlocked(selectedPlan.position) ? 'none' : '0 6px 20px rgba(184,243,74,0.25)',
+                boxShadow: !selectedPlan || positionBlocked(selectedPlan.position) ? 'none' : '0 6px 20px var(--primary-a24)',
               }}
             >
               {selectedPlan && chosenTier ? `Continuer · ${formatPrice(chosenTier.price)}` : 'Sélectionne une durée'}

@@ -49,8 +49,8 @@ export const revalidate = 30
 // Accents du carrousel « Actualité » (#9 phase agent/admin, homepage-config) —
 // mêmes couleurs que ACTUALITE_ACCENTS côté agent (lib/models/HomepageConfig.ts).
 const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: string }> = {
-  teal: { dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
-  gold: { dot: '#b8f34a', soft: 'rgba(184, 243, 74,0.14)', border: 'rgba(184, 243, 74,0.4)' },
+  teal: { dot: 'var(--primary)', soft: 'var(--primary-a14)', border: 'var(--primary-a04)' },
+  gold: { dot: 'var(--primary)', soft: 'var(--primary-a14)', border: 'var(--primary-a04)' },
   pink: { dot: '#ff6b00', soft: 'rgba(255,107,0,0.14)', border: 'rgba(255,107,0,0.4)' },
 }
 
@@ -219,7 +219,7 @@ export default async function AccueilPage() {
                     </span>
                     <DateBadge dateISO={e.date} />
                     {min != null && (
-                      <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 8px', borderRadius: 999, border: '1px solid rgba(184, 243, 74,.4)' }}>
+                      <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10.5, fontWeight: 800, color: 'var(--gold)', background: 'rgba(5,6,10,.92)', padding: '4px 8px', borderRadius: 999, border: '1px solid var(--primary-a04)' }}>
                         dès {fmtMoney(min, eventCurrency(e))}
                       </span>
                     )}
@@ -249,8 +249,8 @@ export default async function AccueilPage() {
       {session?.user && needsPreferences && (
         <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
           <Card
-            accent="rgba(184, 243, 74,.35)"
-            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,rgba(184, 243, 74,.12),rgba(159, 224, 34,.04)),var(--surface)' }}
+            accent="var(--primary-a35)"
+            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),rgba(159, 224, 34,.04)),var(--surface)' }}
           >
             <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
             <h2 style={{ margin: '7px 0 5px', fontSize: 16 }}>Des soirées vraiment faites pour toi</h2>
@@ -370,7 +370,7 @@ export default async function AccueilPage() {
             </ul>
             <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: 'var(--primary-ink)' }}>Créer un espace organisateur</Link>
           </Card>
-          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 18, borderLeft: '3px solid rgba(184, 243, 74,.75)' }}>
+          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 18, borderLeft: '3px solid var(--primary-a75)' }}>
             <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
             <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
             <ul style={featList}>

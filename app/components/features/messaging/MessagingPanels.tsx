@@ -108,7 +108,7 @@ export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissN
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
         {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
-        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'rgba(184, 243, 74,0.12)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
+        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
       </div>
     </ModalShell>
   )

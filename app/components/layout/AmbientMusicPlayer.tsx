@@ -294,7 +294,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
         @media (max-width: 480px) {
           .amp-root {
             right: 10px !important;
-            bottom: calc(env(safe-area-inset-bottom, 0px) + var(--cookie-consent-height, 0px) + 18px) !important;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 18px) !important;
           }
           .amp-trigger { width: 52px !important; height: 52px !important; }
           .amp-panel { width: min(92vw, 320px) !important; }
@@ -527,8 +527,8 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                     borderRadius: 'var(--radius-md)',
                     textAlign: 'left',
                     height: 44,
-                    background: isCur ? 'rgba(184, 243, 74,0.1)' : 'transparent',
-                    border: `1px solid ${isCur ? 'rgba(184, 243, 74,0.4)' : 'transparent'}`,
+                    background: isCur ? 'var(--primary-a10)' : 'transparent',
+                    border: `1px solid ${isCur ? 'var(--primary-a04)' : 'transparent'}`,
                     justifyContent: 'flex-start',
                   }}
                 >
@@ -610,7 +610,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               borderRadius: '50%',
               background: 'var(--surface-2)',
               border: `2px solid ${st.playing ? accent : 'var(--border-strong)'}`,
-              boxShadow: st.playing ? `0 0 0 4px rgba(184, 243, 74,0.14), 0 10px 28px rgba(0,0,0,0.55)` : '0 10px 28px rgba(0,0,0,0.55)',
+              boxShadow: st.playing ? `0 0 0 4px var(--primary-a14), 0 10px 28px rgba(0,0,0,0.55)` : '0 10px 28px rgba(0,0,0,0.55)',
               transition: 'border-color 0.3s, box-shadow 0.3s',
             }}
           />

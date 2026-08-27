@@ -463,7 +463,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   borderRadius: 12,
                   fontSize: 13,
                   textAlign: 'center',
-                  border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(184, 243, 74, 0.5)',
+                  border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid var(--primary-a05)',
                   background: 'rgba(12,12,22,0.96)',
                   color: '#fff',
                 }}

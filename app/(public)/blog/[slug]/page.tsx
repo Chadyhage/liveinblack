@@ -169,10 +169,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <section style={{ maxWidth: 1160, margin: '22px auto 0' }} aria-labelledby="blog-growth-links-title">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'end', flexWrap: 'wrap', marginBottom: 9 }}>
             <div>
-              <p style={{ margin: 0, color: '#b8f34a', fontSize: 10.5, fontWeight: 850, letterSpacing: '.12em', textTransform: 'uppercase' }}>Passer à l’action</p>
+              <p style={{ margin: 0, color: 'var(--primary)', fontSize: 10.5, fontWeight: 850, letterSpacing: '.12em', textTransform: 'uppercase' }}>Passer à l’action</p>
               <h2 id="blog-growth-links-title" className="font-display" style={{ fontSize: 16, letterSpacing: '.01em', margin: '3px 0 0' }}>Continuer sur LIVEINBLACK</h2>
             </div>
-            <Link href="/blog/benin" style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', padding: '0 9px', borderRadius: 999, border: '1px solid rgba(184,243,74,.32)', color: '#b8f34a', fontSize: 10.5, fontWeight: 800, textDecoration: 'none' }}>
+            <Link href="/blog/benin" style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', padding: '0 9px', borderRadius: 999, border: '1px solid var(--primary-a32)', color: 'var(--primary)', fontSize: 10.5, fontWeight: 800, textDecoration: 'none' }}>
               Hub Bénin →
             </Link>
           </div>
@@ -184,11 +184,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 data-growth-event="cta_click"
                 data-growth-surface="blog_article_growth_links"
                 data-growth-target={link.target}
-                style={{ minHeight: 92, display: 'flex', flexDirection: 'column', gap: 5, padding: 10, borderRadius: 12, border: '1px solid var(--border)', background: 'linear-gradient(135deg,rgba(184,243,74,.08),rgba(255,255,255,.035))', color: 'inherit', textDecoration: 'none' }}
+                style={{ minHeight: 92, display: 'flex', flexDirection: 'column', gap: 5, padding: 10, borderRadius: 12, border: '1px solid var(--border)', background: 'linear-gradient(135deg,var(--primary-a08),rgba(255,255,255,.035))', color: 'inherit', textDecoration: 'none' }}
               >
                 <strong style={{ color: '#fff', fontSize: 12.5, lineHeight: 1.15 }}>{link.title}</strong>
                 <span style={{ color: 'var(--text-faint)', fontSize: 10.75, lineHeight: 1.35 }}>{link.text}</span>
-                <span style={{ marginTop: 'auto', color: '#b8f34a', fontSize: 10.5, fontWeight: 800 }}>Ouvrir →</span>
+                <span style={{ marginTop: 'auto', color: 'var(--primary)', fontSize: 10.5, fontWeight: 800 }}>Ouvrir →</span>
               </Link>
             ))}
           </div>

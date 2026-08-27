@@ -471,7 +471,7 @@ export default function OrganizerOnboardingWizard({
                             padding: '8px 14px',
                             borderRadius: 999,
                             border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
-                            background: active ? 'rgba(184, 243, 74,0.14)' : 'transparent',
+                            background: active ? 'var(--primary-a14)' : 'transparent',
                             color: active ? 'var(--gold)' : '#fff',
                             fontSize: 12.5,
                           }}

@@ -14,7 +14,7 @@
 
 .lb-public-layout :where(input, textarea, button, select) { font-family: inherit; }
 .lb-public-layout :where(a, button, summary, input, textarea, [role="button"]):focus-visible {
-  outline: 3px solid #b8f34a;
+  outline: 3px solid var(--primary);
   outline-offset: 3px;
 }
 
@@ -44,12 +44,12 @@
   border-radius: 13px;
   background: rgba(8, 8, 10, .72);
   backdrop-filter: blur(14px);
-  color: #b8f34a;
+  color: var(--primary);
   font-size: 15px;
   font-weight: 750;
 }
 .lb-editorial-card__body { padding: 18px; }
-.lb-editorial-card__body > p:first-child { margin: 0 0 7px; color: #b8f34a; font-size: 12px !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.lb-editorial-card__body > p:first-child { margin: 0 0 7px; color: var(--primary); font-size: 12px !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .lb-editorial-card__body h3 { margin: 0; color: #f5f5f7; font-size: 22px !important; line-height: 1.16; letter-spacing: -.03em; }
 .lb-editorial-card__body h3 + p { margin: 9px 0 0; color: rgba(245, 245, 247, .65); font-size: 15px !important; line-height: 1.54; }
 
@@ -71,7 +71,7 @@
   background: rgba(255, 255, 255, .055);
   box-shadow: 0 18px 52px rgba(0, 0, 0, .2);
 }
-.lb-public-detail-page .lb-detail-section > h2 { margin-bottom: 14px !important; color: #b8f34a !important; font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.01em !important; text-transform: none !important; }
+.lb-public-detail-page .lb-detail-section > h2 { margin-bottom: 14px !important; color: var(--primary) !important; font-size: 16px !important; font-weight: 700 !important; letter-spacing: -.01em !important; text-transform: none !important; }
 .lb-public-detail-page .lb-detail-section p { font-size: 15px !important; line-height: 1.58 !important; }
 .lb-public-detail-page .lb-detail-section a { font-size: 15px !important; }
 
@@ -98,7 +98,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
 }
 .lb-auth-split__form :where(input, textarea)::placeholder { color: rgba(245, 245, 247, .34); }
-.lb-auth-split__form :where(input, textarea):focus { border-color: rgba(184, 243, 74, .75) !important; box-shadow: 0 0 0 4px rgba(184, 243, 74, .12) !important; }
+.lb-auth-split__form :where(input, textarea):focus { border-color: rgba(245, 61, 141, .75) !important; box-shadow: 0 0 0 4px rgba(245, 61, 141, .12) !important; }
 .lb-auth-split__form button,
 .lb-auth-split__form a[style*="primaryBtn"] { min-height: 38px; border-radius: 12px !important; font-size: 13px !important; font-weight: 650 !important; }
 .lb-auth-form > div:first-of-type { margin-bottom: 20px !important; }
@@ -111,7 +111,7 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, .14);
 }
 .lb-auth-form .lb-role-card button { min-height: 64px !important; padding: 10px !important; }
-.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(184, 243, 74, .48) !important; background: rgba(184, 243, 74, .065) !important; }
+.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(245, 61, 141, .48) !important; background: rgba(245, 61, 141, .065) !important; }
 .lb-auth-form [role="tablist"] { min-height: 38px; padding: 3px !important; border-radius: 11px !important; background: rgba(255, 255, 255, .075) !important; }
 .lb-auth-form [role="tab"] { min-height: 32px; border-radius: 9px !important; }
 .lb-auth-state {
@@ -123,7 +123,7 @@
 }
 .lb-auth-state > div:first-child { box-shadow: 0 14px 42px rgba(0, 0, 0, .22); }
 .lb-auth-wizard > div { gap: 16px !important; }
-.lb-auth-wizard > div > div:first-child p:first-child { margin-bottom: 10px !important; color: #b8f34a !important; font-size: 13px !important; font-weight: 700 !important; letter-spacing: .12em !important; }
+.lb-auth-wizard > div > div:first-child p:first-child { margin-bottom: 10px !important; color: var(--primary) !important; font-size: 13px !important; font-weight: 700 !important; letter-spacing: .12em !important; }
 .lb-auth-wizard > div > div:first-child h1 { margin-bottom: 10px !important; }
 .lb-auth-wizard > div > div:nth-child(2) > div:last-child { height: 8px !important; }
 .lb-auth-wizard > div > div:nth-child(3) {
@@ -168,7 +168,7 @@
 .lb-blog-article h1 { font-size: clamp(30px, 4vw, 50px) !important; line-height: 1.02 !important; letter-spacing: -.05em !important; }
 .lb-blog-article article { max-width: 820px !important; color: rgba(245, 245, 247, .72) !important; font-size: 15px !important; line-height: 1.62 !important; }
 .lb-blog-article article :where(h2, h3) { margin-top: 1.45em; color: #f5f5f7; font-size: 1.45em !important; letter-spacing: -.025em !important; }
-.lb-blog-article article a { color: #b8f34a; }
+.lb-blog-article article a { color: var(--primary); }
 
 /* Retours de paiement et d'activation */
 .lb-status-page { padding: clamp(40px, 5vw, 64px) 16px !important; background: rgba(10, 10, 13, .72); }

@@ -75,7 +75,7 @@
 }
 .modalRoot :global(.lb-detail-section) > h2 {
   margin-bottom: 5px !important;
-  color: #b8f34a !important;
+  color: var(--primary) !important;
   font-family: inherit !important;
   font-size: 9.5px !important;
   font-weight: 700 !important;

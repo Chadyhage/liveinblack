@@ -348,7 +348,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                               fontSize: 11.5,
                               fontWeight: 700,
                               border: active ? '1px solid var(--teal)' : '1px solid rgba(255,255,255,.14)',
-                              background: active ? 'rgba(184, 243, 74,0.14)' : 'rgba(255,255,255,.05)',
+                              background: active ? 'var(--primary-a14)' : 'rgba(255,255,255,.05)',
                               color: active ? 'var(--teal)' : 'rgba(255,255,255,.7)',
                             }}
                           >

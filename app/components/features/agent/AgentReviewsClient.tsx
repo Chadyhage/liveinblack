@@ -251,7 +251,7 @@ export default function AgentReviewsClient() {
             size="sm"
             aria-pressed={statusFilter === 'all'}
             className={`${styles.metric}${statusFilter === 'all' ? ` ${styles.metricActive}` : ''}`}
-            style={{ display: 'grid', ...(statusFilter === 'all' ? { borderColor: 'rgba(184,243,74,.42)', background: 'linear-gradient(145deg,rgba(184,243,74,.1),rgba(255,255,255,.045))' } : {}) }}
+            style={{ display: 'grid', ...(statusFilter === 'all' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),rgba(255,255,255,.045))' } : {}) }}
             onClick={() => setQueryParams({ status: null, page: null })}
           >
             <span className={styles.metricIcon}><Star size={18} aria-hidden="true" /></span><strong>{reviews.length}</strong><span>Tous les avis</span>
@@ -271,7 +271,7 @@ export default function AgentReviewsClient() {
             size="sm"
             aria-pressed={statusFilter === 'published'}
             className={`${styles.metric}${statusFilter === 'published' ? ` ${styles.metricActive}` : ''}`}
-            style={{ display: 'grid', ...(statusFilter === 'published' ? { borderColor: 'rgba(184,243,74,.42)', background: 'linear-gradient(145deg,rgba(184,243,74,.1),rgba(255,255,255,.045))' } : {}) }}
+            style={{ display: 'grid', ...(statusFilter === 'published' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),rgba(255,255,255,.045))' } : {}) }}
             onClick={() => setQueryParams({ status: 'published', page: null })}
           >
             <span className={styles.metricIcon}><CheckCircle2 size={18} aria-hidden="true" /></span><strong>{publishedCount}</strong><span>Publiés</span>

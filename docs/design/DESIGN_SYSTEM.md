@@ -2,7 +2,7 @@
 
 > Document généré à partir du code réel (`app/globals.css`, `app/components/ui/*`, composants applicatifs) — **pas d'invention**, chaque valeur ci-dessous existe littéralement dans le repo à la date de génération. Aucun mode clair/sombre : thème unique.
 >
-> ⚠️ **Écart connu avec `CLAUDE.md`** : ce fichier documente une ancienne palette (`--teal:#4ee8c8`, `--gold:#c8a96e`, `--obsidian:#04040b`). Le code a depuis migré vers un thème vert primaire — `--teal`/`--gold`/`--violet` sont aujourd'hui des **alias** qui pointent tous vers `--primary` (`#b8f34a`). Ce document reflète le code tel qu'il est aujourd'hui.
+> 🌸 **Identité visuelle** : Le code a migré vers un thème rose primaire — `--primary` (`#F53D8D`), `--pink` (`#FF75AD`), `--obsidian` (`#191218`).--teal/--gold/--violet sont aujourd'hui des alias de compatibilité qui pointent tous vers `--primary`.
 
 ---
 
@@ -10,23 +10,23 @@
 
 ```css
 /* Couleurs */
---obsidian: #0a0810;       /* fond de page */
---surface: #14101c;        /* cartes */
---surface-2: #0d0a14;      /* modals / menus / inputs */
---primary: #b8f34a;        /* vert primaire — accent principal */
---primary-strong: #9fe022; /* CTA plein, hover */
---primary-ink: #10210a;    /* texte sur fond primaire clair */
+--obsidian: #191218;       /* fond de page */
+--surface: #241a23;        /* cartes */
+--surface-2: #1d141c;      /* modals / menus / inputs */
+--primary: #F53D8D;        /* rose viva — accent principal */
+--primary-strong: #e02d7d; /* CTA plein, hover */
+--primary-ink: #ffffff;    /* texte blanc sur fond rose */
 
-/* Alias de compatibilité — anciennes couleurs convergent vers le vert */
+/* Alias de compatibilité — anciennes couleurs convergent vers le rose */
 --teal: var(--primary);
 --teal-solid: var(--primary-strong);
 --gold: var(--primary);
---pink: #ff7b7b;
+--pink: #FF75AD;
 --violet: var(--primary);
 --violet-cta: linear-gradient(180deg, var(--primary), var(--primary-strong));
 
---border: rgba(184, 243, 74, 0.18);
---border-strong: rgba(184, 243, 74, 0.34);
+--border: rgba(245, 61, 141, 0.18);
+--border-strong: rgba(245, 61, 141, 0.34);
 --text: #ffffff;
 --text-muted: rgba(255, 255, 255, 0.76);
 --text-faint: rgba(255, 255, 255, 0.62);
@@ -382,14 +382,14 @@ Pas d'asset image — le logo est un texte stylé directement dans `PublicNav.ts
 
 Le nom "LIVE IN BLACK" apparaît aussi en texte brut sur les pages légales (`LegalPageLayout.tsx`, filigrane répété ×8) et dans les champs "Logo" upload des profils organisateur (`StudioClient.tsx` — images utilisateur via Cloudinary, sans rapport avec la marque du site elle-même).
 
-**Couleurs de marque** : `--primary` (`#b8f34a`, vert), `--primary-strong` (`#9fe022`), `--primary-ink` (`#10210a`), fond `--obsidian` (`#0a0810`, quasi-noir).
+**Couleurs de marque** : `--primary` (`#F53D8D`, rose), `--primary-strong` (`#e02d7d`), `--primary-ink` (`#ffffff`), fond `--obsidian` (`#191218`).
 
 ---
 
 ## Résumé pour un designer
 
 - **Un seul thème** (sombre), pas de mode clair.
-- **Vert `#b8f34a` = couleur de marque unique** — tout ce qui était teal/gold/violet converge désormais vers ce vert.
+- **Rose `#F53D8D` + Rose doux `#FF75AD` + Obsidian `#191218` = palette de marque unique** — lisible et dynamique.
 - **Tout est inline-style TypeScript**, jamais de Tailwind ni de CSS modules dans les composants applicatifs.
 - **`Button.tsx` est la seule source de vérité pour les boutons** — 5 variantes × 3 tailles, cible tactile 44px minimum partout.
 - **Deux implémentations de badge non harmonisées** (pill vs rectangle arrondi) — point à corriger.

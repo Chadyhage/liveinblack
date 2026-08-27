@@ -192,9 +192,9 @@ const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, 
 // Les couleurs `var(--*)` ne supportent pas la concaténation d'un canal alpha
 // hexadécimal (`${'var(--gold)'}22` produit une chaîne CSS invalide) — voir
 // le même piège documenté dans AgentUsersClient.tsx. On retombe sur
-// l'équivalent rgba() précalculé de --gold (= --primary, #b8f34a) pour ce cas.
+// l'équivalent rgba() précalculé de --gold (= --primary, var(--primary)) pour ce cas.
 function alphaBg(color: string): string {
-  return color.startsWith('var(') ? 'rgba(184,243,74,0.13)' : `${color}22`
+  return color.startsWith('var(') ? 'var(--primary-a12)' : `${color}22`
 }
 
 function str(v: unknown): string {

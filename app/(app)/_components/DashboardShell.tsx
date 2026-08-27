@@ -389,8 +389,8 @@ function SidebarItem({
           display: 'flex',
           alignItems: 'center',
           borderRadius: 13,
-          background: active ? 'rgba(184, 243, 74,.13)' : 'transparent',
-          border: active ? '1px solid rgba(184,243,74,.22)' : '1px solid transparent',
+          background: active ? 'var(--primary-a12)' : 'transparent',
+          border: active ? '1px solid var(--primary-a20)' : '1px solid transparent',
         }}
       >
         <Link
@@ -449,8 +449,8 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
         padding: compact ? '8px 11px' : '10px 12px',
         borderRadius: 13,
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
-        background: active ? 'rgba(184, 243, 74,.13)' : 'transparent',
-        border: active ? '1px solid rgba(184,243,74,.22)' : '1px solid transparent',
+        background: active ? 'var(--primary-a12)' : 'transparent',
+        border: active ? '1px solid var(--primary-a20)' : '1px solid transparent',
         fontSize: compact ? 13 : 14,
         fontWeight: active ? 700 : 600,
         textDecoration: 'none',

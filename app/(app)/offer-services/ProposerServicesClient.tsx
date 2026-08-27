@@ -778,7 +778,7 @@ export default function ProposerServicesClient({
           // (ex. erreur de validation catalogue) reste visible même si
           // l'utilisateur a déjà scrollé, au lieu de rester bloqué en haut
           // de page hors du champ de vision.
-          <Card role="status" accent="rgba(184, 243, 74,.35)" style={{ boxShadow: CARD_SHADOW, position: 'sticky', top: 12, zIndex: 30, padding: '12px 14px', marginTop: 12 }}>
+          <Card role="status" accent="var(--primary-a35)" style={{ boxShadow: CARD_SHADOW, position: 'sticky', top: 12, zIndex: 30, padding: '12px 14px', marginTop: 12 }}>
             <p style={{ fontSize: 12.5, color: '#fff', margin: 0 }}>{message}</p>
           </Card>
         )}
@@ -810,8 +810,8 @@ export default function ProposerServicesClient({
               <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
               <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.42)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
               {hasUnsavedProfileChanges && (
-                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.38)', color: 'rgba(255,255,255,.88)' }}>
-                  <span style={{ width: 28, height: 28, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, color: C.gold, background: 'rgba(184, 243, 74,.12)', border: '1px solid rgba(184, 243, 74,.28)' }}>
+                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', color: 'rgba(255,255,255,.88)' }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, color: C.gold, background: 'var(--primary-a12)', border: '1px solid var(--focus-ring-color)' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 9v4" />
                       <path d="M12 17h.01" />
@@ -872,7 +872,7 @@ export default function ProposerServicesClient({
                       {[{ id: INTERNATIONAL_REGION_ID, name: 'International', flag: '🌍' }, ...regions].map((r) => {
                         const selected = profile.zonesIntervention.includes(r.id)
                         return (
-                          <Button key={r.id} variant="ghost" onClick={() => toggleZone(r.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 12, color: selected ? C.teal : 'rgba(255,255,255,.62)', background: selected ? 'rgba(184, 243, 74,.1)' : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? 'rgba(184, 243, 74,.55)' : 'rgba(255,255,255,.12)'}` }}>
+                          <Button key={r.id} variant="ghost" onClick={() => toggleZone(r.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 12, color: selected ? C.teal : 'rgba(255,255,255,.62)', background: selected ? 'var(--primary-a10)' : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? 'var(--primary-a55)' : 'rgba(255,255,255,.12)'}` }}>
                             {r.flag} {r.name}
                           </Button>
                         )
@@ -1176,7 +1176,7 @@ export default function ProposerServicesClient({
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                             <h3 style={{ fontSize: 16, margin: 0, wordBreak: 'break-word' }}>{item.name}</h3>
-                            <span style={{ padding: '3px 8px', borderRadius: 8, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'rgba(184, 243, 74,.12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'rgba(184, 243, 74,.35)'}` }}>
+                            <span style={{ padding: '3px 8px', borderRadius: 8, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'var(--primary-a12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'var(--primary-a35)'}` }}>
                               {item.available === false ? 'Masquée' : 'Publiée'}
                             </span>
                           </div>
@@ -1211,7 +1211,7 @@ export default function ProposerServicesClient({
         {tab === 'avis' && (
           <section>
             {reportMsg && (
-              <Card role="status" accent="rgba(184, 243, 74,.35)" style={{ boxShadow: CARD_SHADOW, padding: '12px 16px', marginBottom: 12 }}>
+              <Card role="status" accent="var(--primary-a35)" style={{ boxShadow: CARD_SHADOW, padding: '12px 16px', marginBottom: 12 }}>
                 <p style={{ fontSize: 12.5, color: 'var(--primary)', margin: 0 }}>{reportMsg}</p>
               </Card>
             )}
@@ -1264,7 +1264,7 @@ export default function ProposerServicesClient({
                           <Stars value={review.rating} size={14} />
                           <span style={{ fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
                           {review.verified && (
-                            <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--primary)', background: 'rgba(184,243,74,.10)', border: '1px solid rgba(184,243,74,.35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
+                            <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
                           )}
                           {hidden && (
                             <span style={{ fontSize: 10.5, fontWeight: 700, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 999, padding: '2px 8px' }}>Masqué par la modération</span>

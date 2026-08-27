@@ -28,7 +28,7 @@ type Accent = 'teal' | 'gold' | 'pink'
 
 const ACCENTS: { key: Accent; label: string; dot: string; soft: string; border: string }[] = [
   { key: 'teal', label: 'Menthe', dot: '#67e8d3', soft: 'rgba(103,232,211,.12)', border: 'rgba(103,232,211,.34)' },
-  { key: 'gold', label: 'Citron', dot: '#b8f34a', soft: 'rgba(184,243,74,.12)', border: 'rgba(184,243,74,.34)' },
+  { key: 'gold', label: 'Citron', dot: 'var(--primary)', soft: 'var(--primary-a12)', border: 'var(--border-strong)' },
   { key: 'pink', label: 'Rose', dot: '#ff78b9', soft: 'rgba(255,120,185,.12)', border: 'rgba(255,120,185,.34)' },
 ]
 const ACCENT_BY_KEY = Object.fromEntries(ACCENTS.map((accent) => [accent.key, accent])) as Record<Accent, (typeof ACCENTS)[number]>

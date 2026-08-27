@@ -446,8 +446,8 @@ export default function EventCheckoutPanel({
             marginBottom: 14,
             padding: '12px 14px',
             borderRadius: 12,
-            background: 'rgba(184, 243, 74,0.08)',
-            border: '1px solid rgba(184, 243, 74,0.3)',
+            background: 'var(--primary-a08)',
+            border: '1px solid var(--primary-a32)',
             borderLeft: '3px solid var(--gold)',
           }}
         >
@@ -470,8 +470,8 @@ export default function EventCheckoutPanel({
           style={{
             marginBottom: 14,
             padding: '14px 16px',
-            background: 'rgba(184, 243, 74,0.07)',
-            border: '1px solid rgba(184, 243, 74,0.22)',
+            background: 'var(--primary-a07)',
+            border: '1px solid var(--primary-a20)',
             borderRadius: 14,
           }}
         >
@@ -702,7 +702,7 @@ export default function EventCheckoutPanel({
             )}
 
             {discountedPlacePrice > 0 && (
-              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'rgba(184, 243, 74,.08)' : 'rgba(255,255,255,.035)' }}>
+              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'var(--primary-a08)' : 'rgba(255,255,255,.035)' }}>
                 <Checkbox
                   checked={cancellationProtection}
                   onChange={(event) => setCancellationProtection(event.target.checked)}
@@ -749,7 +749,7 @@ export default function EventCheckoutPanel({
                   {Array.from({ length: ticketCount }, (_, index) => {
                     const count = Object.values(preordersByTicket[index] || {}).reduce((sum, value) => sum + value, 0)
                     const active = preorderTicketIndex === index
-                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'rgba(184, 243, 74,.12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
+                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'var(--primary-a12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
                   })}
                 </div>
               )}
@@ -763,7 +763,7 @@ export default function EventCheckoutPanel({
                     style={{
                       padding: '10px 12px',
                       borderRadius: 10,
-                      border: `1px solid ${q > 0 ? 'rgba(184, 243, 74,0.3)' : 'var(--border)'}`,
+                      border: `1px solid ${q > 0 ? 'var(--primary-a32)' : 'var(--border)'}`,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -787,7 +787,7 @@ export default function EventCheckoutPanel({
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {availableShows.map((option) => {
                             const active = selectedShow?.showOptionId === option.id
-                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'rgba(184, 243, 74,.1)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
+                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'var(--primary-a10)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
                           })}
                         </div>
                         {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--primary)', fontSize: 10.5 }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
@@ -811,7 +811,7 @@ export default function EventCheckoutPanel({
           </div>
 
           {eventMinAge >= 18 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(184, 243, 74,0.07)', border: '1px solid rgba(184, 243, 74,0.22)', borderRadius: 12, padding: '11px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--primary-a07)', border: '1px solid var(--primary-a20)', borderRadius: 12, padding: '11px 14px' }}>
               <span
                 style={{
                   flexShrink: 0,
@@ -821,7 +821,7 @@ export default function EventCheckoutPanel({
                   width: 30,
                   height: 30,
                   borderRadius: '50%',
-                  border: '1px solid rgba(184, 243, 74,0.4)',
+                  border: '1px solid var(--primary-a04)',
                   fontSize: 11,
                   fontWeight: 700,
                   color: 'var(--gold)',
@@ -858,7 +858,7 @@ export default function EventCheckoutPanel({
               letterSpacing: 'normal',
               color: buyDisabled ? 'var(--text-faint)' : '#04120e',
               background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg, var(--primary), var(--primary-strong))',
-              boxShadow: buyDisabled ? 'none' : '0 8px 26px rgba(184, 243, 74,0.32)',
+              boxShadow: buyDisabled ? 'none' : '0 8px 26px var(--primary-a32)',
             }}
           >
             {disabled ? bookingDisabledReason : buyLabel}
@@ -967,14 +967,14 @@ export default function EventCheckoutPanel({
 }
 
 function IncludedRow({ label, emoji }: { label: string; emoji?: string }) {
-  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(184, 243, 74,.22)', background: 'rgba(184, 243, 74,.05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary-a20)', background: 'var(--primary-a05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
 }
 
 function SummaryRow({ label, value, accent, strong }: { label: string; value: string; accent?: boolean; strong?: boolean }) {
   return <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span style={{ color: strong ? 'var(--text)' : 'var(--text-muted)', fontSize: strong ? 14 : 12.5, fontWeight: strong ? 800 : 500 }}>{label}</span><span style={{ color: accent ? 'var(--primary)' : strong ? 'var(--gold)' : 'var(--text)', fontSize: strong ? 18 : 12.5, fontWeight: strong ? 900 : 700, textAlign: 'right' }}>{value}</span></div>
 }
 
-const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(184, 243, 74,.32)', background: 'rgba(184, 243, 74,.08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
+const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid var(--primary-a32)', background: 'var(--primary-a08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
 const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
 const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
 const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }

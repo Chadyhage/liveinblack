@@ -91,8 +91,8 @@ export function GroupAvatar({ conv, size = 38 }: { conv: { avatar: string | null
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'rgba(184, 243, 74,0.14)',
-        border: '1px solid rgba(184, 243, 74,0.3)',
+        background: 'var(--primary-a14)',
+        border: '1px solid var(--primary-a32)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -279,8 +279,8 @@ export function MessageRow({
                   variant="secondary"
                   onClick={() => onReact(message.id, emoji)}
                   style={{
-                    background: reactedByMe ? 'rgba(184, 243, 74,0.14)' : 'var(--surface-2)',
-                    border: `1px solid ${reactedByMe ? 'rgba(184, 243, 74,0.3)' : 'var(--border)'}`,
+                    background: reactedByMe ? 'var(--primary-a14)' : 'var(--surface-2)',
+                    border: `1px solid ${reactedByMe ? 'var(--primary-a32)' : 'var(--border)'}`,
                     borderRadius: 10,
                     padding: '2px 6px',
                     display: 'flex',
@@ -559,7 +559,7 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
                 overflow: 'hidden',
               }}
             >
-              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'rgba(184, 243, 74,0.22)' }} />
+              <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'var(--primary-a20)' }} />
               <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {votedByMe ? <span style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span> : null}
                 {option.text}

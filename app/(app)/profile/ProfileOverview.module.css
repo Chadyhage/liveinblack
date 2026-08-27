@@ -4,18 +4,18 @@
 .identity h1 { margin:2px 0 0; color:#fff; font-size:15px; font-weight:760; letter-spacing:-.035em; text-align:center; }
 .email { max-width:100%; margin:0; overflow:hidden; color:rgba(245,245,247,.48); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
 .badges { display:flex; flex-wrap:wrap; justify-content:center; gap:3px; margin-top:1px; }
-.editLink { min-height:30px; display:inline-flex; align-items:center; color:#b8f34a; font-size:10.5px; font-weight:650; text-decoration:none; }
+.editLink { min-height:30px; display:inline-flex; align-items:center; color:var(--primary); font-size:10.5px; font-weight:650; text-decoration:none; }
 .logout { margin-top:3px!important; border-radius:10px!important; border-color:rgba(255,105,180,.28)!important; color:#ff78b8!important; }
 .content { display:flex; flex-direction:column; gap:6px; }
-.points { position:relative; min-height:74px; overflow:hidden; padding:9px!important; border-radius:11px!important; border-color:rgba(184,243,74,.18)!important; background:linear-gradient(125deg,rgba(184,243,74,.1),rgba(255,255,255,.032))!important; }
-.points::after { content:""; position:absolute; width:112px; height:112px; right:-44px; bottom:-68px; border-radius:50%; background:rgba(184,243,74,.12); }
-.pointsLabel { margin:0; color:#b8f34a; font-size:8px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
+.points { position:relative; min-height:74px; overflow:hidden; padding:9px!important; border-radius:11px!important; border-color:var(--border)!important; background:linear-gradient(125deg,var(--primary-a10),rgba(255,255,255,.032))!important; }
+.points::after { content:""; position:absolute; width:112px; height:112px; right:-44px; bottom:-68px; border-radius:50%; background:var(--primary-a12); }
+.pointsLabel { margin:0; color:var(--primary); font-size:8px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
 .pointsValue { display:block; margin:4px 0 1px; color:#fff; font-size:clamp(18px,1.8vw,24px); font-weight:770; letter-spacing:-.05em; }
 .pointsText { max-width:600px; margin:0; color:rgba(245,245,247,.6); font-size:10px; line-height:1.32; }
 .quickGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
 .quickLink { min-height:52px; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; gap:5px; padding:8px; border:1px solid rgba(255,255,255,.1); border-radius:10px; background:rgba(255,255,255,.042); color:#f5f5f7; text-decoration:none; transition:transform .2s ease,border-color .2s ease,background .2s ease; }
-.quickLink:hover { transform:translateY(-2px); border-color:rgba(184,243,74,.22); background:rgba(255,255,255,.06); }
-.quickIcon { width:26px; height:26px; display:grid; place-items:center; border-radius:8px; background:rgba(184,243,74,.1); color:#b8f34a; }
+.quickLink:hover { transform:translateY(-2px); border-color:var(--primary-a20); background:rgba(255,255,255,.06); }
+.quickIcon { width:26px; height:26px; display:grid; place-items:center; border-radius:8px; background:var(--primary-a10); color:var(--primary); }
 .quickLabel { font-size:11px; font-weight:680; }
 @media(max-width:780px){.grid{grid-template-columns:1fr}.identity{position:relative;top:0}.quickGrid{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.quickGrid{grid-template-columns:1fr}.quickLink{min-height:56px}.root{padding-bottom:90px}}

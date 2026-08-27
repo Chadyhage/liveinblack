@@ -54,7 +54,7 @@ export interface PlaylistClientProps {
 // Palette figée du redesign 2026-07 (voir CLAUDE.md) — les compositions avec
 // alpha (bordures/fonds teintés) ont besoin de la valeur hex brute, `var(--x)`
 // ne peut pas recevoir de suffixe alpha concaténé.
-const HEX = { teal: '#b8f34a', gold: '#b8f34a', violet: '#b8f34a', pink: '#ff7b7b' }
+const HEX = { teal: 'var(--primary)', gold: 'var(--primary)', violet: 'var(--primary)', pink: '#ff7b7b' }
 const LIKE_BUDGET = 5
 
 let toastSeq = 0
@@ -575,7 +575,7 @@ export default function PlaylistClient({
             padding: '9px 13px',
             borderRadius: 10,
             border: `1px solid ${HEX.gold}55`,
-            background: 'rgba(184, 243, 74,0.08)',
+            background: 'var(--primary-a08)',
             fontSize: 12,
             color: 'var(--gold)',
             marginBottom: 16,
@@ -601,7 +601,7 @@ export default function PlaylistClient({
             padding: '12px 16px',
             borderRadius: 14,
             border: `1px solid ${HEX.gold}55`,
-            background: 'linear-gradient(135deg, rgba(184, 243, 74,0.14), rgba(139,92,246,0.10))',
+            background: 'linear-gradient(135deg, var(--primary-a14), rgba(139,92,246,0.10))',
             marginBottom: 18,
           }}
         >
@@ -692,7 +692,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: moderationTab === f.key ? 'var(--gold)' : 'var(--text-muted)',
-                  background: moderationTab === f.key ? 'rgba(184, 243, 74,0.12)' : 'rgba(255,255,255,0.04)',
+                  background: moderationTab === f.key ? 'var(--primary-a12)' : 'rgba(255,255,255,0.04)',
                   borderColor: moderationTab === f.key ? `${HEX.gold}73` : 'var(--border)',
                 }}
               >
@@ -708,7 +708,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: djSort === id ? 'var(--teal)' : 'var(--text-muted)',
-                  background: djSort === id ? 'rgba(184, 243, 74,0.12)' : 'rgba(255,255,255,0.04)',
+                  background: djSort === id ? 'var(--primary-a12)' : 'rgba(255,255,255,0.04)',
                   borderColor: djSort === id ? `${HEX.teal}66` : 'var(--border)',
                 }}
               >
@@ -814,7 +814,7 @@ export default function PlaylistClient({
                     fontSize: 13.5,
                     fontWeight: active ? 800 : 600,
                     transition: 'all 0.2s',
-                    color: active ? '#04120e' : 'var(--text-muted)',
+                    color: active ? 'var(--primary-ink)' : 'var(--text-muted)',
                     background: active ? 'var(--teal-solid)' : 'transparent',
                   }}
                 >
@@ -869,7 +869,7 @@ export default function PlaylistClient({
                             borderRadius: 999,
                             flexShrink: 0,
                             border: isMine ? '1px solid rgba(255,255,255,0.06)' : liked ? `1px solid ${HEX.teal}66` : '1px solid var(--border-strong)',
-                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'rgba(184, 243, 74,0.16)' : 'rgba(255,255,255,0.08)',
+                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'var(--primary-a16)' : 'rgba(255,255,255,0.08)',
                             cursor: isMine ? 'not-allowed' : 'pointer',
                           }}
                         >
@@ -903,7 +903,7 @@ export default function PlaylistClient({
                         padding: '12px 14px',
                         borderRadius: 14,
                         border: effectiveHasTicket ? `1px solid ${HEX.teal}44` : '1px solid var(--border-strong)',
-                        background: effectiveHasTicket ? 'rgba(184, 243, 74,0.04)' : 'rgba(255,255,255,0.03)',
+                        background: effectiveHasTicket ? 'var(--primary-a04)' : 'rgba(255,255,255,0.03)',
                       }}
                     >
                       <div
@@ -915,7 +915,7 @@ export default function PlaylistClient({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: effectiveHasTicket ? 'rgba(184, 243, 74,0.1)' : 'rgba(255,255,255,0.05)',
+                          background: effectiveHasTicket ? 'var(--primary-a10)' : 'rgba(255,255,255,0.05)',
                         }}
                       >
                         <TicketIcon done={effectiveHasTicket} />
@@ -1086,7 +1086,7 @@ export default function PlaylistClient({
                 </div>
               </Card>
 
-              <Card accent="rgba(184, 243, 74,0.28)" style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <Card accent="var(--focus-ring-color)" style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                 <div style={{ marginTop: 2, flexShrink: 0 }}>
                   <HeadphonesIcon />
                 </div>

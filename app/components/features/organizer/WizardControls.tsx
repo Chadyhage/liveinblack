@@ -35,7 +35,7 @@ export function InputField({ label, value, onChange, placeholder, type = 'text',
   return (
     <div>
       {label && <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>{label}{locked && <LockIcon />}</label>}
-      <Input type={type} min={min} max={max} maxLength={maxLength} disabled={locked} invalid={Boolean(error)} title={locked ? 'Verrouillé — billets déjà vendus' : undefined} style={{ ...inputStyle, opacity: locked ? 0.55 : 1, background: locked ? 'rgba(184, 243, 74,0.04)' : inputStyle.background, ...style }} placeholder={placeholder} value={value} onChange={onChange} />
+      <Input type={type} min={min} max={max} maxLength={maxLength} disabled={locked} invalid={Boolean(error)} title={locked ? 'Verrouillé — billets déjà vendus' : undefined} style={{ ...inputStyle, opacity: locked ? 0.55 : 1, background: locked ? 'var(--primary-a04)' : inputStyle.background, ...style }} placeholder={placeholder} value={value} onChange={onChange} />
       {error && <p style={{ margin: '4px 0 0', color: '#ff7b7b', fontSize: 12 }}>{error}</p>}
     </div>
   )
@@ -68,7 +68,7 @@ export function NumberInputField({ label, value, onChange, placeholder, error, s
         disabled={locked}
         invalid={Boolean(error)}
         title={locked ? 'Verrouillé — billets déjà vendus' : undefined}
-        style={{ ...inputStyle, opacity: locked ? 0.55 : 1, background: locked ? 'rgba(184, 243, 74,0.04)' : inputStyle.background, ...style }}
+        style={{ ...inputStyle, opacity: locked ? 0.55 : 1, background: locked ? 'var(--primary-a04)' : inputStyle.background, ...style }}
         placeholder={placeholder}
         value={value}
         onChange={onChange}

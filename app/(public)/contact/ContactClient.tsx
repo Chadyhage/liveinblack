@@ -85,7 +85,7 @@ export default function ContactClient() {
         position: 'relative',
         zIndex: 1,
         padding: '20px clamp(14px, 2vw, 28px) 48px',
-        background: 'radial-gradient(circle at 80% 0%, rgba(184,243,74,0.07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+        background: 'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <div style={{ maxWidth: 1560, margin: '0 auto', position: 'relative', zIndex: 1 }}>

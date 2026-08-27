@@ -28,7 +28,7 @@
   box-shadow: 0 8px 22px rgba(0, 0, 0, .13) !important;
 }
 
-.workspace :global(.lb-card):hover { transform: none; border-color: color-mix(in srgb, var(--screen-accent, #b8f34a) 24%, transparent) !important; }
+.workspace :global(.lb-card):hover { transform: none; border-color: color-mix(in srgb, var(--screen-accent, var(--primary)) 24%, transparent) !important; }
 .workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important; gap: 4px !important; }
 .workspace :global(.lb-responsive-metrics) { padding: 3px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(18,19,22,.76); }
 .workspace :global(.lb-responsive-metrics) > :global(.lb-card),
@@ -46,10 +46,10 @@
 .workspace [role="alert"] { border-radius: 12px !important; }
 
 /* Chaque outil conserve une identité fonctionnelle sans casser le système commun. */
-.workspace :global(.lb-agent-screen) { --screen-accent: #b8f34a; }
-.workspace :global(.lb-agent-screen--overview) { --screen-accent: #b8f34a; }
+.workspace :global(.lb-agent-screen) { --screen-accent: var(--primary); }
+.workspace :global(.lb-agent-screen--overview) { --screen-accent: var(--primary); }
 .workspace :global(.lb-agent-screen--users) { --screen-accent: #70b7ff; }
-.workspace :global(.lb-agent-screen--events) { --screen-accent: #b8f34a; }
+.workspace :global(.lb-agent-screen--events) { --screen-accent: var(--primary); }
 .workspace :global(.lb-agent-screen--applications) { --screen-accent: #c4a7ff; }
 .workspace :global(.lb-agent-screen--payments) { --screen-accent: #ffd36a; }
 .workspace :global(.lb-agent-screen--deletions),

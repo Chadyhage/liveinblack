@@ -407,7 +407,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             right: 12,
             display: 'flex',
             flexDirection: 'column',
-            maxHeight: 'calc(100dvh - 76px - var(--cookie-consent-height, 0px))',
+            maxHeight: 'calc(100dvh - 76px)',
             overflowY: 'auto',
             overscrollBehavior: 'contain',
             marginTop: 8,
@@ -540,7 +540,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           display: grid;
           place-items: center;
           border-radius: 10px;
-          background: rgba(184,243,74,.94);
+          background: var(--primary-a.94);
           color: #101500;
           font-size: 11px;
           font-weight: 820;
@@ -578,7 +578,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           font-weight: 650;
         }
         .lb-nav-auth--secondary { margin-left: 5px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.065); }
-        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(209,255,118,.72); background: linear-gradient(180deg, #c8fa68, #b8f34a); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 7px 18px rgba(126,181,27,.18); }
+        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(209,255,118,.72); background: linear-gradient(180deg, #c8fa68, var(--primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 7px 18px rgba(126,181,27,.18); }
         @media (min-width: 1100px) and (max-width: 1399px) {
           .lb-navlink-primary, .lb-nav-search { display: inline-flex }
           .lb-nav-auth { display: inline-flex }
@@ -606,9 +606,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
         }
         .lb-header-search__form:focus-within {
-          border-color: rgba(184,243,74,.62);
+          border-color: var(--primary-a65);
           background: rgba(255,255,255,.1);
-          box-shadow: 0 0 0 4px rgba(184,243,74,.11);
+          box-shadow: 0 0 0 4px var(--primary-a10);
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
         .lb-header-search__button {

@@ -80,7 +80,7 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
   borderRadius: 3,
   border: 'none',
-  background: disabled ? 'rgba(184, 243, 74,0.3)' : 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
+  background: disabled ? 'var(--primary-a32)' : 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
   color: 'var(--primary-ink)',
   fontWeight: 500,
   fontSize: 14,
@@ -92,7 +92,7 @@ const chip = (active: boolean): React.CSSProperties => ({
   padding: '8px 14px',
   borderRadius: 999,
   border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
-  background: active ? 'rgba(184, 243, 74,0.14)' : 'transparent',
+  background: active ? 'var(--primary-a14)' : 'transparent',
   color: active ? 'var(--gold)' : '#fff',
   fontSize: 12.5,
   cursor: 'pointer',
@@ -443,7 +443,7 @@ export default function PrestataireOnboardingWizard({
                 <Input style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} />
               </div>
               {types.includes('artiste') && (
-                <div style={{ padding: 10, borderRadius: 10, background: 'rgba(184, 243, 74,0.06)', border: '1px solid rgba(184, 243, 74,0.2)' }}>
+                <div style={{ padding: 10, borderRadius: 10, background: 'var(--primary-a06)', border: '1px solid var(--primary-a20)' }}>
                   <Label style={labelStyle}>Nom de scène (visible car « Artiste » est sélectionné)</Label>
                   <Input style={inputStyle} value={form.nomScene} onChange={(e) => set('nomScene', e.target.value)} />
                 </div>

@@ -75,7 +75,7 @@ export default function PublicAboutPage() {
       </Section>
 
       <section className={styles.ctaWrap} style={{ padding: '18px 22px 0' }}>
-          <div className={styles.cta} style={{ maxWidth: 1120, margin: '0 auto', padding: '34px 24px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, rgba(184, 243, 74,.12), transparent 60%), var(--surface-2)' }}>
+          <div className={styles.cta} style={{ maxWidth: 1120, margin: '0 auto', padding: '34px 24px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, var(--primary-a12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(24px,5vw,36px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '10px auto 0', maxWidth: 720, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.

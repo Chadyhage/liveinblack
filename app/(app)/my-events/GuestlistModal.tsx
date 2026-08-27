@@ -224,7 +224,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               borderRadius: 3,
               border: 'none',
               background: adding || !name.trim() ? 'rgba(255,255,255,0.07)' : 'var(--teal-solid)',
-              color: adding || !name.trim() ? 'rgba(255,255,255,0.35)' : '#04120e',
+              color: adding || !name.trim() ? 'rgba(255,255,255,0.35)' : 'var(--primary-ink)',
               fontSize: 14,
               fontWeight: 500,
               textTransform: 'none',
@@ -291,7 +291,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         borderRadius: 10,
                         background: copiedCode === entry.ticketCode ? 'var(--teal-solid)' : 'rgba(255,255,255,0.08)',
                         border: copiedCode === entry.ticketCode ? 'none' : '1px solid rgba(255,255,255,0.14)',
-                        color: copiedCode === entry.ticketCode ? '#04120e' : 'rgba(255,255,255,0.9)',
+                        color: copiedCode === entry.ticketCode ? 'var(--primary-ink)' : 'rgba(255,255,255,0.9)',
                         fontSize: 12,
                         fontWeight: 600,
                       }}

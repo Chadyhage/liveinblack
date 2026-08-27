@@ -17,7 +17,7 @@ import { Button, Card, Textarea, Label, Modal, SlideOverModal } from '@/app/comp
 const GOLD = 'var(--primary)'
 const TEAL = 'var(--primary)'
 
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px rgba(184, 243, 74,.18)' }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px var(--border)' }
 const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: 600 }
 const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
 
@@ -227,7 +227,7 @@ export default function ProviderReviewsClient({
                       <Stars value={review.rating} size={13} />
                       <span style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
                       {review.verified && (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'rgba(184, 243, 74,.10)', border: '1px solid rgba(184, 243, 74,.35)', borderRadius: 999, padding: '2px 8px' }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>
                           Avis vérifié
                         </span>
                       )}

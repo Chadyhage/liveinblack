@@ -13,7 +13,7 @@ describe('design des e-mails LIVE IN BLACK', () => {
     )
 
     expect(email.html).toContain('background:#0d0a14')
-    expect(email.html).toContain('LIVE <span style="color:#b8f34a;">IN</span> BLACK')
+    expect(email.html).toContain('LIVE <span style="color:var(--primary);">IN</span> BLACK')
     expect(email.html).toContain('/images/email-icons/shield-check.png')
     expect(email.html).not.toContain('/images/mascot/')
     expect(email.html).not.toContain('/images/live-in-black/')

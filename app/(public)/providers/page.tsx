@@ -124,7 +124,7 @@ export default async function PublicPrestatairesPage({
               containerStyle={{ flex: 1, minWidth: 0 }}
               style={{ border: 0, background: 'transparent', boxShadow: 'none' }}
             />
-            <Button type="submit" className={styles.searchButton} style={{ minWidth: 136, minHeight: 40, borderRadius: 13, background: '#b8f34a', color: '#142000', fontSize: 14.5 }}>
+            <Button type="submit" className={styles.searchButton} style={{ minWidth: 136, minHeight: 40, borderRadius: 13, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 14.5 }}>
               <Search size={19} strokeWidth={2.2} aria-hidden="true" />
               <span>Rechercher</span>
             </Button>

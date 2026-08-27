@@ -143,6 +143,15 @@ const checks = [
     ],
   },
   {
+    file: 'app/(public)/home/home.module.css',
+    description: 'hero home large, autour de deux tiers de hauteur d’écran',
+    required: [
+      'min-height: clamp(520px, 66svh, 760px)',
+      'padding: clamp(44px, 7vh, 88px)',
+      'min-height: clamp(540px, 68svh, 640px)',
+    ],
+  },
+  {
     file: 'app/(public)/home/page.tsx',
     description: 'accueil public compact sur les sections conversion',
     required: [

@@ -79,16 +79,16 @@ interface BadgeColors {
 }
 const ROLE_BADGE: Record<Role, BadgeColors> = {
   client: { color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' },
-  organisateur: { color: 'var(--gold)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' },
+  organisateur: { color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' },
   prestataire: { color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
-  agent: { color: 'var(--gold)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' },
+  agent: { color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' },
 }
 
 function statusLabel(u: UserSummary): { label: string } & BadgeColors {
   if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
-  if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' }
+  if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' }
   if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
-  return { label: 'ACTIF', color: 'var(--primary)', border: 'rgba(184, 243, 74,0.35)', bg: 'rgba(184, 243, 74,0.14)' }
+  return { label: 'ACTIF', color: 'var(--primary)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' }
 }
 
 function fmtDate(iso: string | null): string {
@@ -537,8 +537,8 @@ function DetailPanel({
             height: 48,
             borderRadius: '50%',
             flexShrink: 0,
-            background: 'rgba(184, 243, 74,0.08)',
-            border: '1px solid rgba(184, 243, 74,0.22)',
+            background: 'var(--primary-a08)',
+            border: '1px solid var(--primary-a20)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -587,8 +587,8 @@ function DetailPanel({
                 padding: '10px 0',
                 borderRadius: 3,
                 fontWeight: 500,
-                background: 'rgba(184, 243, 74,0.12)',
-                border: '1px solid rgba(184, 243, 74,0.4)',
+                background: 'var(--primary-a12)',
+                border: '1px solid var(--primary-a04)',
                 color: 'var(--teal)',
                 fontSize: 14,
                 textTransform: 'none',
@@ -706,7 +706,7 @@ function DetailPanel({
               variant="secondary"
               onClick={() => setConfirmDisable(true)}
               disabled={actionBusy}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.55)', color: 'var(--gold)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'var(--primary-a14)', border: '1px solid var(--primary-a55)', color: 'var(--gold)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
             >
               Suspendre le compte
             </Button>

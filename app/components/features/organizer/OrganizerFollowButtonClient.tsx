@@ -126,11 +126,11 @@ export default function OrganizerFollowButtonClient({
   }
 
   const style: React.CSSProperties = following
-    ? { ...base, background: 'rgba(184, 243, 74,0.12)', border: '1px solid rgba(184, 243, 74,0.35)', color: 'var(--primary)' }
+    ? { ...base, background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', color: 'var(--primary)' }
     : appearance === 'premium'
       ? { ...base, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)' }
       : appearance === 'outline'
-        ? { ...base, background: 'transparent', border: '1px solid rgba(184, 243, 74,.55)', color: 'var(--text)' }
+        ? { ...base, background: 'transparent', border: '1px solid var(--primary-a55)', color: 'var(--text)' }
         : { ...base, background: 'var(--primary)', color: 'var(--primary-ink)' }
 
   return (

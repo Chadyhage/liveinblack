@@ -87,8 +87,8 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
 }
 
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
-  sent: { label: 'En cours', color: 'var(--gold)', bg: 'rgba(184,243,74,0.14)' },
-  served: { label: 'Servi', color: 'var(--primary)', bg: 'rgba(184, 243, 74,0.16)' },
+  sent: { label: 'En cours', color: 'var(--gold)', bg: 'var(--primary-a14)' },
+  served: { label: 'Servi', color: 'var(--primary)', bg: 'var(--primary-a16)' },
   cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
 }
 
@@ -553,7 +553,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         </div>
 
         {notice && (
-          <div role="status" aria-live="polite" style={{ background: 'rgba(184,243,74,0.12)', border: '1px solid rgba(184,243,74,0.35)', borderRadius: 14, padding: '8px 12px' }}>
+          <div role="status" aria-live="polite" style={{ background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 14, padding: '8px 12px' }}>
             <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0 }}>{notice}</p>
           </div>
         )}
@@ -621,7 +621,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               <Card
                 className={styles.resultCard}
                 style={{
-                  border: checkinResult.alreadyCheckedIn ? '1px solid rgba(184,243,74,0.35)' : '1px solid rgba(184, 243, 74,0.35)',
+                  border: checkinResult.alreadyCheckedIn ? '1px solid var(--primary-a35)' : '1px solid var(--primary-a35)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                 }}
               >
@@ -637,8 +637,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                       height: 52,
                       borderRadius: '50%',
                       margin: '0 auto 8px',
-                      background: checkinResult.alreadyCheckedIn ? 'rgba(184,243,74,0.10)' : 'rgba(184, 243, 74,0.10)',
-                      border: checkinResult.alreadyCheckedIn ? '2px solid rgba(184,243,74,0.50)' : '2px solid rgba(184, 243, 74,0.50)',
+                      background: checkinResult.alreadyCheckedIn ? 'var(--primary-a10)' : 'var(--primary-a10)',
+                      border: checkinResult.alreadyCheckedIn ? '2px solid var(--primary-a55)' : '2px solid var(--primary-a55)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -760,9 +760,9 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                               loadingText="…"
                               onClick={() => void handleServe(item)}
                               style={{
-                                border: '1px solid rgba(184, 243, 74,0.4)',
+                                border: '1px solid var(--primary-a04)',
                                 color: 'var(--primary)',
-                                background: busyKey === serveKey ? 'rgba(255,255,255,0.03)' : 'rgba(184, 243, 74,0.1)',
+                                background: busyKey === serveKey ? 'rgba(255,255,255,0.03)' : 'var(--primary-a10)',
                                 minWidth: 64,
                               }}
                             >

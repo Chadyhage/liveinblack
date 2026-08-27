@@ -10,7 +10,7 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'>
 // Conteneur "surface" custom — remplace la constante locale `cardStyle`
 // (`background: var(--surface), border: 1px solid var(--border), borderRadius: 16, padding: 20`)
 // redéfinie à l'identique dans des dizaines de fichiers. `accent` permet de
-// personnaliser la couleur de bordure (ex. `rgba(184,243,74,0.25)` pour un
+// personnaliser la couleur de bordure (ex. `var(--primary-a24)` pour un
 // encart accentué) sans redéfinir tout l'objet de style.
 //
 // `ref` transmis + reste des attributs HTML standards (role, aria-*, id...)

@@ -287,7 +287,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           width: 60,
           height: 60,
           borderRadius: '50%',
-          background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'rgba(184, 243, 74,0.18)',
+          background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'var(--border)',
           fontSize: 18,
           fontWeight: 800,
           color: 'var(--gold)',
@@ -914,7 +914,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
       </div>
 
       {user.pendingEmail ? (
-        <div style={{ padding: 14, borderRadius: 10, background: 'rgba(184, 243, 74,0.08)', border: '1px solid rgba(184, 243, 74,0.25)' }}>
+        <div style={{ padding: 14, borderRadius: 10, background: 'var(--primary-a08)', border: '1px solid var(--primary-a24)' }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '0 0 4px' }}>Vérification en attente</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Un lien a été envoyé à {user.pendingEmail}. Ouvre-le pour confirmer le changement.

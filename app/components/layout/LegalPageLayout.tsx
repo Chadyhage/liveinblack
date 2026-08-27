@@ -245,10 +245,10 @@ const FILIGRANE_TEXT = Array(8).fill('LIVE IN BLACK').join(' · ') // couvre ≥
 // offsetD/offsetM : décalage horizontal desktop/mobile (fixe, pas de scroll —
 // voir la note de perf dans le composant légataire src/components/FiligraneRoseBg.jsx).
 const FILIGRANE_LINES: { color: string; offsetD: number; offsetM: number; mobileOnly?: boolean }[] = [
-  { color: 'rgba(184,243,74,0.025)', offsetD: -60, offsetM: -40 },
-  { color: 'rgba(184,243,74,0.02)', offsetD: -420, offsetM: -260 },
+  { color: 'var(--primary-a0.025)', offsetD: -60, offsetM: -40 },
+  { color: 'var(--primary-a0.02)', offsetD: -420, offsetM: -260 },
   { color: 'rgba(255,255,255,0.018)', offsetD: -220, offsetM: -140 },
-  { color: 'rgba(184,243,74,0.018)', offsetD: -560, offsetM: -340 },
+  { color: 'var(--primary-a0.018)', offsetD: -560, offsetM: -340 },
   { color: 'rgba(255,255,255,0.015)', offsetD: -80, offsetM: -80, mobileOnly: true },
 ]
 
@@ -263,7 +263,7 @@ function FiligraneRoseBg() {
         pointerEvents: 'none',
         overflow: 'hidden',
         background:
-          'radial-gradient(circle at 80% 0%, rgba(184,243,74,0.07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+          'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <style>{`

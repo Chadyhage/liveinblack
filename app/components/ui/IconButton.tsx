@@ -14,7 +14,7 @@ export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
 
 const TONE_STYLES: Record<IconButtonTone, CSSProperties> = {
   default: { color: 'var(--text-muted)', border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,.04)' },
-  accent: { color: 'var(--primary)', border: '1px solid rgba(184, 243, 74,.35)', background: 'rgba(184, 243, 74,.08)' },
+  accent: { color: 'var(--primary)', border: '1px solid var(--primary-a35)', background: 'var(--primary-a08)' },
   danger: { color: '#ff7b7b', border: '1px solid rgba(255,91,91,.35)', background: 'rgba(255,91,91,.08)' },
 }
 

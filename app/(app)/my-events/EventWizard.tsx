@@ -827,7 +827,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
         <div
           style={{
             background: 'var(--surface-2)',
-            border: '1px solid rgba(184, 243, 74,0.35)',
+            border: '1px solid var(--primary-a35)',
             borderRadius: 12,
             padding: '14px 16px',
             display: 'flex',
@@ -873,7 +873,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 borderRadius: 12,
                 overflow: 'hidden',
                 aspectRatio: '16/9',
-                border: imagePreview ? '1px solid rgba(184, 243, 74,0.35)' : '2px dashed rgba(255,255,255,0.14)',
+                border: imagePreview ? '1px solid var(--primary-a35)' : '2px dashed rgba(255,255,255,0.14)',
                 background: '#0b0c12',
               }}
             >
@@ -913,7 +913,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 minHeight: 118,
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: videoPreview ? '1px solid rgba(184, 243, 74,0.32)' : '1px dashed rgba(255,255,255,0.14)',
+                border: videoPreview ? '1px solid var(--primary-a32)' : '1px dashed rgba(255,255,255,0.14)',
                 background: '#0b0c12',
               }}
             >
@@ -941,7 +941,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   onClick={() => videoInputRef.current?.click()}
                   style={{ minHeight: 118, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 13, padding: 16, border: 0, background: 'transparent', textAlign: 'left' }}
                 >
-                  <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'rgba(184, 243, 74,0.10)', border: '1px solid rgba(184, 243, 74,0.28)', color: 'var(--teal)', flexShrink: 0 }}>
+                  <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'var(--primary-a10)', border: '1px solid var(--focus-ring-color)', color: 'var(--teal)', flexShrink: 0 }}>
                     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
@@ -1032,8 +1032,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            border: a.providerId ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid rgba(255,255,255,0.14)',
-                            background: a.providerId ? 'rgba(184, 243, 74,0.14)' : 'rgba(255,255,255,0.06)',
+                            border: a.providerId ? '1px solid var(--primary-a42)' : '1px solid rgba(255,255,255,0.14)',
+                            background: a.providerId ? 'var(--primary-a14)' : 'rgba(255,255,255,0.06)',
                             color: a.providerId ? 'var(--teal)' : 'rgba(255,255,255,0.7)',
                             fontSize: 15,
                             fontWeight: 800,
@@ -1121,8 +1121,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     padding: '10px',
                     borderRadius: 10,
                     display: 'block',
-                    border: category === g ? '1px solid rgba(184, 243, 74,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                    background: category === g ? 'rgba(184, 243, 74,0.10)' : 'var(--surface)',
+                    border: category === g ? '1px solid var(--primary-a55)' : '1px solid rgba(255,255,255,0.10)',
+                    background: category === g ? 'var(--primary-a10)' : 'var(--surface)',
                     fontSize: 12,
                     fontWeight: 600,
                     color: category === g ? 'var(--gold)' : 'rgba(255,255,255,0.6)',
@@ -1142,7 +1142,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   placeholder="Précise le genre (ex : Afropop, Jazz, Amapiano…)"
                   value={customGenre}
                   onChange={(e) => setCustomGenre(e.target.value)}
-                  style={{ ...S.inputBase, padding: '9px 14px', border: customGenre.trim() ? '1px solid rgba(184, 243, 74,0.45)' : '1px solid rgba(184, 243, 74,0.22)' }}
+                  style={{ ...S.inputBase, padding: '9px 14px', border: customGenre.trim() ? '1px solid var(--primary-a42)' : '1px solid var(--primary-a20)' }}
                 />
               </div>
             )}
@@ -1210,8 +1210,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   style={{
                     padding: '9px 18px',
                     borderRadius: 10,
-                    border: minAge === value ? '1px solid rgba(184, 243, 74,0.55)' : '1px solid rgba(255,255,255,0.10)',
-                    background: minAge === value ? 'rgba(184, 243, 74,0.12)' : 'var(--surface)',
+                    border: minAge === value ? '1px solid var(--primary-a55)' : '1px solid rgba(255,255,255,0.10)',
+                    background: minAge === value ? 'var(--primary-a12)' : 'var(--surface)',
                     color: minAge === value ? 'var(--teal)' : 'rgba(255,255,255,0.6)',
                     fontSize: 12,
                     fontWeight: 600,
@@ -1285,12 +1285,12 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             const placeHasSales = place.sold > 0
             const menuChoices = menuItems.filter((m) => m.name.trim() && m.price > 0)
             return (
-              <Card key={place.key} accent={placeHasSales ? 'rgba(184, 243, 74,0.25)' : undefined} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Card key={place.key} accent={placeHasSales ? 'var(--primary-a24)' : undefined} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
                     {placeHasSales && (
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', borderRadius: 8, padding: '4px 10px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', borderRadius: 8, padding: '4px 10px' }}>
                         {place.sold} vendu{place.sold > 1 ? 's' : ''}
                       </span>
                     )}
@@ -1340,7 +1340,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, qty: v } : p)))}
                     />
                     {placeHasSales && (
-                      <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>
+                      <p style={{ fontSize: 11, color: 'var(--primary-a85)', marginTop: 4 }}>
                         Minimum : {place.sold} (déjà vendu{place.sold > 1 ? 's' : ''})
                       </p>
                     )}
@@ -1355,7 +1355,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       locked={placeHasSales || place.groupType === 'group'}
                     />
                     {place.groupType === 'group' && (
-                      <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
+                      <p style={{ fontSize: 11, color: 'var(--primary-a75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
                     )}
                   </div>
                 </div>
@@ -1427,7 +1427,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       </div>
                     ))}
                     {place.photos.length < MAX_PLACE_PHOTOS && (
-                      <label style={{ width: 66, height: 66, borderRadius: 8, border: '1px dashed rgba(184, 243, 74,0.4)', background: 'rgba(184, 243, 74,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', color: 'var(--gold)', flexShrink: 0 }}>
+                      <label style={{ width: 66, height: 66, borderRadius: 8, border: '1px dashed var(--primary-a04)', background: 'var(--primary-a05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer', color: 'var(--gold)', flexShrink: 0 }}>
                         <input
                           type="file"
                           accept="image/*"
@@ -1480,7 +1480,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     {place.included.map((inc, k) => {
                       const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
                       return (
-                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'rgba(184, 243, 74,0.22)' : 'rgba(255,255,255,0.10)'}`, background: 'rgba(255,255,255,0.04)' }}>
+                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'var(--primary-a20)' : 'rgba(255,255,255,0.10)'}`, background: 'rgba(255,255,255,0.04)' }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <Input
                               value={inc.name}
@@ -1510,7 +1510,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           />
                           <span
                             title="Inclus gratuitement dans le billet"
-                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid rgba(184, 243, 74,0.35)', background: 'rgba(184, 243, 74,0.14)', color: 'var(--teal)' }}
+                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid var(--primary-a35)', background: 'var(--primary-a14)', color: 'var(--teal)' }}
                           >
                             Offert
                           </span>
@@ -1539,7 +1539,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           onClick={() =>
                             setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: menuChoices[0].name.trim(), qty: 1 }] } : p)))
                           }
-                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(184, 243, 74,0.14)', border: '1px solid rgba(184, 243, 74,0.35)', color: 'var(--teal)', fontSize: 12 }}
+                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', color: 'var(--teal)', fontSize: 12 }}
                         >
                           + Inclure un article du menu
                         </Button>
@@ -1595,7 +1595,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
-          <Card accent="rgba(184, 243, 74,0.15)" style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <Card accent="var(--primary-a14)" style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
@@ -1608,29 +1608,29 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             </div>
           </Card>
 
-          <Card accent={locked ? 'rgba(184, 243, 74,0.18)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <Card accent={locked ? 'var(--border)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Playlist interactive</p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
-              {locked && <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
+              {locked && <p style={{ fontSize: 11, color: 'var(--primary-a85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
             </div>
             <Toggle value={playlist} onChange={() => setPlaylist((v) => !v)} disabled={locked} />
           </Card>
 
-          <Card accent={locked ? 'rgba(184, 243, 74,0.18)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <Card accent={locked ? 'var(--border)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Précommande de consommations</p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
-              {locked && <p style={{ fontSize: 11, color: 'rgba(184, 243, 74,0.85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
+              {locked && <p style={{ fontSize: 11, color: 'var(--primary-a85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
             </div>
             <Toggle value={preorder} onChange={() => setPreorder((v) => !v)} disabled={locked} />
           </Card>
 
           {preorder && (
-            <div style={{ borderTop: '1px solid rgba(184, 243, 74,0.15)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
+            <div style={{ borderTop: '1px solid var(--primary-a14)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
               <p style={{ ...S.label, color: 'var(--gold)', marginBottom: 4 }}>Définir ta carte / menu</p>
               {locked ? (
-                <p style={{ fontSize: 12, color: 'rgba(184, 243, 74,0.85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
+                <p style={{ fontSize: 12, color: 'var(--primary-a85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
               ) : (
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
               )}
@@ -1677,7 +1677,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 disabled={locked}
                 style={{ ...S.inputBase, colorScheme: 'dark', ...(locked ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
               />
-              <p style={{ fontSize: 12, color: locked ? 'rgba(184, 243, 74,0.85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 12, color: locked ? 'var(--primary-a85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
                 {locked ? "Verrouillé — l'événement est déjà publié." : 'L’événement apparaîtra sur le site à cette date et heure. Laisse vide pour publier immédiatement.'}
               </p>
             </div>

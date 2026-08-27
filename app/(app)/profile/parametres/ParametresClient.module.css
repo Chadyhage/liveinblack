@@ -1,4 +1,4 @@
-.root{width:100%;--settings-accent:var(--primary,#b8f34a)}
+.root{width:100%;--settings-accent:var(--primary,var(--primary))}
 .root :global(.profile-settings){width:100%;max-width:none;margin:0;padding-bottom:28px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
 .root :global(.settings-page-stack){display:flex;flex-direction:column;gap:10px}
 .root :global(.settings-toolbar){display:grid;grid-template-columns:auto minmax(240px,560px);align-items:center;justify-content:space-between;gap:10px}

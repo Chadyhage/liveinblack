@@ -64,7 +64,7 @@ export function isCountdownUrgent(event: EventLike | null | undefined, nowTs: nu
 }
 
 // `ink` = couleur de texte lisible sur `color` — `--gold`/`--primary` est un
-// vert citron clair (#b8f34a) : du texte blanc dessus est illisible (retour
+// vert citron clair (var(--primary)) : du texte blanc dessus est illisible (retour
 // client), il faut `--primary-ink` (foncé). `--pink` reste assez sombre pour
 // du texte blanc.
 export type StockBadge = { label: string; color: string; ink: string }

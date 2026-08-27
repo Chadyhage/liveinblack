@@ -149,7 +149,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
       className={ev ? 'lb-card' : undefined}
       style={{ padding: 0, overflow: 'hidden', opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}
     >
-      <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'rgba(184, 243, 74, 0.2)'}, var(--obsidian))` }}>
+      <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'var(--primary-a20)'}, var(--obsidian))` }}>
         {ev && (
           <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 400, 158)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
         )}

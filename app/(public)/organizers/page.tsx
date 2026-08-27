@@ -110,7 +110,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
           <FilterSelect name="region" defaultValue={region} ariaLabel="Filtrer par région" options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]} style={{ minHeight: 36, borderRadius: 15, background: 'rgba(255,255,255,.075)', borderColor: 'rgba(255,255,255,.14)', fontSize: 13.5, padding: '0 12px' }} />
           <FilterSelect name="sort" defaultValue={sort} ariaLabel="Trier les organisateurs" options={[{ value: 'popular', label: 'Plus populaires' }, { value: 'recent', label: 'Plus récents' }]} style={{ minHeight: 36, borderRadius: 15, background: 'rgba(255,255,255,.075)', borderColor: 'rgba(255,255,255,.14)', fontSize: 13.5, padding: '0 12px' }} />
           <div className={styles.upcomingFilter}><Checkbox name="upcoming" value="1" defaultChecked={upcomingOnly} label="Événement à venir" style={{ minHeight: 36, fontSize: 13.5, color: 'rgba(245,245,247,.75)' }} /></div>
-          <Button type="submit" className={styles.submitButton} style={{ minHeight: 36, borderRadius: 14, background: '#b8f34a', color: '#142000', fontSize: 14 }}>Appliquer</Button>
+          <Button type="submit" className={styles.submitButton} style={{ minHeight: 36, borderRadius: 14, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 14 }}>Appliquer</Button>
         </form>
       </section>
 

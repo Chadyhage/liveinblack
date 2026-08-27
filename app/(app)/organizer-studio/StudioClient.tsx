@@ -294,7 +294,7 @@ export default function StudioClient({
               padding: '10px 12px',
               borderRadius: 12,
               border: `1px solid ${tab === t ? 'var(--gold)' : 'var(--border)'}`,
-              background: tab === t ? 'rgba(184,243,74,0.14)' : 'var(--surface)',
+              background: tab === t ? 'var(--primary-a14)' : 'var(--surface)',
               color: tab === t ? 'var(--gold)' : 'var(--text-muted)',
               fontSize: 13,
               fontWeight: 700,
@@ -315,7 +315,7 @@ export default function StudioClient({
             padding: '10px 12px',
             marginBottom: 10,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'rgba(184,243,74,0.5)' : 'rgba(224,90,170,0.5)'}`,
+            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(224,90,170,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
             fontSize: 13,
@@ -441,7 +441,7 @@ export default function StudioClient({
                         padding: '7px 11px',
                         borderRadius: 20,
                         border: `1px solid ${sel ? 'var(--teal)' : 'var(--border)'}`,
-                        background: sel ? 'rgba(184,243,74,0.14)' : 'rgba(255,255,255,0.06)',
+                        background: sel ? 'var(--primary-a14)' : 'rgba(255,255,255,0.06)',
                         color: sel ? 'var(--teal)' : 'var(--text-muted)',
                         fontSize: 12.5,
                         fontWeight: 600,
@@ -457,7 +457,7 @@ export default function StudioClient({
               </p>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', borderRadius: 12, border: '1px solid rgba(184,243,74,0.28)', background: 'rgba(184,243,74,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', borderRadius: 12, border: '1px solid var(--focus-ring-color)', background: 'var(--primary-a06)' }}>
                 <span aria-hidden="true" style={{ fontSize: 17, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={17} /> : <CreditCard size={17} />}</span>
                 <div>
                   <p style={{ font: '700 12.5px var(--font-open-sans)', color: 'var(--gold)', margin: 0 }}>
@@ -508,7 +508,7 @@ export default function StudioClient({
         <Card>
           <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
-            <div style={{ height: 84, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, rgba(184,243,74,0.12), rgba(184,243,74,0.12))' }} />
+            <div style={{ height: 84, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, var(--primary-a12), var(--primary-a12))' }} />
             <div style={{ padding: 12 }}>
               <div style={{ width: 48, height: 48, marginTop: -24, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
@@ -836,7 +836,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           </>
         ) : status.connected && status.chargesEnabled ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(184,243,74,0.15)', color: 'var(--teal)', fontSize: 11, fontWeight: 700 }}>Compte connecté</span>
+            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--primary-a14)', color: 'var(--teal)', fontSize: 11, fontWeight: 700 }}>Compte connecté</span>
             <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>Les paiements sont versés automatiquement sur ton compte bancaire (2-7 jours ouvrés).</p>
           </div>
         ) : (

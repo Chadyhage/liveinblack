@@ -79,7 +79,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{TYPE_LABEL[type]}</h2>
 
       {!application && roleStatus === 'active' && (
-        <Card accent="rgba(184, 243, 74,0.35)" style={{ padding: 24 }}>
+        <Card accent="var(--primary-a35)" style={{ padding: 24 }}>
           <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Compte déjà actif</p>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             Ton interface {type} est active, mais aucun dossier de candidature n&apos;est associé à ce compte (activation manuelle). Aucune action n&apos;est requise.
@@ -154,7 +154,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application?.status === 'approved' && (
-        <Card accent="rgba(184, 243, 74,0.35)" style={{ padding: 24 }}>
+        <Card accent="var(--primary-a35)" style={{ padding: 24 }}>
           <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Dossier approuvé</p>
           {application.approvedAt && (
             <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 16px' }}>

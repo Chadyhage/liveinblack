@@ -47,7 +47,7 @@
   margin-top: 16px;
   padding: 0 14px;
   border-radius: 12px;
-  background: rgba(184, 243, 74, .13);
+  background: var(--primary-a12);
   color: #c9fa6d;
   font-size: 13px;
   font-weight: 650;
@@ -55,7 +55,7 @@
   transition: background 160ms ease;
 }
 
-.primaryLink:hover { background: rgba(184, 243, 74, .2); }
+.primaryLink:hover { background: var(--primary-a20); }
 
 .groups {
   display: grid;

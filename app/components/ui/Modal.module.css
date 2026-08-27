@@ -125,7 +125,7 @@
 }
 
 .close:focus-visible {
-  outline: 3px solid rgba(184, 243, 74, .5);
+  outline: 3px solid var(--primary-a05);
   outline-offset: 2px;
 }
 

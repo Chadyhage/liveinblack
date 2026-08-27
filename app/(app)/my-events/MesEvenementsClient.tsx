@@ -219,7 +219,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             padding: '12px 14px',
             marginBottom: 14,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'rgba(184,243,74,0.5)' : 'rgba(224,90,170,0.5)'}`,
+            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(224,90,170,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
             fontSize: 13,
@@ -230,7 +230,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       )}
 
       {payoutGapLabel && (
-        <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid rgba(184,243,74,0.35)', background: 'rgba(184,243,74,0.08)' }}>
+        <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid var(--primary-a35)', background: 'var(--primary-a08)' }}>
           <p style={{ font: '700 14px var(--font-open-sans)', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 12px' }}>
             Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l&rsquo;argent n&rsquo;est pas versé automatiquement.
@@ -248,7 +248,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <Button
           variant="ghost"
           onClick={startCreate}
-          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid rgba(184,243,74,0.4)', background: 'linear-gradient(135deg,rgba(184,243,74,.14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--primary-a04)', background: 'linear-gradient(135deg,var(--primary-a14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
         >
           <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
           <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Créer un événement</p>

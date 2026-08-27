@@ -188,7 +188,7 @@ export default async function EventDetailContent({
       {/* Hauteur fixe (~1/3 de l'ancien aspectRatio 16/9, retour client) au
           lieu d'un aspectRatio qui poussait description/line-up/organisateur/
           lieu trop bas sur desktop comme mobile. */}
-      <div className={styles.hero} style={{ position: 'relative', margin: '8px 0 0', borderRadius: 14, overflow: 'hidden', height: 118, background: `linear-gradient(135deg, ${event.color || '#b8f34a'}99, var(--surface))` }}>
+      <div className={styles.hero} style={{ position: 'relative', margin: '8px 0 0', borderRadius: 14, overflow: 'hidden', height: 118, background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, var(--surface))` }}>
         <Image
           src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
           alt={event.name}
