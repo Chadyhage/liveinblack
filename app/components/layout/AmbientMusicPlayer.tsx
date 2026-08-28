@@ -19,27 +19,27 @@ function subscribeToMusicEngine(onStoreChange: () => void) {
 // Mapping des images d'ambiance avec des filtres lumineux ajustés pour une meilleure visibilité
 const DISC_ASSETS: Record<string, { img: string; bgPosition: string; filter: string }> = {
   house: {
-    img: '/images/live-in-black/ambient-house-disco-grid.png',
+    img: '/images/live-in-black/ambient/ambient-house-disco-grid.png',
     bgPosition: 'center 40%',
     filter: 'brightness(0.7) saturate(1.4) contrast(1.1) hue-rotate(-20deg)',
   },
   afro: {
-    img: '/images/live-in-black/ambient-afro-percussion-haze.png',
+    img: '/images/live-in-black/ambient/ambient-afro-percussion-haze.png',
     bgPosition: 'center 40%',
     filter: 'brightness(0.7) saturate(1.6) contrast(1.1) hue-rotate(50deg)',
   },
   techno: {
-    img: '/images/live-in-black/ambient-techno-laser-tunnel.png',
+    img: '/images/live-in-black/ambient/ambient-techno-laser-tunnel.png',
     bgPosition: 'center 40%',
     filter: 'brightness(0.7) saturate(1.8) contrast(1.15) hue-rotate(150deg)',
   },
   lofi: {
-    img: '/images/live-in-black/ambient-lofi-vinyl-lounge.png',
+    img: '/images/live-in-black/ambient/ambient-lofi-vinyl-lounge.png',
     bgPosition: 'center 35%',
     filter: 'brightness(0.75) sepia(0.2) contrast(1.1)',
   },
   nuit: {
-    img: '/images/live-in-black/ambient-nuit-rooftop-moon.png',
+    img: '/images/live-in-black/ambient/ambient-nuit-rooftop-moon.png',
     bgPosition: 'center 50%',
     filter: 'brightness(0.7) saturate(1.3) contrast(1.1)',
   },

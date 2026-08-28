@@ -604,7 +604,7 @@ test.describe.serial('seeded advanced business mutations', () => {
       title: 'Article E2E initial',
       excerpt: 'Un article créé par la suite E2E.',
       content: '<p>Contenu initial publié depuis le back-office agent.</p>',
-      coverImageUrl: '/images/live-in-black/hero-nightlife.jpg',
+      coverImageUrl: '/images/live-in-black/home/hero-nightlife.jpg',
       category: 'actualite',
       tags: ['e2e', 'publication'],
       publishedAt,

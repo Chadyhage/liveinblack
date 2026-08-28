@@ -56,15 +56,15 @@ const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: str
 }
 
 const HOME_EVENT_FALLBACKS = [
-  '/images/live-in-black/home-card-event-palms.png',
-  '/images/live-in-black/home-card-event-rooftop-dj.png',
-  '/images/live-in-black/home-card-event-live-band.png',
+  '/images/live-in-black/home/home-card-event-palms.png',
+  '/images/live-in-black/home/home-card-event-rooftop-dj.png',
+  '/images/live-in-black/home/home-card-event-live-band.png',
 ]
 
 const HOME_PROVIDER_FALLBACKS = [
-  '/images/live-in-black/home-card-provider-crew.png',
-  '/images/live-in-black/home-card-provider-dj-booth.png',
-  '/images/live-in-black/home-card-provider-photo-gear.png',
+  '/images/live-in-black/home/home-card-provider-crew.png',
+  '/images/live-in-black/home/home-card-provider-dj-booth.png',
+  '/images/live-in-black/home/home-card-provider-photo-gear.png',
 ]
 
 function firstOfferImage(catalog: CatalogItem[] = []): string | null {
@@ -350,9 +350,9 @@ export default async function AccueilPage() {
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
         <div className={styles.contentGrid}>
           {[
-            ['01', '/images/live-in-black/home-step-discover-cotonou.png', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
-            ['02', '/images/live-in-black/home-step-reserve-mobile.png', 'Des amis réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
-            ['03', '/images/live-in-black/home-step-qr-entry.png', 'Un billet numérique est contrôlé à l’entrée d’un événement', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
+            ['01', '/images/live-in-black/home/home-step-discover-cotonou.png', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
+            ['02', '/images/live-in-black/home/home-step-reserve-mobile.png', 'Des amis réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
+            ['03', '/images/live-in-black/home/home-step-qr-entry.png', 'Un billet numérique est contrôlé à l’entrée d’un événement', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
           ].map(([n, src, alt, title, description]) => (
             <EditorialImageCard key={n} src={src} alt={alt} badge={n} title={title} description={description} />
           ))}
@@ -368,7 +368,7 @@ export default async function AccueilPage() {
           <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--primary)' }}>
             <div className={styles.splitCardInner}>
               <div className={styles.splitCardMedia} style={{ position: 'relative', overflow: 'hidden', minHeight: 280, height: '100%' }}>
-                <Image src="/images/live-in-black/home-split-organizer-control.png" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
+                <Image src="/images/live-in-black/home/home-split-organizer-control.png" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
                 <div className={styles.splitCardMediaOverlay} />
               </div>
               <div className={styles.splitCardContent}>
@@ -386,7 +386,7 @@ export default async function AccueilPage() {
           <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--gold)' }}>
             <div className={styles.splitCardInner}>
               <div className={styles.splitCardMedia} style={{ position: 'relative', overflow: 'hidden', minHeight: 280, height: '100%' }}>
-                <Image src="/images/live-in-black/home-split-provider-crew.png" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
+                <Image src="/images/live-in-black/home/home-split-provider-crew.png" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
                 <div className={styles.splitCardMediaOverlay} />
               </div>
               <div className={styles.splitCardContent}>

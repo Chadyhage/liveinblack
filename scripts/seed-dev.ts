@@ -152,7 +152,7 @@ async function main() {
     followersCount: 342,
     totalEventsCount: 2,
     media: [
-      { id: 'm1', url: '/images/live-in-black/auth-organizer-backstage-ops.png', type: 'image', visibility: 'public', displayOrder: 0 },
+      { id: 'm1', url: '/images/live-in-black/auth/auth-organizer-backstage-ops.png', type: 'image', visibility: 'public', displayOrder: 0 },
     ],
     proPhone: '+228 90 00 00 00',
   })
@@ -201,7 +201,7 @@ async function main() {
     city: 'Lomé',
     region: 'Togo',
     currency: 'XOF',
-    imageUrl: '/images/live-in-black/directory-events-vip-entry.png',
+    imageUrl: '/images/live-in-black/directory/directory-events-vip-entry.png',
     color: '#c8a96e',
     places: [
       { id: 'p1', type: 'Entrée standard', price: 5000, available: 119, total: 200, maxPerAccount: 4 },
@@ -263,7 +263,7 @@ async function main() {
     city: 'Paris',
     region: 'France',
     currency: 'EUR',
-    imageUrl: '/images/live-in-black/home-step-qr-entry.png',
+    imageUrl: '/images/live-in-black/home/home-step-qr-entry.png',
     places: [{ id: 'p1', type: 'Entrée', price: 20, available: 0, total: 80 }],
     minAge: 18,
     userCreated: true,

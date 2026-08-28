@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react'
 import styles from './home.module.css'
 
 const SLIDES = [
-  '/images/live-in-black/home-hero-cotonou-nightlife.png',
-  '/images/live-in-black/home-hero-rooftop-arrival.png',
-  '/images/live-in-black/home-hero-live-entry.png',
+  '/images/live-in-black/home/home-hero-cotonou-nightlife.png',
+  '/images/live-in-black/home/home-hero-rooftop-arrival.png',
+  '/images/live-in-black/home/home-hero-live-entry.png',
 ]
 
 export default function HomeHeroCarousel() {

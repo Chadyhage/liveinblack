@@ -16,9 +16,9 @@ import styles from './DashboardShell.module.css'
 const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
 
 const ROLE_BACKGROUNDS: Record<Exclude<Role, 'agent'>, string> = {
-  client: '/images/live-in-black/dashboard-client-ticket-wallet.png',
-  organisateur: '/images/live-in-black/dashboard-organizer-ops-map.png',
-  prestataire: '/images/live-in-black/dashboard-provider-workspace.png',
+  client: '/images/live-in-black/dashboard/dashboard-client-ticket-wallet.png',
+  organisateur: '/images/live-in-black/dashboard/dashboard-organizer-ops-map.png',
+  prestataire: '/images/live-in-black/dashboard/dashboard-provider-workspace.png',
 }
 
 // Compteurs "en attente" affichés sur les liens Dossiers/Signalements/

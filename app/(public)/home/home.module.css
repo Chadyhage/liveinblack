@@ -24,7 +24,8 @@
 
 .hero {
   position: relative;
-  min-height: clamp(680px, 72vh, 960px);
+  min-height: min(66vh, 760px);
+  height: min(66vh, 760px);
   display: grid;
   align-items: center;
   padding: clamp(56px, 8vh, 96px) max(var(--public-page-gutter), calc((100vw - var(--public-page-max)) / 2)) clamp(54px, 7vh, 88px);
@@ -373,7 +374,8 @@
 
 @media (max-width: 640px) {
   .hero {
-    min-height: clamp(640px, 72svh, 780px);
+    min-height: min(66svh, 520px);
+    height: min(66svh, 520px);
     padding: 34px 16px 34px;
     align-items: end;
   }

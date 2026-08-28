@@ -1,9 +1,9 @@
 // Visuels de secours créés sur mesure pour les vitrines sans photo réelle.
 // Le choix reste déterministe afin qu'une même fiche garde la même identité.
 const NIGHTLIFE_PHOTOS = [
-  '/images/live-in-black/placeholder-event-dancefloor.png',
-  '/images/live-in-black/placeholder-organizer-rooftop.png',
-  '/images/live-in-black/placeholder-provider-equipment.png',
+  '/images/live-in-black/placeholders/placeholder-event-dancefloor.png',
+  '/images/live-in-black/placeholders/placeholder-organizer-rooftop.png',
+  '/images/live-in-black/placeholders/placeholder-provider-equipment.png',
 ]
 
 // Certaines anciennes données de démonstration peuvent encore contenir ces
