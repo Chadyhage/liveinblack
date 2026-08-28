@@ -30,7 +30,7 @@ export default async function FollowedOrganizersPage() {
   const suggestions = publicDirectory.organizers
     .filter((o) => o.userId !== session.user.id && !followedIds.has(o.userId))
     .slice(0, MAX_SUGGESTIONS)
-    .map((o) => ({ organizerId: o.userId, name: o.publicName, slug: o.slug, city: o.city || null, country: o.country || null }))
+    .map((o) => ({ organizerId: o.userId, name: o.publicName, slug: o.slug, city: o.city || null, country: o.country || null, avatarUrl: o.avatarUrl || null, bannerUrl: o.bannerUrl || null }))
 
   return <FollowedOrganizersClient initialFollows={follows} suggestions={suggestions} />
 }

@@ -1,0 +1,27 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.image {
+  position: relative;
+  min-height: 230px;
+  aspect-ratio: 16 / 9;
+}
+
+@media (max-width: 820px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .grid {
+    gap: 14px;
+  }
+
+  .image {
+    min-height: 210px;
+  }
+}

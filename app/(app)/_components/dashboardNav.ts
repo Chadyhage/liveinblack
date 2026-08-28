@@ -18,6 +18,9 @@ import {
   Newspaper,
   BookOpen,
   Settings,
+  ShieldCheck,
+  KeyRound,
+  UserRound,
   LifeBuoy,
   Bell,
 } from 'lucide-react'
@@ -67,7 +70,16 @@ export const COMMON_NAV: DashboardNavItem[] = [
   },
   { label: 'Mes soirées (équipe)', href: '/my-shifts', icon: Users2 },
   { label: 'Messages', href: '/messages', icon: MessageCircle },
-  { label: 'Paramètres', href: '/profile/parametres', icon: Settings },
+  {
+    label: 'Paramètres',
+    href: '/profile/parametres',
+    icon: Settings,
+    children: [
+      { label: 'Profil', href: '/profile/parametres?section=profil', icon: UserRound },
+      { label: 'Confidentialité', href: '/profile/parametres?section=privacy', icon: ShieldCheck },
+      { label: 'Sécurité', href: '/profile/parametres?section=security', icon: KeyRound },
+    ],
+  },
   { label: 'Aide & FAQ', href: '/help', icon: LifeBuoy },
 ]
 

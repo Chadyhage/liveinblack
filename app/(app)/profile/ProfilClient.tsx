@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { ArrowLeft, Heart, KeyRound, LifeBuoy, Search, Settings, ShieldCheck, Ticket, UserRound } from 'lucide-react'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
@@ -29,6 +29,7 @@ export interface ProfilUser {
   pendingEmail: string | null
   avatarUrl: string | null
   phone: string
+  birthDate: string | null
   birthYear: number | null
   gender: string | null
   nameChangedAt: string | null
@@ -49,6 +50,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   // quand il est présent (voir updateName dans lib/server/profile.ts).
   name_cooldown_active: 'Tu as déjà renommé ton compte récemment, réessaie plus tard.',
   invalid_birth_year: 'Année de naissance invalide.',
+  invalid_birth_date: 'Date de naissance invalide. Tu dois avoir entre 13 et 80 ans.',
   invalid_gender: 'Genre invalide.',
   phone_required: 'Le numéro de téléphone est obligatoire',
   invalid_phone: 'Numéro de téléphone invalide pour ce pays',
@@ -158,10 +160,10 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
           )}
 
           <div className={`${overviewStyles.quickGrid} profile-quick-grid-density`}>
-            <QuickAccessCard href="/profile/parametres" icon={<Settings size={18} />} label="Paramètres du compte" />
-            <QuickAccessCard href="/profile/billets" icon={<Ticket size={18} />} label="Mes billets" />
-            <QuickAccessCard href="/profile/interested-events" icon={<Heart size={18} />} label="Mes favoris" />
-            <QuickAccessCard href="/help" icon={<LifeBuoy size={18} />} label="Aide & FAQ" />
+            <QuickAccessCard href="/profile/parametres" icon={<Settings size={19} />} label="Paramètres du compte" imagePosition="0% 0%" />
+            <QuickAccessCard href="/profile/billets" icon={<Ticket size={19} />} label="Mes billets" imagePosition="100% 0%" />
+            <QuickAccessCard href="/profile/interested-events" icon={<Heart size={19} />} label="Mes favoris" imagePosition="0% 100%" />
+            <QuickAccessCard href="/help" icon={<LifeBuoy size={19} />} label="Aide & FAQ" imagePosition="100% 100%" />
           </div>
         </div>
       </div>
@@ -184,14 +186,22 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
 // Cartes de raccourci vers les 4 sous-destinations du sous-menu "Mon profil"
 // (voir dashboardNav.ts) — rend /profile utile en lui-même plutôt qu'un
 // écran quasi vide qui force à repérer le sous-menu de la sidebar.
-function QuickAccessCard({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+function QuickAccessCard({ href, icon, label, imagePosition }: { href: string; icon: React.ReactNode; label: string; imagePosition: string }) {
   return (
     <Link
       href={href}
       className={overviewStyles.quickLink}
+      style={{ minHeight: 250, display: 'grid', gridTemplateRows: 'minmax(0, 2fr) minmax(82px, 1fr)', overflow: 'hidden' }}
     >
-      <span className={overviewStyles.quickIcon}>{icon}</span>
-      <span className={overviewStyles.quickLabel}>{label}</span>
+      <span
+        className={overviewStyles.quickImage}
+        aria-hidden="true"
+        style={{ minHeight: 166, display: 'block', backgroundImage: "url('/images/profile/profile-navigation-sprite.png')", backgroundSize: '200% 200%', backgroundRepeat: 'no-repeat', backgroundPosition: imagePosition }}
+      />
+      <span className={overviewStyles.quickContent} style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+        <span className={overviewStyles.quickIcon}>{icon}</span>
+        <span className={overviewStyles.quickLabel}>{label}</span>
+      </span>
     </Link>
   )
 }
@@ -297,6 +307,9 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       >
         {!user.avatarUrl && initial}
       </Button>
+      <Button type="button" variant="link" onClick={() => fileInputRef.current?.click()} className={overviewStyles.avatarAction}>
+        {user.avatarUrl ? 'Changer la photo' : 'Ajouter une photo'}
+      </Button>
 
       {cropSrc && (
         <Modal
@@ -381,8 +394,10 @@ interface SettingEntry {
 }
 
 export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; setUser: (u: ProfilUser) => void; onBack: () => void }) {
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
-  const [activeGroup, setActiveGroup] = useState('profil')
+  const requestedGroup = searchParams.get('section')
+  const activeGroup = requestedGroup && ['profil', 'privacy', 'security'].includes(requestedGroup) ? requestedGroup : 'profil'
 
   const entries: SettingEntry[] = useMemo(
     () => [
@@ -427,17 +442,6 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
             {query && <Button onClick={() => setQuery('')} variant="ghost" aria-label="Effacer la recherche">Effacer</Button>}
           </div>
         </div>
-
-        <nav className="settings-tabs" aria-label="Catégories de paramètres">
-            {settingGroups.map((group) => {
-              const Icon = group.icon
-              const active = group.id === activeGroup && tokens.length === 0
-              return <Button key={group.id} variant="ghost" onClick={() => { setActiveGroup(group.id); setQuery('') }} className={active ? 'settings-nav-item settings-nav-item--active' : 'settings-nav-item'} aria-current={active ? 'page' : undefined} style={{ '--setting-color': group.color } as React.CSSProperties}>
-                <span className="settings-nav-icon"><Icon size={18} aria-hidden="true" /></span>
-                <span><strong>{group.shortTitle}</strong><small>{group.description}</small></span>
-              </Button>
-            })}
-        </nav>
 
         <section className="settings-content" aria-live="polite">
             {filtered.length === 0 ? (
@@ -527,7 +531,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   const [phoneMsg, setPhoneMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
   const phoneChanged = dialCode !== initialPhone.dialCode || phoneNumber.trim() !== initialPhone.number
 
-  const [birthYear, setBirthYear] = useState(user.birthYear ? String(user.birthYear) : '')
+  const [birthDate, setBirthDate] = useState(user.birthDate ?? (user.birthYear ? `${user.birthYear}-01-01` : ''))
   const [gender, setGender] = useState(user.gender ?? '')
   const [demoSaving, setDemoSaving] = useState(false)
   const [demoMsg, setDemoMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
@@ -541,9 +545,9 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   const nextChangeDate = user.nameChangedAt ? new Date(new Date(user.nameChangedAt).getTime() + NAME_COOLDOWN_MS) : null
   const nameChanged = firstName.trim() !== user.firstName || lastName.trim() !== user.lastName
 
-  const currentYear = new Date().getFullYear()
-  const yearOptions: number[] = []
-  for (let y = currentYear - 13; y >= currentYear - 80; y--) yearOptions.push(y)
+  const today = new Date()
+  const maxBirthDate = new Date(Date.UTC(today.getUTCFullYear() - 13, today.getUTCMonth(), today.getUTCDate())).toISOString().slice(0, 10)
+  const minBirthDate = new Date(Date.UTC(today.getUTCFullYear() - 80, today.getUTCMonth(), today.getUTCDate())).toISOString().slice(0, 10)
 
   async function saveName() {
     if (onCooldown) return
@@ -598,7 +602,8 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
     }
   }
 
-  const demoUnchanged = (birthYear ? Number(birthYear) : null) === user.birthYear && (gender || null) === user.gender
+  const initialBirthDate = user.birthDate ?? (user.birthYear ? `${user.birthYear}-01-01` : '')
+  const demoUnchanged = birthDate === initialBirthDate && (gender || null) === user.gender
 
   async function saveDemographics() {
     setDemoSaving(true)
@@ -607,13 +612,13 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       const res = await fetch('/api/profil/demographie', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ birthYear: birthYear ? Number(birthYear) : null, gender: gender || null }),
+        body: JSON.stringify({ birthDate: birthDate || null, gender: gender || null }),
       })
       const data = await res.json()
       if (!res.ok || !data.ok) {
         setDemoMsg({ text: errorMessage(data.error), kind: 'err' })
       } else {
-        setUser({ ...user, birthYear: data.birthYear, gender: data.gender })
+        setUser({ ...user, birthDate: data.birthDate, birthYear: data.birthYear, gender: data.gender })
         setDemoMsg({ text: 'Infos enregistrées', kind: 'ok' })
         setTimeout(() => setDemoMsg(null), 3000)
       }
@@ -666,12 +671,14 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
       <div className="profile-demo-row" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <Select
-          aria-label="Année de naissance"
-          value={birthYear}
-          onChange={setBirthYear}
-          placeholder="Année de naissance —"
-          options={yearOptions.map((y) => ({ value: String(y), label: String(y) }))}
+        <Input
+          aria-label="Date de naissance"
+          type="date"
+          value={birthDate}
+          min={minBirthDate}
+          max={maxBirthDate}
+          onChange={(event) => setBirthDate(event.target.value)}
+          style={{ flex: 1, colorScheme: 'dark' }}
         />
         <Select
           aria-label="Genre"

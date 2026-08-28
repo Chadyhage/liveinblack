@@ -42,9 +42,17 @@ const apiDefaultHeaders = [
   { key: 'Vary', value: 'Accept-Encoding' },
 ];
 
+const developmentNoStoreHeaders = [
+  ...securityHeaders,
+  { key: 'Cache-Control', value: 'no-store, max-age=0, must-revalidate' },
+];
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  // Le panneau flottant Next.js masque une partie des pages longues quand il
+  // est ouvert sur localhost. Les erreurs restent disponibles dans le terminal.
+  devIndicators: false,
   // Next 16.3 vérifie l'intégralité du projet sélectionné par le tsconfig,
   // y compris les mocks de tests. Vitest contrôle les tests séparément ; le
   // build de production type-check uniquement le code livré.
@@ -80,6 +88,12 @@ const nextConfig: NextConfig = {
 
     return [
       { source: '/(.*)', headers: securityHeaders },
+      ...(isDev
+        ? [
+            { source: '/_next/static/:path*', headers: developmentNoStoreHeaders },
+            { source: '/_next/image/:path*', headers: developmentNoStoreHeaders },
+          ]
+        : []),
       ...productionStaticCacheRoutes,
       { source: '/api/:path*', headers: apiDefaultHeaders },
     ];

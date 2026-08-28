@@ -4,7 +4,7 @@ import { ArrowUpRight, CalendarDays, MapPin } from 'lucide-react'
 import type { PublicEvent } from '@/lib/server/events/events'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './EventListCard.module.css'
 
 export default function EventListCard({ event, reason, eager = false }: { event: PublicEvent; reason?: string; eager?: boolean }) {
@@ -18,7 +18,7 @@ export default function EventListCard({ event, reason, eager = false }: { event:
     <Link href={`/events/${event.id}`} className={styles.card}>
       <div className={styles.visual} style={{ background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, #161619)` }}>
         <Image
-          src={event.imageUrl || placeholderPhotoUrl(event.id, 900, 560)}
+          src={reliablePhotoUrl(event.imageUrl, event.id, 900, 560)}
           alt=""
           fill
           loading={eager ? 'eager' : undefined}

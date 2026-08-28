@@ -150,6 +150,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr-BJ" className={`${interfaceFont.variable} h-full antialiased`}>
+      <head><style>{'nextjs-portal{display:none!important}'}</style></head>
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"

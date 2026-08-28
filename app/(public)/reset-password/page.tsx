@@ -15,7 +15,7 @@ export default async function ResetPasswordPage({
 }) {
   const params = await searchParams
   return (
-    <AuthSplitLayout>
+    <AuthSplitLayout heroImage="/images/live-in-black/auth-reset-secure-email.png">
       <ResetPasswordClient email={params.email || null} token={params.token || null} />
     </AuthSplitLayout>
   )

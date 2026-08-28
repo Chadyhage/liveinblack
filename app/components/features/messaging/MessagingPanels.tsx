@@ -95,20 +95,63 @@ export function NewGroupModal({ friends, onCreate, onClose, onGoToFriends, onPic
   )
 }
 
-export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissNew, onAction, onSend, onRemove, onClose }: { received: FriendRequestView[]; sent: SentFriendRequestView[]; friends: FriendView[]; newFriendIds: Set<string>; onDismissNew: (userId: string) => void; onAction: (requestId: string, action: 'accept' | 'decline' | 'cancel') => void; onSend: (email: string) => Promise<boolean>; onRemove: (friendUserId: string, name: string) => void; onClose: () => void }) {
+export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissNew, onAction, onSend, onRemove, onClose, renderAvatar }: { received: FriendRequestView[]; sent: SentFriendRequestView[]; friends: FriendView[]; newFriendIds: Set<string>; onDismissNew: (userId: string) => void; onAction: (requestId: string, action: 'accept' | 'decline' | 'cancel') => void; onSend: (email: string) => Promise<boolean>; onRemove: (friendUserId: string, name: string) => void; onClose: () => void; renderAvatar: (userId: string, name: string, size?: number) => ReactNode }) {
   const [email, setEmail] = useState('')
+  const [suggestions, setSuggestions] = useState<Array<{ userId: string; name: string; email: string }>>([])
+  const showSuggestions = email.trim().length >= 2
+
+  useEffect(() => {
+    const query = email.trim()
+    if (query.length < 2) return
+    let cancelled = false
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+        const data = await response.json()
+        if (!cancelled && data.ok) setSuggestions(data.users || [])
+      } catch {
+        if (!cancelled) setSuggestions([])
+      }
+    }, 240)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [email])
+
+  async function sendRequest(targetEmail: string) {
+    const success = await onSend(targetEmail)
+    if (success) {
+      setEmail('')
+      setSuggestions([])
+    }
+  }
+
   return (
     <ModalShell title="Amis" onClose={onClose} wide>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email d'un ami" style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-        <Button variant="secondary" onClick={() => { const trimmed = email.trim(); if (trimmed) onSend(trimmed).then((success) => { if (success) setEmail('') }) }} size="sm" style={{ borderRadius: 999 }}>Envoyer</Button>
+      <div style={{ marginBottom: 18 }}>
+        <div className={styles.modalEmailForm}>
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Nom ou e-mail d’un ami" aria-label="Rechercher ou saisir l’e-mail d’un ami" leftIcon={<Search size={17} aria-hidden="true" />} style={{ ...inputStyle, marginBottom: 0 }} autoComplete="off" />
+          <Button variant="primary" onClick={() => { const trimmed = email.trim(); if (trimmed.includes('@')) void sendRequest(trimmed) }} disabled={!email.includes('@')} size="md">Envoyer</Button>
+        </div>
+        {showSuggestions ? (
+          <div className={styles.modalPeopleList} style={{ marginTop: 8 }}>
+            {suggestions.length === 0 ? <p className={styles.modalEmpty}>Aucune suggestion pour cette recherche.</p> : suggestions.map((user) => (
+              <div key={user.userId} className={styles.modalPersonRow}>
+                {renderAvatar(user.userId, user.name, 40)}
+                <span style={{ minWidth: 0, flex: 1 }}>
+                  <strong className={styles.modalPersonName} style={{ display: 'block' }}>{user.name}</strong>
+                  <span style={{ display: 'block', overflow: 'hidden', color: 'var(--text-faint)', fontSize: 12, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</span>
+                </span>
+                <Button variant="secondary" size="sm" onClick={() => void sendRequest(user.email)}>Ajouter</Button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
       {received.length > 0 && <div style={{ marginBottom: 16 }}><p style={sectionLabelStyle}>Demandes reçues</p>{received.map((r) => <div key={r.id} style={rowStyle}><span style={{ fontSize: 13, color: 'var(--text)' }}>{r.fromName}</span><div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" onClick={() => onAction(r.id, 'accept')} size="sm" style={{ borderRadius: 999 }}>Accepter</Button><Button variant="danger" onClick={() => onAction(r.id, 'decline')} size="sm" style={{ borderRadius: 999 }}>Refuser</Button></div></div>)}</div>}
       {sent.length > 0 && <div style={{ marginBottom: 16 }}><p style={sectionLabelStyle}>Demandes envoyées</p>{sent.map((r) => <div key={r.id} style={rowStyle}><span style={{ fontSize: 13, color: 'var(--text)' }}>{r.toName}</span><Button variant="secondary" onClick={() => onAction(r.id, 'cancel')} size="sm" style={{ borderRadius: 999 }}>Annuler</Button></div>)}</div>}
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
         {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
-        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
+        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
       </div>
     </ModalShell>
   )

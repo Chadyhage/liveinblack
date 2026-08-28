@@ -1,4 +1,5 @@
 import { getDb } from '@/lib/db/mongoose'
+import User from '@/lib/models/User'
 import { AUDIO_MIME_TYPES, IMAGE_MIME_TYPES, uploadDataUri } from '@/lib/server/cloudinary'
 import { upsertMessageNotification } from '@/lib/server/notifications'
 import { notifyUserById, notifyAllAgents } from '@/lib/server/emails/notify'
@@ -169,10 +170,21 @@ export type ConversationListResult =
 
 export async function listMyConversations(caller: MessagingCaller, input: ConversationListInput = {}): Promise<ConversationListResult> {
   await getDb()
-  return listConversationsForCaller(caller, input, {
+  const result = await listConversationsForCaller(caller, input, {
     toConversationView: (conversation) => toConversationView(conversation as ConversationSource) as ConversationListView,
     resolveDirectMemberNames,
   })
+  if (!result.ok) return result
+  const memberIds = [...new Set(result.conversations.flatMap((conversation) => conversation.members.map((member) => member.userId)))]
+  const users = memberIds.length ? await User.find({ _id: { $in: memberIds } }, { avatarUrl: 1, 'privacy.showAvatar': 1 }).lean() : []
+  const avatars = new Map(users.map((user) => [String(user._id), user.privacy?.showAvatar === false ? null : (user.avatarUrl ?? null)]))
+  return {
+    ...result,
+    conversations: result.conversations.map((conversation) => ({
+      ...conversation,
+      members: conversation.members.map((member) => ({ ...member, avatarUrl: avatars.get(member.userId) ?? null })),
+    })),
+  }
 }
 
 // ────────────────────────────── getMessages ───────────────────────────────

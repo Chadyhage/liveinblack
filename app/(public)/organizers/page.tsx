@@ -9,7 +9,7 @@ import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import { listMyFollowedOrganizers } from '@/lib/server/organizer/organizerFollows'
 import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import OrganizerFollowButtonClient from '@/app/components/features/organizer/OrganizerFollowButtonClient'
 import FilterSelect from '../_components/FilterSelect'
 import { Button, Checkbox, Input, Mascot, PageLinks } from '@/app/components/ui'
@@ -131,7 +131,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                 <article key={organizer.userId} className={styles.card}>
                   <Link href={`/organizers/${organizer.slug}`} className={styles.cardLink} aria-label={`Découvrir ${organizer.publicName}`}>
                     <div className={styles.visual}>
-                      <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 900, 600)} alt="" fill loading={index < 4 ? 'eager' : undefined} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, (max-width:1440px) 24vw, 210px" />
+                      <Image src={reliablePhotoUrl(organizer.bannerUrl, organizer.userId, 900, 600)} alt="" fill loading={index < 4 ? 'eager' : undefined} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, (max-width:1440px) 24vw, 210px" />
                       <div className={styles.scrim} />
                       <div className={styles.avatar}>{organizer.avatarUrl ? <Image src={organizer.avatarUrl} alt="" fill sizes="72px" /> : organizer.publicName?.[0]?.toUpperCase()}</div>
                     </div>

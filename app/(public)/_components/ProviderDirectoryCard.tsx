@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { ArrowUpRight, MapPin, Package, Star } from 'lucide-react'
 import type { PublicProvider } from '@/lib/server/provider/providers'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import styles from './ProviderDirectoryCard.module.css'
 
 function firstCatalogImage(catalog: PublicProvider['catalog']): string | null {
@@ -19,7 +19,7 @@ export default function ProviderDirectoryCard({ provider, eager = false }: { pro
   const categories = getProviderCategories(provider)
   const primaryCategory = categories[0] || getProviderCategory(provider.prestataireType)
   const availableOffers = (provider.catalog || []).filter((item) => item.available !== false)
-  const coverImage = provider.coverUrl || firstCatalogImage(provider.catalog) || placeholderPhotoUrl(provider.userId, 900, 620)
+  const coverImage = reliablePhotoUrl(provider.coverUrl || firstCatalogImage(provider.catalog), provider.userId, 900, 620)
   const location = [provider.city || provider.location, provider.country].filter(Boolean).join(' · ')
 
   return (

@@ -136,6 +136,12 @@ body {
   line-height: 1.5;
 }
 
+/* Le portail DevTools de Next peut rester monté malgré `devIndicators: false`
+   après un redémarrage à chaud. Il ne fait pas partie de l'interface produit. */
+nextjs-portal {
+  display: none !important;
+}
+
 :where(button, a, input, textarea, select, summary, [role='button'], [role='tab'], [role='option']):focus-visible {
   outline: 3px solid rgba(245, 61, 141, .52);
   outline-offset: 3px;
@@ -668,6 +674,15 @@ a {
   }
 }
 
+/* Specificite volontairement elevee : certaines feuilles de page sont
+   injectees apres globals.css et contiennent encore des ombres !important. */
+html body *:not(#lb-shadow-opt-in),
+html body *:not(#lb-shadow-opt-in)::before,
+html body *:not(#lb-shadow-opt-in)::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
 .lb-accent-line {
   width: 42px;
   height: 4px;
@@ -694,7 +709,6 @@ a {
 :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
   outline: 2px solid var(--primary) !important;
   outline-offset: 3px !important;
-  box-shadow: var(--focus-ring) !important;
 }
 
 :where(button, input, select, textarea):disabled {
@@ -797,6 +811,17 @@ input[type='radio'] {
   .lb-slider::-moz-range-thumb {
     transition: none;
   }
+}
+
+/* Direction visuelle globale : aucune ombre ni halo. La hiérarchie repose
+   sur les bordures, les surfaces et l'espacement. Le focus clavier conserve
+   son outline explicite défini plus haut. Cette règle reste volontairement
+   en dernière position pour neutraliser aussi les anciens styles locaux. */
+*,
+*::before,
+*::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 /* Grain texture discret (cf. CLAUDE.md — opacity 0.035) */

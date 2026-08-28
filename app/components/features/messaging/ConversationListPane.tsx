@@ -9,6 +9,7 @@ import styles from '@/app/(app)/messages/MessagesClient.module.css'
 interface ConversationMemberView {
   userId: string
   name: string
+  avatarUrl?: string | null
 }
 
 interface ConversationListItemView {

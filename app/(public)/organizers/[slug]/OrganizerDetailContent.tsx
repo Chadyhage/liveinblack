@@ -8,7 +8,7 @@ import { getOrganizerBySlug, getOrganizerEvents } from '@/lib/server/organizer/o
 import { isFollowing } from '@/lib/server/organizer/organizerFollows'
 import { getEntityRegionIds, getRegionName } from '@/lib/shared/locations'
 import { fmtMoney, eventCurrency } from '@/lib/shared/money'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import { Mascot } from '@/app/components/ui'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -71,7 +71,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
         </Link>
       </div>
       <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', background: 'linear-gradient(135deg, var(--surface-2), rgba(245,61,141,.22))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
-        <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
+        <Image src={reliablePhotoUrl(organizer.bannerUrl, organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>
 
@@ -136,7 +136,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
                   <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.055)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
                     <div style={{ aspectRatio: '16/9', position: 'relative', background: `linear-gradient(135deg, ${e.color || 'var(--primary)'}33, var(--obsidian))` }}>
                       {e.imageUrl && (
-                        <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 240px" />
+                        <Image src={reliablePhotoUrl(e.imageUrl, e.id, 480, 270)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 240px" />
                       )}
                     </div>
                     <div style={{ padding: '12px 14px' }}>

@@ -7,6 +7,7 @@ import {
   BellRing,
   CalendarDays,
   CheckCheck,
+  ChevronDown,
   CreditCard,
   FileCheck2,
   MessageCircle,
@@ -84,6 +85,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   const [notifications, setNotifications] = useState<NotificationItemView[]>(initialNotifications)
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported' | null>(null)
   const [pushSubscribing, setPushSubscribing] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     getPushPermissionState().then((state) => setPushPermission(isPushSupported() ? state : 'unsupported'))
@@ -115,6 +117,10 @@ export default function NotificationsClient({ initialNotifications }: { initialN
       )))
       fetch(`/api/notifications/${notification.id}/read`, { method: 'POST' }).catch(() => {})
     }
+    setExpandedId((current) => current === notification.id ? null : notification.id)
+  }
+
+  function openNotification(notification: NotificationItemView) {
     if (notification.link) router.push(notification.link)
   }
 
@@ -200,32 +206,44 @@ export default function NotificationsClient({ initialNotifications }: { initialN
             </div>
           ) : (
             <div className={styles.list}>
-              {notifications.map((notification) => (
-                <Button
-                  key={notification.id}
-                  variant="ghost"
-                  fullWidth
-                  onClick={() => handleClick(notification)}
-                  aria-label={`${notification.read ? '' : 'Non lue : '}${notification.title}`}
-                  className={`${styles.notification} ${notification.read ? '' : styles.unread}`}
-                >
-                  <span className={styles.notificationIcon}>{notificationIcon(notification.type)}</span>
-                  <span className={styles.notificationContent}>
-                    <span className={styles.notificationTopRow}>
-                      <span className={styles.notificationBadge}>{notificationLabel(notification.type)}</span>
-                      <span className={styles.notificationMeta}>
-                        <time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time>
-                        {notification.link ? <ArrowUpRight size={16} aria-hidden="true" /> : null}
+              {notifications.map((notification) => {
+                const expanded = expandedId === notification.id
+                return (
+                  <article key={notification.id} className={`${styles.notificationShell} ${notification.read ? '' : styles.unread}`}>
+                    <Button
+                      variant="ghost"
+                      fullWidth
+                      onClick={() => handleClick(notification)}
+                      aria-expanded={expanded}
+                      aria-label={`${notification.read ? '' : 'Non lue : '}${notification.title}`}
+                      className={styles.notification}
+                    >
+                      <span className={styles.notificationIcon}>{notificationIcon(notification.type)}</span>
+                      <span className={styles.notificationContent}>
+                        <span className={styles.notificationTopRow}>
+                          <span className={styles.notificationBadge}>{notificationLabel(notification.type)}</span>
+                          <span className={styles.notificationMeta}><time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time></span>
+                        </span>
+                        <span className={styles.notificationTitle}>
+                          {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
+                          {notification.title}
+                        </span>
                       </span>
-                    </span>
-                    <span className={styles.notificationTitle}>
-                      {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
-                      {notification.title}
-                    </span>
-                    {notification.body ? <span className={styles.notificationBody}>{notification.body}</span> : null}
-                  </span>
-                </Button>
-              ))}
+                      <ChevronDown className={styles.expandIcon} size={18} aria-hidden="true" style={{ transform: expanded ? 'rotate(180deg)' : 'none' }} />
+                    </Button>
+                    {expanded ? (
+                      <div className={styles.notificationDetail}>
+                        {notification.body ? <p>{notification.body}</p> : <p>Aucun détail supplémentaire.</p>}
+                        {notification.link ? (
+                          <Button variant="secondary" size="sm" icon={<ArrowUpRight size={16} aria-hidden="true" />} onClick={() => openNotification(notification)}>
+                            Ouvrir
+                          </Button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </article>
+                )
+              })}
             </div>
           )}
         </section>

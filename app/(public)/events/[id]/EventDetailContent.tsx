@@ -9,7 +9,7 @@ import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getEventCountdown, isCountdownUrgent, getStockBadge } from '@/lib/shared/eventUrgency'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { normalizeShowOptions } from '@/lib/shared/showOptions'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import { canBook as canBookFn, getBookingBlockedReason } from '@/lib/server/permissions'
 import { EventCheckoutPanel, EventInterestButtonClient, ResaleListingsSection } from '@/app/components/features'
 import AgeVerificationGate from '@/app/components/layout/AgeVerificationGate'
@@ -187,7 +187,7 @@ export default async function EventDetailContent({
       {/* HERO */}
       <div className={styles.hero} style={{ position: 'relative', margin: '12px 0 0', borderRadius: 20, overflow: 'hidden', height: 220, background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, var(--surface))`, boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
         <Image
-          src={event.imageUrl || placeholderPhotoUrl(event.id, 880, 495)}
+          src={reliablePhotoUrl(event.imageUrl, event.id, 880, 495)}
           alt={event.name}
           fill
           loading="eager"

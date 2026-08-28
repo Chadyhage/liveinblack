@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { updateDemographics } from '@/lib/server/users/profile'
 
 const bodySchema = z.object({
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   birthYear: z.number().int().nullable().optional(),
   gender: z.enum(['femme', 'homme', 'autre']).nullable().optional(),
 })
@@ -17,5 +18,5 @@ export async function POST(req: Request) {
 
   const result = await updateDemographics({ id: session.user.id }, parsed.data)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
-  return NextResponse.json({ ok: true, birthYear: result.birthYear, gender: result.gender })
+  return NextResponse.json({ ok: true, birthDate: result.birthDate, birthYear: result.birthYear, gender: result.gender })
 }

@@ -51,6 +51,7 @@ export interface FollowedOrganizerView {
   organizerName: string
   organizerSlug: string
   organizerAvatarUrl: string | null
+  organizerBannerUrl: string | null
   organizerCity: string | null
   organizerCountry: string | null
 }
@@ -258,6 +259,7 @@ export async function listMyFollowedOrganizers(caller: FollowCaller): Promise<Li
       organizerName: profile?.publicName ?? '',
       organizerSlug: profile?.slug ?? '',
       organizerAvatarUrl: profile?.avatarUrl ?? null,
+      organizerBannerUrl: profile?.bannerUrl ?? null,
       organizerCity: profile?.city || null,
       organizerCountry: profile?.country || null,
     }

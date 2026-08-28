@@ -42,6 +42,7 @@ export interface MyProfileView {
   pendingEmail: string | null
   avatarUrl: string | null
   phone: string
+  birthDate: string | null
   birthYear: number | null
   gender: string | null
   nameChangedAt: string | null
@@ -64,6 +65,7 @@ export async function getMyProfile(caller: ProfileCaller): Promise<MyProfileView
     pendingEmail: user.pendingEmail ?? null,
     avatarUrl: user.avatarUrl ?? null,
     phone: user.phone ?? '',
+    birthDate: user.birthDate ? new Date(user.birthDate).toISOString().slice(0, 10) : null,
     birthYear: user.birthYear ?? null,
     gender: user.gender ?? null,
     nameChangedAt: user.nameChangedAt ? new Date(user.nameChangedAt).toISOString() : null,
@@ -136,15 +138,35 @@ export async function updateName(caller: ProfileCaller, input: { firstName: stri
 // explicitement le champ (l'utilisateur peut revenir sur "je préfère ne pas
 // répondre").
 
-export type UpdateDemographicsResult = ErrResult | { ok: true; birthYear: number | null; gender: string | null }
+export type UpdateDemographicsResult = ErrResult | { ok: true; birthDate: string | null; birthYear: number | null; gender: string | null }
 
 const GENDERS = ['femme', 'homme', 'autre'] as const
 
 export async function updateDemographics(
   caller: ProfileCaller,
-  input: { birthYear?: number | null; gender?: string | null }
+  input: { birthDate?: string | null; birthYear?: number | null; gender?: string | null }
 ): Promise<UpdateDemographicsResult> {
   await getDb()
+
+  let parsedBirthDate: Date | null | undefined
+  if (input.birthDate !== undefined) {
+    if (input.birthDate === null || input.birthDate === '') {
+      parsedBirthDate = null
+    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(input.birthDate)) {
+      return { ok: false, status: 400, error: 'invalid_birth_date' }
+    } else {
+      parsedBirthDate = new Date(`${input.birthDate}T00:00:00.000Z`)
+      if (Number.isNaN(parsedBirthDate.getTime()) || parsedBirthDate.toISOString().slice(0, 10) !== input.birthDate) {
+        return { ok: false, status: 400, error: 'invalid_birth_date' }
+      }
+      const today = new Date()
+      const youngest = new Date(Date.UTC(today.getUTCFullYear() - 13, today.getUTCMonth(), today.getUTCDate()))
+      const oldest = new Date(Date.UTC(today.getUTCFullYear() - 80, today.getUTCMonth(), today.getUTCDate()))
+      if (parsedBirthDate > youngest || parsedBirthDate < oldest) {
+        return { ok: false, status: 400, error: 'invalid_birth_date' }
+      }
+    }
+  }
 
   if (input.birthYear !== undefined && input.birthYear !== null) {
     const currentYear = new Date().getFullYear()
@@ -157,13 +179,23 @@ export async function updateDemographics(
   }
 
   const setFields: Record<string, unknown> = {}
-  if (input.birthYear !== undefined) setFields.birthYear = input.birthYear
+  if (input.birthDate !== undefined) {
+    setFields.birthDate = parsedBirthDate
+    setFields.birthYear = parsedBirthDate ? parsedBirthDate.getUTCFullYear() : null
+  } else if (input.birthYear !== undefined) {
+    setFields.birthYear = input.birthYear
+  }
   if (input.gender !== undefined) setFields.gender = input.gender
 
   const updated = await User.findByIdAndUpdate(caller.id, { $set: setFields }, { returnDocument: 'after' })
   if (!updated) return { ok: false, status: 404, error: 'user_not_found' }
 
-  return { ok: true, birthYear: updated.birthYear ?? null, gender: updated.gender ?? null }
+  return {
+    ok: true,
+    birthDate: updated.birthDate ? new Date(updated.birthDate).toISOString().slice(0, 10) : null,
+    birthYear: updated.birthYear ?? null,
+    gender: updated.gender ?? null,
+  }
 }
 
 // ──────────────────────────────── updatePhone ────────────────────────────────

@@ -9,6 +9,7 @@ import EventInterestButtonClient from '@/app/components/features/events/EventInt
 import { ArrowLeft } from 'lucide-react'
 import { ActionLink, Card, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import styles from './InterestedEventsClient.module.css'
 
 const PAGE_SIZE = 20
 
@@ -129,7 +130,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 }
 
 function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="lb-card-grid">{children}</div>
+  return <div className={styles.grid}>{children}</div>
 }
 
 function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemView; inactive: boolean; onRemoved: () => void }) {
@@ -147,11 +148,11 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
   const card = (
     <Card
       className={ev ? 'lb-card' : undefined}
-      style={{ padding: 0, overflow: 'hidden', opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative' }}
+      style={{ padding: 0, overflow: 'hidden', opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative', borderRadius: 8 }}
     >
-      <div style={{ height: 158, position: 'relative', background: `linear-gradient(135deg, ${ev?.color || 'var(--primary-a20)'}, var(--obsidian))` }}>
+      <div className={styles.image} style={{ background: ev?.color || 'var(--surface-3)' }}>
         {ev && (
-          <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 400, 158)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
+          <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 720, 440)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 50vw" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(4,4,11,.85), transparent 60%)' }} />
         <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 6 }}>
@@ -163,16 +164,16 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
         </div>
         {ev && (
           <div style={{ position: 'absolute', left: 12, right: 12, bottom: 10 }}>
-            <p style={{ fontSize: 16, fontWeight: 850, margin: 0, color: ev.color || '#fff' }}>{ev.name}</p>
-            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.65)', margin: '2px 0 0' }}>
+            <p style={{ fontSize: 20, fontWeight: 820, margin: 0, color: '#fff', lineHeight: 1.2 }}>{ev.name}</p>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.75)', margin: '5px 0 0' }}>
               {[ev.dateDisplay || ev.date, ev.time, ev.city].filter(Boolean).join(' · ') || 'Date à confirmer'}
             </p>
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderTop: '1px solid var(--border)' }}>
-        <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Ajouté le {addedDate}</span>
-        {priceLabel && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>{priceLabel}</span>}
+      <div style={{ minHeight: 54, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '11px 16px', borderTop: '1px solid var(--border)' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>Ajouté le {addedDate}</span>
+        {priceLabel && <span style={{ fontSize: 14, fontWeight: 750, color: 'var(--gold)' }}>{priceLabel}</span>}
       </div>
     </Card>
   )

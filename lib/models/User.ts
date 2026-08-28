@@ -42,6 +42,7 @@ const userSchema = new Schema(
     // Démographie facultative — jamais affichée sur un profil, jamais un
     // contrôle d'âge (voir le hint exact du legacy dans ProfilePage.jsx) :
     // sert uniquement aux statistiques anonymes côté organisateur.
+    birthDate: { type: Date, default: null },
     birthYear: { type: Number, default: null },
     gender: { type: String, enum: ['femme', 'homme', 'autre'], default: null },
     // Cooldown de 14 jours entre deux changements de nom (NAME_COOLDOWN_MS

@@ -7,7 +7,7 @@
 .listPane button[style*="width: 100%"]:hover { background: rgba(255,255,255,.045) !important; }
 .threadPane { height: 100%; display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1 1 auto; border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius-lg); background: rgba(21,22,26,.96); box-shadow: 0 16px 44px rgba(0,0,0,.16); }
 .threadPane > div:first-child { border-bottom-color: rgba(255,255,255,.085) !important; background: rgba(255,255,255,.018); }
-.threadPane textarea { min-height: 84px !important; border-radius: var(--radius-control) !important; background: rgba(255,255,255,.055) !important; padding: 10px 12px !important; font-size: 14px !important; }
+.threadPane textarea { min-height: 44px !important; height: 44px; max-height: 120px; field-sizing: content; border-radius: 22px !important; background: rgba(255,255,255,.055) !important; padding: 10px 14px !important; font-size: 14px !important; overflow-y: auto; }
 .root :global([data-msg-id]) { scroll-margin-block: 46px; }
 .menuBackdrop { position:fixed!important; inset:0; z-index:190; width:100%; height:100%; min-height:0!important; padding:0!important; border:0!important; border-radius:0!important; background:transparent!important; }
 .menu { min-width:182px; max-width:min(248px,calc(100vw - 20px)); overflow:hidden; border:1px solid rgba(255,255,255,.13); border-radius:14px; background:rgba(29,30,35,.96); box-shadow:0 20px 56px rgba(0,0,0,.42); backdrop-filter:blur(28px) saturate(150%); animation:menu-in .18s cubic-bezier(.22,.9,.3,1) both; }
@@ -17,6 +17,9 @@
 .quickReactions button { width:44px!important; min-width:44px; height:44px; min-height:44px!important; padding:0!important; border-radius:var(--radius-control)!important; font-size:18px!important; }
 .menuItem { width:calc(100% - 6px)!important; min-height:44px!important; justify-content:flex-start!important; margin:3px!important; padding:8px 10px!important; border:0!important; border-radius:var(--radius-control)!important; background:transparent!important; color:rgba(245,245,247,.88)!important; font-size:14px!important; font-weight:550!important; text-align:left!important; }
 .menuItem:hover,.menuItem:focus-visible { background:rgba(255,255,255,.075)!important; color:#fff!important; }
+.attachmentMenu { width:min(320px,calc(100vw - 28px)); display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:10px; }
+.attachmentMenu .menuItem { width:100%!important; min-height:112px!important; margin:0!important; display:flex!important; flex-direction:column; align-items:flex-start!important; justify-content:flex-end!important; gap:12px!important; padding:14px!important; border:1px solid rgba(255,255,255,.1)!important; background:rgba(255,255,255,.045)!important; font-size:13px!important; }
+.attachmentIcon { width:42px; height:42px; display:grid; place-items:center; border-radius:50%; background:rgba(159,224,34,.14); color:var(--teal-solid); }
 .dangerItem { color:#ff78b8!important; }
 @keyframes menu-in { from{opacity:0;transform:translateY(-4px) scale(.97)} to{opacity:1;transform:none} }
 @media(max-width:620px){.fixedMenu,.relativeMenu{position:fixed;right:10px!important;bottom:calc(10px + env(safe-area-inset-bottom));left:10px!important;top:auto!important}.fixedMenu.menu,.relativeMenu.menu{max-width:none;width:auto;border-radius:var(--radius-lg)}.fixedMenu .menuItem,.relativeMenu .menuItem{min-height:44px!important}.fixedMenu .quickReactions button{width:100%!important}}

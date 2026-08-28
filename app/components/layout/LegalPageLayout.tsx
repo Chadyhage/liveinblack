@@ -6,10 +6,9 @@ import { Card } from '@/app/components/ui'
 // cookies, CGU/CGV).
 
 const CARD: React.CSSProperties = {
-  background: 'var(--surface)',
+  background: 'rgba(255, 255, 255, .035)',
   border: '1px solid var(--border)',
-  borderRadius: 14,
-  boxShadow: '0 12px 34px rgba(0,0,0,0.2)',
+  borderRadius: 8,
 }
 
 export type LegalSectionItem = string | { label: string; value?: string }
@@ -36,17 +35,11 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
       style={{
         minHeight: '100vh',
         position: 'relative',
-        isolation: 'isolate',
-        overflow: 'hidden',
-        zIndex: 1,
-        padding: '14px clamp(10px, 1.6vw, 22px) 34px',
-        background:
-          'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+        padding: 'clamp(34px, 4vw, 56px) var(--public-page-gutter) 72px',
+        background: 'rgba(10, 10, 13, .82)',
       }}
     >
-      {/* Filigrane discret, harmonisé avec l'univers sombre du produit. */}
-      <FiligraneRoseBg />
-      <div style={{ maxWidth: 1420, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ width: 'min(100%, var(--public-page-max))', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
           <LegalBackButton />
@@ -71,7 +64,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         </div>
 
         {/* Sommaire */}
-        <details className="lb-legal-toc" style={{ ...CARD, padding: '10px 18px', marginBottom: 14, borderRadius: 16 }}>
+        <details className="lb-legal-toc" style={{ ...CARD, padding: '10px 18px', marginBottom: 20 }}>
           <summary
             style={{
               fontSize: 13.5,
@@ -122,9 +115,9 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         </details>
 
         {/* Sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sections.map((s) => (
-            <Card key={s.n} id={`legal-section-${s.n}`} style={{ boxShadow: CARD.boxShadow, padding: '18px 22px', borderRadius: 18, scrollMarginTop: 18 }}>
+            <Card key={s.n} id={`legal-section-${s.n}`} style={{ padding: 'clamp(20px, 2.4vw, 30px)', borderRadius: 8, background: CARD.background, scrollMarginTop: 18 }}>
               <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <span
                   style={{
@@ -215,10 +208,10 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           <Card
             accent="rgba(255,255,255,0.06)"
             style={{
-              boxShadow: CARD.boxShadow,
               padding: '14px 18px',
-              marginTop: 14,
-              borderRadius: 16,
+              marginTop: 20,
+              borderRadius: 8,
+              background: CARD.background,
             }}
           >
             <p
@@ -236,58 +229,5 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         )}
       </div>
     </main>
-  )
-}
-
-const FILIGRANE_TEXT = Array(8).fill('LIVE IN BLACK').join(' · ') // couvre ≥ 2× la largeur du viewport
-
-// offsetD/offsetM : décalage horizontal desktop/mobile (fixe, pas de scroll —
-// voir la note de perf dans le composant légataire src/components/FiligraneRoseBg.jsx).
-const FILIGRANE_LINES: { color: string; offsetD: number; offsetM: number; mobileOnly?: boolean }[] = [
-  { color: 'rgba(245, 61, 141, 0.025)', offsetD: -60, offsetM: -40 },
-  { color: 'rgba(245, 61, 141, 0.02)', offsetD: -420, offsetM: -260 },
-  { color: 'rgba(255,255,255,0.018)', offsetD: -220, offsetM: -140 },
-  { color: 'rgba(245, 61, 141, 0.018)', offsetD: -560, offsetM: -340 },
-  { color: 'rgba(255,255,255,0.015)', offsetD: -80, offsetM: -80, mobileOnly: true },
-]
-
-function FiligraneRoseBg() {
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: -1,
-        pointerEvents: 'none',
-        overflow: 'hidden',
-      }}
-    >
-      <style>{`
-        .flg-line {
-          white-space: nowrap; margin: 0; line-height: 0.9;
-          font-family: var(--font-open-sans); font-weight: 900;
-          font-size: 74px; letter-spacing: -2.5px;
-          margin-left: var(--off-d);
-          user-select: none; -webkit-user-select: none;
-        }
-        .flg-mobile-only { display: none; }
-        @media (max-width: 767px) {
-          .flg-line { font-size: 44px; letter-spacing: -1.5px; margin-left: var(--off-m); }
-          .flg-mobile-only { display: block; }
-        }
-      `}</style>
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', overflow: 'hidden' }}>
-        {FILIGRANE_LINES.map((line, i) => (
-          <p
-            key={i}
-            className={`flg-line${line.mobileOnly ? ' flg-mobile-only' : ''}`}
-            style={{ color: line.color, '--off-d': `${line.offsetD}px`, '--off-m': `${line.offsetM}px` } as React.CSSProperties}
-          >
-            {FILIGRANE_TEXT}
-          </p>
-        ))}
-      </div>
-    </div>
   )
 }

@@ -189,10 +189,11 @@
 .follow { padding: 0 16px 14px; }
 .follow > * { width: 100% !important; min-height: 42px !important; font-size: 14.5px !important; }
 
-.empty { max-width: 640px; margin: 28px auto 0; padding: clamp(20px, 3vw, 32px); border: 1px solid rgba(255, 255, 255, .12); border-radius: 24px; background: rgba(255, 255, 255, .055); text-align: center; box-shadow: 0 20px 56px rgba(0, 0, 0, .22); }
-.empty h3 { font-size: 20px; font-weight: 800; }
+.empty { max-width: 760px; min-height: 440px; margin: 28px auto 0; padding: clamp(36px, 6vw, 72px); text-align: center; }
+.empty :global(.lb-mascot-image) { width: 220px !important; height: 220px !important; }
+.empty h3 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; }
 .empty p { font-size: 15px; color: rgba(245, 245, 247, .72); }
-.empty a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px; border-radius: 13px; background: var(--primary); color: var(--primary-ink); font-size: 14.5px; font-weight: 700; text-decoration: none; }
+.empty a { min-height: 48px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 8px; background: var(--primary); color: var(--primary-ink); font-size: 15px; font-weight: 700; text-decoration: none; }
 
 @media (max-width: 1180px) {
   .searchPanel { grid-template-columns: minmax(220px, 1fr) minmax(150px, 200px) minmax(140px, 180px); }

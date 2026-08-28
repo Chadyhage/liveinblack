@@ -127,6 +127,17 @@ function HeaderSearch() {
           variant="ghost"
           className="lb-header-search__button"
           aria-label="Lancer la recherche"
+          style={{
+            width: 38,
+            minWidth: 38,
+            height: 38,
+            minHeight: 38,
+            padding: 0,
+            border: 0,
+            borderRadius: '50%',
+            background: '#6dd7c8',
+            color: '#04120e',
+          }}
         >
           <Search size={18} strokeWidth={2} aria-hidden="true" />
         </Button>
@@ -614,12 +625,11 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           border: 1px solid rgba(255,255,255,.16);
           border-radius: 12px;
           background: rgba(255,255,255,.07);
-          transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+          transition: border-color 160ms ease, background 160ms ease;
         }
         .lb-header-search__form:focus-within {
-          border-color: rgba(245,61,141,.7);
-          background: rgba(255,255,255,.11);
-          box-shadow: 0 0 0 4px rgba(245,61,141,.12);
+          border-color: rgba(255,255,255,.28);
+          background: rgba(255,255,255,.07);
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
         .lb-header-search__button {
@@ -631,13 +641,13 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           justify-content: center;
           padding: 0 !important;
           border: 0;
-          border-radius: 10px;
-          background: rgba(255,255,255,.09);
-          color: #f5f5f7;
+          border-radius: 50%;
+          background: #6dd7c8;
+          color: #04120e;
           cursor: pointer;
           transition: color 160ms ease, background 160ms ease;
         }
-        .lb-header-search__button:hover { color: var(--primary); background: rgba(255,255,255,.15); }
+        .lb-header-search__button:hover { color: #04120e; background: #6dd7c8; }
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Cookie, X } from 'lucide-react'
+import { Cookie } from 'lucide-react'
 import { getCookieConsent, saveCookieConsent, type CookieConsentValue } from '@/lib/shared/cookieConsent'
 import styles from './CookieConsentBanner.module.css'
 

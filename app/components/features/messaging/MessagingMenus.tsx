@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { Button } from '@/app/components/ui'
 import { ModalShell } from './MessagingModals'
 import styles from '@/app/(app)/messages/MessagesClient.module.css'
@@ -163,11 +164,11 @@ export function FullReactionPicker({ onPick, onClose }: { onPick: (emoji: string
   )
 }
 
-export function DropdownMenu({ items, onClose }: { items: { label: string; onClick: () => void }[]; onClose: () => void }) {
+export function DropdownMenu({ items, onClose, layout = 'list' }: { items: { label: string; icon?: ReactNode; onClick: () => void }[]; onClose: () => void; layout?: 'list' | 'grid' }) {
   return (
     <>
       <Button className={styles.menuBackdrop} variant="ghost" onClick={onClose} aria-label="Fermer le menu" style={{ zIndex: 49 }} />
-      <div role="menu" aria-label="Actions disponibles" className={`${styles.menu} ${styles.relativeMenu}`} onKeyDown={(event) => handleMenuKeyDown(event, onClose)}>
+      <div role="menu" aria-label="Actions disponibles" className={`${styles.menu} ${styles.relativeMenu}${layout === 'grid' ? ` ${styles.attachmentMenu}` : ''}`} onKeyDown={(event) => handleMenuKeyDown(event, onClose)}>
         {items.map((item, index) => (
           <Button
             key={item.label}
@@ -180,6 +181,7 @@ export function DropdownMenu({ items, onClose }: { items: { label: string; onCli
             }}
             className={styles.menuItem}
           >
+            {item.icon ? <span className={styles.attachmentIcon}>{item.icon}</span> : null}
             {item.label}
           </Button>
         ))}

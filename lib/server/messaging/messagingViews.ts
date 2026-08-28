@@ -2,6 +2,7 @@ export interface ConversationMemberView {
   userId: string
   name: string
   role: 'admin' | 'member'
+  avatarUrl?: string | null
   muteUntilAt?: string | null
 }
 
@@ -104,7 +105,7 @@ export function toConversationView(conv: ConversationSource): ConversationView {
     id: String(conv._id),
     type: conv.type,
     participantIds: conv.participantIds ?? [],
-    members: (conv.members ?? []).map((m) => ({ userId: m.userId, name: m.name ?? '', role: m.role ?? 'member' })),
+    members: (conv.members ?? []).map((m) => ({ userId: m.userId, name: m.name ?? '', role: m.role ?? 'member', avatarUrl: null })),
     name: conv.name ?? null,
     avatar: conv.avatar ?? null,
     mutedUserIds: conv.mutedUserIds ?? [],

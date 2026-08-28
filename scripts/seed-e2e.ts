@@ -589,7 +589,7 @@ async function main() {
     city: 'Lomé',
     region: 'Togo',
     currency: 'XOF',
-    imageUrl: '/images/live-in-black/hero-nightlife.jpg',
+    imageUrl: '/images/live-in-black/directory-events-vip-entry.png',
     places: [
       { id: 'p1', type: 'Entrée standard', price: 5000, available: 117, total: 200, maxPerAccount: 4 },
       { id: 'p2', type: 'VIP', price: 15000, available: 3, total: 20, maxPerAccount: 2 },
@@ -657,7 +657,7 @@ async function main() {
     city: 'Lomé',
     region: 'Togo',
     currency: 'XOF',
-    imageUrl: '/images/live-in-black/hero-nightlife.jpg',
+    imageUrl: '/images/live-in-black/placeholder-event-dancefloor.png',
     places: [{ id: 'p1', type: 'Entrée standard', price: 5000, available: 40, total: 40, maxPerAccount: 2 }],
     preorder: true,
     menu: [],

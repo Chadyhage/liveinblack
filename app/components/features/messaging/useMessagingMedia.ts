@@ -34,6 +34,7 @@ export function useMessagingMedia({
   const [showCamera, setShowCamera] = useState(false)
   const [showAttachMenu, setShowAttachMenu] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false)
   const [recordDuration, setRecordDuration] = useState(0)
 
   const activeIdRef = useRef(activeId)
@@ -148,6 +149,7 @@ export function useMessagingMedia({
         if (recordTimerRef.current) clearInterval(recordTimerRef.current)
         setRecordDuration(0)
         setIsRecording(false)
+        setIsRecordingPaused(false)
         if (shouldSendRef.current && audioChunksRef.current.length > 0) {
           const actualMime = normalizeRecordedAudioMime(mr.mimeType)
           const blob = new Blob(audioChunksRef.current, { type: actualMime })
@@ -170,6 +172,7 @@ export function useMessagingMedia({
       mr.start()
       mediaRecorderRef.current = mr
       setIsRecording(true)
+      setIsRecordingPaused(false)
       setRecordDuration(0)
       if (recordTimerRef.current) clearInterval(recordTimerRef.current)
       recordTimerRef.current = setInterval(() => setRecordDuration((d) => d + 1), 1000)
@@ -181,8 +184,23 @@ export function useMessagingMedia({
   function stopRecording(send: boolean) {
     shouldSendRef.current = send
     const mr = mediaRecorderRef.current
-    if (mr && mr.state === 'recording') mr.stop()
+    if (mr && mr.state !== 'inactive') mr.stop()
     mediaRecorderRef.current = null
+  }
+
+  function toggleRecordingPause() {
+    const mr = mediaRecorderRef.current
+    if (!mr) return
+    if (mr.state === 'recording') {
+      mr.pause()
+      setIsRecordingPaused(true)
+      if (recordTimerRef.current) clearInterval(recordTimerRef.current)
+      recordTimerRef.current = null
+    } else if (mr.state === 'paused') {
+      mr.resume()
+      setIsRecordingPaused(false)
+      recordTimerRef.current = setInterval(() => setRecordDuration((duration) => duration + 1), 1000)
+    }
   }
 
   function handleMicPointerDown() {
@@ -213,6 +231,7 @@ export function useMessagingMedia({
     showCamera,
     showAttachMenu,
     isRecording,
+    isRecordingPaused,
     recordDuration,
     videoRef,
     openAttachMenu,
@@ -225,5 +244,6 @@ export function useMessagingMedia({
     handleMicPointerDown,
     handleMicPointerUp,
     stopRecording,
+    toggleRecordingPause,
   }
 }

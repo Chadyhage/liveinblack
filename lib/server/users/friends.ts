@@ -45,6 +45,7 @@ export interface FriendView {
   userId: string
   name: string
   email: string
+  avatarUrl: string | null
 }
 
 export interface FriendRequestView {
@@ -282,11 +283,12 @@ export async function listFriends(caller: FriendCaller): Promise<FriendListResul
   if (friendships.length === 0) return { ok: true, friends: [] }
 
   const otherIds = friendships.map((f) => (f.userAId === caller.id ? f.userBId : f.userAId))
-  const users = await User.find({ _id: { $in: otherIds } }, { firstName: 1, lastName: 1, email: 1 }).lean()
+  const users = await User.find({ _id: { $in: otherIds } }, { firstName: 1, lastName: 1, email: 1, avatarUrl: 1, 'privacy.showAvatar': 1 }).lean()
   const friends: FriendView[] = users.map((u) => ({
     userId: String(u._id),
     name: displayName(u),
     email: u.email,
+    avatarUrl: u.privacy?.showAvatar === false ? null : (u.avatarUrl ?? null),
   }))
   return { ok: true, friends }
 }
@@ -308,7 +310,7 @@ export async function searchUsers(caller: FriendCaller, query: string): Promise<
   const q = query?.trim()
   if (!q) return { ok: true, users: [] }
 
-  const projectedFields = { firstName: 1, lastName: 1, email: 1 }
+  const projectedFields = { firstName: 1, lastName: 1, email: 1, avatarUrl: 1, 'privacy.showAvatar': 1 }
 
   try {
     // Recherche scalable via index text dès que la longueur permet d'éviter
@@ -330,7 +332,7 @@ export async function searchUsers(caller: FriendCaller, query: string): Promise<
 
       return {
         ok: true,
-        users: users.map((u) => ({ userId: String(u._id), name: displayName(u), email: u.email })),
+        users: users.map((u) => ({ userId: String(u._id), name: displayName(u), email: u.email, avatarUrl: u.privacy?.showAvatar === false ? null : (u.avatarUrl ?? null) })),
       }
     }
   } catch (error) {
@@ -356,7 +358,7 @@ export async function searchUsers(caller: FriendCaller, query: string): Promise<
 
   return {
     ok: true,
-    users: users.map((u) => ({ userId: String(u._id), name: displayName(u), email: u.email })),
+    users: users.map((u) => ({ userId: String(u._id), name: displayName(u), email: u.email, avatarUrl: u.privacy?.showAvatar === false ? null : (u.avatarUrl ?? null) })),
   }
 }
 

@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ChevronDown, Globe, Menu, X } from 'lucide-react'
 import { Button, IconButton } from '@/app/components/ui'
@@ -16,9 +16,9 @@ import styles from './DashboardShell.module.css'
 const PENDING_APPLICATION_STATUSES = new Set(['submitted', 'under_review', 'resubmitted'])
 
 const ROLE_BACKGROUNDS: Record<Exclude<Role, 'agent'>, string> = {
-  client: '/images/live-in-black/auth-community.jpg',
-  organisateur: '/images/live-in-black/auth-organizer.jpg',
-  prestataire: '/images/live-in-black/auth-provider.jpg',
+  client: '/images/live-in-black/dashboard-client-ticket-wallet.png',
+  organisateur: '/images/live-in-black/dashboard-organizer-ops-map.png',
+  prestataire: '/images/live-in-black/dashboard-provider-workspace.png',
 }
 
 // Compteurs "en attente" affichés sur les liens Dossiers/Signalements/
@@ -181,6 +181,7 @@ function useHasStaffedEvents(): boolean {
 // le layout ne monte simplement pas ce composant sur ces routes-là.
 export default function DashboardShell({ activeRole, children }: { activeRole: Role; children: React.ReactNode }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const agentBadges = useAgentBadges(activeRole)
   const notificationUnread = useNotificationBadge()
   const badges = { ...agentBadges, '/notifications': notificationUnread || undefined }
@@ -267,8 +268,11 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
   // /agent/comptes, etc.) — les exclure du match par préfixe pour qu'elles
   // ne restent pas actives en même temps qu'une sous-route.
   function isActive(href: string) {
-    const [path] = href.split('?')
-    return pathname === path || (path !== '/profile' && path !== '/agent' && pathname.startsWith(path + '/'))
+    const [path, rawQuery] = href.split('?')
+    const pathMatches = pathname === path || (path !== '/profile' && path !== '/agent' && pathname.startsWith(path + '/'))
+    if (!pathMatches || !rawQuery) return pathMatches
+    const expected = new URLSearchParams(rawQuery)
+    return Array.from(expected.entries()).every(([key, value]) => searchParams.get(key) === value)
   }
 
   function hasActiveDescendant(item: DashboardNavItem): boolean {
@@ -337,7 +341,7 @@ function SidebarNavigation({ groups, upsell, isActive, hasActiveDescendant, badg
               if (mobile && item.children?.length) {
                 return (
                   <div key={item.href}>
-                    <SidebarLink item={item} active={isActive(item.href)} badge={badges[item.href]} onClick={onNavigate} />
+                    <SidebarLink item={item} active={item.children?.length ? false : isActive(item.href)} badge={badges[item.href]} onClick={onNavigate} />
                     <div style={{ paddingLeft: 12 }}>{item.children.map((child) => <SidebarLink key={child.href} item={child} active={isActive(child.href)} compact onClick={onNavigate} />)}</div>
                   </div>
                 )
@@ -380,7 +384,7 @@ function SidebarItem({
   }
 
   const Icon = item.icon
-  const active = isActive(item.href)
+  const active = false
 
   return (
     <div>

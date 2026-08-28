@@ -60,12 +60,12 @@ const PROVIDER_TYPE_NAMES: Record<string, string> = {
 // Bibliothèque éditoriale locale créée pour LIVE IN BLACK. Les seeds restent
 // déterministes et ne réintroduisent plus de photographies de stock externes.
 const CUSTOM_PHOTOS = [
-  '/images/live-in-black/hero-nightlife.jpg',
-  '/images/live-in-black/journey-discover.jpg',
-  '/images/live-in-black/journey-reserve.jpg',
-  '/images/live-in-black/journey-enter.jpg',
-  '/images/live-in-black/auth-organizer.jpg',
-  '/images/live-in-black/auth-provider.jpg',
+  '/images/live-in-black/directory-events-vip-entry.png',
+  '/images/live-in-black/home-step-discover-cotonou.png',
+  '/images/live-in-black/home-step-reserve-mobile.png',
+  '/images/live-in-black/home-step-qr-entry.png',
+  '/images/live-in-black/auth-organizer-backstage-ops.png',
+  '/images/live-in-black/auth-provider-av-dj-team.png',
 ]
 
 function customPhotoUrl(seed: number, w = 1200, h = 800): string {

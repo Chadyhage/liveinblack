@@ -335,17 +335,17 @@ function TicketGlyph() {
 
 function EmptyWallet() {
   return (
-    <Card style={{ padding: '48px 24px', textAlign: 'center' }}>
-      <Mascot mood="sleeping" size={148} />
-      <p style={{ fontWeight: 700, fontSize: 17, color: '#fff', margin: '0 0 6px' }}>Aucun billet pour l&apos;instant</p>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px' }}>Tes billets achetés apparaîtront ici, avec leur QR code.</p>
+    <div style={{ minHeight: 'clamp(430px, 62vh, 680px)', display: 'grid', alignContent: 'center', justifyItems: 'center', padding: 'clamp(36px, 7vw, 84px) 18px', textAlign: 'center' }}>
+      <Mascot mood="sleeping" size={224} />
+      <h2 style={{ fontWeight: 780, fontSize: 'clamp(24px, 3vw, 34px)', color: '#fff', margin: '4px 0 8px', textTransform: 'none', letterSpacing: 0 }}>Aucun billet pour l&apos;instant</h2>
+      <p style={{ maxWidth: 520, fontSize: 15.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.55 }}>Tes billets achetés apparaîtront ici, avec leur QR code et toutes les informations utiles pour entrer à l’événement.</p>
       <Link
         href="/events"
-        style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', padding: '0 18px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
+        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 15, textDecoration: 'none' }}
       >
         Découvrir les événements
       </Link>
-    </Card>
+    </div>
   )
 }
 

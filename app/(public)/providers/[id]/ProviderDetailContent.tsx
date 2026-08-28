@@ -12,7 +12,7 @@ import { canOrderServices } from '@/lib/server/permissions'
 import { ProviderReviewsClient, PublicProfileActions } from '@/app/components/features'
 import ProviderCatalogInquiry from '@/app/components/features/provider/ProviderCatalogInquiry'
 import { socialUrl } from '@/lib/shared/social'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import { Card } from '@/app/components/ui'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -116,7 +116,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
         </Link>
       </div>
       <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', borderRadius: 'var(--radius-card)', background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
-        <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
+        <Image src={reliablePhotoUrl(provider.coverUrl, id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>
 

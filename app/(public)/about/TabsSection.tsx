@@ -21,7 +21,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
       'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.',
     cta: 'Créer mon compte',
     href: '/login?mode=register',
-    image: '/images/live-in-black/hero-nightlife.jpg',
+    image: '/images/live-in-black/about-tab-client-ticket-friends.png',
     imageAlt: 'Un public profite d’une soirée Live in Black',
   },
   {
@@ -33,7 +33,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
       'Crée et publie ton événement, vends tes billets en ligne, gère ta guestlist, scanne les entrées et suis tes ventes en temps réel — POS sur place inclus.',
     cta: 'Devenir organisateur',
     href: '/organizer-signup',
-    image: '/images/live-in-black/auth-organizer.jpg',
+    image: '/images/live-in-black/about-tab-organizer-sales-tablet.png',
     imageAlt: 'Une organisatrice supervise son événement en coulisses',
   },
   {
@@ -44,7 +44,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
     description: 'DJ, salle, sono, traiteur… Crée ta vitrine publique, sois visible des organisateurs et reçois des demandes de devis directement.',
     cta: 'Devenir prestataire',
     href: '/provider-signup',
-    image: '/images/live-in-black/auth-provider.jpg',
+    image: '/images/live-in-black/about-tab-provider-side-stage.png',
     imageAlt: 'Un photographe professionnel intervient pendant un événement',
   },
 ]

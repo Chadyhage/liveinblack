@@ -67,7 +67,7 @@ export function buildBeninCampaign(referenceDate = new Date()): BeninCampaignPos
       title,
       excerpt: compact(`${title}. Conseils locaux, budget, checklist et ressources pour prendre de meilleures décisions au Bénin.`, 190),
       content: html,
-      coverImageUrl: '/images/live-in-black/hero-nightlife.jpg',
+      coverImageUrl: '/images/live-in-black/blog-editorial-benin-nightlife.png',
       category: topic.slug === 'sortir-week-end' ? 'benin' : 'guide',
       tags: [city.name, 'Bénin', topic.slug.replaceAll('-', ' '), 'LIVEINBLACK'],
       authorName: 'La rédaction LIVEINBLACK',

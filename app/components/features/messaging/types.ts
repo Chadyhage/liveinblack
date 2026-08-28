@@ -2,6 +2,7 @@ export interface ConversationMember {
   userId: string
   name: string
   role: 'admin' | 'member'
+  avatarUrl?: string | null
   muteUntilAt?: string | null
 }
 
@@ -93,6 +94,7 @@ export interface FriendView {
   userId: string
   name: string
   email: string
+  avatarUrl: string | null
 }
 
 export interface BlockedUserView {

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button, Textarea } from '@/app/components/ui'
-import { Check, Mic, Send, Trash2, X } from 'lucide-react'
+import { BarChart3, CalendarDays, Camera, Check, Image as ImageIcon, Mic, Pause, Play, Send, Trash2, X } from 'lucide-react'
 import { DropdownMenu } from './MessagingMenus'
 import { formatRecordingDuration } from './messagingComposerUtils'
 import type { ConversationMember } from './types'
@@ -26,9 +26,11 @@ export default function MessagingComposer({
   replyTo,
   onCancelReply,
   isRecording,
+  isRecordingPaused,
   recordDuration,
   onCancelRecording,
   onSendRecording,
+  onToggleRecordingPause,
   onOpenAttachMenu,
   showAttachMenu,
   onCloseAttachMenu,
@@ -55,9 +57,11 @@ export default function MessagingComposer({
   replyTo: { senderName: string; preview: string } | null
   onCancelReply: () => void
   isRecording: boolean
+  isRecordingPaused: boolean
   recordDuration: number
   onCancelRecording: () => void
   onSendRecording: () => void
+  onToggleRecordingPause: () => void
   onOpenAttachMenu: () => void
   showAttachMenu: boolean
   onCloseAttachMenu: () => void
@@ -152,22 +156,31 @@ export default function MessagingComposer({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            padding: '10px 14px',
+            gap: 10,
+            minHeight: 58,
+            padding: '7px 8px 7px 12px',
             background: 'var(--surface)',
-            borderRadius: 999,
+            borderRadius: 8,
             border: '1px solid var(--border-strong)',
           }}
         >
-          <Button variant="ghost" onClick={onCancelRecording} style={{ color: 'var(--pink)', fontSize: 18, padding: 0 }} aria-label="Annuler">
-            <Trash2 size={18} />
+          <Button variant="ghost" onClick={onCancelRecording} style={{ width: 42, height: 42, minWidth: 42, minHeight: 42, color: 'var(--pink)', padding: 0, borderRadius: '50%' }} aria-label="Supprimer l’enregistrement">
+            <Trash2 size={19} />
           </Button>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pink)', animation: 'lib-pulse 1.2s infinite' }} />
-          <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>
-            {formatRecordingDuration(recordDuration)}
-          </span>
-          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0 }} aria-label="Envoyer">
-            <Check size={18} />
+          <div style={{ minWidth: 52, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pink)', animation: isRecordingPaused ? 'none' : 'lib-pulse 1.2s infinite' }} />
+            <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{formatRecordingDuration(recordDuration)}</span>
+          </div>
+          <div aria-hidden="true" style={{ height: 30, flex: 1, minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, overflow: 'hidden' }}>
+            {Array.from({ length: 22 }, (_, index) => (
+              <span key={index} style={{ width: 3, height: `${8 + ((index * 7) % 20)}px`, borderRadius: 3, background: index < 14 ? 'var(--teal-solid)' : 'rgba(245,245,247,.28)', opacity: isRecordingPaused ? .55 : 1 }} />
+            ))}
+          </div>
+          <Button variant="secondary" onClick={onToggleRecordingPause} style={{ width: 42, height: 42, minWidth: 42, minHeight: 42, padding: 0, borderRadius: '50%' }} aria-label={isRecordingPaused ? 'Reprendre l’enregistrement' : 'Mettre en pause'}>
+            {isRecordingPaused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}
+          </Button>
+          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--teal-solid)', color: '#04120e' }} aria-label="Envoyer le message vocal">
+            <Send size={17} />
           </Button>
         </div>
       ) : (
@@ -180,11 +193,12 @@ export default function MessagingComposer({
               <div style={{ position: 'absolute', bottom: 44, left: 0, zIndex: 50 }}>
                 <DropdownMenu
                   onClose={onCloseAttachMenu}
+                  layout="grid"
                   items={[
-                    { label: 'Photo', onClick: onOpenPhotoPicker },
-                    { label: 'Appareil photo', onClick: onOpenCamera },
-                    { label: 'Sondage', onClick: onOpenPoll },
-                    { label: 'Partager un événement', onClick: onOpenEventShare },
+                    { label: 'Photo', icon: <ImageIcon size={22} />, onClick: onOpenPhotoPicker },
+                    { label: 'Appareil photo', icon: <Camera size={22} />, onClick: onOpenCamera },
+                    { label: 'Sondage', icon: <BarChart3 size={22} />, onClick: onOpenPoll },
+                    { label: 'Événement', icon: <CalendarDays size={22} />, onClick: onOpenEventShare },
                   ]}
                 />
               </div>
@@ -202,7 +216,11 @@ export default function MessagingComposer({
               marginBottom: 0,
               flex: 1,
               resize: 'none',
+              fieldSizing: 'content',
+              minHeight: 44,
+              height: 44,
               maxHeight: 120,
+              overflowY: 'auto',
               borderRadius: 22,
               background: 'var(--surface)',
             }}

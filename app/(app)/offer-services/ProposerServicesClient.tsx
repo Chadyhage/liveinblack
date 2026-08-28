@@ -831,8 +831,9 @@ export default function ProposerServicesClient({
                 <Field label="Accroche professionnelle" helper="Une phrase courte visible en haut de ta page.">
                   <Input maxLength={120} value={profile.headline} onChange={(e) => update({ headline: e.target.value })} placeholder="Ex. DJ afro-house pour soirées privées et clubs" />
                 </Field>
-                <Field label="Mes activités" helper="Tu peux en choisir plusieurs. La première sélectionnée est la catégorie principale." >
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <Field label="Mes activités" helper="Tu peux en choisir plusieurs. La première sélectionnée est la catégorie principale." >
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {PROVIDER_CATEGORIES.map((item) => {
                       const selected = profile.prestataireTypes.includes(item.id)
                       return (
@@ -846,8 +847,9 @@ export default function ProposerServicesClient({
                         </Button>
                       )
                     })}
-                  </div>
-                </Field>
+                    </div>
+                  </Field>
+                </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <Field label="Présentation">
                     <Textarea style={{ minHeight: 125 }} value={profile.description} onChange={(e) => update({ description: e.target.value })} placeholder="Présente ton activité, ton style et ce qui te différencie." />

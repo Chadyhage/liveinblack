@@ -1,12 +1,12 @@
 'use client'
 
 import NextImage from 'next/image'
+import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import { useEffect, useRef, useState, type TouchEvent } from 'react'
 import { ArrowDown, Check, CheckCheck, CornerUpRight, Hourglass, Pause, Play, Star } from 'lucide-react'
 import { Button, ImmersiveDialog } from '@/app/components/ui'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
 import ThreadHeader from './ThreadHeader'
-import { avatarColorFor, conversationLabel, formatTime, getInitials } from './messagingUtils'
+import { avatarColorFor, conversationLabel, formatTime } from './messagingUtils'
 import type { ConversationMember, ConversationView, MessageType, MessageView, PresenceMap } from './types'
 
 export function messageTypeLabel(type: MessageType): string {
@@ -35,15 +35,18 @@ export function Avatar({
   userId,
   name,
   size = 38,
+  src,
   online,
   showOnline,
 }: {
   userId: string
   name: string
   size?: number
+  src?: string | null
   online?: boolean
   showOnline?: boolean
 }) {
+  const resolvedSrc = src || placeholderPhotoUrl(`message-avatar-${userId || name}`, size * 2, size * 2)
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       <div
@@ -60,7 +63,7 @@ export function Avatar({
           fontSize: size <= 32 ? 10 : 13,
         }}
       >
-        {getInitials(name)}
+        <NextImage src={resolvedSrc} alt={name} width={size} height={size} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
       </div>
       {showOnline ? (
         <div
@@ -123,7 +126,6 @@ export function ThreadHeaderSection({
   isDesktop,
   onBack,
   onOpenSearch,
-  onOpenPoll,
   onOpenGroupSettings,
   onOpenContactPanel,
 }: {
@@ -133,7 +135,6 @@ export function ThreadHeaderSection({
   isDesktop: boolean
   onBack: () => void
   onOpenSearch: () => void
-  onOpenPoll: () => void
   onOpenGroupSettings: () => void
   onOpenContactPanel: () => void
 }) {
@@ -149,8 +150,7 @@ export function ThreadHeaderSection({
       onBack={onBack}
       onPrimaryClick={conversation.type === 'group' ? onOpenGroupSettings : onOpenContactPanel}
       onOpenSearch={onOpenSearch}
-      onOpenPoll={onOpenPoll}
-      avatar={conversation.type === 'group' ? <GroupAvatar conv={conversation} size={36} /> : <Avatar userId={other?.userId ?? ''} name={label} size={36} />}
+      avatar={conversation.type === 'group' ? <GroupAvatar conv={conversation} size={36} /> : <Avatar userId={other?.userId ?? ''} name={label} size={36} src={other?.avatarUrl} />}
     />
   )
 }
@@ -224,7 +224,7 @@ export function MessageRow({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div style={{ width: 26, flexShrink: 0 }}>{showAvatar ? <Avatar userId={message.senderId} name={message.senderName} size={26} online={onlineForAvatar} showOnline /> : null}</div>
+      <div style={{ width: 26, flexShrink: 0 }}>{showAvatar ? <Avatar userId={message.senderId} name={message.senderName} size={26} src={members.find((member) => member.userId === message.senderId)?.avatarUrl} online={onlineForAvatar} showOnline /> : null}</div>
       <div style={{ maxWidth: '74%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', gap: 2, transform: `translateX(${swipeX}px)` }}>
         {showSenderName ? <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>{message.senderName}</span> : null}
         {message.forwardedFrom ? (

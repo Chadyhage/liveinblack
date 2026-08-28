@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { ArrowLeft, BarChart2, Search } from 'lucide-react'
+import { ArrowLeft, MoreVertical, Search } from 'lucide-react'
 import { Button } from '@/app/components/ui'
 
 function HeaderIconButton({ title, onClick, children }: { title: string; onClick: () => void; children: ReactNode }) {
@@ -34,7 +34,6 @@ export default function ThreadHeader({
   onBack,
   onPrimaryClick,
   onOpenSearch,
-  onOpenPoll,
   avatar,
 }: {
   label: string
@@ -43,7 +42,6 @@ export default function ThreadHeader({
   onBack: () => void
   onPrimaryClick: () => void
   onOpenSearch: () => void
-  onOpenPoll: () => void
   avatar: ReactNode
 }) {
   return (
@@ -74,8 +72,8 @@ export default function ThreadHeader({
         <HeaderIconButton title="Rechercher" onClick={onOpenSearch}>
           <Search size={16} />
         </HeaderIconButton>
-        <HeaderIconButton title="Sondage" onClick={onOpenPoll}>
-          <BarChart2 size={16} />
+        <HeaderIconButton title="Plus d’options" onClick={onPrimaryClick}>
+          <MoreVertical size={18} />
         </HeaderIconButton>
       </div>
     </div>

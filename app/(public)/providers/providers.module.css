@@ -76,7 +76,7 @@
   transition: box-shadow 160ms ease, background 160ms ease;
 }
 
-.searchField:focus-within { background: rgba(255, 255, 255, .1); box-shadow: 0 0 0 3px rgba(245, 61, 141, .13); }
+.searchField:focus-within { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .1); }
 .searchField > svg { flex: 0 0 auto; }
 .searchField input { min-width: 0; flex: 1; height: 42px; padding: 0 10px; border: 0; outline: 0; background: transparent; color: #f5f5f7; font: 500 15px/1.2 var(--providers-font); }
 .searchField input::placeholder { color: rgba(245, 245, 247, .48); }
@@ -184,10 +184,11 @@
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px)); gap: var(--public-grid-gap); margin-top: 16px; }
 .pagination { margin-top: 24px; }
 
-.emptyState { max-width: 640px; margin: 28px auto 0; padding: clamp(20px, 3vw, 32px); border: 1px solid rgba(255, 255, 255, .12); border-radius: 24px; background: rgba(255, 255, 255, .055); text-align: center; box-shadow: 0 20px 56px rgba(0, 0, 0, .22); }
-.emptyState h3 { margin: 6px 0 0; font: 700 20px/1.2 var(--providers-font); letter-spacing: -.02em; text-transform: none; }
+.emptyState { max-width: 760px; min-height: 440px; margin: 28px auto 0; padding: clamp(36px, 6vw, 72px); text-align: center; }
+.emptyState :global(.lb-mascot-image) { width: 220px !important; height: 220px !important; }
+.emptyState h3 { margin: 8px 0 0; font: 750 clamp(22px, 3vw, 30px)/1.2 var(--providers-font); letter-spacing: 0; text-transform: none; }
 .emptyState p { max-width: 480px; margin: 8px auto 0; color: rgba(245, 245, 247, .72); font-size: 15px; line-height: 1.45; }
-.emptyState a { min-height: 42px; display: inline-flex; align-items: center; margin-top: 14px; padding: 0 16px; border-radius: 12px; background: var(--primary); color: var(--primary-ink); font-size: 14px; font-weight: 700; text-decoration: none; }
+.emptyState a { min-height: 48px; display: inline-flex; align-items: center; margin-top: 18px; padding: 0 20px; border-radius: 8px; background: var(--primary); color: var(--primary-ink); font-size: 15px; font-weight: 700; text-decoration: none; }
 
 .cta {
   display: grid;

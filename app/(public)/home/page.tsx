@@ -17,10 +17,11 @@ import { fmtMoney, eventCurrency } from '@/lib/shared/money'
 import { getProviderCategories, getProviderCategory } from '@/lib/shared/providerCategories'
 import { eventStartMs } from '@/lib/shared/event-time'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
-import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import HomeGreeting from './HomeGreeting'
 import HeroScrollIndicator from './HeroScrollIndicator'
+import HomeHeroCarousel from './HomeHeroCarousel'
 import { ActionLink, Card, EditorialImageCard, Mascot } from '@/app/components/ui'
 import styles from './home.module.css'
 
@@ -54,6 +55,18 @@ const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: str
   pink: { dot: '#ff6b00', soft: 'rgba(255,107,0,0.14)', border: 'rgba(255,107,0,0.4)' },
 }
 
+const HOME_EVENT_FALLBACKS = [
+  '/images/live-in-black/home-card-event-palms.png',
+  '/images/live-in-black/home-card-event-rooftop-dj.png',
+  '/images/live-in-black/home-card-event-live-band.png',
+]
+
+const HOME_PROVIDER_FALLBACKS = [
+  '/images/live-in-black/home-card-provider-crew.png',
+  '/images/live-in-black/home-card-provider-dj-booth.png',
+  '/images/live-in-black/home-card-provider-photo-gear.png',
+]
+
 function firstOfferImage(catalog: CatalogItem[] = []): string | null {
   for (const item of catalog) {
     const image = (item.media || []).find((m) => m?.url && m.type !== 'video')
@@ -84,7 +97,7 @@ export default async function AccueilPage() {
   const hasSessionCookie = hasAuthSessionCookie(cookieStore.getAll())
   const [allEventsResult, providerDirectory, actualiteConfig, boostedIds, session] = await Promise.all([
     getCachedPublicEventsDirectory({ page: 1, pageSize: 30, includeTotal: false }),
-    getCachedPublicProvidersDirectory({ page: 1, pageSize: 4, includeTotal: false }),
+    getCachedPublicProvidersDirectory({ page: 1, pageSize: 3, includeTotal: false }),
     getPublicHomepageConfig(),
     getBoostedEventIds(),
     hasSessionCookie ? auth() : Promise.resolve(null),
@@ -93,7 +106,7 @@ export default async function AccueilPage() {
   const providers = providerDirectory.providers
 
   const events = [...allEvents].sort((a, b) => eventStartMs(a) - eventStartMs(b)).slice(0, 6)
-  const featuredProviders = providers.slice(0, 4)
+  const featuredProviders = providers.slice(0, 3)
   const topThree = [...allEvents]
     .sort((a, b) => Number(boostedIds.has(b.id)) - Number(boostedIds.has(a.id)) || eventStartMs(a) - eventStartMs(b))
     .slice(0, 3)
@@ -130,15 +143,7 @@ export default async function AccueilPage() {
       {/* HERO : hauteur utile du viewport moins la navigation sticky. */}
       <main className={styles.home}>
       <section id="home-hero" className={styles.hero}>
-        <Image
-          src="/images/live-in-black/hero-nightlife.jpg"
-          alt=""
-          fill
-          priority
-          unoptimized
-          sizes="100vw"
-          className={styles.heroImage}
-        />
+        <HomeHeroCarousel />
         <div className={styles.heroOverlay} />
         <div className={styles.heroContent}>
           <p className={styles.heroEyebrow}>Votre nuit, simplement.</p>
@@ -167,7 +172,7 @@ export default async function AccueilPage() {
       {session?.user && topThree.length > 0 && (
         <Section eyebrow="Le classement" title="Top 3 du moment" sub="Les événements mis en avant et les prochaines dates à ne pas manquer.">
           <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
-            {topThree.map((event, index) => <HomeEventCard key={event.id} event={event} badge={`0${index + 1}`} boosted={boostedIds.has(event.id)} />)}
+            {topThree.map((event, index) => <HomeEventCard key={event.id} event={event} badge={`0${index + 1}`} boosted={boostedIds.has(event.id)} fallbackImage={HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length]} />)}
           </div>
         </Section>
       )}
@@ -183,7 +188,7 @@ export default async function AccueilPage() {
             {actualiteConfig.subtitle && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{actualiteConfig.subtitle}</span>}
           </div>
           <div className={styles.horizontalRail}>
-            {actualiteEvents.map((e) => {
+            {actualiteEvents.map((e, index) => {
               const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
               const min = prices.length ? Math.min(...prices) : null
               return (
@@ -195,7 +200,7 @@ export default async function AccueilPage() {
                   >
                     <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
                     <Image
-                      src={e.imageUrl || placeholderPhotoUrl(e.id, 440, 248)}
+                      src={reliablePhotoUrl(e.imageUrl, e.id, 440, 248, HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length])}
                       alt={e.name}
                       fill
                       style={{ objectFit: 'cover' }}
@@ -241,7 +246,7 @@ export default async function AccueilPage() {
             <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
           </div>
           <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
-            {recommendations.map(({ event, reason }) => <HomeEventCard key={event.id} event={event} reason={reason} />)}
+            {recommendations.map(({ event, reason }, index) => <HomeEventCard key={event.id} event={event} reason={reason} fallbackImage={HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length]} />)}
           </div>
         </Section>
       )}
@@ -267,7 +272,7 @@ export default async function AccueilPage() {
         ) : (
           <>
             <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
-              {events.map((event, index) => <HomeEventCard key={event.id} event={event} eager={index === 0} />)}
+              {events.map((event, index) => <HomeEventCard key={event.id} event={event} eager={index === 0} fallbackImage={HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length]} />)}
             </div>
             <div style={{ textAlign: 'center', marginTop: 22 }}>
               <Link href="/events" style={btnGhost}>Tout voir</Link>
@@ -286,7 +291,7 @@ export default async function AccueilPage() {
               {featuredProviders.map((p, index) => {
                 const categories = getProviderCategories(p)
                 const pc = categories[0] || getProviderCategory(p.prestataireType)
-                const coverImage = p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl || placeholderPhotoUrl(p.userId, 440, 248)
+                const coverImage = reliablePhotoUrl(p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl, p.userId, 440, 248, HOME_PROVIDER_FALLBACKS[index % HOME_PROVIDER_FALLBACKS.length])
                 return (
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
@@ -345,9 +350,9 @@ export default async function AccueilPage() {
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
         <div className={styles.contentGrid}>
           {[
-            ['01', '/images/live-in-black/journey-discover.jpg', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
-            ['02', '/images/live-in-black/journey-reserve.jpg', 'Deux amies réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
-            ['03', '/images/live-in-black/journey-enter.jpg', 'Un billet numérique est contrôlé à l’entrée d’un concert', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
+            ['01', '/images/live-in-black/home-step-discover-cotonou.png', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
+            ['02', '/images/live-in-black/home-step-reserve-mobile.png', 'Des amis réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
+            ['03', '/images/live-in-black/home-step-qr-entry.png', 'Un billet numérique est contrôlé à l’entrée d’un événement', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
           ].map(([n, src, alt, title, description]) => (
             <EditorialImageCard key={n} src={src} alt={alt} badge={n} title={title} description={description} />
           ))}
@@ -359,11 +364,11 @@ export default async function AccueilPage() {
 
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 20 }}>
           <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--primary)' }}>
             <div className={styles.splitCardInner}>
-              <div className={styles.splitCardMedia}>
-                <Image src="/images/live-in-black/auth-organizer.jpg" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
+              <div className={styles.splitCardMedia} style={{ position: 'relative', overflow: 'hidden', minHeight: 280, height: '100%' }}>
+                <Image src="/images/live-in-black/home-split-organizer-control.png" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
                 <div className={styles.splitCardMediaOverlay} />
               </div>
               <div className={styles.splitCardContent}>
@@ -380,8 +385,8 @@ export default async function AccueilPage() {
           </Card>
           <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--gold)' }}>
             <div className={styles.splitCardInner}>
-              <div className={styles.splitCardMedia}>
-                <Image src="/images/live-in-black/auth-provider.jpg" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
+              <div className={styles.splitCardMedia} style={{ position: 'relative', overflow: 'hidden', minHeight: 280, height: '100%' }}>
+                <Image src="/images/live-in-black/home-split-provider-crew.png" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
                 <div className={styles.splitCardMediaOverlay} />
               </div>
               <div className={styles.splitCardContent}>
@@ -425,15 +430,15 @@ export default async function AccueilPage() {
   )
 }
 
-function HomeEventCard({ event, badge, boosted = false, reason, eager = false }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string; eager?: boolean }) {
+function HomeEventCard({ event, badge, boosted = false, reason, eager = false, fallbackImage }: { event: PublicEvent; badge?: string; boosted?: boolean; reason?: string; eager?: boolean; fallbackImage?: string }) {
   const prices = (event.places || []).map((place) => Number(place.price)).filter((price) => Number.isFinite(price) && price >= 0)
   const minPrice = prices.length ? Math.min(...prices) : null
   const isRanking = Boolean(badge)
   return (
     <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
-      <div style={{ position: 'relative', aspectRatio: '16/9', background: `radial-gradient(circle at 25% 10%,${event.color || '#8444ff'}55,transparent 58%),var(--surface-2)` }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: event.color || 'var(--surface-2)' }}>
         <Image
-          src={event.imageUrl || placeholderPhotoUrl(event.id, 460, 259)}
+          src={reliablePhotoUrl(event.imageUrl, event.id, 460, 259, fallbackImage)}
           alt={event.name}
           fill
           loading={eager ? 'eager' : undefined}
@@ -442,7 +447,7 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false }:
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,4,11,.74),transparent 58%)' }} />
         {badge ? (
-          <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 18, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff', textShadow: '0 2px 12px #000' }}>{badge}</span>
+          <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 18, lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : '#fff' }}>{badge}</span>
         ) : (
           <DateBadge dateISO={event.date} />
         )}

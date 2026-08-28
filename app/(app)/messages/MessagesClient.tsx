@@ -272,6 +272,7 @@ export default function MessagesClient({
     showCamera,
     showAttachMenu,
     isRecording,
+    isRecordingPaused,
     recordDuration,
     videoRef,
     openAttachMenu,
@@ -284,6 +285,7 @@ export default function MessagesClient({
     handleMicPointerDown,
     handleMicPointerUp,
     stopRecording,
+    toggleRecordingPause,
   } = useMessagingMedia({
     apiFetch,
     activeId,
@@ -843,6 +845,7 @@ export default function MessagesClient({
   const conversationAvatarSize = 34
   const showListPane = isDesktop || mobileView === 'list'
   const showThreadPane = isDesktop || mobileView === 'thread'
+  const avatarUrlFor = (userId: string) => conversations.flatMap((conversation) => conversation.members).find((member) => member.userId === userId)?.avatarUrl ?? friends.find((friend) => friend.userId === userId)?.avatarUrl ?? null
 
   return (
     <main className={styles.root}>
@@ -876,7 +879,7 @@ export default function MessagesClient({
             renderAvatar={(conv, label, online) =>
               conv.type === 'group'
                 ? <GroupAvatar conv={conv} size={conversationAvatarSize} />
-                : <Avatar userId={conv.members.find((m) => m.userId !== currentUserId)?.userId ?? ''} name={label} size={conversationAvatarSize} online={online} showOnline />
+                : (() => { const member = conv.members.find((m) => m.userId !== currentUserId); return <Avatar userId={member?.userId ?? ''} name={label} size={conversationAvatarSize} src={member?.avatarUrl} online={online} showOnline /> })()
             }
             presenceOnlineFor={(userId) => (userId ? Boolean(presence[userId]?.online) : false)}
             formatTime={formatTime}
@@ -927,7 +930,6 @@ export default function MessagesClient({
                   setActiveId(null)
                 }}
                 onOpenSearch={() => setInThreadSearchOpen((v) => !v)}
-                onOpenPoll={() => setPollDraft({ question: '', options: ['', ''] })}
                 onOpenGroupSettings={() => setPanel('groupSettings')}
                 onOpenContactPanel={() => setPanel('contactPanel')}
               />
@@ -1095,9 +1097,11 @@ export default function MessagesClient({
                   replyTo={replyTo}
                   onCancelReply={() => setReplyTo(null)}
                   isRecording={isRecording}
+                  isRecordingPaused={isRecordingPaused}
                   recordDuration={recordDuration}
                   onCancelRecording={() => stopRecording(false)}
                   onSendRecording={() => stopRecording(true)}
+                  onToggleRecordingPause={toggleRecordingPause}
                   onOpenAttachMenu={openAttachMenu}
                   showAttachMenu={showAttachMenu}
                   onCloseAttachMenu={closeAttachMenu}
@@ -1204,7 +1208,7 @@ export default function MessagesClient({
           onPick={handleStartDirectConversation}
           onEmail={handleStartDirectConversationByEmail}
           onClose={() => setPanel('none')}
-          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} online={Boolean(presence[userId]?.online)} showOnline />}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} src={avatarUrlFor(userId)} online={Boolean(presence[userId]?.online)} showOnline />}
         />
       )}
       {panel === 'newGroup' && (
@@ -1214,7 +1218,7 @@ export default function MessagesClient({
           onClose={() => setPanel('none')}
           onGoToFriends={() => setPanel('friends')}
           onPickAvatar={async (file) => compressImage(await fileToDataUrl(file))}
-          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} online={Boolean(presence[userId]?.online)} showOnline />}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} src={avatarUrlFor(userId)} online={Boolean(presence[userId]?.online)} showOnline />}
           renderGroupAvatar={(name, avatar, size = 40) => (
             <GroupAvatar conv={{ name, avatar }} size={size} />
           )}
@@ -1229,6 +1233,7 @@ export default function MessagesClient({
           onDismissNew={handleDismissNewFriend}
           onAction={handleFriendRequestAction}
           onSend={handleSendFriendRequest}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} src={avatarUrlFor(userId)} online={Boolean(presence[userId]?.online)} showOnline />}
           onRemove={(userId, name) =>
             setPendingConfirm({
               title: 'Retirer ce contact',
@@ -1262,7 +1267,7 @@ export default function MessagesClient({
           onRename={handleRenameGroup}
           onUploadAvatar={handleUploadGroupAvatar}
           groupAvatarInputRef={groupAvatarInputRef}
-          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} online={Boolean(presence[userId]?.online)} showOnline />}
+          renderAvatar={(userId, name, size = 40) => <Avatar userId={userId} name={name} size={size} src={avatarUrlFor(userId)} online={Boolean(presence[userId]?.online)} showOnline />}
           renderGroupAvatar={(name, avatar, size = 40) => <GroupAvatar conv={{ name, avatar }} size={size} />}
           onLeave={() =>
             setPendingConfirm({
@@ -1347,7 +1352,7 @@ export default function MessagesClient({
             return res.ok ? res.data.phone : null
           }}
           renderAvatar={(userId, name, size = 40, online = false, showOnline = false) => (
-            <Avatar userId={userId} name={name} size={size} online={online} showOnline={showOnline} />
+            <Avatar userId={userId} name={name} size={size} src={avatarUrlFor(userId)} online={online} showOnline={showOnline} />
           )}
           onClose={() => setPanel('none')}
         />
