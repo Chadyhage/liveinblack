@@ -24,18 +24,18 @@
 
 /* Échelle alignée sur l'accueil pour garder les pages publiques lisibles. */
 .page{padding-bottom:56px}
-.hero{padding:48px 20px 36px!important}
+.hero{max-width:var(--public-page-max)!important;padding:var(--public-hero-padding)!important}
 .hero>p:first-child{font-size:13.5px!important;letter-spacing:.04em!important}
 .hero h1{margin-top:12px!important;font-size:56px!important;line-height:1.06!important}
 .hero>p:last-child{margin-top:16px!important;font-size:18px!important;line-height:1.55!important}
-.section{padding:42px clamp(16px,2vw,24px)!important}
+.section{padding:42px var(--public-page-gutter)!important}
 .section h2{font-size:34px!important;line-height:1.12!important}
 .section p{font-size:16px!important;line-height:1.6!important}
 .section :global(.lb-card-grid){gap:16px}
 .section :global(.lb-card){padding:22px!important;border-radius:18px!important}
 .section details{padding-inline:18px!important;border-radius:18px!important}
 .section details summary{min-height:44px!important;font-size:15px!important}
-.ctaWrap{padding-top:36px!important}
+.ctaWrap{padding:36px var(--public-page-gutter) 0!important}
 .cta{padding:32px!important;border-radius:24px!important}
 .cta h2{font-size:34px!important}
 .cta p{font-size:16px!important;line-height:1.55!important}

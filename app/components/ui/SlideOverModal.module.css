@@ -17,17 +17,18 @@
 .header h2 { margin:0; color:#f5f5f7; font-size:24px; font-weight:720; line-height:1.16; }
 .header p { margin:6px 0 0; max-width:72ch; color:rgba(245,245,247,.62); font-size:13px; line-height:1.45; }
 .actions { flex:0 0 auto; display:flex; justify-content:flex-end; gap:8px; padding:12px var(--modal-inner-space) calc(12px + env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.09); background:rgba(28,28,30,.96); }
-.close { position:absolute!important; top:var(--modal-inner-space); right:var(--modal-inner-space); z-index:4; width:40px; min-width:40px; height:40px; min-height:40px!important; padding:0!important; display:grid!important; place-items:center; border:0!important; border-radius:50%!important; background:rgba(118,118,128,.28)!important; color:rgba(235,235,245,.72)!important; backdrop-filter:blur(18px) saturate(130%); }
-.close:hover { background:rgba(118,118,128,.42)!important; color:#fff!important; }
-.close:focus-visible { outline:3px solid var(--primary-a05); outline-offset:2px; }
+.close { position:absolute!important; top:var(--modal-inner-space); right:var(--modal-inner-space); z-index:100; width:44px; min-width:44px; height:44px; min-height:44px!important; padding:0!important; display:grid!important; place-items:center; border:1.5px solid rgba(255,255,255,.32)!important; border-radius:50%!important; background:#1c1c22!important; color:#ffffff!important; backdrop-filter:blur(20px) saturate(140%); box-shadow:0 8px 24px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.4); cursor:pointer!important; transition:transform .18s ease, background .18s ease, border-color .18s ease!important; }
+.close:hover { background:var(--primary)!important; color:var(--primary-ink)!important; border-color:var(--primary)!important; transform:scale(1.08)!important; }
+.close:focus-visible { outline:3px solid var(--primary); outline-offset:3px; }
+.close svg { width:22px!important; height:22px!important; color:#ffffff!important; stroke:#ffffff!important; stroke-width:2.5!important; opacity:1!important; }
+.close:hover svg { color:var(--primary-ink)!important; stroke:var(--primary-ink)!important; }
 .grabber { display:none; }
 .eventRoot { align-items:stretch; justify-content:flex-end; }
-.eventBackdrop { background:rgba(0,0,0,.52)!important; backdrop-filter:blur(24px) saturate(90%); }
+.eventBackdrop { background:rgba(0,0,0,.68)!important; backdrop-filter:blur(24px) saturate(90%); }
 .eventPanel { width:46vw!important; max-width:46vw!important; min-width:0!important; height:100dvh!important; max-height:100dvh!important; border-radius:0!important; background:rgba(27,27,30,.97); backdrop-filter:blur(34px) saturate(145%); box-shadow:-28px 0 90px rgba(0,0,0,.58),inset 1px 0 0 rgba(255,255,255,.08); transform:translateX(100%); opacity:1; transition:transform .32s cubic-bezier(.22,1,.36,1); }
 .visible .eventPanel { transform:translateX(0); }
 .closing .eventPanel { transform:translateX(100%); }
-.eventClose { top:var(--modal-inner-space); right:var(--modal-inner-space); width:40px; min-width:40px; height:40px; min-height:40px!important; border:1px solid rgba(255,255,255,.12)!important; background:rgba(118,118,128,.46)!important; color:#fff!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 5px 18px rgba(0,0,0,.18); }
-.eventClose svg { width:20px!important; height:20px!important; color:#fff!important; stroke:#fff!important; stroke-width:2.2!important; opacity:1!important; }
+.eventClose { position:absolute!important; top:var(--modal-inner-space); right:var(--modal-inner-space); z-index:100; width:44px; min-width:44px; height:44px; min-height:44px!important; border:1.5px solid rgba(255,255,255,.36)!important; background:#1c1c22!important; color:#ffffff!important; box-shadow:0 8px 24px rgba(0,0,0,.6); }
 .eventContent { scrollbar-gutter:stable; }
 @media(max-width:780px){.root{--modal-inner-space:14px}.panel,.eventPanel{width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important}.content{height:100%;max-height:none;padding-top:0}.close,.eventClose{top:var(--modal-inner-space);right:var(--modal-inner-space)}}
 @media(prefers-reduced-motion:reduce){.backdrop,.panel{transition:none}}

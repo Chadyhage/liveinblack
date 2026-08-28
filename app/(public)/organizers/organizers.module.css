@@ -11,9 +11,9 @@
 }
 
 .hero {
-  max-width: 1280px;
+  max-width: var(--public-page-max);
   margin: 0 auto;
-  padding: clamp(24px, 3vw, 40px) clamp(14px, 2vw, 24px);
+  padding: var(--public-hero-padding);
   text-align: center;
 }
 
@@ -98,16 +98,16 @@
 }
 
 .directory {
-  max-width: 1380px;
+  max-width: var(--public-page-max);
   margin: 0 auto;
-  padding: 0 clamp(14px, 2vw, 28px) clamp(48px, 5vw, 72px);
+  padding: var(--public-content-padding);
 }
 
 .directoryHeader {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--public-grid-gap);
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, .12);
 }

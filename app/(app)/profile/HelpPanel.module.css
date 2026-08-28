@@ -1,9 +1,68 @@
-.grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(240px,.7fr); gap:10px; align-items:start; }
-.faq { padding:14px!important; border-radius:14px!important; }
-.faqTitle { margin:0 0 8px; color:#fff; font-size:15px; font-weight:720; letter-spacing:-.025em; }
-.contact { position:sticky; top:14px; padding:14px!important; overflow:hidden; border-radius:14px!important; border-color:var(--primary-a20)!important; background:linear-gradient(145deg,var(--primary-a10),rgba(255,255,255,.035))!important; }
-.contact h2 { margin:0 0 5px; color:#fff; font-size:16px; letter-spacing:-.03em; }
-.contact p { margin:0 0 10px; color:rgba(245,245,247,.6); font-size:12px; line-height:1.42; }
-.email { display:block; margin:8px 0 3px; overflow-wrap:anywhere; color:#fff; font-size:11.5px; }
-.mailLink { min-height:34px; display:inline-flex; align-items:center; color:var(--primary); font-size:11.5px; font-weight:650; text-decoration:none; }
-@media(max-width:780px){.grid{grid-template-columns:1fr}.contact{position:relative;top:0;grid-row:1}.faq{padding:12px!important}}
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.faq {
+  padding: 22px !important;
+  border-radius: 18px !important;
+}
+
+.faqTitle {
+  margin: 0 0 14px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 760;
+  line-height: 1.18;
+  letter-spacing: -.025em;
+}
+
+.contact {
+  padding: 22px !important;
+  overflow: hidden;
+  border-radius: 18px !important;
+  border-color: var(--primary-a20) !important;
+  background: linear-gradient(145deg, var(--primary-a10), rgba(255, 255, 255, .045)) !important;
+}
+
+.contact h2 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1.18;
+  letter-spacing: -.03em;
+}
+
+.contact p {
+  margin: 0 0 16px;
+  color: rgba(245, 245, 247, .72);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.email {
+  display: block;
+  margin: 12px 0 6px;
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+
+.mailLink {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary);
+  font-size: 14.5px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+@media(max-width:780px){
+  .grid{grid-template-columns:1fr}
+  .contact{grid-row:1}
+  .faq{padding:18px!important}
+}

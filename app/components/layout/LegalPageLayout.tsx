@@ -12,13 +12,6 @@ const CARD: React.CSSProperties = {
   boxShadow: '0 12px 34px rgba(0,0,0,0.2)',
 }
 
-const COLORS = {
-  gold: 'var(--gold)',
-  teal: 'var(--teal)',
-  muted: 'var(--text-muted)',
-  dim: 'var(--text-faint)',
-}
-
 export type LegalSectionItem = string | { label: string; value?: string }
 
 export interface LegalSection {
@@ -43,8 +36,12 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
       style={{
         minHeight: '100vh',
         position: 'relative',
+        isolation: 'isolate',
+        overflow: 'hidden',
         zIndex: 1,
         padding: '14px clamp(10px, 1.6vw, 22px) 34px',
+        background:
+          'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       {/* Filigrane discret, harmonisé avec l'univers sombre du produit. */}
@@ -247,10 +244,10 @@ const FILIGRANE_TEXT = Array(8).fill('LIVE IN BLACK').join(' · ') // couvre ≥
 // offsetD/offsetM : décalage horizontal desktop/mobile (fixe, pas de scroll —
 // voir la note de perf dans le composant légataire src/components/FiligraneRoseBg.jsx).
 const FILIGRANE_LINES: { color: string; offsetD: number; offsetM: number; mobileOnly?: boolean }[] = [
-  { color: 'var(--primary-a0.025)', offsetD: -60, offsetM: -40 },
-  { color: 'var(--primary-a0.02)', offsetD: -420, offsetM: -260 },
+  { color: 'rgba(245, 61, 141, 0.025)', offsetD: -60, offsetM: -40 },
+  { color: 'rgba(245, 61, 141, 0.02)', offsetD: -420, offsetM: -260 },
   { color: 'rgba(255,255,255,0.018)', offsetD: -220, offsetM: -140 },
-  { color: 'var(--primary-a0.018)', offsetD: -560, offsetM: -340 },
+  { color: 'rgba(245, 61, 141, 0.018)', offsetD: -560, offsetM: -340 },
   { color: 'rgba(255,255,255,0.015)', offsetD: -80, offsetM: -80, mobileOnly: true },
 ]
 
@@ -259,13 +256,11 @@ function FiligraneRoseBg() {
     <div
       aria-hidden="true"
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
-        zIndex: 0,
+        zIndex: -1,
         pointerEvents: 'none',
         overflow: 'hidden',
-        background:
-          'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
       }}
     >
       <style>{`

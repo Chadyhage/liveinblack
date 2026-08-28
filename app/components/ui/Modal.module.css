@@ -103,30 +103,35 @@
   position: absolute !important;
   top: var(--modal-inner-space);
   right: var(--modal-inner-space);
-  z-index: 4;
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  min-height: 40px !important;
+  z-index: 100;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px !important;
   margin: 0;
   padding: 0 !important;
   display: grid !important;
   place-items: center;
-  border: 0 !important;
+  border: 1.5px solid rgba(255, 255, 255, .32) !important;
   border-radius: 50% !important;
-  background: rgba(118, 118, 128, .24) !important;
-  color: rgba(235, 235, 245, .68) !important;
-  backdrop-filter: blur(18px) saturate(130%);
+  background: #1c1c22 !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55);
+  cursor: pointer !important;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease !important;
 }
 
 .close:hover {
-  background: rgba(118, 118, 128, .38) !important;
-  color: #fff !important;
+  background: var(--primary) !important;
+  color: var(--primary-ink) !important;
+  border-color: var(--primary) !important;
+  transform: scale(1.08) !important;
 }
 
 .close:focus-visible {
-  outline: 3px solid var(--primary-a05);
-  outline-offset: 2px;
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .actions {

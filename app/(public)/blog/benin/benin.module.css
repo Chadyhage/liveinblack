@@ -1,4 +1,4 @@
-.page{width:100%;max-width:1440px;margin:0 auto;padding:clamp(18px,2vw,28px) clamp(10px,1.5vw,18px) clamp(42px,5vw,72px);color:#f5f5f7}
+.page{width:100%;max-width:var(--public-page-max);margin:0 auto;padding:var(--public-hero-padding);padding-bottom:clamp(42px,5vw,72px);color:#f5f5f7}
 .hero{padding:clamp(18px,2.3vw,34px);border:1px solid rgba(245,61,141,.2);border-radius:20px;background:linear-gradient(135deg,rgba(245,61,141,.1),rgba(255,255,255,.035) 48%,rgba(0,0,0,.18));box-shadow:0 18px 54px rgba(0,0,0,.2)}
 .eyebrow{margin:0;color:var(--primary);font-size:13.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
 .hero h1{max-width:960px;margin:8px 0 0;font-size:clamp(30px,4.2vw,56px);line-height:.96;text-wrap:balance}

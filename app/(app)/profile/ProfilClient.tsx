@@ -1157,14 +1157,14 @@ export function SupportPanel() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           <ArrowLeft size={17} aria-hidden="true" />
           Profil
         </Link>
 
         <header style={{ marginBottom: 10 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 720, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
-          <p style={{ maxWidth: 620, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
+          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(32px,3.6vw,44px)', fontWeight: 760, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
+          <p style={{ maxWidth: 680, margin: '10px 0 0', color: 'rgba(245,245,247,.72)', fontSize: 16, lineHeight: 1.55 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
         </header>
 
         <div className={helpStyles.grid}>

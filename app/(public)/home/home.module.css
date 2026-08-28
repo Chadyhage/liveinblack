@@ -27,7 +27,7 @@
   min-height: clamp(560px, 72svh, 820px);
   display: grid;
   align-items: center;
-  padding: clamp(56px, 9vh, 108px) max(var(--page-gutter), calc((100vw - 1280px) / 2)) clamp(48px, 7vh, 84px);
+  padding: clamp(56px, 9vh, 108px) max(var(--public-page-gutter), calc((100vw - var(--public-page-max)) / 2)) clamp(48px, 7vh, 84px);
   overflow: hidden;
   isolation: isolate;
   text-align: left;
@@ -177,9 +177,9 @@
 
 .section,
 .newsSection {
-  width: min(100%, 1280px);
+  width: min(100%, var(--public-page-max));
   margin: 0 auto;
-  padding: clamp(16px, 2vw, 28px) var(--page-gutter);
+  padding: clamp(16px, 2vw, 28px) var(--public-page-gutter);
 }
 
 .newsSection {
@@ -242,7 +242,7 @@
 }
 
 .finalSection {
-  padding: 16px var(--page-gutter) clamp(24px, 3vw, 42px);
+  padding: 16px var(--public-page-gutter) clamp(24px, 3vw, 42px);
 }
 
 .finalCard {

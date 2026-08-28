@@ -196,7 +196,7 @@ export default async function EventDetailContent({
           sizes="(max-width: 768px) 100vw, 880px"
         />
         <div className={styles.heroOverlay} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.9) 100%)' }} />
-        <div className={styles.heroActions} style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.heroActions} style={{ position: 'absolute', top: 12, right: isModal ? 68 : 12, display: 'flex', alignItems: 'center', gap: 8, zIndex: 10 }}>
           <EventShareButton eventName={event.name} />
           <EventInterestButtonClient eventId={event.id} initialInterested={interestState.interested} isAuthenticated={Boolean(session?.user)} floating />
         </div>

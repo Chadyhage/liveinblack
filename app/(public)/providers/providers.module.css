@@ -11,9 +11,9 @@
 }
 
 .hero {
-  max-width: 1280px;
+  max-width: var(--public-page-max);
   margin: 0 auto;
-  padding: clamp(16px, 2.2vw, 32px) clamp(12px, 1.6vw, 18px) clamp(12px, 1.6vw, 18px);
+  padding: var(--public-hero-padding);
   text-align: center;
 }
 
@@ -112,9 +112,9 @@
 }
 
 .directory {
-  max-width: 1380px;
+  max-width: var(--public-page-max);
   margin: 0 auto;
-  padding: 0 clamp(12px, 1.8vw, 24px) clamp(60px, 6vw, 92px);
+  padding: var(--public-content-padding);
 }
 
 .directoryHeader {
@@ -181,7 +181,7 @@
 .activeFilters strong { color: #fff; }
 .activeFilters a { min-height: 34px; display: inline-flex; align-items: center; gap: 7px; color: var(--primary); font-weight: 650; text-decoration: none; white-space: nowrap; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px)); gap: 16px; margin-top: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px)); gap: var(--public-grid-gap); margin-top: 16px; }
 .pagination { margin-top: 24px; }
 
 .emptyState { max-width: 640px; margin: 28px auto 0; padding: clamp(20px, 3vw, 32px); border: 1px solid rgba(255, 255, 255, .12); border-radius: 24px; background: rgba(255, 255, 255, .055); text-align: center; box-shadow: 0 20px 56px rgba(0, 0, 0, .22); }

@@ -11,9 +11,9 @@
 }
 
 .hero {
-  max-width: 1240px;
+  max-width: var(--public-page-max);
   margin: 0 auto;
-  padding: clamp(16px, 2.1vw, 30px) clamp(12px, 1.4vw, 18px) clamp(12px, 1.6vw, 18px);
+  padding: var(--public-hero-padding);
   text-align: center;
 }
 
@@ -111,9 +111,9 @@
 .searchButton:active { transform: scale(.98); }
 
 .catalogue {
-  max-width: 1440px;
+  max-width: var(--public-page-max);
   margin: 0 auto;
-  padding: 0 clamp(12px, 1.4vw, 18px) clamp(40px, 4.2vw, 64px);
+  padding: var(--public-content-padding);
 }
 
 .filterHeader {
@@ -195,7 +195,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px));
-  gap: 16px;
+  gap: var(--public-grid-gap);
   margin-top: 16px;
 }
 
