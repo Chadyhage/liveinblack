@@ -51,37 +51,38 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
       <FiligraneRoseBg />
       <div style={{ maxWidth: 1420, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
           <LegalBackButton />
           <div>
             <h1
               className="font-display"
               style={{
-                fontSize: 21,
-                letterSpacing: '.01em',
-                color: 'var(--text)',
+                fontSize: 'clamp(26px, 3vw, 36px)',
+                letterSpacing: '-.02em',
+                color: '#fff',
                 margin: 0,
                 lineHeight: 1.2,
+                fontWeight: 800,
               }}
             >
               {title}
             </h1>
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '3px 0 0' }}>
+            <p style={{ fontSize: 14, color: 'rgba(245, 245, 247, .7)', margin: '4px 0 0', fontWeight: 600 }}>
               Dernière mise à jour : {lastUpdate}
             </p>
           </div>
         </div>
 
         {/* Sommaire */}
-        <details className="lb-legal-toc" style={{ ...CARD, padding: '7px 14px', marginBottom: 10 }}>
+        <details className="lb-legal-toc" style={{ ...CARD, padding: '10px 18px', marginBottom: 14, borderRadius: 16 }}>
           <summary
             style={{
-              fontSize: 11.5,
-              fontWeight: 700,
-              color: 'rgba(255,255,255,0.55)',
+              fontSize: 13.5,
+              fontWeight: 800,
+              color: 'var(--primary)',
               textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              minHeight: 34,
+              letterSpacing: '0.05em',
+              minHeight: 38,
               display: 'flex',
               alignItems: 'center',
               cursor: 'pointer',
@@ -91,12 +92,12 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           </summary>
           <nav aria-label="Sommaire"><ol
             style={{
-              margin: 0,
+              margin: '8px 0 0',
               padding: 0,
               listStyle: 'none',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-              gap: '0 14px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '4px 16px',
             }}
           >
             {sections.map((s) => (
@@ -104,18 +105,18 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 <a
                   href={`#legal-section-${s.n}`}
                   style={{
-                    fontSize: 11.5,
-                    color: COLORS.muted,
+                    fontSize: 14,
+                    color: 'rgba(245, 245, 247, .8)',
                     textDecoration: 'none',
                     display: 'flex',
                     gap: 8,
-                    minHeight: 31,
+                    minHeight: 34,
                     alignItems: 'center',
                     padding: '4px 0',
                     lineHeight: 1.35,
                   }}
                 >
-                  <span style={{ color: COLORS.gold, fontWeight: 700, fontSize: 10.5, minWidth: 18, flexShrink: 0 }}>{s.n}</span>
+                  <span style={{ color: 'var(--primary)', fontWeight: 800, fontSize: 13, minWidth: 20, flexShrink: 0 }}>{s.n}</span>
                   {s.title}
                 </a>
               </li>
@@ -124,31 +125,31 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         </details>
 
         {/* Sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sections.map((s) => (
-            <Card key={s.n} id={`legal-section-${s.n}`} style={{ boxShadow: CARD.boxShadow, padding: '14px 16px', scrollMarginTop: 18 }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <Card key={s.n} id={`legal-section-${s.n}`} style={{ boxShadow: CARD.boxShadow, padding: '18px 22px', borderRadius: 18, scrollMarginTop: 18 }}>
+              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <span
                   style={{
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    color: COLORS.gold,
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: 'var(--primary)',
                     letterSpacing: '0.04em',
                     flexShrink: 0,
-                    marginTop: 3,
-                    minWidth: 20,
+                    marginTop: 2,
+                    minWidth: 22,
                   }}
                 >
                   {s.n}
                 </span>
-                <div style={{ flex: 1, minWidth: 0, maxWidth: 860 }}>
+                <div style={{ flex: 1, minWidth: 0, maxWidth: 880 }}>
                   <h2
                     style={{
-                      fontWeight: 700,
-                      fontSize: 15,
-                      color: 'rgba(255,255,255,0.93)',
-                      margin: '0 0 6px',
-                      lineHeight: 1.22,
+                      fontWeight: 800,
+                      fontSize: 18,
+                      color: '#fff',
+                      margin: '0 0 8px',
+                      lineHeight: 1.25,
                     }}
                   >
                     {s.title}
@@ -156,10 +157,10 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.body && (
                     <p
                       style={{
-                        fontSize: 12.75,
-                        color: COLORS.muted,
+                        fontSize: 15.5,
+                        color: 'rgba(245, 245, 247, .82)',
                         margin: 0,
-                        lineHeight: 1.48,
+                        lineHeight: 1.55,
                         whiteSpace: 'pre-wrap',
                       }}
                     >
@@ -167,24 +168,24 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                     </p>
                   )}
                   {s.list && (
-                    <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
+                    <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none' }}>
                       {s.list.map((item, i) => (
                         <li
                           key={i}
                           style={{
-                            fontSize: 12.75,
-                            color: COLORS.muted,
-                            lineHeight: 1.48,
-                            padding: '2px 0 2px 14px',
+                            fontSize: 15.5,
+                            color: 'rgba(245, 245, 247, .82)',
+                            lineHeight: 1.55,
+                            padding: '3px 0 3px 16px',
                             position: 'relative',
                           }}
                         >
-                          <span style={{ position: 'absolute', left: 0, color: COLORS.gold }}>•</span>
+                          <span style={{ position: 'absolute', left: 0, color: 'var(--primary)' }}>•</span>
                           {typeof item === 'string' ? (
                             item
                           ) : (
                             <>
-                              <strong style={{ color: 'rgba(255,255,255,0.93)', fontWeight: 600 }}>{item.label}</strong>
+                              <strong style={{ color: '#fff', fontWeight: 700 }}>{item.label}</strong>
                               {item.value ? ` — ${item.value}` : ''}
                             </>
                           )}
@@ -195,13 +196,13 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.contact && (
                     <p
                       style={{
-                        fontSize: 12.75,
-                        color: COLORS.muted,
-                        margin: '6px 0 0',
-                        lineHeight: 1.48,
+                        fontSize: 15.5,
+                        color: 'rgba(245, 245, 247, .82)',
+                        margin: '8px 0 0',
+                        lineHeight: 1.55,
                       }}
                     >
-                      <a href={`mailto:${s.contact}`} style={{ color: COLORS.gold, textDecoration: 'underline' }}>
+                      <a href={`mailto:${s.contact}`} style={{ color: 'var(--primary)', fontWeight: 650, textDecoration: 'underline' }}>
                         {s.contact}
                       </a>
                     </p>
@@ -218,17 +219,18 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
             accent="rgba(255,255,255,0.06)"
             style={{
               boxShadow: CARD.boxShadow,
-              padding: '10px 14px',
-              marginTop: 10,
+              padding: '14px 18px',
+              marginTop: 14,
+              borderRadius: 16,
             }}
           >
             <p
               style={{
-                fontSize: 11,
-                color: COLORS.dim,
+                fontSize: 13.5,
+                color: 'rgba(245, 245, 247, .65)',
                 textAlign: 'center',
                 margin: 0,
-                lineHeight: 1.45,
+                lineHeight: 1.5,
               }}
             >
               {footerNotice}

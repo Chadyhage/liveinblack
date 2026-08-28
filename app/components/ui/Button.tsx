@@ -87,7 +87,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       onMouseUp={(e) => { setPressed(false); rest.onMouseUp?.(e) }}
       aria-busy={loading || undefined}
       style={{
-        minHeight: size === 'sm' ? 34 : size === 'lg' ? 42 : 38,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

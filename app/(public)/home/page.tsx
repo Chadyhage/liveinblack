@@ -359,26 +359,42 @@ export default async function AccueilPage() {
 
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 12 }}>
-          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 18, borderLeft: '3px solid var(--primary)' }}>
-            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: 0 }}>Organisateur</p>
-            <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Crée, vends, gère tes soirées</h3>
-            <ul style={featList}>
-              {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
-                <li key={f} style={featItem}><span style={{ color: 'var(--primary)' }}>◆</span> {f}</li>
-              ))}
-            </ul>
-            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--violet-cta)', color: 'var(--primary-ink)' }}>Créer un espace organisateur</Link>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))', gap: 20 }}>
+          <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--primary)' }}>
+            <div className={styles.splitCardInner}>
+              <div className={styles.splitCardMedia}>
+                <Image src="/images/live-in-black/auth-organizer.jpg" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
+                <div className={styles.splitCardMediaOverlay} />
+              </div>
+              <div className={styles.splitCardContent}>
+                <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: 0 }}>Organisateur</p>
+                <h3 style={{ fontSize: 20, fontWeight: 800, margin: '8px 0 12px', letterSpacing: '-.02em', lineHeight: 1.25 }}>Crée, vends, gère tes soirées</h3>
+                <ul style={{ ...featList, margin: 0 }}>
+                  {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
+                    <li key={f} style={{ ...featItem, fontSize: 13.5, margin: '4px 0' }}><span style={{ color: 'var(--primary)' }}>◆</span> {f}</li>
+                  ))}
+                </ul>
+                <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 18, minHeight: 42, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 14.5, fontWeight: 700 }}>Créer un espace organisateur</Link>
+              </div>
+            </div>
           </Card>
-          <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 18, borderLeft: '3px solid var(--primary-a75)' }}>
-            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
-            <h3 style={{ fontSize: 17, fontWeight: 800, margin: '10px 0 12px', letterSpacing: '-.5px' }}>Développe ton activité</h3>
-            <ul style={featList}>
-              {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
-                <li key={f} style={featItem}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
-              ))}
-            </ul>
-            <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 16, background: 'var(--gold)', color: 'var(--primary-ink)' }}>Devenir prestataire</Link>
+          <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--gold)' }}>
+            <div className={styles.splitCardInner}>
+              <div className={styles.splitCardMedia}>
+                <Image src="/images/live-in-black/auth-provider.jpg" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
+                <div className={styles.splitCardMediaOverlay} />
+              </div>
+              <div className={styles.splitCardContent}>
+                <p style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
+                <h3 style={{ fontSize: 20, fontWeight: 800, margin: '8px 0 12px', letterSpacing: '-.02em', lineHeight: 1.25 }}>Développe ton activité</h3>
+                <ul style={{ ...featList, margin: 0 }}>
+                  {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
+                    <li key={f} style={{ ...featItem, fontSize: 13.5, margin: '4px 0' }}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
+                  ))}
+                </ul>
+                <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 18, minHeight: 42, background: 'var(--gold)', color: 'var(--primary-ink)', fontSize: 14.5, fontWeight: 700 }}>Devenir prestataire</Link>
+              </div>
+            </div>
           </Card>
         </div>
       </Section>}

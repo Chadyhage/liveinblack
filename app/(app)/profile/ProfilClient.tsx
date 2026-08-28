@@ -467,7 +467,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
 }
 
 function EyebrowLabel({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>{children}</p>
+  return <p style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>{children}</p>
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {

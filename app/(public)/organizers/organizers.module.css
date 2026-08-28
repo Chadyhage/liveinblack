@@ -29,8 +29,8 @@
 
 .hero h1 {
   max-width: 960px;
-  margin: 8px auto 0;
-  font: 800 clamp(34px, 4vw, 52px)/1.05 var(--font);
+  margin: 10px auto 0;
+  font: 800 clamp(34px, 4vw, 52px)/1.2 var(--font);
   letter-spacing: -.03em;
   text-transform: none;
   text-wrap: balance;

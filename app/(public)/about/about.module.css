@@ -22,5 +22,27 @@
 .ctaWrap{padding-top:38px!important}
 }
 
-/* Densité éditoriale : davantage de contenu utile visible sans sacrifier la lisibilité. */
-.page{padding-bottom:28px}.hero{padding:clamp(18px,2.2vw,28px) 16px clamp(12px,1.5vw,16px)!important}.hero>p:first-child{font-size:11px!important}.hero h1{margin-top:6px!important;font-size:clamp(24px,2.8vw,34px)!important}.hero>p:last-child{margin-top:6px!important;font-size:clamp(11px,.9vw,13px)!important}.section{padding:clamp(14px,1.6vw,22px) clamp(10px,1.2vw,14px)!important}.section h2{font-size:clamp(18px,1.7vw,24px)!important}.section p{font-size:11px!important;line-height:1.4!important}.section :global(.lb-card-grid){gap:6px}.section :global(.lb-card){padding:10px!important;border-radius:11px!important}.section details{padding-inline:8px!important;border-radius:10px!important}.section details summary{min-height:34px!important;font-size:11px!important}.ctaWrap{padding-top:14px!important}.cta{padding:12px!important;border-radius:14px!important}.cta h2{font-size:clamp(18px,1.7vw,24px)!important}.cta p{font-size:11px!important}.cta a{min-height:34px!important;font-size:11px!important}
+/* Échelle alignée sur l'accueil pour garder les pages publiques lisibles. */
+.page{padding-bottom:56px}
+.hero{padding:48px 20px 36px!important}
+.hero>p:first-child{font-size:13.5px!important;letter-spacing:.04em!important}
+.hero h1{margin-top:12px!important;font-size:56px!important;line-height:1.06!important}
+.hero>p:last-child{margin-top:16px!important;font-size:18px!important;line-height:1.55!important}
+.section{padding:42px clamp(16px,2vw,24px)!important}
+.section h2{font-size:34px!important;line-height:1.12!important}
+.section p{font-size:16px!important;line-height:1.6!important}
+.section :global(.lb-card-grid){gap:16px}
+.section :global(.lb-card){padding:22px!important;border-radius:18px!important}
+.section details{padding-inline:18px!important;border-radius:18px!important}
+.section details summary{min-height:44px!important;font-size:15px!important}
+.ctaWrap{padding-top:36px!important}
+.cta{padding:32px!important;border-radius:24px!important}
+.cta h2{font-size:34px!important}
+.cta p{font-size:16px!important;line-height:1.55!important}
+.cta a{min-height:46px!important;font-size:15.5px!important}
+
+@media(max-width:680px){
+  .hero h1{font-size:38px!important}
+  .hero>p:last-child{font-size:16px!important}
+  .section h2,.cta h2{font-size:28px!important}
+}

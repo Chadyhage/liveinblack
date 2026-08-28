@@ -110,68 +110,71 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(providerJsonLd).replace(/</g, '\\u003c') }} />
-      <div style={{ padding: '8px 12px 0' }}>
-        <Link href="/providers" style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+      <div style={{ padding: '16px 20px 0' }}>
+        <Link href="/providers" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 162, margin: '7px 0 0', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 14, background: 'linear-gradient(135deg, var(--surface-2), var(--border))' }}>
+      <div style={{ position: 'relative', height: 220, margin: '12px 16px 0', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', borderRadius: 20, background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
         <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>
 
-      <div style={{ padding: '0 12px', marginTop: -22, position: 'relative' }}>
-        <div style={{ width: 42, height: 42, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+      <div style={{ padding: '0 20px 32px', marginTop: -36, position: 'relative', zIndex: 2 }}>
+        <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid #1c1c1e', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
           {provider.photoUrl ? (
-            <Image src={provider.photoUrl} alt={provider.name} width={42} height={42} style={{ objectFit: 'cover' }} />
+            <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
           ) : (
             provider.name[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 15, letterSpacing: '.01em', margin: '7px 0 0' }}>{provider.name}</h1>
-        {provider.headline && <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>{provider.headline}</p>}
-        <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
+        <h1 className="font-display" style={{ fontSize: 'clamp(24px, 2.5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em', margin: '12px 0 0', color: '#fff' }}>{provider.name}</h1>
+        {provider.headline && <p style={{ fontSize: 16, color: 'rgba(245, 245, 247, .76)', margin: '6px 0 0', lineHeight: 1.45 }}>{provider.headline}</p>}
+        <div style={{ marginTop: 12 }}>
+          <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
+        </div>
 
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 7 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           {categories.map((c) => (
-            <span key={c.id} style={{ minHeight: 24, display: 'inline-flex', alignItems: 'center', fontSize: 10, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '3px 8px', borderRadius: 999 }}>
+            <span key={c.id} style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '5px 12px', borderRadius: 999 }}>
               {c.label}
             </span>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, alignItems: 'start', marginTop: 12 }}>
           {provider.description && (
             <Section title="À propos">
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.42, whiteSpace: 'pre-wrap' }}>{provider.description}</p>
+              <p style={{ fontSize: 15.5, color: 'rgba(245, 245, 247, .82)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0 }}>{provider.description}</p>
             </Section>
           )}
 
           <Section title="Coordonnées">
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>
+            <p style={{ fontSize: 15, color: 'rgba(245, 245, 247, .82)', margin: 0, fontWeight: 600 }}>
               {[provider.city || provider.location, provider.country].filter(Boolean).join(', ')}
             </p>
             {provider.zonesIntervention?.length ? (
-              <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>
+              <p style={{ fontSize: 13.5, color: 'rgba(245, 245, 247, .65)', margin: '4px 0 0' }}>
                 Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
               </p>
             ) : null}
             {websiteUrl && (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 32, fontSize: 11.5, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 3, textDecoration: 'none' }}>
-                {provider.website}
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 38, fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
+                🌐 {provider.website}
               </a>
             )}
             {provider.phone && (
-              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', fontSize: 11.5, color: 'var(--teal)', marginTop: 3, textDecoration: 'none' }}>
-                {provider.phone}
+              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+                📞 {provider.phone}
               </a>
             )}
           </Section>
 
           {socialEntries.length > 0 && (
             <Section title="Réseaux">
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {socialEntries.map(([key, value]) => (
-                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 11, color: 'var(--primary)', textDecoration: 'none', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 999, padding: '5px 9px' }}>
+                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', fontSize: 13.5, fontWeight: 650, color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 999, padding: '6px 14px' }}>
                     {SOCIAL_LABELS[key] || key}
                   </a>
                 ))}
@@ -181,37 +184,34 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
         </div>
 
         {visibleCatalog.length > 0 && (
-          <Section title="Catalogue">
-            <div className="lb-card-grid">
+          <Section title="Catalogue & Prestations">
+            <div className="lb-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))', gap: 14, marginTop: 8 }}>
               {visibleCatalog.map((item) => {
-                // Même règle que getOfferMedia (legacy PublicPrestatairePage.jsx) :
-                // la vignette de l'image d'aperçu privilégie une image, jamais
-                // une vidéo, avec repli sur le premier média quel qu'il soit.
                 const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
                 return (
-                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden' }}>
+                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)', borderRadius: 20, background: 'rgba(255,255,255,.055)', boxShadow: '0 14px 40px rgba(0,0,0,.22)' }}>
                     {item.media?.[0]?.url && (
-                      <div style={{ aspectRatio: '4/3', position: 'relative' }}>
+                      <div style={{ aspectRatio: '16/9', position: 'relative' }}>
                         {item.media[0].type === 'video' ? (
                           <video src={item.media[0].url} controls preload="metadata" playsInline aria-label={`Vidéo de ${item.name}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <Image src={item.media[0].url} alt={item.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 220px" />
+                          <Image src={item.media[0].url} alt={item.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 280px" />
                         )}
                       </div>
                     )}
-                    <div style={{ padding: '8px 9px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                        <span style={{ fontSize: 11.5, fontWeight: 700 }}>{item.name}</span>
+                    <div style={{ padding: '14px 16px 16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                        <span style={{ fontSize: 16.5, fontWeight: 800, color: '#fff' }}>{item.name}</span>
                         {item.price != null && (
-                          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
                             {fmtMoney(item.price, item.currency || provider.catalogCurrency)}
                             {item.unit ? ` / ${item.unit}` : ''}
                           </span>
                         )}
                       </div>
-                      {item.description && <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>{item.description}</p>}
+                      {item.description && <p style={{ fontSize: 14, color: 'rgba(245, 245, 247, .7)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.description}</p>}
                       {!isSelf && canOrderCatalog && (
-                        <div style={{ marginTop: 7 }}>
+                        <div style={{ marginTop: 12 }}>
                           <ProviderCatalogInquiry
                             providerId={provider.userId}
                             providerName={provider.name}
@@ -240,21 +240,21 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
 
         {pastEvents.length > 0 && (
           <Section title="Événements passés">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {pastEvents.map((ev) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              {pastEvents.map((ev) => (
                 <Link
                   key={ev.id}
                   href={`/events/${ev.id}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none' }}
                 >
                   {ev.imageUrl && (
-                    <div style={{ width: 32, height: 32, flexShrink: 0, borderRadius: 7, overflow: 'hidden', position: 'relative' }}>
-                      <Image src={ev.imageUrl} alt="" fill sizes="44px" style={{ objectFit: 'cover' }} />
+                    <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 10, overflow: 'hidden', position: 'relative' }}>
+                      <Image src={ev.imageUrl} alt="" fill sizes="56px" style={{ objectFit: 'cover' }} />
                     </div>
                   )}
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 11.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                    <p style={{ margin: '1px 0 0', fontSize: 10, color: 'var(--text-faint)' }}>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(245, 245, 247, .6)' }}>
                       {ev.dateDisplay}
                       {ev.city ? ` · ${ev.city}` : ''}
                     </p>
@@ -273,8 +273,8 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="lb-detail-section">
-      <h2 style={{ fontSize: 11, fontWeight: 400, margin: '0 0 5px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '2.2px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
+    <section className="lb-detail-section" style={{ marginTop: 24 }}>
+      <h2 style={{ fontSize: 13.5, fontWeight: 800, margin: '0 0 10px', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>
   )

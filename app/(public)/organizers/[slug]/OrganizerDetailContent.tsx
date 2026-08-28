@@ -65,36 +65,39 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizerJsonLd).replace(/</g, '\\u003c') }} />
-      <div style={{ padding: '8px 0 0' }}>
-        <Link href="/organizers" style={{ minHeight: 32, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <ArrowLeft size={14} /> Organisateurs
+      <div style={{ padding: '16px 20px 0' }}>
+        <Link href="/organizers" style={{ minHeight: 36, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <ArrowLeft size={16} /> Organisateurs
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 162, margin: '7px 0 0', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), rgba(139,92,246,.22))' }}>
+      <div style={{ position: 'relative', height: 220, margin: '12px 16px 0', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', background: 'linear-gradient(135deg, var(--surface-2), rgba(245,61,141,.22))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
         <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>
 
-      <div style={{ padding: '0 12px', marginTop: -22, position: 'relative' }}>
-        <div style={{ width: 42, height: 42, borderRadius: '50%', border: '3px solid var(--obsidian)', overflow: 'hidden', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+      <div style={{ padding: '0 20px 32px', marginTop: -36, position: 'relative', zIndex: 2 }}>
+        <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid #1c1c1e', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
           {organizer.avatarUrl ? (
-            <Image src={organizer.avatarUrl} alt={organizer.publicName} width={42} height={42} style={{ objectFit: 'cover' }} />
+            <Image src={organizer.avatarUrl} alt={organizer.publicName} width={72} height={72} style={{ objectFit: 'cover' }} />
           ) : (
             organizer.publicName[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 15, letterSpacing: '.01em', margin: '7px 0 0' }}>
+        <h1 className="font-display" style={{ fontSize: 'clamp(24px, 2.5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em', margin: '12px 0 0', color: '#fff' }}>
           {organizer.publicName}
           {organizer.isVerified && (
-            <span style={{ fontFamily: 'var(--font-open-sans), sans-serif', textTransform: 'none', fontWeight: 700, marginLeft: 8, fontSize: 12, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <BadgeCheck size={14} /> vérifié
+            <span style={{ fontFamily: 'var(--font-open-sans), sans-serif', textTransform: 'none', fontWeight: 700, marginLeft: 10, fontSize: 13.5, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <BadgeCheck size={16} /> vérifié
             </span>
           )}
         </h1>
-        {(organizer.city || zones.length > 0) && <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '2px 0 0' }}>{[organizer.city, ...zones].filter(Boolean).join(' · ')}</p>}
-        <PublicProfileActions targetUserId={organizer.userId} displayName={organizer.publicName} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
+        {(organizer.city || zones.length > 0) && <p style={{ fontSize: 15, color: 'rgba(245, 245, 247, .8)', margin: '4px 0 0', fontWeight: 600 }}>{[organizer.city, ...zones].filter(Boolean).join(' · ')}</p>}
+        <div style={{ marginTop: 12 }}>
+          <PublicProfileActions targetUserId={organizer.userId} displayName={organizer.publicName} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
+        </div>
 
         {!isSelf && (
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 14 }}>
             <OrganizerFollowButtonClient
               organizerId={organizer.userId}
               organizerName={organizer.publicName}
@@ -102,10 +105,10 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
               isAuthenticated={Boolean(session?.user)}
               appearance="outline"
             />
-            <p style={{ fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.35, margin: '5px 0 0', maxWidth: 620 }}>
+            <p style={{ fontSize: 13, color: 'rgba(245, 245, 247, .65)', lineHeight: 1.45, margin: '8px 0 0', maxWidth: 640 }}>
               En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux personnaliser tes alertes ou
               te désabonner à tout moment depuis{' '}
-              <Link href="/profile/followed-organizers" style={{ color: 'var(--teal)' }}>
+              <Link href="/profile/followed-organizers" style={{ color: 'var(--primary)', fontWeight: 650 }}>
                 tes organisateurs suivis
               </Link>
               .
@@ -113,33 +116,33 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 9 }}>
+        <div style={{ display: 'flex', gap: 24, marginTop: 16, padding: '12px 16px', borderRadius: 16, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', width: 'fit-content' }}>
           <KPI value={organizer.followersCount} label="Abonnés" />
           <KPI value={Math.max(organizer.totalEventsCount, upcoming.length + past.length)} label="Événements" />
         </div>
 
         <Section title="Événements à venir">
           {upcoming.length === 0 ? (
-            <div style={{ padding: '10px 0', textAlign: 'center' }}>
-              <Mascot mood="sleeping" size={82} />
-              <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Aucun événement à venir pour le moment.</p>
+            <div style={{ padding: '16px 0', textAlign: 'center' }}>
+              <Mascot mood="sleeping" size={96} />
+              <p style={{ fontSize: 14.5, color: 'rgba(245, 245, 247, .65)', margin: '8px 0 0' }}>Aucun événement à venir pour le moment.</p>
             </div>
           ) : (
-            <div className="lb-card-grid-compact">
+            <div className="lb-card-grid-compact" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 14, marginTop: 10 }}>
               {upcoming.map((e) => {
                 const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
                 const min = prices.length ? Math.min(...prices) : null
                 return (
-                  <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                    <div style={{ aspectRatio: '4/3', position: 'relative', background: `linear-gradient(135deg, ${e.color || 'var(--primary)'}33, var(--obsidian))` }}>
+                  <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.055)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, overflow: 'hidden' }}>
+                    <div style={{ aspectRatio: '16/9', position: 'relative', background: `linear-gradient(135deg, ${e.color || 'var(--primary)'}33, var(--obsidian))` }}>
                       {e.imageUrl && (
-                        <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 180px" />
+                        <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 240px" />
                       )}
                     </div>
-                    <div style={{ padding: '7px 8px' }}>
-                      <p style={{ fontSize: 11.5, fontWeight: 700, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{e.name}</p>
-                      <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</p>
-                      {min != null && <p style={{ fontSize: 10.5, color: 'var(--gold)', fontWeight: 700, margin: '2px 0 0' }}>dès {fmtMoney(min, eventCurrency(e))}</p>}
+                    <div style={{ padding: '12px 14px' }}>
+                      <p style={{ fontSize: 15, fontWeight: 700, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', color: '#fff' }}>{e.name}</p>
+                      <p style={{ fontSize: 13, color: 'rgba(245, 245, 247, .65)', margin: '4px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</p>
+                      {min != null && <p style={{ fontSize: 14, color: 'var(--gold)', fontWeight: 800, margin: '4px 0 0' }}>dès {fmtMoney(min, eventCurrency(e))}</p>}
                     </div>
                   </Link>
                 )
@@ -150,11 +153,11 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         {past.length > 0 && (
           <Section title="Événements passés">
-            <div className="lb-card-grid-compact">
+            <div className="lb-card-grid-compact" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 10, marginTop: 10 }}>
               {past.map((e) => (
-                <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 9px', opacity: 0.75 }}>
-                  <p style={{ fontSize: 11.5, fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</p>
-                  <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '2px 0 0' }}>{e.dateDisplay}</p>
+                <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 14, padding: '12px 14px', opacity: 0.82 }}>
+                  <p style={{ fontSize: 14.5, fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>{e.name}</p>
+                  <p style={{ fontSize: 13, color: 'rgba(245, 245, 247, .6)', margin: '4px 0 0' }}>{e.dateDisplay}</p>
                 </Link>
               ))}
             </div>
@@ -163,13 +166,13 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         {visibleMedia.length > 0 && (
           <Section title="Photos & vidéos">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginTop: 10 }}>
               {visibleMedia.map((m) => (
-                <div key={m.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 10, overflow: 'hidden', background: 'var(--surface)' }}>
+                <div key={m.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', background: 'var(--surface)', border: '1px solid rgba(255,255,255,.1)' }}>
                   {m.type === 'video' ? (
                     <video src={m.url} controls preload="metadata" playsInline aria-label={m.title || `Vidéo de ${organizer.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <Image src={m.url} alt={m.title || ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 140px" />
+                    <Image src={m.url} alt={m.title || ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 160px" />
                   )}
                 </div>
               ))}
@@ -179,16 +182,16 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 
         {showLongDescription && (
           <Section title="À propos">
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.42, whiteSpace: 'pre-wrap' }}>{organizer.longDescription}</p>
+            <p style={{ fontSize: 15.5, color: 'rgba(245, 245, 247, .82)', lineHeight: 1.55, whiteSpace: 'pre-wrap', margin: 0 }}>{organizer.longDescription}</p>
           </Section>
         )}
 
         {(organizer.city || organizer.proPhone) && (
           <Section title="Contact">
-            {organizer.city && <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
+            {organizer.city && <p style={{ fontSize: 15, color: 'rgba(245, 245, 247, .8)', margin: 0, fontWeight: 600 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
             {organizer.proPhone && (
-              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', fontSize: 11.5, color: 'var(--teal)', marginTop: 3, textDecoration: 'none' }}>
-                {organizer.proPhone}
+              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--primary)', marginTop: 6, textDecoration: 'none' }}>
+                📞 {organizer.proPhone}
               </a>
             )}
           </Section>
@@ -201,16 +204,16 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
 function KPI({ value, label }: { value: number; label: string }) {
   return (
     <div>
-      <p style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>{value}</p>
-      <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 22, fontWeight: 800, margin: 0, color: '#fff' }}>{value}</p>
+      <p style={{ fontSize: 13, color: 'rgba(245, 245, 247, .65)', margin: '2px 0 0', fontWeight: 600 }}>{label}</p>
     </div>
   )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="lb-detail-section">
-      <h2 style={{ fontSize: 11, fontWeight: 400, margin: '0 0 5px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '2.2px', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
+    <section className="lb-detail-section" style={{ marginTop: 24 }}>
+      <h2 style={{ fontSize: 13.5, fontWeight: 800, margin: '0 0 10px', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>
   )
