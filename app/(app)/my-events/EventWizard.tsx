@@ -130,11 +130,12 @@ const S = {
   inputBase: {
     background: '#0b0c12',
     border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 10,
+    borderRadius: 'var(--radius-control)',
     fontSize: 14,
     fontWeight: 500,
     color: 'rgba(255,255,255,0.92)',
-    padding: '12px 14px',
+    minHeight: 'var(--control-height-md)',
+    padding: '10px 14px',
     width: '100%',
     outline: 'none',
     boxSizing: 'border-box',
@@ -147,12 +148,13 @@ const S = {
     marginBottom: 6,
   } as React.CSSProperties,
   btnPrimary: {
-    padding: '13px 20px',
+    minHeight: 'var(--density-action-min)',
+    padding: '10px 20px',
     background: 'var(--violet-cta)',
     border: '1px solid rgba(255,255,255,0.14)',
-    borderRadius: 3,
+    borderRadius: 'var(--radius-control)',
     fontSize: 14,
-    fontWeight: 500,
+    fontWeight: 700,
     textTransform: 'none',
     letterSpacing: 'normal',
     color: '#fff',
@@ -161,11 +163,12 @@ const S = {
     width: '100%',
   } as React.CSSProperties,
   btnGhost: {
-    padding: '12px 18px',
+    minHeight: 'var(--density-action-min)',
+    padding: '10px 18px',
     background: 'rgba(255,255,255,0.08)',
     border: '1px solid rgba(255,255,255,0.14)',
-    borderRadius: 12,
-    fontSize: 13,
+    borderRadius: 'var(--radius-control)',
+    fontSize: 14,
     fontWeight: 600,
     color: 'rgba(255,255,255,0.9)',
     cursor: 'pointer',
@@ -731,7 +734,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   if (loading) {
     return (
-      <main style={{ width: '100%', padding: '48px clamp(14px, 2vw, 28px) 72px', display: 'flex', justifyContent: 'center' }}>
+      <main style={{ width: '100%', padding: 'var(--space-12) var(--page-gutter) 72px', display: 'flex', justifyContent: 'center' }}>
         <Spinner size={22} />
       </main>
     )
@@ -739,7 +742,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   if (loadError) {
     return (
-      <main style={{ width: '100%', padding: '80px clamp(14px, 2vw, 28px) 56px', textAlign: 'center' }}>
+      <main style={{ width: '100%', padding: 'var(--space-12) var(--page-gutter) 56px', textAlign: 'center' }}>
         <p style={{ color: 'var(--pink)', fontSize: 14, marginBottom: 18 }}>{loadError}</p>
         <Button
           variant="secondary"
@@ -754,7 +757,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
   if (cancelled) {
     return (
-      <main style={{ width: '100%', padding: '30px clamp(14px, 2vw, 28px) 100px' }}>
+      <main style={{ width: '100%', padding: 'var(--space-8) var(--page-gutter) 100px' }}>
         <div
           style={{
             background: 'var(--surface-2)',
@@ -792,14 +795,14 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
   const currency = regionToCurrency(region)
 
   return (
-    <main style={{ width: '100%', padding: '20px clamp(14px, 2vw, 28px) 100px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <main style={{ width: '100%', padding: 'var(--space-6) var(--page-gutter) 100px', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Button
           variant="ghost"
           aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
-          style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
+          style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 'var(--radius-control)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />

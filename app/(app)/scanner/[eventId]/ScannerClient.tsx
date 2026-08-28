@@ -531,7 +531,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       <div className={styles.workspace}>
         <div className={styles.header}>
           <div>
-            <Link href="/my-shifts" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+            <Link href="/my-shifts" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
               ← Événements
             </Link>
             <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>

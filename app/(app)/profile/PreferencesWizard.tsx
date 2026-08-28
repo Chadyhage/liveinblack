@@ -144,8 +144,9 @@ function Chip({ active, color, onClick, children }: { active: boolean; color: st
       variant={active ? 'primary' : 'secondary'}
       onClick={onClick}
       style={{
-        padding: '11px 16px',
-        borderRadius: 999,
+        minHeight: 'var(--density-action-min)',
+        padding: '10px 16px',
+        borderRadius: 'var(--radius-control)',
         border: `1px solid ${active ? color : 'rgba(255,255,255,0.14)'}`,
         background: active ? `${color}1f` : 'rgba(255,255,255,0.04)',
         color: active ? color : 'rgba(255,255,255,0.7)',
@@ -240,7 +241,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 alignItems: 'center',
                 gap: 7,
                 padding: '7px 8px 7px 13px',
-                borderRadius: 999,
+                borderRadius: 'var(--radius-control)',
                 background: `${color}1f`,
                 border: `1px solid ${color}66`,
                 color,
@@ -254,7 +255,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 variant="ghost"
                 onClick={() => remove(v)}
                 aria-label={`Retirer ${v}`}
-                style={{ width: 18, height: 18, minHeight: 18, minWidth: 18, padding: 0, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.25)', color, fontSize: 12, lineHeight: 1 }}
+                style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 'var(--radius-control)', border: 'none', background: 'rgba(0,0,0,0.25)', color, fontSize: 16, lineHeight: 1 }}
               >
                 ×
               </Button>
@@ -277,10 +278,10 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
           }}
           placeholder={placeholder}
           disabled={value.length >= max}
-          style={{ boxSizing: 'border-box', padding: '13px 14px', borderRadius: 12, border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12', color: '#fff', fontSize: 14 }}
+          style={{ boxSizing: 'border-box', minHeight: 'var(--control-height-md)', padding: '10px 14px', borderRadius: 'var(--radius-control)', border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12', color: '#fff', fontSize: 14 }}
         />
         {focused && (matches.length > 0 || canAddCustom || loading) && (
-          <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 5, maxHeight: 240, overflowY: 'auto', borderRadius: 12, padding: 6, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 5, maxHeight: 240, overflowY: 'auto', borderRadius: 'var(--radius-card)', padding: 8, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
             {matches.map((m) => (
               <Button
                 key={`${m.name}-${m.sublabel || ''}`}
@@ -290,7 +291,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                   e.preventDefault()
                   add(m)
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-start', textAlign: 'left', padding: '9px 10px', borderRadius: 8, border: 'none', background: 'none', color: '#fff', fontSize: 14, fontWeight: 400 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-start', textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: 'none', background: 'none', color: '#fff', fontSize: 14, fontWeight: 400 }}
               >
                 <Avatar src={m.picture || null} name={m.name} size="md" style={{ width: 34, height: 34, flexShrink: 0 }} />
                 <span><span style={{ display: 'block' }}>{m.name}</span>{m.sublabel && <span style={{ display: 'block', color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{m.sublabel}</span>}</span>
@@ -305,7 +306,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                   e.preventDefault()
                   add(query)
                 }}
-                style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '11px 12px', borderRadius: 8, border: 'none', background: 'none', color, fontSize: 14, fontWeight: 700 }}
+                style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: 'none', background: 'none', color, fontSize: 14, fontWeight: 700 }}
               >
                 + Ajouter « {query.trim()} »
               </Button>
@@ -424,7 +425,7 @@ export default function PreferencesModal({
             <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
             <Button
               onClick={onClose}
-              style={{ padding: '13px 28px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ minHeight: 'var(--density-action-min)', padding: '10px 24px', borderRadius: 'var(--radius-control)', border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
             >
               Fermer
             </Button>
@@ -493,7 +494,7 @@ export default function PreferencesModal({
                   variant="secondary"
                   onClick={goBack}
                   aria-label="Précédent"
-                  style={{ width: 38, height: 38, padding: 0, borderRadius: 12, flexShrink: 0, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 16 }}
+                  style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, padding: 0, borderRadius: 'var(--radius-control)', flexShrink: 0, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}
                 >
                   ‹
                 </Button>
@@ -502,7 +503,7 @@ export default function PreferencesModal({
                 onClick={goNext}
                 disabled={saving}
                 fullWidth
-                style={{ flex: 1, padding: '15px 24px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }}
+                style={{ flex: 1, minHeight: 'var(--density-action-min)', padding: '10px 24px', borderRadius: 'var(--radius-control)', border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
               >
                 {isLast ? 'Terminer' : hasValue ? 'Continuer' : 'Passer cette étape'}
               </Button>

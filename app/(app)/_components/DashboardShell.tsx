@@ -388,7 +388,7 @@ function SidebarItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          borderRadius: 13,
+          borderRadius: 'var(--radius-control)',
           background: active ? 'var(--primary-a12)' : 'transparent',
           border: active ? '1px solid var(--primary-a20)' : '1px solid transparent',
         }}
@@ -402,7 +402,7 @@ function SidebarItem({
             minWidth: 0,
             alignItems: 'center',
             gap: 9,
-            minHeight: 38,
+            minHeight: 44,
             padding: '8px 7px 8px 10px',
             color: active ? 'var(--text)' : 'var(--text-muted)',
             fontSize: 14.5,
@@ -447,7 +447,7 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
         gap: 9,
         minHeight: compact ? 42 : 46,
         padding: compact ? '8px 11px' : '10px 12px',
-        borderRadius: 13,
+        borderRadius: 'var(--radius-control)',
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
         background: active ? 'var(--primary-a12)' : 'transparent',
         border: active ? '1px solid var(--primary-a20)' : '1px solid transparent',

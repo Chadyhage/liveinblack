@@ -11,8 +11,8 @@
   position: sticky;
   top: 0;
   z-index: 4;
-  min-height: 50px;
-  padding: 8px 54px 7px 16px;
+  min-height: 64px;
+  padding: 12px 64px 12px 20px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, .09);
@@ -23,7 +23,7 @@
 .modalToolbar small {
   display: block;
   color: rgba(235, 235, 245, .46);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 650;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -33,15 +33,15 @@
   display: block;
   margin-top: 2px;
   color: #f5f5f7;
-  font-size: 12.5px;
+  font-size: 15px;
   font-weight: 650;
   letter-spacing: -.02em;
 }
 
 .modalRoot .hero {
-  height: 172px !important;
-  margin: 7px 10px 0 !important;
-  border-radius: 14px !important;
+  height: 268px !important;
+  margin: 16px 20px 0 !important;
+  border-radius: var(--radius-card) !important;
   border: 1px solid rgba(255, 255, 255, .1);
   box-shadow: 0 24px 68px rgba(0, 0, 0, .28);
 }
@@ -49,52 +49,56 @@
 .heroImage { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
 .modalRoot .hero:hover .heroImage { transform: scale(1.018); }
 .modalRoot .heroOverlay { background: linear-gradient(180deg, rgba(5,5,7,.04) 20%, rgba(5,5,7,.88) 100%) !important; }
-.modalRoot .heroActions { top: 10px !important; right: 10px !important; }
-.modalRoot .heroCopy { left: 12px !important; right: 12px !important; bottom: 10px !important; }
-.modalRoot .title { max-width: 600px; font-size: clamp(21px, 2.4vw, 30px) !important; line-height: .98 !important; letter-spacing: -.045em !important; }
-.modalRoot .subtitle { max-width: 540px; margin-top: 4px !important; color: rgba(245,245,247,.72) !important; font-size: 11.5px !important; }
-.modalRoot .tags { margin-top: 5px !important; }
+.modalRoot .heroActions { top: 16px !important; right: 16px !important; }
+.modalRoot .heroCopy { left: 20px !important; right: 20px !important; bottom: 18px !important; }
+.modalRoot .title { max-width: 600px; font-size: clamp(24px, 2.4vw, 34px) !important; line-height: 1.04 !important; letter-spacing: -.035em !important; }
+.modalRoot .subtitle { max-width: 540px; margin-top: 8px !important; color: rgba(245,245,247,.78) !important; font-size: 14px !important; line-height: 1.4 !important; }
+.modalRoot .tags { margin-top: 10px !important; }
 
 .modalRoot .quickInfo {
-  padding: 7px 12px 1px !important;
-  flex-wrap: nowrap !important;
+  padding: 14px 20px 2px !important;
+  flex-wrap: wrap !important;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .modalRoot .quickInfo::-webkit-scrollbar { display: none; }
-.modalRoot .quickInfo > * { flex: 0 0 auto; min-height: 24px; display: inline-flex; align-items: center; padding: 2px 6px !important; font-size: 8.5px !important; }
+.modalRoot .quickInfo > * { flex: 0 0 auto; min-height: 40px; display: inline-flex; align-items: center; padding: 8px 12px !important; font-size: 13px !important; }
 
-.modalRoot .contentGrid { padding: 3px 10px 0 !important; gap: 5px !important; }
+.modalRoot .contentGrid { padding: 0 20px !important; gap: 16px !important; }
 .modalRoot :global(.lb-detail-section) {
-  margin-top: 6px;
-  padding: 10px;
+  margin-top: 16px;
+  padding: 18px;
   border-color: rgba(255,255,255,.1);
-  border-radius: 13px;
+  border-radius: var(--radius-card);
   background: rgba(255,255,255,.048);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
 }
 .modalRoot :global(.lb-detail-section) > h2 {
-  margin-bottom: 5px !important;
+  margin-bottom: 10px !important;
   color: var(--primary) !important;
   font-family: inherit !important;
-  font-size: 9.5px !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   letter-spacing: -.01em !important;
   text-transform: none !important;
 }
-.modalRoot :global(.lb-detail-section) p { margin-top: 0; font-size: 11.5px !important; line-height: 1.36 !important; }
+.modalRoot :global(.lb-detail-section) p { margin-top: 0; font-size: 14px !important; line-height: 1.5 !important; }
 
 @media (max-width: 680px) {
   .modalRoot { padding-bottom: 24px; }
-  .modalToolbar { min-height: 52px; padding: 10px 54px 8px 14px; }
-  .modalRoot .hero { height: 176px !important; margin: 7px 8px 0 !important; border-radius: 14px !important; }
-  .modalRoot .heroActions { top: 34px !important; right: 10px !important; }
-  .modalRoot .heroCopy { left: 12px !important; right: 12px !important; bottom: 12px !important; }
+  .modalToolbar { min-height: 60px; padding: 12px 58px 12px 14px; }
+  .modalToolbar strong { font-size: 14px; }
+  .modalRoot .hero { height: 220px !important; margin: 12px 14px 0 !important; border-radius: var(--radius-card) !important; }
+  .modalRoot .heroActions { top: 14px !important; right: 14px !important; }
+  .modalRoot .heroCopy { left: 16px !important; right: 16px !important; bottom: 16px !important; }
   .modalRoot .title { font-size: clamp(24px, 7.6vw, 32px) !important; }
-  .modalRoot .subtitle { font-size: 12px !important; }
-  .modalRoot .quickInfo { padding: 6px 8px 0 !important; }
-  .modalRoot .contentGrid { grid-template-columns: 1fr !important; padding: 0 8px !important; }
-  .modalRoot :global(.lb-detail-section) { margin: 6px 5px 0; padding: 10px 8px; border-radius: 12px; }
+  .modalRoot .subtitle { font-size: 13px !important; }
+  .modalRoot .quickInfo { padding: 12px 14px 0 !important; }
+  .modalRoot .quickInfo > * { min-height: 38px; font-size: 12.5px !important; }
+  .modalRoot .contentGrid { grid-template-columns: 1fr !important; padding: 0 14px !important; }
+  .modalRoot :global(.lb-detail-section) { margin: 14px 0 0; padding: 16px; border-radius: var(--radius-card); }
+  .modalRoot :global(.lb-detail-section) > h2 { font-size: 15px !important; }
+  .modalRoot :global(.lb-detail-section) p { font-size: 14px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

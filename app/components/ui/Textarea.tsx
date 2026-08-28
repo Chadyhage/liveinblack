@@ -47,7 +47,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
         fontSize: 13.5,
         lineHeight: 1.4,
         padding: '9px 12px',
-        borderRadius: 10,
+        borderRadius: 'var(--radius-control)',
         resize: 'vertical',
         transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
         boxShadow: focused ? 'var(--focus-ring)' : undefined,

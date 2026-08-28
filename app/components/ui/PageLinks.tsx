@@ -45,9 +45,13 @@ export default function PageLinks({ page, pageCount, makeHref, totalItems, pageS
 
 function PageLink({ href, label, ariaLabel, active }: { href: string | null; label: string; ariaLabel?: string; active?: boolean }) {
   const style: React.CSSProperties = {
-    minWidth: 26,
-    padding: '5px 8px',
-    borderRadius: 7,
+    minWidth: 44,
+    minHeight: 44,
+    padding: '8px 10px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     textAlign: 'center',
     fontSize: 11.5,
     fontWeight: active ? 800 : 600,

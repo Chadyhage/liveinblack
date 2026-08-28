@@ -65,17 +65,17 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizerJsonLd).replace(/</g, '\\u003c') }} />
-      <div style={{ padding: '16px 20px 0' }}>
-        <Link href="/organizers" style={{ minHeight: 36, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ padding: 'var(--space-4) var(--page-gutter) 0' }}>
+        <Link href="/organizers" style={{ minHeight: 'var(--control-height-md)', fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <ArrowLeft size={16} /> Organisateurs
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 220, margin: '12px 16px 0', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', background: 'linear-gradient(135deg, var(--surface-2), rgba(245,61,141,.22))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
+      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', background: 'linear-gradient(135deg, var(--surface-2), rgba(245,61,141,.22))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
         <Image src={organizer.bannerUrl || placeholderPhotoUrl(organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>
 
-      <div style={{ padding: '0 20px 32px', marginTop: -36, position: 'relative', zIndex: 2 }}>
+      <div style={{ padding: '0 var(--page-gutter) var(--space-8)', marginTop: -36, position: 'relative', zIndex: 2 }}>
         <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid #1c1c1e', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
           {organizer.avatarUrl ? (
             <Image src={organizer.avatarUrl} alt={organizer.publicName} width={72} height={72} style={{ objectFit: 'cover' }} />
@@ -108,7 +108,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
             <p style={{ fontSize: 13, color: 'rgba(245, 245, 247, .65)', lineHeight: 1.45, margin: '8px 0 0', maxWidth: 640 }}>
               En t&apos;abonnant, tu acceptes de partager ton e-mail avec cet organisateur afin de recevoir ses actualités. Tu peux personnaliser tes alertes ou
               te désabonner à tout moment depuis{' '}
-              <Link href="/profile/followed-organizers" style={{ color: 'var(--primary)', fontWeight: 650 }}>
+              <Link href="/profile/followed-organizers" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 650 }}>
                 tes organisateurs suivis
               </Link>
               .
@@ -116,7 +116,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 24, marginTop: 16, padding: '12px 16px', borderRadius: 16, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', width: 'fit-content' }}>
+        <div style={{ display: 'flex', gap: 24, marginTop: 16, padding: '12px 16px', borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', width: 'fit-content' }}>
           <KPI value={organizer.followersCount} label="Abonnés" />
           <KPI value={Math.max(organizer.totalEventsCount, upcoming.length + past.length)} label="Événements" />
         </div>
@@ -133,7 +133,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
                 const prices = (e.places || []).map((p) => Number(p.price) || 0).filter(Boolean)
                 const min = prices.length ? Math.min(...prices) : null
                 return (
-                  <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.055)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, overflow: 'hidden' }}>
+                  <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.055)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
                     <div style={{ aspectRatio: '16/9', position: 'relative', background: `linear-gradient(135deg, ${e.color || 'var(--primary)'}33, var(--obsidian))` }}>
                       {e.imageUrl && (
                         <Image src={e.imageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 240px" />
@@ -155,7 +155,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           <Section title="Événements passés">
             <div className="lb-card-grid-compact" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))', gap: 10, marginTop: 10 }}>
               {past.map((e) => (
-                <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 14, padding: '12px 14px', opacity: 0.82 }}>
+                <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 'var(--radius-card)', padding: '12px 14px', opacity: 0.82 }}>
                   <p style={{ fontSize: 14.5, fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>{e.name}</p>
                   <p style={{ fontSize: 13, color: 'rgba(245, 245, 247, .6)', margin: '4px 0 0' }}>{e.dateDisplay}</p>
                 </Link>
@@ -168,7 +168,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           <Section title="Photos & vidéos">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginTop: 10 }}>
               {visibleMedia.map((m) => (
-                <div key={m.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', background: 'var(--surface)', border: '1px solid rgba(255,255,255,.1)' }}>
+                <div key={m.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--surface)', border: '1px solid rgba(255,255,255,.1)' }}>
                   {m.type === 'video' ? (
                     <video src={m.url} controls preload="metadata" playsInline aria-label={m.title || `Vidéo de ${organizer.publicName}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -190,7 +190,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           <Section title="Contact">
             {organizer.city && <p style={{ fontSize: 15, color: 'rgba(245, 245, 247, .8)', margin: 0, fontWeight: 600 }}>{[organizer.city, organizer.country].filter(Boolean).join(', ')}</p>}
             {organizer.proPhone && (
-              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--primary)', marginTop: 6, textDecoration: 'none' }}>
+              <a href={`tel:${organizer.proPhone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--primary)', marginTop: 6, textDecoration: 'none' }}>
                 📞 {organizer.proPhone}
               </a>
             )}

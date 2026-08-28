@@ -110,17 +110,17 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(providerJsonLd).replace(/</g, '\\u003c') }} />
-      <div style={{ padding: '16px 20px 0' }}>
-        <Link href="/providers" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
+      <div style={{ padding: 'var(--space-4) var(--page-gutter) 0' }}>
+        <Link href="/providers" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 220, margin: '12px 16px 0', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', borderRadius: 20, background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
+      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', borderRadius: 'var(--radius-card)', background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
         <Image src={provider.coverUrl || placeholderPhotoUrl(id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>
 
-      <div style={{ padding: '0 20px 32px', marginTop: -36, position: 'relative', zIndex: 2 }}>
+      <div style={{ padding: '0 var(--page-gutter) var(--space-8)', marginTop: -36, position: 'relative', zIndex: 2 }}>
         <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid #1c1c1e', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
           {provider.photoUrl ? (
             <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
@@ -159,12 +159,12 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
               </p>
             ) : null}
             {websiteUrl && (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 38, fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--control-height-md)', fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
                 🌐 {provider.website}
               </a>
             )}
             {provider.phone && (
-              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
                 📞 {provider.phone}
               </a>
             )}
@@ -174,7 +174,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
             <Section title="Réseaux">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {socialEntries.map(([key, value]) => (
-                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', fontSize: 13.5, fontWeight: 650, color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 999, padding: '6px 14px' }}>
+                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 650, color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 'var(--radius-control)', padding: '0 14px' }}>
                     {SOCIAL_LABELS[key] || key}
                   </a>
                 ))}
@@ -189,7 +189,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
               {visibleCatalog.map((item) => {
                 const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
                 return (
-                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)', borderRadius: 20, background: 'rgba(255,255,255,.055)', boxShadow: '0 14px 40px rgba(0,0,0,.22)' }}>
+                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)', borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,.055)', boxShadow: '0 14px 40px rgba(0,0,0,.22)' }}>
                     {item.media?.[0]?.url && (
                       <div style={{ aspectRatio: '16/9', position: 'relative' }}>
                         {item.media[0].type === 'video' ? (
@@ -245,7 +245,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                 <Link
                   key={ev.id}
                   href={`/events/${ev.id}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none' }}
                 >
                   {ev.imageUrl && (
                     <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 10, overflow: 'hidden', position: 'relative' }}>

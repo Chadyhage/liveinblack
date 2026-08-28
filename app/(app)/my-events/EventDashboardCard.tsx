@@ -44,7 +44,7 @@ export default function EventDashboardCard({
     <article
       style={{
         border: '1px solid var(--border-strong)',
-        borderRadius: 'var(--radius-xl)',
+        borderRadius: 'var(--radius-card)',
         background: 'linear-gradient(180deg,var(--surface-2),var(--surface))',
         boxShadow: '0 18px 48px rgba(0,0,0,0.24)',
         overflow: 'hidden',
@@ -75,7 +75,7 @@ export default function EventDashboardCard({
         </p>
         <Link
           href={`/events/${event.id}`}
-          style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', font: '600 12px var(--font-open-sans)', color: 'var(--gold)', textDecoration: 'none' }}
+          style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', font: '600 14px var(--font-open-sans)', color: 'var(--gold)', textDecoration: 'none' }}
         >
           Voir la page de l&rsquo;événement →
         </Link>
@@ -95,9 +95,9 @@ export default function EventDashboardCard({
                 loading={isDuplicating}
                 loadingText="Duplication…"
                 style={{
-                  minHeight: 38,
-                  padding: '9px 11px',
-                  borderRadius: 10,
+                  minHeight: 'var(--density-action-min)',
+                  padding: '10px 12px',
+                  borderRadius: 'var(--radius-control)',
                   border: '1px solid var(--border)',
                   background: 'rgba(255,255,255,0.04)',
                   color: action.color,
@@ -114,7 +114,7 @@ export default function EventDashboardCard({
           })}
         </div>
         <details style={{ marginTop: 12, border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,.025)', overflow: 'hidden' }}>
-          <summary style={{ minHeight: 40, display: 'flex', alignItems: 'center', padding: '0 14px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13, fontWeight: 750 }}>
+          <summary style={{ minHeight: 'var(--density-action-min)', display: 'flex', alignItems: 'center', padding: '0 14px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14, fontWeight: 750 }}>
             Plus d’actions
           </summary>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 12px 12px' }}>
@@ -128,7 +128,7 @@ export default function EventDashboardCard({
                   disabled={isDuplicating}
                   loading={isDuplicating}
                   loadingText="Duplication…"
-                  style={{ minHeight: 38, padding: '9px 11px', borderRadius: 10, border: '1px solid var(--border)', background: 'rgba(255,255,255,.04)', color: action.color, fontSize: 12, fontWeight: 700, textAlign: 'left', justifyContent: 'flex-start' }}
+                  style={{ minHeight: 'var(--density-action-min)', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'rgba(255,255,255,.04)', color: action.color, fontSize: 14, fontWeight: 700, textAlign: 'left', justifyContent: 'flex-start' }}
                 >
                   {action.label}
                 </Button>

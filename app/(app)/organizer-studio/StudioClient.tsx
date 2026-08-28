@@ -292,11 +292,11 @@ export default function StudioClient({
             onClick={() => setTab(t)}
             style={{
               padding: '10px 12px',
-              borderRadius: 12,
+              borderRadius: 'var(--radius-control)',
               border: `1px solid ${tab === t ? 'var(--gold)' : 'var(--border)'}`,
               background: tab === t ? 'var(--primary-a14)' : 'var(--surface)',
               color: tab === t ? 'var(--gold)' : 'var(--text-muted)',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 700,
               textTransform: 'none',
               letterSpacing: 'normal',
@@ -353,7 +353,7 @@ export default function StudioClient({
           {linkCopied ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Copié <Check size={13} /></span> : 'Copier le lien'}
         </Button>
         {profile.status === 'public' && (
-          <Link href={`/organizers/${slug}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '7px 12px', borderRadius: 8, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href={`/organizers/${slug}`} style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-control)', background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Voir ma page
           </Link>
         )}
@@ -373,7 +373,7 @@ export default function StudioClient({
                   <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <label style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '7px 11px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>
+              <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13.5, cursor: 'pointer' }}>
                 {uploading === 'avatar' ? 'Envoi…' : 'Changer le logo'}
                 <input
                   type="file"
@@ -395,7 +395,7 @@ export default function StudioClient({
                   <NextImage src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
                 )}
               </div>
-              <label style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '7px 11px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>
+              <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13.5, cursor: 'pointer' }}>
                 {uploading === 'banner' ? 'Envoi…' : 'Changer la bannière'}
                 <input
                   type="file"
@@ -671,13 +671,13 @@ export default function StudioClient({
 function saveButtonStyle(saving: boolean): React.CSSProperties {
   return {
     width: '100%',
-    minHeight: 38,
-    padding: 11,
+    minHeight: 'var(--density-action-min)',
+    padding: '10px 14px',
     background: 'var(--gold)',
     border: '1px solid var(--gold)',
-    borderRadius: 3,
+    borderRadius: 'var(--radius-control)',
     color: 'var(--obsidian)',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
     textTransform: 'none',
     letterSpacing: 'normal',
@@ -688,12 +688,13 @@ function saveButtonStyle(saving: boolean): React.CSSProperties {
 
 const mediaActionStyle: React.CSSProperties = {
   flex: 1,
-  padding: '7px 6px',
+  minHeight: 'var(--density-action-min)',
+  padding: '10px 8px',
   background: 'rgba(255,255,255,0.06)',
   border: '1px solid var(--border)',
-  borderRadius: 8,
+  borderRadius: 'var(--radius-control)',
   color: 'rgba(255,255,255,0.7)',
-  fontSize: 11,
+  fontSize: 13,
   cursor: 'pointer',
 }
 

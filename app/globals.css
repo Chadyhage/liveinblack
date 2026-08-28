@@ -60,13 +60,19 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-pill: 999px;
+  --radius-control: 12px;
+  --radius-card: var(--radius-xl);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 21px;
   --space-6: 25px;
+  --space-8: 32px;
+  --space-12: 48px;
   --density-action-min: 44px;
+  --control-height-sm: 40px;
+  --control-height-md: 46px;
   --density-card-gap: 8px;
   --density-card-min: 180px;
   --density-card-min-compact: 148px;
@@ -77,6 +83,13 @@
   --content-max: 1440px;
   --content-wide: 1500px;
   --page-gutter: clamp(7px, .9vw, 16px);
+  --public-page-max: 1440px;
+  --public-detail-max: 1320px;
+  --public-page-gutter: clamp(16px, 2vw, 28px);
+  --public-hero-padding: clamp(28px, 3.5vw, 48px) var(--public-page-gutter) clamp(20px, 2.5vw, 36px);
+  --public-content-padding: 0 var(--public-page-gutter) clamp(48px, 5vw, 80px);
+  --public-section-top: 24px;
+  --public-grid-gap: 16px;
   --z-nav: 40;
   --z-floating: 45;
   --z-sheet: 200;
@@ -215,12 +228,37 @@ select:-webkit-autofill:focus {
 ::-webkit-scrollbar-thumb { background: rgba(245, 61, 141, 0.32); border-radius: 999px; }
 
 .lb-card {
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 20px 56px rgba(0, 0, 0, 0.22);
   overflow: hidden;
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+/* Contrat global des contrôles privés : les pages peuvent composer, mais ne
+   doivent pas réduire la zone tactile minimale ni réinventer les rayons. */
+:where(button:not([data-lb-icon-button]):not([data-lb-button='link']), [role='button']) {
+  min-height: var(--density-action-min) !important;
+  border-radius: var(--radius-control) !important;
+}
+
+/* Toute instance de Button partage le même rayon, même lorsqu'un ancien
+   écran lui transmet encore un borderRadius inline. Les boutons icônes et
+   les liens textuels gardent leur géométrie dédiée. */
+:where(button[data-lb-button='primary'], button[data-lb-button='secondary'], button[data-lb-button='danger'], button[data-lb-button='ghost']) {
+  border-radius: var(--radius-control) !important;
+}
+
+/* Compatibilité des contrôles historiques écrits en inline : une action
+   interactive ne peut pas redevenir trop petite selon la page qui l'utilise.
+   Les éléments décoratifs et les boutons icônes sont volontairement exclus. */
+:where(button:not([data-lb-icon-button])[style*='min-height: 36px'], button:not([data-lb-icon-button])[style*='min-height:36px'], button:not([data-lb-icon-button])[style*='min-height: 38px'], button:not([data-lb-icon-button])[style*='min-height:38px'], button:not([data-lb-icon-button])[style*='min-height: 40px'], button:not([data-lb-icon-button])[style*='min-height:40px'], a[style*='min-height: 36px'], a[style*='min-height:36px'], a[style*='min-height: 38px'], a[style*='min-height:38px'], a[style*='min-height: 40px'], a[style*='min-height:40px'], [role='button'][style*='min-height: 36px'], [role='button'][style*='min-height:36px'], [role='button'][style*='min-height: 38px'], [role='button'][style*='min-height:38px'], [role='button'][style*='min-height: 40px'], [role='button'][style*='min-height:40px']) {
+  min-height: var(--density-action-min) !important;
+}
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not([type='file']), textarea, select) {
+  min-height: var(--control-height-md) !important;
+  border-radius: var(--radius-control) !important;
 }
 
 .lb-card:is([role='button'], [tabindex='0']):hover,
@@ -607,6 +645,11 @@ a {
 :where(button, a, [role='button'])[style*='border-radius: 0'],
 :where(button, a, [role='button'])[style*='border-radius:0'] {
   border-radius: var(--radius-md) !important;
+}
+
+:where(summary) {
+  min-height: var(--density-action-min);
+  border-radius: var(--radius-control);
 }
 
 @media (max-width: 720px) {

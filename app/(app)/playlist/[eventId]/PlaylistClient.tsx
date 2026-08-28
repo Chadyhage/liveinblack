@@ -457,9 +457,9 @@ export default function PlaylistClient({
   // panneau de gestion, billet ou non.
   if (!canModerate && !hasTicket) {
     return (
-      <main style={{ width: '100%', minWidth: 0, padding: '24px clamp(14px, 2vw, 28px) 90px' }}>
+      <main style={{ width: '100%', minWidth: 0, padding: 'var(--space-6) var(--page-gutter) 90px' }}>
         <div style={{ marginBottom: 18 }}>
-          <Link href={`/events/${eventId}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-faint)', textDecoration: 'none' }}>
+          <Link href={`/events/${eventId}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← {eventName}
           </Link>
         </div>
@@ -488,7 +488,7 @@ export default function PlaylistClient({
   }
 
   return (
-    <main style={{ width: '100%', minWidth: 0, padding: '24px clamp(14px, 2vw, 28px) 90px' }}>
+    <main style={{ width: '100%', minWidth: 0, padding: 'var(--space-6) var(--page-gutter) 90px' }}>
       <style>{`
         @keyframes lbBar1 { from { height: 5px } to { height: 18px } }
         @keyframes lbBar2 { from { height: 14px } to { height: 6px } }
@@ -497,7 +497,7 @@ export default function PlaylistClient({
       `}</style>
 
       <div style={{ marginBottom: 18 }}>
-        <Link href={`/events/${eventId}`} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-faint)', textDecoration: 'none' }}>
+        <Link href={`/events/${eventId}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
           ← {eventName}
         </Link>
       </div>
@@ -1032,11 +1032,11 @@ export default function PlaylistClient({
                             }
                             title="Supprimer mon son"
                             style={{
-                              width: 38,
-                              height: 38,
-                              minWidth: 38,
-                              minHeight: 38,
-                              borderRadius: 12,
+                              width: 44,
+                              height: 44,
+                              minWidth: 44,
+                              minHeight: 44,
+                              borderRadius: 'var(--radius-control)',
                               flexShrink: 0,
                               cursor: 'pointer',
                               display: 'flex',
@@ -1183,11 +1183,11 @@ function SearchResultsList({
                 disabled={!r.previewUrl}
                 aria-label={playing ? `Mettre en pause l'extrait de ${r.title}` : `Écouter un extrait de ${r.title}`}
                 style={{
-                  width: 38,
-                  height: 38,
-                  minWidth: 38,
-                  minHeight: 38,
-                  borderRadius: 12,
+                  width: 44,
+                  height: 44,
+                  minWidth: 44,
+                  minHeight: 44,
+                  borderRadius: 'var(--radius-control)',
                   flexShrink: 0,
                   overflow: 'hidden',
                   position: 'relative',
@@ -1248,11 +1248,11 @@ function SongRow({
         disabled={!song.previewUrl}
         aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
         style={{
-          width: 38,
-          height: 38,
-          minWidth: 38,
-          minHeight: 38,
-          borderRadius: 12,
+          width: 44,
+          height: 44,
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 'var(--radius-control)',
           flexShrink: 0,
           overflow: 'hidden',
           position: 'relative',
@@ -1331,11 +1331,11 @@ function DjSongRow({
         disabled={!song.previewUrl}
         aria-label={playing ? `Mettre en pause l'extrait de ${song.title}` : `Écouter un extrait de ${song.title}`}
         style={{
-          width: 38,
-          height: 38,
-          minWidth: 38,
-          minHeight: 38,
-          borderRadius: 12,
+          width: 44,
+          height: 44,
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 'var(--radius-control)',
           flexShrink: 0,
           overflow: 'hidden',
           position: 'relative',
@@ -1395,8 +1395,9 @@ function StatChip({ label, value, color }: { label: string; value: string | numb
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
+  minHeight: 'var(--control-height-md)',
   padding: '10px 40px 10px 12px',
-  borderRadius: 10,
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border)',
   background: 'var(--surface-2)',
   color: 'var(--text)',
@@ -1405,32 +1406,35 @@ const inputStyle: React.CSSProperties = {
 }
 
 const smallButtonStyle: React.CSSProperties = {
-  padding: '7px 12px',
-  borderRadius: 999,
+  minHeight: 'var(--density-action-min)',
+  padding: '10px 14px',
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text)',
-  fontSize: 12.5,
+  fontSize: 14,
   fontWeight: 700,
   cursor: 'pointer',
 }
 
 const ghostButtonStyle: React.CSSProperties = {
-  padding: '7px 12px',
-  borderRadius: 999,
+  minHeight: 'var(--density-action-min)',
+  padding: '10px 14px',
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text)',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 700,
   cursor: 'pointer',
 }
 
 const pillButtonStyle: React.CSSProperties = {
-  padding: '7px 12px',
-  borderRadius: 999,
+  minHeight: 'var(--density-action-min)',
+  padding: '10px 14px',
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border)',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 700,
   cursor: 'pointer',
 }

@@ -12,8 +12,8 @@ describe('design des e-mails LIVE IN BLACK', () => {
       'https://liveinblack.com/profile/parametres',
     )
 
-    expect(email.html).toContain('background:#0d0a14')
-    expect(email.html).toContain('LIVE <span style="color:var(--primary);">IN</span> BLACK')
+    expect(email.html).toContain('background:#191218')
+    expect(email.html).toContain('LIVE <span style="color:#F53D8D;">IN</span> BLACK')
     expect(email.html).toContain('/images/email-icons/shield-check.png')
     expect(email.html).not.toContain('/images/mascot/')
     expect(email.html).not.toContain('/images/live-in-black/')

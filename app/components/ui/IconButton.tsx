@@ -29,6 +29,7 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       aria-label={label}
       title={label}
       disabled={disabled}
+      data-lb-icon-button="true"
       {...rest}
       style={{
         width: Math.max(size, 44),

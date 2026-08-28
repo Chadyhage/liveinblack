@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { minHeight: 36, padding: '7px 10px', fontSize: 12.75 } : { minHeight: 40, padding: '8px 12px', fontSize: 13.5 }
+  const sizeStyle = size === 'sm' ? { minHeight: 'var(--control-height-sm)', padding: '7px 10px', fontSize: 14 } : { minHeight: 'var(--control-height-md)', padding: '8px 12px', fontSize: 14.5 }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
@@ -100,6 +100,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
         }}
         onKeyDown={onTriggerKeyDown}
         role="combobox"
+        data-lb-button="select"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}

@@ -103,7 +103,7 @@ export default async function MesSoireesPage() {
                     <div style={{ minWidth: 0 }}>
                       <p
                         style={{
-                      fontSize: 16,
+                          fontSize: 16,
                           fontWeight: 800,
                           letterSpacing: '-0.4px',
                           color: 'var(--text)',
@@ -126,7 +126,7 @@ export default async function MesSoireesPage() {
                         color: meta.color,
                         background: meta.soft,
                         border: `1px solid ${meta.border}`,
-                        borderRadius: 8,
+                        borderRadius: 'var(--radius-control)',
                         padding: '4px 10px',
                       }}
                     >
@@ -152,11 +152,11 @@ export default async function MesSoireesPage() {
                     style={{
                       width: '100%',
                       padding: '14px',
-                      minHeight: 40,
-                      borderRadius: 3,
+                      minHeight: 'var(--density-action-min)',
+                      borderRadius: 'var(--radius-control)',
                       border: '1px solid var(--border-strong)',
-                      fontSize: 13,
-                      fontWeight: 500,
+                      fontSize: 14,
+                      fontWeight: 700,
                       textTransform: 'none',
                       letterSpacing: 'normal',
                       color: 'var(--obsidian)',

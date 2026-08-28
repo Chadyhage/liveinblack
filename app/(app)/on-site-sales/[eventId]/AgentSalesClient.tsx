@@ -120,11 +120,11 @@ export default function AgentSalesClient({
   }
 
   return (
-    <main style={{ width: '100%', padding: '14px clamp(10px, 1.4vw, 18px) 56px' }}>
+    <main style={{ width: '100%', padding: 'var(--space-4) var(--page-gutter) 56px' }}>
       <h1 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 3px' }}>Vente sur place</h1>
       <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 10px' }}>{eventName}</p>
 
-      <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, marginBottom: 10 }}>
+      <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 'var(--space-2)', marginBottom: 16 }}>
         <Card style={CARD_STYLE}>
           <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
           <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
@@ -143,12 +143,12 @@ export default function AgentSalesClient({
         </Card>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 16 }}>
         <Button
           variant={mode === 'onsite' ? 'primary' : 'secondary'}
           onClick={() => setMode('onsite')}
           fullWidth
-          style={{ flex: 1, borderRadius: 8 }}
+          style={{ flex: 1, borderRadius: 'var(--radius-control)' }}
         >
           Vente (avant soirée)
         </Button>
@@ -156,7 +156,7 @@ export default function AgentSalesClient({
           variant={mode === 'door' ? 'primary' : 'secondary'}
           onClick={() => setMode('door')}
           fullWidth
-          style={{ flex: 1, borderRadius: 8 }}
+          style={{ flex: 1, borderRadius: 'var(--radius-control)' }}
         >
           Vente à l&apos;entrée (rapide)
         </Button>
@@ -214,7 +214,7 @@ export default function AgentSalesClient({
               variant="secondary"
               onClick={() => setMethod('cash')}
               fullWidth
-              style={{ flex: 1, borderRadius: 8, background: method === 'cash' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'cash' ? '#1a1508' : 'var(--text)' }}
+              style={{ flex: 1, borderRadius: 'var(--radius-control)', background: method === 'cash' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'cash' ? '#1a1508' : 'var(--text)' }}
             >
               Espèces
             </Button>
@@ -222,7 +222,7 @@ export default function AgentSalesClient({
               variant="secondary"
               onClick={() => setMethod('momo')}
               fullWidth
-              style={{ flex: 1, borderRadius: 8, background: method === 'momo' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'momo' ? '#1a1508' : 'var(--text)' }}
+              style={{ flex: 1, borderRadius: 'var(--radius-control)', background: method === 'momo' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'momo' ? '#1a1508' : 'var(--text)' }}
             >
               Mobile Money
             </Button>

@@ -341,7 +341,7 @@ function EmptyWallet() {
       <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 20px' }}>Tes billets achetés apparaîtront ici, avec leur QR code.</p>
       <Link
         href="/events"
-        style={{ display: 'inline-block', padding: '11px 22px', borderRadius: 10, background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
+        style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', padding: '0 18px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}
       >
         Découvrir les événements
       </Link>
@@ -441,7 +441,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
           <div style={{ display: 'flex', gap: 8 }}>
             <a
               href={contactSupportMailto()}
-              style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--pink)', color: '#fff', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}
+              style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-control)', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}
             >
               Contacter le support
             </a>
@@ -708,7 +708,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                     onChange={(e) => setEmailDraft(e.target.value)}
                     placeholder="Adresse e-mail de ton invité·e"
                     size="sm"
-                    style={{ flex: 1, borderRadius: 8, fontSize: 12.5 }}
+                    style={{ flex: 1, borderRadius: 'var(--radius-control)', fontSize: 14 }}
                   />
                   <Button
                     variant="primary"
@@ -743,7 +743,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
 }
 
 function smallBtnStyle(bg: string, color: string): React.CSSProperties {
-  return { padding: '6px 12px', borderRadius: 8, background: bg, color, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }
+  return { minHeight: 'var(--density-action-min)', padding: '10px 14px', borderRadius: 'var(--radius-control)', background: bg, color, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }
 }
 
 function inviteErrorMessage(code: string): string {
@@ -1252,13 +1252,13 @@ function MetaCell({ label, value }: { label: string; value: string }) {
 
 function actionBtnStyle(disabled: boolean, bg = 'rgba(255,255,255,0.06)', color = 'var(--text)'): React.CSSProperties {
   return {
-    minHeight: 36,
-    padding: '7px 11px',
-    borderRadius: 999,
+    minHeight: 'var(--density-action-min)',
+    padding: '10px 14px',
+    borderRadius: 'var(--radius-control)',
     background: bg,
     color,
     border: '1px solid rgba(255,255,255,.10)',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 700,
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.6 : 1,

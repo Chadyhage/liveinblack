@@ -21,27 +21,3 @@
 .empty { min-height:45dvh; display:grid; place-items:center; text-align:center; color:rgba(245,245,247,.56); }
 .error { padding:16px 18px; border:1px solid rgba(224,90,170,.28); border-radius:16px; background:rgba(224,90,170,.08); color:#ff91c9; }
 @media(max-width:700px){.overview{grid-template-columns:1fr 1fr}.metric:first-child{grid-column:1/-1}.summaryGrid{grid-template-columns:1fr}.ticketTop{gap:10px}.sectionHeader{align-items:flex-start}.metric{min-height:104px}}
-.overview{gap:6px;margin-bottom:12px}.metric{min-height:72px;padding:10px!important;border-radius:12px!important}.metric span{font-size:11px}.metric strong{margin-top:4px;font-size:clamp(18px,2vw,24px)}.section{margin-top:14px}.sectionHeader{margin-bottom:10px;gap:12px}.sectionHeader h2{font-size:18px}.sectionHeader p{font-size:11.5px}.summaryGrid{gap:8px}.summaryRow{min-height:40px;padding:7px 9px!important;border-radius:11px!important}.summaryRow span{font-size:12.5px}.summaryRow strong{font-size:14px}.ticketList{gap:5px}.ticket{padding:9px 10px!important;border-radius:11px!important}.ticketName{font-size:14px}.ticketMeta{margin-top:4px;font-size:11.5px}.price{font-size:14px}.preorders{margin-top:7px;padding:7px 8px;gap:5px;border-radius:11px;font-size:11.5px}.error{padding:13px 14px;border-radius:13px}
-
-/* Feuille réservations dense : plus de billets et de catégories visibles dans
-   le panneau sans allonger inutilement la lecture. */
-.overview{grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:5px;margin-bottom:9px}
-.metric{min-height:58px;padding:8px!important;border-radius:10px!important}
-.metric span{font-size:10px}
-.metric strong{margin-top:3px;font-size:clamp(16px,1.8vw,21px)}
-.section{margin-top:11px}
-.sectionHeader{min-height:28px;margin-bottom:6px;gap:8px}
-.sectionHeader h2{font-size:15px}
-.sectionHeader p{margin-top:2px;font-size:10px}
-.summaryGrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:5px}
-.summaryRow{min-height:34px;padding:5px 7px!important;border-radius:9px!important}
-.summaryRow span{font-size:10.75px}
-.summaryRow strong{font-size:12px}
-.ticketList{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:5px}
-.ticket{padding:8px!important;border-radius:10px!important}
-.ticketTop{gap:8px}
-.ticketName{font-size:12px}
-.ticketMeta{margin-top:3px;font-size:10px}
-.price{font-size:12px}
-.preorders{margin-top:6px;padding:6px 7px;gap:4px;border-radius:9px;font-size:10px}
-@media(max-width:700px){.overview,.summaryGrid,.ticketList{grid-template-columns:1fr}.metric:first-child{grid-column:auto}.metric{min-height:54px}}

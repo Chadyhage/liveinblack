@@ -22,14 +22,14 @@ export default function ActionLink({ children, tone = 'primary', icon, fullWidth
     <Link
       {...props}
       style={{
-        minHeight: 48,
+        minHeight: 'var(--control-height-md)',
         width: fullWidth ? '100%' : undefined,
         padding: '12px 20px',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        borderRadius: 14,
+        borderRadius: 'var(--radius-control)',
         fontSize: 15,
         fontWeight: 700,
         lineHeight: 1.2,

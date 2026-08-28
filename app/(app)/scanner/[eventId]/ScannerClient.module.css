@@ -1,13 +1,13 @@
 .shell {
   min-height: 100vh;
-  padding: 12px clamp(10px, 1.4vw, 18px) 72px;
+  padding: var(--space-4) var(--page-gutter) 72px;
 }
 
 .workspace {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .header {
@@ -20,7 +20,7 @@
 .scanGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.78fr);
-  gap: 8px;
+  gap: var(--space-4);
   align-items: start;
 }
 
@@ -30,10 +30,10 @@
 
 .cameraCard { min-height: 240px; }
 
-.shell { padding: 10px clamp(10px, 1.3vw, 16px) 68px; }
-.workspace { gap: 7px; }
-.scanGrid,.serviceGrid { gap: 8px; }
-.servicePrimary { gap: 7px; }
+.shell { padding: var(--space-4) var(--page-gutter) 68px; }
+.workspace { gap: var(--space-4); }
+.scanGrid,.serviceGrid { gap: var(--space-4); }
+.servicePrimary { gap: 12px; }
 
 .manualCard {
   position: sticky;
@@ -42,13 +42,13 @@
 
 .manualForm {
   display: flex;
-  gap: 7px;
+  gap: 10px;
 }
 
 .serviceGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) minmax(260px, 0.72fr);
-  gap: 8px;
+  gap: var(--space-4);
   align-items: start;
 }
 
@@ -56,7 +56,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 12px;
 }
 
 .resultCard {
@@ -85,7 +85,7 @@
 
 @media (max-width: 1020px) {
   .shell {
-    padding: 18px 12px 88px;
+    padding: var(--space-4) var(--page-gutter) 88px;
   }
 
   .scanGrid,
@@ -108,7 +108,7 @@
 
 @media (max-width: 620px) {
   .shell {
-    padding: 16px 10px 84px;
+    padding: var(--space-4) var(--page-gutter) 84px;
   }
 
   .header,

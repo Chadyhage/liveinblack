@@ -598,6 +598,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           .lb-nav-auth { display: inline-flex !important }
           .lb-navlink-mobile { display: none !important }
         }
+        @media (max-width: 1099px) {
+          .lb-navlink, .lb-nav-auth { display: none !important }
+        }
         .lb-navlink { transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 120ms ease; }
         .lb-navlink:not(.lb-nav-search):hover { color: #fff; background: rgba(255,255,255,.1); }
         .lb-navlink:not(.lb-nav-search):active { transform: scale(.97); }

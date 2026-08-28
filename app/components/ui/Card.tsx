@@ -27,7 +27,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ children, sty
       style={{
         background: 'rgba(255, 255, 255, 0.055)',
         border: `1px solid ${accent || 'rgba(255, 255, 255, 0.12)'}`,
-        borderRadius: 24,
+        borderRadius: 'var(--radius-card)',
         padding: 20,
         boxShadow: '0 20px 56px rgba(0, 0, 0, 0.22)',
         overflow: 'hidden',

@@ -211,7 +211,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
     <main className="lb-operational-shell">
       <div className="lb-operational-workspace">
         <div>
-          <Link href="/profile" style={{ fontSize: 12.5, color: 'var(--text-faint)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← Retour
           </Link>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
@@ -424,12 +424,12 @@ function StepButton({ label, disabled, onClick }: { label: string; disabled: boo
       disabled={disabled}
       onClick={onClick}
       style={{
-        width: 38,
-        height: 38,
-        minWidth: 38,
-        minHeight: 38,
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
         padding: 0,
-        borderRadius: '50%',
+        borderRadius: 'var(--radius-control)',
         border: '1px solid var(--border-strong)',
         background: disabled ? 'rgba(255,255,255,0.03)' : 'var(--surface-2)',
         color: 'var(--text)',

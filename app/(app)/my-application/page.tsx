@@ -19,27 +19,31 @@ export const metadata: Metadata = {
 const KNOWN_APPLICATION_STATUSES = ['draft', 'submitted', 'under_review', 'resubmitted', 'needs_changes', 'rejected', 'approved']
 
 const primaryBtn: React.CSSProperties = {
-  display: 'inline-block',
-  padding: '12px 22px',
-  borderRadius: 'var(--radius-pill)',
+  display: 'inline-flex',
+  minHeight: 'var(--density-action-min)',
+  padding: '0 18px',
+  borderRadius: 'var(--radius-control)',
   border: 'none',
   background: 'var(--primary)',
   color: 'var(--primary-ink)',
   fontWeight: 800,
-  fontSize: 13.5,
+  fontSize: 14,
+  alignItems: 'center',
   textTransform: 'none',
   letterSpacing: 'normal',
   textDecoration: 'none',
 }
 const secondaryBtn: React.CSSProperties = {
-  display: 'inline-block',
-  padding: '12px 22px',
-  borderRadius: 10,
+  display: 'inline-flex',
+  minHeight: 'var(--density-action-min)',
+  padding: '0 18px',
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border-strong)',
   background: 'transparent',
   color: '#fff',
   fontWeight: 700,
-  fontSize: 13.5,
+  fontSize: 14,
+  alignItems: 'center',
   textDecoration: 'none',
 }
 
@@ -65,7 +69,7 @@ function formatDate(iso: string): string {
 
 function SupportLink() {
   return (
-    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>
+    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--primary)', textDecoration: 'none' }}>
       Une question ? Contacte le support
     </a>
   )
@@ -198,7 +202,7 @@ export default async function MonDossierPage() {
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <Link href="/profile" style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', fontSize: 13, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
           ← Mon profil
         </Link>
         <header>
@@ -206,10 +210,10 @@ export default async function MonDossierPage() {
           <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13, lineHeight: 1.42 }}>Suis l’avancement de tes candidatures organisateur et prestataire.</p>
         </header>
         <nav style={{ display: 'flex', gap: 10 }}>
-          <a href="#organisateur" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <a href="#organisateur" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier organisateur
           </a>
-          <a href="#prestataire" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <a href="#prestataire" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier prestataire
           </a>
         </nav>

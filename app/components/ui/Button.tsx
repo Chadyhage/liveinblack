@@ -17,9 +17,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { minHeight: 38, padding: '8px 14px', fontSize: 14, borderRadius: 11, gap: 6 },
-  md: { minHeight: 44, padding: '10px 18px', fontSize: 15.5, borderRadius: 13, gap: 8 },
-  lg: { minHeight: 50, padding: '12px 24px', fontSize: 17, borderRadius: 15, gap: 8 },
+  sm: { minHeight: 'var(--control-height-sm)', padding: '8px 14px', fontSize: 14, borderRadius: 'var(--radius-control)', gap: 6 },
+  md: { minHeight: 'var(--control-height-md)', padding: '10px 18px', fontSize: 15.5, borderRadius: 'var(--radius-control)', gap: 8 },
+  lg: { minHeight: 50, padding: '12px 24px', fontSize: 17, borderRadius: 'var(--radius-control)', gap: 8 },
 }
 
 function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties {
@@ -80,6 +80,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       ref={ref}
       type={type}
       disabled={isDisabled}
+      data-lb-button={variant}
       {...rest}
       onMouseEnter={(e) => { setHovered(true); rest.onMouseEnter?.(e) }}
       onMouseLeave={(e) => { setHovered(false); setPressed(false); rest.onMouseLeave?.(e) }}
