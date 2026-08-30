@@ -142,7 +142,7 @@ export function subPresentation(sub: SubWindow | null | undefined, nowMs: number
         status,
         daysLeft,
         tone: 'ok',
-        color: '#4ee8c8',
+        color: '#F53D8D',
         title: 'Abonnement actif',
         message: `Ton profil est visible sur LIVEINBLACK. Il te reste ${daysLeft} jour${daysLeft > 1 ? 's' : ''}.`,
         cta: "Renouveler à l'avance",

@@ -101,6 +101,12 @@ export const metadata: Metadata = {
   formatDetection: { email: false, address: false, telephone: false },
   manifest: "/manifest.webmanifest",
   icons: {
+    icon: [
+      { url: "/branding/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/branding/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: ["/branding/icon-192.png"],
+    apple: [{ url: "/branding/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     other: [
       {
         rel: "search",

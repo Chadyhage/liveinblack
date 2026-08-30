@@ -14,7 +14,7 @@ export default function AuthSplitLayout({ children, tagline, heroImage, wide = f
         </div>
         <div className={styles.overlay} />
         <Link href="/home" className={styles.brand} aria-label="Live in Black — accueil">
-          LIVE<span>IN</span>BLACK
+          <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} priority />
         </Link>
         <div className={styles.story}>
           <span className={styles.eyebrow}>LIVE IN BLACK</span>

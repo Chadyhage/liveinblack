@@ -15,7 +15,7 @@ Toutes les valeurs ci-dessous sont copiées du code réel (`app/components/ui/*.
 | `secondary` | transparent | `var(--text)` | `1px solid rgba(184,243,74,.55)` |
 | `danger` | `#e05a5a` | `#fff` | transparente |
 | `ghost` | transparent | `var(--text-muted)` | transparente |
-| `link` | transparent, pas de padding | `var(--teal)` (→ primary) | aucune, `text-decoration: underline` |
+| `link` | transparent, pas de padding | `var(--primary)` | aucune, `text-decoration: underline` |
 
 Tailles : `sm` → 44px min-height, `md` → 44px, `lg` → 48px (jamais en dessous de 44px, cible tactile). Hover = `brightness(1.08)`, press = `translateY(1px)`. `loading` remplace le contenu par `<Spinner>`.
 
@@ -23,10 +23,10 @@ Tailles : `sm` → 44px min-height, `md` → 44px, `lg` → 48px (jamais en dess
 Conteneur "surface" — `background: var(--surface)`, `border: 1px solid var(--border)` (ou `accent` custom), `border-radius: var(--radius-lg)`, `padding: 20`. Utiliser `accent` (ex. `rgba(184,243,74,0.25)`) pour un encart mis en avant plutôt que redéfinir tout le style.
 
 ## Badge
-`tone`: `teal | gold | pink | violet | danger | neutral` (teal/gold/violet convergent visuellement, tous alias du vert primary sauf `pink`/`danger`). Pill 999px, texte 11px/800/uppercase/letter-spacing .045em.
+`tone`: `teal | gold | pink | violet | danger | neutral` (teal/gold/violet convergent visuellement, tous alias du token accent principal sauf `pink`/`danger`). Pill 999px, texte 11px/800/uppercase/letter-spacing .045em.
 
 ## Input / Textarea
-`size`: `sm | md`, props `invalid`, `leftIcon`, `rightIcon`. Fond `var(--surface-2)`, bordure `var(--border-strong)` → `var(--teal)` au focus → `#ff5b5b` si `invalid`. Jamais de `outline` natif (géré par le `:focus-visible` global de `globals.css`).
+`size`: `sm | md`, props `invalid`, `leftIcon`, `rightIcon`. Fond `var(--surface-2)`, bordure `var(--border-strong)` → `var(--primary)` au focus → `#ff5b5b` si `invalid`. Jamais de `outline` natif (géré par le `:focus-visible` global de `globals.css`).
 
 ## Checkbox / Radio / Switch
 Contrôles custom (visuel coché/décoché piloté en React), le focus clavier reste géré en CSS global (`:focus-visible ~ *`). `accent-color: var(--primary)` appliqué aux `input[type=checkbox|radio]` natifs restants (wizards notamment) pour cohérence même sans passer par ces composants.

@@ -22,8 +22,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'LIVEINBLACK'
   const options = {
     body: data.body || '',
-    icon: '/next.svg',
-    badge: '/next.svg',
+    icon: '/branding/icon-192.png',
+    badge: '/branding/liveinblack-monogram.png',
     data: { url: data.url || '/' },
   }
 

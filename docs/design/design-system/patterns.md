@@ -20,7 +20,7 @@ Ces classes vivent dans `app/globals.css` (pas des composants React) et posent l
 - `.lb-responsive-metrics` — grille de tuiles-métriques, passe à 2 colonnes sous 620px.
 
 ## Annuaires publics (`/events`, `/providers`, `/organizers`, `/search`)
-- `.lb-directory-intro` — bandeau d'intro, dégradé `primary` léger + `var(--surface-2)`
+- `.lb-directory-intro` — bandeau d'intro, dégradé accent léger + `var(--surface-2)`
 - `.lb-directory-hero` — `max-width: 860px`
 - `.lb-directory-filters` — panneau de filtres, `var(--surface-2)`
 - `.lb-search-panel` / `.lb-access-code` — panneaux flex avec contrôles, passent en colonne sous 620px
@@ -31,7 +31,7 @@ Ces classes vivent dans `app/globals.css` (pas des composants React) et posent l
 
 ## Accent visuel
 - `.lb-accent-line` — trait 42×4px `var(--primary)`, sous un `SectionHeader`
-- `.lb-card:hover` — `translateY(-3px)`, bordure `rgba(255,229,0,.42)` *(⚠️ valeur legacy jaune non alignée sur le token `--primary` vert actuel — probablement un oubli de migration, à vérifier avant de s'en servir comme référence)*
+- `.lb-card:hover` — `translateY(-3px)`, bordure `rgba(255,229,0,.42)` *(⚠️ valeur legacy jaune non alignée sur le token accent actuel — probablement un oubli de migration, à vérifier avant de s'en servir comme référence)*
 
 ## Points d'accessibilité globaux (ne jamais réintroduire une régression dessus)
 - Cibles tactiles ≥44px sur toute nav (`.lb-public-nav`, `.lb-dashboard-sidebar`) et boutons

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowUpRight } from 'lucide-react'
 import { LEGAL } from '@/lib/shared/legal'
 import styles from './Footer.module.css'
@@ -42,7 +43,7 @@ export default function Footer() {
         <div className={styles.top}>
           <div className={styles.brandBlock}>
             <Link href="/home" className={styles.brand} aria-label="LIVEINBLACK, accueil">
-              LIVE<span>IN</span>BLACK
+              <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} />
             </Link>
             <p>La scène qui rassemble les publics, les artistes et les professionnels autour d’expériences mémorables.</p>
             <Link href="/events" className={styles.primaryLink}>

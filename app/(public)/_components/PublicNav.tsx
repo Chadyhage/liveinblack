@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -332,8 +333,14 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         className="lb-public-nav__brand"
         aria-label="LIVEINBLACK — Accueil"
       >
-        <span aria-hidden="true" className="lb-public-nav__brand-mark">LB</span>
-        <span>LIVE<span className="lb-public-nav__brand-muted">IN</span>BLACK</span>
+        <Image
+          src="/branding/liveinblack-logo-horizontal.png"
+          alt="LIVEINBLACK"
+          width={614}
+          height={217}
+          className="lb-public-nav__brand-logo"
+          priority
+        />
       </Link>
       <nav aria-label="Navigation principale" className="lb-public-nav__links">
         {/* Nav publique (Accueil/Événements/Prestataires/Organisateurs) —
@@ -538,28 +545,17 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           height: 42px;
           display: inline-flex;
           align-items: center;
-          gap: 7px;
           flex-shrink: 0;
           color: #f5f5f7;
           text-decoration: none;
-          font-size: 13.5px;
-          font-weight: 700;
-          letter-spacing: -.025em;
           border-radius: 12px;
         }
-        .lb-public-nav__brand-mark {
-          width: 30px;
+        .lb-public-nav__brand-logo {
+          width: auto;
           height: 30px;
-          display: grid;
-          place-items: center;
-          border-radius: 10px;
-          background: var(--primary);
-          color: var(--primary-ink);
-          font-size: 12px;
-          font-weight: 850;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+          max-width: min(42vw, 190px);
+          object-fit: contain;
         }
-        .lb-public-nav__brand-muted { color: rgba(245,245,247,.48); font-weight: 520; }
         .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
         .lb-navlink { display: none }
         .lb-navlink-mobile { display: inline-flex; align-items: center; justify-content: center; }
@@ -652,8 +648,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
           .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
-          .lb-public-nav__brand-mark { display: none; }
-          .lb-public-nav__brand { font-size: 12.5px; height: 38px; min-height: 38px; }
+          .lb-public-nav__brand { height: 38px; min-height: 38px; }
+          .lb-public-nav__brand-logo { height: 24px; max-width: min(45vw, 150px); }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }

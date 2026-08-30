@@ -3043,7 +3043,7 @@ Couverture auto existante : aucune — manuel.
 **NF-013 — Contraste et navigabilité clavier des CTA rectangulaires et des en-têtes teal**
 Priorité : Haute
 Étapes :
-1. Sur une page publique et un dashboard utilisant le nouveau pattern CTA rectangulaire majuscule + eyebrow teal (ex. `/scanner` : `p` teal « Staff », `h1.font-display` « Scanner »), vérifier le contraste texte/fond (WCAG AA, ratio ≥ 4.5:1 pour texte normal, 3:1 pour grand texte) pour le teal `--teal` (#4ee8c8) sur fond `--obsidian`/`--surface`.
+1. Sur une page publique et un dashboard utilisant le nouveau pattern CTA rectangulaire majuscule + eyebrow accent (ex. `/scanner` : `p` « Staff », `h1.font-display` « Scanner »), vérifier le contraste texte/fond (WCAG AA, ratio ≥ 4.5:1 pour texte normal, 3:1 pour grand texte) pour l'accent principal sur fond `--obsidian`/`--surface`.
 2. Naviguer entièrement au clavier (Tab/Shift+Tab/Entrée/Espace) à travers les CTA rectangulaires (boutons `primaryButtonStyle`, `dangerButtonStyle`, etc. dans `ScannerClient.tsx` et équivalents ailleurs) : vérifier un focus visible (outline ou équivalent) sur chaque bouton/lien.
 3. Vérifier les champs de saisie avec `<label>` visuellement masqué (`SR_ONLY_STYLE`) — confirmer avec un lecteur d'écran (VoiceOver/NVDA) que le label est bien annoncé (ex. « Code du billet », « Motif de l'annulation »).
 Résultat attendu : Contraste conforme AA sur fond sombre pour teal/gold/pink sur `--obsidian`/`--surface`/`--surface-2` ; focus clavier visible sur tous les CTA ; labels masqués visuellement mais lus par lecteurs d'écran.

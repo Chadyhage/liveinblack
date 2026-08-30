@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -308,7 +309,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <Link href="/profile" className={styles.brand} aria-label="LIVEINBLACK — vue d’ensemble">
-              <span className={styles.brandName}>LIVE<span>IN</span>BLACK</span>
+              <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} priority />
             </Link>
             <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
             <div className={styles.account}>

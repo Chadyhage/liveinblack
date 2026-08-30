@@ -25,16 +25,14 @@ Marketplace événementielle / nightlife en français (billetterie, organisateur
 Tout le style des composants applicatifs est fait avec des **objets `style={{}}` inline en TypeScript**, utilisant des **CSS custom properties**. Tailwind est actuellement importé (`@import "tailwindcss"` dans `app/globals.css`) et `app/layout.tsx` l'utilise pour quelques classes utilitaires de mise en page sur `<html>`/`<body>` (`h-full`, `antialiased`, `min-h-full`, `flex`, `flex-col`) — ce n'est donc pas une devDependency totalement inerte. Mais ce n'est PAS la convention de ce port : ne pas introduire de nouvelles classes Tailwind dans les composants applicatifs, rester sur le pattern `style={{}}` + `var(--*)` ci-dessous.
 
 Tokens définis dans `app/globals.css` (`:root`) :
-- `--obsidian` (#04040b) — fond
-- `--surface` (#0e0f16) — cartes
-- `--surface-2` (#12131c) — modals/menus
-- `--teal` (#4ee8c8) — accent principal
-- `--teal-solid` (#3ed6b5) — CTA teal plein
-- `--gold` (#c8a96e) — accent secondaire (agent, éléments premium)
-- `--pink` (#e05aaa) — badges
-- `--violet` (#8b5cf6)
-- `--border` (rgba blanc 0.08) / `--border-strong` (rgba blanc 0.18)
-- `--text` (blanc) / `--text-muted` (rgba blanc 0.6) / `--text-faint` (rgba blanc 0.4)
+- `--obsidian` (#191218) — fond
+- `--surface` (#241a23) — cartes
+- `--surface-2` (#1d141c) — modals/menus
+- `--primary` (#F53D8D) — accent principal
+- `--primary-strong` (#e02d7d) — CTA plein / hover
+- `--pink` (#FF75AD) — badges et alertes douces
+- `--border` (rgba rose 0.18) / `--border-strong` (rgba rose 0.34)
+- `--text` (blanc) / `--text-muted` (rgba blanc 0.76) / `--text-faint` (rgba blanc 0.62)
 
 Convention observée dans le code existant (ex. `app/components/AgentDashboardClient.tsx`) : constantes de style typées `React.CSSProperties` extraites en haut de fichier pour les styles réutilisés dans un composant, `style={{ ... }}` inline pour le reste. Suivre ce pattern plutôt que d'introduire des CSS modules ou du Tailwind.
 

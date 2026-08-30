@@ -11,7 +11,7 @@ export type ProviderCategory = {
 export const PROVIDER_CATEGORIES: ProviderCategory[] = [
   { id: 'artiste', label: 'Artistes, DJ & animation', singular: 'Artiste / DJ / animation', icon: 'mic', color: '#e05aaa', description: 'DJ, musicien, danseur, MC, performeur, animation…' },
   { id: 'salle', label: 'Salles & lieux', singular: 'Salle / lieu', icon: 'building', color: '#8b5cf6', description: 'Club, rooftop, loft, domaine, espace de réception…' },
-  { id: 'materiel', label: 'Technique & matériel', singular: 'Technique / matériel', icon: 'speaker', color: '#4ee8c8', description: 'Son, lumière, scène, vidéo, mobilier, structures…' },
+  { id: 'materiel', label: 'Technique & matériel', singular: 'Technique / matériel', icon: 'speaker', color: '#F53D8D', description: 'Son, lumière, scène, vidéo, mobilier, structures…' },
   { id: 'food', label: 'Food & boissons', singular: 'Food / boissons', icon: 'cart', color: '#c8a96e', description: 'Traiteur, bar, cocktails, food truck, pâtisserie…' },
   { id: 'photo_video', label: 'Photo & vidéo', singular: 'Photo / vidéo', icon: 'camera', color: '#38bdf8', description: 'Photographe, vidéaste, photobooth, drone, montage…' },
   { id: 'decoration', label: 'Décoration & scénographie', singular: 'Décoration / scénographie', icon: 'sparkle', color: '#f472b6', description: 'Décoration, fleurs, scénographie, design d’espace…' },

@@ -22,8 +22,8 @@ Extraction fidèle du design system réel de l'app (`app/globals.css` + `app/com
 
 1. **Pas de Tailwind dans les composants applicatifs** — uniquement `style={{}}` inline + `var(--*)`. Tailwind reste importé pour quelques classes utilitaires de layout sur `<html>/<body>` uniquement.
 2. **Jamais de `<button>`/`<input>` brut stylé inline** — toujours les composants de `app/components/ui/`.
-3. Un seul token de couleur d'accent (`--primary`, vert lime) — les alias `--teal`/`--gold`/`--violet` existent pour compatibilité avec du code plus ancien mais ne doivent plus être introduits dans du nouveau code.
-4. `CLAUDE.md` documente encore l'**ancienne** palette (teal `#4ee8c8`, gold `#c8a96e`, etc.) — ces valeurs sont obsolètes, `app/globals.css` (et donc `tokens.json` ici) fait foi. À corriger dans `CLAUDE.md` à l'occasion.
+3. Un seul token de couleur d'accent (`--primary`) — les alias `--teal`/`--gold`/`--violet` existent pour compatibilité avec du code plus ancien mais ne doivent plus être introduits dans du nouveau code.
+4. `CLAUDE.md` documente encore l'**ancienne** palette — ces valeurs sont obsolètes, `app/globals.css` (et donc `tokens.json` ici) fait foi. À corriger dans `CLAUDE.md` à l'occasion.
 
 ## Maintenance
 

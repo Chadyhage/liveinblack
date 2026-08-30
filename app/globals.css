@@ -717,7 +717,7 @@ html body *:not(#lb-shadow-opt-in)::after {
 
 
 
-/* Checkboxes/radios natifs du navigateur détonnent avec le thème teal/gold
+/* Checkboxes/radios natifs du navigateur détonnent avec le thème de marque
    (rendu par défaut clair/anguleux) — accent-color les aligne sur le design
    system sans avoir à styliser un composant custom partout où ils sont
    utilisés (organizer-studio, wizards d'inscription, etc.). */
