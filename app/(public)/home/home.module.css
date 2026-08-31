@@ -45,7 +45,7 @@
   opacity: 0;
   object-fit: cover;
   object-position: 58% 42%;
-  filter: saturate(.9) contrast(1.04) brightness(.98);
+  filter: brightness(.98);
   transition: opacity 700ms ease;
 }
 

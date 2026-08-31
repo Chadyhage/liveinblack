@@ -21,27 +21,27 @@ const DISC_ASSETS: Record<string, { img: string; bgPosition: string; filter: str
   house: {
     img: '/images/live-in-black/ambient/ambient-house-disco-grid.png',
     bgPosition: 'center 40%',
-    filter: 'brightness(0.7) saturate(1.4) contrast(1.1) hue-rotate(-20deg)',
+    filter: 'brightness(0.7)',
   },
   afro: {
     img: '/images/live-in-black/ambient/ambient-afro-percussion-haze.png',
     bgPosition: 'center 40%',
-    filter: 'brightness(0.7) saturate(1.6) contrast(1.1) hue-rotate(50deg)',
+    filter: 'brightness(0.7)',
   },
   techno: {
     img: '/images/live-in-black/ambient/ambient-techno-laser-tunnel.png',
     bgPosition: 'center 40%',
-    filter: 'brightness(0.7) saturate(1.8) contrast(1.15) hue-rotate(150deg)',
+    filter: 'brightness(0.7)',
   },
   lofi: {
     img: '/images/live-in-black/ambient/ambient-lofi-vinyl-lounge.png',
     bgPosition: 'center 35%',
-    filter: 'brightness(0.75) sepia(0.2) contrast(1.1)',
+    filter: 'brightness(0.75)',
   },
   nuit: {
     img: '/images/live-in-black/ambient/ambient-nuit-rooftop-moon.png',
     bgPosition: 'center 50%',
-    filter: 'brightness(0.7) saturate(1.3) contrast(1.1)',
+    filter: 'brightness(0.7)',
   },
 }
 

@@ -157,7 +157,7 @@ body::before {
     radial-gradient(circle at 78% 10%, rgba(245, 61, 141, .06), transparent 34%),
     linear-gradient(180deg, rgba(25, 18, 24, .8) 0%, rgba(25, 18, 24, .89) 52%, rgba(25, 18, 24, .95) 100%),
     url('/media1.jpg') 58% center / cover no-repeat;
-  filter: saturate(.7) contrast(1.02) blur(3px);
+  filter: blur(3px);
 }
 
 h1, h2, h3, .heading {

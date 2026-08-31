@@ -299,7 +299,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
               <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(60%)', flexShrink: 0 }} />
+                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
                   <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0 }}>
@@ -330,7 +330,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <div style={{ display: 'grid', gap: 10 }}>
             {pagedPastEvents.map((event) => (
               <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', filter: 'grayscale(30%)', flexShrink: 0 }} />
+                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
                   <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0 }}>
