@@ -6,7 +6,7 @@ const TONE_STYLES: Record<BadgeTone, CSSProperties> = {
   teal: { background: 'var(--primary-a14)', color: 'var(--primary)' },
   gold: { background: 'var(--primary-a16)', color: 'var(--gold)' },
   pink: { background: 'rgba(255,107,0,0.14)', color: 'var(--pink)' },
-  violet: { background: 'rgba(124,58,237,0.16)', color: 'var(--violet)' },
+  violet: { background: 'rgba(200,169,110,0.16)', color: 'var(--violet)' },
   danger: { background: 'rgba(224,90,90,0.16)', color: '#e05a5a' },
   neutral: { background: 'var(--surface-2)', color: 'var(--text-muted)' },
 }

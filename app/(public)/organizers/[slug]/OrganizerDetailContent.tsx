@@ -70,7 +70,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           <ArrowLeft size={16} /> Organisateurs
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', background: 'linear-gradient(135deg, var(--surface-2), rgba(245,61,141,.22))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
+      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', background: 'linear-gradient(135deg, var(--surface-2), rgba(200,169,110,.22))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
         <Image src={reliablePhotoUrl(organizer.bannerUrl, organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
       </div>

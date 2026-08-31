@@ -78,7 +78,7 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
         {listings.map((listing) => (
           <Card
             key={listing.id}
-            accent="rgba(139,92,246,0.25)"
+            accent="rgba(200,169,110,0.25)"
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 14px' }}
           >
             <div style={{ minWidth: 0 }}>
@@ -107,7 +107,7 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
           </Card>
         ))}
       </div>
-      {error && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}
+      {error && <p style={{ fontSize: 11.5, color: '#c8a96e', margin: '8px 0 0' }}>{error}</p>}
     </section>
   )
 }

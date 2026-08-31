@@ -53,10 +53,10 @@
 .workspace :global(.lb-agent-screen--applications) { --screen-accent: #c4a7ff; }
 .workspace :global(.lb-agent-screen--payments) { --screen-accent: #ffd36a; }
 .workspace :global(.lb-agent-screen--deletions),
-.workspace :global(.lb-agent-screen--reports) { --screen-accent: #ff8fb2; }
+.workspace :global(.lb-agent-screen--reports) { --screen-accent: #e8d49e; }
 .workspace :global(.lb-agent-screen--reviews) { --screen-accent: #ffcf5a; }
 .workspace :global(.lb-agent-screen--homepage),
-.workspace :global(.lb-agent-screen--blog) { --screen-accent: #ff8fb2; }
+.workspace :global(.lb-agent-screen--blog) { --screen-accent: #e8d49e; }
 
 .workspace :global(.lb-agent-screen) > div > div:first-child:has(.lb-dashboard-title),
 .workspace :global(.lb-agent-screen) > div > div:first-child > div:has(.lb-dashboard-title) {

@@ -219,7 +219,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             padding: '12px 14px',
             marginBottom: 14,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(224,90,170,0.5)'}`,
+            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(200,169,110,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
             fontSize: 13,
@@ -306,7 +306,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                     {event.dateDisplay || event.date} · {event.city}
                   </p>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.15)', color: 'var(--pink)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>Annulé</span>
+                <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(200,169,110,0.15)', color: 'var(--pink)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>Annulé</span>
                 <Button
                   variant="secondary"
                   size="sm"

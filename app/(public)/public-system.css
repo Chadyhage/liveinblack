@@ -99,7 +99,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
 }
 .lb-auth-split__form :where(input, textarea)::placeholder { color: rgba(245, 245, 247, .34); }
-.lb-auth-split__form :where(input, textarea):focus { border-color: rgba(245, 61, 141, .75) !important; box-shadow: 0 0 0 4px rgba(245, 61, 141, .12) !important; }
+.lb-auth-split__form :where(input, textarea):focus { border-color: rgba(200, 169, 110, .75) !important; box-shadow: 0 0 0 4px rgba(200, 169, 110, .12) !important; }
 .lb-auth-split__form button,
 .lb-auth-split__form a[style*="primaryBtn"] { min-height: 46px; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 650 !important; }
 .lb-auth-form > div:first-of-type { margin-bottom: 20px !important; }
@@ -112,7 +112,7 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, .14);
 }
 .lb-auth-form .lb-role-card button { min-height: 64px !important; padding: 10px !important; }
-.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(245, 61, 141, .48) !important; background: rgba(245, 61, 141, .065) !important; }
+.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(200, 169, 110, .48) !important; background: rgba(200, 169, 110, .065) !important; }
 .lb-auth-form [role="tablist"] { min-height: 38px; padding: 3px !important; border-radius: 11px !important; background: rgba(255, 255, 255, .075) !important; }
 .lb-auth-form [role="tab"] { min-height: 32px; border-radius: 9px !important; }
 .lb-auth-state {

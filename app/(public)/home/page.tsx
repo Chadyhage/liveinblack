@@ -255,7 +255,7 @@ export default async function AccueilPage() {
         <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
           <Card
             accent="var(--primary-a35)"
-            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),rgba(159, 224, 34,.04)),var(--surface)' }}
+            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),rgba(200, 169, 110,.04)),var(--surface)' }}
           >
             <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
             <h2 style={{ margin: '7px 0 5px', fontSize: 16 }}>Des soirées vraiment faites pour toi</h2>
@@ -452,7 +452,7 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false, f
           <DateBadge dateISO={event.date} />
         )}
         {boosted && <span style={{ position: 'absolute', top: 12, right: 12, borderRadius: 999, background: 'var(--gold)', color: '#181104', padding: '5px 10px', fontSize: 12, fontWeight: 900 }}>À LA UNE</span>}
-        {reason && <span style={{ position: 'absolute', left: 12, bottom: 12, maxWidth: 'calc(100% - 24px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(132,68,255,.48)', background: 'rgba(5,6,10,.86)', color: '#e5d8ff', padding: '6px 12px', fontSize: 13, fontWeight: 700 }}>{reason}</span>}
+        {reason && <span style={{ position: 'absolute', left: 12, bottom: 12, maxWidth: 'calc(100% - 24px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', borderRadius: 999, border: '1px solid rgba(200,169,110,.48)', background: 'rgba(5,6,10,.86)', color: '#f4e6be', padding: '6px 12px', fontSize: 13, fontWeight: 700 }}>{reason}</span>}
       </div>
       <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <p style={{ margin: 0, color: '#fff', fontSize: isRanking ? 24 : 22, lineHeight: 1.16, fontWeight: 800, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{event.name}</p>

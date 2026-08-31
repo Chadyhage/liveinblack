@@ -481,7 +481,7 @@ export default function EventCheckoutPanel({
       )}
 
       {disabled && (
-        <div style={{ marginBottom: 14, padding: '12px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', borderRadius: 12 }}>
+        <div style={{ marginBottom: 14, padding: '12px 14px', background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.28)', borderRadius: 12 }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--pink)', margin: 0 }}>{bookingDisabledReason}</p>
         </div>
       )}
@@ -525,7 +525,7 @@ export default function EventCheckoutPanel({
                     fontSize: 10.5,
                     fontWeight: 700,
                     color: 'var(--violet)',
-                    background: 'rgba(139,92,246,.14)',
+                    background: 'rgba(200,169,110,.14)',
                     padding: '2px 8px',
                     borderRadius: 999,
                   }}
@@ -667,7 +667,7 @@ export default function EventCheckoutPanel({
                         borderRadius: 9,
                         border: 'none',
                         background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--teal-solid)',
-                        color: !promoInput.trim() ? 'var(--text-faint)' : '#250817',
+                        color: !promoInput.trim() ? 'var(--text-faint)' : '#17130c',
                         fontSize: 12.5,
                         fontWeight: 700,
                       }}
@@ -836,7 +836,7 @@ export default function EventCheckoutPanel({
           )}
 
           {checkoutError && (
-            <div role="alert" style={{ background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.30)', borderRadius: 12, padding: '12px 14px' }}>
+            <div role="alert" style={{ background: 'rgba(200,169,110,0.10)', border: '1px solid rgba(200,169,110,0.30)', borderRadius: 12, padding: '12px 14px' }}>
               <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0, lineHeight: 1.5 }}>{checkoutError}</p>
             </div>
           )}
@@ -856,7 +856,7 @@ export default function EventCheckoutPanel({
               fontWeight: 500,
               textTransform: 'none',
               letterSpacing: 'normal',
-              color: buyDisabled ? 'var(--text-faint)' : '#250817',
+              color: buyDisabled ? 'var(--text-faint)' : '#17130c',
               background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg, var(--primary), var(--primary-strong))',
               boxShadow: buyDisabled ? 'none' : '0 8px 26px var(--primary-a32)',
             }}

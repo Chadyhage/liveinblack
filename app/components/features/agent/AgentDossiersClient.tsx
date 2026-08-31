@@ -83,9 +83,9 @@ const SECTIONS: { key: string; label: string; color: string; statuses: Applicati
   { key: 'pending', label: 'En attente', color: 'var(--gold)', statuses: ['submitted'] },
   { key: 'review', label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
   { key: 'correction', label: 'À corriger', color: '#f59e0b', statuses: ['needs_changes'] },
-  { key: 'resubmitted', label: 'Re-soumis', color: '#a78bfa', statuses: ['resubmitted'] },
-  { key: 'validated', label: 'Validés', color: '#F53D8D', statuses: ['approved'] },
-  { key: 'refused', label: 'Refusés', color: '#e05aaa', statuses: ['rejected', 'suspended'] },
+  { key: 'resubmitted', label: 'Re-soumis', color: '#d7bd82', statuses: ['resubmitted'] },
+  { key: 'validated', label: 'Validés', color: '#c8a96e', statuses: ['approved'] },
+  { key: 'refused', label: 'Refusés', color: '#c8a96e', statuses: ['rejected', 'suspended'] },
 ]
 
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
@@ -104,10 +104,10 @@ const STATUS_COLOR: Record<ApplicationStatus, string> = {
   submitted: 'var(--gold)',
   under_review: '#3b82f6',
   needs_changes: '#f59e0b',
-  resubmitted: '#a78bfa',
-  approved: '#F53D8D',
-  rejected: '#e05aaa',
-  suspended: '#e05aaa',
+  resubmitted: '#d7bd82',
+  approved: '#c8a96e',
+  rejected: '#c8a96e',
+  suspended: '#c8a96e',
 }
 
 const AUDIT_ACTION_LABEL: Record<string, string> = {
@@ -122,13 +122,13 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
 }
 const AUDIT_ACTION_COLOR: Record<string, string> = {
   submitted: 'var(--gold)',
-  resubmitted: '#a78bfa',
+  resubmitted: '#d7bd82',
   under_review: '#3b82f6',
-  approve: '#F53D8D',
+  approve: '#c8a96e',
   request_changes: '#f59e0b',
-  reject: '#e05aaa',
-  suspended: '#e05aaa',
-  reactivated: '#F53D8D',
+  reject: '#c8a96e',
+  suspended: '#c8a96e',
+  reactivated: '#c8a96e',
 }
 const AUTO_NOTE_ACTIONS = new Set(['submitted', 'resubmitted'])
 
@@ -522,7 +522,7 @@ export default function AgentDossiersClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
+          <Card accent="rgba(200,169,110,.35)" className={styles.error} role="alert">
             <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les dossiers</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
             <Button variant="secondary" onClick={loadList}>Réessayer</Button>
           </Card>
@@ -605,7 +605,7 @@ export default function AgentDossiersClient() {
         <SlideOverModal onClose={closeDetail} ariaLabel="Détail du dossier">
           <div className={styles.drawerContent}>
             {detailError ? (
-              <Card accent="rgba(224,90,170,.35)" className={styles.drawerError}>
+              <Card accent="rgba(200,169,110,.35)" className={styles.drawerError}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le dossier n’existe peut-être plus, ou une erreur serveur est survenue.</p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
@@ -726,14 +726,14 @@ function DetailPanel({
       <div>
         <p style={sectionTitleStyle}>Complétude</p>
         <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--teal)' : completeness >= 50 ? 'var(--gold)' : '#e05aaa' }} />
+          <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--teal)' : completeness >= 50 ? 'var(--gold)' : '#c8a96e' }} />
         </div>
         <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>{completeness}%</p>
       </div>
 
       {detail.candidateNote && (
-        <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, padding: 14 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
+        <div style={{ background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.3)', borderRadius: 12, padding: 14 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#d7bd82', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
             {detail.status === 'resubmitted' ? 'Message joint à la re-soumission' : 'Message joint à la soumission'}
           </p>
           <p style={{ fontSize: 13.5, color: '#fff', margin: 0, fontStyle: 'italic' }}>« {detail.candidateNote} »</p>
@@ -875,7 +875,7 @@ function DossierActions({
   const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
   const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
   const amber: React.CSSProperties = { ...btnBase, background: '#f59e0b', color: '#1a1508' }
-  const pink: React.CSSProperties = { ...btnBase, background: '#c2347f', color: '#fff' }
+  const pink: React.CSSProperties = { ...btnBase, background: '#ff7b7b', color: '#fff' }
   const blue: React.CSSProperties = { ...btnBase, background: '#3b82f6', color: '#fff' }
 
   function reset() {

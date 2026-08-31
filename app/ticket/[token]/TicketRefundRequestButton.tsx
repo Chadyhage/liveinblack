@@ -75,7 +75,7 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
           void handleClick()
         }}
       />
-      {message && <p style={{ fontSize: 11.5, color: '#e05aaa', textAlign: 'center', margin: 0 }}>{message}</p>}
+      {message && <p style={{ fontSize: 11.5, color: '#c8a96e', textAlign: 'center', margin: 0 }}>{message}</p>}
     </div>
   )
 }

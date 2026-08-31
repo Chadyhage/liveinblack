@@ -690,7 +690,7 @@ export default function PrestataireOnboardingWizard({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Finaliser</h2>
               {missingDocs.length > 0 ? (
-                <p style={{ fontSize: 12.5, color: '#e05aaa', margin: 0 }}>
+                <p style={{ fontSize: 12.5, color: '#c8a96e', margin: 0 }}>
                   Documents manquants : {missingDocs.map((k) => DOC_LABELS[k] || k).join(', ')}
                 </p>
               ) : (
@@ -710,7 +710,7 @@ export default function PrestataireOnboardingWizard({
             </div>
           )}
 
-          {error && <p style={{ fontSize: 12.5, color: '#e05aaa', marginTop: 14 }}>{error}</p>}
+          {error && <p style={{ fontSize: 12.5, color: '#c8a96e', marginTop: 14 }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
             {step > 0 && (
@@ -808,7 +808,7 @@ function DocUpload({
           {files.map((f, i) => (
             <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
               <span>{f.name}</span>
-              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#e05aaa', fontSize: 12, textDecoration: 'none' }}>
+              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#c8a96e', fontSize: 12, textDecoration: 'none' }}>
                 Retirer
               </Button>
             </div>

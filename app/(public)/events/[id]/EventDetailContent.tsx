@@ -231,7 +231,7 @@ export default async function EventDetailContent({
         <div style={{ padding: '12px 16px 0' }}>
           <Link
             href={session?.user ? `/playlist/${event.id}` : `/login?next=${encodeURIComponent(`/playlist/${event.id}`)}`}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 999, border: '1px solid rgba(245,61,141,.35)', background: 'rgba(245,61,141,.12)', color: 'var(--primary)', fontSize: 13.5, fontWeight: 800, textDecoration: 'none' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 999, border: '1px solid rgba(200,169,110,.35)', background: 'rgba(200,169,110,.12)', color: 'var(--primary)', fontSize: 13.5, fontWeight: 800, textDecoration: 'none' }}
           >
             🎵 Playlist interactive · Proposer un son
           </Link>
@@ -330,7 +330,7 @@ export default async function EventDetailContent({
                     <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(place.price, currency)}</span>
                   </div>
                   {place.groupType === 'group' && (
-                    <span style={{ display: 'inline-block', marginTop: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--primary)', background: 'rgba(245,61,141,.14)', padding: '3px 10px', borderRadius: 999 }}>
+                    <span style={{ display: 'inline-block', marginTop: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--primary)', background: 'rgba(200,169,110,.14)', padding: '3px 10px', borderRadius: 999 }}>
                       Place de groupe · {place.groupMin}-{place.groupMax} pers.
                     </span>
                   )}
@@ -394,7 +394,7 @@ export default async function EventDetailContent({
           ) : (
             <Link
               href={loginHref}
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 48, padding: '12px 28px', borderRadius: 14, fontSize: 15.5, fontWeight: 750, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', boxShadow: '0 6px 20px rgba(245, 61, 141, 0.28)' }}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 48, padding: '12px 28px', borderRadius: 14, fontSize: 15.5, fontWeight: 750, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', boxShadow: '0 6px 20px rgba(200, 169, 110, 0.28)' }}
             >
               Se connecter pour réserver
             </Link>

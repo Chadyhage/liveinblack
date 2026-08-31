@@ -601,7 +601,7 @@ export default function PlaylistClient({
             padding: '12px 16px',
             borderRadius: 14,
             border: `1px solid ${HEX.gold}55`,
-            background: 'linear-gradient(135deg, var(--primary-a14), rgba(139,92,246,0.10))',
+            background: 'linear-gradient(135deg, var(--primary-a14), rgba(200,169,110,0.10))',
             marginBottom: 18,
           }}
         >
@@ -1042,7 +1042,7 @@ export default function PlaylistClient({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              background: 'rgba(224,90,170,0.14)',
+                              background: 'rgba(200,169,110,0.14)',
                               border: `1px solid ${HEX.pink}8c`,
                               color: 'var(--pink)',
                             }}

@@ -23,7 +23,7 @@ import { Button, Input, Modal, SlideOverModal, Skeleton } from '@/app/components
 // Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
 // hex locales pour permettre la composition alpha (`${color}24` etc.), ce que
 // `var(--teal)` ne permet pas en concaténation de chaîne.
-const C = { teal: 'var(--teal)', gold: 'var(--gold)', violet: '#8b5cf6', pink: '#e05aaa' }
+const C = { teal: 'var(--teal)', gold: 'var(--gold)', violet: '#c8a96e', pink: '#c8a96e' }
 
 type InviteRole = 'serveur' | 'scan' | 'dj' | 'vendeur'
 
@@ -346,7 +346,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
-          <p style={{ fontSize: 13, color: '#ff9ed2', textAlign: 'center', padding: '20px 0', margin: 0 }}>
+          <p style={{ fontSize: 13, color: '#e8d49e', textAlign: 'center', padding: '20px 0', margin: 0 }}>
             Impossible de charger l&apos;équipe — vérifie ta connexion.
           </p>
         ) : (
@@ -440,7 +440,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             padding: '8px 14px',
                             borderRadius: 10,
                             border: '1px solid transparent',
-                            color: '#250817',
+                            color: '#17130c',
                             fontSize: 12.5,
                             fontWeight: 700,
                             background: 'var(--teal-solid)',
@@ -463,7 +463,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   borderRadius: 12,
                   fontSize: 13,
                   textAlign: 'center',
-                  border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid var(--primary-a05)',
+                  border: isErr ? '1px solid rgba(200,169,110,0.5)' : '1px solid var(--primary-a05)',
                   background: 'rgba(12,12,22,0.96)',
                   color: '#fff',
                 }}
@@ -517,9 +517,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                         minWidth: 44,
                         padding: 0,
                         borderRadius: 12,
-                        background: 'rgba(224,90,170,0.14)',
-                        border: '1px solid rgba(224,90,170,0.45)',
-                        color: '#ff9ed2',
+                        background: 'rgba(200,169,110,0.14)',
+                        border: '1px solid rgba(200,169,110,0.45)',
+                        color: '#e8d49e',
                       }}
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -552,8 +552,8 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'rgba(224,90,170,0.12)',
-                  border: '1px solid rgba(224,90,170,0.35)',
+                  background: 'rgba(200,169,110,0.12)',
+                  border: '1px solid rgba(200,169,110,0.35)',
                 }}
               >
                 <IconAlert size={18} color="var(--pink)" />

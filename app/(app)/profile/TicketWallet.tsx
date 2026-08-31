@@ -413,7 +413,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
               fontWeight: 700,
               fontSize: 13.5,
               margin: '0 0 2px',
-              color: cancelled ? '#e05aaa' : past ? 'var(--text-muted)' : '#fff',
+              color: cancelled ? '#c8a96e' : past ? 'var(--text-muted)' : '#fff',
               textDecoration: cancelled ? 'line-through' : 'none',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -425,7 +425,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
           <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>{event?.dateDisplay || event?.date || ''}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-          {cancelled && <Pill color="#e05aaa" bg="rgba(224,90,170,0.12)">Annulé</Pill>}
+          {cancelled && <Pill color="#c8a96e" bg="rgba(200,169,110,0.12)">Annulé</Pill>}
           {past && !cancelled && <Pill color="var(--text-faint)" bg="rgba(255,255,255,0.06)">Terminé</Pill>}
           <Pill color="var(--teal)" bg="var(--primary-a10)">
             {group.myTickets.length} billet{group.myTickets.length > 1 ? 's' : ''}
@@ -434,7 +434,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       </Link>
 
       {showCancelBanner && (
-        <div style={{ margin: '0 14px 14px', padding: 14, borderRadius: 12, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.25)' }}>
+        <div style={{ margin: '0 14px 14px', padding: 14, borderRadius: 12, background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.25)' }}>
           <p style={{ fontSize: 13, color: '#fff', margin: '0 0 10px', lineHeight: 1.5 }}>
             Cet événement n&apos;aura pas lieu. Pour toute question concernant ton billet ou un remboursement, contacte le support.
           </p>
@@ -604,7 +604,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
   }
 
   return (
-    <div style={{ margin: '0 14px 14px', padding: 16, borderRadius: 12, background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.20)', position: 'relative' }}>
+    <div style={{ margin: '0 14px 14px', padding: 16, borderRadius: 12, background: 'rgba(200,169,110,0.06)', border: '1px solid rgba(200,169,110,0.20)', position: 'relative' }}>
       {toast && (
         <div
           style={{
@@ -665,7 +665,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                       })
                     }
                     disabled={busyCode === seat.ticketCode}
-                    style={smallBtnStyle('rgba(224,90,170,0.14)', '#e05aaa')}
+                    style={smallBtnStyle('rgba(200,169,110,0.14)', '#c8a96e')}
                   >
                     Reprendre
                   </Button>
@@ -694,7 +694,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                       setOpenInviteFor(openInviteFor === seat.ticketCode ? null : seat.ticketCode)
                       setEmailDraft('')
                     }}
-                    style={smallBtnStyle('rgba(139,92,246,0.16)', 'var(--violet)')}
+                    style={smallBtnStyle('rgba(200,169,110,0.16)', 'var(--violet)')}
                   >
                     Inviter
                   </Button>
@@ -1106,7 +1106,7 @@ function PremiumTicketCard({
                 loadingText="Création…"
                 title="Une belle image 9:16 pour Instagram — sans le QR code"
                 icon={<Sparkles size={15} aria-hidden="true" />}
-                style={actionBtnStyle(false, 'rgba(224,90,170,0.14)', '#e05aaa')}
+                style={actionBtnStyle(false, 'rgba(200,169,110,0.14)', '#c8a96e')}
               >
                 Story
               </Button>
@@ -1120,13 +1120,13 @@ function PremiumTicketCard({
                   loading={refundState === 'busy'}
                   loadingText="Envoi…"
                   icon={<HandCoins size={15} aria-hidden="true" />}
-                  style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'rgba(224,90,170,0.14)', '#e05aaa')}
+                  style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'rgba(200,169,110,0.14)', '#c8a96e')}
                 >
                   {refundState === 'done' ? 'Demandé' : 'Rembourser'}
                 </Button>
               )}
               {ticket.resellable && !activeListing && (
-                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={15} aria-hidden="true" />} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
+                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={15} aria-hidden="true" />} style={actionBtnStyle(false, 'rgba(200,169,110,0.14)', 'var(--violet)')}>
                   Revendre
                 </Button>
               )}
@@ -1146,9 +1146,9 @@ function PremiumTicketCard({
               )}
             </div>
             {downloadState === 'err' && (
-              <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>Le téléchargement n&apos;a pas pu démarrer. Réessaie dans quelques secondes.</p>
+              <p style={{ fontSize: 11.5, color: '#c8a96e', margin: 0 }}>Le téléchargement n&apos;a pas pu démarrer. Réessaie dans quelques secondes.</p>
             )}
-            {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
+            {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#c8a96e', margin: 0 }}>{refundErr}</p>}
 
             {withdrawConfirmOpen && (
               <Modal
@@ -1231,7 +1231,7 @@ function PremiumTicketCard({
                     Confirmer
                   </Button>
                 </div>
-                {resellState === 'err' && resellErr && <p role="alert" style={{ fontSize: 13.5, color: '#ff8fc7', margin: 0 }}>{resellErr}</p>}
+                {resellState === 'err' && resellErr && <p role="alert" style={{ fontSize: 13.5, color: '#e8d49e', margin: 0 }}>{resellErr}</p>}
               </div>
             )}
           </>

@@ -3,36 +3,36 @@
 // clients mail les filtrent. Les couleurs reprennent donc leurs valeurs réelles.
 export const EMAIL_COLORS = {
   // Même fond que les modales et menus de l'application (--surface-2).
-  background: '#191218',
-  surface: '#241a23',
-  surface2: '#1d141c',
+  background: '#181714',
+  surface: '#242018',
+  surface2: '#1d1a14',
   surface3: '#2a1f29',
 
-  obsidian: '#191218',
-  obsidianRaised: '#241a23',
-  primary: '#F53D8D',
-  primaryStrong: '#e02d7d',
-  primarySoft: '#3a1827',
-  primaryText: '#F53D8D',
+  obsidian: '#181714',
+  obsidianRaised: '#242018',
+  primary: '#c8a96e',
+  primaryStrong: '#e2c37e',
+  primarySoft: '#3a301f',
+  primaryText: '#c8a96e',
   primaryInk: '#ffffff',
-  pink: '#FF75AD',
+  pink: '#e8d49e',
 
   text: '#ffffff',
   textMuted: '#d5d1dc',
   textFaint: '#aaa4b4',
-  border: '#3c2838',
-  borderStrong: '#5c3d56',
+  border: '#3c3426',
+  borderStrong: '#5c4d32',
 
-  success: '#ff8fb2',
-  successSoft: '#2a1320',
+  success: '#e8d49e',
+  successSoft: '#2a2418',
   warning: '#ffc66d',
   warningSoft: '#2a2113',
   danger: '#ff7b7b',
   dangerSoft: '#2c171b',
 
-  ink: '#191218',
-  mint: '#1d141c',
-  mintStrong: '#3a1827',
+  ink: '#181714',
+  mint: '#1d1a14',
+  mintStrong: '#3a301f',
 } as const
 
 export const EMAIL_FONTS = {

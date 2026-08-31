@@ -149,8 +149,8 @@ type ConfirmAction =
 // files financières plutôt que dans sa propre entrée de sidebar.
 const SECTIONS = [
   { key: 'payouts', label: 'Reversements', helper: 'À verser', color: '#f5c96a', icon: Landmark },
-  { key: 'refunds', label: 'Remboursements', helper: 'À restituer', color: '#ff8fb2', icon: RotateCcw },
-  { key: 'alerts', label: 'Alertes paiement', helper: 'À vérifier', color: '#ff8fb2', icon: ShieldCheck },
+  { key: 'refunds', label: 'Remboursements', helper: 'À restituer', color: '#e8d49e', icon: RotateCcw },
+  { key: 'alerts', label: 'Alertes paiement', helper: 'À vérifier', color: '#e8d49e', icon: ShieldCheck },
   { key: 'boosts', label: 'Boosts', helper: 'Suivi commercial', color: '#c4a7ff', icon: Megaphone },
 ] as const
 type SectionKey = (typeof SECTIONS)[number]['key']
@@ -349,7 +349,7 @@ export default function AgentPaymentsClient() {
         </div>
 
         {loadError && (
-          <Card accent="rgba(255,143,178,0.35)" className={styles.error} role="alert">
+          <Card accent="rgba(232,212,158,0.35)" className={styles.error} role="alert">
             <div className={styles.errorCopy}>
               <AlertTriangle size={20} aria-hidden="true" />
               <div>
@@ -508,7 +508,7 @@ function PayoutsSection({
           <QueueHeader icon={<Smartphone size={18} aria-hidden="true" />} title="Versements Mobile Money en échec" description="À régler dans FedaPay avant de les marquer comme payés." count={failedPayouts.length} tone="danger" />
           <div className={styles.cardGrid}>
             {failedPayoutsPageItems.map((p) => (
-              <Card key={p.eventId} accent="rgba(255,143,178,0.3)" className={`${styles.moneyCard} ${styles.dangerCard}`} role="article" aria-label={`Versement en échec pour ${p.eventName}, ${fmtXOF(p.amountDueXOF)}`}>
+              <Card key={p.eventId} accent="rgba(232,212,158,0.3)" className={`${styles.moneyCard} ${styles.dangerCard}`} role="article" aria-label={`Versement en échec pour ${p.eventName}, ${fmtXOF(p.amountDueXOF)}`}>
                 <div className={styles.cardTop}>
                   <div className={styles.identity}>
                     <span className={`${styles.identityIcon} ${styles.dangerIcon}`} aria-hidden="true"><AlertTriangle size={18} /></span>
@@ -655,7 +655,7 @@ function RefundsSection({
   const { pageItems, pageCount } = useMemo(() => pagedSlice(refunds, page, PAGE_SIZE), [refunds, page])
   return (
     <div className={styles.sectionStack}>
-      <Card accent="rgba(255,143,178,0.3)" className={styles.guideCard} role="note">
+      <Card accent="rgba(232,212,158,0.3)" className={styles.guideCard} role="note">
         <div className={`${styles.guideIcon} ${styles.refundGuideIcon}`} aria-hidden="true"><RotateCcw size={20} /></div>
         <div><strong>Remboursements Mobile Money</strong><p>Exécutez d’abord le remboursement dans FedaPay, puis confirmez-le ici. Les paiements Stripe sont remboursés automatiquement.</p></div>
       </Card>
@@ -705,7 +705,7 @@ function AlertsSection({
   const { pageItems, pageCount } = useMemo(() => pagedSlice(alerts, page, PAGE_SIZE), [alerts, page])
   return (
     <div className={styles.sectionStack}>
-      <Card accent="rgba(255,143,178,0.3)" className={styles.guideCard} role="note">
+      <Card accent="rgba(232,212,158,0.3)" className={styles.guideCard} role="note">
         <div className={`${styles.guideIcon} ${styles.alertGuideIcon}`} aria-hidden="true"><ShieldCheck size={20} /></div>
         <div><strong>Contrôle avant clôture</strong><p>Vérifiez la transaction dans Stripe ou FedaPay avant de rembourser, corriger ou clôturer une alerte.</p></div>
       </Card>
@@ -714,7 +714,7 @@ function AlertsSection({
       ) : (
         <div className={styles.cardGrid}>
           {pageItems.map((a) => (
-            <Card key={a.id} accent="rgba(255,143,178,0.32)" className={`${styles.moneyCard} ${styles.dangerCard}`} role="article" aria-label={`Alerte financière : ${ALERT_REASON_LABEL[a.reason] || a.reason}`}>
+            <Card key={a.id} accent="rgba(232,212,158,0.32)" className={`${styles.moneyCard} ${styles.dangerCard}`} role="article" aria-label={`Alerte financière : ${ALERT_REASON_LABEL[a.reason] || a.reason}`}>
               <div className={styles.cardTop}>
                 <div className={styles.identity}>
                   <span className={`${styles.identityIcon} ${styles.dangerIcon}`} aria-hidden="true"><AlertTriangle size={18} /></span>

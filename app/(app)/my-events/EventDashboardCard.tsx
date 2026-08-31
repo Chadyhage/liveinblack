@@ -18,7 +18,7 @@ const ACTIONS: { key: EventActionKey; label: string; color: string }[] = [
   { key: 'duplicate', label: 'Dupliquer', color: 'var(--violet)' },
   { key: 'edit', label: 'Modifier', color: 'var(--gold)' },
   { key: 'postpone', label: 'Reporter', color: 'var(--gold)' },
-  { key: 'delete', label: 'Supprimer / Annuler', color: '#e05aaa' },
+  { key: 'delete', label: 'Supprimer / Annuler', color: '#c8a96e' },
 ]
 const PRIMARY_ACTION_KEYS = new Set<EventActionKey>(['stats', 'bookings', 'edit', 'staff'])
 

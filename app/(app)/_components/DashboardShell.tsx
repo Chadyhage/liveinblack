@@ -470,7 +470,7 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
             fontWeight: 800,
             lineHeight: 1.4,
             color: '#fff',
-            background: 'rgba(224,90,170,0.85)',
+            background: 'rgba(200,169,110,0.85)',
             borderRadius: 999,
             padding: '1px 6px',
             flexShrink: 0,

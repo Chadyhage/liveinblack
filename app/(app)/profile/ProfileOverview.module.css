@@ -5,7 +5,7 @@
 .email { max-width: 100%; margin: 0; overflow: hidden; color: rgba(245,245,247,.68); font-size: 13.5px; text-overflow: ellipsis; white-space: nowrap; }
 .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; }
 .editLink { min-height: var(--control-height-md); display: inline-flex; align-items: center; color: var(--primary); font-size: 14px; font-weight: 700; text-decoration: none; }
-.logout { margin-top: 6px !important; border-radius: 12px !important; border-color: rgba(245, 61, 141, .35) !important; color: var(--primary) !important; font-size: 14.5px !important; }
+.logout { margin-top: 6px !important; border-radius: 12px !important; border-color: rgba(200, 169, 110, .35) !important; color: var(--primary) !important; font-size: 14.5px !important; }
 .content { display: flex; flex-direction: column; gap: 12px; }
 .points { position: relative; min-height: 84px; overflow: hidden; padding: 16px 18px !important; border-radius: 18px !important; border: 1px solid rgba(255,255,255,.12) !important; background: linear-gradient(125deg, var(--primary-a10), rgba(255,255,255,.032)) !important; }
 .points::after { content: ""; position: absolute; width: 112px; height: 112px; right: -44px; bottom: -68px; border-radius: 50%; background: var(--primary-a12); }

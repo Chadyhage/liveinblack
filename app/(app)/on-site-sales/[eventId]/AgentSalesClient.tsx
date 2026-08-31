@@ -281,7 +281,7 @@ export default function AgentSalesClient({
           Encaisser la vente
         </Button>
 
-        {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
+        {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#c8a96e', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
       </Card>
 
       <ConfirmDialog

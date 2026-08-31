@@ -80,14 +80,14 @@ interface BadgeColors {
 const ROLE_BADGE: Record<Role, BadgeColors> = {
   client: { color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' },
   organisateur: { color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' },
-  prestataire: { color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
+  prestataire: { color: 'var(--pink)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' },
   agent: { color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' },
 }
 
 function statusLabel(u: UserSummary): { label: string } & BadgeColors {
   if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
   if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' }
-  if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
+  if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'rgba(200,169,110,0.35)', bg: 'rgba(200,169,110,0.14)' }
   return { label: 'ACTIF', color: 'var(--primary)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' }
 }
 
@@ -365,7 +365,7 @@ export default function AgentUsersClient() {
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--users">
       <div className={styles.pageStack}>
         {listError && (
-          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(200,169,110,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={triggerReload} style={{ fontSize: 12.5 }}>
               Recharger
@@ -449,7 +449,7 @@ export default function AgentUsersClient() {
         <SlideOverModal onClose={closeDetail} ariaLabel="Détail du compte">
           <div className={styles.inspectorBody}>
             {detailError ? (
-              <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+              <Card accent="rgba(200,169,110,0.35)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le compte n’existe peut-être plus, ou une erreur serveur est survenue.</p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>

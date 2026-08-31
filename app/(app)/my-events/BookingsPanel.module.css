@@ -17,7 +17,7 @@
 .ticketMeta { margin:5px 0 0; color:rgba(245,245,247,.48); font-size:12.5px; }
 .price { flex-shrink:0; color:var(--primary); font-size:15px; font-weight:750; }
 .preorders { margin:13px 0 0; padding:12px 14px; display:grid; gap:7px; border-radius:13px; background:var(--primary-a06); color:rgba(245,245,247,.68); font-size:12.5px; list-style:none; }
-.show { display:block; margin-top:3px; color:#ff8fb2; }
+.show { display:block; margin-top:3px; color:#e8d49e; }
 .empty { min-height:45dvh; display:grid; place-items:center; text-align:center; color:rgba(245,245,247,.56); }
-.error { padding:16px 18px; border:1px solid rgba(224,90,170,.28); border-radius:16px; background:rgba(224,90,170,.08); color:#ff91c9; }
+.error { padding:16px 18px; border:1px solid rgba(200,169,110,.28); border-radius:16px; background:rgba(200,169,110,.08); color:#e8d49e; }
 @media(max-width:700px){.overview{grid-template-columns:1fr 1fr}.metric:first-child{grid-column:1/-1}.summaryGrid{grid-template-columns:1fr}.ticketTop{gap:10px}.sectionHeader{align-items:flex-start}.metric{min-height:104px}}

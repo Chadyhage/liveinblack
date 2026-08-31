@@ -238,7 +238,7 @@ export default function AgentBlogClient() {
         </div>
 
         {loadError && (
-          <Card style={{ border: '1px solid rgba(224,90,170,0.35)' }}>
+          <Card style={{ border: '1px solid rgba(200,169,110,0.35)' }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible — recharge la page pour réessayer.</p>
           </Card>
         )}
@@ -272,7 +272,7 @@ export default function AgentBlogClient() {
                     aria-label="Supprimer"
                     onClick={() => setConfirmDeleteId(p.id)}
                     disabled={deletingId === p.id}
-                    style={{ padding: 8, minHeight: 44, minWidth: 44, color: '#ff9ed2' }}
+                    style={{ padding: 8, minHeight: 44, minWidth: 44, color: '#e8d49e' }}
                   >
                     <Trash2 size={15} />
                   </Button>
@@ -342,7 +342,7 @@ export default function AgentBlogClient() {
             <Textarea value={draft.metaDescription} onChange={(e) => patch({ metaDescription: e.target.value })} rows={2} />
           </div>
 
-          {formError && <p style={{ fontSize: 12.5, fontWeight: 600, color: '#ff9ed2', margin: 0 }}>{formError}</p>}
+          {formError && <p style={{ fontSize: 12.5, fontWeight: 600, color: '#e8d49e', margin: 0 }}>{formError}</p>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <Button

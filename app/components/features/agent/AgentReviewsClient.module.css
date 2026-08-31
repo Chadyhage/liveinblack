@@ -15,9 +15,9 @@
 button.metric { cursor:pointer; }
 button.metric:hover { border-color:var(--primary-a32); background:#222225; transform:translateY(-1px); }
 .metricActive { border-color:var(--primary-a42); background:linear-gradient(145deg,var(--primary-a10),rgba(255,255,255,.045)); }
-.metricUrgent { border-color:rgba(255,143,178,.38); }
+.metricUrgent { border-color:rgba(232,212,158,.38); }
 .metricIcon { grid-row:1 / 3; width:34px; height:34px; display:grid; place-items:center; border-radius:11px; background:var(--primary-a10); color:var(--primary); }
-.urgentIcon { background:rgba(255,143,178,.1); color:#ff8fb2; }
+.urgentIcon { background:rgba(232,212,158,.1); color:#e8d49e; }
 .metric strong { font-size:23px; font-weight:750; line-height:1; letter-spacing:-.045em; }
 .metric>span:last-child { color:rgba(245,245,247,.58); font-size:11px; font-weight:600; }
 .workspace { display:flex; flex-direction:column; gap:14px; padding:16px; border:1px solid rgba(255,255,255,.09); border-radius:18px; background:rgba(16,17,20,.7); box-shadow:0 20px 56px rgba(0,0,0,.16); }
@@ -32,7 +32,7 @@ button.metric:hover { border-color:var(--primary-a32); background:#222225; trans
 .ratingFilter button svg { color:var(--primary); fill:currentColor; }
 .grid,.loadingGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; align-items:start; }
 .reviewCard { min-width:0; display:flex; flex-direction:column; gap:10px; padding:14px!important; border-color:rgba(255,255,255,.1)!important; border-radius:16px!important; background:rgba(28,28,30,.92)!important; box-shadow:0 14px 36px rgba(0,0,0,.14); }
-.reviewReported { border-color:rgba(255,143,178,.24)!important; box-shadow:inset 3px 0 0 rgba(255,143,178,.62),0 18px 50px rgba(0,0,0,.15)!important; }
+.reviewReported { border-color:rgba(232,212,158,.24)!important; box-shadow:inset 3px 0 0 rgba(232,212,158,.62),0 18px 50px rgba(0,0,0,.15)!important; }
 .cardTop { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .identity { min-width:0; display:flex; align-items:center; gap:9px; }
 .identityIcon { width:34px; height:34px; flex:0 0 auto; display:grid; place-items:center; border-radius:50%; background:var(--primary-a10); color:var(--primary); font-size:13px; font-weight:750; }
@@ -43,9 +43,9 @@ button.metric:hover { border-color:var(--primary-a32); background:#222225; trans
 .badges { flex:0 0 auto; display:flex; align-items:center; gap:5px; }
 .status,.reportBadge,.autoBadge { min-height:24px; display:inline-flex; align-items:center; gap:4px; padding:0 8px; border:1px solid; border-radius:999px; font-size:10px; font-weight:700; white-space:nowrap; }
 .statusPublished { border-color:var(--focus-ring-color); background:var(--primary-a08); color:var(--primary); }
-.statusHidden { border-color:rgba(255,143,178,.28); background:rgba(255,143,178,.08); color:#ff8fb2; }
+.statusHidden { border-color:rgba(232,212,158,.28); background:rgba(232,212,158,.08); color:#e8d49e; }
 .statusDeleted { border-color:rgba(255,255,255,.13); background:rgba(255,255,255,.055); color:rgba(245,245,247,.52); }
-.reportBadge { border-color:rgba(255,143,178,.3); background:rgba(255,143,178,.09); color:#ff8fb2; }
+.reportBadge { border-color:rgba(232,212,158,.3); background:rgba(232,212,158,.09); color:#e8d49e; }
 .autoBadge { border-color:rgba(196,167,255,.25); background:rgba(196,167,255,.08); color:#c4a7ff; }
 .ratingLine { display:flex; align-items:center; gap:8px; color:rgba(245,245,247,.45); font-size:10px; }
 .ratingLine>span { display:inline-flex; align-items:center; gap:4px; color:var(--primary); font-weight:650; }
@@ -54,8 +54,8 @@ button.metric:hover { border-color:var(--primary-a32); background:#222225; trans
 .reply { padding:10px 11px; border-radius:12px; background:var(--primary-a05); }
 .reply strong { color:var(--primary); font-size:11px; }
 .reply p { margin:4px 0 0; color:rgba(245,245,247,.65); font-size:11.5px; line-height:1.45; }
-.reports { padding:11px; border:1px solid rgba(255,143,178,.18); border-radius:13px; background:rgba(255,143,178,.055); }
-.reportsTitle { display:flex; align-items:center; gap:6px; margin-bottom:6px; color:#ff8fb2; font-size:11px; }
+.reports { padding:11px; border:1px solid rgba(232,212,158,.18); border-radius:13px; background:rgba(232,212,158,.055); }
+.reportsTitle { display:flex; align-items:center; gap:6px; margin-bottom:6px; color:#e8d49e; font-size:11px; }
 .reports p { margin:0 0 4px; color:rgba(245,245,247,.66); font-size:11px; line-height:1.45; }
 .reports p:last-child { margin-bottom:0; }
 .reports p>span { color:rgba(245,245,247,.46); }
@@ -64,11 +64,11 @@ button.metric:hover { border-color:var(--primary-a32); background:#222225; trans
 .cardActions { display:flex; align-items:center; gap:7px; margin-top:auto; padding-top:1px; }
 .cardActions button { min-height:38px!important; padding:8px 11px!important; border-radius:11px!important; font-size:13px!important; }
 .cardActions button:first-child { margin-right:auto; }
-.deleteAction { color:#ff8fb2!important; }
+.deleteAction { color:#e8d49e!important; }
 .modalLabel { display:block; margin:0 0 6px; color:rgba(245,245,247,.58); font-size:11px; font-weight:650; }
 .characterCount { margin:6px 2px 0; color:rgba(245,245,247,.38); font-size:10px; text-align:right; }
-.deletePreview { display:flex; align-items:flex-start; gap:8px; padding:11px; border:1px solid rgba(255,143,178,.2); border-radius:12px; background:rgba(255,143,178,.06); }
-.deletePreview svg { flex:0 0 auto; color:#ff8fb2; }
+.deletePreview { display:flex; align-items:flex-start; gap:8px; padding:11px; border:1px solid rgba(232,212,158,.2); border-radius:12px; background:rgba(232,212,158,.06); }
+.deletePreview svg { flex:0 0 auto; color:#e8d49e; }
 .deletePreview p { margin:0; color:rgba(245,245,247,.72); font-size:12px; line-height:1.45; }
 @media(max-width:1180px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.hero{min-height:0;align-items:flex-start;flex-direction:column;padding:12px}.refresh{width:100%}.controls,.filterBlock{align-items:stretch;flex-direction:column}.resultCount{padding-left:2px;font-size:10.5px}.segmented,.ratingFilter{width:100%;overflow-x:auto}.segmented button,.ratingFilter button{flex:1}.workspace{padding:10px}.grid,.loadingGrid{grid-template-columns:1fr}}

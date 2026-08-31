@@ -279,7 +279,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
-          <p style={{ marginTop: 18, color: '#ff9ed2', font: `500 13px var(--font-open-sans)` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
+          <p style={{ marginTop: 18, color: '#e8d49e', font: `500 13px var(--font-open-sans)` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
         ) : (
           <>
             {/* Création */}
@@ -360,7 +360,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   </div>
                 )}
               </div>
-              {error && <p style={{ margin: '10px 0 0', color: '#ff9ed2', font: `500 12.5px var(--font-open-sans)` }}>{error}</p>}
+              {error && <p style={{ margin: '10px 0 0', color: '#e8d49e', font: `500 12.5px var(--font-open-sans)` }}>{error}</p>}
               <Button
                 onClick={addCode}
                 loading={saving}
@@ -447,9 +447,9 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                         style={{
                           padding: '8px 12px',
                           borderRadius: 8,
-                          border: '1px solid rgba(224,90,170,.4)',
-                          background: 'rgba(224,90,170,.10)',
-                          color: '#ff9ed2',
+                          border: '1px solid rgba(200,169,110,.4)',
+                          background: 'rgba(200,169,110,.10)',
+                          color: '#e8d49e',
                           font: `600 11.5px var(--font-open-sans)`,
                           flexShrink: 0,
                         }}

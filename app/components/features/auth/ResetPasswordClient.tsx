@@ -124,7 +124,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                 <Input id="reset-password-confirm" name="new-password" type="password" autoComplete="new-password" placeholder="Mot de passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
               </div>
               {error && <p style={{ fontSize: 12, color: COLORS.pink, margin: 0 }}>{error}</p>}
-              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)', '#250817'), marginTop: 4 }}>
+              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)', '#17130c'), marginTop: 4 }}>
                 Changer mon mot de passe
               </Button>
             </form>
@@ -139,7 +139,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
               Le mot de passe de {email} a été changé. Tu peux maintenant te connecter avec ton nouveau mot de passe.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#250817')}>Se connecter</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#17130c')}>Se connecter</Button>
             </div>
           </>
         )}
