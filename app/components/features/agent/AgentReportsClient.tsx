@@ -200,7 +200,7 @@ export default function AgentReportsClient() {
           {(
             [
               { key: 'open' as const, label: 'À traiter', color: '#ff8fb2', count: counts?.open ?? (filter === 'open' ? reports.length : 0), icon: Clock3 },
-              { key: 'handled' as const, label: 'Traités', color: '#48c9b0', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
+              { key: 'handled' as const, label: 'Traités', color: '#ff8fb2', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
             ]
           ).map((f) => {
             const active = f.key === filter

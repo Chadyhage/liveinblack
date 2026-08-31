@@ -6,7 +6,7 @@ export const contentType = 'image/png'
 
 export default function OpenGraphImage() {
   return new ImageResponse(
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 68, color: '#f7f7f8', background: 'linear-gradient(135deg, #08090a 0%, #171a13 58%, #283712 100%)' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 68, color: '#f7f7f8', background: 'linear-gradient(135deg, #08090a 0%, #191218 58%, #3a1827 100%)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
         <div style={{ width: 28, height: 28, borderRadius: 999, background: '#F53D8D' }} />
         <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 5 }}>LIVEINBLACK</div>

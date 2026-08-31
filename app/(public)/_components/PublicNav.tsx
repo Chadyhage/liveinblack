@@ -136,8 +136,8 @@ function HeaderSearch() {
             padding: 0,
             border: 0,
             borderRadius: '50%',
-            background: '#6dd7c8',
-            color: '#04120e',
+            background: '#ff8fb2',
+            color: '#250817',
           }}
         >
           <Search size={18} strokeWidth={2} aria-hidden="true" />
@@ -390,7 +390,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 padding: '8px 12px',
                 borderRadius: 12,
                 background: 'var(--teal-solid)',
-                color: '#04120e',
+                color: '#250817',
                 fontSize: 14,
                 fontWeight: 650,
                 textDecoration: 'none',
@@ -541,8 +541,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
         .lb-public-nav__brand {
-          min-height: 42px;
-          height: 42px;
+          min-height: 54px;
+          height: 54px;
           display: inline-flex;
           align-items: center;
           flex-shrink: 0;
@@ -552,8 +552,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         }
         .lb-public-nav__brand-logo {
           width: auto;
-          height: 30px;
-          max-width: min(42vw, 190px);
+          height: 42px;
+          max-width: min(50vw, 250px);
           object-fit: contain;
         }
         .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
@@ -638,18 +638,18 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           padding: 0 !important;
           border: 0;
           border-radius: 50%;
-          background: #6dd7c8;
-          color: #04120e;
+          background: #ff8fb2;
+          color: #250817;
           cursor: pointer;
           transition: color 160ms ease, background 160ms ease;
         }
-        .lb-header-search__button:hover { color: #04120e; background: #6dd7c8; }
+        .lb-header-search__button:hover { color: #250817; background: #ff8fb2; }
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
           .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
-          .lb-public-nav__brand { height: 38px; min-height: 38px; }
-          .lb-public-nav__brand-logo { height: 24px; max-width: min(45vw, 150px); }
+          .lb-public-nav__brand { height: 46px; min-height: 46px; }
+          .lb-public-nav__brand-logo { height: 33px; max-width: min(52vw, 190px); }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }

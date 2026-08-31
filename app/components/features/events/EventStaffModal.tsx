@@ -440,7 +440,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             padding: '8px 14px',
                             borderRadius: 10,
                             border: '1px solid transparent',
-                            color: '#04120e',
+                            color: '#250817',
                             fontSize: 12.5,
                             fontWeight: 700,
                             background: 'var(--teal-solid)',

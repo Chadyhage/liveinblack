@@ -56,7 +56,7 @@
 .workspace :global(.lb-agent-screen--reports) { --screen-accent: #ff8fb2; }
 .workspace :global(.lb-agent-screen--reviews) { --screen-accent: #ffcf5a; }
 .workspace :global(.lb-agent-screen--homepage),
-.workspace :global(.lb-agent-screen--blog) { --screen-accent: #8ee7c5; }
+.workspace :global(.lb-agent-screen--blog) { --screen-accent: #ff8fb2; }
 
 .workspace :global(.lb-agent-screen) > div > div:first-child:has(.lb-dashboard-title),
 .workspace :global(.lb-agent-screen) > div > div:first-child > div:has(.lb-dashboard-title) {

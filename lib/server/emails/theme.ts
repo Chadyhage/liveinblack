@@ -23,8 +23,8 @@ export const EMAIL_COLORS = {
   border: '#3c2838',
   borderStrong: '#5c3d56',
 
-  success: '#84dc8e',
-  successSoft: '#14271a',
+  success: '#ff8fb2',
+  successSoft: '#2a1320',
   warning: '#ffc66d',
   warningSoft: '#2a2113',
   danger: '#ff7b7b',

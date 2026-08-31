@@ -320,7 +320,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         gap: 5,
                         background: 'rgba(34,197,94,0.14)',
                         border: '1px solid rgba(34,197,94,0.35)',
-                        color: '#22c55e',
+                        color: '#F53D8D',
                         fontSize: 12,
                         fontWeight: 600,
                       }}

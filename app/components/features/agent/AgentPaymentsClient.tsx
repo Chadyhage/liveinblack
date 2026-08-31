@@ -149,7 +149,7 @@ type ConfirmAction =
 // files financières plutôt que dans sa propre entrée de sidebar.
 const SECTIONS = [
   { key: 'payouts', label: 'Reversements', helper: 'À verser', color: '#f5c96a', icon: Landmark },
-  { key: 'refunds', label: 'Remboursements', helper: 'À restituer', color: '#6dd7c8', icon: RotateCcw },
+  { key: 'refunds', label: 'Remboursements', helper: 'À restituer', color: '#ff8fb2', icon: RotateCcw },
   { key: 'alerts', label: 'Alertes paiement', helper: 'À vérifier', color: '#ff8fb2', icon: ShieldCheck },
   { key: 'boosts', label: 'Boosts', helper: 'Suivi commercial', color: '#c4a7ff', icon: Megaphone },
 ] as const
@@ -655,7 +655,7 @@ function RefundsSection({
   const { pageItems, pageCount } = useMemo(() => pagedSlice(refunds, page, PAGE_SIZE), [refunds, page])
   return (
     <div className={styles.sectionStack}>
-      <Card accent="rgba(109,215,200,0.3)" className={styles.guideCard} role="note">
+      <Card accent="rgba(255,143,178,0.3)" className={styles.guideCard} role="note">
         <div className={`${styles.guideIcon} ${styles.refundGuideIcon}`} aria-hidden="true"><RotateCcw size={20} /></div>
         <div><strong>Remboursements Mobile Money</strong><p>Exécutez d’abord le remboursement dans FedaPay, puis confirmez-le ici. Les paiements Stripe sont remboursés automatiquement.</p></div>
       </Card>

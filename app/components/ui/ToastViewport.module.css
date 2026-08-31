@@ -3,7 +3,7 @@
 .toast svg { flex:0 0 auto; }
 .success { border-color:var(--primary-a24); }.success svg{color:var(--primary)}
 .error { border-color:rgba(255,105,180,.28); }.error svg{color:#ff69b4}
-.info { border-color:rgba(72,201,176,.28); }.info svg{color:#48c9b0}
+.info { border-color:rgba(255,143,178,.28); }.info svg{color:#ff8fb2}
 @keyframes toast-in { from{opacity:0;transform:translateY(12px) scale(.98)} to{opacity:1;transform:none} }
 @media(max-width:620px){.viewport{right:16px;bottom:calc(14px + env(safe-area-inset-bottom));left:16px;width:auto}.toast{border-radius:15px}}
 @media(prefers-reduced-motion:reduce){.toast{animation:none}}

@@ -50,7 +50,7 @@ export default function AgeVerificationGate({ minAge, href, label }: AgeVerifica
       <a
         href={href}
         onClick={handleClick}
-        style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#04120e', background: 'var(--teal-solid)', textDecoration: 'none' }}
+        style={{ display: 'inline-block', padding: '15px 32px', borderRadius: 3, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', color: '#250817', background: 'var(--teal-solid)', textDecoration: 'none' }}
       >
         {label}
       </a>

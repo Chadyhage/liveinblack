@@ -18,7 +18,7 @@ export const PROVIDER_CATEGORIES: ProviderCategory[] = [
   { id: 'securite', label: 'Sécurité & accueil', singular: 'Sécurité / accueil', icon: 'shield', color: '#60a5fa', description: 'Sécurité, agents d’accueil, contrôle, vestiaire…' },
   { id: 'transport', label: 'Transport & logistique', singular: 'Transport / logistique', icon: 'truck', color: '#fb923c', description: 'Navettes, chauffeurs, livraison, montage et logistique…' },
   { id: 'staff', label: 'Équipe & renfort événementiel', singular: 'Équipe événementielle', icon: 'users', color: '#a78bfa', description: 'Serveurs, hôtes, techniciens, régisseurs, personnel…' },
-  { id: 'communication', label: 'Communication & création', singular: 'Communication / création', icon: 'megaphone', color: '#2dd4bf', description: 'Graphisme, réseaux sociaux, promotion, impression…' },
+  { id: 'communication', label: 'Communication & création', singular: 'Communication / création', icon: 'megaphone', color: '#ff8fb2', description: 'Graphisme, réseaux sociaux, promotion, impression…' },
   { id: 'bien_etre', label: 'Beauté & bien-être', singular: 'Beauté / bien-être', icon: 'heart', color: '#fda4af', description: 'Maquillage, coiffure, stylisme et préparation…' },
   { id: 'autre', label: 'Autres services', singular: 'Service événementiel', icon: 'grid', color: '#94a3b8', description: 'Toute autre activité utile à un événement.' },
 ]

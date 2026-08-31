@@ -667,7 +667,7 @@ export default function EventCheckoutPanel({
                         borderRadius: 9,
                         border: 'none',
                         background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--teal-solid)',
-                        color: !promoInput.trim() ? 'var(--text-faint)' : '#04120e',
+                        color: !promoInput.trim() ? 'var(--text-faint)' : '#250817',
                         fontSize: 12.5,
                         fontWeight: 700,
                       }}
@@ -856,7 +856,7 @@ export default function EventCheckoutPanel({
               fontWeight: 500,
               textTransform: 'none',
               letterSpacing: 'normal',
-              color: buyDisabled ? 'var(--text-faint)' : '#04120e',
+              color: buyDisabled ? 'var(--text-faint)' : '#250817',
               background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg, var(--primary), var(--primary-strong))',
               boxShadow: buyDisabled ? 'none' : '0 8px 26px var(--primary-a32)',
             }}

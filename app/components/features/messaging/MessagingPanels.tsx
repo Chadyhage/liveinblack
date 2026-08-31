@@ -201,7 +201,7 @@ export function ContactPanelModal({ conversationId, member, online, lastSeenAt, 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         {renderAvatar(member.userId, member.name, 64, online, true)}
         <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>
-        <p style={{ fontSize: 12, color: online ? '#22c55e' : 'var(--text-faint)', margin: 0 }}>{online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}</p>
+        <p style={{ fontSize: 12, color: online ? '#F53D8D' : 'var(--text-faint)', margin: 0 }}>{online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}</p>
         {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>{phone}</a>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

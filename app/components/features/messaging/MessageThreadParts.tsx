@@ -74,7 +74,7 @@ export function Avatar({
             width: 10,
             height: 10,
             borderRadius: '50%',
-            background: online ? '#22c55e' : 'rgba(255,255,255,0.2)',
+            background: online ? '#F53D8D' : 'rgba(255,255,255,0.2)',
             border: '2px solid var(--obsidian)',
           }}
         />

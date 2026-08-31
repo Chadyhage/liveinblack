@@ -84,7 +84,7 @@ const SECTIONS: { key: string; label: string; color: string; statuses: Applicati
   { key: 'review', label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
   { key: 'correction', label: 'À corriger', color: '#f59e0b', statuses: ['needs_changes'] },
   { key: 'resubmitted', label: 'Re-soumis', color: '#a78bfa', statuses: ['resubmitted'] },
-  { key: 'validated', label: 'Validés', color: '#22c55e', statuses: ['approved'] },
+  { key: 'validated', label: 'Validés', color: '#F53D8D', statuses: ['approved'] },
   { key: 'refused', label: 'Refusés', color: '#e05aaa', statuses: ['rejected', 'suspended'] },
 ]
 
@@ -105,7 +105,7 @@ const STATUS_COLOR: Record<ApplicationStatus, string> = {
   under_review: '#3b82f6',
   needs_changes: '#f59e0b',
   resubmitted: '#a78bfa',
-  approved: '#22c55e',
+  approved: '#F53D8D',
   rejected: '#e05aaa',
   suspended: '#e05aaa',
 }
@@ -124,11 +124,11 @@ const AUDIT_ACTION_COLOR: Record<string, string> = {
   submitted: 'var(--gold)',
   resubmitted: '#a78bfa',
   under_review: '#3b82f6',
-  approve: '#22c55e',
+  approve: '#F53D8D',
   request_changes: '#f59e0b',
   reject: '#e05aaa',
   suspended: '#e05aaa',
-  reactivated: '#22c55e',
+  reactivated: '#F53D8D',
 }
 const AUTO_NOTE_ACTIONS = new Set(['submitted', 'resubmitted'])
 

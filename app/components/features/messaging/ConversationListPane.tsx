@@ -157,7 +157,7 @@ export default function ConversationListPane({
                             style={{
                               fontSize: 11,
                               fontWeight: 700,
-                              color: '#04120e',
+                              color: '#250817',
                               background: 'var(--teal-solid)',
                               borderRadius: 999,
                               padding: '1px 6px',

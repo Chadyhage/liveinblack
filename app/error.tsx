@@ -34,7 +34,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           padding: '11px 22px',
           borderRadius: 999,
           background: 'var(--teal-solid)',
-          color: '#04120e',
+          color: '#250817',
         }}
       >
         Réessayer

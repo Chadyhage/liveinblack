@@ -39,7 +39,7 @@ export interface MusicState {
 
 export const DISCS: Disc[] = [
   { id: 'house', name: 'House', bpm: 124, color: '#e05aaa', desc: '4/4 chaud, claps' },
-  { id: 'afro', name: 'Afro', bpm: 112, color: '#34d399', desc: 'Percu & marimba' },
+  { id: 'afro', name: 'Afro', bpm: 112, color: '#F53D8D', desc: 'Percu & marimba' },
   { id: 'techno', name: 'Techno', bpm: 130, color: '#8b5cf6', desc: 'Sombre & roulant' },
   { id: 'lofi', name: 'Lo-Fi', bpm: 84, color: '#c8a96e', desc: 'Jazzy, posé' },
   { id: 'nuit', name: 'Nuit', bpm: 68, color: '#60a5fa', desc: 'Nappes ambient' },

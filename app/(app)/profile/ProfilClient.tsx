@@ -418,7 +418,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
   const filtered = filterSettingEntries(entries, query)
   const settingGroups = [
     { id: 'profil', title: 'Profil et préférences', shortTitle: 'Profil', description: 'Identité, téléphone et goûts', ids: ['identite', 'goûts'], icon: UserRound, color: '#70b7ff' },
-    { id: 'privacy', title: 'Confidentialité et données', shortTitle: 'Confidentialité', description: 'Visibilité, recommandations et export', ids: ['visibilite', 'confidentialite', 'mes donnees'], icon: ShieldCheck, color: '#70dac4' },
+    { id: 'privacy', title: 'Confidentialité et données', shortTitle: 'Confidentialité', description: 'Visibilité, recommandations et export', ids: ['visibilite', 'confidentialite', 'mes donnees'], icon: ShieldCheck, color: '#ff8fb2' },
     { id: 'security', title: 'Connexion et sécurité', shortTitle: 'Sécurité', description: 'E-mail, mot de passe et compte', ids: ['email', 'mot de passe', 'danger'], icon: KeyRound, color: '#c4a7ff' },
   ]
   const visibleGroups = tokens.length > 0 ? settingGroups : settingGroups.filter((group) => group.id === activeGroup)
