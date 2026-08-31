@@ -156,7 +156,7 @@
 
 .visual {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1;
   overflow: hidden;
 }
 

@@ -124,7 +124,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
               ].map((k) => (
                 <Card key={k.label} style={{ padding: 14, textAlign: 'center' }}>
                   <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
                 </Card>
               ))}
             </div>
@@ -159,7 +159,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
                   </div>
                 ))}
                 {data.expired.length > 10 && (
-                  <p className="lb-agent-grid-wide" style={{ fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+                  <p className="lb-agent-grid-wide" style={{ fontSize: 12, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
                     + {data.expired.length - 10} boost{data.expired.length - 10 > 1 ? 's' : ''} expiré{data.expired.length - 10 > 1 ? 's' : ''} supplémentaire{data.expired.length - 10 > 1 ? 's' : ''} non affiché{data.expired.length - 10 > 1 ? 's' : ''}
                   </p>
                 )}
@@ -179,12 +179,12 @@ function BoostCard({ b }: { b: AgentBoostView }) {
       style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--obsidian)', background: 'var(--gold)', borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 999, padding: '2px 9px' }}>
+        <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--obsidian)', background: 'var(--gold)', borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 999, padding: '2px 9px' }}>
           {b.region || 'Toutes régions'}
         </span>
         {b.conflict && (
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>
+          <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>
             {b.status === 'refund_failed' ? 'REMBOURSEMENT ÉCHOUÉ' : 'CONFLIT DE CRÉNEAU'}
           </span>
         )}
@@ -194,11 +194,11 @@ function BoostCard({ b }: { b: AgentBoostView }) {
         {b.eventName}
         {b.organizerName ? ` · ${b.organizerName}` : ''}
       </p>
-      <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
         Acheté le {fmtDate(b.purchasedAt)} · expire le {fmtDate(b.expiresAt)} · {b.days} jour{b.days > 1 ? 's' : ''}
       </p>
       {b.conflict && (
-        <p style={{ fontSize: 11.5, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
           {b.status === 'refunded_conflict'
             ? 'Conflit de créneau : ce boost a été remboursé AUTOMATIQUEMENT par le webhook. Rien à faire — ne pas re-rembourser dans Stripe.'
             : b.status === 'refund_failed'

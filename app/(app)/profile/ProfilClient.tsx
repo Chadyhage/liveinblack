@@ -425,6 +425,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
 
   return (
     <main className="profile-settings lb-dashboard-page">
+      <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>Paramètres</h1>
       <style>{`
         @media (max-width: 480px) {
           .profile-settings { padding-bottom: 120px; }
@@ -692,7 +693,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           ]}
         />
       </div>
-      <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Optionnel — sert uniquement aux statistiques anonymes des organisateurs. Jamais affiché sur ton profil, jamais utilisé comme contrôle d&apos;âge.
       </p>
       <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>

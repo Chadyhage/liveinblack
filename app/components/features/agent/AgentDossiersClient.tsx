@@ -5,7 +5,7 @@ import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { regions } from '@/lib/shared/regions'
 import { getApplicationCompleteness } from '@/lib/shared/applicationValidation'
 import { getProviderCategories } from '@/lib/shared/providerCategories'
-import { AlertTriangle, BriefcaseBusiness, CheckCircle2, ChevronRight, Clock3, FileCheck2, FilePenLine, RefreshCw, RotateCcw, Search, UserRound, XCircle } from 'lucide-react'
+import { AlertTriangle, BriefcaseBusiness, CheckCircle2, ChevronRight, Clock3, FilePenLine, RefreshCw, Search, UserRound } from 'lucide-react'
 import { Avatar, Button, Card, ConfirmDialog, Input, Textarea, Label, Pagination, SkeletonRow, pagedSlice, EmptyState, SlideOverModal, ToastViewport } from '@/app/components/ui'
 import styles from './AgentDossiersClient.module.css'
 
@@ -80,12 +80,9 @@ interface ApplicationDetail {
 }
 
 const SECTIONS: { key: string; label: string; color: string; statuses: ApplicationStatus[] }[] = [
-  { key: 'pending', label: 'En attente', color: 'var(--gold)', statuses: ['submitted'] },
-  { key: 'review', label: 'En révision', color: '#3b82f6', statuses: ['under_review'] },
-  { key: 'correction', label: 'À corriger', color: '#f59e0b', statuses: ['needs_changes'] },
-  { key: 'resubmitted', label: 'Re-soumis', color: '#a78bfa', statuses: ['resubmitted'] },
-  { key: 'validated', label: 'Validés', color: '#F53D8D', statuses: ['approved'] },
-  { key: 'refused', label: 'Refusés', color: '#e05aaa', statuses: ['rejected', 'suspended'] },
+  { key: 'pending', label: 'À traiter', color: 'var(--gold)', statuses: ['submitted', 'resubmitted'] },
+  { key: 'review', label: 'En cours', color: '#3b82f6', statuses: ['under_review', 'needs_changes'] },
+  { key: 'closed', label: 'Traités', color: '#F53D8D', statuses: ['approved', 'rejected', 'suspended'] },
 ]
 
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
@@ -532,7 +529,7 @@ export default function AgentDossiersClient() {
           {SECTIONS.map((s) => {
             const count = applications.filter((a) => s.statuses.includes(a.status)).length
             const active = s.key === section
-            const Icon = s.key === 'pending' ? Clock3 : s.key === 'review' ? FilePenLine : s.key === 'correction' ? RotateCcw : s.key === 'resubmitted' ? FileCheck2 : s.key === 'validated' ? CheckCircle2 : XCircle
+            const Icon = s.key === 'pending' ? Clock3 : s.key === 'review' ? FilePenLine : CheckCircle2
             return (
               <Button
                 key={s.key}
@@ -714,7 +711,7 @@ function DetailPanel({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h2 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: 0 }}>{displayName}</h2>
-          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: alphaBg(STATUS_COLOR[detail.status]), color: STATUS_COLOR[detail.status], fontWeight: 700 }}>
+          <span style={{ fontSize: 12, padding: '3px 8px', borderRadius: 999, background: alphaBg(STATUS_COLOR[detail.status]), color: STATUS_COLOR[detail.status], fontWeight: 700 }}>
             {STATUS_LABEL[detail.status]}
           </span>
         </div>
@@ -728,12 +725,12 @@ function DetailPanel({
         <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--teal)' : completeness >= 50 ? 'var(--gold)' : '#e05aaa' }} />
         </div>
-        <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>{completeness}%</p>
+        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '4px 0 0' }}>{completeness}%</p>
       </div>
 
       {detail.candidateNote && (
         <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, padding: 14 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
             {detail.status === 'resubmitted' ? 'Message joint à la re-soumission' : 'Message joint à la soumission'}
           </p>
           <p style={{ fontSize: 13.5, color: '#fff', margin: 0, fontStyle: 'italic' }}>« {detail.candidateNote} »</p>
@@ -795,7 +792,7 @@ function DetailPanel({
 
       <div>
         <p style={sectionTitleStyle}>Notes internes</p>
-        <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 8px' }}>Privé — jamais visible par le candidat.</p>
+        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 8px' }}>Privé — jamais visible par le candidat.</p>
         <Textarea style={{ minHeight: 70 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Ajouter une note…" />
         <Button
           variant="secondary"
@@ -835,7 +832,7 @@ function DetailPanel({
                   {entry.note && !AUTO_NOTE_ACTIONS.has(entry.action) && (
                     <p style={{ fontSize: 12, color: AUDIT_ACTION_COLOR[entry.action] || 'var(--text-muted)', margin: '2px 0' }}>« {entry.note} »</p>
                   )}
-                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>
                     {entry.byName || entry.by} · {fmtDateTime(entry.at)}
                   </p>
                 </div>
@@ -1058,7 +1055,7 @@ function ActionForm({
     <Card style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Label style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</Label>
       <Textarea style={{ minHeight: 70 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder={placeholder} />
-      {helper && <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>{helper}</p>}
+      {helper && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>{helper}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
         <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '9px 12px', fontSize: 12.5 }}>
           Annuler

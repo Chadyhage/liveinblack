@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
-import { Building2, ChevronRight, CircleUserRound, Search, ShieldCheck, SlidersHorizontal, UserRoundCheck, UsersRound, X } from 'lucide-react'
+import { Building2, Check, ChevronDown, ChevronRight, CircleUserRound, Search, ShieldCheck, SlidersHorizontal, UserRoundCheck, UsersRound, X } from 'lucide-react'
 import { Button, Card, ConfirmDialog, Input, Pagination, SkeletonRow, EmptyState, SlideOverModal, ToastViewport } from '@/app/components/ui'
 import styles from './AgentUsersClient.module.css'
 
@@ -98,7 +98,7 @@ function fmtDate(iso: string | null): string {
 
 function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
   return (
-    <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${border}`, background: bg, color, letterSpacing: '0.04em' }}>
+    <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${border}`, background: bg, color, letterSpacing: '0.04em' }}>
       {label}
     </span>
   )
@@ -130,6 +130,7 @@ export default function AgentUsersClient() {
   const [roleFilter, setRoleFilter] = useQueryParamState<RoleFilter>('role', 'all')
   const [statusFilter, setStatusFilter] = useQueryParamState<StatusFilter>('status', 'all')
   const [onlineOnly, setOnlineOnly] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [pageParam, setPageParam] = useQueryParamState<string>('page', '1')
   const page = Number(pageParam) || 1
   const setPage = useCallback((p: number) => setPageParam(String(p)), [setPageParam])
@@ -386,13 +387,44 @@ export default function AgentUsersClient() {
             <Input aria-label="Rechercher un compte" className={styles.searchInput} placeholder="Rechercher un nom, une adresse email ou un téléphone" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
             {search ? <Button className={styles.clearSearch} variant="ghost" aria-label="Effacer la recherche" onClick={() => { setSearch(''); setPage(1) }}><X size={14} /></Button> : null}
           </div>
-          <div className={styles.filterRow}>
-            <span className={styles.filterLabel}><CircleUserRound size={15} />Type de compte</span>
-            <div className={styles.segmented}>{ROLE_FILTERS.map((f) => <Button key={f.key} variant="ghost" className={roleFilter === f.key ? styles.segmentActive : styles.segment} onClick={() => { setRoleFilter(f.key); setPage(1) }}>{f.label}</Button>)}</div>
-          </div>
-          <div className={styles.filterRow}>
-            <span className={styles.filterLabel}><SlidersHorizontal size={15} />État</span>
-            <div className={styles.segmented}>{STATUS_FILTERS.map((s) => <Button key={s.key} variant="ghost" className={statusFilter === s.key ? styles.segmentActive : styles.segment} onClick={() => { setStatusFilter(s.key); setPage(1) }}>{s.label}</Button>)}<Button variant="ghost" className={onlineOnly ? styles.segmentOnline : styles.segment} onClick={() => { setOnlineOnly((value) => !value); setPage(1) }}><i aria-hidden="true" />En ligne</Button></div>
+          <div className={styles.filterMenuWrap}>
+            <Button
+              variant="secondary"
+              className={styles.filterTrigger}
+              aria-haspopup="menu"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((value) => !value)}
+              icon={<SlidersHorizontal size={17} aria-hidden="true" />}
+            >
+              Filtres{roleFilter !== 'all' || statusFilter !== 'all' || onlineOnly ? ' actifs' : ''}
+              <ChevronDown size={16} aria-hidden="true" className={filtersOpen ? styles.chevronOpen : ''} />
+            </Button>
+            {filtersOpen ? (
+              <div className={styles.filterDropdown} role="menu" aria-label="Filtres des comptes">
+                <div className={styles.filterGroup}>
+                  <span className={styles.filterLabel}><CircleUserRound size={16} aria-hidden="true" />Type de compte</span>
+                  {ROLE_FILTERS.map((filter) => (
+                    <Button key={filter.key} variant="ghost" className={styles.filterOption} role="menuitemradio" aria-checked={roleFilter === filter.key} onClick={() => { setRoleFilter(filter.key); setPage(1) }}>
+                      {filter.label}{roleFilter === filter.key ? <Check size={16} aria-hidden="true" /> : null}
+                    </Button>
+                  ))}
+                </div>
+                <div className={styles.filterGroup}>
+                  <span className={styles.filterLabel}><SlidersHorizontal size={16} aria-hidden="true" />État</span>
+                  {STATUS_FILTERS.map((filter) => (
+                    <Button key={filter.key} variant="ghost" className={styles.filterOption} role="menuitemradio" aria-checked={statusFilter === filter.key} onClick={() => { setStatusFilter(filter.key); setPage(1) }}>
+                      {filter.label}{statusFilter === filter.key ? <Check size={16} aria-hidden="true" /> : null}
+                    </Button>
+                  ))}
+                  <Button variant="ghost" className={styles.filterOption} role="menuitemcheckbox" aria-checked={onlineOnly} onClick={() => { setOnlineOnly((value) => !value); setPage(1) }}>
+                    En ligne uniquement{onlineOnly ? <Check size={16} aria-hidden="true" /> : null}
+                  </Button>
+                </div>
+                {roleFilter !== 'all' || statusFilter !== 'all' || onlineOnly ? (
+                  <Button variant="secondary" className={styles.resetFilters} onClick={() => { setRoleFilter('all'); setStatusFilter('all'); setOnlineOnly(false); setPage(1); setFiltersOpen(false) }}>Réinitialiser</Button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </Card>
 

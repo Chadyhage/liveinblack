@@ -255,7 +255,7 @@ export default async function AccueilPage() {
         <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
           <Card
             accent="var(--primary-a35)"
-            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),rgba(159, 224, 34,.04)),var(--surface)' }}
+            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),rgba(255,255,255,.04)),var(--surface)' }}
           >
             <p style={{ margin: 0, color: '#c9b0ff', fontSize: 10.5, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
             <h2 style={{ margin: '7px 0 5px', fontSize: 16 }}>Des soirées vraiment faites pour toi</h2>

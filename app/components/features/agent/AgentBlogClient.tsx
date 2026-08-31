@@ -255,12 +255,12 @@ export default function AgentBlogClient() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</span>
                       {scheduled && (
-                        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gold)', border: '1px solid rgba(200,169,110,0.4)', borderRadius: 6, padding: '2px 6px', flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gold)', border: '1px solid rgba(200,169,110,0.4)', borderRadius: 6, padding: '2px 6px', flexShrink: 0 }}>
                           Programmé
                         </span>
                       )}
                     </span>
-                    <span style={{ display: 'block', fontSize: 11.5, fontWeight: 500, color: 'var(--text-faint)', marginTop: 2 }}>
+                    <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-faint)', marginTop: 2 }}>
                       {CATEGORY_LABELS[p.category]} · {new Date(p.publishedAt).toLocaleDateString('fr-FR')} · /blog/{p.slug}
                     </span>
                   </span>

@@ -3,6 +3,7 @@
   --agent-border: rgba(255, 255, 255, .115);
   width: 100%;
   min-width: 0;
+  padding-top: 18px;
 }
 
 .workspace :global(.lb-dashboard-page) { width: 100%; max-width: none; margin-inline: 0; }
@@ -38,7 +39,9 @@
 .workspace :where(input, textarea) { min-height: var(--control-height-md) !important; border-radius: var(--radius-control) !important; border-color: rgba(255,255,255,.12) !important; background: rgba(30,31,35,.96) !important; font-size: 14px !important; }
 .workspace textarea { min-height: 64px !important; }
 .workspace button { min-height: var(--density-action-min); border-radius: var(--radius-control) !important; font-size: 14px !important; }
-.workspace label { color: rgba(245, 245, 247, .72) !important; font-size: 11px !important; }
+.workspace label { color: rgba(245, 245, 247, .72) !important; font-size: 13px !important; }
+.workspace :where(p, li, td, th) { font-size: max(13px, .82rem); line-height: 1.5; }
+.workspace small { font-size: 12px; }
 .workspace :global(.lb-modal-panel) { border-color: rgba(255, 255, 255, .13) !important; border-radius: 12px !important; background: rgba(27, 27, 32, .92) !important; backdrop-filter: blur(30px) saturate(150%); }
 
 .workspace section > p:first-child[style*="text-transform: uppercase"] { color: rgba(245, 245, 247, .52) !important; font-size: 10.5px !important; font-weight: 700 !important; letter-spacing: .06em !important; }
@@ -72,8 +75,8 @@
   background: var(--screen-accent);
   box-shadow: 0 0 28px color-mix(in srgb, var(--screen-accent) 46%, transparent);
 }
-.workspace :global(.lb-agent-screen) :global(.lb-dashboard-description) { max-width: 640px; margin-top: 4px; color: rgba(245,245,247,.48); font-size: 11.5px; line-height: 1.35; }
-.workspace :global(.lb-agent-kicker) { display: block; margin-bottom: 5px; color: var(--screen-accent); font-size: 9px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+.workspace :global(.lb-agent-screen) :global(.lb-dashboard-description) { max-width: 720px; margin-top: 6px; color: rgba(245,245,247,.68); font-size: 14px; line-height: 1.5; }
+.workspace :global(.lb-agent-kicker) { display: block; margin-bottom: 6px; color: var(--screen-accent); font-size: 12px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
 .workspace :global(.lb-agent-page-header):has(:global(.lb-agent-kicker)) :global(.lb-dashboard-title)::before { display: none; }
 .workspace :global(.lb-agent-page-header) { min-height: 42px; gap: 6px !important; }
 .workspace :global(.lb-agent-page-header) > div:first-child { min-width: 0; flex: 1; }
@@ -188,6 +191,7 @@
 }
 
 @media (max-width: 760px) {
+  .workspace { padding-top: 10px; }
   .workspace :global(.lb-dashboard-page) > div { gap: 9px !important; }
   .workspace :global(.lb-dashboard-title) { font-size: 21px !important; }
   .workspace :global(.lb-responsive-metrics) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }

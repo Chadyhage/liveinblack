@@ -258,8 +258,8 @@ export function MessageRow({
           style={{
             padding: message.deletedForAll ? '8px 14px' : ['image', 'poll', 'event_poll', 'story', 'event', 'catalog_item'].includes(message.type) ? 6 : '9px 14px',
             borderRadius: isMine ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-            background: isMine ? 'rgba(159, 224, 34,0.16)' : 'var(--surface)',
-            border: `1px solid ${isMine ? 'rgba(159, 224, 34,0.32)' : 'var(--border)'}`,
+            background: isMine ? 'var(--primary-a16)' : 'var(--surface)',
+            border: `1px solid ${isMine ? 'var(--primary-a32)' : 'var(--border)'}`,
             maxWidth: '100%',
             cursor: 'context-menu',
             boxShadow: highlighted ? '0 0 0 2px rgba(255,255,255,0.85)' : 'none',

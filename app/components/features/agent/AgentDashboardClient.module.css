@@ -9,7 +9,7 @@
   display: block;
   margin-bottom: 8px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 760;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -26,7 +26,7 @@
   border-radius: 999px;
   background: var(--primary-a08);
   color: rgba(238, 255, 207, .85);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
 }
 
@@ -55,8 +55,8 @@
 
 .sectionHeading > div { display: flex; align-items: center; gap: 10px; }
 .sectionHeading h2 { margin: 0; color: #f5f5f7; font-size: 18px; font-weight: 690; letter-spacing: -.025em; }
-.sectionHeading p { margin: 0; color: rgba(245, 245, 247, .42); font-size: 11px; }
-.sectionIndex { color: var(--primary-a65); font-size: 10px; font-weight: 750; letter-spacing: .08em; }
+.sectionHeading p { margin: 0; color: rgba(245, 245, 247, .42); font-size: 12px; }
+.sectionIndex { color: var(--primary-a65); font-size: 12px; font-weight: 750; letter-spacing: .08em; }
 
 .actionGrid {
   display: grid;
@@ -86,8 +86,8 @@
 .action > svg { color: rgba(245,245,247,.4); }
 .actionBody { grid-column: 1 / -1; align-self: end; display: flex; flex-direction: column; }
 .actionBody strong { color: #fff; font-size: 20px; font-weight: 680; letter-spacing: -.04em; line-height: 1.05; }
-.actionBody > span { margin-top: 5px; color: rgba(245,245,247,.82); font-size: 11px; font-weight: 650; }
-.actionBody small { margin-top: 3px; color: rgba(245,245,247,.38); font-size: 10px; line-height: 1.35; }
+.actionBody > span { margin-top: 5px; color: rgba(245,245,247,.82); font-size: 12px; font-weight: 650; }
+.actionBody small { margin-top: 3px; color: rgba(245,245,247,.38); font-size: 12px; line-height: 1.35; }
 
 .pulseSection,
 .overviewSection,
@@ -120,7 +120,7 @@
 .pulseIcon { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; background: var(--primary-a09); color: var(--primary); }
 .pulseItem div { min-width: 0; display: flex; flex-direction: column; }
 .pulseItem strong { color: #f5f5f7; font-size: 18px; font-weight: 690; letter-spacing: -.035em; line-height: 1; }
-.pulseItem div span { margin-top: 3px; color: rgba(245,245,247,.42); font-size: 9.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pulseItem div span { margin-top: 3px; color: rgba(245,245,247,.42); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .bentoGrid {
   display: grid;
@@ -143,13 +143,13 @@
 }
 
 .cardTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: rgba(245,245,247,.42); }
-.cardTop > span { font-size: 10px; font-weight: 720; letter-spacing: .08em; text-transform: uppercase; }
+.cardTop > span { font-size: 12px; font-weight: 720; letter-spacing: .08em; text-transform: uppercase; }
 .cardTop svg { color: var(--primary-a75); }
 .heroValue { margin-top: auto; color: #f5f5f7; font-size: clamp(30px, 3.4vw, 50px); font-weight: 650; letter-spacing: -.06em; line-height: .94; }
 .secondaryValue { display: block; margin-top: 7px; color: var(--primary); font-size: 15px; font-weight: 620; letter-spacing: -.025em; }
 .revenueBreakdown { margin-top: 18px; padding-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255,255,255,.1); }
 .revenueBreakdown div { display: flex; flex-direction: column; gap: 7px; }
-.revenueBreakdown span, .compactStat span { color: rgba(245,245,247,.38); font-size: 10px; }
+.revenueBreakdown span, .compactStat span { color: rgba(245,245,247,.38); font-size: 12px; }
 .revenueBreakdown strong { color: rgba(245,245,247,.82); font-size: 14px; font-weight: 620; }
 
 .volumeCard,
@@ -159,19 +159,19 @@
 .compactStat strong { color: var(--primary); font-size: 17px; font-weight: 680; }
 .ecosystemTotal { margin: 12px 0; display: flex; align-items: flex-end; gap: 7px; }
 .ecosystemTotal strong { color: #f5f5f7; font-size: 28px; font-weight: 670; letter-spacing: -.05em; line-height: .92; }
-.ecosystemTotal span { max-width: 125px; color: rgba(245,245,247,.38); font-size: 8.5px; line-height: 1.3; }
+.ecosystemTotal span { max-width: 125px; color: rgba(245,245,247,.38); font-size: 12px; line-height: 1.3; }
 .roleRows { margin-top: auto; display: flex; flex-direction: column; }
 .roleRows div { min-height: 28px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid rgba(255,255,255,.075); }
-.roleRows span { color: rgba(245,245,247,.45); font-size: 9px; }
-.roleRows strong { color: rgba(245,245,247,.85); font-size: 11px; }
+.roleRows span { color: rgba(245,245,247,.45); font-size: 12px; }
+.roleRows strong { color: rgba(245,245,247,.85); font-size: 12px; }
 
 .insightsGrid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .85fr); gap: 10px; }
 .chartCard { min-width: 0; }
 .chartHeading { margin-bottom: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .chartHeading > div { display: flex; flex-direction: column; gap: 4px; }
-.chartHeading > div span { color: var(--primary-a75); font-size: 8.5px; font-weight: 720; letter-spacing: .1em; text-transform: uppercase; }
+.chartHeading > div span { color: var(--primary-a75); font-size: 12px; font-weight: 720; letter-spacing: .1em; text-transform: uppercase; }
 .chartHeading > div strong { color: #f5f5f7; font-size: 15px; font-weight: 670; letter-spacing: -.02em; }
-.delta, .totalPill { min-height: 24px; padding: 0 8px; display: inline-flex; align-items: center; flex: 0 0 auto; border-radius: 999px; background: var(--primary-a09); color: rgba(224,255,166,.76); font-size: 8.5px; font-weight: 650; }
+.delta, .totalPill { min-height: 24px; padding: 0 8px; display: inline-flex; align-items: center; flex: 0 0 auto; border-radius: 999px; background: var(--primary-a09); color: rgba(224,255,166,.76); font-size: 12px; font-weight: 650; }
 .totalPill { background: rgba(255,255,255,.06); color: rgba(245,245,247,.5); }
 
 @media (max-width: 1180px) {
@@ -205,7 +205,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) { .action { transition: none; } }
-.heading{gap:10px}.eyebrow{margin-bottom:4px;font-size:9px}.sectionHeading{margin-bottom:6px;gap:8px}.sectionHeading h2{font-size:16px;letter-spacing:0}.action{min-height:92px;padding:10px;grid-template-columns:30px minmax(0,1fr) auto;gap:6px;border-radius:10px}.actionIcon{width:30px;height:30px;border-radius:8px}.actionBody strong{font-size:17px;letter-spacing:0}.actionBody>span{margin-top:3px;font-size:10.5px}.actionBody small{font-size:9px}.pulseRail{border-radius:10px}.pulseItem{padding:9px;gap:6px}.pulseIcon{width:28px;height:28px;border-radius:8px}.pulseItem strong{font-size:16px;letter-spacing:0}.pulseItem div span{margin-top:2px;font-size:8.5px}.bentoGrid{grid-template-rows:repeat(2,minmax(120px,auto));gap:6px}.revenueCard,.volumeCard,.ecosystemCard,.chartCard{padding:11px!important}.revenueCard{min-height:230px}.heroValue{font-size:34px;letter-spacing:0}.secondaryValue{margin-top:5px;font-size:13px;letter-spacing:0}.revenueBreakdown{margin-top:12px;padding-top:10px;gap:6px}.largeValue{margin-top:10px;font-size:22px;letter-spacing:0}.compactStat{padding-top:9px}.ecosystemTotal{margin:8px 0}.ecosystemTotal strong{font-size:24px;letter-spacing:0}.insightsGrid{gap:6px}.chartHeading{margin-bottom:8px}.delta,.totalPill{min-height:20px;padding:0 6px;font-size:8px}
+.heading{gap:10px}.eyebrow{margin-bottom:4px;font-size: 12px}.sectionHeading{margin-bottom:6px;gap:8px}.sectionHeading h2{font-size:16px;letter-spacing:0}.action{min-height:92px;padding:10px;grid-template-columns:30px minmax(0,1fr) auto;gap:6px;border-radius:10px}.actionIcon{width:30px;height:30px;border-radius:8px}.actionBody strong{font-size:17px;letter-spacing:0}.actionBody>span{margin-top:3px;font-size: 12px}.actionBody small{font-size: 12px}.pulseRail{border-radius:10px}.pulseItem{padding:9px;gap:6px}.pulseIcon{width:28px;height:28px;border-radius:8px}.pulseItem strong{font-size:16px;letter-spacing:0}.pulseItem div span{margin-top:2px;font-size: 12px}.bentoGrid{grid-template-rows:repeat(2,minmax(120px,auto));gap:6px}.revenueCard,.volumeCard,.ecosystemCard,.chartCard{padding:11px!important}.revenueCard{min-height:230px}.heroValue{font-size:34px;letter-spacing:0}.secondaryValue{margin-top:5px;font-size:13px;letter-spacing:0}.revenueBreakdown{margin-top:12px;padding-top:10px;gap:6px}.largeValue{margin-top:10px;font-size:22px;letter-spacing:0}.compactStat{padding-top:9px}.ecosystemTotal{margin:8px 0}.ecosystemTotal strong{font-size:24px;letter-spacing:0}.insightsGrid{gap:6px}.chartHeading{margin-bottom:8px}.delta,.totalPill{min-height:20px;padding:0 6px;font-size: 12px}
 
 @media (min-width: 980px) {
   .actionGrid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }

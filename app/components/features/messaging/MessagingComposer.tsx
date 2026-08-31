@@ -243,7 +243,7 @@ export default function MessagingComposer({
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#250817',
-                background: busy ? 'rgba(159, 224, 34,0.5)' : 'var(--teal-solid)',
+                background: busy ? 'var(--primary-a52)' : 'var(--teal-solid)',
                 cursor: busy ? 'default' : 'pointer',
                 flexShrink: 0,
               }}

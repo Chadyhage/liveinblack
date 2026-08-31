@@ -7,7 +7,7 @@
 .image {
   position: relative;
   min-height: 230px;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1;
 }
 
 @media (max-width: 820px) {

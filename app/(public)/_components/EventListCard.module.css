@@ -21,13 +21,13 @@
 
 .visual {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1;
   overflow: hidden;
 }
 
 .image { object-fit: cover; transition: transform 500ms cubic-bezier(.2, .7, .2, 1); }
 .card:hover .image { transform: scale(1.035); }
-.scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .28), transparent 46%, rgba(0, 0, 0, .56)); }
+.scrim { position: absolute; inset: 0; background: transparent; }
 
 .topBadges,
 .bottomBadges {

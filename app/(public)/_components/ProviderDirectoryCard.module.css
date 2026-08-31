@@ -15,10 +15,10 @@
 .card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .08); box-shadow: 0 24px 64px rgba(0, 0, 0, .28); }
 .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
 
-.visual { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.visual { position: relative; aspect-ratio: 1; overflow: hidden; }
 .cover { object-fit: cover; transition: transform 500ms cubic-bezier(.2, .7, .2, 1); }
 .card:hover .cover { transform: scale(1.035); }
-.scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .18), transparent 48%, rgba(0, 0, 0, .66)); }
+.scrim { position: absolute; inset: 0; background: transparent; }
 
 .category {
   position: absolute;

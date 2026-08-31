@@ -299,9 +299,9 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{request.userName || request.userEmail}</span>
-          <span style={{ fontSize: 10.5, padding: '2px 6px', borderRadius: 6, background: 'rgba(224,90,170,0.14)', color: 'var(--pink)' }}>{ROLE_LABEL[request.userRole] || request.userRole || '—'}</span>
+          <span style={{ fontSize: 12, padding: '2px 6px', borderRadius: 6, background: 'rgba(224,90,170,0.14)', color: 'var(--pink)' }}>{ROLE_LABEL[request.userRole] || request.userRole || '—'}</span>
         </div>
-        <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>
           {request.userEmail} · Demandé le {fmtDateTime(request.requestedAt)}
         </p>
         {request.reason && (
@@ -340,7 +340,7 @@ function DetailPanel({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <h2 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: 0 }}>{detail.userName || detail.userEmail}</h2>
-          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: 'var(--pink)', fontWeight: 700 }}>En attente</span>
+          <span style={{ fontSize: 12, padding: '3px 8px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: 'var(--pink)', fontWeight: 700 }}>En attente</span>
         </div>
         <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
           {detail.userEmail} · {ROLE_LABEL[detail.userRole] || detail.userRole || '—'} · Demandé le {fmtDateTime(detail.requestedAt)}
@@ -396,7 +396,7 @@ function DetailPanel({
             Approuver la suppression (irréversible)
           </Button>
 
-          <Label style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</Label>
+          <Label style={{ fontSize: 12, color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</Label>
           <Textarea
             style={{ minHeight: 60 }}
             placeholder="Ex : merci de préciser la raison de ta demande…"
