@@ -159,7 +159,7 @@ const S = {
     letterSpacing: 'normal',
     color: '#fff',
     cursor: 'pointer',
-    boxShadow: '0 6px 20px rgba(200,169,110,0.35)',
+    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
     width: '100%',
   } as React.CSSProperties,
   btnGhost: {
@@ -761,7 +761,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
         <div
           style={{
             background: 'var(--surface-2)',
-            border: '1px solid rgba(200,169,110,0.5)',
+            border: '1px solid rgba(224,90,170,0.5)',
             borderRadius: 12,
             padding: '14px 16px',
             display: 'flex',
@@ -931,7 +931,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     <Button
                       variant="danger"
                       onClick={clearVideo}
-                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(200,169,110,0.55)', background: 'rgba(200,169,110,0.14)', color: '#e8d49e', fontSize: 12 }}
+                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontSize: 12 }}
                     >
                       Retirer
                     </Button>
@@ -1307,7 +1307,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       }}
                       disabled={placeHasSales}
                       title={placeHasSales ? 'Impossible — cette place a déjà été vendue' : undefined}
-                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(200,169,110,0.14)', border: '1px solid rgba(200,169,110,0.55)', opacity: placeHasSales ? 0.4 : 1, fontSize: 12, color: '#e8d49e' }}
+                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', opacity: placeHasSales ? 0.4 : 1, fontSize: 12, color: '#ff9ed2' }}
                     >
                       Supprimer
                     </Button>
@@ -1662,7 +1662,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
           )}
 
           {preorder && validMenuItemsForGate.length === 0 && (
-            <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(200,169,110,0.5)', borderRadius: 12, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(224,90,170,0.5)', borderRadius: 12, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
               La précommande est activée mais aucun article n&apos;a été renseigné. Ajoute au moins un article avec un nom et un prix, ou désactive la précommande.
             </div>
           )}

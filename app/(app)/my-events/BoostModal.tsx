@@ -180,7 +180,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
 
         {step === 'error' ? (
           <div style={{ textAlign: 'center', padding: '28px 0' }}>
-            <p style={{ fontSize: 13, color: '#d7bd82', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
+            <p style={{ fontSize: 13, color: '#ee9bb7', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
             <Button
               variant="secondary"
               onClick={() => setStep('pick')}

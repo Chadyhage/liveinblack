@@ -136,8 +136,8 @@ function HeaderSearch() {
             padding: 0,
             border: 0,
             borderRadius: '50%',
-            background: '#e8d49e',
-            color: '#17130c',
+            background: '#ff8fb2',
+            color: '#250817',
           }}
         >
           <Search size={18} strokeWidth={2} aria-hidden="true" />
@@ -390,7 +390,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 padding: '8px 12px',
                 borderRadius: 12,
                 background: 'var(--teal-solid)',
-                color: '#17130c',
+                color: '#250817',
                 fontSize: 14,
                 fontWeight: 650,
                 textDecoration: 'none',
@@ -591,7 +591,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           font-weight: 700;
         }
         .lb-nav-auth--secondary { margin-left: 4px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.07); }
-        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(200,169,110,.6); background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 6px 18px rgba(200,169,110,.3); }
+        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(245,61,141,.6); background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 6px 18px rgba(245,61,141,.3); }
         .lb-nav-auth--primary:hover { background: var(--primary-strong); filter: brightness(1.08); }
         @media (min-width: 1100px) and (max-width: 1399px) {
           .lb-navlink-primary, .lb-nav-search { display: inline-flex }
@@ -638,12 +638,12 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           padding: 0 !important;
           border: 0;
           border-radius: 50%;
-          background: #e8d49e;
-          color: #17130c;
+          background: #ff8fb2;
+          color: #250817;
           cursor: pointer;
           transition: color 160ms ease, background 160ms ease;
         }
-        .lb-header-search__button:hover { color: #17130c; background: #e8d49e; }
+        .lb-header-search__button:hover { color: #250817; background: #ff8fb2; }
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }

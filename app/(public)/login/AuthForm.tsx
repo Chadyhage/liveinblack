@@ -49,7 +49,7 @@ const btnPrimary: React.CSSProperties = {
   letterSpacing: 'normal',
   color: 'var(--primary-ink)',
   width: '100%',
-  boxShadow: '0 6px 20px rgba(200, 169, 110,0.18)',
+  boxShadow: '0 6px 20px rgba(245, 61, 141,0.18)',
 }
 const btnGold: React.CSSProperties = {
   padding: '10px 18px',
@@ -112,9 +112,9 @@ function RoleIcon({ role, size = 18 }: { role: RegRole; size?: number }) {
 // Hex littéraux ici (et pas var(--teal)/var(--violet)/var(--gold)) car on a
 // besoin de suffixer une transparence (1a/3a) — mêmes valeurs que les vars.
 const ROLE_CARDS: { role: RegRole; title: string; desc: string; badge: string | null; accent: string }[] = [
-  { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: '#c8a96e' },
-  { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: '#c8a96e' },
-  { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: '#c8a96e' },
+  { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: '#F53D8D' },
+  { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: '#F53D8D' },
+  { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: '#F53D8D' },
 ]
 
 function withNext(path: string, next: string | null) {
@@ -464,17 +464,17 @@ export default function AuthForm() {
         />
 
         {mode === 'login' && loginError && (
-          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
+          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
             {loginError}
           </div>
         )}
         {mode === 'login' && !loginError && loginInfo && (
-          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(200, 169, 110,0.10)', border: '1px solid rgba(200, 169, 110,0.35)', borderRadius: 10, fontSize: 12.5, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.45 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(245, 61, 141,0.10)', border: '1px solid rgba(245, 61, 141,0.35)', borderRadius: 10, fontSize: 12.5, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.45 }}>
             {loginInfo}
           </div>
         )}
         {mode === 'register' && regError && (
-          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
             {regError}
           </div>
         )}
@@ -569,7 +569,7 @@ export default function AuthForm() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2, flexWrap: 'wrap' }}>
                       <p style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
                       {badge && (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--primary)', padding: '2px 7px', borderRadius: 8, border: '1px solid rgba(200, 169, 110,0.35)', background: 'rgba(200, 169, 110,0.12)' }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--primary)', padding: '2px 7px', borderRadius: 8, border: '1px solid rgba(245, 61, 141,0.35)', background: 'rgba(245, 61, 141,0.12)' }}>
                           {badge}
                         </span>
                       )}

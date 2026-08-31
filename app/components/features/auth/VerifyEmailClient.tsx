@@ -102,7 +102,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
               {email ? <>L&apos;adresse {email} est confirmée, tu peux te connecter.</> : 'Ton adresse email est confirmée, tu peux te connecter.'}
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#17130c')}>Se connecter</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#250817')}>Se connecter</Button>
             </div>
           </>
         )}

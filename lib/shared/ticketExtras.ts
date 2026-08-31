@@ -310,5 +310,5 @@ export function getPasswordStrength(pw: string): { score: number; label: 'FAIBLE
   if (/[^A-Za-z0-9]/.test(pw)) score++
   if (score <= 1) return { score, label: 'FAIBLE', color: '#ef4444', pct: 25 }
   if (score <= 3) return { score, label: 'MOYEN', color: '#f97316', pct: 60 }
-  return { score, label: 'FORT', color: '#c8a96e', pct: 100 }
+  return { score, label: 'FORT', color: '#F53D8D', pct: 100 }
 }

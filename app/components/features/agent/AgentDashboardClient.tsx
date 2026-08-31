@@ -55,7 +55,7 @@ const ROLE_LABEL: Record<DashboardStats['roleBreakdown'][number]['role'], string
 const ROLE_COLOR: Record<DashboardStats['roleBreakdown'][number]['role'], string> = {
   client: 'var(--teal)',
   organisateur: 'var(--gold)',
-  prestataire: '#c8a96e',
+  prestataire: '#e05aaa',
 }
 
 function fmtDay(iso: string): string {
@@ -109,7 +109,7 @@ export default function AgentDashboardClient() {
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--overview">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {error && (
-          <Card accent="rgba(200,169,110,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
             <Button variant="secondary" onClick={load} style={{ fontSize: 12.5 }}>
               Recharger

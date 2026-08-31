@@ -63,7 +63,7 @@
   white-space: nowrap;
 }
 
-.urgentBadge { background: #ff7b7b; border-color: transparent; }
+.urgentBadge { background: #d92d5e; border-color: transparent; }
 .price { margin-left: auto; color: var(--primary); }
 .stock { border: 0; }
 .reason { min-width: 0; overflow: hidden; color: var(--primary); text-overflow: ellipsis; }

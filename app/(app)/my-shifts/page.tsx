@@ -30,9 +30,9 @@ export const metadata: Metadata = {
 // fond/bordure translucides cohérents avec `color`.
 const ROLE_META: Record<string, { label: string; color: string; soft: string; border: string; desc: string }> = {
   serveur: { label: 'Serveur', color: 'var(--teal)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Prends et sers les commandes au bar' },
-  scan: { label: 'Contrôle entrée', color: '#c8a96e', soft: 'rgba(200, 169, 110, 0.12)', border: 'rgba(200, 169, 110, 0.35)', desc: "Scanne les billets à l'entrée" },
+  scan: { label: 'Contrôle entrée', color: '#8b5cf6', soft: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.35)', desc: "Scanne les billets à l'entrée" },
   manager: { label: 'Manager', color: 'var(--gold)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Gestion complète de la soirée' },
-  dj: { label: 'DJ', color: '#c8a96e', soft: 'rgba(200, 169, 110, 0.12)', border: 'rgba(200, 169, 110, 0.35)', desc: 'Gère la playlist interactive de la soirée' },
+  dj: { label: 'DJ', color: '#e05aaa', soft: 'rgba(224, 90, 170, 0.12)', border: 'rgba(224, 90, 170, 0.35)', desc: 'Gère la playlist interactive de la soirée' },
   // 'vendeur' (#C, lib/server/agentSales.ts) ajouté après le reste de cette
   // page — manquait ici, ce qui faisait tomber sur le fallback générique
   // (couleur grise, description vide) ET, pire, redirigeait vers le scanner

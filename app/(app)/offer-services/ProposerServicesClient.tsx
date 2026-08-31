@@ -28,7 +28,7 @@ import {
 // après montage via useEffect, écran "Chargement..."), tout est déjà résolu
 // côté serveur (voir page.tsx) — aucun état de chargement initial ici.
 // Avatar et couverture utilisent le recadrage partagé avant leur upload.
-const C = { obsidian: '#04040b', teal: 'var(--primary)', gold: 'var(--primary)', pink: '#c8a96e' }
+const C = { obsidian: '#04040b', teal: 'var(--primary)', gold: 'var(--primary)', pink: '#e05aaa' }
 
 const CARD_SHADOW = '0 18px 46px rgba(0,0,0,.22)'
 const primaryButton: React.CSSProperties = {
@@ -41,7 +41,7 @@ const primaryButton: React.CSSProperties = {
   fontWeight: 500,
   textTransform: 'none',
   letterSpacing: 'normal',
-  boxShadow: '0 6px 20px rgba(200,169,110,.35)',
+  boxShadow: '0 6px 20px rgba(122,59,242,.35)',
 }
 const secondaryButton: React.CSSProperties = { ...primaryButton, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', color: 'rgba(255,255,255,.9)', fontWeight: 600, boxShadow: 'none' }
 const ghostButtonSmall: React.CSSProperties = { fontSize: 11.5, fontWeight: 700 }
@@ -1193,7 +1193,7 @@ export default function ProposerServicesClient({
                         <Button variant="secondary" onClick={() => startEdit(item)} style={secondaryButton}>
                           Modifier
                         </Button>
-                        <Button variant="danger" onClick={() => setConfirmRemoveItem(item)} style={{ ...secondaryButton, color: '#e8d49e', border: '1px solid rgba(200,169,110,.55)', background: 'rgba(200,169,110,.14)' }}>
+                        <Button variant="danger" onClick={() => setConfirmRemoveItem(item)} style={{ ...secondaryButton, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.55)', background: 'rgba(224,90,170,.14)' }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 6h18" />
                             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -1259,7 +1259,7 @@ export default function ProposerServicesClient({
                     return (
                       <Card
                         key={review.id}
-                        accent={hidden ? 'rgba(200,169,110,.3)' : undefined}
+                        accent={hidden ? 'rgba(224,90,170,.3)' : undefined}
                         style={{ boxShadow: CARD_SHADOW, padding: 18, opacity: hidden ? 0.75 : 1 }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -1269,7 +1269,7 @@ export default function ProposerServicesClient({
                             <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
                           )}
                           {hidden && (
-                            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#e8d49e', background: 'rgba(255,123,123,.12)', border: '1px solid rgba(255,123,123,.4)', borderRadius: 999, padding: '2px 8px' }}>Masqué par la modération</span>
+                            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 999, padding: '2px 8px' }}>Masqué par la modération</span>
                           )}
                           <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.38)' }}>{fmtDate(review.createdAt)}</span>
                         </div>
@@ -1292,7 +1292,7 @@ export default function ProposerServicesClient({
                               style={{ minHeight: 64, lineHeight: 1.5 }}
                             />
                             {replyErr && (
-                              <p role="alert" style={{ fontSize: 12, color: '#e8d49e', margin: '7px 0 0' }}>
+                              <p role="alert" style={{ fontSize: 12, color: '#ff8fb2', margin: '7px 0 0' }}>
                                 {replyErr}
                               </p>
                             )}
@@ -1318,7 +1318,7 @@ export default function ProposerServicesClient({
                             <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '0 0 8px' }}>Motif du signalement</p>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
                               {REVIEW_REPORT_REASONS.map((reason) => (
-                                <Button key={reason.id} variant="ghost" onClick={() => setReportReason(reason.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: reportReason === reason.id ? 'rgba(200,169,110,.16)' : 'rgba(255,255,255,.05)', border: reportReason === reason.id ? '1px solid rgba(200,169,110,.6)' : '1px solid rgba(255,255,255,.10)', color: reportReason === reason.id ? '#cdb4ff' : 'rgba(255,255,255,.7)' }}>
+                                <Button key={reason.id} variant="ghost" onClick={() => setReportReason(reason.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: reportReason === reason.id ? 'rgba(143,86,255,.16)' : 'rgba(255,255,255,.05)', border: reportReason === reason.id ? '1px solid rgba(143,86,255,.6)' : '1px solid rgba(255,255,255,.10)', color: reportReason === reason.id ? '#cdb4ff' : 'rgba(255,255,255,.7)' }}>
                                   {reason.label}
                                 </Button>
                               ))}
@@ -1425,7 +1425,7 @@ export default function ProposerServicesClient({
               <Button variant="secondary" onClick={() => setConfirmRemoveItem(null)} disabled={removingItem} style={secondaryButton}>
                 Annuler
               </Button>
-              <Button variant="danger" onClick={() => void confirmDeleteItem()} disabled={removingItem} loading={removingItem} loadingText="Suppression…" style={{ ...primaryButton, background: '#ff7b7b', boxShadow: 'none' }}>
+              <Button variant="danger" onClick={() => void confirmDeleteItem()} disabled={removingItem} loading={removingItem} loadingText="Suppression…" style={{ ...primaryButton, background: '#c2347f', boxShadow: 'none' }}>
                 Supprimer
               </Button>
             </div>
@@ -1453,7 +1453,7 @@ export default function ProposerServicesClient({
               disabled={mediaUploading}
               loading={mediaUploading}
               loadingText="Suppression…"
-              style={{ ...primaryButton, background: '#ff7b7b', boxShadow: 'none' }}
+              style={{ ...primaryButton, background: '#c2347f', boxShadow: 'none' }}
             >
               Supprimer
             </Button>

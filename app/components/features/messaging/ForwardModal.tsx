@@ -47,7 +47,7 @@ function conversationLabel(conv: ConversationView, currentUserId: string): strin
 }
 
 function avatarColorFor(userId: string): string {
-  const colors = ['var(--primary)', '#c8a96e', '#c8a96e', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
+  const colors = ['var(--primary)', '#8b5cf6', '#e05aaa', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
   if (!userId) return colors[0]
   const code = userId.charCodeAt(userId.length - 1) || 0
   return colors[code % colors.length]
@@ -95,7 +95,7 @@ function GroupAvatar({ size = 30 }: { size?: number }) {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        background: 'rgba(200,169,110,.22)',
+        background: 'rgba(139,92,246,.22)',
         color: '#fff',
         fontSize: Math.max(11, Math.round(size * 0.4)),
         fontWeight: 800,

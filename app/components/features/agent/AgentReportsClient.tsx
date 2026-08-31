@@ -186,7 +186,7 @@ export default function AgentReportsClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(200,169,110,.35)" className={styles.error} role="alert">
+          <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
             <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les signalements</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
             <Button variant="secondary" onClick={() => loadList(filter)}>Réessayer</Button>
           </Card>
@@ -199,8 +199,8 @@ export default function AgentReportsClient() {
           </Card>
           {(
             [
-              { key: 'open' as const, label: 'À traiter', color: '#e8d49e', count: counts?.open ?? (filter === 'open' ? reports.length : 0), icon: Clock3 },
-              { key: 'handled' as const, label: 'Traités', color: '#e8d49e', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
+              { key: 'open' as const, label: 'À traiter', color: '#ff8fb2', count: counts?.open ?? (filter === 'open' ? reports.length : 0), icon: Clock3 },
+              { key: 'handled' as const, label: 'Traités', color: '#ff8fb2', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
             ]
           ).map((f) => {
             const active = f.key === filter

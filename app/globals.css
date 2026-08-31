@@ -3,21 +3,21 @@
 /* Design system LIVEINBLACK (voir CLAUDE.md) : surfaces opaques, CTA pleins,
    pas de glow néon ni de glassmorphism de contenu (blur toléré : nav/header). */
 :root {
-  --obsidian: #181714;
-  --surface: #242018; /* cartes */
-  --surface-2: #1d1a14; /* modals/menus */
-  --primary: #c8a96e;
-  --primary-strong: #e2c37e;
-  --primary-ink: #17130c;
-  /* Aliases de compatibilité : les anciennes clés convergent vers l'or primaire. */
+  --obsidian: #191218;
+  --surface: #241a23; /* cartes */
+  --surface-2: #1d141c; /* modals/menus */
+  --primary: #F53D8D;
+  --primary-strong: #e02d7d;
+  --primary-ink: #ffffff;
+  /* Aliases de compatibilité : l'ancienne palette converge vers le rose primaire. */
   --teal: var(--primary);
   --teal-solid: var(--primary-strong);
   --gold: var(--primary);
-  --pink: var(--primary);
+  --pink: #FF75AD;
   --violet: var(--primary);
   --violet-cta: linear-gradient(180deg, var(--primary), var(--primary-strong));
-  --border: rgba(200, 169, 110, 0.18);
-  --border-strong: rgba(200, 169, 110, 0.34);
+  --border: rgba(245, 61, 141, 0.18);
+  --border-strong: rgba(245, 61, 141, 0.34);
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.76);
   --text-faint: rgba(255, 255, 255, 0.62);
@@ -27,32 +27,32 @@
      rgba() en cohérence. Cela évite d'avoir des hex ou rgba() hardcodés dans
      les composants — tout consommateur référence ces tokens.
      ──────────────────────────────────────────────────────────────────────── */
-  --primary-a04:  rgba(200, 169, 110, 0.04);
-  --primary-a05:  rgba(200, 169, 110, 0.05);
-  --primary-a06:  rgba(200, 169, 110, 0.06);
-  --primary-a07:  rgba(200, 169, 110, 0.07);
-  --primary-a08:  rgba(200, 169, 110, 0.08);
-  --primary-a09:  rgba(200, 169, 110, 0.09);
-  --primary-a10:  rgba(200, 169, 110, 0.10);
-  --primary-a12:  rgba(200, 169, 110, 0.12);
-  --primary-a14:  rgba(200, 169, 110, 0.14);
-  --primary-a16:  rgba(200, 169, 110, 0.16);
-  --primary-a18:  rgba(200, 169, 110, 0.18); /* = --border */
-  --primary-a20:  rgba(200, 169, 110, 0.20);
-  --primary-a24:  rgba(200, 169, 110, 0.24);
-  --primary-a28:  rgba(200, 169, 110, 0.28);
-  --primary-a32:  rgba(200, 169, 110, 0.32);
-  --primary-a34:  rgba(200, 169, 110, 0.34); /* = --border-strong */
-  --primary-a35:  rgba(200, 169, 110, 0.35);
-  --primary-a42:  rgba(200, 169, 110, 0.42);
-  --primary-a52:  rgba(200, 169, 110, 0.52);
-  --primary-a55:  rgba(200, 169, 110, 0.55);
-  --primary-a60:  rgba(200, 169, 110, 0.60);
-  --primary-a65:  rgba(200, 169, 110, 0.65);
-  --primary-a75:  rgba(200, 169, 110, 0.75);
-  --primary-a85:  rgba(200, 169, 110, 0.85);
+  --primary-a04:  rgba(245, 61, 141, 0.04);
+  --primary-a05:  rgba(245, 61, 141, 0.05);
+  --primary-a06:  rgba(245, 61, 141, 0.06);
+  --primary-a07:  rgba(245, 61, 141, 0.07);
+  --primary-a08:  rgba(245, 61, 141, 0.08);
+  --primary-a09:  rgba(245, 61, 141, 0.09);
+  --primary-a10:  rgba(245, 61, 141, 0.10);
+  --primary-a12:  rgba(245, 61, 141, 0.12);
+  --primary-a14:  rgba(245, 61, 141, 0.14);
+  --primary-a16:  rgba(245, 61, 141, 0.16);
+  --primary-a18:  rgba(245, 61, 141, 0.18); /* = --border */
+  --primary-a20:  rgba(245, 61, 141, 0.20);
+  --primary-a24:  rgba(245, 61, 141, 0.24);
+  --primary-a28:  rgba(245, 61, 141, 0.28);
+  --primary-a32:  rgba(245, 61, 141, 0.32);
+  --primary-a34:  rgba(245, 61, 141, 0.34); /* = --border-strong */
+  --primary-a35:  rgba(245, 61, 141, 0.35);
+  --primary-a42:  rgba(245, 61, 141, 0.42);
+  --primary-a52:  rgba(245, 61, 141, 0.52);
+  --primary-a55:  rgba(245, 61, 141, 0.55);
+  --primary-a60:  rgba(245, 61, 141, 0.60);
+  --primary-a65:  rgba(245, 61, 141, 0.65);
+  --primary-a75:  rgba(245, 61, 141, 0.75);
+  --primary-a85:  rgba(245, 61, 141, 0.85);
   /* Focus ring (distinct token pour sémantique claire) */
-  --focus-ring-color: rgba(200, 169, 110, 0.28);
+  --focus-ring-color: rgba(245, 61, 141, 0.28);
   --focus-ring: 0 0 0 3px var(--focus-ring-color);
 
   --radius-sm: 8px;
@@ -109,7 +109,7 @@
 html {
   font-size: 115%;
   scroll-padding-top: 84px;
-  background: #181714;
+  background: #191218;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-text-size-adjust: 100%;
@@ -143,7 +143,7 @@ nextjs-portal {
 }
 
 :where(button, a, input, textarea, select, summary, [role='button'], [role='tab'], [role='option']):focus-visible {
-  outline: 3px solid rgba(200, 169, 110, .52);
+  outline: 3px solid rgba(245, 61, 141, .52);
   outline-offset: 3px;
 }
 
@@ -154,8 +154,8 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 78% 10%, rgba(200, 169, 110, .06), transparent 34%),
-    linear-gradient(180deg, rgba(24, 23, 20, .8) 0%, rgba(24, 23, 20, .89) 52%, rgba(24, 23, 20, .95) 100%),
+    radial-gradient(circle at 78% 10%, rgba(245, 61, 141, .06), transparent 34%),
+    linear-gradient(180deg, rgba(25, 18, 24, .8) 0%, rgba(25, 18, 24, .89) 52%, rgba(25, 18, 24, .95) 100%),
     url('/media1.jpg') 58% center / cover no-repeat;
   filter: saturate(.7) contrast(1.02) blur(3px);
 }
@@ -231,7 +231,7 @@ select:-webkit-autofill:focus {
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--obsidian); }
-::-webkit-scrollbar-thumb { background: rgba(200, 169, 110, 0.32); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: rgba(245, 61, 141, 0.32); border-radius: 999px; }
 
 .lb-card {
   border-radius: var(--radius-card);
@@ -271,7 +271,7 @@ select:-webkit-autofill:focus {
 a:hover > .lb-card,
 button:hover > .lb-card {
   transform: translateY(-3px);
-  border-color: rgba(200, 169, 110, 0.42) !important;
+  border-color: rgba(245, 61, 141, 0.42) !important;
   background: rgba(255, 255, 255, 0.08) !important;
 }
 
@@ -377,7 +377,7 @@ button:hover > .lb-card {
   padding: clamp(18px, 2vw, 26px);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, rgba(200, 169, 110, .08), transparent 48%), var(--surface-2);
+  background: linear-gradient(135deg, rgba(245, 61, 141, .08), transparent 48%), var(--surface-2);
   box-shadow: 0 22px 64px rgba(0, 0, 0, .22);
 }
 

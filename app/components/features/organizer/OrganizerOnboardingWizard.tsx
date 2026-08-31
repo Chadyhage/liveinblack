@@ -556,12 +556,12 @@ export default function OrganizerOnboardingWizard({
           )}
 
           {error && (
-            <p style={{ fontSize: 12.5, color: '#c8a96e', marginTop: 14 }}>
+            <p style={{ fontSize: 12.5, color: '#e05aaa', marginTop: 14 }}>
               {error}{' '}
               {emailTaken && (
                 <>
                   Connecte-toi à ce compte, puis débloque l’interface organisateur depuis ton profil :{' '}
-                  <Link href="/login" style={{ color: '#c8a96e', textDecoration: 'underline' }}>
+                  <Link href="/login" style={{ color: '#e05aaa', textDecoration: 'underline' }}>
                     se connecter
                   </Link>
                   .
@@ -652,7 +652,7 @@ function DocUpload({
                 </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
               </span>
-              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#c8a96e', fontSize: 12, flexShrink: 0, textDecoration: 'none' }}>
+              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#e05aaa', fontSize: 12, flexShrink: 0, textDecoration: 'none' }}>
                 Retirer
               </Button>
             </div>

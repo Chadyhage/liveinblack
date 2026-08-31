@@ -91,7 +91,7 @@ export default function AgeGateModal({
           fontSize: 14,
           fontWeight: 700,
           color: '#fff',
-          boxShadow: '0 6px 20px rgba(200,169,110,0.35)',
+          boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
         }}
       >
         J&apos;ai compris

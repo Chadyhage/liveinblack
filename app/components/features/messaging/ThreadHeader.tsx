@@ -65,7 +65,7 @@ export default function ThreadHeader({
         {avatar}
         <div style={{ minWidth: 0 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</h2>
-          <p style={{ fontSize: 11, color: subtitle === 'En ligne' ? '#c8a96e' : 'var(--text-faint)', margin: 0 }}>{subtitle}</p>
+          <p style={{ fontSize: 11, color: subtitle === 'En ligne' ? '#F53D8D' : 'var(--text-faint)', margin: 0 }}>{subtitle}</p>
         </div>
       </Button>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>

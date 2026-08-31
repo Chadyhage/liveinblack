@@ -179,7 +179,7 @@ export default function MessagingComposer({
           <Button variant="secondary" onClick={onToggleRecordingPause} style={{ width: 42, height: 42, minWidth: 42, minHeight: 42, padding: 0, borderRadius: '50%' }} aria-label={isRecordingPaused ? 'Reprendre l’enregistrement' : 'Mettre en pause'}>
             {isRecordingPaused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}
           </Button>
-          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--teal-solid)', color: '#17130c' }} aria-label="Envoyer le message vocal">
+          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--teal-solid)', color: '#250817' }} aria-label="Envoyer le message vocal">
             <Send size={17} />
           </Button>
         </div>
@@ -242,8 +242,8 @@ export default function MessagingComposer({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#17130c',
-                background: busy ? 'rgba(200, 169, 110,0.5)' : 'var(--teal-solid)',
+                color: '#250817',
+                background: busy ? 'rgba(159, 224, 34,0.5)' : 'var(--teal-solid)',
                 cursor: busy ? 'default' : 'pointer',
                 flexShrink: 0,
               }}
@@ -263,7 +263,7 @@ export default function MessagingComposer({
                 padding: 0,
                 borderRadius: '50%',
                 background: 'var(--teal-solid)',
-                color: '#17130c',
+                color: '#250817',
                 flexShrink: 0,
               }}
               aria-label="Message vocal"

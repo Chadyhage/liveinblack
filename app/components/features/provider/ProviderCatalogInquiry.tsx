@@ -250,7 +250,7 @@ export default function ProviderCatalogInquiry({
             </p>
 
             {error && (
-              <p role="alert" style={{ fontSize: 12.5, color: '#e8d49e', background: 'rgba(255,123,123,.12)', border: '1px solid rgba(255,123,123,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
+              <p role="alert" style={{ fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
                 {error}
               </p>
             )}

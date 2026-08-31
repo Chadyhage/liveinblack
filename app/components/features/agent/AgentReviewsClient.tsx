@@ -237,7 +237,7 @@ export default function AgentReviewsClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(232,212,158,.35)" className={styles.error}>
+          <Card accent="rgba(255,143,178,.35)" className={styles.error}>
             <div><strong>Impossible de charger les avis</strong><p>Réessaie maintenant ou reconnecte-toi si le problème persiste.</p></div>
             <Button variant="secondary" onClick={loadList}>
               Recharger
@@ -261,7 +261,7 @@ export default function AgentReviewsClient() {
             size="sm"
             aria-pressed={statusFilter === 'reported'}
             className={`${styles.metric}${statusFilter === 'reported' ? ` ${styles.metricActive} ${styles.metricUrgent}` : ''}`}
-            style={{ display: 'grid', ...(statusFilter === 'reported' ? { borderColor: 'rgba(232,212,158,.38)', background: 'linear-gradient(145deg,rgba(232,212,158,.1),rgba(255,255,255,.045))' } : {}) }}
+            style={{ display: 'grid', ...(statusFilter === 'reported' ? { borderColor: 'rgba(255,143,178,.38)', background: 'linear-gradient(145deg,rgba(255,143,178,.1),rgba(255,255,255,.045))' } : {}) }}
             onClick={() => setQueryParams({ status: 'reported', page: null })}
           >
             <span className={`${styles.metricIcon} ${styles.urgentIcon}`}><Flag size={18} aria-hidden="true" /></span><strong>{reportedCount}</strong><span>À examiner</span>

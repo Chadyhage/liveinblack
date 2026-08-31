@@ -19,8 +19,8 @@
 .menuItem:hover,.menuItem:focus-visible { background:rgba(255,255,255,.075)!important; color:#fff!important; }
 .attachmentMenu { width:min(320px,calc(100vw - 28px)); display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:10px; }
 .attachmentMenu .menuItem { width:100%!important; min-height:112px!important; margin:0!important; display:flex!important; flex-direction:column; align-items:flex-start!important; justify-content:flex-end!important; gap:12px!important; padding:14px!important; border:1px solid rgba(255,255,255,.1)!important; background:rgba(255,255,255,.045)!important; font-size:13px!important; }
-.attachmentIcon { width:42px; height:42px; display:grid; place-items:center; border-radius:50%; background:rgba(200,169,110,.14); color:var(--teal-solid); }
-.dangerItem { color:#d8b66f!important; }
+.attachmentIcon { width:42px; height:42px; display:grid; place-items:center; border-radius:50%; background:rgba(245,61,141,.14); color:var(--teal-solid); }
+.dangerItem { color:#ff78b8!important; }
 @keyframes menu-in { from{opacity:0;transform:translateY(-4px) scale(.97)} to{opacity:1;transform:none} }
 @media(max-width:620px){.fixedMenu,.relativeMenu{position:fixed;right:10px!important;bottom:calc(10px + env(safe-area-inset-bottom));left:10px!important;top:auto!important}.fixedMenu.menu,.relativeMenu.menu{max-width:none;width:auto;border-radius:var(--radius-lg)}.fixedMenu .menuItem,.relativeMenu .menuItem{min-height:44px!important}.fixedMenu .quickReactions button{width:100%!important}}
 @media(prefers-reduced-motion:reduce){.menu{animation:none}}

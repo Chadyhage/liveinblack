@@ -32,8 +32,8 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               height: 80,
               borderRadius: '50%',
               margin: '0 auto 24px',
-              background: 'rgba(200,169,110,0.08)',
-              border: '2px solid rgba(200,169,110,0.35)',
+              background: 'rgba(224,90,170,0.08)',
+              border: '2px solid rgba(224,90,170,0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -45,10 +45,10 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
             Ce QR code n&apos;est pas reconnu, a été falsifié, ou n&apos;est plus à jour.
           </p>
-          <Card accent="rgba(200,169,110,0.20)" style={{ padding: '10px 16px', marginBottom: 20 }}>
+          <Card accent="rgba(224,90,170,0.20)" style={{ padding: '10px 16px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <LockKeyhole size={12} strokeWidth={1.5} color="var(--pink)" aria-hidden="true" />
-              <p style={{ fontSize: 11, color: 'rgba(200,169,110,0.75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
+              <p style={{ fontSize: 11, color: 'rgba(224,90,170,0.75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
             </div>
           </Card>
           <Link

@@ -170,7 +170,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <p style={{ margin: 0, color: 'var(--primary)', fontSize: 13, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Passer à l’action</p>
               <h2 id="blog-growth-links-title" className="font-display" style={{ fontSize: 22, letterSpacing: '-.02em', margin: '4px 0 0', color: '#fff' }}>Continuer sur LIVEINBLACK</h2>
             </div>
-            <Link href="/blog/benin" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 999, border: '1px solid rgba(200,169,110,.35)', color: 'var(--primary)', fontSize: 13.5, fontWeight: 800, textDecoration: 'none' }}>
+            <Link href="/blog/benin" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 999, border: '1px solid rgba(245,61,141,.35)', color: 'var(--primary)', fontSize: 13.5, fontWeight: 800, textDecoration: 'none' }}>
               Hub Bénin →
             </Link>
           </div>

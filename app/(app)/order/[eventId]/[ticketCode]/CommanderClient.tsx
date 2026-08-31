@@ -63,7 +63,7 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'var(--primary-a14)' },
   served: { label: 'Servi', color: 'var(--teal)', bg: 'var(--primary-a16)' },
-  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(200,169,110,0.2)' },
+  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
 }
 let toastSeq = 0
 
@@ -385,7 +385,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
             key={t.id}
             style={{
               background: 'var(--surface-2)',
-              border: '1px solid rgba(200,169,110,0.4)',
+              border: '1px solid rgba(224,90,170,0.4)',
               color: 'var(--text)',
               borderRadius: 12,
               padding: '10px 16px',

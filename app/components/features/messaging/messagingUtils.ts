@@ -1,6 +1,6 @@
 import type { ConversationMember, ConversationView, MessageView } from './types'
 
-const AVATAR_COLORS = ['var(--primary)', '#c8a96e', '#c8a96e', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
+const AVATAR_COLORS = ['var(--primary)', '#8b5cf6', '#e05aaa', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
 
 const ERROR_MESSAGES: Record<string, string> = {
   auth_required: 'Ta session a expiré — reconnecte-toi.',

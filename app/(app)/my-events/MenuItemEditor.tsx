@@ -287,7 +287,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                           variant="ghost"
                           disabled={disabled}
                           onClick={() => updateShowOption(option.id, { excludedPlaces: excluded ? option.excludedPlaces.filter((value) => value !== placeType) : [...option.excludedPlaces, placeType] })}
-                          style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid rgba(200,169,110,.5)' : '1px solid rgba(255,255,255,.1)', background: excluded ? 'rgba(200,169,110,.14)' : '#0b0c12', color: excluded ? '#e8d49e' : 'rgba(255,255,255,.55)' }}
+                          style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid rgba(224,90,170,.5)' : '1px solid rgba(255,255,255,.1)', background: excluded ? 'rgba(224,90,170,.14)' : '#0b0c12', color: excluded ? '#ff9ed2' : 'rgba(255,255,255,.55)' }}
                         >
                           {excluded ? '× ' : ''}{placeType}
                         </Button>
@@ -319,9 +319,9 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                     fontWeight: 600,
                     padding: '5px 10px',
                     borderRadius: 8,
-                    border: isExcluded ? '1px solid rgba(200,169,110,0.5)' : '1px solid rgba(255,255,255,0.10)',
-                    background: isExcluded ? 'rgba(200,169,110,0.14)' : '#0b0c12',
-                    color: isExcluded ? '#e8d49e' : 'rgba(255,255,255,0.55)',
+                    border: isExcluded ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(255,255,255,0.10)',
+                    background: isExcluded ? 'rgba(224,90,170,0.14)' : '#0b0c12',
+                    color: isExcluded ? '#ff9ed2' : 'rgba(255,255,255,0.55)',
                   }}
                 >
                   {isExcluded ? (

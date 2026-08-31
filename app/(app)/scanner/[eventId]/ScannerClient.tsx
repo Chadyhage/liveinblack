@@ -89,7 +89,7 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'var(--primary-a14)' },
   served: { label: 'Servi', color: 'var(--primary)', bg: 'var(--primary-a16)' },
-  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(200,169,110,0.2)' },
+  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
 }
 
 let toastSeq = 0
@@ -561,7 +561,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         {mode === 'scan' ? (
           <div className={styles.scanGrid}>
             {checkinError && (
-              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'rgba(200,169,110,0.08)', border: '1px solid rgba(200,169,110,0.35)', borderRadius: 14, padding: '8px 12px' }}>
+              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 14, padding: '8px 12px' }}>
                 <p style={{ fontSize: 12.5, color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 6px' : 0 }}>{checkinError}</p>
                 {checkinErrorCode === 'auth_required' && (
                   <Link href="/login" style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
@@ -738,7 +738,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                   fontSize: 10,
                                   fontWeight: 700,
                                   color: 'var(--teal-solid)',
-                                  background: 'rgba(200,169,110,0.16)',
+                                  background: 'rgba(245,61,141,0.16)',
                                   padding: '3px 9px',
                                   borderRadius: 999,
                                   whiteSpace: 'nowrap',
@@ -939,7 +939,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             key={t.id}
             style={{
               background: 'var(--surface-2)',
-              border: '1px solid rgba(200,169,110,0.4)',
+              border: '1px solid rgba(224,90,170,0.4)',
               color: 'var(--text)',
               borderRadius: 12,
               padding: '10px 16px',

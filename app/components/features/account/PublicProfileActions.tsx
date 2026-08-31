@@ -104,7 +104,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
   )
 }
 
-const primary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: 0, background: 'var(--teal-solid)', color: '#17130c', fontWeight: 800, cursor: 'pointer' }
+const primary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: 0, background: 'var(--teal-solid)', color: '#250817', fontWeight: 800, cursor: 'pointer' }
 const secondary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontWeight: 700, cursor: 'pointer' }
 const label: React.CSSProperties = { display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }
 const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--obsidian)', color: 'var(--text)' }

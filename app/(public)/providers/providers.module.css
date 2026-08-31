@@ -6,7 +6,7 @@
   font-family: var(--providers-font);
   background:
     radial-gradient(circle at 12% 4%, var(--primary-a07), transparent 28%),
-    radial-gradient(circle at 88% 18%, rgba(200, 169, 110, .08), transparent 30%),
+    radial-gradient(circle at 88% 18%, rgba(124, 92, 255, .08), transparent 30%),
     rgba(10, 10, 13, .68);
 }
 
@@ -197,9 +197,9 @@
   gap: 16px;
   margin-top: clamp(36px, 5vw, 64px);
   padding: clamp(20px, 3vw, 32px);
-  border: 1px solid rgba(200, 169, 110, .22);
+  border: 1px solid rgba(245, 61, 141, .22);
   border-radius: 24px;
-  background: linear-gradient(135deg, rgba(200, 169, 110, .11), rgba(255, 255, 255, .045));
+  background: linear-gradient(135deg, rgba(245, 61, 141, .11), rgba(255, 255, 255, .045));
   box-shadow: 0 20px 56px rgba(0, 0, 0, .22);
 }
 

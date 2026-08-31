@@ -296,7 +296,7 @@ export default function ProviderReviewsClient({
           <p style={{ fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,.42)', margin: '6px 0 14px' }}>Ton avis est publié avec ton nom d&rsquo;affichage. Les avis contraires aux règles peuvent être retirés par la modération.</p>
 
           {formErr && (
-            <p role="alert" style={{ fontSize: 12.5, color: '#e8d49e', background: 'rgba(255,123,123,.12)', border: '1px solid rgba(255,123,123,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
+            <p role="alert" style={{ fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
               {formErr}
             </p>
           )}
@@ -347,8 +347,8 @@ export default function ProviderReviewsClient({
                       borderRadius: 12,
                       fontSize: 13.5,
                       fontWeight: 600,
-                      background: reportReason === reason.id ? 'rgba(200,169,110,.16)' : 'rgba(255,255,255,.05)',
-                      border: reportReason === reason.id ? '1px solid rgba(200,169,110,.6)' : '1px solid rgba(255,255,255,.10)',
+                      background: reportReason === reason.id ? 'rgba(143,86,255,.16)' : 'rgba(255,255,255,.05)',
+                      border: reportReason === reason.id ? '1px solid rgba(143,86,255,.6)' : '1px solid rgba(255,255,255,.10)',
                       color: reportReason === reason.id ? '#cdb4ff' : 'rgba(255,255,255,.78)',
                     }}
                   >
@@ -398,7 +398,7 @@ export default function ProviderReviewsClient({
               onClick={handleRemoveOwn}
               loading={removeBusy}
               loadingText="Retrait…"
-              style={{ ...primaryBtn, flex: 1.2, background: '#ff7b7b', boxShadow: 'none' }}
+              style={{ ...primaryBtn, flex: 1.2, background: '#c2347f', boxShadow: 'none' }}
             >
               Retirer mon avis
             </Button>

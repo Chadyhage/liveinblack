@@ -318,9 +318,9 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 5,
-                        background: 'rgba(200,169,110,0.14)',
-                        border: '1px solid rgba(200,169,110,0.35)',
-                        color: '#c8a96e',
+                        background: 'rgba(34,197,94,0.14)',
+                        border: '1px solid rgba(34,197,94,0.35)',
+                        color: '#F53D8D',
                         fontSize: 12,
                         fontWeight: 600,
                       }}
@@ -339,9 +339,9 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         style={{
                           padding: '9px 12px',
                           borderRadius: 10,
-                          background: 'rgba(200,169,110,0.14)',
-                          border: '1px solid rgba(200,169,110,0.55)',
-                          color: '#e8d49e',
+                          background: 'rgba(224,90,170,0.14)',
+                          border: '1px solid rgba(224,90,170,0.55)',
+                          color: '#ff9ed2',
                           fontSize: 12,
                           fontWeight: 700,
                         }}

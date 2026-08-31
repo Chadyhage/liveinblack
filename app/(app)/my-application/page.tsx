@@ -114,7 +114,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application && ['submitted', 'under_review', 'resubmitted'].includes(application.status) && (
-        <Card accent="rgba(200,169,110,0.35)" style={{ padding: 24 }}>
+        <Card accent="rgba(139,92,246,0.35)" style={{ padding: 24 }}>
           <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--violet)', margin: '0 0 8px' }}>Dossier verrouillé — en attente de validation</p>
           {application.submittedAt && (
             <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Envoyé le {formatDate(application.submittedAt)}</p>
@@ -140,8 +140,8 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application?.status === 'rejected' && (
-        <Card accent="rgba(200,169,110,0.35)" style={{ padding: 24 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#c8a96e', margin: '0 0 8px' }}>Dossier refusé</p>
+        <Card accent="rgba(224,90,170,0.35)" style={{ padding: 24 }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#e05aaa', margin: '0 0 8px' }}>Dossier refusé</p>
           {application.rejectedAt && (
             <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Le {formatDate(application.rejectedAt)}</p>
           )}

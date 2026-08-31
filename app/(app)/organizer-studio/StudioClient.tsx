@@ -315,7 +315,7 @@ export default function StudioClient({
             padding: '10px 12px',
             marginBottom: 10,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(200,169,110,0.5)'}`,
+            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(224,90,170,0.5)'}`,
             background: 'rgba(12,12,22,0.96)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
             fontSize: 13,

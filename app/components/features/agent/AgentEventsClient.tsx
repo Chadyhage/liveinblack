@@ -162,7 +162,7 @@ export default function AgentEventsClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(200,169,110,0.35)" className={styles.error} role="alert">
+          <Card accent="rgba(224,90,170,0.35)" className={styles.error} role="alert">
             <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les événements</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
             <Button variant="secondary" onClick={triggerReload}>Réessayer</Button>
           </Card>
@@ -285,7 +285,7 @@ function AdminCancelModal({
   onConfirm: () => void
 }) {
   return (
-    <Modal onClose={onCancel} dismissible={!busy} ariaLabel={`Annuler ${name}`} contentStyle={{ borderColor: 'rgba(200,169,110,.3)' }}>
+    <Modal onClose={onCancel} dismissible={!busy} ariaLabel={`Annuler ${name}`} contentStyle={{ borderColor: 'rgba(224,90,170,.3)' }}>
       <div className={styles.modalHeader}><span className={styles.modalIcon}><AlertTriangle size={22} aria-hidden="true" /></span><h2>Annuler « {name} » ?</h2><p>Cette action est irréversible. Les billets seront annulés, le stock libéré, les versements bloqués et les remboursements déclenchés selon le moyen de paiement.</p></div>
       <Label>Message aux acheteurs (optionnel)</Label>
       <Textarea
