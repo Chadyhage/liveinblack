@@ -22,7 +22,7 @@ export default function EventVenueMap({ address }: { address: string }) {
         type="button"
         variant="ghost"
         onClick={() => setOpen(true)}
-        style={{ marginTop: 12, padding: '9px 16px', fontSize: 12.5, display: 'inline-flex', alignItems: 'center', gap: 7 }}
+        style={{ marginTop: 12, padding: '9px 16px', fontSize: 'var(--font-size-footnote-lg)', display: 'inline-flex', alignItems: 'center', gap: 7 }}
       >
         <MapPin size={15} strokeWidth={2} aria-hidden="true" />
         Voir la carte
@@ -31,7 +31,7 @@ export default function EventVenueMap({ address }: { address: string }) {
       {open && (
         <SlideOverModal onClose={() => setOpen(false)} ariaLabel="Localisation de l’événement" contentStyle={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{address}</p>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{address}</p>
           </div>
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: 'var(--surface)' }}>
             <iframe
@@ -52,14 +52,14 @@ export default function EventVenueMap({ address }: { address: string }) {
               href={googleMapsHref}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ flex: 1, minHeight: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontSize: 12.5, fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}
+              style={{ flex: 1, minHeight: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}
             >
               Ouvrir dans Google Maps
             </a>
             <Button
               variant="secondary"
               onClick={() => setOpen(false)}
-              style={{ flex: 1, borderRadius: 10, fontSize: 13, fontWeight: 800 }}
+              style={{ flex: 1, borderRadius: 10, fontSize: 'var(--font-size-callout)', fontWeight: 800 }}
             >
               Fermer
             </Button>

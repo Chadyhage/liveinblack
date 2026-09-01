@@ -117,8 +117,8 @@ function HeaderSearch() {
             padding: '0 7px 0 12px',
             border: 0,
             background: 'transparent',
-            color: '#f5f5f7',
-            fontSize: 13.5,
+            color: 'var(--text)',
+            fontSize: 'var(--font-size-body)',
             fontFamily: 'inherit',
             boxShadow: 'none',
           }}
@@ -135,9 +135,9 @@ function HeaderSearch() {
             minHeight: 38,
             padding: 0,
             border: 0,
-            borderRadius: '50%',
-            background: '#ff8fb2',
-            color: '#250817',
+            borderRadius: 10,
+            background: 'var(--primary)',
+            color: 'var(--primary-ink)',
           }}
         >
           <Search size={18} strokeWidth={2} aria-hidden="true" />
@@ -156,19 +156,19 @@ function HeaderSearch() {
             maxWidth: '90vw',
             maxHeight: 320,
             overflowY: 'auto',
-            background: 'rgba(24,24,27,.96)',
+            background: 'var(--modal-surface)',
             backdropFilter: 'blur(24px) saturate(160%)',
-            border: '1px solid rgba(255,255,255,.12)',
+            border: '1px solid var(--border)',
             borderRadius: 16,
-            boxShadow: '0 24px 64px rgba(0,0,0,.42)',
+            boxShadow: 'none',
             zIndex: 60,
           }}
         >
           {loading && !hasResults && (
-            <p style={{ padding: 16, margin: 0, fontSize: 13, color: 'var(--text-faint)' }}>Recherche…</p>
+            <p style={{ padding: 16, margin: 0, fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Recherche…</p>
           )}
           {!loading && !hasResults && (
-            <p style={{ padding: 16, margin: 0, fontSize: 13, color: 'var(--text-faint)' }}>Aucun résultat pour « {value.trim()} ».</p>
+            <p style={{ padding: 16, margin: 0, fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Aucun résultat pour « {value.trim()} ».</p>
           )}
 
           {results.events.length > 0 && (
@@ -182,8 +182,8 @@ function HeaderSearch() {
                   style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 9px', textDecoration: 'none', color: 'inherit' }}
                 >
                   <span style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
-                    <span style={{ display: 'block', fontSize: 10, color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-footnote)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>{[e.dateDisplay, e.city].filter(Boolean).join(' · ')}</span>
                   </span>
                 </Link>
               ))}
@@ -200,8 +200,8 @@ function HeaderSearch() {
                   className="lb-menu-row"
                   style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 9px', textDecoration: 'none', color: 'inherit' }}
                 >
-                  <span style={{ fontSize: 12, fontWeight: 700 }}>{o.publicName}</span>
-                  {o.city && <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{o.city}</span>}
+                  <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700 }}>{o.publicName}</span>
+                  {o.city && <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>{o.city}</span>}
                 </Link>
               ))}
             </QuickResultGroup>
@@ -217,8 +217,8 @@ function HeaderSearch() {
                   className="lb-menu-row"
                   style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5px 9px', textDecoration: 'none', color: 'inherit' }}
                 >
-                  <span style={{ fontSize: 12, fontWeight: 700 }}>{p.name}</span>
-                  {p.city && <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{p.city}</span>}
+                  <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700 }}>{p.name}</span>
+                  {p.city && <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>{p.city}</span>}
                 </Link>
               ))}
             </QuickResultGroup>
@@ -232,7 +232,7 @@ function HeaderSearch() {
 function QuickResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 10, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
+      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 'var(--font-size-caption-2)', fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
       {children}
     </div>
   )
@@ -324,7 +324,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         top: 0,
         zIndex: 40,
         padding: '10px clamp(10px, 2vw, 24px) 0',
-        background: 'linear-gradient(180deg, rgba(5,5,7,.42), transparent)',
+        background: 'linear-gradient(180deg, rgba(var(--media-black-rgb), .42), transparent)',
       }}
     >
       <div className="lb-public-nav__inner">
@@ -389,9 +389,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                 minHeight: 38,
                 padding: '8px 12px',
                 borderRadius: 12,
-                background: 'var(--teal-solid)',
-                color: '#250817',
-                fontSize: 14,
+                background: 'var(--primary)',
+                color: 'var(--primary-ink)',
+                fontSize: 'var(--font-size-body-sm)',
                 fontWeight: 650,
                 textDecoration: 'none',
               }}
@@ -409,7 +409,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             icon={mobileOpen ? <X size={18} strokeWidth={2} aria-hidden="true" /> : <Menu size={18} strokeWidth={2} aria-hidden="true" />}
             size={44}
-            style={{ background: 'rgba(255,255,255,.08)', color: '#f5f5f7', border: '1px solid rgba(255,255,255,.13)', borderRadius: 12 }}
+            style={{ background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 12 }}
           />
         </span>
       </nav>
@@ -430,11 +430,11 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
             overflowY: 'auto',
             overscrollBehavior: 'contain',
             marginTop: 8,
-            background: 'rgba(24,24,27,.96)',
+            background: 'var(--modal-surface)',
             backdropFilter: 'blur(28px) saturate(170%)',
-            border: '1px solid rgba(255,255,255,.12)',
+            border: '1px solid var(--border)',
             borderRadius: 20,
-            boxShadow: '0 24px 64px rgba(0,0,0,.46)',
+            boxShadow: 'none',
           }}
         >
           <div style={{ padding: '14px 22px 4px' }}>
@@ -442,7 +442,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           </div>
           {dashboardLinks && dashboardLinks.length > 0 && (
             <>
-              <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 'var(--font-size-caption)', fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Mon espace
               </p>
               {dashboardLinks.map((link) => {
@@ -458,10 +458,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                       padding: '10px 14px',
                       margin: '2px 8px',
                       borderRadius: 12,
-                      color: active ? '#f5f5f7' : 'rgba(255,255,255,.76)',
-                      background: active ? 'rgba(255,255,255,.1)' : 'transparent',
+                      color: active ? 'var(--text)' : 'var(--text-muted)',
+                      background: active ? 'var(--surface-2)' : 'transparent',
                       textDecoration: 'none',
-                      fontSize: 16,
+                      fontSize: 'var(--font-size-headline-lg)',
                       fontWeight: active ? 650 : 500,
                     }}
                   >
@@ -469,7 +469,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                   </Link>
                 )
               })}
-              <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 11, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <p style={{ padding: '12px 22px 6px', margin: 0, fontSize: 'var(--font-size-caption)', fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Site
               </p>
             </>
@@ -487,10 +487,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
                   padding: '10px 14px',
                   margin: '2px 8px',
                   borderRadius: 12,
-                  color: active ? '#f5f5f7' : 'rgba(255,255,255,.76)',
-                  background: active ? 'rgba(255,255,255,.1)' : 'transparent',
+                  color: active ? 'var(--text)' : 'var(--text-muted)',
+                  background: active ? 'var(--surface-2)' : 'transparent',
                   textDecoration: 'none',
-                  fontSize: 16,
+                  fontSize: 'var(--font-size-headline-lg)',
                   fontWeight: active ? 650 : 500,
                 }}
               >
@@ -532,12 +532,12 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           align-items: center;
           justify-content: space-between;
           gap: clamp(8px, 1.2vw, 14px);
-          border: 1px solid rgba(255,255,255,.14);
+          border: 1px solid var(--border);
           border-radius: 17px;
-          background: rgba(22,22,25,.7);
+          background: var(--modal-surface);
           -webkit-backdrop-filter: blur(30px) saturate(170%);
           backdrop-filter: blur(30px) saturate(170%);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 40px rgba(0,0,0,.22);
+          box-shadow: none;
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
         .lb-public-nav__brand {
@@ -546,7 +546,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           display: inline-flex;
           align-items: center;
           flex-shrink: 0;
-          color: #f5f5f7;
+          color: var(--text);
           text-decoration: none;
           border-radius: 12px;
         }
@@ -568,13 +568,13 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           align-items: center;
           padding: 0 12px;
           border-radius: 12px;
-          color: rgba(245,245,247,.72);
+          color: var(--text-muted);
           text-decoration: none;
-          font-size: 13.5px;
+          font-size: var(--font-size-body);
           font-weight: 600;
           letter-spacing: -.01em;
         }
-        .lb-navlink-active { color: #f5f5f7; background: rgba(255,255,255,.11); box-shadow: inset 0 0 0 1px rgba(255,255,255,.055); }
+        .lb-navlink-active { color: var(--text); background: var(--surface-2); box-shadow: none; }
         .lb-nav-auth {
           min-height: 42px;
           height: 42px;
@@ -587,11 +587,11 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           line-height: 1;
           white-space: nowrap;
           text-decoration: none;
-          font-size: 13.5px;
+          font-size: var(--font-size-body);
           font-weight: 700;
         }
-        .lb-nav-auth--secondary { margin-left: 4px; color: #f5f5f7; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.07); }
-        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid rgba(245,61,141,.6); background: var(--primary); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 6px 18px rgba(245,61,141,.3); }
+        .lb-nav-auth--secondary { margin-left: 4px; color: var(--text); border: 1px solid var(--border); background: var(--surface-2); }
+        .lb-nav-auth--primary { color: var(--primary-ink); border: 1px solid var(--primary-a60); background: var(--primary); box-shadow: none; }
         .lb-nav-auth--primary:hover { background: var(--primary-strong); filter: brightness(1.08); }
         @media (min-width: 1100px) and (max-width: 1399px) {
           .lb-navlink-primary, .lb-nav-search { display: inline-flex }
@@ -609,7 +609,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           .lb-navlink, .lb-nav-auth { display: none !important }
         }
         .lb-navlink { transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 120ms ease; }
-        .lb-navlink:not(.lb-nav-search):hover { color: #fff; background: rgba(255,255,255,.1); }
+        .lb-navlink:not(.lb-nav-search):hover { color: var(--text); background: var(--surface-2); }
         .lb-navlink:not(.lb-nav-search):active { transform: scale(.97); }
         .lb-header-search__form {
           width: clamp(160px, 13vw, 216px);
@@ -618,14 +618,14 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           min-height: 42px;
           height: 42px;
           padding: 2px 2px 2px 2px;
-          border: 1px solid rgba(255,255,255,.16);
+          border: 1px solid var(--border);
           border-radius: 12px;
-          background: rgba(255,255,255,.07);
+          background: var(--surface-2);
           transition: border-color 160ms ease, background 160ms ease;
         }
         .lb-header-search__form:focus-within {
-          border-color: rgba(255,255,255,.28);
-          background: rgba(255,255,255,.07);
+          border-color: var(--primary);
+          background: var(--surface-2);
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
         .lb-header-search__button {
@@ -637,13 +637,13 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           justify-content: center;
           padding: 0 !important;
           border: 0;
-          border-radius: 50%;
-          background: #ff8fb2;
-          color: #250817;
+          border-radius: 10px;
+          background: var(--primary);
+          color: var(--primary-ink);
           cursor: pointer;
           transition: color 160ms ease, background 160ms ease;
         }
-        .lb-header-search__button:hover { color: #250817; background: #ff8fb2; }
+        .lb-header-search__button:hover { color: var(--primary-ink); background: var(--primary-strong); }
         .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
@@ -653,17 +653,17 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }
-        .lb-mobile-auth-actions { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px 10px 10px; margin-top: 5px; border-top: 1px solid rgba(255,255,255,.09); }
-        .lb-mobile-auth-button { min-height: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border-radius: 12px; text-decoration: none; font-size: 13.5px; font-weight: 700; }
+        .lb-mobile-auth-actions { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 8px 10px 10px; margin-top: 5px; border-top: 1px solid var(--border); }
+        .lb-mobile-auth-button { min-height: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border-radius: 12px; text-decoration: none; font-size: var(--font-size-body); font-weight: 700; }
         .lb-mobile-auth-button--primary { color: var(--primary-ink); background: var(--primary); }
-        .lb-mobile-auth-button--secondary { color: #f5f5f7; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); }
+        .lb-mobile-auth-button--secondary { color: var(--text); background: var(--surface-2); border: 1px solid var(--border); }
         .lb-menu-row { transition: background 0.15s ease; }
-        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: rgba(255,255,255,.07); }
+        .lb-menu-row:hover, .lb-menu-row:focus-visible { background: var(--surface-2); }
         @media (prefers-reduced-motion: reduce) {
           .lb-navlink, .lb-header-search__form, .lb-header-search__button, .lb-menu-row { transition: none; }
         }
         @media (prefers-reduced-transparency: reduce) {
-          .lb-public-nav__inner { background: rgba(22,22,25,.97); backdrop-filter: none; -webkit-backdrop-filter: none; }
+          .lb-public-nav__inner { background: var(--modal-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
         }
       `}</style>
     </header>

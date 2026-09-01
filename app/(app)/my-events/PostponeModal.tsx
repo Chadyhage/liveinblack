@@ -55,35 +55,35 @@ export default function PostponeModal({ event, onClose, onDone }: { event: Postp
 
   return (
     <Modal onClose={onClose} maxWidth={520} ariaLabel="Reporter l’événement">
-        <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 14px' }}>
+        <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Reporter l&rsquo;événement ?</h2>
+        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.7, margin: '0 0 14px' }}>
           Les billets déjà vendus restent valables pour la nouvelle date — personne n&rsquo;est remboursé. Chaque acheteur est prévenu par e-mail (ancienne et nouvelle date).
         </p>
-        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.5)', margin: '0 0 16px' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '0 0 16px' }}>
           Date actuelle : <span style={{ textDecoration: 'line-through' }}>{event.dateDisplay || event.date}</span> · {event.time}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
           <div style={{ display: 'grid', gap: 6 }}>
-            <Label style={{ font: '600 11px var(--font-open-sans)', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Nouvelle date</Label>
+            <Label style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-faint)', margin: 0 }}>Nouvelle date</Label>
             <Input
               type="date"
               value={date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)}
-              style={{ padding: '11px 12px', borderRadius: 10, background: '#0b0c12', color: '#fff' }}
+              style={{ padding: '11px 12px', borderRadius: 10, background: 'var(--field-bg)', color: 'var(--text)' }}
             />
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
-            <Label style={{ font: '600 11px var(--font-open-sans)', color: 'rgba(255,255,255,0.55)', margin: 0 }}>Heure</Label>
+            <Label style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-faint)', margin: 0 }}>Heure</Label>
             <Input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              style={{ padding: '11px 12px', borderRadius: 10, background: '#0b0c12', color: '#fff' }}
+              style={{ padding: '11px 12px', borderRadius: 10, background: 'var(--field-bg)', color: 'var(--text)' }}
             />
           </div>
         </div>
-        {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
+        {error && <p style={{ color: 'var(--pink)', fontSize: 'var(--font-size-footnote-lg)', marginBottom: 12 }}>{error}</p>}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 10 }}>
           <Button
             variant="secondary"

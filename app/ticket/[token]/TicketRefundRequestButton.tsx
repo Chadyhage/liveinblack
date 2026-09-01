@@ -48,7 +48,7 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
   }
 
   if (state === 'done') {
-    return <p style={{ fontSize: 12.5, color: 'var(--primary)', textAlign: 'center', margin: 0 }}>Remboursement demandé — un email de confirmation te sera envoyé.</p>
+    return <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--primary)', textAlign: 'center', margin: 0 }}>Remboursement demandé — un email de confirmation te sera envoyé.</p>
   }
 
   return (
@@ -59,7 +59,7 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
         disabled={state === 'busy'}
         loading={state === 'busy'}
         loadingText="Envoi…"
-        style={{ width: '100%', padding: '13px 0', borderRadius: 12, fontSize: 13.5, fontWeight: 700 }}
+        style={{ width: '100%', padding: '13px 0', borderRadius: 12, fontSize: 'var(--font-size-body)', fontWeight: 700 }}
       >
         Demander un remboursement
       </Button>
@@ -75,7 +75,7 @@ export default function TicketRefundRequestButton({ token }: { token: string }) 
           void handleClick()
         }}
       />
-      {message && <p style={{ fontSize: 11.5, color: '#e05aaa', textAlign: 'center', margin: 0 }}>{message}</p>}
+      {message && <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--danger)', textAlign: 'center', margin: 0 }}>{message}</p>}
     </div>
   )
 }

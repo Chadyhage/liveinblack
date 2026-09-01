@@ -84,7 +84,7 @@ Vous pouvez également configurer votre navigateur pour refuser les cookies :`,
   ]
 
   return (
-    <div>
+    <div style={{ minHeight: '100vh', background: 'var(--obsidian)' }}>
       <LegalPageLayout
         title="Politique de cookies"
         lastUpdate={LEGAL.lastUpdate}

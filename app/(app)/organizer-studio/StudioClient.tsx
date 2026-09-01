@@ -279,8 +279,8 @@ export default function StudioClient({
       `}</style>
       <main className="lb-dashboard-page">
       <header style={{ marginBottom: 14 }}>
-        <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
-        <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12.5, lineHeight: 1.4 }}>Présente ton univers, publie tes médias et configure tes encaissements.</p>
+        <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Ma page organisateur</h1>
+        <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote-lg)', lineHeight: 1.4 }}>Présente ton univers, publie tes médias et configure tes encaissements.</p>
       </header>
       <div role="tablist" aria-label="Sections du studio" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 10 }}>
         {(['page', 'paiements'] as const).map((t) => (
@@ -296,7 +296,7 @@ export default function StudioClient({
               border: `1px solid ${tab === t ? 'var(--gold)' : 'var(--border)'}`,
               background: tab === t ? 'var(--primary-a14)' : 'var(--surface)',
               color: tab === t ? 'var(--gold)' : 'var(--text-muted)',
-              fontSize: 14,
+              fontSize: 'var(--font-size-body-sm)',
               fontWeight: 700,
               textTransform: 'none',
               letterSpacing: 'normal',
@@ -315,10 +315,10 @@ export default function StudioClient({
             padding: '10px 12px',
             marginBottom: 10,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(224,90,170,0.5)'}`,
-            background: 'rgba(12,12,22,0.96)',
+            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'var(--danger-border)'}`,
+            background: 'var(--surface-2)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
-            fontSize: 13,
+            fontSize: 'var(--font-size-callout)',
           }}
         >
           {message.text}
@@ -329,17 +329,17 @@ export default function StudioClient({
       <>
       <Card style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 0, padding: 0, marginBottom: 10, overflow: 'hidden' }}>
         <div style={{ padding: 12, borderRight: '1px solid var(--border)' }}>
-          <p style={{ font: '600 24px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.followersCount}</p>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Abonnés</p>
+          <p style={{ font: '600 24px var(--font-open-sans)', color: 'var(--text)', margin: 0 }}>{profile.followersCount}</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Abonnés</p>
         </div>
         <div style={{ padding: 12 }}>
-          <p style={{ font: '600 24px var(--font-open-sans)', color: '#fff', margin: 0 }}>{profile.viewsCount}</p>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Vues de la page</p>
+          <p style={{ font: '600 24px var(--font-open-sans)', color: 'var(--text)', margin: 0 }}>{profile.viewsCount}</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.05em', margin: '4px 0 0' }}>Vues de la page</p>
         </div>
       </Card>
 
       <Card style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 12px', marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{ flex: 1, minWidth: 220, fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
+        <span style={{ flex: 1, minWidth: 220, fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{publicUrl}</span>
         <Button
           variant="secondary"
           size="sm"
@@ -348,12 +348,12 @@ export default function StudioClient({
             setLinkCopied(true)
             setTimeout(() => setLinkCopied(false), 2000)
           }}
-          style={{ fontSize: 11.5 }}
+          style={{ fontSize: 'var(--font-size-caption-lg)' }}
         >
           {linkCopied ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Copié <Check size={13} /></span> : 'Copier le lien'}
         </Button>
         {profile.status === 'public' && (
-          <Link href={`/organizers/${slug}`} style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-control)', background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href={`/organizers/${slug}`} style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-control)', background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 'var(--font-size-body-sm)', fontWeight: 700, textDecoration: 'none' }}>
             Voir ma page
           </Link>
         )}
@@ -362,18 +362,18 @@ export default function StudioClient({
       <div className="studio-profile-grid">
         {/* Informations publiques */}
         <Card>
-          <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Informations publiques</h2>
+          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Informations publiques</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '112px 1fr', gap: 10, marginBottom: 12 }}>
             <div>
-              <div style={{ width: 88, height: 88, borderRadius: '50%', overflow: 'hidden', background: '#12151d', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 88, height: 88, borderRadius: '50%', overflow: 'hidden', background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={88} height={88} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13.5, cursor: 'pointer' }}>
+              <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--font-size-body)', cursor: 'pointer' }}>
                 {uploading === 'avatar' ? 'Envoi…' : 'Changer le logo'}
                 <input
                   type="file"
@@ -387,15 +387,15 @@ export default function StudioClient({
                   style={{ display: 'none' }}
                 />
               </label>
-              <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
+              <p style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
             </div>
             <div>
-              <div style={{ height: 88, borderRadius: 8, overflow: 'hidden', background: '#10131d', position: 'relative' }}>
+              <div style={{ height: 88, borderRadius: 8, overflow: 'hidden', background: 'var(--surface-2)', position: 'relative' }}>
                 {profile.bannerUrl && (
                   <NextImage src={profile.bannerUrl} alt={`Bannière de ${profile.publicName}`} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 400px" />
                 )}
               </div>
-              <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13.5, cursor: 'pointer' }}>
+              <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--font-size-body)', cursor: 'pointer' }}>
                 {uploading === 'banner' ? 'Envoi…' : 'Changer la bannière'}
                 <input
                   type="file"
@@ -409,7 +409,7 @@ export default function StudioClient({
                   style={{ display: 'none' }}
                 />
               </label>
-              <p style={{ fontSize: 10, color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
+              <p style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', margin: '4px 0 0' }}>Image 10 Mo max.</p>
             </div>
           </div>
 
@@ -441,9 +441,9 @@ export default function StudioClient({
                         padding: '7px 11px',
                         borderRadius: 20,
                         border: `1px solid ${sel ? 'var(--teal)' : 'var(--border)'}`,
-                        background: sel ? 'var(--primary-a14)' : 'rgba(255,255,255,0.06)',
+                        background: sel ? 'var(--primary-a14)' : 'var(--surface)',
                         color: sel ? 'var(--teal)' : 'var(--text-muted)',
-                        fontSize: 12.5,
+                        fontSize: 'var(--font-size-footnote-lg)',
                         fontWeight: 600,
                       }}
                     >
@@ -452,13 +452,13 @@ export default function StudioClient({
                   )
                 })}
               </div>
-              <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', marginTop: 6 }}>
                 Sélectionne tous les pays où tu organises — les visiteurs pourront te trouver en cherchant l&rsquo;un d&rsquo;eux. C&rsquo;est du marketing : ça ne change JAMAIS ta devise ni ton mode de paiement. Choisir un pays précis désélectionne « International » (les deux ne se cumulent pas).
               </p>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 11px', borderRadius: 12, border: '1px solid var(--focus-ring-color)', background: 'var(--primary-a06)' }}>
-                <span aria-hidden="true" style={{ fontSize: 17, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={17} /> : <CreditCard size={17} />}</span>
+                <span aria-hidden="true" style={{ fontSize: 'var(--font-size-title-5)', display: 'inline-flex', alignItems: 'center', color: 'var(--gold)' }}>{regionCurrency === 'XOF' ? <Smartphone size={17} /> : <CreditCard size={17} />}</span>
                 <div>
                   <p style={{ font: '700 12.5px var(--font-open-sans)', color: 'var(--gold)', margin: 0 }}>
                     {getRegionName(profile.regionId) || profile.country || '—'} · {regionCurrency === 'XOF' ? 'FCFA (XOF)' : 'Euro (€)'}
@@ -479,7 +479,7 @@ export default function StudioClient({
                 onChange={(e) => update({ shortDescription: e.target.value })}
                 placeholder="Présente ton univers en quelques phrases."
               />
-              <span style={{ fontSize: 10.5, color: 'var(--text-faint)', justifySelf: 'end' }}>{profile.shortDescription.length}/500</span>
+              <span style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', justifySelf: 'end' }}>{profile.shortDescription.length}/500</span>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <Label style={{ font: '600 11px var(--font-open-sans)', textTransform: 'uppercase', marginBottom: 0 }}>Réseaux sociaux</Label>
@@ -506,20 +506,20 @@ export default function StudioClient({
 
         {/* Aperçu + statut */}
         <Card>
-          <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Aperçu de ma page</h2>
-          <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: '#0b0c12' }}>
+          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Aperçu de ma page</h2>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-2)' }}>
             <div style={{ height: 84, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, var(--primary-a12), var(--primary-a12))' }} />
             <div style={{ padding: 12 }}>
-              <div style={{ width: 48, height: 48, marginTop: -24, borderRadius: '50%', overflow: 'hidden', border: '3px solid #0b0d14', background: '#111', display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 48, height: 48, marginTop: -24, borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--surface-2)', background: 'var(--surface-2)', display: 'grid', placeItems: 'center' }}>
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt="" width={48} height={48} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 17, color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
-              <h3 style={{ font: '600 18px var(--font-open-sans)', color: '#fff', margin: '8px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
+              <h3 style={{ font: '600 18px var(--font-open-sans)', color: 'var(--text)', margin: '8px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
               <p style={{ font: '600 11px var(--font-open-sans)', color: 'var(--gold)', margin: '4px 0 0' }}>{[profile.city, profile.country].filter(Boolean).join(' · ') || 'Ville · Pays'}</p>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, margin: '8px 0 0' }}>{profile.shortDescription || 'Ta description apparaîtra ici.'}</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '8px 0 0' }}>{profile.shortDescription || 'Ta description apparaîtra ici.'}</p>
             </div>
           </div>
           <div style={{ marginTop: 10 }}>
@@ -530,14 +530,14 @@ export default function StudioClient({
                 checked={profile.status === status}
                 onChange={() => update({ status })}
                 label={status === 'public' ? 'Publique — visible par tout le monde' : 'Privée — visible par toi seulement'}
-                style={{ padding: '9px 0', fontSize: 13, color: 'rgba(255,255,255,0.85)' }}
+                style={{ padding: '9px 0', fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}
               />
             ))}
           </div>
           <Button onClick={save} loading={saving} loadingText="Enregistrement…" fullWidth style={{ ...saveButtonStyle(saving), background: 'var(--gold)', color: 'var(--obsidian)', border: '1px solid var(--gold)' }}>
             Enregistrer
           </Button>
-          <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textAlign: 'center', margin: '6px 0 0' }}>Enregistre l&rsquo;ensemble de ton profil, y compris les informations publiques.</p>
+          <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', textAlign: 'center', margin: '6px 0 0' }}>Enregistre l&rsquo;ensemble de ton profil, y compris les informations publiques.</p>
         </Card>
       </div>
 
@@ -545,10 +545,10 @@ export default function StudioClient({
       <Card style={{ marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
           <div>
-            <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
+            <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
           </div>
-          <label style={{ padding: '8px 13px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 11.5, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', cursor: 'pointer' }}>
+          <label style={{ padding: '8px 13px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 'var(--font-size-caption-lg)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', cursor: 'pointer' }}>
             {uploading === 'gallery' ? 'Envoi…' : '+ Ajouter un média'}
             <input
               type="file"
@@ -564,12 +564,12 @@ export default function StudioClient({
           </label>
         </div>
         {profile.media.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Tu n&rsquo;as encore ajouté aucun média.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-callout)' }}>Tu n&rsquo;as encore ajouté aucun média.</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
             {profile.media.map((item, index) => (
-              <article key={item.id} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 9, background: 'rgba(255,255,255,0.04)' }}>
-                <div style={{ height: 108, background: '#111', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+              <article key={item.id} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 9, background: 'var(--card-bg)' }}>
+                <div style={{ height: 108, background: 'var(--surface-2)', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
                   {item.type === 'video' ? (
                     <video src={item.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -596,7 +596,7 @@ export default function StudioClient({
                   checked={item.visibility !== 'hidden'}
                   onChange={(e) => void updateMedia(item.id, { visibility: e.target.checked ? 'public' : 'hidden' })}
                   label="Visible publiquement"
-                  style={{ gap: 7, fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}
+                  style={{ gap: 7, fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)', marginTop: 8 }}
                 />
                 <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
                   <Button variant="ghost" onClick={() => void moveMedia(index, -1)} disabled={index === 0} aria-label="Déplacer vers la gauche" style={mediaActionStyle}>
@@ -644,8 +644,8 @@ export default function StudioClient({
       )}
       {pendingConfirm && (
         <Modal onClose={() => setPendingConfirm(null)} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 style={{ fontSize: 17, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
+          <h3 style={{ fontSize: 'var(--font-size-title-5)', letterSpacing: '-.4px', margin: 0, color: 'var(--text)' }}>{pendingConfirm.title}</h3>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', lineHeight: 1.55 }}>{pendingConfirm.message}</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setPendingConfirm(null)} style={{ flex: 1 }}>
               Annuler
@@ -677,7 +677,7 @@ function saveButtonStyle(saving: boolean): React.CSSProperties {
     border: '1px solid var(--gold)',
     borderRadius: 'var(--radius-control)',
     color: 'var(--obsidian)',
-    fontSize: 14,
+    fontSize: 'var(--font-size-body-sm)',
     fontWeight: 500,
     textTransform: 'none',
     letterSpacing: 'normal',
@@ -690,11 +690,11 @@ const mediaActionStyle: React.CSSProperties = {
   flex: 1,
   minHeight: 'var(--density-action-min)',
   padding: '10px 8px',
-  background: 'rgba(255,255,255,0.06)',
+  background: 'var(--surface)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-control)',
-  color: 'rgba(255,255,255,0.7)',
-  fontSize: 13,
+  color: 'var(--text-muted)',
+  fontSize: 'var(--font-size-callout)',
   cursor: 'pointer',
 }
 
@@ -810,17 +810,17 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
 
   return (
     <Card style={{ display: 'grid', gap: 10 }} id="encaissement">
-      <h2 style={{ fontSize: 13, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
+      <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
 
-      <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}>
+      <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
         {status.mode === 'manual' ? (
           <>
-            <p style={{ fontSize: 13, color: '#fff', margin: '0 0 8px' }}>Réglé par virement / mobile money (hors Stripe Connect).</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: '0 0 8px' }}>Réglé par virement / mobile money (hors Stripe Connect).</p>
             {due ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div>
-                  {status.amountDueCents > 0 && <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{fmtMoney(status.amountDueCents / 100, 'EUR')}</p>}
-                  {status.amountDueXOF > 0 && <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{fmtMoney(status.amountDueXOF, 'XOF')}</p>}
+                  {status.amountDueCents > 0 && <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{fmtMoney(status.amountDueCents / 100, 'EUR')}</p>}
+                  {status.amountDueXOF > 0 && <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{fmtMoney(status.amountDueXOF, 'XOF')}</p>}
                 </div>
                 <Button
                   onClick={requestPayout}
@@ -832,17 +832,17 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                 </Button>
               </div>
             ) : (
-              <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Aucun solde à reverser pour l&rsquo;instant.</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>Aucun solde à reverser pour l&rsquo;instant.</p>
             )}
           </>
         ) : status.connected && status.chargesEnabled ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--primary-a14)', color: 'var(--teal)', fontSize: 11, fontWeight: 700 }}>Compte connecté</span>
-            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>Les paiements sont versés automatiquement sur ton compte bancaire (2-7 jours ouvrés).</p>
+            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--primary-a14)', color: 'var(--teal)', fontSize: 'var(--font-size-caption)', fontWeight: 700 }}>Compte connecté</span>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0 }}>Les paiements sont versés automatiquement sur ton compte bancaire (2-7 jours ouvrés).</p>
           </div>
         ) : (
           <>
-            <p style={{ fontSize: 13, color: '#fff', margin: '0 0 10px' }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: '0 0 10px' }}>
               {status.connected ? 'Ton compte Stripe est en cours de vérification.' : 'Connecte ton compte bancaire via Stripe pour être payé automatiquement.'}
             </p>
             <Button
@@ -855,24 +855,24 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
             </Button>
           </>
         )}
-        {payoutMessage && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>{payoutMessage}</p>}
+        {payoutMessage && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', marginTop: 10 }}>{payoutMessage}</p>}
       </div>
 
       <div>
-        <p style={{ font: '600 12px var(--font-open-sans)', color: '#fff', margin: '0 0 4px' }}>Mobile Money — un numéro par pays</p>
-        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 10px' }}>
+        <p style={{ font: '600 12px var(--font-open-sans)', color: 'var(--text)', margin: '0 0 4px' }}>Mobile Money — un numéro par pays</p>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 10px' }}>
           Chaque événement est payé automatiquement sur le numéro du <strong style={{ color: 'var(--gold)' }}>pays de l&rsquo;événement</strong>. Ajoute un numéro pour chaque pays où tu organises.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-          {openCountries.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)', gridColumn: '1 / -1' }}>Aucun pays encore. Ajoute-en un ci-dessous.</p>}
+          {openCountries.length === 0 && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', gridColumn: '1 / -1' }}>Aucun pays encore. Ajoute-en un ci-dessous.</p>}
           {openCountries.map((code) => {
             const region = MOMO_REGIONS.find((r) => r.momoCountry === code)
             if (!region) return null
             const hasError = momoErrorCountry === code
             return (
-              <div key={code} style={{ border: hasError ? '1px solid var(--pink)' : '1px solid var(--border)', borderRadius: 12, padding: 10, background: 'rgba(255,255,255,0.02)' }}>
+              <div key={code} style={{ border: hasError ? '1px solid var(--pink)' : '1px solid var(--border)', borderRadius: 12, padding: 10, background: 'var(--surface)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                  <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>
                     {region.flag} {region.name}
                   </span>
                   <Button
@@ -882,7 +882,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                       else if (window.confirm(`Le numéro Mobile Money saisi pour ${region.name} sera perdu sur cet écran.`)) removeCountry(code)
                     }}
                     aria-label="Retirer"
-                    style={{ color: 'var(--text-faint)', fontSize: 16, padding: 0 }}
+                    style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-headline-lg)', padding: 0 }}
                   >
                     ×
                   </Button>
@@ -908,12 +908,12 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                 options={remaining.map((r) => ({ value: r.momoCountry ?? '', label: `${r.flag} ${r.name}` }))}
               />
             </div>
-            <Button variant="secondary" onClick={() => addCountry(addSel)} disabled={!addSel} style={{ padding: '0 14px', borderRadius: 10, fontSize: 13 }}>
+            <Button variant="secondary" onClick={() => addCountry(addSel)} disabled={!addSel} style={{ padding: '0 14px', borderRadius: 10, fontSize: 'var(--font-size-callout)' }}>
               Ajouter
             </Button>
           </div>
         )}
-        {momoMessage && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12 }}>{momoMessage}</p>}
+        {momoMessage && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', marginTop: 12 }}>{momoMessage}</p>}
         <Button
           onClick={saveMomos}
           loading={savingMomos}

@@ -161,7 +161,7 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
         position: 'relative',
         borderRadius: 14,
         overflow: 'hidden',
-        background: '#000',
+        background: 'var(--media-canvas)',
         aspectRatio: '4 / 3',
         border: '1px solid var(--border)',
       }}
@@ -175,12 +175,12 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       {!active && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Caméra en pause</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: 0 }}>Caméra en pause</p>
         </div>
       )}
       {active && !ready && !error && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Connexion à la caméra…</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: 0 }}>Connexion à la caméra…</p>
         </div>
       )}
       {active && error && (
@@ -197,7 +197,7 @@ export default function CameraScanner({ active, onScan }: CameraScannerProps) {
             background: 'color-mix(in srgb, var(--obsidian) 90%, transparent)',
           }}
         >
-          <p style={{ fontSize: 13, color: 'var(--pink)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>{error}</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--pink)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>{error}</p>
         </div>
       )}
     </div>

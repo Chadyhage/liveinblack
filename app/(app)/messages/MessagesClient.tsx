@@ -943,7 +943,7 @@ export default function MessagesClient({
                     placeholder="Rechercher dans la conversation…"
                     style={{ ...inputStyle, marginBottom: 3 }}
                   />
-                  <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>
+                  <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: 0 }}>
                     {inThreadSearchQuery.trim() ? `${visibleMessages.length} résultat${visibleMessages.length !== 1 ? 's' : ''}` : 'Tape pour rechercher'}
                   </p>
                 </div>
@@ -965,7 +965,7 @@ export default function MessagesClient({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                     <span><Pin size={14} /></span>
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {pinnedMessage.deletedForAll ? 'Message supprimé' : pinnedMessage.content || messageTypeLabel(pinnedMessage.type)}
                     </p>
                   </div>
@@ -976,7 +976,7 @@ export default function MessagesClient({
                         e.stopPropagation()
                         handleTogglePin(pinnedMessage)
                       }}
-                      style={{ color: 'var(--text-faint)', fontSize: 13, padding: 0 }}
+                      style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-callout)', padding: 0 }}
                     >
                       <X size={14} />
                     </Button>
@@ -987,7 +987,7 @@ export default function MessagesClient({
               <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', position: 'relative' }}>
                 {loadingOlder && (
                   <div style={{ textAlign: 'center', padding: '2px 0 6px' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Chargement des messages précédents…</span>
+                    <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>Chargement des messages précédents…</span>
                   </div>
                 )}
                 {visibleMessages.length === 0 && inThreadSearchOpen && inThreadSearchQuery.trim() && (
@@ -1005,7 +1005,7 @@ export default function MessagesClient({
                           <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
                             <span
                               style={{
-                                fontSize: 10.5,
+                                fontSize: 'var(--font-size-caption-2-lg)',
                                 fontWeight: 600,
                                 color: 'var(--text-faint)',
                                 letterSpacing: '0.06em',
@@ -1040,7 +1040,7 @@ export default function MessagesClient({
                 {typingUsers.length > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 3px' }}>
                     <TypingDots />
-                    <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+                    <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>
                       {typingUsers.map((u) => u.name).join(', ')} écri{typingUsers.length > 1 ? 'vent' : 't'}…
                     </span>
                   </div>
@@ -1062,7 +1062,7 @@ export default function MessagesClient({
                     minHeight: 38,
                     padding: 0,
                     borderRadius: '50%',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                    boxShadow: '0 8px 24px rgba(var(--black-rgb), .40)',
                   }}
                 >
                   <ArrowDown size={16} />
@@ -1071,18 +1071,18 @@ export default function MessagesClient({
 
               {myGroupMute ? (
                 <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                  <p style={{ fontSize: 12, color: 'var(--pink)', margin: 0 }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--pink)', margin: 0 }}>
                     Un administrateur t&apos;a mis en sourdine {formatMuteUntil(myGroupMute.untilAt)}.
                   </p>
                 </div>
               ) : isBlockedByMe ? (
                 <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>
                     Tu as bloqué ce contact —{' '}
                     <Button
                       variant="link"
                       onClick={() => otherDirectMember && handleUnblock(otherDirectMember.userId)}
-                      style={{ fontSize: 12 }}
+                      style={{ fontSize: 'var(--font-size-footnote)' }}
                     >
                       débloquer
                     </Button>

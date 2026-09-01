@@ -4,14 +4,14 @@ import type { CSSProperties, ChangeEvent } from 'react'
 import { LockKeyhole, X } from 'lucide-react'
 import { Button, Input, NumberField, Switch } from '@/app/components/ui'
 
-const labelStyle: CSSProperties = { display: 'block', marginBottom: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }
-const inputStyle: CSSProperties = { background: '#0b0c12', borderRadius: 7, fontSize: 14, fontWeight: 500 }
+const labelStyle: CSSProperties = { display: 'block', marginBottom: 6, color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', fontWeight: 700 }
+const inputStyle: CSSProperties = { background: 'var(--field-bg)', borderRadius: 7, fontSize: 'var(--font-size-body-sm)', fontWeight: 500 }
 
 export function LockIcon() {
   return <LockKeyhole size={11} strokeWidth={1.8} color="var(--gold)" aria-hidden="true" />
 }
 
-export function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }: { size?: number; color?: string }) {
+export function IconClose({ size = 12, color = 'var(--text-faint)' }: { size?: number; color?: string }) {
   return <X size={size} strokeWidth={2} color={color} aria-hidden="true" />
 }
 
@@ -36,7 +36,7 @@ export function InputField({ label, value, onChange, placeholder, type = 'text',
     <div>
       {label && <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>{label}{locked && <LockIcon />}</label>}
       <Input type={type} min={min} max={max} maxLength={maxLength} disabled={locked} invalid={Boolean(error)} title={locked ? 'Verrouillé — billets déjà vendus' : undefined} style={{ ...inputStyle, opacity: locked ? 0.55 : 1, background: locked ? 'var(--primary-a04)' : inputStyle.background, ...style }} placeholder={placeholder} value={value} onChange={onChange} />
-      {error && <p style={{ margin: '4px 0 0', color: '#ff7b7b', fontSize: 12 }}>{error}</p>}
+      {error && <p style={{ margin: '4px 0 0', color: 'var(--danger-text)', fontSize: 'var(--font-size-footnote)' }}>{error}</p>}
     </div>
   )
 }
@@ -73,11 +73,11 @@ export function NumberInputField({ label, value, onChange, placeholder, error, s
         value={value}
         onChange={onChange}
       />
-      {error && <p style={{ margin: '4px 0 0', color: '#ff7b7b', fontSize: 12 }}>{error}</p>}
+      {error && <p style={{ margin: '4px 0 0', color: 'var(--danger-text)', fontSize: 'var(--font-size-footnote)' }}>{error}</p>}
     </div>
   )
 }
 
 export function Pill({ label, active, onClick, disabled = false, accent = 'var(--teal)' }: { label: string; active: boolean; onClick: () => void; disabled?: boolean; accent?: string }) {
-  return <Button variant="ghost" onClick={onClick} disabled={disabled} title={disabled ? 'Verrouillé — billets déjà vendus' : undefined} style={{ padding: '8px 12px', borderRadius: 5, opacity: disabled ? 0.35 : 1, border: active ? `1px solid ${accent}` : '1px solid rgba(255,255,255,0.10)', background: active ? `${accent}22` : 'transparent', color: active ? accent : 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 800 }}>{label}</Button>
+  return <Button variant="ghost" onClick={onClick} disabled={disabled} title={disabled ? 'Verrouillé — billets déjà vendus' : undefined} style={{ padding: '8px 12px', borderRadius: 5, opacity: disabled ? 0.35 : 1, border: active ? `1px solid ${accent}` : '1px solid var(--border)', background: active ? `${accent}22` : 'transparent', color: active ? accent : 'var(--text-faint)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>{label}</Button>
 }

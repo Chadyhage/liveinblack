@@ -97,7 +97,7 @@ function toDraft(p: Post): Draft {
   }
 }
 
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', marginBottom: 8 }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', marginBottom: 8 }
 
 export default function AgentBlogClient() {
   const [posts, setPosts] = useState<Post[]>([])
@@ -232,14 +232,14 @@ export default function AgentBlogClient() {
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--blog">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}>
+          <Button variant="primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 3, fontWeight: 500, fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal' }}>
             <Plus size={16} /> Nouvel article
           </Button>
         </div>
 
         {loadError && (
-          <Card style={{ border: '1px solid rgba(224,90,170,0.35)' }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible — recharge la page pour réessayer.</p>
+          <Card style={{ border: '1px solid var(--danger-border)' }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible — recharge la page pour réessayer.</p>
           </Card>
         )}
 
@@ -253,14 +253,14 @@ export default function AgentBlogClient() {
                 <Card key={p.id} style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</span>
+                      <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</span>
                       {scheduled && (
-                        <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gold)', border: '1px solid rgba(200,169,110,0.4)', borderRadius: 6, padding: '2px 6px', flexShrink: 0 }}>
+                        <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gold)', border: '1px solid var(--gold-border)', borderRadius: 6, padding: '2px 6px', flexShrink: 0 }}>
                           Programmé
                         </span>
                       )}
                     </span>
-                    <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-faint)', marginTop: 2 }}>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-footnote)', fontWeight: 500, color: 'var(--text-faint)', marginTop: 2 }}>
                       {CATEGORY_LABELS[p.category]} · {new Date(p.publishedAt).toLocaleDateString('fr-FR')} · /blog/{p.slug}
                     </span>
                   </span>
@@ -272,7 +272,7 @@ export default function AgentBlogClient() {
                     aria-label="Supprimer"
                     onClick={() => setConfirmDeleteId(p.id)}
                     disabled={deletingId === p.id}
-                    style={{ padding: 8, minHeight: 44, minWidth: 44, color: '#ff9ed2' }}
+                    style={{ padding: 8, minHeight: 44, minWidth: 44, color: 'var(--danger)' }}
                   >
                     <Trash2 size={15} />
                   </Button>
@@ -286,7 +286,7 @@ export default function AgentBlogClient() {
       {modalOpen && (
       <SlideOverModal onClose={() => setModalOpen(false)} ariaLabel={editingId ? "Modifier l’article" : "Créer un article"} padded>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#fff' }}>{editingId ? "Modifier l'article" : 'Nouvel article'}</h3>
+          <h3 style={{ margin: '0 0 4px', fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)' }}>{editingId ? "Modifier l'article" : 'Nouvel article'}</h3>
           <div>
             <span style={labelStyle}>Titre</span>
             <Input value={draft.title} onChange={(e) => patch({ title: e.target.value })} placeholder="Titre de l'article" />
@@ -342,7 +342,7 @@ export default function AgentBlogClient() {
             <Textarea value={draft.metaDescription} onChange={(e) => patch({ metaDescription: e.target.value })} rows={2} />
           </div>
 
-          {formError && <p style={{ fontSize: 12.5, fontWeight: 600, color: '#ff9ed2', margin: 0 }}>{formError}</p>}
+          {formError && <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 600, color: 'var(--danger)', margin: 0 }}>{formError}</p>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <Button
@@ -351,7 +351,7 @@ export default function AgentBlogClient() {
               disabled={saving}
               loading={saving}
               loadingText="Enregistrement…"
-              style={{ padding: '10px 20px', borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ padding: '10px 20px', borderRadius: 3, fontWeight: 500, fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal' }}
             >
               Enregistrer
             </Button>
@@ -389,7 +389,7 @@ export default function AgentBlogClient() {
             </>
           }
         >
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
             L’article sera retiré définitivement du blog public.
           </p>
         </Modal>

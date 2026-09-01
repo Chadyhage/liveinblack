@@ -29,7 +29,7 @@ async function main() {
   const output = resolve(process.cwd(), 'public/images/email-icons')
   await mkdir(output, { recursive: true })
   await Promise.all(Object.entries(icons).map(async ([name, Icon]) => {
-    const svg = renderToStaticMarkup(<Icon xmlns="http://www.w3.org/2000/svg" size={64} stroke="#b8f34a" strokeWidth={2.1} fill="none" aria-hidden="true" />)
+    const svg = renderToStaticMarkup(<Icon xmlns="http://www.w3.org/2000/svg" size={64} stroke="#F53D8D" strokeWidth={2.1} fill="none" aria-hidden="true" />)
     await sharp(Buffer.from(svg)).resize(64, 64).png().toFile(resolve(output, `${name}.png`))
   }))
   console.log(`${Object.keys(icons).length} icônes e-mail générées dans ${output}.`)

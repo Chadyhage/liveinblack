@@ -27,7 +27,7 @@ const primaryBtn: React.CSSProperties = {
   background: 'var(--primary)',
   color: 'var(--primary-ink)',
   fontWeight: 800,
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   alignItems: 'center',
   textTransform: 'none',
   letterSpacing: 'normal',
@@ -40,9 +40,9 @@ const secondaryBtn: React.CSSProperties = {
   borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border-strong)',
   background: 'transparent',
-  color: '#fff',
+  color: 'var(--text)',
   fontWeight: 700,
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   alignItems: 'center',
   textDecoration: 'none',
 }
@@ -69,7 +69,7 @@ function formatDate(iso: string): string {
 
 function SupportLink() {
   return (
-    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--primary)', textDecoration: 'none' }}>
+    <a href={`mailto:${SUPPORT_EMAIL}?subject=Question%20sur%20mon%20dossier`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--primary)', textDecoration: 'none' }}>
       Une question ? Contacte le support
     </a>
   )
@@ -80,12 +80,12 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
   return (
     <section id={id} style={{ display: 'flex', flexDirection: 'column', gap: 10, scrollMarginTop: 20 }}>
-      <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{TYPE_LABEL[type]}</h2>
+      <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>{TYPE_LABEL[type]}</h2>
 
       {!application && roleStatus === 'active' && (
         <Card accent="var(--primary-a35)" style={{ padding: 24 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Compte déjà actif</p>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Compte déjà actif</p>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             Ton interface {type} est active, mais aucun dossier de candidature n&apos;est associé à ce compte (activation manuelle). Aucune action n&apos;est requise.
           </p>
           <Link href={SUCCESS_PATH[type]} style={primaryBtn}>
@@ -96,8 +96,8 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
       {!application && roleStatus !== 'active' && (
         <Card style={{ padding: 24 }}>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 6px' }}>{TYPE_CONTEXT[type]}</p>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '0 0 16px' }}>Tu n&apos;as pas encore de dossier de candidature {type}.</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 6px' }}>{TYPE_CONTEXT[type]}</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: '0 0 16px' }}>Tu n&apos;as pas encore de dossier de candidature {type}.</p>
           <Link href={editPath} style={secondaryBtn}>
             Commencer ma candidature
           </Link>
@@ -106,7 +106,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
       {application?.status === 'draft' && (
         <Card style={{ padding: 24 }}>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '0 0 16px' }}>Ton dossier est en brouillon — termine-le pour le soumettre à l&apos;équipe LIVEINBLACK.</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: '0 0 16px' }}>Ton dossier est en brouillon — termine-le pour le soumettre à l&apos;équipe LIVEINBLACK.</p>
           <Link href={editPath} style={primaryBtn}>
             Compléter mon dossier
           </Link>
@@ -114,12 +114,12 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application && ['submitted', 'under_review', 'resubmitted'].includes(application.status) && (
-        <Card accent="rgba(139,92,246,0.35)" style={{ padding: 24 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--violet)', margin: '0 0 8px' }}>Dossier verrouillé — en attente de validation</p>
+        <Card accent="var(--violet-border)" style={{ padding: 24 }}>
+          <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--violet)', margin: '0 0 8px' }}>Dossier verrouillé — en attente de validation</p>
           {application.submittedAt && (
-            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Envoyé le {formatDate(application.submittedAt)}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '0 0 8px' }}>Envoyé le {formatDate(application.submittedAt)}</p>
           )}
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             Notre équipe examine ton dossier. Le statut ci-dessus sera mis à jour dès qu&apos;une décision sera prise. Si des corrections sont nécessaires, tu pourras
             le modifier et le renvoyer.
           </p>
@@ -128,9 +128,9 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application?.status === 'needs_changes' && (
-        <Card accent="rgba(245,158,11,0.4)" style={{ padding: 24 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', margin: '0 0 8px' }}>Corrections requises</p>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+        <Card accent="rgba(var(--warning-rgb), .4)" style={{ padding: 24 }}>
+          <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--warning-text)', margin: '0 0 8px' }}>Corrections requises</p>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             {application.requestedChanges || 'Aucun motif détaillé fourni.'}
           </p>
           <Link href={editPath} style={primaryBtn}>
@@ -140,12 +140,12 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
       )}
 
       {application?.status === 'rejected' && (
-        <Card accent="rgba(224,90,170,0.35)" style={{ padding: 24 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#e05aaa', margin: '0 0 8px' }}>Dossier refusé</p>
+        <Card accent="var(--danger-border)" style={{ padding: 24 }}>
+          <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--danger)', margin: '0 0 8px' }}>Dossier refusé</p>
           {application.rejectedAt && (
-            <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Le {formatDate(application.rejectedAt)}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '0 0 8px' }}>Le {formatDate(application.rejectedAt)}</p>
           )}
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 16px' }}>
             {application.rejectionReason || 'Aucun motif détaillé fourni.'}
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -159,9 +159,9 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
       {application?.status === 'approved' && (
         <Card accent="var(--primary-a35)" style={{ padding: 24 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Dossier approuvé</p>
+          <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--primary)', margin: '0 0 8px' }}>Dossier approuvé</p>
           {application.approvedAt && (
-            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 16px' }}>
+            <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '0 0 16px' }}>
               Compte activé le {new Date(application.approvedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
@@ -173,7 +173,7 @@ function ApplicationCard({ type, application, roleStatus, id }: { type: 'organis
 
       {application && !KNOWN_APPLICATION_STATUSES.includes(application.status) && (
         <Card style={{ padding: 24 }}>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
             Ton dossier existe mais son statut n&apos;a pas pu être affiché correctement. Contacte le support si cela persiste.
           </p>
           <div style={{ marginTop: 16 }}>
@@ -202,18 +202,18 @@ export default async function MonDossierPage() {
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', textDecoration: 'none' }}>
           ← Mon profil
         </Link>
         <header>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(28px,3.6vw,38px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes dossiers</h1>
-          <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13, lineHeight: 1.42 }}>Suis l’avancement de tes candidatures organisateur et prestataire.</p>
+          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(28px,3.6vw,38px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes dossiers</h1>
+          <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-callout)', lineHeight: 1.42 }}>Suis l’avancement de tes candidatures organisateur et prestataire.</p>
         </header>
         <nav style={{ display: 'flex', gap: 10 }}>
-          <a href="#organisateur" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <a href="#organisateur" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier organisateur
           </a>
-          <a href="#prestataire" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <a href="#prestataire" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', textDecoration: 'none' }}>
             ↓ Dossier prestataire
           </a>
         </nav>

@@ -44,25 +44,25 @@ const btnPrimary: React.CSSProperties = {
   background: 'var(--primary)',
   border: '1px solid var(--border-strong)',
   borderRadius: 3,
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   textTransform: 'none',
   letterSpacing: 'normal',
   color: 'var(--primary-ink)',
   width: '100%',
-  boxShadow: '0 6px 20px rgba(245, 61, 141,0.18)',
+  boxShadow: '0 6px 20px var(--primary-a18)',
 }
 const btnGold: React.CSSProperties = {
   padding: '10px 18px',
   background: 'var(--primary)',
   border: '1px solid var(--border-strong)',
   borderRadius: 3,
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   textTransform: 'none',
   letterSpacing: 'normal',
   color: 'var(--primary-ink)',
   width: '100%',
 }
-const errorText: React.CSSProperties = { fontSize: 12, color: 'var(--pink)' }
+const errorText: React.CSSProperties = { fontSize: 'var(--font-size-footnote)', color: 'var(--pink)' }
 
 function IconCheck({ size = 11 }: { size?: number }) {
   return (
@@ -112,9 +112,9 @@ function RoleIcon({ role, size = 18 }: { role: RegRole; size?: number }) {
 // Hex littéraux ici (et pas var(--teal)/var(--violet)/var(--gold)) car on a
 // besoin de suffixer une transparence (1a/3a) — mêmes valeurs que les vars.
 const ROLE_CARDS: { role: RegRole; title: string; desc: string; badge: string | null; accent: string }[] = [
-  { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: '#F53D8D' },
-  { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: '#F53D8D' },
-  { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: '#F53D8D' },
+  { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: 'var(--primary)' },
+  { role: 'organisateur', title: 'Organisateur', desc: 'Crée et gère tes propres événements', badge: 'Validation requise', accent: 'var(--primary)' },
+  { role: 'prestataire', title: 'Prestataire', desc: 'DJ, salle, matériel, traiteur…', badge: 'Validation requise', accent: 'var(--primary)' },
 ]
 
 function withNext(path: string, next: string | null) {
@@ -379,24 +379,24 @@ export default function AuthForm() {
               <path d="M2 7l10 7 10-7" />
             </svg>
           </div>
-          <h2 style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', margin: 0 }}>Confirme ton inscription</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, overflowWrap: 'break-word' }}>
+          <h2 style={{ fontWeight: 700, fontSize: 'var(--font-size-title-4)', color: 'var(--text)', margin: 0 }}>Confirme ton inscription</h2>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0, overflowWrap: 'break-word' }}>
             Un lien de confirmation a été envoyé à <span style={{ color: 'var(--text)' }}>{registeredEmail}</span>.
           </p>
           <div style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 12 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8, marginTop: 0 }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8, marginTop: 0 }}>
               Comment ça marche
             </p>
             {['1. Ouvre ta boîte mail', '2. Cherche un email de LIVEINBLACK', '3. Clique sur le lien dans cet email', '4. Reviens ici et connecte-toi'].map((step) => (
-              <p key={step} style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.8, margin: 0 }}>
+              <p key={step} style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.8, margin: 0 }}>
                 {step}
               </p>
             ))}
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>L&apos;email peut arriver dans les spams ou courriers indésirables.</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>L&apos;email peut arriver dans les spams ou courriers indésirables.</p>
 
           {resendSent && (
-            <p style={{ fontSize: 12.5, color: 'var(--teal)', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--teal)', margin: 0, lineHeight: 1.5 }}>
               Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
             </p>
           )}
@@ -404,7 +404,7 @@ export default function AuthForm() {
             variant="ghost"
             onClick={handleResendVerification}
             disabled={resendLoading || resendCooldown > 0}
-            style={{ fontSize: 12.5, color: resendCooldown > 0 ? 'var(--text-faint)' : 'var(--text-muted)', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
+            style={{ fontSize: 'var(--font-size-footnote-lg)', color: resendCooldown > 0 ? 'var(--text-faint)' : 'var(--text-muted)', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
           >
             {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
           </Button>
@@ -431,11 +431,11 @@ export default function AuthForm() {
     <div className="lb-auth-form" style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
       <style>{`
         @keyframes lb-spin { to { transform: rotate(360deg) } }
-        .lb-role-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.05) !important }
+        .lb-role-card:hover { transform: translateY(-2px); border-color: var(--border-strong) !important; background: var(--fill-secondary) !important }
         .lb-role-card { transition: transform .18s ease, border-color .2s ease, background .2s ease }
         .lb-role-chevron { transition: stroke .18s ease }
-        .lb-role-card:hover .lb-role-chevron { stroke: rgba(255,255,255,0.6) }
-        .lb-tab:hover:not(.lb-tab-active) { background: rgba(255,255,255,0.06) !important }
+        .lb-role-card:hover .lb-role-chevron { stroke: var(--text-muted) }
+        .lb-tab:hover:not(.lb-tab-active) { background: var(--fill-secondary) !important }
         .lb-toggle-btn { transition: color .15s ease }
         .lb-toggle-btn:hover { color: var(--text) !important }
         @keyframes lb-fade-in { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: none } }
@@ -443,10 +443,10 @@ export default function AuthForm() {
       `}</style>
 
       <div style={{ marginBottom: 16 }}>
-        <h1 className="font-display" style={{ fontSize: 18, letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
+        <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-4)', letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '8px 0 0' }}>
+        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '8px 0 0' }}>
           {mode === 'login' ? 'Connecte-toi pour retrouver tes billets et tes soirées.' : "Crée ton compte pour découvrir ce qui se passe près de toi."}
         </p>
       </div>
@@ -464,17 +464,17 @@ export default function AuthForm() {
         />
 
         {mode === 'login' && loginError && (
-          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
+          <div id="login-error" role="alert" className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 10, fontSize: 'var(--font-size-footnote-lg)', color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
             {loginError}
           </div>
         )}
         {mode === 'login' && !loginError && loginInfo && (
-          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(245, 61, 141,0.10)', border: '1px solid rgba(245, 61, 141,0.35)', borderRadius: 10, fontSize: 12.5, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.45 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 10, fontSize: 'var(--font-size-footnote-lg)', color: 'var(--primary)', textAlign: 'center', lineHeight: 1.45 }}>
             {loginInfo}
           </div>
         )}
         {mode === 'register' && regError && (
-          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'rgba(224,90,170,0.12)', border: '1px solid rgba(224,90,170,0.4)', borderRadius: 10, fontSize: 12.5, color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
+          <div className="lb-banner-fade" style={{ marginBottom: 10, padding: '9px 12px', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 10, fontSize: 'var(--font-size-footnote-lg)', color: 'var(--pink)', textAlign: 'center', lineHeight: 1.45 }}>
             {regError}
           </div>
         )}
@@ -518,7 +518,7 @@ export default function AuthForm() {
                   <Button
                     variant="ghost"
                     onClick={() => setShowLoginPwd((v) => !v)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'inherit' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)', color: 'inherit' }}
                   >
                     <IconEye open={showLoginPwd} />
                     {showLoginPwd ? 'Cacher' : 'Voir'}
@@ -532,7 +532,7 @@ export default function AuthForm() {
             <Button
               variant="ghost"
               onClick={openForgotModal}
-              style={{ alignSelf: 'center', marginTop: 2, fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'underline' }}
+              style={{ alignSelf: 'center', marginTop: 2, fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', textDecoration: 'underline' }}
             >
               Mot de passe oublié&nbsp;?
             </Button>
@@ -542,11 +542,11 @@ export default function AuthForm() {
         {/* REGISTER — STEP 1 : choix du rôle */}
         {mode === 'register' && regStep === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center', margin: '2px 0 6px' }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center', margin: '2px 0 6px' }}>
               Quel type de compte veux-tu créer&nbsp;?
             </p>
             {ROLE_CARDS.map(({ role, title, desc, badge, accent }) => (
-              <div key={role} className="lb-role-card" style={{ borderRadius: 16, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)' }}>
+              <div key={role} className="lb-role-card" style={{ borderRadius: 16, border: '1px solid var(--border)', background: 'var(--card-bg)' }}>
                 <Button
                   variant="ghost"
                   fullWidth
@@ -567,22 +567,22 @@ export default function AuthForm() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2, flexWrap: 'wrap' }}>
-                      <p style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
+                      <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, letterSpacing: '-0.2px', color: 'var(--text)', margin: 0 }}>{title}</p>
                       {badge && (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--primary)', padding: '2px 7px', borderRadius: 8, border: '1px solid rgba(245, 61, 141,0.35)', background: 'rgba(245, 61, 141,0.12)' }}>
+                        <span style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--primary)', padding: '2px 7px', borderRadius: 8, border: '1px solid var(--primary-a35)', background: 'var(--primary-a12)' }}>
                           {badge}
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.35 }}>{desc}</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.35 }}>{desc}</p>
                   </div>
-                  <svg className="lb-role-chevron" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={2} strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <svg className="lb-role-chevron" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth={2} strokeLinecap="round" style={{ flexShrink: 0 }}>
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </Button>
               </div>
             ))}
-            <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-faint)', marginTop: 8, lineHeight: 1.6 }}>
+            <p style={{ textAlign: 'center', fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', marginTop: 8, lineHeight: 1.6 }}>
               En t&apos;inscrivant, tu acceptes nos{' '}
               <a href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>CGU</a> et notre{' '}
               <a href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Politique de confidentialité</a>.
@@ -597,14 +597,14 @@ export default function AuthForm() {
               <Button
                 variant="ghost"
                 onClick={() => { setRegStep(1); setRegError('') }}
-                style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}
+                style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}
               >
                 <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
                 Retour
               </Button>
-              <span style={{ marginLeft: 'auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '3px 8px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'rgba(255,255,255,0.06)' }}>
+              <span style={{ marginLeft: 'auto', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '3px 8px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--fill-secondary)' }}>
                 Client
               </span>
             </div>
@@ -647,7 +647,7 @@ export default function AuthForm() {
                   ]}
                 />
               </div>
-              <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.5 }}>Optionnel · utilisé uniquement dans des statistiques anonymes, jamais affiché sur ton profil.</p>
+              <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', lineHeight: 1.5 }}>Optionnel · utilisé uniquement dans des statistiques anonymes, jamais affiché sur ton profil.</p>
             </div>
 
             <div>
@@ -680,7 +680,7 @@ export default function AuthForm() {
                   style={{ flex: 1 }}
                 />
               </div>
-              <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '6px 0 0' }}>Sans l&apos;indicatif pays, déjà sélectionné à gauche.</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '6px 0 0' }}>Sans l&apos;indicatif pays, déjà sélectionné à gauche.</p>
             </div>
 
             <div>
@@ -701,7 +701,7 @@ export default function AuthForm() {
                   <Button
                     variant="ghost"
                     onClick={() => setShowRegPwd((v) => !v)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'inherit' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)', color: 'inherit' }}
                   >
                     <IconEye open={showRegPwd} />
                     {showRegPwd ? 'Cacher' : 'Voir'}
@@ -714,17 +714,17 @@ export default function AuthForm() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: -4 }}>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[1, 2, 3].map((i) => (
-                    <div key={i} style={{ flex: 1, height: 5, borderRadius: 2, background: i <= pwdStrength.score ? pwdStrength.color : 'rgba(255,255,255,0.08)', transition: 'background 0.3s' }} />
+                    <div key={i} style={{ flex: 1, height: 5, borderRadius: 2, background: i <= pwdStrength.score ? pwdStrength.color : 'var(--fill-secondary)', transition: 'background 0.3s' }} />
                   ))}
                 </div>
-                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: pwdStrength.color, margin: 0 }}>{pwdStrength.label}</p>
+                <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '0.04em', color: pwdStrength.color, margin: 0 }}>{pwdStrength.label}</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
                   {[
                     { ok: regPwd.length >= 8, text: '8 caractères min.' },
                     { ok: /[A-Z]/.test(regPwd), text: 'Majuscule' },
                     { ok: /[0-9]/.test(regPwd), text: 'Chiffre' },
                   ].map((r) => (
-                    <span key={r.text} style={{ fontSize: 11, fontWeight: 600, color: r.ok ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span key={r.text} style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: r.ok ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       {r.ok ? <IconCheck /> : <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', opacity: 0.6, display: 'inline-block' }} />} {r.text}
                     </span>
                   ))}
@@ -751,7 +751,7 @@ export default function AuthForm() {
             <Button type="submit" variant="primary" disabled={regLoading} loading={regLoading} loadingText="Création…" style={{ ...btnPrimary, marginTop: 4 }}>
               Créer mon compte
             </Button>
-            <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0', lineHeight: 1.6 }}>
+            <p style={{ textAlign: 'center', fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0', lineHeight: 1.6 }}>
               En créant ton compte, tu acceptes nos{' '}
               <a href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>CGU</a> et notre{' '}
               <a href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Politique de confidentialité</a>.
@@ -764,8 +764,8 @@ export default function AuthForm() {
         <Modal onClose={closeForgotModal} maxWidth={400} zIndex={100} ariaLabel="Mot de passe oublié" contentStyle={{ padding: '22px 20px' }}>
             {!forgotSubmitted ? (
               <>
-                <h2 id="forgot-modal-title" style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
+                <h2 id="forgot-modal-title" style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
+                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
                   Entre ton adresse email, on t&apos;envoie un lien pour choisir un nouveau mot de passe.
                 </p>
                 <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -789,10 +789,10 @@ export default function AuthForm() {
                   </div>
                   {forgotError && <p id="forgot-email-error" role="alert" style={errorText}>{forgotError}</p>}
                   <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                    <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '10px 13px', borderRadius: 12, fontSize: 13 }}>
+                    <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '10px 13px', borderRadius: 12, fontSize: 'var(--font-size-callout)' }}>
                       Annuler
                     </Button>
-                    <Button type="submit" variant="primary" disabled={forgotLoading} loading={forgotLoading} loadingText="Envoi…" style={{ ...btnPrimary, flex: 1, fontSize: 13.5 }}>
+                    <Button type="submit" variant="primary" disabled={forgotLoading} loading={forgotLoading} loadingText="Envoi…" style={{ ...btnPrimary, flex: 1, fontSize: 'var(--font-size-body)' }}>
                       Envoyer le lien
                     </Button>
                   </div>
@@ -806,8 +806,8 @@ export default function AuthForm() {
                     <path d="M2 7l10 7 10-7" />
                   </svg>
                 </div>
-                <h2 id="forgot-modal-title" style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Vérifie ta boîte mail</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                <h2 id="forgot-modal-title" style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>Vérifie ta boîte mail</h2>
+                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                   Si un compte existe avec cette adresse, tu vas recevoir un email avec un lien pour réinitialiser ton mot de passe.
                 </p>
                 <Button variant="primary" onClick={closeForgotModal} style={{ ...btnGold, marginTop: 4 }}>

@@ -5,8 +5,8 @@ export default function Spinner({ text, size = 14 }: { text?: string; size?: num
         style={{
           width: size,
           height: size,
-          border: '2px solid rgba(255,255,255,0.15)',
-          borderTopColor: 'rgba(255,255,255,0.7)',
+          border: '2px solid var(--border)',
+          borderTopColor: 'var(--accent-text)',
           borderRadius: '50%',
           animation: 'lb-spin 0.7s linear infinite',
           display: 'inline-block',

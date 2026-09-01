@@ -28,23 +28,23 @@ import {
 // après montage via useEffect, écran "Chargement..."), tout est déjà résolu
 // côté serveur (voir page.tsx) — aucun état de chargement initial ici.
 // Avatar et couverture utilisent le recadrage partagé avant leur upload.
-const C = { obsidian: '#04040b', teal: 'var(--primary)', gold: 'var(--primary)', pink: '#e05aaa' }
+const C = { obsidian: 'var(--background)', teal: 'var(--primary)', gold: 'var(--primary)', pink: 'var(--pink)' }
 
-const CARD_SHADOW = '0 18px 46px rgba(0,0,0,.22)'
+const CARD_SHADOW = 'none'
 const primaryButton: React.CSSProperties = {
   minHeight: 38,
-  border: '1px solid rgba(255,255,255,.14)',
+  border: '1px solid var(--border-strong)',
   borderRadius: 3,
   background: 'var(--violet-cta)',
-  color: '#fff',
-  fontSize: 13,
+  color: 'var(--primary-ink)',
+  fontSize: 'var(--font-size-callout)',
   fontWeight: 500,
   textTransform: 'none',
   letterSpacing: 'normal',
-  boxShadow: '0 6px 20px rgba(122,59,242,.35)',
+  boxShadow: 'none',
 }
-const secondaryButton: React.CSSProperties = { ...primaryButton, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', color: 'rgba(255,255,255,.9)', fontWeight: 600, boxShadow: 'none' }
-const ghostButtonSmall: React.CSSProperties = { fontSize: 11.5, fontWeight: 700 }
+const secondaryButton: React.CSSProperties = { ...primaryButton, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontWeight: 600, boxShadow: 'none' }
+const ghostButtonSmall: React.CSSProperties = { fontSize: 'var(--font-size-caption-lg)', fontWeight: 700 }
 
 // Glyphe distinct par catégorie (PROVIDER_CATEGORIES[].icon) — auparavant un
 // unique pictogramme maison/toit s'affichait pour toutes les catégories.
@@ -148,10 +148,10 @@ function CategoryIcon({ icon, size = 23 }: { icon: string; size?: number }) {
 
 function Field({ label, helper, children }: { label: string; helper?: string; children: React.ReactNode }) {
   return (
-    <Label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 0 }}>
+    <Label style={{ display: 'block', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 0 }}>
       <span style={{ display: 'block', marginBottom: 7 }}>{label}</span>
       {children}
-      {helper && <span style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,.45)', lineHeight: 1.5, marginTop: 6 }}>{helper}</span>}
+      {helper && <span style={{ display: 'block', fontSize: 'var(--font-size-footnote)', fontWeight: 400, color: 'var(--text-faint)', lineHeight: 1.5, marginTop: 6 }}>{helper}</span>}
     </Label>
   )
 }
@@ -765,8 +765,8 @@ export default function ProposerServicesClient({
       <main className="provider-workspace lb-dashboard-page">
         <div className="provider-workspace-header" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
           <header>
-            <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(28px,3.6vw,38px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mon espace prestataire</h1>
-            <p style={{ maxWidth: 650, margin: '8px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13.5, lineHeight: 1.45 }}>Présente tes services, gère ton catalogue et suis les avis reçus.</p>
+            <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(28px,3.6vw,38px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mon espace prestataire</h1>
+            <p style={{ maxWidth: 650, margin: '8px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body)', lineHeight: 1.45 }}>Présente tes services, gère ton catalogue et suis les avis reçus.</p>
           </header>
           <Button variant="secondary" onClick={() => router.push(`/providers/${encodeURIComponent(profile.userId)}`)} style={secondaryButton}>
             Voir ma page publique
@@ -779,11 +779,11 @@ export default function ProposerServicesClient({
           // l'utilisateur a déjà scrollé, au lieu de rester bloqué en haut
           // de page hors du champ de vision.
           <Card role="status" accent="var(--primary-a35)" style={{ boxShadow: CARD_SHADOW, position: 'sticky', top: 12, zIndex: 30, padding: '12px 14px', marginTop: 12 }}>
-            <p style={{ fontSize: 12.5, color: '#fff', margin: 0 }}>{message}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text)', margin: 0 }}>{message}</p>
           </Card>
         )}
 
-        <div role="tablist" aria-label="Sections de l’espace prestataire" style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
+        <div role="tablist" aria-label="Sections de l’espace prestataire" style={{ display: 'flex', gap: 6, margin: '22px 0 16px', padding: 4, borderRadius: 13, background: 'var(--surface-2)', border: '1px solid var(--surface-2)' }}>
           {[
             { id: 'profil' as const, label: 'Ma page publique', shortLabel: 'Ma page' },
             { id: 'catalogue' as const, label: `Catalogue (${profile.catalog.length})`, shortLabel: `Catalogue (${profile.catalog.length})` },
@@ -796,7 +796,7 @@ export default function ProposerServicesClient({
               role="tab"
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
-              style={{ flex: 1, minHeight: 38, borderRadius: 12, border: '1px solid transparent', background: tab === item.id ? 'rgba(255,255,255,.10)' : 'transparent', color: tab === item.id ? '#fff' : 'rgba(255,255,255,.68)', fontSize: 13, fontWeight: 700 }}
+              style={{ flex: 1, minHeight: 38, borderRadius: 12, border: '1px solid transparent', background: tab === item.id ? 'var(--border)' : 'transparent', color: tab === item.id ? 'var(--text)' : 'var(--text-muted)', fontSize: 'var(--font-size-callout)', fontWeight: 700 }}
             >
               <span className="provider-tab-full">{item.label}</span>
               <span className="provider-tab-short">{item.shortLabel}</span>
@@ -807,10 +807,10 @@ export default function ProposerServicesClient({
         {tab === 'profil' && (
           <div className="provider-profile-grid">
             <Card style={{ boxShadow: CARD_SHADOW, padding: 18 }}>
-              <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
-              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.42)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
+              <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
               {hasUnsavedProfileChanges && (
-                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', color: 'rgba(255,255,255,.88)' }}>
+                <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', color: 'var(--text)' }}>
                   <span style={{ width: 28, height: 28, borderRadius: 9, display: 'grid', placeItems: 'center', flexShrink: 0, color: C.gold, background: 'var(--primary-a12)', border: '1px solid var(--focus-ring-color)' }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 9v4" />
@@ -819,8 +819,8 @@ export default function ProposerServicesClient({
                     </svg>
                   </span>
                   <div>
-                    <strong style={{ display: 'block', fontSize: 13.5, color: C.gold, marginBottom: 3 }}>Modifications non enregistrées</strong>
-                    <p style={{ fontSize: 12.5, lineHeight: 1.45, color: 'rgba(255,255,255,.64)', margin: 0 }}>Clique sur « Enregistrer ma page » pour que ces changements soient visibles sur ta page publique.</p>
+                    <strong style={{ display: 'block', fontSize: 'var(--font-size-body)', color: C.gold, marginBottom: 3 }}>Modifications non enregistrées</strong>
+                    <p style={{ fontSize: 'var(--font-size-footnote-lg)', lineHeight: 1.45, color: 'var(--text-muted)', margin: 0 }}>Clique sur « Enregistrer ma page » pour que ces changements soient visibles sur ta page publique.</p>
                   </div>
                 </div>
               )}
@@ -841,7 +841,7 @@ export default function ProposerServicesClient({
                           key={item.id}
                           variant="ghost"
                           onClick={() => toggleProviderCategory(item.id)}
-                          style={{ padding: '8px 11px', borderRadius: 999, fontSize: 11.5, fontWeight: 700, color: selected ? item.color : 'rgba(255,255,255,.62)', background: selected ? `${item.color}18` : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? `${item.color}88` : 'rgba(255,255,255,.12)'}` }}
+                          style={{ padding: '8px 11px', borderRadius: 999, fontSize: 'var(--font-size-caption-lg)', fontWeight: 700, color: selected ? item.color : 'var(--text-muted)', background: selected ? `${item.color}18` : 'var(--surface-2)', border: `1px solid ${selected ? `${item.color}88` : 'var(--border)'}` }}
                         >
                           {item.singular}
                         </Button>
@@ -874,7 +874,7 @@ export default function ProposerServicesClient({
                       {[{ id: INTERNATIONAL_REGION_ID, name: 'International', flag: '🌍' }, ...regions].map((r) => {
                         const selected = profile.zonesIntervention.includes(r.id)
                         return (
-                          <Button key={r.id} variant="ghost" onClick={() => toggleZone(r.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 12, color: selected ? C.teal : 'rgba(255,255,255,.62)', background: selected ? 'var(--primary-a10)' : 'rgba(255,255,255,.04)', border: `1px solid ${selected ? 'var(--primary-a55)' : 'rgba(255,255,255,.12)'}` }}>
+                          <Button key={r.id} variant="ghost" onClick={() => toggleZone(r.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 'var(--font-size-footnote)', color: selected ? C.teal : 'var(--text-muted)', background: selected ? 'var(--primary-a10)' : 'var(--surface-2)', border: `1px solid ${selected ? 'var(--primary-a55)' : 'var(--border)'}` }}>
                             {r.flag} {r.name}
                           </Button>
                         )
@@ -887,7 +887,7 @@ export default function ProposerServicesClient({
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                       {SOCIAL_NETWORKS.filter((n) => n.key !== 'website').map((network) => (
                         <Label key={network.key} style={{ display: 'grid', gap: 5, marginBottom: 0 }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.48)' }}>{network.label}</span>
+                          <span style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>{network.label}</span>
                           <Input value={profile.socialLinks[network.key] || ''} onChange={(e) => update({ socialLinks: { ...profile.socialLinks, [network.key]: e.target.value } })} placeholder={network.placeholder} />
                         </Label>
                       ))}
@@ -898,14 +898,14 @@ export default function ProposerServicesClient({
                   <Button onClick={handleSaveProfile} disabled={saving || Boolean(uploading)} loading={Boolean(uploading)} loadingText="Envoi de l’image…" style={{ ...primaryButton, alignSelf: 'flex-start' }}>
                     {saving ? 'Enregistrement…' : 'Enregistrer ma page'}
                   </Button>
-                  {hasUnsavedProfileChanges && <span style={{ fontSize: 12, color: C.gold }}>À enregistrer pour publier les changements</span>}
+                  {hasUnsavedProfileChanges && <span style={{ fontSize: 'var(--font-size-footnote)', color: C.gold }}>À enregistrer pour publier les changements</span>}
                 </div>
               </div>
             </Card>
 
             <Card style={{ boxShadow: CARD_SHADOW, overflow: 'hidden', alignSelf: 'start' }}>
-              <Button variant="ghost" onClick={() => coverInputRef.current?.click()} style={{ width: '100%', height: 150, position: 'relative', display: 'block', padding: 0, border: 0, borderRadius: 0, background: profile.coverUrl ? `url(${profile.coverUrl}) center/cover` : `linear-gradient(135deg,${category.color}55,rgba(8,10,20,.95))` }} aria-label="Modifier la photo de couverture">
-                <span style={{ position: 'absolute', right: 10, top: 10, padding: '6px 9px', borderRadius: 8, background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 11, fontWeight: 700 }}>Modifier la couverture</span>
+              <Button variant="ghost" onClick={() => coverInputRef.current?.click()} style={{ width: '100%', height: 150, position: 'relative', display: 'block', padding: 0, border: 0, borderRadius: 0, background: profile.coverUrl ? `url(${profile.coverUrl}) center/cover` : `linear-gradient(135deg,${category.color}55,var(--media-panel-deep))` }} aria-label="Modifier la photo de couverture">
+                <span style={{ position: 'absolute', right: 10, top: 10, padding: '6px 9px', borderRadius: 8, background: 'var(--media-scrim)', color: 'var(--text)', fontSize: 'var(--font-size-caption)', fontWeight: 700 }}>Modifier la couverture</span>
               </Button>
               <input
                 ref={coverInputRef}
@@ -919,7 +919,7 @@ export default function ProposerServicesClient({
                 }}
               />
               <div style={{ padding: '0 18px 19px', marginTop: -38, position: 'relative' }}>
-                <Button variant="ghost" onClick={() => avatarInputRef.current?.click()} style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', display: 'grid', placeItems: 'center', padding: 0, border: '4px solid #090b14', background: category.color, color: C.obsidian, fontSize: 18, fontWeight: 900, position: 'relative' }} aria-label="Modifier la photo de profil">
+                <Button variant="ghost" onClick={() => avatarInputRef.current?.click()} style={{ width: 52, height: 52, borderRadius: '50%', overflow: 'hidden', display: 'grid', placeItems: 'center', padding: 0, border: '4px solid var(--media-canvas)', background: category.color, color: C.obsidian, fontSize: 'var(--font-size-title-4)', fontWeight: 900, position: 'relative' }} aria-label="Modifier la photo de profil">
                   {profile.photoUrl ? (
                     <NextImage src={profile.photoUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="78px" />
                   ) : (
@@ -937,10 +937,10 @@ export default function ProposerServicesClient({
                     void handleImage('photoUrl', file)
                   }}
                 />
-                <h3 style={{ fontSize: 18, margin: '10px 0 0' }}>{profile.name || 'Nom de ta page'}</h3>
-                {profile.headline && <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,.82)', lineHeight: 1.4, margin: '7px 0 0' }}>{profile.headline}</p>}
-                <p style={{ fontSize: 12, fontWeight: 800, color: category.color, margin: '5px 0 0' }}>{providerTypes.map((v) => getProviderCategory(v).singular).join(' · ')}</p>
-                <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.5)', lineHeight: 1.55, margin: '12px 0 0' }}>{profile.description || 'Ta présentation apparaîtra ici.'}</p>
+                <h3 style={{ fontSize: 'var(--font-size-title-4)', margin: '10px 0 0' }}>{profile.name || 'Nom de ta page'}</h3>
+                {profile.headline && <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)', lineHeight: 1.4, margin: '7px 0 0' }}>{profile.headline}</p>}
+                <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 800, color: category.color, margin: '5px 0 0' }}>{providerTypes.map((v) => getProviderCategory(v).singular).join(' · ')}</p>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', lineHeight: 1.55, margin: '12px 0 0' }}>{profile.description || 'Ta présentation apparaîtra ici.'}</p>
               </div>
             </Card>
           </div>
@@ -950,8 +950,8 @@ export default function ProposerServicesClient({
           <section>
             <div className="provider-catalog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 13 }}>
               <div>
-                <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Mon catalogue</h2>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,.42)', margin: '4px 0 0' }}>Les tarifs sont indicatifs. Le client te contacte ensuite pour tout organiser avec toi.</p>
+                <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Mon catalogue</h2>
+                <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '4px 0 0' }}>Les tarifs sont indicatifs. Le client te contacte ensuite pour tout organiser avec toi.</p>
               </div>
               {!showItemForm && (
                 <Button onClick={() => setShowItemForm(true)} style={primaryButton}>
@@ -962,7 +962,7 @@ export default function ProposerServicesClient({
 
             {showItemForm && (
               <Card style={{ boxShadow: CARD_SHADOW, padding: 18, marginBottom: 14 }}>
-                <h3 style={{ fontSize: 18, margin: '0 0 14px' }}>Nouvelle offre</h3>
+                <h3 style={{ fontSize: 'var(--font-size-title-4)', margin: '0 0 14px' }}>Nouvelle offre</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <Field label="Nom de l'offre">
@@ -1006,17 +1006,17 @@ export default function ProposerServicesClient({
                   </div>
 
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Photos / vidéos (optionnel)</span>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 7 }}>Photos / vidéos (optionnel)</span>
                     {newItemFiles.length > 0 && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginBottom: 8 }}>
                         {newItemFiles.map((f, i) => (
-                          <div key={`${f.file.name}-${i}`} style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#05060b', aspectRatio: '16 / 10' }}>
+                          <div key={`${f.file.name}-${i}`} style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', aspectRatio: '16 / 10' }}>
                             {f.file.type.startsWith('video/') ? (
                               <video src={f.url} muted preload="metadata" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                               <NextImage src={f.url} alt="" fill unoptimized style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                             )}
-                            <Button variant="ghost" aria-label={`Retirer ${f.file.name}`} onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 18, padding: 0 }}>
+                            <Button variant="ghost" aria-label={`Retirer ${f.file.name}`} onClick={() => removeNewItemFile(i)} disabled={addingItem} style={{ position: 'absolute', top: 7, right: 7, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', border: '1px solid var(--border-strong)', background: 'var(--media-scrim)', color: 'var(--text)', fontSize: 'var(--font-size-title-4)', padding: 0 }}>
                               ×
                             </Button>
                           </div>
@@ -1024,7 +1024,7 @@ export default function ProposerServicesClient({
                       </div>
                     )}
                     {newItemFiles.length < 4 && (
-                      <Label style={{ display: 'block', width: '100%', minHeight: 64, borderRadius: 13, border: '1px dashed rgba(255,255,255,.18)', background: 'rgba(255,255,255,.04)', color: 'rgba(255,255,255,.55)', cursor: addingItem ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700, textAlign: 'center', lineHeight: '64px', marginBottom: 0 }}>
+                      <Label style={{ display: 'block', width: '100%', minHeight: 64, borderRadius: 13, border: '1px dashed var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-faint)', cursor: addingItem ? 'wait' : 'pointer', fontSize: 'var(--font-size-callout)', fontWeight: 700, textAlign: 'center', lineHeight: '64px', marginBottom: 0 }}>
                         {`+ Ajouter une photo ou une vidéo (${newItemFiles.length}/4)`}
                         <input
                           type="file"
@@ -1039,7 +1039,7 @@ export default function ProposerServicesClient({
                         />
                       </Label>
                     )}
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,.35)', margin: '6px 0 0' }}>
+                    <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '6px 0 0' }}>
                       JPG, PNG, WEBP, MP4, WEBM ou MOV. Envoyés dès la publication de l&rsquo;offre — tu pourras aussi en ajouter ou en retirer plus tard.
                     </p>
                   </div>
@@ -1058,8 +1058,8 @@ export default function ProposerServicesClient({
 
             {profile.catalog.length === 0 && !showItemForm ? (
               <Card style={{ boxShadow: CARD_SHADOW, padding: '36px 20px', textAlign: 'center' }}>
-                <h2 style={{ fontSize: 18, margin: 0 }}>Ton catalogue est vide</h2>
-                <p style={{ maxWidth: 410, margin: '8px auto 15px', fontSize: 12.5, color: 'rgba(255,255,255,.5)', lineHeight: 1.55 }}>Ajoute les services, formules ou équipements que les visiteurs pourront découvrir sur ta page.</p>
+                <h2 style={{ fontSize: 'var(--font-size-title-4)', margin: 0 }}>Ton catalogue est vide</h2>
+                <p style={{ maxWidth: 410, margin: '8px auto 15px', fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', lineHeight: 1.55 }}>Ajoute les services, formules ou équipements que les visiteurs pourront découvrir sur ta page.</p>
                 <Button onClick={() => setShowItemForm(true)} style={primaryButton}>
                   Ajouter ma première offre
                 </Button>
@@ -1074,7 +1074,7 @@ export default function ProposerServicesClient({
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
                           <Input type="number" min="0" value={editingItem.price} onChange={(e) => setEditingItem((c) => (c ? { ...c, price: e.target.value } : c))} placeholder="Tarif sur demande" />
                           <Label style={{ display: 'block' }}>
-                            <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Devise</span>
+                            <span style={{ display: 'block', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 7 }}>Devise</span>
                             <Select
                               value={editingItem.currency}
                               onChange={(value) => setEditingItem((c) => (c ? { ...c, currency: value } : c))}
@@ -1096,17 +1096,17 @@ export default function ProposerServicesClient({
                         <Textarea style={{ minHeight: 62 }} value={editingItem.description} onChange={(e) => setEditingItem((c) => (c ? { ...c, description: e.target.value } : c))} />
 
                         <div>
-                          <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,.7)', marginBottom: 7 }}>Photos / vidéos</span>
+                          <span style={{ display: 'block', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 7 }}>Photos / vidéos</span>
                           {item.media.length > 0 && (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8, marginBottom: 8 }}>
                               {item.media.map((m, i) => (
-                                <div key={`${m.url}-${i}`} style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#05060b', aspectRatio: '16 / 10' }}>
+                                <div key={`${m.url}-${i}`} style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', aspectRatio: '16 / 10' }}>
                                   {m.type === 'video' ? (
                                     <video src={m.url} controls preload="metadata" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
                                   ) : (
                                     <NextImage src={m.url} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 50vw, 240px" />
                                   )}
-                                  <Button variant="ghost" aria-label={`Retirer le média ${i + 1}`} onClick={() => setConfirmRemoveMedia({ itemId: item.id, mediaIndex: i })} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 34, height: 34, minHeight: 34, minWidth: 34, borderRadius: '50%', border: '1px solid rgba(255,255,255,.18)', background: 'rgba(4,4,11,.82)', color: '#fff', fontSize: 16, padding: 0 }}>
+                                  <Button variant="ghost" aria-label={`Retirer le média ${i + 1}`} onClick={() => setConfirmRemoveMedia({ itemId: item.id, mediaIndex: i })} disabled={mediaUploading} style={{ position: 'absolute', top: 7, right: 7, width: 34, height: 34, minHeight: 34, minWidth: 34, borderRadius: '50%', border: '1px solid var(--border-strong)', background: 'var(--media-scrim)', color: 'var(--text)', fontSize: 'var(--font-size-headline-lg)', padding: 0 }}>
                                     ×
                                   </Button>
                                 </div>
@@ -1114,7 +1114,7 @@ export default function ProposerServicesClient({
                             </div>
                           )}
                           {item.media.length < 4 && (
-                            <Label style={{ display: 'block', width: '100%', minHeight: 58, borderRadius: 13, border: '1px dashed rgba(255,255,255,.18)', background: 'rgba(255,255,255,.04)', color: mediaUploading ? C.gold : 'rgba(255,255,255,.55)', cursor: mediaUploading ? 'wait' : 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'center', lineHeight: '58px', marginBottom: 0 }}>
+                            <Label style={{ display: 'block', width: '100%', minHeight: 58, borderRadius: 13, border: '1px dashed var(--border-strong)', background: 'var(--surface-2)', color: mediaUploading ? C.gold : 'var(--text-faint)', cursor: mediaUploading ? 'wait' : 'pointer', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, textAlign: 'center', lineHeight: '58px', marginBottom: 0 }}>
                               {mediaUploading ? 'Envoi du média…' : `+ Ajouter une photo ou une vidéo (${item.media.length}/4)`}
                               <input
                                 type="file"
@@ -1130,7 +1130,7 @@ export default function ProposerServicesClient({
                             </Label>
                           )}
                           {item.media.length < 4 && !mediaUploading && (
-                            <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,.35)', margin: '5px 0 0' }}>
+                            <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '5px 0 0' }}>
                               JPG, PNG, WEBP, MP4, WEBM ou MOV. Privilégie des fichiers légers pour un envoi rapide.
                             </p>
                           )}
@@ -1166,24 +1166,24 @@ export default function ProposerServicesClient({
                       <div style={{ display: 'contents', opacity: item.available === false ? 0.58 : 1 }}>
                         {item.media[0] ? (
                           item.media[0].type === 'video' ? (
-                            <video src={item.media[0].url} preload="metadata" muted playsInline style={{ width: 80, height: 60, borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                            <video src={item.media[0].url} preload="metadata" muted playsInline style={{ width: 80, height: 60, borderRadius: 10, objectFit: 'cover', background: 'var(--surface-2)', flexShrink: 0 }} />
                           ) : (
-                            <NextImage src={item.media[0].url} alt="" width={86} height={64} style={{ borderRadius: 10, objectFit: 'cover', background: '#05060b', flexShrink: 0 }} />
+                            <NextImage src={item.media[0].url} alt="" width={86} height={64} style={{ borderRadius: 10, objectFit: 'cover', background: 'var(--surface-2)', flexShrink: 0 }} />
                           )
                         ) : (
-                          <div style={{ width: 80, height: 60, borderRadius: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.22)', flexShrink: 0 }}>
+                          <div style={{ width: 80, height: 60, borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', display: 'grid', placeItems: 'center', color: 'var(--border-strong)', flexShrink: 0 }}>
                             <CategoryIcon icon={category.icon} size={22} />
                           </div>
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <h3 style={{ fontSize: 16, margin: 0, wordBreak: 'break-word' }}>{item.name}</h3>
-                            <span style={{ padding: '3px 8px', borderRadius: 8, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'rgba(255,255,255,.5)' : C.teal, background: item.available === false ? 'rgba(255,255,255,.07)' : 'var(--primary-a12)', border: `1px solid ${item.available === false ? 'rgba(255,255,255,.14)' : 'var(--primary-a35)'}` }}>
+                            <h3 style={{ fontSize: 'var(--font-size-headline-lg)', margin: 0, wordBreak: 'break-word' }}>{item.name}</h3>
+                            <span style={{ padding: '3px 8px', borderRadius: 8, fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '.04em', color: item.available === false ? 'var(--text-faint)' : C.teal, background: item.available === false ? 'var(--surface-2)' : 'var(--primary-a12)', border: `1px solid ${item.available === false ? 'var(--border-strong)' : 'var(--primary-a35)'}` }}>
                               {item.available === false ? 'Masquée' : 'Publiée'}
                             </span>
                           </div>
-                          <p style={{ fontSize: 13, fontWeight: 800, color: C.gold, margin: '5px 0 0' }}>{Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}</p>
-                          {item.description && <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.46)', lineHeight: 1.45, margin: '5px 0 0' }}>{item.description}</p>}
+                          <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: C.gold, margin: '5px 0 0' }}>{Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}</p>
+                          {item.description && <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', lineHeight: 1.45, margin: '5px 0 0' }}>{item.description}</p>}
                         </div>
                       </div>
                       <div className="provider-catalog-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -1193,7 +1193,7 @@ export default function ProposerServicesClient({
                         <Button variant="secondary" onClick={() => startEdit(item)} style={secondaryButton}>
                           Modifier
                         </Button>
-                        <Button variant="danger" onClick={() => setConfirmRemoveItem(item)} style={{ ...secondaryButton, color: '#ff9ed2', border: '1px solid rgba(224,90,170,.55)', background: 'rgba(224,90,170,.14)' }}>
+                        <Button variant="danger" onClick={() => setConfirmRemoveItem(item)} style={{ ...secondaryButton, color: 'var(--danger)', border: '1px solid var(--danger-border)', background: 'var(--danger-fill)' }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 6h18" />
                             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -1214,14 +1214,14 @@ export default function ProposerServicesClient({
           <section>
             {reportMsg && (
               <Card role="status" accent="var(--primary-a35)" style={{ boxShadow: CARD_SHADOW, padding: '12px 16px', marginBottom: 12 }}>
-                <p style={{ fontSize: 12.5, color: 'var(--primary)', margin: 0 }}>{reportMsg}</p>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--primary)', margin: 0 }}>{reportMsg}</p>
               </Card>
             )}
 
             {count === 0 && reviews.length === 0 ? (
               <Card style={{ boxShadow: CARD_SHADOW, padding: 24 }}>
-                <h2 style={{ fontSize: 18, margin: '0 0 7px' }}>Pas encore d&rsquo;avis</h2>
-                <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.55)', lineHeight: 1.55, margin: 0 }}>
+                <h2 style={{ fontSize: 'var(--font-size-title-4)', margin: '0 0 7px' }}>Pas encore d&rsquo;avis</h2>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', lineHeight: 1.55, margin: 0 }}>
                   Les clients qui ont travaillé avec toi pourront laisser une note et un commentaire sur ta page publique.
                 </p>
               </Card>
@@ -1229,25 +1229,25 @@ export default function ProposerServicesClient({
               <>
                 <Card style={{ boxShadow: CARD_SHADOW, padding: 18, marginBottom: 12, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
                   <div style={{ textAlign: 'center', minWidth: 100 }}>
-                    <p style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-1.5px', color: '#fff', margin: 0, lineHeight: 1 }}>
+                    <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, letterSpacing: '-1.5px', color: 'var(--text)', margin: 0, lineHeight: 1 }}>
                       {String(avg).replace('.', ',')}
-                      <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.4)' }}> / 5</span>
+                      <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text-faint)' }}> / 5</span>
                     </p>
                     <div style={{ marginTop: 6 }}>
                       <Stars value={avg} size={15} />
                     </div>
-                    <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,.45)', margin: '5px 0 0' }}>
+                    <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: '5px 0 0' }}>
                       {count} avis publié{count > 1 ? 's' : ''}
                     </p>
                   </div>
                   <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {([5, 4, 3, 2, 1] as const).map((n) => (
                       <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.55)', width: 10, textAlign: 'right' }}>{n}</span>
-                        <div style={{ flex: 1, height: 6, borderRadius: 999, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                        <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--text-faint)', width: 10, textAlign: 'right' }}>{n}</span>
+                        <div style={{ flex: 1, height: 6, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
                           <div style={{ width: `${count ? Math.round((dist[n] / count) * 100) : 0}%`, height: '100%', borderRadius: 999, background: C.gold }} />
                         </div>
-                        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,.4)', width: 20 }}>{dist[n]}</span>
+                        <span style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', width: 20 }}>{dist[n]}</span>
                       </div>
                     ))}
                   </div>
@@ -1259,26 +1259,26 @@ export default function ProposerServicesClient({
                     return (
                       <Card
                         key={review.id}
-                        accent={hidden ? 'rgba(224,90,170,.3)' : undefined}
+                        accent={hidden ? 'var(--danger-border)' : undefined}
                         style={{ boxShadow: CARD_SHADOW, padding: 18, opacity: hidden ? 0.75 : 1 }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                           <Stars value={review.rating} size={14} />
-                          <span style={{ fontSize: 13.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
+                          <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)' }}>{review.authorName || 'Membre'}</span>
                           {review.verified && (
-                            <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
+                            <span style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Avis vérifié</span>
                           )}
                           {hidden && (
-                            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 999, padding: '2px 8px' }}>Masqué par la modération</span>
+                            <span style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, color: 'var(--accent-text)', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 999, padding: '2px 8px' }}>Masqué par la modération</span>
                           )}
-                          <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.38)' }}>{fmtDate(review.createdAt)}</span>
+                          <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>{fmtDate(review.createdAt)}</span>
                         </div>
-                        <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: '9px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
+                        <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: '9px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
 
                         {review.reply?.text && replyFor !== review.id && (
-                          <div style={{ marginTop: 11, padding: '10px 13px', borderRadius: 12, background: 'rgba(255,255,255,.045)', border: '1px solid rgba(255,255,255,.08)' }}>
-                            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: C.gold, margin: '0 0 5px' }}>Ta réponse</p>
-                            <p style={{ fontSize: 13, color: 'rgba(255,255,255,.66)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
+                          <div style={{ marginTop: 11, padding: '10px 13px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--surface-2)' }}>
+                            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: C.gold, margin: '0 0 5px' }}>Ta réponse</p>
+                            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
                           </div>
                         )}
 
@@ -1292,7 +1292,7 @@ export default function ProposerServicesClient({
                               style={{ minHeight: 64, lineHeight: 1.5 }}
                             />
                             {replyErr && (
-                              <p role="alert" style={{ fontSize: 12, color: '#ff8fb2', margin: '7px 0 0' }}>
+                              <p role="alert" style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--accent-text)', margin: '7px 0 0' }}>
                                 {replyErr}
                               </p>
                             )}
@@ -1315,10 +1315,10 @@ export default function ProposerServicesClient({
                           </div>
                         ) : reportFor === review.id ? (
                           <div style={{ marginTop: 12 }}>
-                            <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '0 0 8px' }}>Motif du signalement</p>
+                            <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 8px' }}>Motif du signalement</p>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
                               {REVIEW_REPORT_REASONS.map((reason) => (
-                                <Button key={reason.id} variant="ghost" onClick={() => setReportReason(reason.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: reportReason === reason.id ? 'rgba(143,86,255,.16)' : 'rgba(255,255,255,.05)', border: reportReason === reason.id ? '1px solid rgba(143,86,255,.6)' : '1px solid rgba(255,255,255,.10)', color: reportReason === reason.id ? '#cdb4ff' : 'rgba(255,255,255,.7)' }}>
+                                <Button key={reason.id} variant="ghost" onClick={() => setReportReason(reason.id)} style={{ padding: '8px 12px', borderRadius: 999, fontSize: 'var(--font-size-footnote)', fontWeight: 600, background: reportReason === reason.id ? 'var(--primary-a16)' : 'var(--surface-2)', border: reportReason === reason.id ? '1px solid var(--primary-a60)' : '1px solid var(--border)', color: reportReason === reason.id ? 'var(--accent-text)' : 'var(--text-muted)' }}>
                                   {reason.label}
                                 </Button>
                               ))}
@@ -1362,7 +1362,7 @@ export default function ProposerServicesClient({
                                   setReportFor(review.id)
                                   setReportReason('')
                                 }}
-                                style={{ ...ghostButtonSmall, padding: 0, fontWeight: 600, color: 'rgba(255,255,255,.38)' }}
+                                style={{ ...ghostButtonSmall, padding: 0, fontWeight: 600, color: 'var(--text-faint)' }}
                               >
                                 Signaler
                               </Button>
@@ -1382,8 +1382,8 @@ export default function ProposerServicesClient({
           <section>
             <SubscriptionPanel profile={profile} subscription={subscription} />
             <Card style={{ boxShadow: CARD_SHADOW, padding: 20, marginTop: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 18, color: '#fff' }}>Pays de facturation</h2>
-              <p style={{ margin: '7px 0 14px', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.55 }}>
+              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)', color: 'var(--text)' }}>Pays de facturation</h2>
+              <p style={{ margin: '7px 0 14px', color: 'var(--text-muted)', fontSize: 'var(--font-size-body)', lineHeight: 1.55 }}>
                 {billingRegion ? `${billingRegion.flag} ${billingRegion.name}` : 'Choisis ton pays pour afficher le bon tarif et le bon moyen de paiement.'}
               </p>
               {subscription.canChangeBilling ? (
@@ -1395,7 +1395,7 @@ export default function ProposerServicesClient({
                   style={{ maxWidth: 420 }}
                 />
               ) : (
-                <p style={{ margin: 0, color: 'var(--text-faint)', fontSize: 13 }}>Termine ou annule ton abonnement actuel pour changer de pays.</p>
+                <p style={{ margin: 0, color: 'var(--text-faint)', fontSize: 'var(--font-size-callout)' }}>Termine ou annule ton abonnement actuel pour changer de pays.</p>
               )}
             </Card>
           </section>
@@ -1417,15 +1417,15 @@ export default function ProposerServicesClient({
 
       {confirmRemoveItem && (
         <Modal onClose={() => setConfirmRemoveItem(null)} dismissible={!removingItem} zIndex={3200} hideClose ariaLabel="Supprimer l’offre">
-                            <h3 style={{ fontSize: 18, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer cette offre ?</h3>
-            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
+                            <h3 style={{ fontSize: 'var(--font-size-title-4)', letterSpacing: '-.4px', margin: '0 0 8px', color: 'var(--text)' }}>Supprimer cette offre ?</h3>
+            <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
               « {confirmRemoveItem.name} » sera retirée de ton catalogue. Cette action est définitive.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <Button variant="secondary" onClick={() => setConfirmRemoveItem(null)} disabled={removingItem} style={secondaryButton}>
                 Annuler
               </Button>
-              <Button variant="danger" onClick={() => void confirmDeleteItem()} disabled={removingItem} loading={removingItem} loadingText="Suppression…" style={{ ...primaryButton, background: '#c2347f', boxShadow: 'none' }}>
+              <Button variant="danger" onClick={() => void confirmDeleteItem()} disabled={removingItem} loading={removingItem} loadingText="Suppression…" style={{ ...primaryButton, background: 'var(--danger)', boxShadow: 'none' }}>
                 Supprimer
               </Button>
             </div>
@@ -1434,8 +1434,8 @@ export default function ProposerServicesClient({
 
       {confirmRemoveMedia && (
         <Modal onClose={() => !mediaUploading && setConfirmRemoveMedia(null)} dismissible={!mediaUploading} zIndex={3200} hideClose ariaLabel="Supprimer ce média">
-          <h3 style={{ fontSize: 18, letterSpacing: '-.4px', margin: '0 0 8px', color: '#fff' }}>Supprimer ce média ?</h3>
-          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>
+          <h3 style={{ fontSize: 'var(--font-size-title-4)', letterSpacing: '-.4px', margin: '0 0 8px', color: 'var(--text)' }}>Supprimer ce média ?</h3>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
             Ce média sera retiré de ton offre immédiatement.
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
@@ -1453,7 +1453,7 @@ export default function ProposerServicesClient({
               disabled={mediaUploading}
               loading={mediaUploading}
               loadingText="Suppression…"
-              style={{ ...primaryButton, background: '#c2347f', boxShadow: 'none' }}
+              style={{ ...primaryButton, background: 'var(--danger)', boxShadow: 'none' }}
             >
               Supprimer
             </Button>

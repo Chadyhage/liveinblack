@@ -12,12 +12,12 @@ import { Button, Card, Mascot } from '@/app/components/ui'
 
 // Couleurs alignées sur les custom properties de app/globals.css (:root) —
 // jamais de hex/rgba dupliqués ici, voir CLAUDE.md.
-const COLORS = { pink: 'var(--pink)', gold: 'var(--gold)', muted: 'rgba(255,255,255,0.42)', dim: 'rgba(255,255,255,0.22)' }
+const COLORS = { pink: 'var(--pink)', gold: 'var(--gold)', muted: 'var(--text-faint)', dim: 'var(--border)' }
 const CARD: React.CSSProperties = {
   background: 'var(--surface-2)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+  boxShadow: '0 24px 64px rgba(var(--black-rgb), .55)',
 }
 
 const MAX_ATTEMPTS = 20
@@ -26,7 +26,7 @@ const POLL_INTERVAL_MS = 1000
 type State = 'loading' | 'success' | 'error'
 type BoostInfo = { position: number; days: number; eventId: string; eventName: string }
 
-function IconMail({ size = 15, color = '#141007' }: { size?: number; color?: string }) {
+function IconMail({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -96,7 +96,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
         {state === 'loading' && (
           <>
             <Mascot mood="sleeping" size={148} />
-            <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: 0 }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, letterSpacing: '-0.4px', color: 'var(--text)', margin: 0 }}>
               Activation du boost…
             </h1>
           </>
@@ -105,11 +105,11 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
         {state === 'success' && (
           <>
             <Mascot mood="success" size={156} />
-            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 8px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-xl)', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: '0 0 8px' }}>
               Boost activé
             </h1>
             {boostInfo && (
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
                 Ton événement {boostInfo.eventName ? `« ${boostInfo.eventName} »` : ''} apparaît
                 désormais en <strong style={{ color: COLORS.pink }}>Top {boostInfo.position}</strong>{' '}
                 pour les {boostInfo.days} prochain{boostInfo.days > 1 ? 's' : ''} jour{boostInfo.days > 1 ? 's' : ''}.
@@ -118,13 +118,13 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
               <Button
                 onClick={() => router.push('/my-events')}
-                style={{ padding: '14px 20px', borderRadius: 12, fontSize: 14.5, fontWeight: 600, textTransform: 'none', letterSpacing: 'normal', background: 'var(--violet-cta)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>
+                style={{ padding: '14px 20px', borderRadius: 12, fontSize: 'var(--font-size-body-lg)', fontWeight: 600, textTransform: 'none', letterSpacing: 'normal', background: 'var(--violet-cta)', border: '1px solid var(--border-strong)', color: 'var(--primary-ink)', boxShadow: '0 6px 20px var(--primary-a24)' }}>
                 Voir mes événements
               </Button>
               <Button
                 onClick={() => router.push('/home')}
                 variant="secondary"
-                style={{ padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
+                style={{ padding: '13px 20px', borderRadius: 12, fontSize: 'var(--font-size-body-sm)', fontWeight: 600, background: 'var(--fill-secondary)', border: '1px solid var(--border)', color: 'var(--text)' }}>
                 Voir le Top 3
               </Button>
             </div>
@@ -134,23 +134,23 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
         {state === 'error' && (
           <>
             <Mascot mood="error" size={148} />
-            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1)', fontWeight: 800, letterSpacing: '-0.4px', color: COLORS.pink, margin: '0 0 10px' }}>
               Erreur d&apos;activation
             </h1>
-            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               {errorMsg}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
               <a
                 href="mailto:hagechady@liveinblack.com?subject=Probl%C3%A8me%20de%20boost"
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700, background: COLORS.gold, border: 'none', color: '#141007', textDecoration: 'none' }}>
-                <IconMail size={15} color="#141007" />
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 20px', borderRadius: 12, fontSize: 'var(--font-size-body-sm)', fontWeight: 700, background: COLORS.gold, border: 'none', color: 'var(--danger-ink)', textDecoration: 'none' }}>
+                <IconMail size={15} />
                 Contacter le support
               </a>
               <Button
                 onClick={() => router.push('/my-events')}
                 variant="secondary"
-                style={{ padding: '13px 20px', borderRadius: 12, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)' }}>
+                style={{ padding: '13px 20px', borderRadius: 12, fontSize: 'var(--font-size-body-sm)', fontWeight: 600, background: 'var(--fill-secondary)', border: '1px solid var(--border)', color: 'var(--text)' }}>
                 Retour à mes événements
               </Button>
             </div>

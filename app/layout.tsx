@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -8,6 +9,8 @@ import { Providers } from "./providers";
 import CookieConsentBanner from "./components/layout/CookieConsentBanner";
 import GoogleAnalytics from "./components/layout/GoogleAnalytics";
 import GrowthAnalytics from "./components/layout/GrowthAnalytics";
+import ThemeModeToggle from "./components/layout/ThemeModeToggle";
+import { STATIC_THEME } from "@/lib/shared/staticTheme";
 
 // Police variable déjà distribuée avec la version verrouillée de Next.js.
 // Elle est auto-hébergée au build : aucune requête à Google Fonts, aucun
@@ -145,9 +148,24 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#191218",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: STATIC_THEME.lightBackground },
+    { media: "(prefers-color-scheme: dark)", color: STATIC_THEME.darkBackground },
+  ],
+  colorScheme: "light dark",
 };
+
+const themeBootScript = `
+try {
+  var key = 'lib_theme';
+  var stored = window.localStorage.getItem(key);
+  var mode = stored === 'light' || stored === 'dark'
+    ? stored
+    : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  document.documentElement.dataset.theme = mode;
+  document.documentElement.style.colorScheme = mode;
+} catch (_) {}
+`;
 
 export default function RootLayout({
   children,
@@ -155,14 +173,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr-BJ" className={`${interfaceFont.variable} h-full antialiased`}>
+    <html lang="fr-BJ" className={`${interfaceFont.variable} h-full antialiased`} suppressHydrationWarning>
       <head><style>{'nextjs-portal{display:none!important}'}</style></head>
       <body className="min-h-full flex flex-col">
-        <script
+        <Script id="lib-theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <Script
+          id="lib-structured-data"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
         />
         <Providers>{children}</Providers>
+        <ThemeModeToggle />
         <CookieConsentBanner />
         <Suspense fallback={null}>
           <GrowthAnalytics />

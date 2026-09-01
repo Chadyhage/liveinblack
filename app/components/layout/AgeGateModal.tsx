@@ -23,11 +23,11 @@ export default function AgeGateModal({
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{ width: 28, height: 1, background: 'var(--gold)', flexShrink: 0 }} />
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
             Événement {minAge}+
           </span>
         </div>
-        <p id="age-gate-title" style={{ fontSize: 21, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+        <p id="age-gate-title" style={{ fontSize: 'var(--font-size-title-3-lg)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>
           Réservé aux {minAge} ans et plus
         </p>
       </div>
@@ -42,7 +42,7 @@ export default function AgeGateModal({
           borderRadius: '50%',
           border: '1px solid var(--primary-a04)',
           background: 'var(--primary-a12)',
-          fontSize: 15,
+          fontSize: 'var(--font-size-headline)',
           fontWeight: 700,
           color: 'var(--gold)',
           marginBottom: 20,
@@ -54,14 +54,14 @@ export default function AgeGateModal({
       <div
         style={{
           padding: '14px 16px',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border)',
           borderLeft: '3px solid var(--gold)',
           borderRadius: 12,
           marginBottom: 20,
         }}
       >
-        <p style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 700, color: 'var(--gold)', margin: '0 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        <p style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)', margin: '0 0 6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="16" rx="2" />
             <circle cx="9" cy="10" r="2.5" />
@@ -71,12 +71,12 @@ export default function AgeGateModal({
           </svg>
           Pièce d&apos;identité
         </p>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
           Une pièce d&apos;identité pourra être demandée à l&apos;entrée. Si tu ne peux pas prouver ton âge, l&apos;accès pourra être refusé selon les conditions de l&apos;événement.
         </p>
       </div>
 
-      <p style={{ fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.6, marginBottom: 20 }}>
+      <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', lineHeight: 1.6, marginBottom: 20 }}>
         En continuant, tu confirmes avoir {minAge} ans ou plus.
       </p>
 
@@ -88,10 +88,10 @@ export default function AgeGateModal({
           background: 'var(--violet-cta)',
           border: '1px solid var(--border-strong)',
           borderRadius: 12,
-          fontSize: 14,
+          fontSize: 'var(--font-size-body-sm)',
           fontWeight: 700,
-          color: '#fff',
-          boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
+          color: 'var(--primary-ink)',
+          boxShadow: 'none',
         }}
       >
         J&apos;ai compris
@@ -103,12 +103,12 @@ export default function AgeGateModal({
         style={{
           marginTop: 8,
           padding: '12px 20px',
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.14)',
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border)',
           borderRadius: 12,
-          fontSize: 13,
+          fontSize: 'var(--font-size-callout)',
           fontWeight: 600,
-          color: 'rgba(255,255,255,0.85)',
+          color: 'var(--text)',
         }}
       >
         Annuler

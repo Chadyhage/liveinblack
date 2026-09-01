@@ -15,8 +15,8 @@ import type { getMySubscriptionOverview } from '@/lib/server/provider/providerSu
 
 type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>>
 const C = { obsidian: 'var(--obsidian)', teal: 'var(--teal)', gold: 'var(--gold)', pink: 'var(--pink)' }
-const CARD_SHADOW = '0 18px 46px rgba(0,0,0,0.22)'
-const primaryButton: React.CSSProperties = { background: C.gold, color: C.obsidian, fontSize: 14, fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }
+const CARD_SHADOW = '0 18px 46px rgba(var(--black-rgb), .22)'
+const primaryButton: React.CSSProperties = { background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-sm)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }
 
 function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
@@ -39,9 +39,9 @@ function fmtPaymentAmount(amountMinor: number, currency: 'EUR' | 'XOF'): string 
 
 function InfoTile({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
-    <div style={{ flex: '1 1 140px', minWidth: 140, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)' }}>
-      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)', margin: 0 }}>{label}</p>
-      <p style={{ fontSize: 16, fontWeight: 700, color: accent || '#fff', margin: '5px 0 0' }}>{value}</p>
+    <div style={{ flex: '1 1 140px', minWidth: 140, padding: '12px 14px', borderRadius: 12, background: 'var(--fill-secondary)', border: '1px solid var(--border)' }}>
+      <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: accent || 'var(--text)', margin: '5px 0 0' }}>{value}</p>
     </div>
   )
 }
@@ -132,7 +132,7 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
   return (
     <section aria-labelledby="provider-subscription-title">
         <div style={{ marginBottom: 20 }}>
-          <p style={{ margin: 0, color: 'var(--gold)', fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Visibilité et facturation</p>
+          <p style={{ margin: 0, color: 'var(--gold)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Visibilité et facturation</p>
           <h2 id="provider-subscription-title" className="font-display" style={{ margin: '7px 0 0', fontSize: 'clamp(28px,4vw,40px)', lineHeight: 1 }}>Mon abonnement</h2>
           <p className="lb-dashboard-description" style={{ marginTop: 9 }}>Gère la visibilité de ton profil et retrouve l’historique de tes paiements.</p>
         </div>
@@ -140,10 +140,10 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
         <Card style={{ padding: 18, marginTop: 20, boxShadow: CARD_SHADOW, borderLeft: `3px solid ${color}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
-            <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color }}>{title}</h2>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color, background: `${color}24`, border: `1px solid ${color}59`, borderRadius: 8, padding: '4px 10px' }}>{statusLabel}</span>
+            <h2 style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, margin: 0, color }}>{title}</h2>
+            <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color, background: `${color}24`, border: `1px solid ${color}59`, borderRadius: 8, padding: '4px 10px' }}>{statusLabel}</span>
           </div>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,.6)', margin: '10px 0 0', lineHeight: 1.5 }}>{message}</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '10px 0 0', lineHeight: 1.5 }}>{message}</p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
             <InfoTile label={currency === 'EUR' ? 'Prochain prélèvement' : 'Jours restants'} value={currency === 'EUR' ? (expiresAt ? fmtDate(expiresAt) : '—') : expiresAt ? `${daysLeft} j` : '—'} accent={currency === 'XOF' && daysLeft > 0 ? C.teal : currency === 'XOF' ? C.pink : undefined} />
@@ -152,11 +152,11 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
             <InfoTile label="Tarif" value={currency === 'XOF' ? subPriceLabel() : '9,99 € / mois'} />
           </div>
 
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '12px 0 0' }}>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '12px 0 0' }}>
             {currency === 'XOF' ? 'Paiement Mobile Money / carte (FedaPay) · renouvellement manuel · aucun prélèvement automatique' : 'Carte bancaire (Stripe) · renouvellement automatique chaque mois'}
           </p>
 
-          {msg && <p style={{ fontSize: 12, color: C.pink, margin: '12px 0 0' }}>{msg}</p>}
+          {msg && <p style={{ fontSize: 'var(--font-size-footnote)', color: C.pink, margin: '12px 0 0' }}>{msg}</p>}
 
           {showCta && (
             <Button
@@ -172,19 +172,19 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
         </Card>
 
         <Card style={{ padding: 18, marginTop: 16, boxShadow: CARD_SHADOW }}>
-          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Historique des paiements</h2>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
+          <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Historique des paiements</h2>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
           {subscription.payments.length === 0 ? (
-            <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.5)', margin: '16px 0 0' }}>Aucun paiement confirmé dans cet historique.</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '16px 0 0' }}>Aucun paiement confirmé dans cet historique.</p>
           ) : (
             <div style={{ display: 'grid', gap: 8, marginTop: 16 }}>
               {subscription.payments.map((payment) => (
-                <div key={payment.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '12px 13px', borderRadius: 11, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(255,255,255,.07)' }}>
+                <div key={payment.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '12px 13px', borderRadius: 11, background: 'var(--fill-secondary)', border: '1px solid var(--border)' }}>
                   <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>{fmtPaymentAmount(payment.amountMinor, payment.currency)}</p>
-                    <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,.48)' }}>{fmtDate(payment.paidAt)} · {payment.rail === 'stripe' ? 'Carte bancaire' : 'FedaPay'}</p>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-callout)', fontWeight: 700 }}>{fmtPaymentAmount(payment.amountMinor, payment.currency)}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>{fmtDate(payment.paidAt)} · {payment.rail === 'stripe' ? 'Carte bancaire' : 'FedaPay'}</p>
                   </div>
-                  {payment.receiptUrl ? <a href={payment.receiptUrl} target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Voir le reçu</a> : <span style={{ color: C.teal, fontSize: 10.5, fontWeight: 800 }}>PAYÉ</span>}
+                  {payment.receiptUrl ? <a href={payment.receiptUrl} target="_blank" rel="noopener noreferrer" style={{ color: C.teal, fontSize: 'var(--font-size-footnote)', fontWeight: 700, textDecoration: 'none' }}>Voir le reçu</a> : <span style={{ color: C.teal, fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800 }}>PAYÉ</span>}
                 </div>
               ))}
             </div>

@@ -16,9 +16,9 @@ import { Button, Mascot } from '@/app/components/ui'
 
 const COLORS = { teal: 'var(--primary)', pink: 'var(--pink)' }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 'var(--font-size-body-lg)', fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
-  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
+  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(var(--black-rgb), .30)',
 })
 
 type State = 'loading' | 'success' | 'error'
@@ -55,7 +55,7 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
         {state === 'loading' && (
           <>
             <Mascot mood="sleeping" size={148} />
-            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1)', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: 0 }}>
               Confirmation de ta nouvelle adresse…
             </h1>
           </>
@@ -64,10 +64,10 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
         {state === 'success' && (
           <>
             <Mascot mood="success" size={156} />
-            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-xl)', fontWeight: 800, letterSpacing: '-0.6px', color: 'var(--text)', margin: '0 0 10px' }}>
               Adresse e-mail mise à jour
             </h1>
-            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>
+            <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
               {email ? `${email} est désormais ton adresse de connexion.` : 'Ta nouvelle adresse est confirmée.'}
             </p>
             <div style={{ marginTop: 28 }}>
@@ -79,10 +79,10 @@ export default function ConfirmEmailChangeClient({ email, token }: { email: stri
         {state === 'error' && (
           <>
             <Mascot mood="error" size={148} />
-            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1-lg)', fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Lien invalide ou expiré
             </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Ce lien de confirmation n&apos;est plus valable. Relance la demande de changement d&apos;e-mail depuis ton profil.
             </p>
             <div style={{ marginTop: 28 }}>

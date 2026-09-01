@@ -128,12 +128,12 @@ const MAX_PLACE_PHOTOS = 6
 
 const S = {
   inputBase: {
-    background: '#0b0c12',
-    border: '1px solid rgba(255,255,255,0.12)',
+    background: 'var(--surface-2)',
+    border: '1px solid var(--border)',
     borderRadius: 'var(--radius-control)',
-    fontSize: 14,
+    fontSize: 'var(--font-size-body-sm)',
     fontWeight: 500,
-    color: 'rgba(255,255,255,0.92)',
+    color: 'var(--text)',
     minHeight: 'var(--control-height-md)',
     padding: '10px 14px',
     width: '100%',
@@ -141,9 +141,9 @@ const S = {
     boxSizing: 'border-box',
   } as React.CSSProperties,
   label: {
-    fontSize: 12,
+    fontSize: 'var(--font-size-footnote)',
     fontWeight: 600,
-    color: 'rgba(255,255,255,0.6)',
+    color: 'var(--text-muted)',
     display: 'block',
     marginBottom: 6,
   } as React.CSSProperties,
@@ -151,26 +151,26 @@ const S = {
     minHeight: 'var(--density-action-min)',
     padding: '10px 20px',
     background: 'var(--violet-cta)',
-    border: '1px solid rgba(255,255,255,0.14)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-control)',
-    fontSize: 14,
+    fontSize: 'var(--font-size-body-sm)',
     fontWeight: 700,
     textTransform: 'none',
     letterSpacing: 'normal',
-    color: '#fff',
+    color: 'var(--primary-ink)',
     cursor: 'pointer',
-    boxShadow: '0 6px 20px rgba(122,59,242,0.35)',
+    boxShadow: 'none',
     width: '100%',
   } as React.CSSProperties,
   btnGhost: {
     minHeight: 'var(--density-action-min)',
     padding: '10px 18px',
-    background: 'rgba(255,255,255,0.08)',
-    border: '1px solid rgba(255,255,255,0.14)',
+    background: 'var(--surface-2)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-control)',
-    fontSize: 14,
+    fontSize: 'var(--font-size-body-sm)',
     fontWeight: 600,
-    color: 'rgba(255,255,255,0.9)',
+    color: 'var(--text)',
     cursor: 'pointer',
     width: '100%',
   } as React.CSSProperties,
@@ -743,11 +743,11 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
   if (loadError) {
     return (
       <main style={{ width: '100%', padding: 'var(--space-12) var(--page-gutter) 56px', textAlign: 'center' }}>
-        <p style={{ color: 'var(--pink)', fontSize: 14, marginBottom: 18 }}>{loadError}</p>
+        <p style={{ color: 'var(--pink)', fontSize: 'var(--font-size-body-sm)', marginBottom: 18 }}>{loadError}</p>
         <Button
           variant="secondary"
           onClick={onClose}
-          style={{ padding: '12px 22px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', textTransform: 'none', letterSpacing: 'normal' }}
+          style={{ padding: '12px 22px', borderRadius: 3, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', textTransform: 'none', letterSpacing: 'normal' }}
         >
           Retour au tableau de bord
         </Button>
@@ -761,26 +761,26 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
         <div
           style={{
             background: 'var(--surface-2)',
-            border: '1px solid rgba(224,90,170,0.5)',
+            border: '1px solid var(--danger-border)',
             borderRadius: 12,
             padding: '14px 16px',
             display: 'flex',
             gap: 12,
             alignItems: 'flex-start',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            boxShadow: '0 8px 24px var(--scrim-mid)',
             marginBottom: 20,
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
-            <circle cx="12" cy="16" r="0.6" fill="rgba(220,100,100,0.95)" />
+            <circle cx="12" cy="16" r="0.6" fill="var(--danger)" />
           </svg>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(220,100,100,0.95)', margin: '0 0 4px' }}>
+            <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--danger)', margin: '0 0 4px' }}>
               Événement annulé
             </p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: 0, lineHeight: 1.6 }}>
               Cet événement a été annulé. Les modifications sont désactivées. Pour relancer un événement similaire, crée-en un nouveau depuis ton tableau de bord.
             </p>
           </div>
@@ -802,17 +802,17 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
           variant="ghost"
           aria-label={step === 0 ? 'Fermer la création d’événement' : 'Revenir à l’étape précédente'}
           onClick={() => (step === 0 ? requestClose() : setStep((s) => s - 1))}
-          style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 'var(--radius-control)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}
+          style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 'var(--radius-control)', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', flexShrink: 0 }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </Button>
         <div>
-          <p className="font-display" style={{ fontSize: 17, color: 'rgba(255,255,255,0.93)', margin: 0 }}>
+          <p className="font-display" style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--text)', margin: 0 }}>
             {eventId ? "Modifier l'événement" : 'Créer un événement'}
           </p>
-          <p style={{ fontSize: 12, letterSpacing: '0.02em', color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+          <p style={{ fontSize: 'var(--font-size-footnote)', letterSpacing: '0.02em', color: 'var(--text-faint)', marginTop: 2 }}>
             Étape {step + 1}/{STEP_NAMES.length} — {STEP_NAMES[step]}
           </p>
         </div>
@@ -821,7 +821,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {/* Progress bar */}
       <div style={{ display: 'flex', gap: 4 }}>
         {STEP_NAMES.map((s, i) => (
-          <div key={s} style={{ flex: 1, height: 2, borderRadius: 2, background: i <= step ? 'var(--gold)' : 'rgba(255,255,255,0.06)', transition: 'background 0.3s' }} />
+          <div key={s} style={{ flex: 1, height: 2, borderRadius: 2, background: i <= step ? 'var(--gold)' : 'var(--surface-2)', transition: 'background 0.3s' }} />
         ))}
       </div>
 
@@ -836,7 +836,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             display: 'flex',
             gap: 12,
             alignItems: 'flex-start',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            boxShadow: '0 8px 24px var(--scrim-mid)',
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true">
@@ -844,10 +844,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             <path d="M8 11 V7 a4 4 0 0 1 8 0 V11" />
           </svg>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 4px' }}>
+            <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 4px' }}>
               {totalSold} billet{totalSold > 1 ? 's' : ''} déjà vendu{totalSold > 1 ? 's' : ''}
             </p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Pour ne pas léser les acheteurs, certains champs sont verrouillés (date, heures, lieu, prix existants, type d&apos;événement, âge minimum, options, date de publication). Tu peux toujours modifier la description, l&apos;affiche, les artistes et la date de clôture.
             </p>
           </div>
@@ -857,7 +857,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {/* Erreur de sauvegarde — visible quelle que soit l'étape courante,
           car une erreur de validation serveur peut ramener l'utilisateur à
           une étape antérieure à celle du récapitulatif (étape 4). */}
-      {saveError && <p style={{ color: 'var(--pink)', fontSize: 12.5, margin: 0 }}>{saveError}</p>}
+      {saveError && <p style={{ color: 'var(--pink)', fontSize: 'var(--font-size-footnote-lg)', margin: 0 }}>{saveError}</p>}
 
       {/* ── Step 0 : Bases ── */}
       {step === 0 && (
@@ -876,8 +876,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 borderRadius: 12,
                 overflow: 'hidden',
                 aspectRatio: '16/9',
-                border: imagePreview ? '1px solid var(--primary-a35)' : '2px dashed rgba(255,255,255,0.14)',
-                background: '#0b0c12',
+                border: imagePreview ? '1px solid var(--primary-a35)' : '2px dashed var(--border-strong)',
+                background: 'var(--surface-2)',
               }}
             >
               {imagePreview ? (
@@ -885,30 +885,30 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 <img src={imagePreview} alt="Aperçu affiche" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" aria-hidden="true">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--border-strong)" strokeWidth="1" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>Clique pour ajouter l&apos;affiche</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Format recommandé : 1200 × 630 px</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)' }}>JPG, PNG ou WEBP — 5 Mo maximum</p>
+                  <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)' }}>Clique pour ajouter l&apos;affiche</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Format recommandé : 1200 × 630 px</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>JPG, PNG ou WEBP — 5 Mo maximum</p>
                 </div>
               )}
               {posterUploading && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,4,11,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(var(--media-black-rgb), .55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Spinner size={20} />
                 </div>
               )}
             </Button>
             <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handlePoster} />
-            {errors.image && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.image}</p>}
+            {errors.image && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', marginTop: 4 }}>{errors.image}</p>}
           </div>
 
           {/* Vidéo d'aperçu */}
           <div>
             <label style={S.label}>
-              Vidéo d&apos;aperçu au survol <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
+              Vidéo d&apos;aperçu au survol <span style={{ color: 'var(--text-faint)' }}>(optionnel)</span>
             </label>
             <div
               style={{
@@ -916,22 +916,22 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 minHeight: 118,
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: videoPreview ? '1px solid var(--primary-a32)' : '1px dashed rgba(255,255,255,0.14)',
-                background: '#0b0c12',
+                border: videoPreview ? '1px solid var(--primary-a32)' : '1px dashed var(--border-strong)',
+                background: 'var(--surface-2)',
               }}
             >
               {videoPreview ? (
                 <>
-                  <video src={videoPreview} controls muted playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'cover', background: '#05060b' }} />
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <video src={videoPreview} controls muted playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'cover', background: 'var(--surface-2)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderTop: '1px solid var(--surface-2)' }}>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
-                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
+                      <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
+                      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
                     </div>
                     <Button
                       variant="danger"
                       onClick={clearVideo}
-                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.55)', background: 'rgba(224,90,170,0.14)', color: '#ff9ed2', fontSize: 12 }}
+                      style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, border: '1px solid var(--danger-border)', background: 'var(--danger-fill)', color: 'var(--danger)', fontSize: 'var(--font-size-footnote)' }}
                     >
                       Retirer
                     </Button>
@@ -950,19 +950,19 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     </svg>
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Ajouter une courte vidéo</span>
-                    <span style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 30 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>Ajouter une courte vidéo</span>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', lineHeight: 1.5, marginTop: 4 }}>MP4, WEBM ou MOV · 30 Mo maximum. Idéal : 6 à 12 secondes en 720p.</span>
                   </span>
                 </Button>
               )}
               {videoUploading && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,4,11,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(var(--media-black-rgb), .55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Spinner size={20} />
                 </div>
               )}
             </div>
             <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/quicktime" style={{ display: 'none' }} onChange={handleVideo} />
-            {errors.video && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.video}</p>}
+            {errors.video && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', marginTop: 4 }}>{errors.video}</p>}
           </div>
 
           {/* Champs de base */}
@@ -977,7 +977,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 <InputField label="Heure début" type="time" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} locked={locked} />
                 <InputField label="Heure fin" type="time" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} locked={locked} />
               </div>
-              {errors.timeEnd && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 4 }}>{errors.timeEnd}</p>}
+              {errors.timeEnd && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', marginTop: 4 }}>{errors.timeEnd}</p>}
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
@@ -994,8 +994,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             <Card style={{ padding: 12, gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showArtistSection ? 12 : 0 }}>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>DJs / Artistes</p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>DJs / Artistes</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 2 }}>Affiché sur la playlist et la fiche événement</p>
                 </div>
                 <Toggle value={showArtistSection} onChange={() => setShowArtistSection((v) => !v)} />
               </div>
@@ -1035,10 +1035,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            border: a.providerId ? '1px solid var(--primary-a42)' : '1px solid rgba(255,255,255,0.14)',
-                            background: a.providerId ? 'var(--primary-a14)' : 'rgba(255,255,255,0.06)',
-                            color: a.providerId ? 'var(--teal)' : 'rgba(255,255,255,0.7)',
-                            fontSize: 15,
+                            border: a.providerId ? '1px solid var(--primary-a42)' : '1px solid var(--border-strong)',
+                            background: a.providerId ? 'var(--primary-a14)' : 'var(--surface-2)',
+                            color: a.providerId ? 'var(--teal)' : 'var(--text-muted)',
+                            fontSize: 'var(--font-size-headline)',
                             fontWeight: 800,
                           }}
                         >
@@ -1049,16 +1049,16 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           onClick={() => setArtists((prev) => prev.filter((_, xi) => xi !== i))}
                           style={{ background: 'none', border: 'none', flexShrink: 0, display: 'flex', alignItems: 'center', padding: 4 }}
                         >
-                          <IconClose size={13} color="rgba(220,100,100,0.9)" />
+                          <IconClose size={13} color="var(--danger)" />
                         </Button>
                       </div>
                       {a.providerId && (
-                        <p style={{ fontSize: 11, color: 'var(--teal)', margin: '0 0 0 138px' }}>
+                        <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--teal)', margin: '0 0 0 138px' }}>
                           Lié à un profil prestataire — alimentera son historique d&apos;événements.
                         </p>
                       )}
                       {providerSearchFor === i && (
-                        <div style={{ margin: '0 0 4px 138px', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ margin: '0 0 4px 138px', padding: 10, borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
                           <Input
                             style={{ ...S.inputBase }}
                             placeholder="Rechercher un prestataire par nom…"
@@ -1067,12 +1067,12 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                             autoFocus
                           />
                           {providerQuery.trim().length > 0 && providerQuery.trim().length < 2 ? (
-                            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Tape au moins 2 caractères.</p>
+                            <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>Tape au moins 2 caractères.</p>
                           ) : providerQuery.trim().length >= 2 ? (
                             providerSearching ? (
-                              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Recherche…</p>
+                              <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>Recherche…</p>
                             ) : providerResults.length === 0 ? (
-                              <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', margin: 0 }}>Aucun prestataire trouvé.</p>
+                              <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>Aucun prestataire trouvé.</p>
                             ) : (
                               providerResults.map((p) => (
                                 <Button
@@ -1084,10 +1084,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                                     setArtists((prev) => prev.map((x, xi) => (xi === i ? { ...x, name: p.name, providerId: p.userId } : x)))
                                     setProviderSearchFor(null)
                                   }}
-                                  style={{ justifyContent: 'flex-start', textAlign: 'left', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', fontSize: 14 }}
+                                  style={{ justifyContent: 'flex-start', textAlign: 'left', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)' }}
                                 >
                                   {p.name}
-                                  {p.headline && <span style={{ color: 'rgba(255,255,255,0.45)' }}> · {p.headline}</span>}
+                                  {p.headline && <span style={{ color: 'var(--text-faint)' }}> · {p.headline}</span>}
                                 </Button>
                               ))
                             )
@@ -1099,7 +1099,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   <Button
                     variant="secondary"
                     onClick={() => setArtists((prev) => [...prev, { name: '', role: 'DJ' }])}
-                    style={{ padding: '10px', fontSize: 13, color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(255,255,255,0.08)' }}
+                    style={{ padding: '10px', fontSize: 'var(--font-size-callout)', color: 'var(--text)', border: '1px solid var(--border-strong)', borderRadius: 10, background: 'var(--surface-2)' }}
                   >
                     + Ajouter un DJ / artiste
                   </Button>
@@ -1124,11 +1124,11 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     padding: '10px',
                     borderRadius: 10,
                     display: 'block',
-                    border: category === g ? '1px solid var(--primary-a55)' : '1px solid rgba(255,255,255,0.10)',
+                    border: category === g ? '1px solid var(--primary-a55)' : '1px solid var(--border)',
                     background: category === g ? 'var(--primary-a10)' : 'var(--surface)',
-                    fontSize: 12,
+                    fontSize: 'var(--font-size-footnote)',
                     fontWeight: 600,
-                    color: category === g ? 'var(--gold)' : 'rgba(255,255,255,0.6)',
+                    color: category === g ? 'var(--gold)' : 'var(--text-muted)',
                     textAlign: 'center',
                   }}
                 >
@@ -1154,18 +1154,18 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
           {/* Ciblage & recommandations */}
           <div>
             <label style={{ ...S.label, marginBottom: 4 }}>Ciblage & recommandations</label>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 12px' }}>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 12px' }}>
               Optionnel mais recommandé : ta soirée sera proposée en priorité aux clients dont les goûts correspondent.
             </p>
 
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Type de soirée</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '0 0 7px' }}>Type de soirée</p>
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
               {EVENT_TYPES.map((t) => (
                 <Pill key={t} label={t} active={partyType === t} onClick={() => setPartyType((cur) => (cur === t ? '' : t))} accent="var(--violet)" />
               ))}
             </div>
 
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Styles musicaux joués</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '0 0 7px' }}>Styles musicaux joués</p>
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
               {MUSIC_STYLES.map((mstyle) => (
                 <Pill
@@ -1178,7 +1178,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
               ))}
             </div>
 
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '0 0 7px' }}>Ambiance (3 max)</p>
             <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
               {AMBIANCES.map((a) => {
                 const active = ambiances.includes(a)
@@ -1213,10 +1213,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   style={{
                     padding: '9px 18px',
                     borderRadius: 10,
-                    border: minAge === value ? '1px solid var(--primary-a55)' : '1px solid rgba(255,255,255,0.10)',
+                    border: minAge === value ? '1px solid var(--primary-a55)' : '1px solid var(--border)',
                     background: minAge === value ? 'var(--primary-a12)' : 'var(--surface)',
-                    color: minAge === value ? 'var(--teal)' : 'rgba(255,255,255,0.6)',
-                    fontSize: 12,
+                    color: minAge === value ? 'var(--teal)' : 'var(--text-muted)',
+                    fontSize: 'var(--font-size-footnote)',
                     fontWeight: 600,
                     letterSpacing: '0.04em',
                     opacity: locked && minAge !== value ? 0.4 : 1,
@@ -1244,7 +1244,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 }}
                 style={{ ...S.inputBase, width: 130, padding: '8px 14px', opacity: locked ? 0.55 : 1, cursor: locked ? 'not-allowed' : 'text' }}
               />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{minAge === 0 ? 'Tout public' : `${minAge} ans minimum`}</span>
+              <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>{minAge === 0 ? 'Tout public' : `${minAge} ans minimum`}</span>
             </div>
           </div>
 
@@ -1258,14 +1258,14 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Places &amp; Prix</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Configure chaque type de place que tu veux proposer.</p>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Places &amp; Prix</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Configure chaque type de place que tu veux proposer.</p>
           </div>
 
           {(() => {
             const isXof = currency === 'XOF'
             return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${isXof ? 'var(--teal)' : 'var(--gold)'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', borderLeft: `3px solid ${isXof ? 'var(--teal)' : 'var(--gold)'}` }}>
                 {isXof ? (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true">
                     <rect x="7" y="2" width="10" height="20" rx="2" />
@@ -1277,7 +1277,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     <line x1="2" y1="10" x2="22" y2="10" />
                   </svg>
                 )}
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4 }}>
+                <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
                   Tu fixes tes prix en <strong style={{ color: isXof ? 'var(--teal)' : 'var(--gold)' }}>{currencySymbol(currency)}</strong> — paiement par {payRailLabel(currency)}.
                 </p>
               </div>
@@ -1291,9 +1291,9 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
               <Card key={place.key} accent={placeHasSales ? 'var(--primary-a24)' : undefined} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
+                    <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gold)' }}>Place {i + 1}</p>
                     {placeHasSales && (
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', borderRadius: 8, padding: '4px 10px' }}>
+                      <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--gold)', background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', borderRadius: 8, padding: '4px 10px' }}>
                         {place.sold} vendu{place.sold > 1 ? 's' : ''}
                       </span>
                     )}
@@ -1307,7 +1307,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       }}
                       disabled={placeHasSales}
                       title={placeHasSales ? 'Impossible — cette place a déjà été vendue' : undefined}
-                      style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(224,90,170,0.14)', border: '1px solid rgba(224,90,170,0.55)', opacity: placeHasSales ? 0.4 : 1, fontSize: 12, color: '#ff9ed2' }}
+                      style={{ padding: '8px 14px', borderRadius: 10, background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', opacity: placeHasSales ? 0.4 : 1, fontSize: 'var(--font-size-footnote)', color: 'var(--danger)' }}
                     >
                       Supprimer
                     </Button>
@@ -1343,7 +1343,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       onChange={(v) => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, qty: v } : p)))}
                     />
                     {placeHasSales && (
-                      <p style={{ fontSize: 11, color: 'var(--primary-a85)', marginTop: 4 }}>
+                      <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--primary-a85)', marginTop: 4 }}>
                         Minimum : {place.sold} (déjà vendu{place.sold > 1 ? 's' : ''})
                       </p>
                     )}
@@ -1358,15 +1358,15 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       locked={placeHasSales || place.groupType === 'group'}
                     />
                     {place.groupType === 'group' && (
-                      <p style={{ fontSize: 11, color: 'var(--primary-a75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
+                      <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--primary-a75)', marginTop: 4 }}>Fixé à 1 réservation de groupe par compte</p>
                     )}
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Place de groupe</p>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
+                    <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Place de groupe</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 2 }}>Réservation pour plusieurs personnes</p>
                   </div>
                   <Toggle
                     value={place.groupType === 'group'}
@@ -1406,24 +1406,24 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                         locked={placeHasSales}
                       />
                     </div>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>La réservation est validée dès le minimum atteint, jusqu&apos;au maximum indiqué.</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>La réservation est validée dès le minimum atteint, jusqu&apos;au maximum indiqué.</p>
                   </div>
                 )}
 
                 {/* Photos */}
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
+                <div style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 12 }}>
                   <p style={S.label}>
-                    Photos de cette place <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
+                    Photos de cette place <span style={{ color: 'var(--text-faint)' }}>(optionnel)</span>
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                     {place.photos.map((ph, k) => (
-                      <div key={k} style={{ position: 'relative', width: 66, height: 66, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
+                      <div key={k} style={{ position: 'relative', width: 66, height: 66, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0 }}>
                         <NextImage src={ph} alt="" fill style={{ objectFit: 'cover' }} sizes="66px" />
                         <Button
                           variant="ghost"
                           onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, photos: p.photos.filter((_, m) => m !== k) } : p)))}
                           title="Retirer"
-                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, minHeight: 18, minWidth: 18, borderRadius: '50%', background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 12, lineHeight: '15px', padding: 0 }}
+                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, minHeight: 18, minWidth: 18, borderRadius: '50%', background: 'var(--scrim-page)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 'var(--font-size-footnote)', lineHeight: '15px', padding: 0 }}
                         >
                           ×
                         </Button>
@@ -1450,13 +1450,13 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                               <circle cx="8.5" cy="8.5" r="1.5" />
                               <polyline points="21 15 16 10 5 21" />
                             </svg>
-                            <span style={{ fontSize: 10, fontWeight: 700 }}>Ajouter</span>
+                            <span style={{ fontSize: 'var(--font-size-caption-2)', fontWeight: 700 }}>Ajouter</span>
                           </>
                         )}
                       </label>
                     )}
                   </div>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 8, lineHeight: 1.5 }}>
                     Montre le carré, la table, la vue… Le client les verra avant de réserver. 6 photos maximum.
                   </p>
                 </div>
@@ -1470,12 +1470,12 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     Le champ modèle `included[].name` reste un simple texte
                     dans les deux cas — la distinction est purement une
                     facilité de saisie côté UI. */}
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12 }}>
+                <div style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 12 }}>
                   <p style={S.label}>
-                    Options incluses dans ce billet <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
+                    Options incluses dans ce billet <span style={{ color: 'var(--text-faint)' }}>(optionnel)</span>
                   </p>
                   {place.included.length === 0 && (
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 8, lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 8, lineHeight: 1.5 }}>
                       Ex. « Vestiaire offert », « Accès zone VIP »… ou rattache un article de ta précommande (Options avancées → Précommandes) pour l&apos;offrir gratuitement sur ce billet.
                     </p>
                   )}
@@ -1483,7 +1483,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     {place.included.map((inc, k) => {
                       const stillInMenu = menuChoices.some((m) => m.name.trim() === inc.name)
                       return (
-                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'var(--primary-a20)' : 'rgba(255,255,255,0.10)'}`, background: 'rgba(255,255,255,0.04)' }}>
+                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, border: `1px solid ${stillInMenu ? 'var(--primary-a20)' : 'var(--border)'}`, background: 'var(--surface-2)' }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <Input
                               value={inc.name}
@@ -1493,10 +1493,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                                   prev.map((p) => (p.key === place.key ? { ...p, included: p.included.map((x, m) => (m === k ? { ...x, name: e.target.value } : x)) } : p))
                                 )
                               }
-                              style={{ background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12.5, padding: '8px 10px' }}
+                              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 'var(--font-size-footnote-lg)', padding: '8px 10px' }}
                             />
                             {stillInMenu && (
-                              <p style={{ fontSize: 10.5, color: 'var(--teal)', margin: '4px 0 0' }}>Correspond à un article de ta précommande.</p>
+                              <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--teal)', margin: '4px 0 0' }}>Correspond à un article de ta précommande.</p>
                             )}
                           </div>
                           <Input
@@ -1509,11 +1509,11 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                               )
                             }
                             title="Quantité incluse"
-                            style={{ width: 52, background: '#0b0c12', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.92)', fontSize: 12, padding: '8px 6px', textAlign: 'center' }}
+                            style={{ width: 52, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 'var(--font-size-footnote)', padding: '8px 6px', textAlign: 'center' }}
                           />
                           <span
                             title="Inclus gratuitement dans le billet"
-                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid var(--primary-a35)', background: 'var(--primary-a14)', color: 'var(--teal)' }}
+                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid var(--primary-a35)', background: 'var(--primary-a14)', color: 'var(--teal)' }}
                           >
                             Offert
                           </span>
@@ -1521,7 +1521,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                             variant="ghost"
                             onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: p.included.filter((_, m) => m !== k) } : p)))}
                             title="Retirer cette option"
-                            style={{ flexShrink: 0, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', background: 'rgba(220,50,50,0.10)', border: '1px solid rgba(220,100,100,0.3)', color: 'rgba(255,150,150,0.9)', fontSize: 16, lineHeight: 1, padding: 0 }}
+                            style={{ flexShrink: 0, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', color: 'var(--danger)', fontSize: 'var(--font-size-headline-lg)', lineHeight: 1, padding: 0 }}
                           >
                             ×
                           </Button>
@@ -1532,7 +1532,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                       <Button
                         variant="secondary"
                         onClick={() => setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: '', qty: 1 }] } : p)))}
-                        style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.85)', fontSize: 12 }}
+                        style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 'var(--font-size-footnote)' }}
                       >
                         + Ajouter un avantage
                       </Button>
@@ -1542,7 +1542,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           onClick={() =>
                             setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: menuChoices[0].name.trim(), qty: 1 }] } : p)))
                           }
-                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', color: 'var(--teal)', fontSize: 12 }}
+                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', color: 'var(--teal)', fontSize: 'var(--font-size-footnote)' }}
                         >
                           + Inclure un article du menu
                         </Button>
@@ -1567,8 +1567,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Indique où se déroulera ton événement.</p>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Indique où se déroulera ton événement.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
             <InputField label="Nom du lieu" placeholder="Ex: Club Le Baroque, Salle des Fêtes..." value={venueName} onChange={(e) => setVenueName(e.target.value)} locked={locked} />
@@ -1577,13 +1577,13 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {regions.map((r) => (
                   <Pill key={r.id} label={`${r.flag} ${r.name}`} active={region === r.name} disabled={locked} onClick={() => setRegion(r.name)} accent="var(--teal)" />
                 ))}
               </div>
-              {errors.region && <p style={{ fontSize: 12, color: 'rgba(220,100,100,0.9)', marginTop: 6 }}>{errors.region}</p>}
+              {errors.region && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', marginTop: 6 }}>{errors.region}</p>}
             </div>
           </div>
 
@@ -1596,35 +1596,35 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {/* ── Step 3 : Options avancées ── */}
       {step === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
           <Card accent="var(--primary-a14)" style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>QR code billet</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>QR code billet</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
+              <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
             </div>
           </Card>
 
           <Card accent={locked ? 'var(--border)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Playlist interactive</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
-              {locked && <p style={{ fontSize: 11, color: 'var(--primary-a85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Playlist interactive</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 4, lineHeight: 1.6 }}>1 son par ticket — vote par likes</p>
+              {locked && <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--primary-a85)', marginTop: 4 }}>Verrouillé — billets déjà vendus</p>}
             </div>
             <Toggle value={playlist} onChange={() => setPlaylist((v) => !v)} disabled={locked} />
           </Card>
 
           <Card accent={locked ? 'var(--border)' : undefined} style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Précommande de consommations</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
-              {locked && <p style={{ fontSize: 11, color: 'var(--primary-a85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Précommande de consommations</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 4, lineHeight: 1.6 }}>Les clients peuvent commander à l&apos;avance.</p>
+              {locked && <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--primary-a85)', marginTop: 4 }}>Verrouillé — des précommandes existent</p>}
             </div>
             <Toggle value={preorder} onChange={() => setPreorder((v) => !v)} disabled={locked} />
           </Card>
@@ -1633,9 +1633,9 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             <div style={{ borderTop: '1px solid var(--primary-a14)', paddingTop: 16, ...(locked ? { opacity: 0.6, pointerEvents: 'none' } : {}) }}>
               <p style={{ ...S.label, color: 'var(--gold)', marginBottom: 4 }}>Définir ta carte / menu</p>
               {locked ? (
-                <p style={{ fontSize: 12, color: 'var(--primary-a85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
+                <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--primary-a85)', marginBottom: 12 }}>Menu verrouillé — des précommandes existent.</p>
               ) : (
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
+                <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 12 }}>Ajoute les articles que tes clients pourront précommander.</p>
               )}
               {menuItems.map((item, i) => (
                 <MenuItemEditor
@@ -1662,34 +1662,34 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
           )}
 
           {preorder && validMenuItemsForGate.length === 0 && (
-            <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(224,90,170,0.5)', borderRadius: 12, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
+            <div style={{ padding: '12px 14px', background: 'var(--surface-2)', border: '1px solid var(--danger-border)', borderRadius: 12, fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               La précommande est activée mais aucun article n&apos;a été renseigné. Ajoute au moins un article avec un nom et un prix, ou désactive la précommande.
             </div>
           )}
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Planification</p>
+          <div style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>Planification</p>
             <div>
               <label style={S.label}>
-                Date de publication <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel — vide = maintenant)</span>
+                Date de publication <span style={{ color: 'var(--text-faint)' }}>(optionnel — vide = maintenant)</span>
               </label>
               <Input
                 type="datetime-local"
                 value={publishAt}
                 onChange={(e) => setPublishAt(e.target.value)}
                 disabled={locked}
-                style={{ ...S.inputBase, colorScheme: 'dark', ...(locked ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
+                style={{ ...S.inputBase, colorScheme: 'light dark', ...(locked ? { opacity: 0.55, cursor: 'not-allowed' } : {}) }}
               />
-              <p style={{ fontSize: 12, color: locked ? 'var(--primary-a85)' : 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: locked ? 'var(--primary-a85)' : 'var(--text-faint)', marginTop: 5, lineHeight: 1.6 }}>
                 {locked ? "Verrouillé — l'événement est déjà publié." : 'L’événement apparaîtra sur le site à cette date et heure. Laisse vide pour publier immédiatement.'}
               </p>
             </div>
             <div>
               <label style={S.label}>
-                Date de clôture des réservations <span style={{ color: 'rgba(255,255,255,0.5)' }}>(optionnel)</span>
+                Date de clôture des réservations <span style={{ color: 'var(--text-faint)' }}>(optionnel)</span>
               </label>
-              <Input type="datetime-local" value={closingDate} onChange={(e) => setClosingDate(e.target.value)} min={dateStr || undefined} style={{ ...S.inputBase, colorScheme: 'dark' }} />
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 5, lineHeight: 1.6 }}>Laisse vide pour fermer automatiquement à la date de l&apos;événement.</p>
+              <Input type="datetime-local" value={closingDate} onChange={(e) => setClosingDate(e.target.value)} min={dateStr || undefined} style={{ ...S.inputBase, colorScheme: 'light dark' }} />
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 5, lineHeight: 1.6 }}>Laisse vide pour fermer automatiquement à la date de l&apos;événement.</p>
             </div>
           </div>
 
@@ -1697,7 +1697,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             variant="primary"
             onClick={() => goNext(3)}
             disabled={!canProceedStep3}
-            style={{ ...S.btnPrimary, ...(!canProceedStep3 ? { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.06)', boxShadow: 'none' } : {}) }}
+            style={{ ...S.btnPrimary, ...(!canProceedStep3 ? { background: 'var(--surface-2)', color: 'var(--text-faint)', border: '1px solid var(--surface-2)', boxShadow: 'none' } : {}) }}
           >
             Suivant
           </Button>
@@ -1707,7 +1707,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {/* ── Step 4 : Récapitulatif & publication ── */}
       {step === 4 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Récapitulatif &amp; publication</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Récapitulatif &amp; publication</p>
 
           {imagePreview && (
             <div style={{ borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>
@@ -1738,8 +1738,8 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
               { label: 'QR Code billet', val: 'Activé — obligatoire' },
             ].map((r) => (
               <Card key={r.label} style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}>{r.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)', textAlign: 'right' }}>{r.val}</span>
+                <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', flexShrink: 0 }}>{r.label}</span>
+                <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 500, color: 'var(--text)', textAlign: 'right' }}>{r.val}</span>
               </Card>
             ))}
           </div>
@@ -1788,7 +1788,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             </>
           }
         >
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
             Les modifications en cours ne sont pas enregistrées et seront perdues si tu fermes maintenant.
           </p>
         </Modal>

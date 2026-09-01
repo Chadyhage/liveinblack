@@ -19,9 +19,9 @@ export default function NotFound() {
       }}
     >
       <Mascot mood="confused" size={220} />
-      <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', margin: 0, textTransform: 'uppercase' }}>Erreur 404</p>
-      <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, color: 'var(--text)' }}>Cette page n&apos;existe pas</h1>
-      <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, maxWidth: 620 }}>
+      <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', margin: 0, textTransform: 'uppercase' }}>Erreur 404</p>
+      <h1 style={{ fontSize: 'var(--font-size-large-title)', fontWeight: 800, margin: 0, color: 'var(--text)' }}>Cette page n&apos;existe pas</h1>
+      <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, maxWidth: 620 }}>
         Le lien est peut-être incorrect ou la page a été supprimée.
       </p>
       <Link
@@ -34,8 +34,8 @@ export default function NotFound() {
           padding: '11px 22px',
           borderRadius: 999,
           background: 'var(--teal-solid)',
-          color: '#250817',
-          fontSize: 13.5,
+          color: 'var(--primary-ink)',
+          fontSize: 'var(--font-size-body)',
           fontWeight: 700,
           textDecoration: 'none',
         }}

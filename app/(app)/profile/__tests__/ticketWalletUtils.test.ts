@@ -21,7 +21,7 @@ function makeGroup(overrides: Partial<TicketWalletGroupView>): TicketWalletGroup
       time: '22:00',
       city: 'Paris',
       imageUrl: null,
-      color: '#fff',
+      color: 'var(--qr-required-white)',
       cancelled: false,
       minAge: 18,
       hasPlaylist: true,

@@ -7,10 +7,10 @@ import { ModalActions, ModalShell } from './MessagingModals'
 const inputStyle: React.CSSProperties = {
   width: '100%',
   borderRadius: 14,
-  border: '1px solid rgba(255,255,255,.12)',
-  background: 'rgba(118,118,128,.16)',
+  border: '1px solid var(--border)',
+  background: 'var(--field-bg)',
   color: 'var(--text)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   marginBottom: 10,
   fontFamily: 'inherit',
 }

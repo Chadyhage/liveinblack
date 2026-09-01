@@ -24,12 +24,12 @@ export default function Accordion({ items }: { items: AccordionItem[] }) {
             variant="ghost"
             fullWidth
             aria-expanded={openIndex === i}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', color: 'var(--text)', fontSize: 15, textAlign: 'left' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', color: 'var(--text)', fontSize: 'var(--font-size-headline)', textAlign: 'left' }}
           >
             {item.question}
             <ChevronDown size={17} strokeWidth={1.8} aria-hidden="true" style={{ transform: openIndex === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease', color: 'var(--teal)', flexShrink: 0 }} />
           </Button>
-          {openIndex === i && <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.65, margin: '0 0 16px' }}>{item.answer}</div>}
+          {openIndex === i && <div style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.65, margin: '0 0 16px' }}>{item.answer}</div>}
         </div>
       ))}
     </div>

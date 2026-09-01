@@ -98,7 +98,7 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Partager ${eventName}`}
-        style={{ minHeight: 38, padding: '7px 12px', borderRadius: 999, border: '1px solid rgba(255,255,255,.24)', background: 'rgba(4,4,11,.72)', backdropFilter: 'blur(10px)', color: '#fff', fontSize: 11.5 }}
+        style={{ minHeight: 38, padding: '7px 12px', borderRadius: 999, border: '1px solid var(--image-border)', background: 'rgba(var(--black-rgb), .55)', backdropFilter: 'blur(10px)', color: 'var(--image-text)', fontSize: 'var(--font-size-caption-lg)' }}
       >
         {copied ? 'Lien copié' : 'Partager'}
       </Button>
@@ -120,7 +120,7 @@ export default function EventShareButton({ eventName }: { eventName: string }) {
               borderRadius: 14,
               border: '1px solid var(--border-strong)',
               background: 'var(--surface-2)',
-              boxShadow: '0 18px 44px rgba(0,0,0,.4)',
+              boxShadow: '0 18px 44px rgba(var(--black-rgb), .40)',
               opacity: visible ? 1 : 0,
               transform: visible ? 'scale(1)' : 'scale(0.96)',
               transformOrigin: 'top right',
@@ -163,7 +163,7 @@ const glyphStyle: React.CSSProperties = {
   justifyContent: 'center',
   width: 16,
   height: 16,
-  fontSize: 11,
+  fontSize: 'var(--font-size-caption)',
   fontWeight: 800,
   lineHeight: 1,
   flexShrink: 0,
@@ -175,7 +175,7 @@ const menuItemStyle: React.CSSProperties = {
   gap: 10,
   padding: '9px 11px',
   borderRadius: 9,
-  fontSize: 13,
+  fontSize: 'var(--font-size-callout)',
   fontWeight: 600,
   color: 'var(--text)',
   textDecoration: 'none',

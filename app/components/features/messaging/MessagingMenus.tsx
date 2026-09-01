@@ -154,7 +154,7 @@ export function FullReactionPicker({ onPick, onClose }: { onPick: (emoji: string
               onPick(emoji)
               onClose()
             }}
-            style={{ background: 'var(--surface)', border: 'none', borderRadius: 8, padding: 8, fontSize: 20 }}
+            style={{ background: 'var(--surface)', border: 'none', borderRadius: 8, padding: 8, fontSize: 'var(--font-size-title-3)' }}
           >
             {emoji}
           </Button>

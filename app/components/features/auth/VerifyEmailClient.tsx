@@ -12,10 +12,10 @@ import { Button, Mascot } from '@/app/components/ui'
 // le reste des pages de confirmation « one-shot » de cette migration.
 
 const COLORS = { teal: 'var(--primary)', pink: 'var(--pink)' }
-const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
+const btnSolid = (bg: string, fg = 'var(--primary-ink)'): React.CSSProperties => ({
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 'var(--font-size-body-lg)', fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
-  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
+  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(var(--black-rgb), .30)',
 })
 
 type State = 'loading' | 'success' | 'error' | 'missing'
@@ -86,7 +86,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
         {state === 'loading' && (
           <>
             <Mascot mood="sleeping" size={148} />
-            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1)', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: 0 }}>
               Vérification de ton email…
             </h1>
           </>
@@ -95,14 +95,14 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
         {state === 'success' && (
           <>
             <Mascot mood="success" size={156} />
-            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-xl)', fontWeight: 800, letterSpacing: '-0.6px', color: 'var(--text)', margin: '0 0 10px' }}>
               Email vérifié
             </h1>
-            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
+            <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
               {email ? <>L&apos;adresse {email} est confirmée, tu peux te connecter.</> : 'Ton adresse email est confirmée, tu peux te connecter.'}
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#250817')}>Se connecter</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)')}>Se connecter</Button>
             </div>
           </>
         )}
@@ -110,17 +110,17 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
         {state === 'error' && (
           <>
             <Mascot mood="error" size={148} />
-            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1-lg)', fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Lien invalide ou expiré
             </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Ce lien de vérification n&apos;est plus valable.{email ? ' Tu peux en demander un nouveau ci-dessous.' : ' Reconnecte-toi pour en recevoir un nouveau.'}
             </p>
 
             {email && (
               <div style={{ marginTop: 18 }}>
                 {resendSent && (
-                  <p style={{ fontSize: 12.5, color: COLORS.teal, margin: '0 0 10px', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: COLORS.teal, margin: '0 0 10px', lineHeight: 1.5 }}>
                     Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
                   </p>
                 )}
@@ -129,7 +129,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
                   type="button"
                   onClick={handleResend}
                   disabled={resendLoading || resendCooldown > 0}
-                  style={{ fontSize: 12.5, fontWeight: 600, color: resendCooldown > 0 ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', cursor: resendLoading || resendCooldown > 0 ? 'default' : 'pointer', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
+                  style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 600, color: resendCooldown > 0 ? 'var(--text-faint)' : 'var(--text-muted)', cursor: resendLoading || resendCooldown > 0 ? 'default' : 'pointer', textDecoration: resendCooldown > 0 ? 'none' : 'underline' }}
                 >
                   {resendLoading ? 'Envoi…' : resendCooldown > 0 ? `Renvoyer dans ${resendCooldown}s` : "Renvoyer l'email de vérification"}
                 </Button>
@@ -137,7 +137,7 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
             )}
 
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', 'var(--danger-ink)')}>Retour à la connexion</Button>
             </div>
           </>
         )}
@@ -145,14 +145,14 @@ export default function VerifyEmailClient({ email, token }: { email: string | nu
         {state === 'missing' && (
           <>
             <Mascot mood="confused" size={148} />
-            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1-lg)', fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Lien de vérification introuvable
             </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Cette page s&apos;utilise uniquement depuis le lien reçu par email. Reconnecte-toi pour en recevoir un nouveau.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', 'var(--danger-ink)')}>Retour à la connexion</Button>
             </div>
           </>
         )}

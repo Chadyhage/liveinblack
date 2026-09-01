@@ -17,17 +17,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const SIZE_STYLES: Record<ButtonSize, CSSProperties> = {
-  sm: { minHeight: 'var(--control-height-sm)', padding: '8px 14px', fontSize: 14, borderRadius: 'var(--radius-control)', gap: 6 },
-  md: { minHeight: 'var(--control-height-md)', padding: '10px 18px', fontSize: 15.5, borderRadius: 'var(--radius-control)', gap: 8 },
-  lg: { minHeight: 50, padding: '12px 24px', fontSize: 17, borderRadius: 'var(--radius-control)', gap: 8 },
+  sm: { minHeight: 'var(--control-height-sm)', padding: '8px 14px', fontSize: 'var(--font-size-body-sm)', borderRadius: 'var(--radius-control)', gap: 6 },
+  md: { minHeight: 'var(--control-height-md)', padding: '10px 18px', fontSize: 'var(--font-size-headline-xl)', borderRadius: 'var(--radius-control)', gap: 8 },
+  lg: { minHeight: 50, padding: '12px 24px', fontSize: 'var(--font-size-title-5)', borderRadius: 'var(--radius-control)', gap: 8 },
 }
 
 function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties {
   switch (variant) {
     case 'primary':
       return {
-        background: disabled ? 'var(--primary-a35)' : 'var(--gold)',
-        color: 'var(--obsidian)',
+        background: disabled ? 'var(--primary-a35)' : 'var(--primary)',
+        color: 'var(--primary-ink)',
         border: '1px solid transparent',
       }
     case 'secondary':
@@ -38,8 +38,8 @@ function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties 
       }
     case 'danger':
       return {
-        background: disabled ? 'rgba(224,90,90,0.35)' : '#e05a5a',
-        color: '#fff',
+        background: disabled ? 'color-mix(in srgb, var(--danger) 35%, transparent)' : 'var(--danger)',
+        color: 'var(--danger-ink)',
         border: '1px solid transparent',
       }
     case 'ghost':
@@ -51,7 +51,7 @@ function variantStyle(variant: ButtonVariant, disabled: boolean): CSSProperties 
     case 'link':
       return {
         background: 'transparent',
-        color: 'var(--teal)',
+        color: 'var(--accent-text)',
         border: 'none',
         padding: 0,
         textDecoration: 'underline',
@@ -95,8 +95,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         fontFamily: 'inherit',
         cursor: isDisabled ? (loading ? 'wait' : 'not-allowed') : 'pointer',
         width: fullWidth ? '100%' : undefined,
-        transition: 'opacity 0.15s ease, transform 0.1s ease, filter 0.15s ease',
-        opacity: isDisabled && !loading ? 0.6 : 1,
+        transition: 'transform 0.1s ease, filter 0.15s ease',
+        opacity: 1,
         filter: interactive && hovered ? 'brightness(1.08)' : undefined,
         transform: interactive && pressed ? 'translateY(1px)' : undefined,
         ...(isLink ? {} : SIZE_STYLES[size]),

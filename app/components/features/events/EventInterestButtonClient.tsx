@@ -66,8 +66,8 @@ export default function EventInterestButtonClient({
     padding: compact ? '0 8px' : '0 14px',
     borderRadius: 999,
     border: interested ? `1px solid ${floating ? 'var(--primary-a42)' : 'var(--primary-a35)'}` : 'none',
-    background: interested ? (floating ? 'var(--primary-a16)' : 'var(--primary-a12)') : floating ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.07)',
-    color: interested ? 'var(--primary)' : '#fff',
+    background: interested ? (floating ? 'var(--primary-a16)' : 'var(--primary-a12)') : floating ? 'rgba(var(--black-rgb), .55)' : 'var(--fill-secondary)',
+    color: interested ? 'var(--primary)' : floating ? 'var(--image-text)' : 'var(--text)',
     cursor: busy ? 'default' : 'pointer',
     opacity: busy ? 0.7 : 1,
   }
@@ -82,7 +82,7 @@ export default function EventInterestButtonClient({
         aria-label={interested ? 'Retirer de mes événements intéressés' : 'Ajouter à mes événements intéressés'}
       >
         <Heart size={16} strokeWidth={1.9} fill={interested ? 'currentColor' : 'none'} aria-hidden="true" />
-        {!compact && <span style={{ fontSize: 12.5, fontWeight: 700 }}>Intéressé</span>}
+        {!compact && <span style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700 }}>Intéressé</span>}
       </Button>
       {error && (
         <div
@@ -94,9 +94,9 @@ export default function EventInterestButtonClient({
             zIndex: 20,
             padding: '6px 10px',
             borderRadius: 8,
-            background: 'rgba(255,123,123,0.14)',
+            background: 'rgba(var(--danger-soft-rgb), .14)',
             color: 'var(--pink)',
-            fontSize: 11,
+            fontSize: 'var(--font-size-caption)',
             whiteSpace: 'nowrap',
           }}
         >

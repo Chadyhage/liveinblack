@@ -38,7 +38,7 @@ export default function Tabs({ value, onChange, options, style }: TabsProps) {
               borderRadius: 'var(--radius-md)',
               border: active ? '1px solid var(--primary-a35)' : '1px solid transparent',
               background: active ? 'var(--primary-a10)' : 'transparent',
-              color: active ? 'var(--gold)' : 'var(--text-faint)',
+              color: active ? 'var(--accent-text)' : 'var(--text-faint)',
             }}
           >
             {opt.label}

@@ -45,7 +45,7 @@ export default function ConfirmDialog({
   return (
     <Modal onClose={onCancel} maxWidth={maxWidth ?? 440} zIndex={zIndex} title={title}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+        <div style={{ margin: 0, fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
           {body}
         </div>
         {children}

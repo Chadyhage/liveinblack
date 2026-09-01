@@ -36,8 +36,8 @@ function GateScreen({ title, message }: { title: string; message: string }) {
             height: 48,
             borderRadius: '50%',
             margin: '0 auto 22px',
-            background: 'rgba(224,90,170,0.08)',
-            border: '2px solid rgba(224,90,170,0.35)',
+            background: 'var(--danger-fill)',
+            border: '2px solid var(--danger-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -45,9 +45,9 @@ function GateScreen({ title, message }: { title: string; message: string }) {
         >
           <AlertCircle size={32} strokeWidth={1.8} color="var(--pink)" aria-hidden="true" />
         </div>
-        <p style={{ fontWeight: 800, fontSize: 16, color: 'var(--pink)', margin: '0 0 8px' }}>{title}</p>
-        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href="/home" style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
+        <p style={{ fontWeight: 800, fontSize: 'var(--font-size-headline-lg)', color: 'var(--pink)', margin: '0 0 8px' }}>{title}</p>
+        <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
+        <Link href="/home" style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Accueil
         </Link>
       </div>

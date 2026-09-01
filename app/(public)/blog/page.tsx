@@ -47,7 +47,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const { categorie, page: pageParam } = await searchParams
   const category = (categorie || '') as BlogCategoryId | ''
   const requestedPage = Math.max(1, Number(pageParam) || 1)
-  const { posts, page, pageCount, totalCount } = await listPublishedPosts({ category, page: requestedPage, pageSize: PAGE_SIZE })
+  const { posts, page, pageCount, totalCount } = await listPublishedPosts({ category, page: requestedPage, pageSize: PAGE_SIZE }).catch((error) => {
+    console.warn('[blog] Published posts unavailable, rendering empty state.', error)
+    return { posts: [], page: 1, pageCount: 1, totalCount: 0 }
+  })
   const itemListJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',

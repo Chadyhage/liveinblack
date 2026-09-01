@@ -20,10 +20,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Modal, SlideOverModal, Skeleton } from '@/app/components/ui'
-// Mirroir des tokens définis dans app/globals.css (:root) — repris en constantes
-// hex locales pour permettre la composition alpha (`${color}24` etc.), ce que
-// `var(--teal)` ne permet pas en concaténation de chaîne.
-const C = { teal: 'var(--teal)', gold: 'var(--gold)', violet: '#8b5cf6', pink: '#e05aaa' }
+const C = { teal: 'var(--teal)', gold: 'var(--gold)', violet: 'var(--violet)', pink: 'var(--pink)' }
 
 type InviteRole = 'serveur' | 'scan' | 'dj' | 'vendeur'
 
@@ -95,11 +92,11 @@ function Avatar({ name, size = 38 }: { name?: string; size?: number }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.10)',
+        background: 'var(--surface-2)',
+        border: '1px solid var(--border)',
         fontWeight: 600,
         fontSize: size * 0.42,
-        color: 'rgba(255,255,255,0.6)',
+        color: 'var(--text-muted)',
       }}
     >
       {initial}
@@ -108,17 +105,17 @@ function Avatar({ name, size = 38 }: { name?: string; size?: number }) {
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const m = ROLE_META[role] || { label: role, color: 'rgba(255,255,255,0.5)' }
+  const m = ROLE_META[role] || { label: role, color: 'var(--text-faint)' }
   return (
     <span
       style={{
-        fontSize: 11,
+        fontSize: 'var(--font-size-caption)',
         fontWeight: 700,
         letterSpacing: '0.04em',
         textTransform: 'uppercase',
         color: m.color,
-        background: `${m.color}24`,
-        border: `1px solid ${m.color}59`,
+        background: `color-mix(in srgb, ${m.color} 14%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${m.color} 35%, transparent)`,
         borderRadius: 8,
         padding: '4px 10px',
         flexShrink: 0,
@@ -130,10 +127,10 @@ function RoleBadge({ role }: { role: string }) {
   )
 }
 
-function Spinner({ size = 16, color = 'rgba(255,255,255,0.6)' }: { size?: number; color?: string }) {
+function Spinner({ size = 16, color = 'var(--text-muted)' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
+      <circle cx="12" cy="12" r="9" fill="none" stroke="var(--border-strong)" strokeWidth={3} />
       <path d="M21 12a9 9 0 00-9-9" fill="none" stroke={color} strokeWidth={3} strokeLinecap="round">
         <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
       </path>
@@ -328,9 +325,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
-            <h2 style={{ fontSize: 21, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.4px' }}>Équipe de la soirée</h2>
+            <h2 style={{ fontSize: 'var(--font-size-title-3-lg)', fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.4px' }}>Équipe de la soirée</h2>
           </div>
-          <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0, lineHeight: 1.5 }}>
             <span style={{ color: C.teal }}>{event.name}</span>
             {rosterEntries.length > 0 && (
               <>
@@ -346,14 +343,14 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
-          <p style={{ fontSize: 13, color: '#ff9ed2', textAlign: 'center', padding: '20px 0', margin: 0 }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--danger)', textAlign: 'center', padding: '20px 0', margin: 0 }}>
             Impossible de charger l&apos;équipe — vérifie ta connexion.
           </p>
         ) : (
           <>
             {/* Invite */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 15, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
-              <p style={{ fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', margin: 0 }}>Inviter un membre</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 15, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', borderRadius: 12 }}>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>Inviter un membre</p>
 
               {/* Rôle */}
               <div style={{ display: 'flex', gap: 8 }}>
@@ -372,12 +369,12 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                         justifyContent: 'flex-start',
                         flexDirection: 'column',
                         alignItems: 'flex-start',
-                        border: active ? `1px solid ${r.color}88` : '1px solid rgba(255,255,255,0.10)',
-                        background: active ? `${r.color}22` : 'rgba(255,255,255,0.05)',
+                        border: active ? `1px solid ${r.color}88` : '1px solid var(--border)',
+                        background: active ? `${r.color}22` : 'var(--surface-2)',
                       }}
                     >
-                      <span style={{ fontSize: 13, fontWeight: 700, color: active ? r.color : 'rgba(255,255,255,0.75)' }}>{r.label}</span>
-                      <span style={{ display: 'block', fontSize: 10.5, color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>{r.desc}</span>
+                      <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: active ? r.color : 'var(--text-muted)' }}>{r.label}</span>
+                      <span style={{ display: 'block', fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', marginTop: 2, lineHeight: 1.4 }}>{r.desc}</span>
                     </Button>
                   )
                 })}
@@ -393,21 +390,21 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   boxSizing: 'border-box',
                   padding: '12px 14px',
                   borderRadius: 10,
-                  background: '#0b0c12',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  fontSize: 14,
-                  color: 'rgba(255,255,255,0.92)',
+                  background: 'var(--field-bg)',
+                  border: '1px solid var(--border)',
+                  fontSize: 'var(--font-size-body-sm)',
+                  color: 'var(--text)',
                   outline: 'none',
                 }}
               />
 
               {/* Résultats */}
               {query.trim().length > 0 && query.trim().length < 2 ? (
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0' }}>Tape au moins 2 caractères.</p>
+                <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0, textAlign: 'center', padding: '6px 0' }}>Tape au moins 2 caractères.</p>
               ) : query.trim().length >= 2 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {visibleResults.length === 0 ? (
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0, textAlign: 'center', padding: '6px 0', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0, textAlign: 'center', padding: '6px 0', lineHeight: 1.5 }}>
                       {searching ? (
                         'Recherche…'
                       ) : (
@@ -420,14 +417,14 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                     visibleResults.map((u) => (
                       <div
                         key={u.userId}
-                        style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 11px', borderRadius: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 11px', borderRadius: 11, background: 'var(--surface-2)', border: '1px solid var(--surface-2)' }}
                       >
                         <Avatar name={u.name} size={36} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {u.name || 'Membre'}
                           </p>
-                          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {u.email}
                           </p>
                         </div>
@@ -440,8 +437,8 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             padding: '8px 14px',
                             borderRadius: 10,
                             border: '1px solid transparent',
-                            color: '#250817',
-                            fontSize: 12.5,
+                            color: 'var(--primary-ink)',
+                            fontSize: 'var(--font-size-footnote-lg)',
                             fontWeight: 700,
                             background: 'var(--teal-solid)',
                           }}
@@ -461,11 +458,11 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                 style={{
                   padding: '10px 14px',
                   borderRadius: 12,
-                  fontSize: 13,
+                  fontSize: 'var(--font-size-callout)',
                   textAlign: 'center',
-                  border: isErr ? '1px solid rgba(224,90,170,0.5)' : '1px solid var(--primary-a05)',
-                  background: 'rgba(12,12,22,0.96)',
-                  color: '#fff',
+                  border: isErr ? '1px solid var(--danger-border)' : '1px solid var(--primary-a05)',
+                  background: isErr ? 'var(--danger-fill, var(--danger-fill-strong))' : 'var(--surface)',
+                  color: 'var(--text)',
                 }}
               >
                 {msgText}
@@ -476,11 +473,11 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <p
                 style={{
-                  fontSize: 11,
+                  fontSize: 'var(--font-size-caption)',
                   fontWeight: 700,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.4)',
+                  color: 'var(--text-faint)',
                   margin: '2px 0 0',
                 }}
               >
@@ -488,21 +485,21 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               </p>
 
               {rosterEntries.length === 0 ? (
-                <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', textAlign: 'center', padding: '10px 0', lineHeight: 1.6, margin: 0 }}>
                   Personne d&apos;autre pour l&apos;instant. Invite tes serveurs, contrôleurs d&apos;entrée ou ton DJ ci-dessus.
                 </p>
               ) : (
                 rosterEntries.map((m) => (
                   <div
                     key={m.userId}
-                    style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 12px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--surface-2)' }}
                   >
                     <Avatar name={m.name} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 14.5, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 600, color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {m.name || 'Membre'}
                       </p>
-                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '1px 0 0' }}>Ajouté à l&apos;équipe</p>
+                      <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '1px 0 0' }}>Ajouté à l&apos;équipe</p>
                     </div>
                     <RoleBadge role={m.role} />
                     <Button
@@ -517,9 +514,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                         minWidth: 44,
                         padding: 0,
                         borderRadius: 12,
-                        background: 'rgba(224,90,170,0.14)',
-                        border: '1px solid rgba(224,90,170,0.45)',
-                        color: '#ff9ed2',
+                        background: 'var(--danger-fill)',
+                        border: '1px solid var(--danger-border)',
+                        color: 'var(--danger)',
                       }}
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -531,9 +528,9 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
               )}
             </div>
 
-            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>
-              Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un{' '}
-              <strong style={{ color: 'rgba(255,255,255,0.75)' }}>contrôle entrée</strong> peut scanner les billets. Un <strong style={{ color: 'rgba(255,255,255,0.75)' }}>DJ</strong> gère la
+            <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', lineHeight: 1.6, margin: 0 }}>
+              Un <strong style={{ color: 'var(--text-muted)' }}>serveur</strong> prend et sert les commandes en mode Service du scanner. Un{' '}
+              <strong style={{ color: 'var(--text-muted)' }}>contrôle entrée</strong> peut scanner les billets. Un <strong style={{ color: 'var(--text-muted)' }}>DJ</strong> gère la
               playlist interactive (sons proposés, validation, en cours de lecture) — sans accès au scanner ni au bar. Toi seul (manager) peux annuler une commande ou consulter l&apos;historique.
             </p>
           </>
@@ -552,16 +549,16 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'rgba(224,90,170,0.12)',
-                  border: '1px solid rgba(224,90,170,0.35)',
+                  background: 'var(--danger-fill)',
+                  border: '1px solid var(--danger-border)',
                 }}
               >
                 <IconAlert size={18} color="var(--pink)" />
               </span>
-              <p style={{ fontSize: 17, fontWeight: 700, color: '#fff', margin: 0 }}>Retirer de l&apos;équipe ?</p>
+              <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>Retirer de l&apos;équipe ?</p>
             </div>
-            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
-              <strong style={{ color: '#fff' }}>{confirmRemove.name}</strong> n&apos;aura plus accès au scanner de cette soirée. Tu pourras le réinviter à tout moment.
+            <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
+              <strong style={{ color: 'var(--text)' }}>{confirmRemove.name}</strong> n&apos;aura plus accès au scanner de cette soirée. Tu pourras le réinviter à tout moment.
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
               <Button
@@ -572,10 +569,10 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   flex: 1,
                   padding: '11px',
                   borderRadius: 12,
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.9)',
-                  fontSize: 13.5,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border-strong)',
+                  color: 'var(--text)',
+                  fontSize: 'var(--font-size-body)',
                   fontWeight: 600,
                 }}
               >
@@ -592,8 +589,8 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                   borderRadius: 12,
                   background: 'var(--pink)',
                   border: '1px solid transparent',
-                  color: '#fff',
-                  fontSize: 13.5,
+                  color: 'var(--text)',
+                  fontSize: 'var(--font-size-body)',
                   fontWeight: 700,
                 }}
               >

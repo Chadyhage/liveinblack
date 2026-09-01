@@ -147,10 +147,10 @@ function Chip({ active, color, onClick, children }: { active: boolean; color: st
         minHeight: 'var(--density-action-min)',
         padding: '10px 16px',
         borderRadius: 'var(--radius-control)',
-        border: `1px solid ${active ? color : 'rgba(255,255,255,0.14)'}`,
-        background: active ? `${color}1f` : 'rgba(255,255,255,0.04)',
-        color: active ? color : 'rgba(255,255,255,0.7)',
-        fontSize: 13.5,
+        border: `1px solid ${active ? color : 'var(--border)'}`,
+        background: active ? `${color}1f` : 'var(--card-bg)',
+        color: active ? color : 'var(--text-muted)',
+        fontSize: 'var(--font-size-body)',
         fontWeight: 700,
       }}
     >
@@ -245,7 +245,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 background: `${color}1f`,
                 border: `1px solid ${color}66`,
                 color,
-                fontSize: 13,
+                fontSize: 'var(--font-size-callout)',
                 fontWeight: 700,
               }}
             >
@@ -255,7 +255,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                 variant="ghost"
                 onClick={() => remove(v)}
                 aria-label={`Retirer ${v}`}
-                style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 'var(--radius-control)', border: 'none', background: 'rgba(0,0,0,0.25)', color, fontSize: 16, lineHeight: 1 }}
+                style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, borderRadius: 'var(--radius-control)', border: 'none', background: 'rgba(var(--black-rgb), .25)', color, fontSize: 'var(--font-size-headline-lg)', lineHeight: 1 }}
               >
                 ×
               </Button>
@@ -278,10 +278,10 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
           }}
           placeholder={placeholder}
           disabled={value.length >= max}
-          style={{ boxSizing: 'border-box', minHeight: 'var(--control-height-md)', padding: '10px 14px', borderRadius: 'var(--radius-control)', border: `1px solid ${focused ? color : 'rgba(255,255,255,0.12)'}`, background: '#0b0c12', color: '#fff', fontSize: 14 }}
+          style={{ boxSizing: 'border-box', minHeight: 'var(--control-height-md)', padding: '10px 14px', borderRadius: 'var(--radius-control)', border: `1px solid ${focused ? color : 'var(--border)'}`, background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)' }}
         />
         {focused && (matches.length > 0 || canAddCustom || loading) && (
-          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 5, maxHeight: 240, overflowY: 'auto', borderRadius: 'var(--radius-card)', padding: 8, background: '#12131c', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 5, maxHeight: 240, overflowY: 'auto', borderRadius: 'var(--radius-card)', padding: 8, background: 'var(--surface-2)', border: '1px solid var(--fill-secondary)', boxShadow: '0 24px 64px rgba(var(--black-rgb), .55)' }}>
             {matches.map((m) => (
               <Button
                 key={`${m.name}-${m.sublabel || ''}`}
@@ -291,13 +291,13 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                   e.preventDefault()
                   add(m)
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-start', textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: 'none', background: 'none', color: '#fff', fontSize: 14, fontWeight: 400 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-start', textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: 'none', background: 'none', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400 }}
               >
                 <Avatar src={m.picture || null} name={m.name} size="md" style={{ width: 34, height: 34, flexShrink: 0 }} />
-                <span><span style={{ display: 'block' }}>{m.name}</span>{m.sublabel && <span style={{ display: 'block', color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{m.sublabel}</span>}</span>
+                <span><span style={{ display: 'block' }}>{m.name}</span>{m.sublabel && <span style={{ display: 'block', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-lg)' }}>{m.sublabel}</span>}</span>
               </Button>
             ))}
-            {loading && matches.length === 0 && <p style={{ padding: '10px 12px', margin: 0, color: 'rgba(255,255,255,.4)', fontSize: 13 }}>Recherche…</p>}
+            {loading && matches.length === 0 && <p style={{ padding: '10px 12px', margin: 0, color: 'var(--text-faint)', fontSize: 'var(--font-size-callout)' }}>Recherche…</p>}
             {canAddCustom && (
               <Button
                 variant="ghost"
@@ -306,7 +306,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
                   e.preventDefault()
                   add(query)
                 }}
-                style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: 'none', background: 'none', color, fontSize: 14, fontWeight: 700 }}
+                style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--radius-control)', border: 'none', background: 'none', color, fontSize: 'var(--font-size-body-sm)', fontWeight: 700 }}
               >
                 + Ajouter « {query.trim()} »
               </Button>
@@ -314,7 +314,7 @@ function SearchMultiSelect({ value, photos = {}, onChange, suggestions, color, p
           </div>
         )}
       </div>
-      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '8px 0 0' }}>
+      <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '8px 0 0' }}>
         Tape un nom et sélectionne-le, ou ajoute-le s&apos;il n&apos;apparaît pas. {value.length}/{max}
       </p>
     </div>
@@ -421,34 +421,34 @@ export default function PreferencesModal({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>C&apos;est noté !</h2>
-            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
+            <h2 style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>C&apos;est noté !</h2>
+            <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 22px' }}>Tes préférences sont enregistrées.</p>
             <Button
               onClick={onClose}
-              style={{ minHeight: 'var(--density-action-min)', padding: '10px 24px', borderRadius: 'var(--radius-control)', border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ minHeight: 'var(--density-action-min)', padding: '10px 24px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'var(--violet-cta)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-sm)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
             >
               Fermer
             </Button>
           </div>
         ) : (
           <>
-            <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: VIOLET, fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Personnalisation</p>
-            <h2 className="font-display" style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 16px' }}>Dis-nous ce que tu aimes</h2>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: VIOLET, fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Personnalisation</p>
+            <h2 className="font-display" style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: '0 0 16px' }}>Dis-nous ce que tu aimes</h2>
 
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: current.color, fontFamily: 'var(--font-display), sans-serif' }}>
+                <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: current.color, fontFamily: 'var(--font-display), sans-serif' }}>
                   Étape {step + 1} / {STEPS.length}
                 </span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{progress}%</span>
+                <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
               </div>
-              <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ height: 6, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: VIOLET }} />
               </div>
             </div>
 
-            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 4px' }}>{current.title}</h3>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: '0 0 20px', lineHeight: 1.5 }}>{current.subtitle}</p>
+            <h3 style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, letterSpacing: '-0.4px', color: 'var(--text)', margin: '0 0 4px' }}>{current.title}</h3>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: '0 0 20px', lineHeight: 1.5 }}>{current.subtitle}</p>
 
             <div style={{ minHeight: 120 }}>
               {current.type === 'multi' && (
@@ -483,7 +483,7 @@ export default function PreferencesModal({
             </div>
 
             {saveError && (
-              <p style={{ fontSize: 12.5, color: 'rgba(220,100,100,0.9)', margin: '14px 0 0' }}>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--danger)', margin: '14px 0 0' }}>
                 L&apos;enregistrement a échoué — vérifie ta connexion et réessaie.
               </p>
             )}
@@ -494,7 +494,7 @@ export default function PreferencesModal({
                   variant="secondary"
                   onClick={goBack}
                   aria-label="Précédent"
-                  style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, padding: 0, borderRadius: 'var(--radius-control)', flexShrink: 0, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 18 }}
+                  style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, padding: 0, borderRadius: 'var(--radius-control)', flexShrink: 0, border: '1px solid var(--border)', background: 'var(--fill-secondary)', color: 'var(--text)', fontSize: 'var(--font-size-title-4)' }}
                 >
                   ‹
                 </Button>
@@ -503,7 +503,7 @@ export default function PreferencesModal({
                 onClick={goNext}
                 disabled={saving}
                 fullWidth
-                style={{ flex: 1, minHeight: 'var(--density-action-min)', padding: '10px 24px', borderRadius: 'var(--radius-control)', border: '1px solid rgba(255,255,255,0.14)', background: 'var(--violet-cta)', color: '#fff', fontSize: 14, fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
+                style={{ flex: 1, minHeight: 'var(--density-action-min)', padding: '10px 24px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'var(--violet-cta)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-sm)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal' }}
               >
                 {isLast ? 'Terminer' : hasValue ? 'Continuer' : 'Passer cette étape'}
               </Button>

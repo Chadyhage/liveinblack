@@ -18,7 +18,7 @@ export default function PublicAboutPage() {
     <PageShell style={{ maxWidth: 'none', padding: 0 }}>
       <div className={styles.page}>
       <section className={styles.hero} style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 22px 18px', textAlign: 'center' }}>
-        <p style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
+        <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 300, letterSpacing: '0.08em', margin: 0 }}>
           L<span>|</span>VE IN <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontWeight: 700 }}>BLACK</span>
         </p>
         <h1 className="font-display" style={{ fontSize: 'clamp(28px,6vw,48px)', letterSpacing: '.01em', lineHeight: 1.04, margin: '14px 0 0' }}>
@@ -64,7 +64,7 @@ export default function PublicAboutPage() {
       </Section>
 
       <Section eyebrow="La confiance" title="Tout est protégé et sécurisé">
-        <div style={{ maxWidth: 880, margin: '0 auto', padding: '10px 24px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 24, background: 'rgba(255,255,255,.055)' }}>
+        <div style={{ maxWidth: 880, margin: '0 auto', padding: '10px 24px', border: '1px solid var(--border)', borderRadius: 24, background: 'var(--card-bg)' }}>
           <Accordion items={[
             { question: 'Paiements sécurisés', answer: 'Transactions protégées, billets authentiques avec QR unique — impossible à falsifier.' },
             { question: 'Profils sélectionnés', answer: 'Chaque organisateur et prestataire visible sur la plateforme a été validé par notre équipe.' },
@@ -77,7 +77,7 @@ export default function PublicAboutPage() {
       <section className={styles.ctaWrap} style={{ padding: '18px 22px 0' }}>
           <div className={styles.cta} style={{ maxWidth: 1120, margin: '0 auto', padding: '34px 24px', borderRadius: 'var(--radius-xl)', textAlign: 'center', border: '1px solid var(--border)', background: 'radial-gradient(ellipse at 50% 0%, var(--primary-a12), transparent 60%), var(--surface-2)' }}>
           <h2 className="font-display" style={{ fontSize: 'clamp(24px,5vw,36px)', letterSpacing: '.01em', margin: 0 }}>Prêt à vivre la nuit ?</h2>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '10px auto 0', maxWidth: 720, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: '10px auto 0', maxWidth: 720, lineHeight: 1.5 }}>
             Crée ton compte en moins d&apos;une minute et découvre tout ce que Live in Black peut simplifier pour toi.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>

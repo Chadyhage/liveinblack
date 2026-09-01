@@ -434,7 +434,7 @@ export default function EventCheckoutPanel({
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
+      <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
 
       {cancelNoticeVisible && (
         <div
@@ -451,14 +451,14 @@ export default function EventCheckoutPanel({
             borderLeft: '3px solid var(--gold)',
           }}
         >
-          <p style={{ fontSize: 13, color: 'var(--text)', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0, lineHeight: 1.5 }}>
             Paiement annulé — aucun montant n&apos;a été débité. Tu peux réessayer quand tu veux.
           </p>
           <Button
             onClick={() => setCancelNoticeVisible(false)}
             aria-label="Fermer"
             variant="ghost"
-            style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 18, lineHeight: 1, padding: 0, display: 'flex', alignItems: 'center' }}
+            style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 'var(--font-size-title-4)', lineHeight: 1, padding: 0, display: 'flex', alignItems: 'center' }}
           >
             <X size={18} />
           </Button>
@@ -475,14 +475,14 @@ export default function EventCheckoutPanel({
             borderRadius: 14,
           }}
         >
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: 0, lineHeight: 1.4 }}>{blockedReason}</p>
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '4px 0 0', lineHeight: 1.45 }}>Pour réserver des places, utilise un compte client.</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--gold)', margin: 0, lineHeight: 1.4 }}>{blockedReason}</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '4px 0 0', lineHeight: 1.45 }}>Pour réserver des places, utilise un compte client.</p>
         </div>
       )}
 
       {disabled && (
-        <div style={{ marginBottom: 14, padding: '12px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', borderRadius: 12 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--pink)', margin: 0 }}>{bookingDisabledReason}</p>
+        <div style={{ marginBottom: 14, padding: '12px 14px', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 12 }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--pink)', margin: 0 }}>{bookingDisabledReason}</p>
         </div>
       )}
 
@@ -514,18 +514,18 @@ export default function EventCheckoutPanel({
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{place.type}</span>
-                <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(place.price, currency)}</span>
+                <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 700, color: 'var(--text)' }}>{place.type}</span>
+                <span style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(place.price, currency)}</span>
               </div>
               {place.groupType === 'group' && (
                 <span
                   style={{
                     display: 'inline-block',
                     marginTop: 6,
-                    fontSize: 10.5,
+                    fontSize: 'var(--font-size-caption-2-lg)',
                     fontWeight: 700,
                     color: 'var(--violet)',
-                    background: 'rgba(139,92,246,.14)',
+                    background: 'rgba(var(--violet-rgb), .14)',
                     padding: '2px 8px',
                     borderRadius: 999,
                   }}
@@ -533,13 +533,13 @@ export default function EventCheckoutPanel({
                   Place de groupe · {place.groupMin}-{place.groupMax} pers.
                 </span>
               )}
-              <p style={{ fontSize: 12, color: soldOut ? 'var(--pink)' : 'var(--text-faint)', margin: '8px 0 0' }}>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: soldOut ? 'var(--pink)' : 'var(--text-faint)', margin: '8px 0 0' }}>
                 {soldOut ? 'Complet' : `${place.available}/${place.total} restantes`}
               </p>
               {place.included?.length > 0 && (
                 <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {place.included.map((inc) => (
-                    <li key={inc.name} style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
+                    <li key={inc.name} style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>
                       {inc.qty > 1 ? `${inc.qty}× ` : ''}
                       {inc.name}
                     </li>
@@ -576,7 +576,7 @@ export default function EventCheckoutPanel({
                   )}
                 </div>
               )}
-              <span style={{ display: 'inline-block', marginTop: 10, fontSize: 10.5, fontWeight: 700, color: isSelected ? 'var(--gold)' : 'var(--text-faint)' }}>
+              <span style={{ display: 'inline-block', marginTop: 10, fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, color: isSelected ? 'var(--gold)' : 'var(--text-faint)' }}>
                 {isSelected ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={12} /> Choisi</span> : soldOut ? 'Complet' : 'Choisir'}
               </span>
             </Card>
@@ -588,42 +588,42 @@ export default function EventCheckoutPanel({
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <Card style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Place sélectionnée</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{selectedPlace.type}</span>
+              <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>Place sélectionnée</span>
+              <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>{selectedPlace.type}</span>
             </div>
 
             {!isGroup ? (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Quantité</span>
+                <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>Quantité</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <StepperButton onClick={() => changeQty(Math.max(1, qty - 1))} disabled={qty <= 1} label="−" ariaLabel={`Diminuer la quantité de ${selectedPlace.type}`} variant="ghost" />
-                  <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--gold)', width: 18, textAlign: 'center' }}>{qty}</span>
+                  <span style={{ fontWeight: 700, fontSize: 'var(--font-size-headline)', color: 'var(--gold)', width: 18, textAlign: 'center' }}>{qty}</span>
                   <StepperButton onClick={() => changeQty(Math.min(maxQty, qty + 1))} disabled={qty >= maxQty} label="+" ariaLabel={`Augmenter la quantité de ${selectedPlace.type}`} variant="solid" />
                 </div>
               </div>
             ) : (
-              <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
                 Vendue comme place de groupe entière, pour {selectedPlace.groupMin}-{selectedPlace.groupMax} personnes.
               </p>
             )}
             {!isGroup && maxPerAccount > 0 && (
-              <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '-4px 0 0', textAlign: 'right' }}>Max {maxPerAccount} par compte</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '-4px 0 0', textAlign: 'right' }}>Max {maxPerAccount} par compte</p>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{qty > 1 && !isGroup ? `Prix (${fmtMoney(placePrice, currency)} × ${qty})` : 'Prix'}</span>
-              <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(placePrice * lineQty, currency)}</span>
+              <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>{qty > 1 && !isGroup ? `Prix (${fmtMoney(placePrice, currency)} × ${qty})` : 'Prix'}</span>
+              <span style={{ fontSize: 'var(--font-size-title-3)', fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(placePrice * lineQty, currency)}</span>
             </div>
 
             {placePrice > 0 &&
               (promoApplied ? (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                     Code {promoApplied} {promoLabel && `· ${promoLabel}`}
                     <Button
                       onClick={removePromo}
                       variant="ghost"
-                      style={{ background: 'none', border: 'none', color: 'var(--pink)', fontSize: 11, fontWeight: 700, padding: 0 }}
+                      style={{ background: 'none', border: 'none', color: 'var(--pink)', fontSize: 'var(--font-size-caption)', fontWeight: 700, padding: 0 }}
                     >
                       Retirer
                     </Button>
@@ -652,7 +652,7 @@ export default function EventCheckoutPanel({
                         borderRadius: 9,
                         background: 'var(--obsidian)',
                         color: 'var(--text)',
-                        fontSize: 13,
+                        fontSize: 'var(--font-size-callout)',
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
                       }}
@@ -667,21 +667,21 @@ export default function EventCheckoutPanel({
                         borderRadius: 9,
                         border: 'none',
                         background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--teal-solid)',
-                        color: !promoInput.trim() ? 'var(--text-faint)' : '#250817',
-                        fontSize: 12.5,
+                        color: !promoInput.trim() ? 'var(--text-faint)' : 'var(--primary-ink)',
+                        fontSize: 'var(--font-size-footnote-lg)',
                         fontWeight: 700,
                       }}
                     >
                       Appliquer
                     </Button>
                   </div>
-                  {promoFieldError && <p style={{ margin: '7px 0 0', color: 'var(--pink)', fontSize: 12 }}>{promoFieldError}</p>}
+                  {promoFieldError && <p style={{ margin: '7px 0 0', color: 'var(--pink)', fontSize: 'var(--font-size-footnote)' }}>{promoFieldError}</p>}
                 </div>
               ) : (
                 <Button
                   onClick={() => setPromoOpen(true)}
                   variant="ghost"
-                  style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', justifyContent: 'flex-start', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}
+                  style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', justifyContent: 'flex-start', color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', fontWeight: 600 }}
                 >
                   Ajouter un code promo
                 </Button>
@@ -689,25 +689,25 @@ export default function EventCheckoutPanel({
 
             {promoApplied && promoUnitDiscount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: 'var(--teal)' }}>Réduction</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)' }}>− {fmtMoney(promoUnitDiscount * lineQty, currency)}</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--teal)' }}>Réduction</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--teal)' }}>− {fmtMoney(promoUnitDiscount * lineQty, currency)}</span>
               </div>
             )}
 
             {fee > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Frais de service</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(fee, currency)}</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)' }}>Frais de service</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(fee, currency)}</span>
               </div>
             )}
 
             {discountedPlacePrice > 0 && (
-              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'var(--primary-a08)' : 'rgba(255,255,255,.035)' }}>
+              <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'var(--primary-a08)' : 'var(--fill-secondary)' }}>
                 <Checkbox
                   checked={cancellationProtection}
                   onChange={(event) => setCancellationProtection(event.target.checked)}
                   label={
-                    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text)' }}>
                       Assurance annulation · +{fmtMoney(
                         currency === 'XOF'
                           ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
@@ -717,7 +717,7 @@ export default function EventCheckoutPanel({
                     </span>
                   }
                   description={
-                    <span style={{ display: 'block', fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>
+                    <span style={{ display: 'block', fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', marginTop: 2 }}>
                       Remboursement possible à tout moment avant l&apos;événement, même sans annulation ni report (hors billet déjà scanné).
                     </span>
                   }
@@ -726,13 +726,13 @@ export default function EventCheckoutPanel({
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Points fidélité</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>+1 par billet scanné à l&apos;entrée</span>
+              <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)' }}>Points fidélité</span>
+              <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)' }}>+1 par billet scanné à l&apos;entrée</span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Paiement</span>
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>Paiement</span>
+              <span style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 600, color: 'var(--text-muted)' }}>
                 {grandTotal > 0 ? (currency === 'XOF' ? 'Sécurisé · Mobile Money (FedaPay)' : 'Sécurisé · Stripe') : 'Gratuit'}
               </span>
             </div>
@@ -741,15 +741,15 @@ export default function EventCheckoutPanel({
           {preorderEnabled && activeMenu.length > 0 && (
             <Card style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div>
-                <p style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Précommande de consommations</p>
-                <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Optionnel · choisis les consommations de chaque billet.</p>
+                <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>Précommande de consommations</p>
+                <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Optionnel · choisis les consommations de chaque billet.</p>
               </div>
               {ticketCount > 1 && (
                 <div role="tablist" aria-label="Billet à personnaliser" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
                   {Array.from({ length: ticketCount }, (_, index) => {
                     const count = Object.values(preordersByTicket[index] || {}).reduce((sum, value) => sum + value, 0)
                     const active = preorderTicketIndex === index
-                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'var(--primary-a12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 11.5, fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
+                    return <Button key={index} type="button" role="tab" aria-selected={active} variant="ghost" onClick={() => setPreorderTicketIndex(index)} style={{ flexShrink: 0, padding: '8px 11px', borderRadius: 9, border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`, background: active ? 'var(--primary-a12)' : 'var(--surface-2)', color: active ? 'var(--gold)' : 'var(--text-muted)', fontSize: 'var(--font-size-caption-lg)', fontWeight: 800 }}>Billet {index + 1}{count > 0 ? ` · ${count}` : ''}</Button>
                   })}
                 </div>
               )}
@@ -768,29 +768,29 @@ export default function EventCheckoutPanel({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
-                        {item.imageUrl ? <Image src={item.imageUrl} alt="" width={42} height={42} style={{ borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} /> : item.emoji ? <span aria-hidden="true" style={{ width: 34, textAlign: 'center', fontSize: 22 }}>{item.emoji}</span> : null}
+                        {item.imageUrl ? <Image src={item.imageUrl} alt="" width={42} height={42} style={{ borderRadius: 9, objectFit: 'cover', flexShrink: 0 }} /> : item.emoji ? <span aria-hidden="true" style={{ width: 34, textAlign: 'center', fontSize: 'var(--font-size-title-2)' }}>{item.emoji}</span> : null}
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', margin: 0 }}>{item.name}</p>
-                          {item.description && <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</p>}
-                          <p style={{ fontSize: 12, color: 'var(--gold)', margin: '2px 0 0' }}>{fmtMoney(item.price, currency)}</p>
+                          <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 600, color: 'var(--text)', margin: 0 }}>{item.name}</p>
+                          {item.description && <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</p>}
+                          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--gold)', margin: '2px 0 0' }}>{fmtMoney(item.price, currency)}</p>
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                         <StepperButton onClick={() => updatePreorder(item.name, -1)} disabled={q === 0} label="−" ariaLabel={`Diminuer la quantité de ${item.name}`} variant="ghost" />
-                        <span style={{ fontSize: 14, fontWeight: 700, color: q > 0 ? 'var(--gold)' : 'var(--text-faint)', width: 16, textAlign: 'center' }}>{q}</span>
+                        <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 700, color: q > 0 ? 'var(--gold)' : 'var(--text-faint)', width: 16, textAlign: 'center' }}>{q}</span>
                         <StepperButton onClick={() => updatePreorder(item.name, 1)} disabled={q >= MAX_PREORDER_ITEM_QTY} label="+" ariaLabel={`Augmenter la quantité de ${item.name}`} variant="solid" />
                       </div>
                     </div>
                     {q > 0 && availableShows.length > 0 && (
                       <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px solid var(--border)' }}>
-                        <p style={{ margin: '0 0 7px', color: 'var(--text-faint)', fontSize: 10.5, fontWeight: 700 }}>Ajouter un show à la livraison (optionnel)</p>
+                        <p style={{ margin: '0 0 7px', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700 }}>Ajouter un show à la livraison (optionnel)</p>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                           {availableShows.map((option) => {
                             const active = selectedShow?.showOptionId === option.id
-                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'var(--primary-a10)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 10.5, fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
+                            return <Button key={option.id} type="button" variant="ghost" onClick={() => chooseShow(item.name, option)} aria-pressed={active} style={{ padding: '6px 9px', borderRadius: 'var(--radius-md)', border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`, background: active ? 'var(--primary-a10)' : 'var(--surface-2)', color: active ? 'var(--primary)' : 'var(--text-muted)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700 }}>{option.label}{option.requiresInfo && !active ? ' · à préciser' : ''}</Button>
                           })}
                         </div>
-                        {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--primary)', fontSize: 10.5 }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
+                        {selectedShow && <p style={{ margin: '7px 0 0', color: 'var(--primary)', fontSize: 'var(--font-size-caption-2-lg)' }}>Show choisi : {selectedShow.showLabel}{selectedShow.showInfo ? ` · ${selectedShow.showInfo}` : ''}</p>}
                       </div>
                     )}
                   </div>
@@ -798,16 +798,16 @@ export default function EventCheckoutPanel({
               })}
               {preorderTotal > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                  <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Total précommande</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(preorderTotal, currency)}</span>
+                  <span style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)' }}>Total précommande</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(preorderTotal, currency)}</span>
                 </div>
               )}
             </Card>
           )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px' }}>
-            <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>Total</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)' }}>{fmtMoney(grandTotal, currency)}</span>
+            <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)' }}>Total</span>
+            <span style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, color: 'var(--teal)' }}>{fmtMoney(grandTotal, currency)}</span>
           </div>
 
           {eventMinAge >= 18 && (
@@ -822,22 +822,22 @@ export default function EventCheckoutPanel({
                   height: 30,
                   borderRadius: '50%',
                   border: '1px solid var(--primary-a04)',
-                  fontSize: 11,
+                  fontSize: 'var(--font-size-caption)',
                   fontWeight: 700,
                   color: 'var(--gold)',
                 }}
               >
                 {eventMinAge}+
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.5 }}>
                 Événement {eventMinAge}+ · une pièce d&apos;identité pourra être demandée à l&apos;entrée.
               </span>
             </div>
           )}
 
           {checkoutError && (
-            <div role="alert" style={{ background: 'rgba(224,90,170,0.10)', border: '1px solid rgba(224,90,170,0.30)', borderRadius: 12, padding: '12px 14px' }}>
-              <p style={{ fontSize: 13, color: 'var(--pink)', margin: 0, lineHeight: 1.5 }}>{checkoutError}</p>
+            <div role="alert" style={{ background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 12, padding: '12px 14px' }}>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--pink)', margin: 0, lineHeight: 1.5 }}>{checkoutError}</p>
             </div>
           )}
 
@@ -852,11 +852,11 @@ export default function EventCheckoutPanel({
               borderRadius: 3,
               border: 'none',
               gap: 9,
-              fontSize: 15,
+              fontSize: 'var(--font-size-headline)',
               fontWeight: 500,
               textTransform: 'none',
               letterSpacing: 'normal',
-              color: buyDisabled ? 'var(--text-faint)' : '#250817',
+              color: buyDisabled ? 'var(--text-faint)' : 'var(--primary-ink)',
               background: buyDisabled ? 'var(--surface-2)' : 'linear-gradient(135deg, var(--primary), var(--primary-strong))',
               boxShadow: buyDisabled ? 'none' : '0 8px 26px var(--primary-a32)',
             }}
@@ -866,7 +866,7 @@ export default function EventCheckoutPanel({
 
           {!disabled && !isGroup && discountedPlacePrice > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-              <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center' }}>
+              <p style={{ margin: 0, fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', textAlign: 'center' }}>
                 Pas prêt·e à payer maintenant ? Bloque la place à ce prix.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -893,7 +893,7 @@ export default function EventCheckoutPanel({
                   Bloquer 72h · +10%
                 </Button>
               </div>
-              {seatHoldError && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5, textAlign: 'center' }}>{seatHoldError}</p>}
+              {seatHoldError && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 'var(--font-size-caption-lg)', textAlign: 'center' }}>{seatHoldError}</p>}
             </div>
           )}
         </div>
@@ -901,12 +901,12 @@ export default function EventCheckoutPanel({
 
       {photoGallery && (
         <SlideOverModal onClose={() => setPhotoGallery(null)} ariaLabel={`Photos de la place ${photoGallery.type}`} contentStyle={{ padding: 18 }}>
-            <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: '#090a10', border: '1px solid var(--border-strong)' }}>
+            <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 18, overflow: 'hidden', background: 'var(--primary-ink)', border: '1px solid var(--border-strong)' }}>
               <Image src={photoGallery.photos[photoGallery.index]} alt={`${photoGallery.type}, photo ${photoGallery.index + 1}`} fill style={{ objectFit: 'contain' }} sizes="(max-width: 768px) 100vw, 760px" />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12 }}>
               <Button type="button" variant="secondary" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index - 1 + current.photos.length) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Précédente</Button>
-              <p style={{ margin: 0, color: '#fff', fontSize: 13, fontWeight: 700 }}>{photoGallery.type} · {photoGallery.index + 1}/{photoGallery.photos.length}</p>
+              <p style={{ margin: 0, color: 'var(--text)', fontSize: 'var(--font-size-callout)', fontWeight: 700 }}>{photoGallery.type} · {photoGallery.index + 1}/{photoGallery.photos.length}</p>
               <Button type="button" variant="secondary" onClick={() => setPhotoGallery((current) => current && ({ ...current, index: (current.index + 1) % current.photos.length }))} disabled={photoGallery.photos.length < 2} style={galleryButton}>Suivante</Button>
             </div>
         </SlideOverModal>
@@ -915,7 +915,7 @@ export default function EventCheckoutPanel({
       {includedModal && (
         <SlideOverModal onClose={() => setIncludedModal(null)} ariaLabel={`Inclus dans ${includedModal.type}`}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-              <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 20 }}>{includedModal.type}</h3></div>
+              <div><p style={{ margin: 0, color: 'var(--gold)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif' }}>Inclus dans ce billet</p><h3 id="included-modal-title" style={{ margin: '3px 0 0', fontSize: 'var(--font-size-title-3)' }}>{includedModal.type}</h3></div>
             </div>
             <div style={{ display: 'grid', gap: 8, marginTop: 18 }}>
               <IncludedRow label="1 entrée à la soirée" />
@@ -924,39 +924,39 @@ export default function EventCheckoutPanel({
                 return <IncludedRow key={item.name} label={`${item.qty || 1}× ${item.name}`} emoji={menuItem?.emoji} />
               })}
             </div>
-            <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 12, lineHeight: 1.55 }}>Ces options seront servies sur place et validées par le staff depuis ton billet.</p>
+            <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote)', lineHeight: 1.55 }}>Ces options seront servies sur place et validées par le staff depuis ton billet.</p>
         </SlideOverModal>
       )}
 
       {showInfoModal && (
         <Modal onClose={() => setShowInfoModal(null)} ariaLabel={`Personnaliser ${showInfoModal.option.label}`}>
-            <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Personnaliser le show</p>
-            <h3 id="show-info-title" style={{ margin: '5px 0 4px', fontSize: 20 }}>{showInfoModal.option.label}</h3>
-            <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 12 }}>Pour {showInfoModal.itemName} · billet {showInfoModal.ticketIndex + 1}</p>
-            <label htmlFor="show-info-input" style={{ display: 'block', marginBottom: 6, color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>{showInfoModal.option.infoPrompt || 'Information à transmettre au staff'}</label>
+            <p style={{ margin: 0, color: 'var(--gold)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Personnaliser le show</p>
+            <h3 id="show-info-title" style={{ margin: '5px 0 4px', fontSize: 'var(--font-size-title-3)' }}>{showInfoModal.option.label}</h3>
+            <p style={{ margin: '0 0 14px', color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote)' }}>Pour {showInfoModal.itemName} · billet {showInfoModal.ticketIndex + 1}</p>
+            <label htmlFor="show-info-input" style={{ display: 'block', marginBottom: 6, color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', fontWeight: 700 }}>{showInfoModal.option.infoPrompt || 'Information à transmettre au staff'}</label>
             <Textarea id="show-info-input" autoFocus rows={3} maxLength={240} value={showInfoInput} onChange={(event) => setShowInfoInput(event.target.value)} style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', borderRadius: 11, background: 'var(--surface)', color: 'var(--text)', padding: '11px 12px', font: 'inherit' }} />
-            <p style={{ margin: '5px 0 0', color: 'var(--text-faint)', textAlign: 'right', fontSize: 10 }}>{showInfoInput.length}/240</p>
+            <p style={{ margin: '5px 0 0', color: 'var(--text-faint)', textAlign: 'right', fontSize: 'var(--font-size-caption-2)' }}>{showInfoInput.length}/240</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setShowInfoModal(null)} style={{ ...secondaryAction, flex: 1 }}>Annuler</Button><Button type="button" onClick={confirmShowInfo} disabled={!showInfoInput.trim()} style={{ ...primaryAction, flex: 1, opacity: showInfoInput.trim() ? 1 : .45 }}>Valider</Button></div>
         </Modal>
       )}
 
       {showConfirmation && selectedPlace && (
         <Modal onClose={() => setShowConfirmation(false)} dismissible={!submitting} ariaLabel="Récapitulatif de la commande">
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 22 }}>Récapitulatif</h3></div></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 'var(--font-size-title-2)' }}>Récapitulatif</h3></div></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />
               <SummaryRow label="Quantité" value={String(lineQty)} />
               {Array.from({ length: ticketCount }, (_, ticketIndex) => {
                 const entries = Object.entries(preordersByTicket[ticketIndex] || {}).filter(([, count]) => count > 0)
                 if (!entries.length) return null
-                return <div key={ticketIndex} style={{ padding: '8px 10px', borderRadius: 9, background: 'rgba(255,255,255,.035)' }}><p style={{ margin: '0 0 6px', color: 'var(--gold)', fontSize: 11, fontWeight: 800 }}>Billet {ticketIndex + 1}</p>{entries.map(([name, count]) => { const show = showsByTicket[ticketIndex]?.[name]; return <div key={name} style={{ marginBottom: 4 }}><SummaryRow label={name} value={`${count}×`} />{show && <p style={{ margin: '2px 0 0', color: 'var(--teal)', fontSize: 10.5 }}>{show.showLabel}{show.showInfo ? ` · ${show.showInfo}` : ''}</p>}</div> })}</div>
+                return <div key={ticketIndex} style={{ padding: '8px 10px', borderRadius: 9, background: 'var(--fill-secondary)' }}><p style={{ margin: '0 0 6px', color: 'var(--gold)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>Billet {ticketIndex + 1}</p>{entries.map(([name, count]) => { const show = showsByTicket[ticketIndex]?.[name]; return <div key={name} style={{ marginBottom: 4 }}><SummaryRow label={name} value={`${count}×`} />{show && <p style={{ margin: '2px 0 0', color: 'var(--teal)', fontSize: 'var(--font-size-caption-2-lg)' }}>{show.showLabel}{show.showInfo ? ` · ${show.showInfo}` : ''}</p>}</div> })}</div>
               })}
               {promoApplied && <SummaryRow label={`Code ${promoApplied}`} value={`− ${fmtMoney(promoUnitDiscount * lineQty, currency)}`} accent />}
               {fee > 0 && <SummaryRow label="Frais de service" value={fmtMoney(fee, currency)} />}
               {cancellationProtectionFee > 0 && <SummaryRow label="Assurance annulation" value={fmtMoney(cancellationProtectionFee, currency)} />}
               <div style={{ borderTop: '1px solid var(--border)', marginTop: 3, paddingTop: 12 }}><SummaryRow label="Total à payer" value={fmtMoney(grandTotal, currency)} strong /></div>
             </div>
-            <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 11.5, lineHeight: 1.5 }}>{grandTotal > 0 ? `Paiement sécurisé par ${currency === 'XOF' ? 'FedaPay' : 'Stripe'}.` : 'Aucun moyen de paiement ne sera demandé.'}</p>
+            <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-lg)', lineHeight: 1.5 }}>{grandTotal > 0 ? `Paiement sécurisé par ${currency === 'XOF' ? 'FedaPay' : 'Stripe'}.` : 'Aucun moyen de paiement ne sera demandé.'}</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}><Button type="button" variant="secondary" onClick={() => setShowConfirmation(false)} disabled={submitting} style={{ ...secondaryAction, flex: 1 }}>Modifier</Button><Button type="button" onClick={() => void doCheckout()} loading={submitting} loadingText="Redirection…" style={{ ...primaryAction, flex: 1 }}>{grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, currency)}` : 'Confirmer'}</Button></div>
         </Modal>
       )}
@@ -967,17 +967,17 @@ export default function EventCheckoutPanel({
 }
 
 function IncludedRow({ label, emoji }: { label: string; emoji?: string }) {
-  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary-a20)', background: 'var(--primary-a05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 10, fontWeight: 800 }}>INCLUS</span></div>
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary-a20)', background: 'var(--primary-a05)' }}><span aria-hidden="true" style={{ width: 20, textAlign: 'center', display: 'inline-flex', justifyContent: 'center' }}>{emoji || <Check size={14} color="var(--primary)" />}</span><span style={{ flex: 1, fontSize: 'var(--font-size-callout)', fontWeight: 700 }}>{label}</span><span style={{ color: 'var(--primary)', fontSize: 'var(--font-size-caption-2)', fontWeight: 800 }}>INCLUS</span></div>
 }
 
 function SummaryRow({ label, value, accent, strong }: { label: string; value: string; accent?: boolean; strong?: boolean }) {
   return <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><span style={{ color: strong ? 'var(--text)' : 'var(--text-muted)', fontSize: strong ? 14 : 12.5, fontWeight: strong ? 800 : 500 }}>{label}</span><span style={{ color: accent ? 'var(--primary)' : strong ? 'var(--gold)' : 'var(--text)', fontSize: strong ? 18 : 12.5, fontWeight: strong ? 900 : 700, textAlign: 'right' }}>{value}</span></div>
 }
 
-const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid var(--primary-a32)', background: 'var(--primary-a08)', color: 'var(--gold)', fontSize: 10.5, fontWeight: 800, cursor: 'pointer' }
-const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }
-const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', fontSize: 13.5, cursor: 'pointer' }
-const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 13, cursor: 'pointer' }
+const detailButton: React.CSSProperties = { padding: '7px 10px', borderRadius: 8, border: '1px solid var(--primary-a32)', background: 'var(--primary-a08)', color: 'var(--gold)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, cursor: 'pointer' }
+const galleryButton: React.CSSProperties = { minWidth: 92, padding: '9px 12px', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--fill-secondary)', color: 'var(--text)', fontSize: 'var(--font-size-footnote)', fontWeight: 700, cursor: 'pointer' }
+const primaryAction: React.CSSProperties = { minHeight: 46, border: 0, borderRadius: 'var(--radius-md)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', fontSize: 'var(--font-size-body)', cursor: 'pointer' }
+const secondaryAction: React.CSSProperties = { minHeight: 46, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', fontSize: 'var(--font-size-callout)', cursor: 'pointer' }
 
 function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onClick: () => void; disabled?: boolean; label: string; ariaLabel: string; variant: 'ghost' | 'solid' }) {
   return (
@@ -993,12 +993,12 @@ function StepperButton({ onClick, disabled, label, ariaLabel, variant }: { onCli
         minWidth: 44,
         minHeight: 44,
         borderRadius: 12,
-        fontSize: 15,
+        fontSize: 'var(--font-size-headline)',
         fontWeight: 700,
         opacity: disabled ? 0.4 : 1,
         border: variant === 'ghost' ? '1px solid var(--border-strong)' : 'none',
         background: variant === 'ghost' ? 'var(--surface-2)' : 'var(--gold)',
-        color: variant === 'ghost' ? 'var(--text-muted)' : '#1a1206',
+        color: variant === 'ghost' ? 'var(--text-muted)' : 'var(--primary-ink)',
       }}
     >
       {label}

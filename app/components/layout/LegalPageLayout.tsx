@@ -6,7 +6,7 @@ import { Card } from '@/app/components/ui'
 // cookies, CGU/CGV).
 
 const CARD: React.CSSProperties = {
-  background: 'rgba(255, 255, 255, .035)',
+  background: 'var(--card-bg)',
   border: '1px solid var(--border)',
   borderRadius: 8,
 }
@@ -36,7 +36,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         minHeight: '100vh',
         position: 'relative',
         padding: 'clamp(34px, 4vw, 56px) var(--public-page-gutter) 72px',
-        background: 'rgba(10, 10, 13, .82)',
+        background: 'var(--obsidian)',
       }}
     >
       <div style={{ width: 'min(100%, var(--public-page-max))', margin: '0 auto' }}>
@@ -49,7 +49,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
               style={{
                 fontSize: 'clamp(26px, 3vw, 36px)',
                 letterSpacing: '-.02em',
-                color: '#fff',
+                color: 'var(--text)',
                 margin: 0,
                 lineHeight: 1.2,
                 fontWeight: 800,
@@ -57,7 +57,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
             >
               {title}
             </h1>
-            <p style={{ fontSize: 14, color: 'rgba(245, 245, 247, .7)', margin: '4px 0 0', fontWeight: 600 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: '4px 0 0', fontWeight: 600 }}>
               Dernière mise à jour : {lastUpdate}
             </p>
           </div>
@@ -67,7 +67,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         <details className="lb-legal-toc" style={{ ...CARD, padding: '10px 18px', marginBottom: 20 }}>
           <summary
             style={{
-              fontSize: 13.5,
+              fontSize: 'var(--font-size-body)',
               fontWeight: 800,
               color: 'var(--primary)',
               textTransform: 'uppercase',
@@ -95,8 +95,8 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                 <a
                   href={`#legal-section-${s.n}`}
                   style={{
-                    fontSize: 14,
-                    color: 'rgba(245, 245, 247, .8)',
+                    fontSize: 'var(--font-size-body-sm)',
+                    color: 'var(--text-muted)',
                     textDecoration: 'none',
                     display: 'flex',
                     gap: 8,
@@ -106,7 +106,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                     lineHeight: 1.35,
                   }}
                 >
-                  <span style={{ color: 'var(--primary)', fontWeight: 800, fontSize: 13, minWidth: 20, flexShrink: 0 }}>{s.n}</span>
+                  <span style={{ color: 'var(--primary)', fontWeight: 800, fontSize: 'var(--font-size-callout)', minWidth: 20, flexShrink: 0 }}>{s.n}</span>
                   {s.title}
                 </a>
               </li>
@@ -121,7 +121,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
               <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <span
                   style={{
-                    fontSize: 14,
+                    fontSize: 'var(--font-size-body-sm)',
                     fontWeight: 800,
                     color: 'var(--primary)',
                     letterSpacing: '0.04em',
@@ -136,8 +136,8 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   <h2
                     style={{
                       fontWeight: 800,
-                      fontSize: 18,
-                      color: '#fff',
+                      fontSize: 'var(--font-size-title-4)',
+                      color: 'var(--text)',
                       margin: '0 0 8px',
                       lineHeight: 1.25,
                     }}
@@ -147,8 +147,8 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.body && (
                     <p
                       style={{
-                        fontSize: 15.5,
-                        color: 'rgba(245, 245, 247, .82)',
+                        fontSize: 'var(--font-size-headline-xl)',
+                        color: 'var(--text-muted)',
                         margin: 0,
                         lineHeight: 1.55,
                         whiteSpace: 'pre-wrap',
@@ -163,8 +163,8 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                         <li
                           key={i}
                           style={{
-                            fontSize: 15.5,
-                            color: 'rgba(245, 245, 247, .82)',
+                            fontSize: 'var(--font-size-headline-xl)',
+                            color: 'var(--text-muted)',
                             lineHeight: 1.55,
                             padding: '3px 0 3px 16px',
                             position: 'relative',
@@ -175,7 +175,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                             item
                           ) : (
                             <>
-                              <strong style={{ color: '#fff', fontWeight: 700 }}>{item.label}</strong>
+                              <strong style={{ color: 'var(--text)', fontWeight: 700 }}>{item.label}</strong>
                               {item.value ? ` — ${item.value}` : ''}
                             </>
                           )}
@@ -186,8 +186,8 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
                   {s.contact && (
                     <p
                       style={{
-                        fontSize: 15.5,
-                        color: 'rgba(245, 245, 247, .82)',
+                        fontSize: 'var(--font-size-headline-xl)',
+                        color: 'var(--text-muted)',
                         margin: '8px 0 0',
                         lineHeight: 1.55,
                       }}
@@ -206,7 +206,7 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
         {/* Footer notice */}
         {footerNotice && (
           <Card
-            accent="rgba(255,255,255,0.06)"
+            accent="var(--border)"
             style={{
               padding: '14px 18px',
               marginTop: 20,
@@ -216,8 +216,8 @@ export default function LegalPageLayout({ title, lastUpdate = 'Avril 2026', sect
           >
             <p
               style={{
-                fontSize: 13.5,
-                color: 'rgba(245, 245, 247, .65)',
+                fontSize: 'var(--font-size-body)',
+                color: 'var(--text-muted)',
                 textAlign: 'center',
                 margin: 0,
                 lineHeight: 1.5,

@@ -29,7 +29,7 @@ export function DonutChart({ data, size = 160 }: { data: DonutChartSlice[]; size
             <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className={styles.total}>{total}</text>
             <text x="50%" y="59%" textAnchor="middle" dominantBaseline="middle" className={styles.totalLabel}>comptes</text>
             <Tooltip
-              contentStyle={{ background: 'rgba(30,31,35,.96)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 14, boxShadow: '0 16px 42px rgba(0,0,0,.38)', fontSize: 12 }}
+              contentStyle={{ background: 'var(--modal-surface)', border: '1px solid var(--border-strong)', borderRadius: 14, boxShadow: 'none', fontSize: 'var(--font-size-footnote)' }}
               itemStyle={{ color: 'var(--text)' }}
               cursor={false}
               formatter={(value, name) => [`${value} (${total ? Math.round((Number(value) / total) * 100) : 0}%)`, name]}

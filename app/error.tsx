@@ -22,9 +22,9 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
       }}
     >
       <Mascot mood="error" size={210} />
-      <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', margin: 0, textTransform: 'uppercase' }}>Oups</p>
-      <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, color: 'var(--text)' }}>Un problème est survenu</h1>
-      <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, maxWidth: 620 }}>
+      <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', margin: 0, textTransform: 'uppercase' }}>Oups</p>
+      <h1 style={{ fontSize: 'var(--font-size-large-title)', fontWeight: 800, margin: 0, color: 'var(--text)' }}>Un problème est survenu</h1>
+      <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, maxWidth: 620 }}>
         Quelque chose s&apos;est mal passé de notre côté. Réessaie, ou reviens un peu plus tard.
       </p>
       <Button
@@ -34,7 +34,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           padding: '11px 22px',
           borderRadius: 999,
           background: 'var(--teal-solid)',
-          color: '#250817',
+          color: 'var(--primary-ink)',
         }}
       >
         Réessayer

@@ -81,8 +81,8 @@ interface ApplicationDetail {
 
 const SECTIONS: { key: string; label: string; color: string; statuses: ApplicationStatus[] }[] = [
   { key: 'pending', label: 'À traiter', color: 'var(--gold)', statuses: ['submitted', 'resubmitted'] },
-  { key: 'review', label: 'En cours', color: '#3b82f6', statuses: ['under_review', 'needs_changes'] },
-  { key: 'closed', label: 'Traités', color: '#F53D8D', statuses: ['approved', 'rejected', 'suspended'] },
+  { key: 'review', label: 'En cours', color: 'var(--info)', statuses: ['under_review', 'needs_changes'] },
+  { key: 'closed', label: 'Traités', color: 'var(--primary)', statuses: ['approved', 'rejected', 'suspended'] },
 ]
 
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
@@ -99,12 +99,12 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
 const STATUS_COLOR: Record<ApplicationStatus, string> = {
   draft: 'var(--text-faint)',
   submitted: 'var(--gold)',
-  under_review: '#3b82f6',
-  needs_changes: '#f59e0b',
-  resubmitted: '#a78bfa',
-  approved: '#F53D8D',
-  rejected: '#e05aaa',
-  suspended: '#e05aaa',
+  under_review: 'var(--info)',
+  needs_changes: 'var(--warning-text)',
+  resubmitted: 'var(--violet-text)',
+  approved: 'var(--primary)',
+  rejected: 'var(--danger)',
+  suspended: 'var(--danger)',
 }
 
 const AUDIT_ACTION_LABEL: Record<string, string> = {
@@ -119,13 +119,13 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
 }
 const AUDIT_ACTION_COLOR: Record<string, string> = {
   submitted: 'var(--gold)',
-  resubmitted: '#a78bfa',
-  under_review: '#3b82f6',
-  approve: '#F53D8D',
-  request_changes: '#f59e0b',
-  reject: '#e05aaa',
-  suspended: '#e05aaa',
-  reactivated: '#F53D8D',
+  resubmitted: 'var(--violet-text)',
+  under_review: 'var(--info)',
+  approve: 'var(--primary)',
+  request_changes: 'var(--warning-text)',
+  reject: 'var(--danger)',
+  suspended: 'var(--danger)',
+  reactivated: 'var(--primary)',
 }
 const AUTO_NOTE_ACTIONS = new Set(['submitted', 'resubmitted'])
 
@@ -184,7 +184,7 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
   personne: 'Par personne',
 }
 
-const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 // Les couleurs `var(--*)` ne supportent pas la concaténation d'un canal alpha
 // hexadécimal (`${'var(--gold)'}22` produit une chaîne CSS invalide) — voir
@@ -221,9 +221,9 @@ function fmtDateTime(iso: string): string {
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 'var(--font-size-callout)' }}>
       <span style={{ color: 'var(--text-faint)' }}>{label}</span>
-      <span style={{ color: '#fff', textAlign: 'right' }}>{value || '—'}</span>
+      <span style={{ color: 'var(--text)', textAlign: 'right' }}>{value || '—'}</span>
     </div>
   )
 }
@@ -519,7 +519,7 @@ export default function AgentDossiersClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
+          <Card accent="var(--danger-border)" className={styles.error} role="alert">
             <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les dossiers</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
             <Button variant="secondary" onClick={loadList}>Réessayer</Button>
           </Card>
@@ -569,7 +569,7 @@ export default function AgentDossiersClient() {
             title={search ? 'Aucun résultat' : 'Aucun dossier'}
             description={search ? `Aucun dossier ne correspond à « ${search} » dans « ${activeSection.label} ».` : `Aucun dossier dans la section « ${activeSection.label} ».`}
             action={search ? (
-              <Button variant="secondary" onClick={() => { setSearch(''); setPage(1) }} style={{ fontSize: 12.5 }}>
+              <Button variant="secondary" onClick={() => { setSearch(''); setPage(1) }} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                 Effacer la recherche
               </Button>
             ) : undefined}
@@ -602,13 +602,13 @@ export default function AgentDossiersClient() {
         <SlideOverModal onClose={closeDetail} ariaLabel="Détail du dossier">
           <div className={styles.drawerContent}>
             {detailError ? (
-              <Card accent="rgba(224,90,170,.35)" className={styles.drawerError}>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le dossier n’existe peut-être plus, ou une erreur serveur est survenue.</p>
+              <Card accent="var(--danger-border)" className={styles.drawerError}>
+                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le dossier n’existe peut-être plus, ou une erreur serveur est survenue.</p>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
+                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                     Réessayer
                   </Button>
-                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 12.5 }}>
+                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                     Fermer
                   </Button>
                 </div>
@@ -710,30 +710,30 @@ function DetailPanel({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h2 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: 0 }}>{displayName}</h2>
-          <span style={{ fontSize: 12, padding: '3px 8px', borderRadius: 999, background: alphaBg(STATUS_COLOR[detail.status]), color: STATUS_COLOR[detail.status], fontWeight: 700 }}>
+          <h2 style={{ fontSize: 'var(--font-size-title-4-lg)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>{displayName}</h2>
+          <span style={{ fontSize: 'var(--font-size-footnote)', padding: '3px 8px', borderRadius: 999, background: alphaBg(STATUS_COLOR[detail.status]), color: STATUS_COLOR[detail.status], fontWeight: 700 }}>
             {STATUS_LABEL[detail.status]}
           </span>
         </div>
-        <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '4px 0 0' }}>
           {detail.userEmail} · {typeLabel}
         </p>
       </div>
 
       <div>
         <p style={sectionTitleStyle}>Complétude</p>
-        <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--teal)' : completeness >= 50 ? 'var(--gold)' : '#e05aaa' }} />
+        <div style={{ height: 6, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--teal)' : completeness >= 50 ? 'var(--gold)' : 'var(--danger)' }} />
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '4px 0 0' }}>{completeness}%</p>
+        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '4px 0 0' }}>{completeness}%</p>
       </div>
 
       {detail.candidateNote && (
-        <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, padding: 14 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
+        <div style={{ background: 'rgba(var(--violet-rgb), .10)', border: '1px solid rgba(var(--violet-rgb), .30)', borderRadius: 12, padding: 14 }}>
+          <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--violet-text)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
             {detail.status === 'resubmitted' ? 'Message joint à la re-soumission' : 'Message joint à la soumission'}
           </p>
-          <p style={{ fontSize: 13.5, color: '#fff', margin: 0, fontStyle: 'italic' }}>« {detail.candidateNote} »</p>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text)', margin: 0, fontStyle: 'italic' }}>« {detail.candidateNote} »</p>
         </div>
       )}
 
@@ -744,7 +744,7 @@ function DetailPanel({
         ) : (
           prestataireFieldRows(detail.formData).map((block, i) => (
             <div key={i} style={{ marginTop: i > 0 ? 14 : 0 }}>
-              {block.header && <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)', margin: '0 0 4px' }}>{block.header}</p>}
+              {block.header && <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)', margin: '0 0 4px' }}>{block.header}</p>}
               {block.rows.map((r) => (
                 <FieldRow key={r.label} label={r.label} value={r.value} />
               ))}
@@ -756,14 +756,14 @@ function DetailPanel({
       <div>
         <p style={sectionTitleStyle}>Documents déposés</p>
         {uploadedDocKeys.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Aucun document</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: 0 }}>Aucun document</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {uploadedDocKeys.map((key) => (
               <div key={key}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>{DOC_LABELS[key] || key}</p>
+                <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>{DOC_LABELS[key] || key}</p>
                 {detail.documents[key].map((doc, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', padding: '3px 0' }}>
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', padding: '3px 0' }}>
                     <span>
                       {doc.name}
                       {doc.size ? ` · ${Math.round(doc.size / 1024)}ko` : ''}
@@ -786,19 +786,19 @@ function DetailPanel({
       {lastMessage && (
         <div>
           <p style={sectionTitleStyle}>Dernier message envoyé</p>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>« {lastMessage} »</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>« {lastMessage} »</p>
         </div>
       )}
 
       <div>
         <p style={sectionTitleStyle}>Notes internes</p>
-        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 8px' }}>Privé — jamais visible par le candidat.</p>
+        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '0 0 8px' }}>Privé — jamais visible par le candidat.</p>
         <Textarea style={{ minHeight: 70 }} value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="Ajouter une note…" />
         <Button
           variant="secondary"
           onClick={onSaveNote}
           disabled={noteBusy || noteDraft === detail.adminNote}
-          style={{ marginTop: 8, fontSize: 12.5, opacity: noteDraft === detail.adminNote ? 0.5 : 1 }}
+          style={{ marginTop: 8, fontSize: 'var(--font-size-footnote-lg)', opacity: noteDraft === detail.adminNote ? 0.5 : 1 }}
         >
           Enregistrer la note
         </Button>
@@ -828,11 +828,11 @@ function DetailPanel({
               <div key={i} style={{ display: 'flex', gap: 10 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: AUDIT_ACTION_COLOR[entry.action] || 'var(--text-faint)', marginTop: 5, flexShrink: 0 }} />
                 <div>
-                  <p style={{ fontSize: 12.5, color: '#fff', margin: 0 }}>{AUDIT_ACTION_LABEL[entry.action] || entry.action}</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text)', margin: 0 }}>{AUDIT_ACTION_LABEL[entry.action] || entry.action}</p>
                   {entry.note && !AUTO_NOTE_ACTIONS.has(entry.action) && (
-                    <p style={{ fontSize: 12, color: AUDIT_ACTION_COLOR[entry.action] || 'var(--text-muted)', margin: '2px 0' }}>« {entry.note} »</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: AUDIT_ACTION_COLOR[entry.action] || 'var(--text-muted)', margin: '2px 0' }}>« {entry.note} »</p>
                   )}
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '2px 0 0' }}>
                     {entry.byName || entry.by} · {fmtDateTime(entry.at)}
                   </p>
                 </div>
@@ -869,11 +869,11 @@ function DossierActions({
   onAction: (action: ModerateAction, note?: string) => void
 }) {
   const [confirmReactivate, setConfirmReactivate] = useState(false)
-  const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 13, textTransform: 'none', letterSpacing: 'normal', width: '100%' }
+  const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal', width: '100%' }
   const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
-  const amber: React.CSSProperties = { ...btnBase, background: '#f59e0b', color: '#1a1508' }
-  const pink: React.CSSProperties = { ...btnBase, background: '#c2347f', color: '#fff' }
-  const blue: React.CSSProperties = { ...btnBase, background: '#3b82f6', color: '#fff' }
+  const amber: React.CSSProperties = { ...btnBase, background: 'var(--warning-text)', color: 'var(--primary-ink)' }
+  const pink: React.CSSProperties = { ...btnBase, background: 'var(--primary)', color: 'var(--primary-ink)' }
+  const blue: React.CSSProperties = { ...btnBase, background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border-strong)' }
 
   function reset() {
     setActiveAction(null)
@@ -881,7 +881,7 @@ function DossierActions({
   }
 
   if (status === 'rejected') {
-    return <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>Dossier refusé — aucune action disponible.</p>
+    return <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: 0 }}>Dossier refusé — aucune action disponible.</p>
   }
 
   if (status === 'approved') {
@@ -928,7 +928,7 @@ function DossierActions({
   if (status === 'needs_changes') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0 }}>
           Le candidat a été notifié des corrections à apporter. Le dossier repassera en « En attente » une fois re-soumis.
         </p>
         {activeAction === 'reject' ? (
@@ -1053,14 +1053,14 @@ function ActionForm({
   const disabled = busy || (required && !note.trim())
   return (
     <Card style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <Label style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</Label>
+      <Label style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)' }}>{label}</Label>
       <Textarea style={{ minHeight: 70 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder={placeholder} />
-      {helper && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>{helper}</p>}
+      {helper && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>{helper}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '9px 12px', fontSize: 12.5 }}>
+        <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1, padding: '9px 12px', fontSize: 'var(--font-size-footnote-lg)' }}>
           Annuler
         </Button>
-        <Button variant="primary" onClick={onConfirm} disabled={disabled} style={{ ...confirmStyle, flex: 1, opacity: disabled ? 0.5 : 1, padding: '9px 12px', fontSize: 12.5 }}>
+        <Button variant="primary" onClick={onConfirm} disabled={disabled} style={{ ...confirmStyle, flex: 1, opacity: disabled ? 0.5 : 1, padding: '9px 12px', fontSize: 'var(--font-size-footnote-lg)' }}>
           {confirmLabel}
         </Button>
       </div>

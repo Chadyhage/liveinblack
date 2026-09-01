@@ -25,12 +25,12 @@ export default function PageLinks({ page, pageCount, makeHref, totalItems, pageS
 
   return (
     <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-      {rangeLabel && <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{rangeLabel}</span>}
+      {rangeLabel && <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>{rangeLabel}</span>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
         <PageLink href={page > 1 ? makeHref(page - 1) : null} label="‹" ariaLabel="Page précédente" />
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`gap-${i}`} style={{ fontSize: 12, color: 'var(--text-faint)', padding: '0 4px' }}>
+            <span key={`gap-${i}`} style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', padding: '0 4px' }}>
               …
             </span>
           ) : (
@@ -53,7 +53,7 @@ function PageLink({ href, label, ariaLabel, active }: { href: string | null; lab
     justifyContent: 'center',
     borderRadius: 'var(--radius-control)',
     textAlign: 'center',
-    fontSize: 11.5,
+    fontSize: 'var(--font-size-caption-lg)',
     fontWeight: active ? 800 : 600,
     textDecoration: 'none',
     color: active ? 'var(--primary-ink)' : href ? 'var(--text-muted)' : 'var(--text-faint)',

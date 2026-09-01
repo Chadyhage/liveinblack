@@ -70,36 +70,36 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 4px' }}>Revente officielle LIVE IN BLACK</h2>
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
+      <h2 style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, margin: '0 0 4px' }}>Revente officielle LIVE IN BLACK</h2>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
         Billets vérifiés et garantis par la plateforme — jamais d&apos;échange direct entre utilisateurs, jamais d&apos;identité de vendeur communiquée.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {listings.map((listing) => (
           <Card
             key={listing.id}
-            accent="rgba(139,92,246,0.25)"
+            accent="rgba(var(--violet-rgb), .25)"
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 14px' }}
           >
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 13.5, fontWeight: 700, margin: 0 }}>
+              <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, margin: 0 }}>
                 {listing.place}
                 {listing.isGroupListing ? ` — groupe (${listing.seatCount} pers.)` : ''}
               </p>
-              <p style={{ fontSize: 11, color: 'var(--violet)', margin: '2px 0 0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Revente vérifiée</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--violet)', margin: '2px 0 0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Revente vérifiée</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(toMajor(listing.resalePriceMinor, listing.currency), listing.currency)}</span>
+              <span style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(toMajor(listing.resalePriceMinor, listing.currency), listing.currency)}</span>
               {isAuthenticated ? (
                 <Button
                   onClick={() => handleBuy(listing)}
                   disabled={buyingId === listing.id}
-                  style={{ padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--violet)', color: '#fff', fontSize: 12.5 }}
+                  style={{ padding: '9px 16px', borderRadius: 999, border: 'none', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-footnote-lg)' }}
                 >
                   {buyingId === listing.id ? 'Redirection…' : 'Acheter'}
                 </Button>
               ) : (
-                <a href="/login" style={{ padding: '9px 16px', borderRadius: 999, background: 'var(--violet)', color: '#fff', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}>
+                <a href="/login" style={{ padding: '9px 16px', borderRadius: 999, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, textDecoration: 'none' }}>
                   Se connecter
                 </a>
               )}
@@ -107,7 +107,7 @@ export default function ResaleListingsSection({ eventId, isAuthenticated }: { ev
           </Card>
         ))}
       </div>
-      {error && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: '8px 0 0' }}>{error}</p>}
+      {error && <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--danger)', margin: '8px 0 0' }}>{error}</p>}
     </section>
   )
 }

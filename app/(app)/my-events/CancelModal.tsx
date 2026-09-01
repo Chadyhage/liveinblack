@@ -64,16 +64,16 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
 
   return (
     <Modal onClose={onClose} maxWidth={520} ariaLabel="Annuler l’événement">
-        <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>
+        <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>
           {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
         </h2>
 
         {phase === 'confirm' ? (
           <>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 18px' }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.7, margin: '0 0 18px' }}>
               Cette action est irréversible s&rsquo;il n&rsquo;y a aucune réservation. S&rsquo;il y en a déjà, l&rsquo;événement sera annulé et remboursé plutôt que supprimé.
             </p>
-            {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--pink)', fontSize: 'var(--font-size-footnote-lg)', marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Button
                 variant="secondary"
@@ -97,28 +97,28 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
           </>
         ) : (
           <>
-            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.08)', marginBottom: 16 }}>
-              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: 0 }}>
+            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--warning-rgb), .4)', background: 'var(--warning-fill)', marginBottom: 16 }}>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.7, margin: 0 }}>
                 {bookingCount} réservation(s) {bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. En confirmant, les acheteurs sont remboursés automatiquement (carte bancaire) ou placés dans ta liste de remboursement mobile money — tu ne touches jamais l&rsquo;argent d&rsquo;un événement annulé, et chaque acheteur est prévenu par e-mail.
               </p>
             </div>
             <label style={{ display: 'grid', gap: 6, marginBottom: 6 }}>
-              <span style={{ font: '600 11px var(--font-open-sans)', color: 'rgba(255,255,255,0.55)' }}>Message aux acheteurs (optionnel)</span>
+              <span style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-faint)' }}>Message aux acheteurs (optionnel)</span>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 500))}
                 rows={4}
                 placeholder="Ex : Nous sommes au regret de vous annoncer l'annulation de cet événement pour cause de force majeure. Le remboursement du prix de votre billet vous sera versé automatiquement (hors frais de service, non remboursables)."
-                style={{ background: '#0b0c12' }}
+                style={{ background: 'var(--field-bg)' }}
               />
             </label>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '0 0 14px' }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '0 0 14px' }}>
               Ce message s&rsquo;affichera sur le billet de chaque acheteur, accompagné d&rsquo;un bouton de contact support. ({message.length}/500)
             </p>
-            <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              L&rsquo;événement sera marqué <strong style={{ color: '#fff' }}>Annulé</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu&rsquo;elles voient ce message.
+            <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              L&rsquo;événement sera marqué <strong style={{ color: 'var(--text)' }}>Annulé</strong> et retiré du site, mais restera accessible aux personnes ayant un billet pour qu&rsquo;elles voient ce message.
             </p>
-            {error && <p style={{ color: 'var(--pink)', fontSize: 12.5, marginBottom: 12 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--pink)', fontSize: 'var(--font-size-footnote-lg)', marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 10 }}>
               <Button
                 variant="secondary"

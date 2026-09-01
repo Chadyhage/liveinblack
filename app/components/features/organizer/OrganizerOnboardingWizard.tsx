@@ -45,8 +45,8 @@ const EMPTY_FORM: OrganizerFormData = {
   description: '',
 }
 
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 14, outline: 'none' }
-const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', outline: 'none' }
+const labelStyle: React.CSSProperties = { fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
   borderRadius: 3,
@@ -55,7 +55,7 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   opacity: disabled ? 0.4 : 1,
   color: 'var(--primary-ink)',
   fontWeight: 500,
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   textTransform: 'none',
   letterSpacing: 'normal',
   cursor: disabled ? 'default' : 'pointer',
@@ -250,12 +250,12 @@ export default function OrganizerOnboardingWizard({
     return (
       <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <Card style={{ padding: 24, width: '100%', maxWidth: 760, textAlign: 'center' }}>
-          <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
-            Tu seras contacté à <strong style={{ color: '#fff' }}>{submitted.emailPro}</strong> une fois ton compte validé.
+          <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1)', color: 'var(--text)', margin: '0 0 12px' }}>Demande envoyée</h1>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
+            Tu seras contacté à <strong style={{ color: 'var(--text)' }}>{submitted.emailPro}</strong> une fois ton compte validé.
           </p>
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
           <Link href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
             Retour à l&apos;accueil
           </Link>
@@ -270,19 +270,19 @@ export default function OrganizerOnboardingWizard({
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
-          <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Organisateur</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
+          <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 6px' }}>Compte Organisateur</h1>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
-            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{progress}%</span>
+            <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
           </div>
-          <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: 6, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function OrganizerOnboardingWizard({
         <Card style={{ padding: 24 }}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
               {/* Grille responsive (2 colonnes dès que la place le permet, 1
                   sous ~460px de large) au lieu d'un empilement systématique
                   sur une seule colonne — le formulaire n'utilisait qu'une
@@ -349,7 +349,7 @@ export default function OrganizerOnboardingWizard({
               {mode === 'anonymous' && (
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                  <h3 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ton compte de connexion</h3>
+                  <h3 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ton compte de connexion</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
@@ -372,7 +372,7 @@ export default function OrganizerOnboardingWizard({
                           aria-pressed={showRegPassword}
                           aria-label={showRegPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
                           onClick={() => setShowRegPassword((v) => !v)}
-                          style={{ position: 'absolute', right: 6, top: '50%', minWidth: 64, minHeight: 44, padding: 0, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
+                          style={{ position: 'absolute', right: 6, top: '50%', minWidth: 64, minHeight: 44, padding: 0, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
                         >
                           <IconEye open={showRegPassword} />
                           {showRegPassword ? 'Cacher' : 'Voir'}
@@ -384,7 +384,7 @@ export default function OrganizerOnboardingWizard({
                       <Input aria-label="Confirmation du mot de passe" style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
                     </div>
                   </div>
-                  <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>
+                  <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>
                 </>
               )}
             </div>
@@ -392,7 +392,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Description de l&apos;activité</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Description de l&apos;activité</h2>
               <div>
                 <Label style={labelStyle}>Type d&apos;établissement {requiredMark}</Label>
                 <Select
@@ -472,8 +472,8 @@ export default function OrganizerOnboardingWizard({
                             borderRadius: 999,
                             border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
                             background: active ? 'var(--primary-a14)' : 'transparent',
-                            color: active ? 'var(--gold)' : '#fff',
-                            fontSize: 12.5,
+                            color: active ? 'var(--gold)' : 'var(--text)',
+                            fontSize: 'var(--font-size-footnote-lg)',
                           }}
                         >
                           {r.flag} {r.name}
@@ -498,7 +498,7 @@ export default function OrganizerOnboardingWizard({
                   onChange={(e) => set('alcoolAtteste', e.target.checked)}
                   style={{ alignItems: 'flex-start' }}
                   label={
-                    <span style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, fontWeight: 400 }}>
+                    <span style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, fontWeight: 400 }}>
                       J&apos;atteste respecter la réglementation locale sur la vente d&apos;alcool et en assumer l&apos;entière responsabilité. Cette responsabilité t&apos;incombe entièrement —
                       LIVEINBLACK n&apos;est pas responsable de la conformité de ton activité.
                     </span>
@@ -510,9 +510,9 @@ export default function OrganizerOnboardingWizard({
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Comment tu seras payé</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0 }}>Comment tu seras payé</p>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                 LIVEINBLACK collecte les paiements de tes billets et te reverse ta part directement sur ton compte bancaire. Les reversements sont gérés de façon
                 entièrement automatique — tu n&apos;as rien à faire manuellement.
               </p>
@@ -522,14 +522,14 @@ export default function OrganizerOnboardingWizard({
                 ['03', 'Reversements automatiques', 'Tes ventes te sont reversées automatiquement, après commission LIVEINBLACK.'],
               ].map(([n, title, body]) => (
                 <div key={n} style={{ display: 'flex', gap: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold)' }}>{n}</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--gold)' }}>{n}</span>
                   <div>
-                    <p style={{ fontSize: 13.5, fontWeight: 700, color: '#fff', margin: 0 }}>{title}</p>
-                    <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{body}</p>
+                    <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{title}</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>{body}</p>
                   </div>
                 </div>
               ))}
-              <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>
+              <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>
                 Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1. Aucune information bancaire n&apos;est demandée ici
                 — tu configureras tout après approbation.
               </p>
@@ -538,8 +538,8 @@ export default function OrganizerOnboardingWizard({
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
-              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                 Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité. Ils sont stockés de façon privée et accessibles uniquement à
                 l&apos;équipe LIVEINBLACK. Formats acceptés : PDF, JPG, PNG — 10 Mo max par fichier.
               </p>
@@ -556,12 +556,12 @@ export default function OrganizerOnboardingWizard({
           )}
 
           {error && (
-            <p style={{ fontSize: 12.5, color: '#e05aaa', marginTop: 14 }}>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--danger)', marginTop: 14 }}>
               {error}{' '}
               {emailTaken && (
                 <>
                   Connecte-toi à ce compte, puis débloque l’interface organisateur depuis ton profil :{' '}
-                  <Link href="/login" style={{ color: '#e05aaa', textDecoration: 'underline' }}>
+                  <Link href="/login" style={{ color: 'var(--danger)', textDecoration: 'underline' }}>
                     se connecter
                   </Link>
                   .
@@ -572,7 +572,7 @@ export default function OrganizerOnboardingWizard({
 
           <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
             {step > 0 && (
-              <Button variant="secondary" onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff' }}>
+              <Button variant="secondary" onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text)' }}>
                 Retour
               </Button>
             )}
@@ -593,7 +593,7 @@ export default function OrganizerOnboardingWizard({
           </div>
         </Card>
 
-        <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+        <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
           {mode === 'anonymous'
             ? 'Rien n’est encore enregistré : termine et envoie ta demande pour ne rien perdre.'
             : autosaveState === 'error'
@@ -628,7 +628,7 @@ function DocUpload({
       <Label style={labelStyle}>
         {label} {required && <span style={{ color: 'var(--gold)' }}>*</span>}
       </Label>
-      <label style={{ display: 'inline-block', padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 12.5, cursor: 'pointer' }}>
+      <label style={{ display: 'inline-block', padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-footnote-lg)', cursor: 'pointer' }}>
         + Ajouter un fichier
         <input
           type="file"
@@ -645,14 +645,14 @@ function DocUpload({
       {files.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
           {files.map((f, i) => (
-            <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+            <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 9, color: 'var(--text-faint)', textTransform: 'uppercase' }}>
+                <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--surface-2)', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 'var(--font-size-mini)', color: 'var(--text-faint)', textTransform: 'uppercase' }}>
                   {f.format}
                 </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
               </span>
-              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#e05aaa', fontSize: 12, flexShrink: 0, textDecoration: 'none' }}>
+              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: 'var(--danger)', fontSize: 'var(--font-size-footnote)', flexShrink: 0, textDecoration: 'none' }}>
                 Retirer
               </Button>
             </div>

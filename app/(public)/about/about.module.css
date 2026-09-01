@@ -1,20 +1,20 @@
-.page{--font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;width:100%;padding-bottom:120px;color:#f5f5f7;font-family:var(--font);background:radial-gradient(circle at 12% 4%,var(--primary-a07),transparent 28%),radial-gradient(circle at 88% 18%,rgba(124,92,255,.08),transparent 30%),#0a0a0d}
+.page{--font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;width:100%;padding-bottom:120px;color:var(--text);font-family:var(--font);background:radial-gradient(circle at 12% 4%,var(--primary-a07),transparent 28%),radial-gradient(circle at 88% 18%,rgba(var(--violet-rgb), .08),transparent 30%),var(--obsidian)}
 .hero{max-width:1040px!important;padding:clamp(56px,7vw,96px) 20px clamp(44px,5vw,72px)!important}
-.hero>p:first-child{font-size:12px!important;font-weight:700!important;letter-spacing:-.04em!important}
+.hero>p:first-child{font-size: var(--font-size-footnote)!important;font-weight:700!important;letter-spacing:-.04em!important}
 .hero h1{margin-top:16px!important;font:700 clamp(38px,5.4vw,64px)/.98 var(--font)!important;letter-spacing:-.055em!important;text-transform:none!important}
-.hero>p:last-child{max-width:760px!important;margin-top:20px!important;color:rgba(245,245,247,.7)!important;font-size:clamp(16px,1.8vw,20px)!important;line-height:1.45!important}
-.section{padding:clamp(42px,5vw,68px) clamp(10px,2vw,24px)!important;border-top:1px solid rgba(255,255,255,.1)}
+.hero>p:last-child{max-width:760px!important;margin-top:20px!important;color:var(--text-muted)!important;font-size:clamp(16px,1.8vw,20px)!important;line-height:1.45!important}
+.section{padding:clamp(42px,5vw,68px) clamp(10px,2vw,24px)!important;border-top:1px solid var(--border)}
 .section h2{font:700 clamp(28px,3.2vw,42px)/1.05 var(--font)!important;letter-spacing:-.045em!important;text-transform:none!important}
-.section p{font-size:15px!important;line-height:1.58!important}
+.section p{font-size: var(--font-size-headline)!important;line-height:1.58!important}
 .section :global(.lb-card-grid){gap:18px}
-.section :global(.lb-card){padding:22px!important;border-radius:18px!important;background:rgba(255,255,255,.055)!important}
-.section details{border-color:rgba(255,255,255,.12)!important;border-radius:18px!important;background:rgba(255,255,255,.055)!important;padding:0 18px!important}
-.section details summary{min-height:36px!important;font-size:12px!important}
+.section :global(.lb-card){padding:22px!important;border-radius:18px!important;background:var(--card-bg)!important}
+.section details{border-color:var(--border)!important;border-radius:18px!important;background:var(--card-bg)!important;padding:0 18px!important}
+.section details summary{min-height:36px!important;font-size: var(--font-size-footnote)!important}
 .ctaWrap{padding:48px 20px 0!important}
-.cta{max-width:980px!important;padding:clamp(30px,4.5vw,52px)!important;border-radius:24px!important;background:linear-gradient(135deg,var(--primary-a12),rgba(255,255,255,.045))!important}
+.cta{max-width:980px!important;padding:clamp(30px,4.5vw,52px)!important;border-radius:24px!important;background:linear-gradient(135deg,var(--primary-a12),var(--fill-secondary))!important}
 .cta h2{font:700 clamp(28px,3.2vw,42px)/1.05 var(--font)!important;letter-spacing:-.045em!important;text-transform:none!important}
-.cta p{font-size:16px!important}
-.cta a{min-height:44px!important;border-radius:13px!important;font-size:14px!important}
+.cta p{font-size: var(--font-size-headline-lg)!important}
+.cta a{min-height:44px!important;border-radius:13px!important;font-size: var(--font-size-body-sm)!important}
 @media(max-width:680px){.page{padding-bottom:72px}
 .hero{text-align:left!important;padding-top:42px!important}
 .hero h1{font-size:clamp(34px,10vw,46px)!important}
@@ -25,24 +25,24 @@
 /* Échelle alignée sur l'accueil pour garder les pages publiques lisibles. */
 .page{padding-bottom:56px}
 .hero{max-width:var(--public-page-max)!important;padding:var(--public-hero-padding)!important}
-.hero>p:first-child{font-size:13.5px!important;letter-spacing:.04em!important}
-.hero h1{margin-top:12px!important;font-size:56px!important;line-height:1.06!important}
-.hero>p:last-child{margin-top:16px!important;font-size:18px!important;line-height:1.55!important}
+.hero>p:first-child{font-size: var(--font-size-body)!important;letter-spacing:.04em!important}
+.hero h1{margin-top:12px!important;font-size: var(--font-size-display-xxl)!important;line-height:1.06!important}
+.hero>p:last-child{margin-top:16px!important;font-size: var(--font-size-title-4)!important;line-height:1.55!important}
 .section{padding:42px var(--public-page-gutter)!important}
-.section h2{font-size:34px!important;line-height:1.12!important}
-.section p{font-size:16px!important;line-height:1.6!important}
+.section h2{font-size: var(--font-size-display-md)!important;line-height:1.12!important}
+.section p{font-size: var(--font-size-headline-lg)!important;line-height:1.6!important}
 .section :global(.lb-card-grid){gap:16px}
 .section :global(.lb-card){padding:22px!important;border-radius:18px!important}
 .section details{padding-inline:18px!important;border-radius:18px!important}
-.section details summary{min-height:44px!important;font-size:15px!important}
+.section details summary{min-height:44px!important;font-size: var(--font-size-headline)!important}
 .ctaWrap{padding:36px var(--public-page-gutter) 0!important}
 .cta{padding:32px!important;border-radius:24px!important}
-.cta h2{font-size:34px!important}
-.cta p{font-size:16px!important;line-height:1.55!important}
-.cta a{min-height:46px!important;font-size:15.5px!important}
+.cta h2{font-size: var(--font-size-display-md)!important}
+.cta p{font-size: var(--font-size-headline-lg)!important;line-height:1.55!important}
+.cta a{min-height:46px!important;font-size: var(--font-size-headline-xl)!important}
 
 @media(max-width:680px){
-  .hero h1{font-size:38px!important}
-  .hero>p:last-child{font-size:16px!important}
-  .section h2,.cta h2{font-size:28px!important}
+  .hero h1{font-size: var(--font-size-display-lg)!important}
+  .hero>p:last-child{font-size: var(--font-size-headline-lg)!important}
+  .section h2,.cta h2{font-size: var(--font-size-large-title)!important}
 }

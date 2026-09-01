@@ -13,7 +13,7 @@ const rowStyle: React.CSSProperties = {
 }
 
 const sectionLabelStyle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 'var(--font-size-callout)',
   fontWeight: 650,
   color: 'var(--text-faint)',
   letterSpacing: '-0.01em',
@@ -35,24 +35,24 @@ export default function BlockedReportedModal({
   return (
     <ModalShell title="Bloqués & signalés" onClose={onClose} wide>
       <p style={sectionLabelStyle}>Comptes bloqués ({blocked.length})</p>
-      {blocked.length === 0 ? <p style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 16 }}>Aucun compte bloqué.</p> : null}
+      {blocked.length === 0 ? <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 16 }}>Aucun compte bloqué.</p> : null}
       {blocked.map((b) => (
         <div key={b.userId} style={rowStyle}>
-          <span style={{ fontSize: 13, color: 'var(--text)' }}>{b.name}</span>
+          <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{b.name}</span>
           <Button variant="secondary" onClick={() => onUnblock(b.userId, b.name)} size="sm" style={{ borderRadius: 999 }}>
             Débloquer
           </Button>
         </div>
       ))}
       <p style={{ ...sectionLabelStyle, marginTop: 18 }}>Signalements envoyés ({reports.length})</p>
-      {reports.length === 0 ? <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun signalement envoyé.</p> : null}
+      {reports.length === 0 ? <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Aucun signalement envoyé.</p> : null}
       {reports.map((r) => (
         <div key={r.id} style={rowStyle}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 13, color: 'var(--text)', margin: 0 }}>{r.targetName}</p>
-            <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.reason}</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0 }}>{r.targetName}</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.reason}</p>
           </div>
-          <span style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>{new Date(r.createdAt).toLocaleDateString('fr-FR')}</span>
+          <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', flexShrink: 0 }}>{new Date(r.createdAt).toLocaleDateString('fr-FR')}</span>
         </div>
       ))}
     </ModalShell>

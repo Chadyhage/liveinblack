@@ -100,9 +100,9 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
     <Wrapper className={embedded ? undefined : 'lb-dashboard-page'}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {error && (
-          <Card accent="rgba(224,90,170,0.35)" style={{ padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
-            <Button variant="secondary" onClick={load} style={{ fontSize: 12.5, flexShrink: 0 }}>
+          <Card accent="var(--danger-border)" style={{ padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page.</p>
+            <Button variant="secondary" onClick={load} style={{ fontSize: 'var(--font-size-footnote-lg)', flexShrink: 0 }}>
               Recharger
             </Button>
           </Card>
@@ -119,19 +119,19 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
             <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {[
                 { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--teal)' },
-                { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? '#dc3232' : 'var(--text-muted)' },
+                { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? 'var(--danger)' : 'var(--text-muted)' },
                 { label: 'Revenus boosts', value: fmtMoney(data.totalRevenue, 'EUR'), color: 'var(--gold)' },
               ].map((k) => (
                 <Card key={k.label} style={{ padding: 14, textAlign: 'center' }}>
-                  <p style={{ fontSize: 22, fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
+                  <p style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, color: k.color, margin: 0 }}>{k.value}</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '3px 0 0' }}>{k.label}</p>
                 </Card>
               ))}
             </div>
 
             {data.conflicts.length > 0 && (
               <div className="lb-agent-card-grid">
-                <p className="lb-agent-grid-heading" style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: '#ff8c8c', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Conflits — action requise</p>
+                <p className="lb-agent-grid-heading" style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--danger-text-strong)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Conflits — action requise</p>
                 {data.conflicts.map((b) => (
                   <BoostCard key={b.id} b={b} />
                 ))}
@@ -139,7 +139,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
             )}
 
             <div className="lb-agent-card-grid">
-              <p className="lb-agent-grid-heading" style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
+              <p className="lb-agent-grid-heading" style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Actifs ({activeList.length})</p>
               {activeList.length === 0 ? (
                 <div className="lb-agent-grid-wide"><EmptyState title="Aucun boost actif" description="Aucun événement n’a de boost en cours actuellement." /></div>
               ) : (
@@ -152,14 +152,14 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
 
             {data.expired.length > 0 && (
               <div className="lb-agent-card-grid">
-                <p className="lb-agent-grid-heading" style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-faint)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Expirés ({data.expired.length})</p>
+                <p className="lb-agent-grid-heading" style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--text-faint)', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Expirés ({data.expired.length})</p>
                 {data.expired.slice(0, 10).map((b) => (
                   <div key={b.id} style={{ opacity: 0.55 }}>
                     <BoostCard b={b} />
                   </div>
                 ))}
                 {data.expired.length > 10 && (
-                  <p className="lb-agent-grid-wide" style={{ fontSize: 12, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+                  <p className="lb-agent-grid-wide" style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
                     + {data.expired.length - 10} boost{data.expired.length - 10 > 1 ? 's' : ''} expiré{data.expired.length - 10 > 1 ? 's' : ''} supplémentaire{data.expired.length - 10 > 1 ? 's' : ''} non affiché{data.expired.length - 10 > 1 ? 's' : ''}
                   </p>
                 )}
@@ -175,30 +175,30 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
 function BoostCard({ b }: { b: AgentBoostView }) {
   return (
     <Card
-      accent={b.conflict && b.active ? 'rgba(220,50,50,0.5)' : undefined}
+      accent={b.conflict && b.active ? 'var(--danger-border)' : undefined}
       style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--obsidian)', background: 'var(--gold)', borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 999, padding: '2px 9px' }}>
+        <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 800, color: 'var(--obsidian)', background: 'var(--gold)', borderRadius: 999, padding: '2px 9px' }}>Top {b.position}</span>
+        <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 999, padding: '2px 9px' }}>
           {b.region || 'Toutes régions'}
         </span>
         {b.conflict && (
-          <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.06em', color: '#fff', background: 'rgba(220,50,50,0.85)', borderRadius: 999, padding: '2px 9px' }}>
+          <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--danger-ink)', background: 'var(--danger)', borderRadius: 999, padding: '2px 9px' }}>
             {b.status === 'refund_failed' ? 'REMBOURSEMENT ÉCHOUÉ' : 'CONFLIT DE CRÉNEAU'}
           </span>
         )}
-        <span style={{ marginLeft: 'auto', fontWeight: 800, fontSize: 15, color: 'var(--gold)' }}>{fmtMoney(b.price, 'EUR')}</span>
+        <span style={{ marginLeft: 'auto', fontWeight: 800, fontSize: 'var(--font-size-headline)', color: 'var(--gold)' }}>{fmtMoney(b.price, 'EUR')}</span>
       </div>
-      <p style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', margin: 0 }}>
+      <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>
         {b.eventName}
         {b.organizerName ? ` · ${b.organizerName}` : ''}
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0 }}>
         Acheté le {fmtDate(b.purchasedAt)} · expire le {fmtDate(b.expiresAt)} · {b.days} jour{b.days > 1 ? 's' : ''}
       </p>
       {b.conflict && (
-        <p style={{ fontSize: 12, color: 'rgba(255,140,140,0.9)', margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'rgba(var(--danger-muted-rgb), .9)', margin: 0, lineHeight: 1.5 }}>
           {b.status === 'refunded_conflict'
             ? 'Conflit de créneau : ce boost a été remboursé AUTOMATIQUEMENT par le webhook. Rien à faire — ne pas re-rembourser dans Stripe.'
             : b.status === 'refund_failed'

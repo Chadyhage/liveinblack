@@ -47,7 +47,7 @@ function conversationLabel(conv: ConversationView, currentUserId: string): strin
 }
 
 function avatarColorFor(userId: string): string {
-  const colors = ['var(--primary)', '#8b5cf6', '#e05aaa', '#3b82f6', 'var(--primary-strong)', '#f59e0b']
+  const colors = ['var(--primary)', 'var(--violet-text)', 'var(--danger)', 'var(--info)', 'var(--primary-strong)', 'var(--warning-text)']
   if (!userId) return colors[0]
   const code = userId.charCodeAt(userId.length - 1) || 0
   return colors[code % colors.length]
@@ -73,7 +73,7 @@ function Avatar({ userId, name, size = 30 }: { userId: string; name: string; siz
         justifyContent: 'center',
         flexShrink: 0,
         background: avatarColorFor(userId),
-        color: '#fff',
+        color: 'var(--image-text)',
         fontSize: Math.max(11, Math.round(size * 0.38)),
         fontWeight: 700,
       }}
@@ -95,8 +95,8 @@ function GroupAvatar({ size = 30 }: { size?: number }) {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        background: 'rgba(139,92,246,.22)',
-        color: '#fff',
+        background: 'var(--violet-fill-strong)',
+        color: 'var(--image-text)',
         fontSize: Math.max(11, Math.round(size * 0.4)),
         fontWeight: 800,
       }}
@@ -135,7 +135,7 @@ export default function ForwardModal({
               label={
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {conv.type === 'group' ? <GroupAvatar size={30} /> : <Avatar userId={conv.id} name={label} size={30} />}
-                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{label}</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', fontWeight: 400 }}>{label}</span>
                 </span>
               }
             />

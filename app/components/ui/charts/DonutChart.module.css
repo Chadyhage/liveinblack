@@ -1,11 +1,11 @@
 .root { width: 100%; min-width: 0; display: flex; align-items: center; gap: clamp(14px,2vw,28px); }
-.chart { position: relative; flex: 0 0 auto; filter: drop-shadow(0 14px 30px rgba(0,0,0,.22)); }
-.total { fill: #f5f5f7; font-size: 25px; font-weight: 720; letter-spacing: -.04em; }
-.totalLabel { fill: rgba(245,245,247,.38); font-size: 9px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+.chart { position: relative; flex: 0 0 auto; }
+.total { fill: var(--text); font-size: var(--font-size-title-1-lg); font-weight: 720; letter-spacing: -.04em; }
+.totalLabel { fill: var(--text-faint); font-size: var(--font-size-mini); font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
 .legend { min-width: 0; flex: 1 1 140px; display: flex; flex-direction: column; gap: 8px; }
-.legendItem { min-width:0; min-height: 44px; padding: 0 10px; display: grid; grid-template-columns: 8px minmax(0,1fr) auto auto; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.075); border-radius: 13px; background: rgba(255,255,255,.035); }
-.dot { width: 8px; height: 8px; border-radius: 99px; box-shadow: 0 0 12px currentColor; }
-.name { min-width:0; overflow:hidden; color: rgba(245,245,247,.68); font-size: 13px; text-overflow:ellipsis; white-space:nowrap; }
-.legendItem strong { color: #f5f5f7; font-size: 13px; }
-.legendItem small { min-width: 32px; padding: 3px 6px; border-radius: 999px; background: rgba(255,255,255,.055); color: rgba(245,245,247,.42); font-size: 9px; text-align: center; }
+.legendItem { min-width:0; min-height: 44px; padding: 0 10px; display: grid; grid-template-columns: 8px minmax(0,1fr) auto auto; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-2); }
+.dot { width: 8px; height: 8px; border-radius: 99px; }
+.name { min-width:0; overflow:hidden; color: var(--text-muted); font-size: var(--font-size-callout); text-overflow:ellipsis; white-space:nowrap; }
+.legendItem strong { color: var(--text); font-size: var(--font-size-callout); }
+.legendItem small { min-width: 32px; padding: 3px 6px; border-radius: 999px; background: var(--primary-a08); color: var(--text-faint); font-size: var(--font-size-mini); text-align: center; }
 @media(max-width:520px){.root{align-items:stretch;flex-direction:column}.chart{align-self:center}.legend{width:100%}}

@@ -14,7 +14,7 @@ type SearchResults = { events: SearchEvent[]; providers: SearchProvider[]; organ
 const EMPTY_RESULTS: SearchResults = { events: [], providers: [], organizers: [] }
 
 function visualStyle(url?: string | null) {
-  return url ? { backgroundImage: `linear-gradient(180deg, transparent, rgba(0,0,0,.28)), url("${url.replaceAll('"', '%22')}")` } : undefined
+  return url ? { backgroundImage: `linear-gradient(180deg, transparent, rgba(var(--black-rgb), .28)), url("${url.replaceAll('"', '%22')}")` } : undefined
 }
 
 export default function SearchClient({ initialQuery }: { initialQuery: string }) {

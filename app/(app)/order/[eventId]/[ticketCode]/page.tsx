@@ -70,8 +70,8 @@ function GateScreen({
   variant?: 'error' | 'notice'
 }) {
   const accent = variant === 'notice' ? 'var(--gold)' : 'var(--pink)'
-  const accentBg = variant === 'notice' ? 'var(--primary-a08)' : 'rgba(224,90,170,0.08)'
-  const accentBorder = variant === 'notice' ? 'var(--primary-a35)' : 'rgba(224,90,170,0.35)'
+  const accentBg = variant === 'notice' ? 'var(--primary-a08)' : 'var(--danger-fill)'
+  const accentBorder = variant === 'notice' ? 'var(--primary-a35)' : 'var(--danger-border)'
   return (
     <main style={{ minHeight: '100vh', width: '100%', padding: '32px clamp(18px, 3vw, 48px) 56px' }}>
       <div style={{ width: '100%', maxWidth: 'none', minHeight: 'calc(100vh - 88px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -99,9 +99,9 @@ function GateScreen({
             </svg>
           )}
         </div>
-        <h1 style={{ fontWeight: 800, fontSize: 16, color: accent, margin: '0 0 10px', letterSpacing: '-.03em' }}>{title}</h1>
-        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href={backHref} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+        <h1 style={{ fontWeight: 800, fontSize: 'var(--font-size-headline-lg)', color: accent, margin: '0 0 10px', letterSpacing: '-.03em' }}>{title}</h1>
+        <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
+        <Link href={backHref} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
           ← {backLabel}
         </Link>
       </div>

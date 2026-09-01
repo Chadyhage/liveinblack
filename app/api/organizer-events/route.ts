@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { auth } from '@/auth'
 import { createOrganizerEvent, listMyOrganizerEvents } from '@/lib/server/organizer/organizerEvents'
 import { canCreateEvent } from '@/lib/server/permissions'
+import { STATIC_THEME } from '@/lib/shared/staticTheme'
 
 const placeSchema = z.object({
   id: z.string().default(''),
@@ -62,8 +63,8 @@ const eventFormSchema = z.object({
   region: z.string().trim().min(1),
   imageUrl: z.string().nullable().default(null),
   videoUrl: z.string().nullable().default(null),
-  color: z.string().default('#c8a96e'),
-  accentColor: z.string().default('#e8d49e'),
+  color: z.string().default(STATIC_THEME.eventDefaultColor),
+  accentColor: z.string().default(STATIC_THEME.eventDefaultAccentColor),
   places: z.array(placeSchema).default([]),
   playlist: z.boolean().default(false),
   preorder: z.boolean().default(false),

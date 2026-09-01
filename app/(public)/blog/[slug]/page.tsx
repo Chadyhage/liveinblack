@@ -127,37 +127,37 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
 
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        <nav aria-label="Fil d'ariane" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 13.5, color: 'rgba(245, 245, 247, .65)' }}>
+        <nav aria-label="Fil d'ariane" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 'var(--font-size-body)', color: 'var(--text-faint)' }}>
           <Link href="/blog" style={{ color: 'var(--primary)', fontWeight: 650, textDecoration: 'none' }}>Blog</Link>
           <span>/</span>
-          <span style={{ color: 'rgba(245, 245, 247, .85)' }}>{post.title}</span>
+          <span style={{ color: 'var(--text)' }}>{post.title}</span>
         </nav>
 
         <header style={{ marginBottom: 20 }}>
-          <span style={{ display: 'inline-block', fontSize: 13, fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '4px 12px', borderRadius: 999, marginBottom: 12 }}>
+          <span style={{ display: 'inline-block', fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '4px 12px', borderRadius: 999, marginBottom: 12 }}>
             {articleSection}
           </span>
-          <h1 className="font-display" style={{ fontSize: 'clamp(28px, 3.8vw, 44px)', lineHeight: 1.2, letterSpacing: '-.02em', margin: 0, color: '#fff' }}>
+          <h1 className="font-display" style={{ fontSize: 'clamp(28px, 3.8vw, 44px)', lineHeight: 1.2, letterSpacing: '-.02em', margin: 0, color: 'var(--text)' }}>
             {post.title}
           </h1>
-          <p style={{ margin: '10px 0 0', fontSize: 14.5, color: 'rgba(245, 245, 247, .75)', fontWeight: 600 }}>
+          <p style={{ margin: '10px 0 0', fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', fontWeight: 600 }}>
             Par {post.authorName} · {publishedDisplay} · {post.readingTimeMinutes} min de lecture
           </p>
         </header>
 
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight: 420, borderRadius: 20, overflow: 'hidden', marginBottom: 28, background: 'var(--obsidian)', border: '1px solid rgba(255,255,255,.12)', boxShadow: '0 20px 56px rgba(0,0,0,.3)' }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight: 420, borderRadius: 20, overflow: 'hidden', marginBottom: 28, background: 'var(--obsidian)', border: '1px solid var(--border)', boxShadow: '0 20px 56px rgba(var(--black-rgb), .30)' }}>
           <Image src={coverImageUrl} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 960px) 100vw, 960px" priority />
         </div>
 
         <article
-          style={{ maxWidth: 780, margin: '0 auto', fontSize: 16.5, lineHeight: 1.65, color: 'rgba(245, 245, 247, .86)' }}
+          style={{ maxWidth: 780, margin: '0 auto', fontSize: 'var(--font-size-headline-xxl)', lineHeight: 1.65, color: 'var(--text)' }}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
         {post.tags.length > 0 && (
           <div style={{ maxWidth: 780, margin: '24px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {post.tags.map((tag) => (
-              <span key={tag} style={{ fontSize: 13, fontWeight: 700, color: 'rgba(245, 245, 247, .8)', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.14)', padding: '5px 12px', borderRadius: 999 }}>
+              <span key={tag} style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface)', border: '1px solid var(--border)', padding: '5px 12px', borderRadius: 999 }}>
                 #{tag}
               </span>
             ))}
@@ -167,10 +167,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <section style={{ maxWidth: 960, margin: '36px auto 0' }} aria-labelledby="blog-growth-links-title">
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'end', flexWrap: 'wrap', marginBottom: 14 }}>
             <div>
-              <p style={{ margin: 0, color: 'var(--primary)', fontSize: 13, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Passer à l’action</p>
-              <h2 id="blog-growth-links-title" className="font-display" style={{ fontSize: 22, letterSpacing: '-.02em', margin: '4px 0 0', color: '#fff' }}>Continuer sur LIVEINBLACK</h2>
+              <p style={{ margin: 0, color: 'var(--primary)', fontSize: 'var(--font-size-callout)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase' }}>Passer à l’action</p>
+              <h2 id="blog-growth-links-title" className="font-display" style={{ fontSize: 'var(--font-size-title-2)', letterSpacing: '-.02em', margin: '4px 0 0', color: 'var(--text)' }}>Continuer sur LIVEINBLACK</h2>
             </div>
-            <Link href="/blog/benin" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 999, border: '1px solid rgba(245,61,141,.35)', color: 'var(--primary)', fontSize: 13.5, fontWeight: 800, textDecoration: 'none' }}>
+            <Link href="/blog/benin" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 999, border: '1px solid var(--primary-a35)', color: 'var(--primary)', fontSize: 'var(--font-size-body)', fontWeight: 800, textDecoration: 'none' }}>
               Hub Bénin →
             </Link>
           </div>
@@ -182,11 +182,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 data-growth-event="cta_click"
                 data-growth-surface="blog_article_growth_links"
                 data-growth-target={link.target}
-                style={{ minHeight: 104, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 16px', borderRadius: 16, border: '1px solid rgba(255,255,255,.12)', background: 'linear-gradient(135deg, var(--primary-a08), rgba(255,255,255,.04))', color: 'inherit', textDecoration: 'none' }}
+                style={{ minHeight: 104, display: 'flex', flexDirection: 'column', gap: 6, padding: '14px 16px', borderRadius: 16, border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--primary-a08), var(--card-bg))', color: 'inherit', textDecoration: 'none' }}
               >
-                <strong style={{ color: '#fff', fontSize: 15, lineHeight: 1.25 }}>{link.title}</strong>
-                <span style={{ color: 'rgba(245, 245, 247, .65)', fontSize: 13.5, lineHeight: 1.4 }}>{link.text}</span>
-                <span style={{ marginTop: 'auto', color: 'var(--primary)', fontSize: 13.5, fontWeight: 800 }}>Ouvrir →</span>
+                <strong style={{ color: 'var(--text)', fontSize: 'var(--font-size-headline)', lineHeight: 1.25 }}>{link.title}</strong>
+                <span style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-body)', lineHeight: 1.4 }}>{link.text}</span>
+                <span style={{ marginTop: 'auto', color: 'var(--primary)', fontSize: 'var(--font-size-body)', fontWeight: 800 }}>Ouvrir →</span>
               </Link>
             ))}
           </div>
@@ -194,7 +194,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {related.length > 0 && (
           <section style={{ maxWidth: 960, margin: '40px auto 0' }}>
-            <h2 className="font-display" style={{ fontSize: 22, letterSpacing: '-.02em', margin: '0 0 14px', color: '#fff' }}>À lire aussi</h2>
+            <h2 className="font-display" style={{ fontSize: 'var(--font-size-title-2)', letterSpacing: '-.02em', margin: '0 0 14px', color: 'var(--text)' }}>À lire aussi</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%, 260px), 1fr))', gap: 14 }}>
               {related.map((r) => (
                 <Link
@@ -203,10 +203,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   data-growth-event="cta_click"
                   data-growth-surface="blog_article_related"
                   data-growth-target="related_post"
-                  style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 16, padding: '14px 16px' }}
+                  style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 16, padding: '14px 16px' }}
                 >
-                  <p style={{ fontSize: 15.5, fontWeight: 800, margin: 0, lineHeight: 1.3, color: '#fff' }}>{r.title}</p>
-                  <p style={{ fontSize: 13.5, color: 'rgba(245, 245, 247, .65)', margin: '6px 0 0', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.excerpt}</p>
+                  <p style={{ fontSize: 'var(--font-size-headline-xl)', fontWeight: 800, margin: 0, lineHeight: 1.3, color: 'var(--text)' }}>{r.title}</p>
+                  <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', margin: '6px 0 0', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.excerpt}</p>
                 </Link>
               ))}
             </div>

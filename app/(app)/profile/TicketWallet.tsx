@@ -118,25 +118,25 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
         .ticket-wallet-section-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important; gap: 8px !important; }
         .ticket-wallet-event-link { gap: 8px !important; padding: 10px !important; }
         .ticket-wallet-event-thumb { width: 44px !important; height: 44px !important; border-radius: 9px !important; }
-        .ticket-wallet-event-title { font-size: 13.5px !important; }
+        .ticket-wallet-event-title { font-size: var(--font-size-body) !important; }
         .ticket-wallet-face { grid-template-columns: minmax(0,1fr) 112px !important; }
         .ticket-wallet-rail { min-height: 112px !important; padding: 12px !important; }
-        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: 0 12px 30px rgba(0,0,0,.24) !important; }
+        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: none !important; }
         .ticket-wallet-card-body { padding-inline: 12px !important; }
         .ticket-wallet-card-actions { padding: 8px 12px 12px !important; gap: 6px !important; }
         @media (max-width: 480px) {
           .ticket-wallet-face { grid-template-columns: 1fr !important; }
-          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed rgba(255,255,255,0.15); }
+          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed var(--border); }
           .ticket-wallet-meta { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)) !important; }
           .ticket-wallet-rail { min-height: 104px !important; }
           .ticket-wallet-summary { grid-template-columns: 1fr !important; }
           .ticket-wallet-summary-action { justify-content: flex-start !important; }
-          .ticket-wallet-summary-action a { min-height: 32px !important; padding: 6px 10px !important; font-size: 11px !important; }
+          .ticket-wallet-summary-action a { min-height: 32px !important; padding: 6px 10px !important; font-size: var(--font-size-caption) !important; }
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={16} aria-hidden="true" />
             Profil
           </Link>
@@ -144,8 +144,8 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
         </div>
 
         <header style={{ marginBottom: 6 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(26px,3.2vw,34px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
-          <p style={{ maxWidth: 720, margin: '5px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12, lineHeight: 1.38 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
+          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(26px,3.2vw,34px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes billets</h1>
+          <p style={{ maxWidth: 720, margin: '5px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', lineHeight: 1.38 }}>Tous tes accès, QR codes et places à venir dans un seul portefeuille.</p>
         </header>
 
         <SeatHoldsPanel />
@@ -158,10 +158,10 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <TicketGlyph />
                 <div>
-                  <p style={{ fontWeight: 800, fontSize: 15, color: '#fff', margin: 0 }}>
+                  <p style={{ fontWeight: 800, fontSize: 'var(--font-size-headline)', color: 'var(--text)', margin: 0 }}>
                     {upcomingSeatCount > 0 ? `${upcomingSeatCount} place${upcomingSeatCount > 1 ? 's' : ''} à venir` : 'Aucune place à venir'}
                   </p>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: '2px 0 0' }}>
                     {buckets.upcoming.length > 0
                       ? `Sur ${buckets.upcoming.length} événement${buckets.upcoming.length > 1 ? 's' : ''} — QR codes prêts à scanner`
                       : 'Trouve ta prochaine soirée dans les événements'}
@@ -181,7 +181,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
                   background: 'var(--teal-solid)',
                   color: 'var(--primary-ink)',
                   fontWeight: 700,
-                  fontSize: 12,
+                  fontSize: 'var(--font-size-footnote)',
                   textDecoration: 'none',
                   gap: 6,
                 }}
@@ -259,12 +259,12 @@ function SeatHoldsPanel() {
 
   return (
     <Card accent="var(--primary-a35)" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ margin: 0, color: 'var(--gold)', fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Places bloquées</p>
+      <p style={{ margin: 0, color: 'var(--gold)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Places bloquées</p>
       {active.map((hold) => (
         <div key={hold.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
           <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, color: '#fff' }}>{hold.placeType}</p>
-            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-faint)' }}>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 'var(--font-size-body)', color: 'var(--text)' }}>{hold.placeType}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>
               Solde {fmtMoney(toMajor(hold.balanceDueMinor, hold.currency), hold.currency)} · {hold.expiresAt ? hoursRemainingLabel(hold.expiresAt) : ''}
             </p>
           </div>
@@ -281,7 +281,7 @@ function SeatHoldsPanel() {
           </Button>
         </div>
       ))}
-      {payErr && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 11.5 }}>{payErr}</p>}
+      {payErr && <p style={{ margin: 0, color: 'var(--pink)', fontSize: 'var(--font-size-caption-lg)' }}>{payErr}</p>}
     </Card>
   )
 }
@@ -303,7 +303,7 @@ function Section({
   const { pageItems, pageCount } = pagedSlice(groups, page, GROUP_PAGE_SIZE)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
+      <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
       <div className="ticket-wallet-section-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: 8, alignItems: 'start' }}>
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
@@ -337,11 +337,11 @@ function EmptyWallet() {
   return (
     <div style={{ minHeight: 'clamp(430px, 62vh, 680px)', display: 'grid', alignContent: 'center', justifyItems: 'center', padding: 'clamp(36px, 7vw, 84px) 18px', textAlign: 'center' }}>
       <Mascot mood="sleeping" size={224} />
-      <h2 style={{ fontWeight: 780, fontSize: 'clamp(24px, 3vw, 34px)', color: '#fff', margin: '4px 0 8px', textTransform: 'none', letterSpacing: 0 }}>Aucun billet pour l&apos;instant</h2>
-      <p style={{ maxWidth: 520, fontSize: 15.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.55 }}>Tes billets achetés apparaîtront ici, avec leur QR code et toutes les informations utiles pour entrer à l’événement.</p>
+      <h2 style={{ fontWeight: 780, fontSize: 'clamp(24px, 3vw, 34px)', color: 'var(--text)', margin: '4px 0 8px', textTransform: 'none', letterSpacing: 0 }}>Aucun billet pour l&apos;instant</h2>
+      <p style={{ maxWidth: 520, fontSize: 'var(--font-size-headline-xl)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.55 }}>Tes billets achetés apparaîtront ici, avec leur QR code et toutes les informations utiles pour entrer à l’événement.</p>
       <Link
         href="/events"
-        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 15, textDecoration: 'none' }}
+        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 'var(--font-size-headline)', textDecoration: 'none' }}
       >
         Découvrir les événements
       </Link>
@@ -411,9 +411,9 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
             className="ticket-wallet-event-title"
             style={{
               fontWeight: 700,
-              fontSize: 13.5,
+              fontSize: 'var(--font-size-body)',
               margin: '0 0 2px',
-              color: cancelled ? '#e05aaa' : past ? 'var(--text-muted)' : '#fff',
+              color: cancelled ? 'var(--danger)' : past ? 'var(--text-muted)' : 'var(--text)',
               textDecoration: cancelled ? 'line-through' : 'none',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -422,11 +422,11 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
           >
             {event?.name ?? 'Événement supprimé'}
           </p>
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>{event?.dateDisplay || event?.date || ''}</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>{event?.dateDisplay || event?.date || ''}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-          {cancelled && <Pill color="#e05aaa" bg="rgba(224,90,170,0.12)">Annulé</Pill>}
-          {past && !cancelled && <Pill color="var(--text-faint)" bg="rgba(255,255,255,0.06)">Terminé</Pill>}
+          {cancelled && <Pill color="var(--danger)" bg="var(--danger-fill)">Annulé</Pill>}
+          {past && !cancelled && <Pill color="var(--text-faint)" bg="var(--surface-2)">Terminé</Pill>}
           <Pill color="var(--teal)" bg="var(--primary-a10)">
             {group.myTickets.length} billet{group.myTickets.length > 1 ? 's' : ''}
           </Pill>
@@ -434,14 +434,14 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       </Link>
 
       {showCancelBanner && (
-        <div style={{ margin: '0 14px 14px', padding: 14, borderRadius: 12, background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.25)' }}>
-          <p style={{ fontSize: 13, color: '#fff', margin: '0 0 10px', lineHeight: 1.5 }}>
+        <div style={{ margin: '0 14px 14px', padding: 14, borderRadius: 12, background: 'var(--danger-fill)', border: '1px solid var(--danger-border)' }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Cet événement n&apos;aura pas lieu. Pour toute question concernant ton billet ou un remboursement, contacte le support.
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <a
               href={contactSupportMailto()}
-              style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-control)', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}
+              style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-control)', background: 'var(--pink)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', fontWeight: 700, textDecoration: 'none' }}
             >
               Contacter le support
             </a>
@@ -459,9 +459,9 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       )}
 
       {past && !cancelled && (
-        <div style={{ margin: '0 14px 14px', padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0 }}>Événement terminé</p>
-          <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Billet conservé dans ton historique · QR et commandes désactivés</p>
+        <div style={{ margin: '0 14px 14px', padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)' }}>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0 }}>Événement terminé</p>
+          <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Billet conservé dans ton historique · QR et commandes désactivés</p>
         </div>
       )}
 
@@ -470,13 +470,13 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       {group.myTickets.length > 0 && (
         <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 12.5 }}>
+            <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
               {expanded ? 'Masquer mes places' : 'Voir mes places'}
             </Button>
             {event?.hasPlaylist && !cancelled && !past && (
               <Link
                 href={`/playlist/${event.id}`}
-                style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--violet)', textDecoration: 'none' }}
+                style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--violet)', textDecoration: 'none' }}
               >
                 Playlist interactive
               </Link>
@@ -494,7 +494,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
 
 function Pill({ children, color, bg }: { children: React.ReactNode; color: string; bg: string }) {
   return (
-    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 999, color, background: bg, whiteSpace: 'nowrap' }}>{children}</span>
+    <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, padding: '3px 9px', borderRadius: 999, color, background: bg, whiteSpace: 'nowrap' }}>{children}</span>
   )
 }
 
@@ -604,7 +604,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
   }
 
   return (
-    <div style={{ margin: '0 14px 14px', padding: 16, borderRadius: 12, background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.20)', position: 'relative' }}>
+    <div style={{ margin: '0 14px 14px', padding: 16, borderRadius: 12, background: 'rgba(var(--violet-rgb), .06)', border: '1px solid rgba(var(--violet-rgb), .20)', position: 'relative' }}>
       {toast && (
         <div
           style={{
@@ -615,8 +615,8 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
             padding: '6px 14px',
             borderRadius: 999,
             background: toast.kind === 'ok' ? 'var(--teal-solid)' : 'var(--pink)',
-            color: toast.kind === 'ok' ? 'var(--primary-ink)' : '#fff',
-            fontSize: 11.5,
+            color: toast.kind === 'ok' ? 'var(--primary-ink)' : 'var(--text)',
+            fontSize: 'var(--font-size-caption-lg)',
             fontWeight: 700,
             whiteSpace: 'nowrap',
             zIndex: 10,
@@ -626,12 +626,12 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
-        <span style={{ fontSize: 12, color: 'var(--violet)', fontWeight: 700 }}>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
+        <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--violet)', fontWeight: 700 }}>
           {assignedCount}/{hostedSeats.length} attribuées
         </span>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Invite chaque place à un ami via l&apos;e-mail de son compte : il reçoit une invitation qu&apos;il doit accepter pour recevoir le billet avec son propre QR
         code. Tu peux reprendre une place tant que ton invité n&apos;est pas entré.
       </p>
@@ -639,11 +639,11 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
         {hostedSeats.map((seat, i) => {
           const pendingEmail = pendingByCode[seat.ticketCode]
           return (
-            <div key={seat.ticketCode} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+            <div key={seat.ticketCode} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 0', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <div>
-                  <p style={{ fontSize: 13, color: '#fff', margin: 0, fontWeight: 600 }}>Place {i + 1}</p>
-                  <p style={{ fontSize: 11.5, margin: '1px 0 0', color: seat.assignedTo ? 'var(--teal)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
+                  <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>Place {i + 1}</p>
+                  <p style={{ fontSize: 'var(--font-size-caption-lg)', margin: '1px 0 0', color: seat.assignedTo ? 'var(--teal)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
                     {seat.assignedTo ? `Attribuée à ${seat.assignedName || 'un invité'}` : pendingEmail ? `Invitation envoyée à ${pendingEmail}` : 'Libre — à toi'}
                     {seat.assignedTo && (
                       <span style={{ marginLeft: 6, color: seat.checkedInAt ? 'var(--pink)' : 'var(--text-faint)' }}>
@@ -665,7 +665,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                       })
                     }
                     disabled={busyCode === seat.ticketCode}
-                    style={smallBtnStyle('rgba(224,90,170,0.14)', '#e05aaa')}
+                    style={smallBtnStyle('var(--danger-fill)', 'var(--danger)')}
                   >
                     Reprendre
                   </Button>
@@ -682,7 +682,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                       })
                     }
                     disabled={busyCode === seat.ticketCode}
-                    style={smallBtnStyle('rgba(255,255,255,0.06)', 'var(--text-muted)')}
+                    style={smallBtnStyle('var(--surface-2)', 'var(--text-muted)')}
                   >
                     Annuler
                   </Button>
@@ -694,7 +694,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                       setOpenInviteFor(openInviteFor === seat.ticketCode ? null : seat.ticketCode)
                       setEmailDraft('')
                     }}
-                    style={smallBtnStyle('rgba(139,92,246,0.16)', 'var(--violet)')}
+                    style={smallBtnStyle('var(--violet-fill)', 'var(--violet)')}
                   >
                     Inviter
                   </Button>
@@ -708,7 +708,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                     onChange={(e) => setEmailDraft(e.target.value)}
                     placeholder="Adresse e-mail de ton invité·e"
                     size="sm"
-                    style={{ flex: 1, borderRadius: 'var(--radius-control)', fontSize: 14 }}
+                    style={{ flex: 1, borderRadius: 'var(--radius-control)', fontSize: 'var(--font-size-body-sm)' }}
                   />
                   <Button
                     variant="primary"
@@ -743,7 +743,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
 }
 
 function smallBtnStyle(bg: string, color: string): React.CSSProperties {
-  return { minHeight: 'var(--density-action-min)', padding: '10px 14px', borderRadius: 'var(--radius-control)', background: bg, color, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }
+  return { minHeight: 'var(--density-action-min)', padding: '10px 14px', borderRadius: 'var(--radius-control)', background: bg, color, border: 'none', fontSize: 'var(--font-size-body-sm)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }
 }
 
 function inviteErrorMessage(code: string): string {
@@ -941,25 +941,25 @@ function PremiumTicketCard({
   }
 
   return (
-    <div className="ticket-wallet-card-shell" style={{ borderRadius: 14, background: 'linear-gradient(145deg,rgba(28,30,39,.96),rgba(9,10,16,.98))', border: '1px solid rgba(255,255,255,.12)', overflow: 'hidden', position: 'relative', boxShadow: '0 12px 30px rgba(0,0,0,.24)' }}>
+    <div className="ticket-wallet-card-shell" style={{ borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: 'none' }}>
       {flashMsg && (
         <div
-          style={{ position: 'absolute', top: 8, right: 8, padding: '5px 12px', borderRadius: 999, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 11, zIndex: 5 }}
+          style={{ position: 'absolute', top: 8, right: 8, padding: '5px 12px', borderRadius: 999, background: 'rgba(var(--black-rgb), .70)', color: 'var(--text)', fontSize: 'var(--font-size-caption)', zIndex: 5 }}
         >
           {flashMsg}
         </div>
       )}
       <div className="ticket-wallet-face" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 112px' }}>
         <div style={{ minWidth: 0 }}>
-          <div className="ticket-wallet-rail" style={{ minHeight: 112, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,rgba(8,9,14,.92),rgba(8,9,14,.58)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'var(--border)'},rgba(13,14,21,.96))` }}>
+          <div className="ticket-wallet-rail" style={{ minHeight: 112, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,var(--media-panel-strong),var(--media-panel-soft)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'var(--border)'},var(--media-panel-deep))` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
               <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 10.5, fontWeight: 800, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 7px' }}>
+                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 7px' }}>
                   Live in Black · Billet officiel
                 </p>
-                <p style={{ fontWeight: 850, fontSize: 18, color: '#fff', lineHeight: 1.12, margin: 0, maxWidth: 270 }}>{event?.name ?? 'Événement'}</p>
+                <p style={{ fontWeight: 850, fontSize: 'var(--font-size-title-4)', color: 'var(--text)', lineHeight: 1.12, margin: 0, maxWidth: 270 }}>{event?.name ?? 'Événement'}</p>
               </div>
-              <Pill color={inactive ? 'var(--text-faint)' : 'var(--primary-ink)'} bg={inactive ? 'rgba(255,255,255,0.08)' : 'var(--teal-solid)'}>
+              <Pill color={inactive ? 'var(--text-faint)' : 'var(--primary-ink)'} bg={inactive ? 'var(--surface-2)' : 'var(--teal-solid)'}>
                 {inactive ? inactiveLabel : countdown || 'Valide'}
               </Pill>
             </div>
@@ -969,11 +969,11 @@ function PremiumTicketCard({
                   <Pill color="var(--gold)" bg="var(--primary-a14)">18+</Pill>
                 </span>
               )}
-              <Pill color="#fff" bg="rgba(0,0,0,.34)">{ticket.place}</Pill>
-              <Pill color="var(--text-muted)" bg="rgba(0,0,0,.28)">#{String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')}</Pill>
+              <Pill color="var(--text)" bg="rgba(var(--black-rgb), .34)">{ticket.place}</Pill>
+              <Pill color="var(--text-muted)" bg="rgba(var(--black-rgb), .28)">#{String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')}</Pill>
             </div>
           </div>
-          <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,.06)' }}>
+          <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'var(--surface-2)' }}>
             <MetaCell label="Date" value={event?.dateDisplay || event?.date || ''} />
             <MetaCell label="Ville" value={event?.city || '-'} />
             <MetaCell label="Réf." value={ticket.ticketCode} />
@@ -985,7 +985,7 @@ function PremiumTicketCard({
           style={{
             width: 140,
             flexShrink: 0,
-            borderLeft: '1px dashed rgba(255,255,255,0.18)',
+            borderLeft: '1px dashed var(--border-strong)',
             padding: 16,
             display: 'flex',
             flexDirection: 'column',
@@ -1000,16 +1000,16 @@ function PremiumTicketCard({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
                 <circle cx="12" cy="12" r="9" strokeLinecap="round" />
               </svg>
-              <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel}</p>
-              <p style={{ fontSize: 9.5, color: 'var(--text-faint)', margin: 0 }}>QR désactivé</p>
+              <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel}</p>
+              <p style={{ fontSize: 'var(--font-size-mini-lg)', color: 'var(--text-faint)', margin: 0 }}>QR désactivé</p>
             </>
           ) : (
             <>
-              <div role="img" aria-label="Code QR du billet, à scanner à l'entrée" style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
+              <div role="img" aria-label="Code QR du billet, à scanner à l'entrée" style={{ background: 'var(--qr-required-white)', padding: 8, borderRadius: 8 }}>
                 <QRCodeCanvas value={ticketUrl} size={84} level="H" />
               </div>
-              <p style={{ fontSize: 10, color: 'var(--text-faint)', letterSpacing: '0.04em', margin: 0 }}>{ticket.ticketCode}</p>
-              <p style={{ fontSize: 9, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>Usage unique</p>
+              <p style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', letterSpacing: '0.04em', margin: 0 }}>{ticket.ticketCode}</p>
+              <p style={{ fontSize: 'var(--font-size-mini)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>Usage unique</p>
             </>
           )}
         </div>
@@ -1024,18 +1024,18 @@ function PremiumTicketCard({
 
       {preorderTotal > 0 && (
         <div className="ticket-wallet-card-body" style={{ padding: '0 12px 12px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Consommations incluses</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Consommations incluses</p>
           {ticket.preorders.map((item, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 4 }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', marginBottom: 4 }}>
               <span>
                 {item.name} ×{item.qty}
                 {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
               </span>
-              <span style={{ color: '#fff', fontWeight: 600 }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
+              <span style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
             </div>
           ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border)' }}>
-            <span style={{ color: '#fff' }}>Total</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-callout)', fontWeight: 700, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border)' }}>
+            <span style={{ color: 'var(--text)' }}>Total</span>
             <span style={{ color: 'var(--gold)' }}>{fmtMoney(preorderTotal, ticket.currency)}</span>
           </div>
         </div>
@@ -1047,19 +1047,19 @@ function PremiumTicketCard({
             <Skeleton width="72%" height={13} />
           ) : included.length === 0 ? (
             <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)' }}>
-              <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Aucune option incluse.</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>Aucune option incluse.</p>
             </div>
           ) : (
             <>
               {included.map((it) => (
-                <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 6 }}>
+                <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote-lg)', marginBottom: 6 }}>
                   <span style={{ color: 'var(--text-muted)' }}>
                     {it.name} ×{it.quantity}
                   </span>
-                  <span style={{ color: it.status === 'served' ? 'var(--teal)' : 'var(--gold)', fontWeight: 700, fontSize: 11 }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
+                  <span style={{ color: it.status === 'served' ? 'var(--teal)' : 'var(--gold)', fontWeight: 700, fontSize: 'var(--font-size-caption)' }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
                 </div>
               ))}
-              <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '8px 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '8px 0 0', lineHeight: 1.5 }}>
                 Présente ton billet au staff pendant la soirée : il coche chaque option au moment où il te la sert.
               </p>
             </>
@@ -1069,7 +1069,7 @@ function PremiumTicketCard({
 
       <div className="ticket-wallet-card-actions" style={{ padding: '8px 12px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {inactive ? (
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel} · aucune action disponible</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel} · aucune action disponible</p>
         ) : (
           <>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1106,7 +1106,7 @@ function PremiumTicketCard({
                 loadingText="Création…"
                 title="Une belle image 9:16 pour Instagram — sans le QR code"
                 icon={<Sparkles size={15} aria-hidden="true" />}
-                style={actionBtnStyle(false, 'rgba(224,90,170,0.14)', '#e05aaa')}
+                style={actionBtnStyle(false, 'var(--danger-fill)', 'var(--danger)')}
               >
                 Story
               </Button>
@@ -1120,13 +1120,13 @@ function PremiumTicketCard({
                   loading={refundState === 'busy'}
                   loadingText="Envoi…"
                   icon={<HandCoins size={15} aria-hidden="true" />}
-                  style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'rgba(224,90,170,0.14)', '#e05aaa')}
+                  style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'var(--danger-fill)', 'var(--danger)')}
                 >
                   {refundState === 'done' ? 'Demandé' : 'Rembourser'}
                 </Button>
               )}
               {ticket.resellable && !activeListing && (
-                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={15} aria-hidden="true" />} style={actionBtnStyle(false, 'rgba(139,92,246,0.14)', 'var(--violet)')}>
+                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={15} aria-hidden="true" />} style={actionBtnStyle(false, 'rgba(var(--violet-rgb), .14)', 'var(--violet)')}>
                   Revendre
                 </Button>
               )}
@@ -1139,16 +1139,16 @@ function PremiumTicketCard({
                   loading={withdrawState === 'busy'}
                   loadingText="Retrait…"
                   icon={<Gift size={15} aria-hidden="true" />}
-                  style={actionBtnStyle(withdrawState === 'busy', 'rgba(255,255,255,0.06)', 'var(--text-muted)')}
+                  style={actionBtnStyle(withdrawState === 'busy', 'var(--surface-2)', 'var(--text-muted)')}
                 >
                   {`${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
                 </Button>
               )}
             </div>
             {downloadState === 'err' && (
-              <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>Le téléchargement n&apos;a pas pu démarrer. Réessaie dans quelques secondes.</p>
+              <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--danger)', margin: 0 }}>Le téléchargement n&apos;a pas pu démarrer. Réessaie dans quelques secondes.</p>
             )}
-            {refundState === 'err' && refundErr && <p style={{ fontSize: 11.5, color: '#e05aaa', margin: 0 }}>{refundErr}</p>}
+            {refundState === 'err' && refundErr && <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--danger)', margin: 0 }}>{refundErr}</p>}
 
             {withdrawConfirmOpen && (
               <Modal
@@ -1171,7 +1171,7 @@ function PremiumTicketCard({
                   </>
                 }
               >
-                <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+                <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
                   Ce billet ne sera plus visible à la revente et un nouveau billet actif sera généré pour toi.
                 </p>
               </Modal>
@@ -1198,7 +1198,7 @@ function PremiumTicketCard({
                   </>
                 }
               >
-                <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+                <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
                   Tu demandes le remboursement de ce billet. Les frais de service ne sont pas remboursés et le billet sera désactivé si la demande est acceptée.
                 </p>
               </Modal>
@@ -1206,7 +1206,7 @@ function PremiumTicketCard({
 
             {resellOpen && !activeListing && (
               <div style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p id={`resell-help-${ticket.ticketCode}`} style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
+                <p id={`resell-help-${ticket.ticketCode}`} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
                   Prix maximum : {fmtMoney(ticket.placePrice, ticket.currency)} (prix initial, majoration interdite). Le montant de revente n&apos;est jamais garanti tant que personne n&apos;a acheté ; les frais payés à l&apos;achat initial ne sont pas récupérés.
                 </p>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1218,7 +1218,7 @@ function PremiumTicketCard({
                     placeholder={`Prix (max ${ticket.placePrice})`}
                     value={resellPrice}
                     onChange={(e) => setResellPrice(e.target.value)}
-                    style={{ flex: 1, borderRadius: 12, background: 'var(--obsidian)', fontSize: 16 }}
+                    style={{ flex: 1, borderRadius: 12, background: 'var(--obsidian)', fontSize: 'var(--font-size-headline-lg)' }}
                   />
                   <Button
                     variant="primary"
@@ -1226,12 +1226,12 @@ function PremiumTicketCard({
                     disabled={resellState === 'busy'}
                     loading={resellState === 'busy'}
                     loadingText="Publication…"
-                    style={{ ...actionBtnStyle(resellState === 'busy'), background: 'var(--violet)', color: '#fff' }}
+                    style={{ ...actionBtnStyle(resellState === 'busy'), background: 'var(--violet)', color: 'var(--text)' }}
                   >
                     Confirmer
                   </Button>
                 </div>
-                {resellState === 'err' && resellErr && <p role="alert" style={{ fontSize: 13.5, color: '#ff8fc7', margin: 0 }}>{resellErr}</p>}
+                {resellState === 'err' && resellErr && <p role="alert" style={{ fontSize: 'var(--font-size-body)', color: 'var(--pink-strong)', margin: 0 }}>{resellErr}</p>}
               </div>
             )}
           </>
@@ -1243,22 +1243,22 @@ function PremiumTicketCard({
 
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ minWidth: 0, padding: '11px 12px', background: 'rgba(10,11,17,.74)' }}>
-      <p style={{ fontSize: 10.5, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 4px' }}>{label}</p>
-      <p style={{ fontSize: 13, color: '#fff', fontWeight: 750, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
+    <div style={{ minWidth: 0, padding: '11px 12px', background: 'rgba(var(--night-rgb), .74)' }}>
+      <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 4px' }}>{label}</p>
+      <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', fontWeight: 750, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
     </div>
   )
 }
 
-function actionBtnStyle(disabled: boolean, bg = 'rgba(255,255,255,0.06)', color = 'var(--text)'): React.CSSProperties {
+function actionBtnStyle(disabled: boolean, bg = 'var(--surface-2)', color = 'var(--text)'): React.CSSProperties {
   return {
     minHeight: 'var(--density-action-min)',
     padding: '10px 14px',
     borderRadius: 'var(--radius-control)',
     background: bg,
     color,
-    border: '1px solid rgba(255,255,255,.10)',
-    fontSize: 14,
+    border: '1px solid var(--border)',
+    fontSize: 'var(--font-size-body-sm)',
     fontWeight: 700,
     cursor: disabled ? 'default' : 'pointer',
     opacity: disabled ? 0.6 : 1,

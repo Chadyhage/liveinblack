@@ -54,11 +54,11 @@ function formatPrice(price: number): string {
 }
 
 function RankIcon({ position, size = 20 }: { position: number; size?: number }) {
-  const color = position === 1 ? 'var(--gold)' : position === 2 ? 'rgba(255,255,255,0.72)' : 'var(--primary-a65)'
+  const color = position === 1 ? 'var(--gold)' : position === 2 ? 'var(--text-muted)' : 'var(--primary-a65)'
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill={color} />
-      <text x="12" y="15" textAnchor="middle" fontSize={8} fill="#090a10" fontFamily="var(--font-open-sans)" fontWeight="bold">
+      <text x="12" y="15" textAnchor="middle" fontSize={8} fill="var(--primary-ink)" fontFamily="var(--font-open-sans)" fontWeight="bold">
         {position}
       </text>
     </svg>
@@ -160,11 +160,11 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
   return (
     <SlideOverModal onClose={onClose} ariaLabel="Promouvoir l’événement" padded>
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
+          <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
           <p
             style={{
               fontWeight: 600,
-              fontSize: 11,
+              fontSize: 'var(--font-size-caption)',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               color: 'var(--gold)',
@@ -180,14 +180,14 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
 
         {step === 'error' ? (
           <div style={{ textAlign: 'center', padding: '28px 0' }}>
-            <p style={{ fontSize: 13, color: '#ee9bb7', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--danger)', lineHeight: 1.7, marginBottom: 20 }}>{errorMsg}</p>
             <Button
               variant="secondary"
               onClick={() => setStep('pick')}
               style={{
                 padding: '14px 22px',
                 borderRadius: 12,
-                fontSize: 13,
+                fontSize: 'var(--font-size-callout)',
                 fontWeight: 600,
               }}
             >
@@ -196,20 +196,20 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
           </div>
         ) : step === 'pay' && chosen && chosenTier ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-            <div style={{ padding: 18, border: '1px solid var(--primary-a32)', borderRadius: 14, background: 'rgba(255,255,255,0.04)' }}>
-              <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
+            <div style={{ padding: 18, border: '1px solid var(--primary-a32)', borderRadius: 14, background: 'var(--surface-2)' }}>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>
                 <span>Position</span>
-                <strong style={{ display: 'flex', alignItems: 'center', gap: 7, color: '#fff', fontWeight: 600 }}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--text)', fontWeight: 600 }}>
                   <RankIcon position={chosen.position} size={17} />
                   {chosen.label}
                 </strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>
                 <span>Durée</span>
-                <strong style={{ color: '#fff', fontWeight: 600 }}>{chosenTier.label}</strong>
+                <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{chosenTier.label}</strong>
               </div>
               <div
                 style={{
@@ -218,17 +218,17 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                   alignItems: 'center',
                   gap: 10,
                   padding: '12px 0 6px',
-                  fontSize: 12.5,
-                  color: 'rgba(255,255,255,0.55)',
-                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                  fontSize: 'var(--font-size-footnote-lg)',
+                  color: 'var(--text-muted)',
+                  borderTop: '1px solid var(--border)',
                   marginTop: 4,
                 }}
               >
                 <span>Total</span>
-                <strong style={{ fontWeight: 700, fontSize: 18, color: 'var(--gold)' }}>{formatPrice(chosenTier.price)}</strong>
+                <strong style={{ fontWeight: 700, fontSize: 'var(--font-size-title-4)', color: 'var(--gold)' }}>{formatPrice(chosenTier.price)}</strong>
               </div>
             </div>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', lineHeight: 1.7, margin: 0 }}>
               Paiement sécurisé via Stripe. Le créneau est confirmé uniquement après validation du paiement.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 9 }}>
@@ -238,7 +238,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 style={{
                   minHeight: 40,
                   borderRadius: 12,
-                  fontSize: 13,
+                  fontSize: 'var(--font-size-callout)',
                   fontWeight: 600,
                 }}
               >
@@ -254,9 +254,9 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 style={{
                   minHeight: 40,
                   borderRadius: 3,
-                  background: paying ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
-                  color: paying ? 'rgba(255,255,255,0.35)' : '#181206',
-                  fontSize: 14,
+                  background: paying ? 'var(--surface-2)' : 'var(--gold)',
+                  color: paying ? 'var(--text-faint)' : 'var(--obsidian)',
+                  fontSize: 'var(--font-size-body-sm)',
                   fontWeight: 500,
                   textTransform: 'none',
                   letterSpacing: 'normal',
@@ -270,7 +270,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 1. Choisis ta position
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -292,13 +292,13 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         justifyContent: 'flex-start',
                         textAlign: 'left',
                         display: 'block',
-                        color: '#fff',
-                        border: active ? '1px solid var(--primary-a65)' : '1px solid rgba(255,255,255,0.08)',
-                        background: active ? 'var(--primary-a14)' : 'rgba(255,255,255,0.04)',
+                        color: 'var(--text)',
+                        border: active ? '1px solid var(--primary-a65)' : '1px solid var(--border)',
+                        background: active ? 'var(--primary-a14)' : 'var(--surface-2)',
                         opacity: blocked ? 0.78 : 1,
                       }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 12.5 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: 'var(--font-size-footnote-lg)' }}>
                         <RankIcon position={plan.position} />
                         {plan.label}
                       </span>
@@ -306,7 +306,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         style={{
                           display: 'block',
                           fontWeight: 700,
-                          fontSize: 11,
+                          fontSize: 'var(--font-size-caption)',
                           letterSpacing: '0.05em',
                           textTransform: 'uppercase',
                           marginTop: 9,
@@ -324,16 +324,16 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10, marginBottom: 9 }}>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
                     2. Choisis la durée
                   </p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{activePlan.description}</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>{activePlan.description}</p>
                 </div>
                 {positionBlocked(activePosition) && (
                   <span
                     style={{
                       fontWeight: 700,
-                      fontSize: 11,
+                      fontSize: 'var(--font-size-caption)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
                       color: positionColor(activePosition),
@@ -362,15 +362,15 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         justifyContent: 'flex-start',
                         textAlign: 'left',
                         display: 'block',
-                        border: selected ? '1px solid var(--primary-a75)' : '1px solid rgba(255,255,255,0.08)',
-                        background: selected ? 'var(--primary-a12)' : 'rgba(255,255,255,0.04)',
+                        border: selected ? '1px solid var(--primary-a75)' : '1px solid var(--border)',
+                        background: selected ? 'var(--primary-a12)' : 'var(--surface-2)',
                         opacity: disabled ? 0.38 : 1,
                       }}
                     >
-                      <span style={{ display: 'block', fontWeight: 600, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--teal)' : 'rgba(255,255,255,0.48)' }}>
+                      <span style={{ display: 'block', fontWeight: 600, fontSize: 'var(--font-size-caption)', letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--teal)' : 'var(--text-faint)' }}>
                         {tier.label}
                       </span>
-                      <strong style={{ display: 'block', fontWeight: 700, fontSize: 17, marginTop: 8, whiteSpace: 'nowrap', color: selected ? '#fff' : activePlan.color }}>
+                      <strong style={{ display: 'block', fontWeight: 700, fontSize: 'var(--font-size-title-5)', marginTop: 8, whiteSpace: 'nowrap', color: selected ? 'var(--text)' : activePlan.color }}>
                         {formatPrice(tier.price)}
                       </strong>
                     </Button>
@@ -378,7 +378,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 })}
               </div>
               {positionBlocked(activePosition) && (
-                <p style={{ fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', margin: '10px 0 0' }}>
+                <p style={{ fontSize: 'var(--font-size-footnote)', lineHeight: 1.6, color: 'var(--text-faint)', margin: '10px 0 0' }}>
                   Cette place est déjà prise ou en cours de paiement dans cette région. Choisis une autre position.
                 </p>
               )}
@@ -395,9 +395,9 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                 fontWeight: 500,
                 textTransform: 'none',
                 letterSpacing: 'normal',
-                fontSize: 14,
-                background: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.07)' : 'var(--gold)',
-                color: !selectedPlan || positionBlocked(selectedPlan.position) ? 'rgba(255,255,255,0.35)' : '#181206',
+                fontSize: 'var(--font-size-body-sm)',
+                background: !selectedPlan || positionBlocked(selectedPlan.position) ? 'var(--surface-2)' : 'var(--gold)',
+                color: !selectedPlan || positionBlocked(selectedPlan.position) ? 'var(--text-faint)' : 'var(--obsidian)',
                 boxShadow: !selectedPlan || positionBlocked(selectedPlan.position) ? 'none' : '0 6px 20px var(--primary-a24)',
               }}
             >

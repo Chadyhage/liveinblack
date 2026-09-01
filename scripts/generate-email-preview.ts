@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { Email } from '../lib/server/emails'
-import * as emails from '../lib/server/emails'
+import type { Email } from '../lib/server/emails/index'
+import * as emails from '../lib/server/emails/index'
 
 type PreviewItem = { group: string; label: string; email: Email }
 
@@ -92,7 +92,9 @@ function escapeAttribute(value: string): string {
 }
 
 function localizeImages(html: string): string {
-  return html.replace(/src="https:\/\/liveinblack\.com\/images\//g, 'src="../../public/images/')
+  return html
+    .replace(/src="https:\/\/liveinblack\.com\/images\//g, 'src="../../public/images/')
+    .replace(/src="https:\/\/liveinblack\.com\/branding\//g, 'src="../../public/branding/')
 }
 
 const groups = [...new Set(items.map((item) => item.group))]
@@ -113,25 +115,25 @@ const document = `<!doctype html>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Catalogue des e-mails LIVE IN BLACK</title>
   <style>
-    :root{--ink:#0a0810;--lime:#b8f34a;--page:#0a0810;--panel:#14101c;--panel-2:#0d0a14;--line:#30283d;--text:#fff;--muted:#aaa4b4}
+    :root{--ink:#050505;--accent:#F53D8D;--page:#191218;--panel:#241a23;--panel-2:#1d141c;--line:rgba(255,255,255,.12);--text:#fff;--muted:rgba(255,255,255,.74)}
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
     body{margin:0;background:var(--page);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
     .hero{background:var(--panel-2);color:var(--text);padding:52px max(24px,calc((100vw - 1080px)/2));border-bottom:1px solid var(--line)}
-    .brand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:850;letter-spacing:.08em}.brand-mark{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--lime);color:#10210a;font-size:15px}.brand em{font-style:normal;color:var(--lime)}
+    .brand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:850;letter-spacing:.08em}.brand-mark{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--accent);color:var(--ink);font-size:15px}.brand em{font-style:normal;color:var(--accent)}
     .hero h1{max-width:760px;font-size:clamp(38px,6vw,70px);line-height:.98;letter-spacing:-.045em;margin:48px 0 18px}.hero p{max-width:700px;color:var(--muted);font-size:17px;line-height:1.6;margin:0}
     .nav{display:flex;gap:8px;overflow:auto;padding:18px max(20px,calc((100vw - 1080px)/2));position:sticky;top:0;z-index:2;background:rgba(13,10,20,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
     .chip{flex:0 0 auto;padding:9px 13px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);font-size:13px;font-weight:650;text-decoration:none}
     main{max-width:1080px;margin:0 auto;padding:52px 20px 100px}
-    section{scroll-margin-top:90px;margin:0 0 74px}.section-title p{margin:0 0 6px;color:var(--lime);font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}.section-title h2{font-size:34px;letter-spacing:-.03em;margin:0 0 22px}
+    section{scroll-margin-top:90px;margin:0 0 74px}.section-title p{margin:0 0 6px;color:var(--accent);font-size:12px;font-weight:750;letter-spacing:.07em;text-transform:uppercase}.section-title h2{font-size:34px;letter-spacing:-.03em;margin:0 0 22px}
     .item{background:var(--panel);border:1px solid var(--line);border-radius:20px;margin:0 0 28px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.22)}
-    .meta{padding:22px 24px;border-bottom:1px solid var(--line)}.meta>span{display:inline-block;padding:5px 9px;border-radius:999px;background:#1b2513;color:var(--lime);font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.05em}.meta h3{font-size:22px;letter-spacing:-.02em;margin:10px 0 5px}.meta p{margin:0;color:var(--muted);font-size:14px}
+    .meta{padding:22px 24px;border-bottom:1px solid var(--line)}.meta>span{display:inline-block;padding:5px 9px;border-radius:999px;background:rgba(245,61,141,.14);color:var(--accent);font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.05em}.meta h3{font-size:22px;letter-spacing:-.02em;margin:10px 0 5px}.meta p{margin:0;color:var(--muted);font-size:14px}
     iframe{display:block;width:100%;height:720px;border:0;background:var(--panel-2)}
     @media(max-width:680px){.hero{padding-top:28px;padding-bottom:36px}.hero h1{margin-top:34px}.nav{padding-left:14px}main{padding:36px 10px 70px}.item{border-radius:18px}.meta{padding:18px}iframe{height:900px}}
   </style>
 </head>
 <body>
-  <header class="hero"><div class="brand"><span class="brand-mark">LB</span><span>LIVE <em>IN</em> BLACK</span></div><h1>Chaque e-mail, revu et harmonisé.</h1><p>Fond des modales, surfaces sombres, vert de la marque et véritables icônes métier : les ${items.length} scénarios envoyés par la plateforme sont listés et prévisualisés ici, un par un.</p></header>
+  <header class="hero"><div class="brand"><span class="brand-mark">LB</span><span>LIVE <em>IN</em> BLACK</span></div><h1>Chaque e-mail, revu et harmonisé.</h1><p>Fond des modales, surfaces sombres, accent primaire et véritables icônes métier : les ${items.length} scénarios envoyés par la plateforme sont listés et prévisualisés ici, un par un.</p></header>
   <nav class="nav" aria-label="Catégories">${nav}</nav>
   <main>${sections}</main>
 </body>

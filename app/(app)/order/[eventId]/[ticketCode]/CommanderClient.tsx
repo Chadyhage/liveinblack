@@ -63,7 +63,7 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'var(--primary-a14)' },
   served: { label: 'Servi', color: 'var(--teal)', bg: 'var(--primary-a16)' },
-  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
+  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'var(--danger-fill)' },
 }
 let toastSeq = 0
 
@@ -211,29 +211,29 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
     <main className="lb-operational-shell">
       <div className="lb-operational-workspace">
         <div>
-          <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← Retour
           </Link>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
+          <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
             Service sur place
           </p>
-          <h1 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Commander</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
+          <h1 style={{ fontSize: 'var(--font-size-title-4)', fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Commander</h1>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>
             {eventName} · Billet {ticketCode}
           </p>
         </div>
 
         {notice && (
           <div role="status" aria-live="polite" style={{ background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 12, padding: '10px 14px' }}>
-            <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{notice}</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--gold)', margin: 0 }}>{notice}</p>
           </div>
         )}
 
         <div className="lb-operational-grid">
           <div className="lb-operational-primary">
         {hasOwnItems && (
-          <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)', padding: 18 }}>
-            <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 12px' }}>
+          <Card style={{ boxShadow: '0 8px 24px var(--scrim-mid)', padding: 18 }}>
+            <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 12px' }}>
               Commande de ce billet
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -241,13 +241,13 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                 const meta = STATUS_META[item.status]
                 return (
                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
+                    <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                       {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
                       {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
+                      <span style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>
                         {meta.label}
                       </span>
                     </div>
@@ -260,13 +260,13 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
           </div>
 
         <section className="lb-operational-side">
-          <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 12px' }}>
+          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', margin: '0 0 12px' }}>
             Le menu
           </h2>
           {menu.length === 0 ? (
-            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)', padding: '40px 20px', textAlign: 'center' }}>
-              <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 6px' }}>Aucune carte disponible</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
+            <Card style={{ boxShadow: '0 8px 24px var(--scrim-mid)', padding: '40px 20px', textAlign: 'center' }}>
+              <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, margin: '0 0 6px' }}>Aucune carte disponible</p>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>
                 L&apos;organisateur n&apos;a pas encore publié de menu pour la commande sur place.
               </p>
             </Card>
@@ -274,7 +274,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
             <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
               {groups.map(([category, catItems]) => (
                 <div key={category}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     {category}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -291,14 +291,14 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             gap: 12,
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                            boxShadow: '0 8px 24px var(--scrim-mid)',
                           }}
                         >
-                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 18 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
+                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 10, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 'var(--font-size-title-4)' }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
                           <div style={{ minWidth: 0, flex: 1 }}>
-                            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
-                            {menuItem.description && <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
-                            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '4px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
+                            <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
+                            {menuItem.description && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
+                            <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--gold)', margin: '4px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
                           </div>
                           <div style={{ flexShrink: 0 }}>
                             {editable ? (
@@ -308,7 +308,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                                 <StepButton label="+" disabled={busy} onClick={() => handleStep(menuItem, editable, 1)} />
                               </div>
                             ) : lockedLine ? (
-                              <span style={{ fontSize: 11.5, color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{lockedLineLabel(lockedLine)}</span>
+                              <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{lockedLineLabel(lockedLine)}</span>
                             ) : (
                               <Button
                                 type="button"
@@ -321,9 +321,9 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                                   padding: '8px 16px',
                                   borderRadius: 999,
                                   border: 'none',
-                                  fontSize: 13,
+                                  fontSize: 'var(--font-size-callout)',
                                   fontWeight: 700,
-                                  color: '#fff',
+                                  color: 'var(--image-text)',
                                   background: 'var(--violet)',
                                 }}
                               >
@@ -357,8 +357,8 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
           }}
         >
           <div className="lb-operational-paybar">
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>À régler au bar</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
+            <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)' }}>À régler au bar</span>
+            <span style={{ fontSize: 'var(--font-size-title-4)', fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(total, currency)}</span>
           </div>
         </div>
       )}
@@ -385,14 +385,14 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
             key={t.id}
             style={{
               background: 'var(--surface-2)',
-              border: '1px solid rgba(224,90,170,0.4)',
+              border: '1px solid var(--danger-border)',
               color: 'var(--text)',
               borderRadius: 12,
               padding: '10px 16px',
-              fontSize: 13,
+              fontSize: 'var(--font-size-callout)',
               maxWidth: 400,
               textAlign: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              boxShadow: '0 8px 24px rgba(var(--black-rgb), .40)',
             }}
           >
             {t.message}
@@ -431,9 +431,9 @@ function StepButton({ label, disabled, onClick }: { label: string; disabled: boo
         padding: 0,
         borderRadius: 'var(--radius-control)',
         border: '1px solid var(--border-strong)',
-        background: disabled ? 'rgba(255,255,255,0.03)' : 'var(--surface-2)',
+        background: disabled ? 'var(--fill-secondary)' : 'var(--surface-2)',
         color: 'var(--text)',
-        fontSize: 16,
+        fontSize: 'var(--font-size-headline-lg)',
         fontWeight: 700,
         display: 'flex',
         alignItems: 'center',

@@ -74,8 +74,8 @@ const EMPTY_FORM: PrestataireFormData = {
   tarifDevis: false,
 }
 
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: '#fff', fontSize: 14, outline: 'none' }
-const labelStyle: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', outline: 'none' }
+const labelStyle: React.CSSProperties = { fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
   borderRadius: 3,
@@ -83,7 +83,7 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   background: disabled ? 'var(--primary-a32)' : 'linear-gradient(180deg, var(--primary), var(--primary-strong))',
   color: 'var(--primary-ink)',
   fontWeight: 500,
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   textTransform: 'none',
   letterSpacing: 'normal',
   cursor: disabled ? 'default' : 'pointer',
@@ -93,8 +93,8 @@ const chip = (active: boolean): React.CSSProperties => ({
   borderRadius: 999,
   border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
   background: active ? 'var(--primary-a14)' : 'transparent',
-  color: active ? 'var(--gold)' : '#fff',
-  fontSize: 12.5,
+  color: active ? 'var(--gold)' : 'var(--text)',
+  fontSize: 'var(--font-size-footnote-lg)',
   cursor: 'pointer',
 })
 
@@ -309,12 +309,12 @@ export default function PrestataireOnboardingWizard({
     return (
       <Shell style={mode === 'anonymous' ? undefined : { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <Card style={{ padding: 24, width: '100%', maxWidth: 760, textAlign: 'center' }}>
-          <h1 className="font-display" style={{ fontSize: 24, color: '#fff', margin: '0 0 12px' }}>Demande envoyée</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
-            Tu seras contacté à <strong style={{ color: '#fff' }}>{submitted.email}</strong> une fois ton compte validé.
+          <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1)', color: 'var(--text)', margin: '0 0 12px' }}>Demande envoyée</h1>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>Ton dossier a été transmis à l&apos;équipe LIVEINBLACK.</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 8px' }}>
+            Tu seras contacté à <strong style={{ color: 'var(--text)' }}>{submitted.email}</strong> une fois ton compte validé.
           </p>
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
           <a href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
             Retour à l&apos;accueil
           </a>
@@ -330,18 +330,18 @@ export default function PrestataireOnboardingWizard({
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
       <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
-          <h1 className="font-display" style={{ fontSize: 28, color: '#fff', margin: '0 0 6px' }}>Compte Prestataire</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
+          <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 6px' }}>Compte Prestataire</h1>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
           </div>
-          <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+          <div style={{ height: 6, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
           </div>
         </div>
@@ -349,7 +349,7 @@ export default function PrestataireOnboardingWizard({
         <Card style={{ padding: 24 }}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes informations</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes informations</h2>
               <div style={{ display: 'flex', gap: 10 }}>
                 <div style={{ flex: 1 }}>
                   <Label style={labelStyle}>Prénom</Label>
@@ -409,7 +409,7 @@ export default function PrestataireOnboardingWizard({
                           type="button"
                           aria-label={showRegPwd ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
                           onClick={() => setShowRegPwd((v) => !v)}
-                          style={{ position: 'absolute', right: 6, top: '50%', minWidth: 44, minHeight: 44, padding: 0, transform: 'translateY(-50%)', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
+                          style={{ position: 'absolute', right: 6, top: '50%', minWidth: 44, minHeight: 44, padding: 0, transform: 'translateY(-50%)', fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
                         >
                           {showRegPwd ? 'Cacher' : 'Voir'}
                         </Button>
@@ -427,7 +427,7 @@ export default function PrestataireOnboardingWizard({
 
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ton activité</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ton activité</h2>
               <div>
                 <Label style={labelStyle}>Que proposes-tu ? (plusieurs choix possibles)</Label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -478,11 +478,11 @@ export default function PrestataireOnboardingWizard({
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Détails de ton activité</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Détails de ton activité</h2>
 
               {types.includes('artiste') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Artiste / DJ / animation</p>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Artiste / DJ / animation</p>
                   <Select
                     value={form.typeArtiste}
                     onChange={(value) => set('typeArtiste', value)}
@@ -532,7 +532,7 @@ export default function PrestataireOnboardingWizard({
 
               {types.includes('salle') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Salle / lieu</p>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Salle / lieu</p>
                   <Input style={inputStyle} value={form.adresseLieu} onChange={(e) => set('adresseLieu', e.target.value)} placeholder="Adresse du lieu" />
                   <Input style={inputStyle} type="number" min={0} value={form.capaciteLieu ?? ''} onChange={(e) => set('capaciteLieu', e.target.value ? Number(e.target.value) : null)} placeholder="Capacité d'accueil" />
                   <Select
@@ -558,7 +558,7 @@ export default function PrestataireOnboardingWizard({
 
               {types.includes('materiel') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Technique / matériel</p>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Technique / matériel</p>
                   <Input style={inputStyle} value={form.categoriesMateriel} onChange={(e) => set('categoriesMateriel', e.target.value)} placeholder="Catégories de matériel" />
                   <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.inventaire} onChange={(e) => set('inventaire', e.target.value)} placeholder="Inventaire" />
                   <Textarea style={{ ...inputStyle, minHeight: 60 }} value={form.conditionsLocation} onChange={(e) => set('conditionsLocation', e.target.value)} placeholder="Conditions de location" />
@@ -568,7 +568,7 @@ export default function PrestataireOnboardingWizard({
 
               {types.includes('food') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Food / boissons</p>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Food / boissons</p>
                   <Select
                     value={form.typeActiviteFood}
                     onChange={(value) => set('typeActiviteFood', value)}
@@ -594,7 +594,7 @@ export default function PrestataireOnboardingWizard({
                       onChange={(e) => set('alcoolFoodAtteste', e.target.checked)}
                       style={{ alignItems: 'flex-start' }}
                       label={
-                        <span style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, fontWeight: 400 }}>
+                        <span style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, fontWeight: 400 }}>
                           J&apos;atteste respecter la réglementation locale sur la vente d&apos;alcool et en assumer l&apos;entière responsabilité.
                         </span>
                       }
@@ -604,7 +604,7 @@ export default function PrestataireOnboardingWizard({
               )}
 
               {types.filter((t) => !['artiste', 'salle', 'materiel', 'food'].includes(t)).length > 0 && (
-                <p style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', lineHeight: 1.5, margin: 0 }}>
                   Pas de champs spécifiques pour{' '}
                   {types
                     .filter((t) => !['artiste', 'salle', 'materiel', 'food'].includes(t))
@@ -615,7 +615,7 @@ export default function PrestataireOnboardingWizard({
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tarifs</p>
+                <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tarifs</p>
                 <Checkbox
                   label="Sur devis uniquement"
                   checked={form.tarifDevis}
@@ -647,21 +647,21 @@ export default function PrestataireOnboardingWizard({
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Comment ça marche</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Comment ça marche</h2>
               {[
                 ['01', 'Page publiée', 'Ta page prestataire est visible dans l’annuaire LIVEINBLACK.'],
                 ['02', 'Catalogue consulté', 'Les organisateurs et clients consultent ton catalogue de services.'],
                 ['03', 'Mise en relation directe', 'Ils te contactent par messagerie pour organiser la prestation.'],
               ].map(([n, title, body]) => (
                 <div key={n} style={{ display: 'flex', gap: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold)' }}>{n}</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--gold)' }}>{n}</span>
                   <div>
-                    <p style={{ fontSize: 13.5, fontWeight: 700, color: '#fff', margin: 0 }}>{title}</p>
-                    <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{body}</p>
+                    <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{title}</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>{body}</p>
                   </div>
                 </div>
               ))}
-              <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>
+              <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>
                 LIVEINBLACK ne collecte pas le paiement de tes prestations et ne prélève aucune commission dessus.
               </p>
             </div>
@@ -669,8 +669,8 @@ export default function PrestataireOnboardingWizard({
 
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
-              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                 Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité. Ils sont stockés de façon privée et accessibles uniquement à
                 l&apos;équipe LIVEINBLACK.
               </p>
@@ -688,15 +688,15 @@ export default function PrestataireOnboardingWizard({
 
           {step === 5 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Finaliser</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Finaliser</h2>
               {missingDocs.length > 0 ? (
-                <p style={{ fontSize: 12.5, color: '#e05aaa', margin: 0 }}>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--danger)', margin: 0 }}>
                   Documents manquants : {missingDocs.map((k) => DOC_LABELS[k] || k).join(', ')}
                 </p>
               ) : (
-                <p style={{ fontSize: 12.5, color: 'var(--teal)', margin: 0 }}>Tous les documents obligatoires sont fournis.</p>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--teal)', margin: 0 }}>Tous les documents obligatoires sont fournis.</p>
               )}
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                 Une fois validé, ton compte est créé. Pour rendre ton profil visible publiquement, tu activeras ton abonnement depuis ton espace prestataire —{' '}
                 {candidateCurrency === 'XOF'
                   ? `${fmtMoney(PROVIDER_SUB.price, 'XOF')} / ${PROVIDER_SUB.periodDays} j · Mobile Money`
@@ -710,11 +710,11 @@ export default function PrestataireOnboardingWizard({
             </div>
           )}
 
-          {error && <p style={{ fontSize: 12.5, color: '#e05aaa', marginTop: 14 }}>{error}</p>}
+          {error && <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--danger)', marginTop: 14 }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
             {step > 0 && (
-              <Button variant="secondary" onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: '#fff' }}>
+              <Button variant="secondary" onClick={back} style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text)' }}>
                 Retour
               </Button>
             )}
@@ -736,7 +736,7 @@ export default function PrestataireOnboardingWizard({
           </div>
         </Card>
 
-        <p style={{ fontSize: 11, color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
+        <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>
           {mode === 'anonymous'
             ? 'Rien n’est encore enregistré : termine et envoie ta demande pour ne rien perdre.'
             : autosaveState === 'error'
@@ -785,7 +785,7 @@ function DocUpload({
           border: '1px solid var(--border-strong)',
           background: 'var(--surface-2)',
           color: 'var(--text-muted)',
-          fontSize: 12.5,
+          fontSize: 'var(--font-size-footnote-lg)',
           cursor: 'pointer',
         }}
       >
@@ -806,9 +806,9 @@ function DocUpload({
       {files.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
           {files.map((f, i) => (
-            <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
+            <div key={f.publicId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)' }}>
               <span>{f.name}</span>
-              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: '#e05aaa', fontSize: 12, textDecoration: 'none' }}>
+              <Button variant="link" onClick={() => onRemove(docKey, i)} style={{ color: 'var(--danger)', fontSize: 'var(--font-size-footnote)', textDecoration: 'none' }}>
                 Retirer
               </Button>
             </div>

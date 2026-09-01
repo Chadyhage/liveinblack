@@ -24,7 +24,7 @@ export default function ProviderDirectoryCard({ provider, eager = false }: { pro
 
   return (
     <Link href={`/providers/${encodeURIComponent(provider.userId)}`} className={styles.card}>
-      <div className={styles.visual} style={{ background: `linear-gradient(135deg, ${primaryCategory.color}55, #161619)` }}>
+      <div className={styles.visual} style={{ background: `linear-gradient(135deg, ${primaryCategory.color}55, var(--surface-2))` }}>
         <Image
           src={coverImage}
           alt=""
@@ -34,10 +34,10 @@ export default function ProviderDirectoryCard({ provider, eager = false }: { pro
           sizes="(max-width: 680px) calc(100vw - 40px), (max-width: 1020px) 46vw, (max-width: 1440px) 24vw, 210px"
         />
         <div className={styles.scrim} aria-hidden="true" />
-        <span className={styles.category} style={{ background: `${primaryCategory.color}e6` }}>
+        <span className={styles.category} style={{ borderColor: primaryCategory.color }}>
           {primaryCategory.label}{categories.length > 1 ? ` +${categories.length - 1}` : ''}
         </span>
-        <div className={styles.identity} style={{ background: primaryCategory.color }}>
+        <div className={styles.identity} style={{ borderColor: primaryCategory.color }}>
           {provider.photoUrl ? (
             <Image src={provider.photoUrl} alt="" fill className={styles.avatar} sizes="72px" />
           ) : (

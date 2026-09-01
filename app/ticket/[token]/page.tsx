@@ -32,8 +32,8 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               height: 80,
               borderRadius: '50%',
               margin: '0 auto 24px',
-              background: 'rgba(224,90,170,0.08)',
-              border: '2px solid rgba(224,90,170,0.35)',
+              background: 'var(--danger-fill)',
+              border: '2px solid var(--danger-border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -41,14 +41,14 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           >
             <AlertCircle size={38} strokeWidth={1.8} color="var(--pink)" aria-hidden="true" />
           </div>
-          <h1 className="font-display" style={{ fontWeight: 800, fontSize: 25, letterSpacing: '-0.4px', color: 'var(--pink)', margin: '0 0 10px' }}>Billet invalide</h1>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
+          <h1 className="font-display" style={{ fontWeight: 800, fontSize: 'var(--font-size-title-1-lg)', letterSpacing: '-0.4px', color: 'var(--pink)', margin: '0 0 10px' }}>Billet invalide</h1>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>
             Ce QR code n&apos;est pas reconnu, a été falsifié, ou n&apos;est plus à jour.
           </p>
-          <Card accent="rgba(224,90,170,0.20)" style={{ padding: '10px 16px', marginBottom: 20 }}>
+          <Card accent="var(--danger-fill)" style={{ padding: '10px 16px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <LockKeyhole size={12} strokeWidth={1.5} color="var(--pink)" aria-hidden="true" />
-              <p style={{ fontSize: 11, color: 'rgba(224,90,170,0.75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--primary-a75)', margin: 0, letterSpacing: '0.04em' }}>Signature invalide · LIVEINBLACK</p>
             </div>
           </Card>
           <Link
@@ -57,7 +57,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               display: 'inline-block',
               padding: '12px 24px',
               borderRadius: 12,
-              fontSize: 13.5,
+              fontSize: 'var(--font-size-body)',
               fontWeight: 700,
               color: 'var(--text)',
               background: 'transparent',
@@ -72,7 +72,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
     )
   }
 
-  const CARD_SHADOW = '0 8px 24px rgba(0,0,0,0.35)'
+  const CARD_SHADOW = '0 8px 24px var(--scrim-mid)'
   const qrUrl = `${SITE}/ticket/${token}`
 
   return (
@@ -94,21 +94,21 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
           >
             <CheckCircle2 size={34} strokeWidth={2.5} color="var(--primary)" aria-hidden="true" />
           </div>
-          <h1 className="font-display" style={{ fontWeight: 800, fontSize: 26, color: 'var(--primary)', margin: '0 0 5px', letterSpacing: '-0.4px' }}>Billet valide</h1>
+          <h1 className="font-display" style={{ fontWeight: 800, fontSize: 'var(--font-size-title-xl)', color: 'var(--primary)', margin: '0 0 5px', letterSpacing: '-0.4px' }}>Billet valide</h1>
         </div>
 
         {ticket.guestName && (
           <Card style={{ boxShadow: CARD_SHADOW, padding: '14px 20px', textAlign: 'center' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Invité</p>
-            <p style={{ fontWeight: 700, fontSize: 21, color: '#fff', margin: 0 }}>{ticket.guestName}</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Invité</p>
+            <p style={{ fontWeight: 700, fontSize: 'var(--font-size-title-3-lg)', color: 'var(--text)', margin: 0 }}>{ticket.guestName}</p>
           </Card>
         )}
 
         <Card style={{ boxShadow: CARD_SHADOW, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-          <div style={{ padding: 16, background: '#fff', borderRadius: 12 }}>
+          <div style={{ padding: 16, background: 'var(--qr-required-white)', borderRadius: 12 }}>
             <TicketQr url={qrUrl} />
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em', margin: 0 }}>Présente ce QR code à l&apos;entrée</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', letterSpacing: '0.02em', margin: 0 }}>Présente ce QR code à l&apos;entrée</p>
         </Card>
 
         <Link
@@ -121,7 +121,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
             alignItems: 'center',
             justifyContent: 'center',
             gap: 9,
-            fontSize: 14.5,
+            fontSize: 'var(--font-size-body-lg)',
             fontWeight: 700,
             color: 'var(--primary-ink)',
             background: 'var(--primary)',
@@ -146,7 +146,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
             alignItems: 'center',
             justifyContent: 'center',
             gap: 9,
-            fontSize: 14,
+            fontSize: 'var(--font-size-body-sm)',
             fontWeight: 700,
             color: 'var(--text)',
             background: 'transparent',
@@ -158,20 +158,20 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
         </Link>
 
         <Card style={{ boxShadow: CARD_SHADOW }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Événement</p>
-          <p style={{ fontWeight: 800, fontSize: 24, color: '#fff', textTransform: 'uppercase', lineHeight: 1.2, margin: '0 0 5px', letterSpacing: '0.01em' }}>
+          <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 10px' }}>Événement</p>
+          <p style={{ fontWeight: 800, fontSize: 'var(--font-size-title-1)', color: 'var(--text)', textTransform: 'uppercase', lineHeight: 1.2, margin: '0 0 5px', letterSpacing: '0.01em' }}>
             {ticket.eventName}
           </p>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{ticket.eventDate}</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>{ticket.eventDate}</p>
 
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Type de place</p>
-              <p style={{ fontWeight: 700, fontSize: 17, color: '#fff', margin: 0 }}>{ticket.place}</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-faint)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Type de place</p>
+              <p style={{ fontWeight: 700, fontSize: 'var(--font-size-title-5)', color: 'var(--text)', margin: 0 }}>{ticket.place}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prix de la place</p>
-              <p style={{ fontWeight: 700, fontSize: 20, color: 'var(--gold)', margin: 0 }}>{fmtMoney(ticket.placePrice, ticket.currency)}</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-faint)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prix de la place</p>
+              <p style={{ fontWeight: 700, fontSize: 'var(--font-size-title-3)', color: 'var(--gold)', margin: 0 }}>{fmtMoney(ticket.placePrice, ticket.currency)}</p>
             </div>
           </div>
         </Card>
@@ -179,7 +179,7 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
         {ticket.preorders.length > 0 && (
           <Card style={{ boxShadow: CARD_SHADOW }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Précommande</p>
+              <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Précommande</p>
             </div>
             {ticket.preorders.map((item, i) => (
               <div
@@ -193,10 +193,10 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
                   borderBottom: i < ticket.preorders.length - 1 ? '1px solid var(--border)' : 'none',
                 }}
               >
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{item.name}{item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 3 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}</span>
+                <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>{item.name}{item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 3 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>×{item.qty}</span>
-                  <span style={{ fontWeight: 600, fontSize: 15, color: '#fff' }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
+                  <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>×{item.qty}</span>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-headline)', color: 'var(--text)' }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
                 </div>
               </div>
             ))}
@@ -204,13 +204,13 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
         )}
 
         <Card style={{ boxShadow: CARD_SHADOW, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Total payé</span>
+          <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)' }}>Total payé</span>
           <span style={{ fontWeight: 800, fontSize: ticket.currency === 'XOF' ? 20 : 24, color: 'var(--gold)' }}>{fmtMoney(ticket.totalPrice, ticket.currency)}</span>
         </Card>
 
         <Card style={{ boxShadow: CARD_SHADOW, padding: '12px 16px', textAlign: 'center' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>Code billet</p>
-          <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.08em', margin: 0 }}>{ticket.ticketCode}</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>Code billet</p>
+          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.08em', margin: 0 }}>{ticket.ticketCode}</p>
         </Card>
       </div>
     </main>

@@ -8,7 +8,7 @@ import { conversationLabel } from './messagingUtils'
 import type { ConversationView } from './types'
 
 const sectionLabelStyle: CSSProperties = {
-  fontSize: 13,
+  fontSize: 'var(--font-size-callout)',
   fontWeight: 650,
   color: 'var(--text-faint)',
   letterSpacing: '-0.01em',
@@ -65,7 +65,7 @@ export function PhotoPreviewModal({
                   label={
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {conv.type === 'group' ? <GroupAvatar conv={conv} size={28} /> : <Avatar userId={conv.id} name={label} size={28} />}
-                      <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{label}</span>
+                      <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', fontWeight: 400 }}>{label}</span>
                     </span>
                   }
                 />
@@ -102,7 +102,7 @@ export function CameraCaptureModal({
         </>
       }
     >
-      <video ref={videoRef} autoPlay playsInline aria-label="Aperçu de la caméra" style={{ width: 'min(100%, 1100px)', maxHeight: 'calc(100dvh - 170px)', objectFit: 'contain', borderRadius: 20, boxShadow: '0 28px 90px rgba(0,0,0,.5)' }} />
+      <video ref={videoRef} autoPlay playsInline aria-label="Aperçu de la caméra" style={{ width: 'min(100%, 1100px)', maxHeight: 'calc(100dvh - 170px)', objectFit: 'contain', borderRadius: 20, boxShadow: '0 28px 90px rgba(var(--black-rgb), .50)' }} />
     </ImmersiveDialog>
   )
 }

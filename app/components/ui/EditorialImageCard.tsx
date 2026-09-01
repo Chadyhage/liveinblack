@@ -15,7 +15,7 @@ export interface EditorialImageCardProps {
 export default function EditorialImageCard({ src, alt, eyebrow, title, description, badge, priority = false }: EditorialImageCardProps) {
   return (
     <article className="lb-editorial-card">
-      <div className="lb-editorial-card__media">
+      <div className="lb-editorial-card__media" data-contrast-on-image="true">
         <Image src={src} alt={alt} fill priority={priority} sizes="(max-width: 720px) calc(100vw - 40px), (max-width: 1100px) 46vw, 31vw" />
         <div className="lb-editorial-card__scrim" />
         {badge ? <span className="lb-editorial-card__badge">{badge}</span> : null}

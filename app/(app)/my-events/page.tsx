@@ -38,7 +38,7 @@ export default async function MesEvenementsPage() {
         <p style={{ font: '700 11px var(--font-open-sans)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>
           Validation en cours
         </p>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 22px' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', lineHeight: 1.7, margin: '0 0 22px' }}>
           Ton compte organisateur est en attente de validation par l&rsquo;équipe LIVEINBLACK. Tu pourras créer des événements dès que ton dossier sera approuvé.
         </p>
         <a
@@ -50,7 +50,7 @@ export default async function MesEvenementsPage() {
             background: 'var(--gold)',
             color: 'var(--obsidian)',
             fontWeight: 700,
-            fontSize: 13,
+            fontSize: 'var(--font-size-callout)',
             textDecoration: 'none',
             letterSpacing: '.04em',
             textTransform: 'uppercase',
@@ -65,11 +65,11 @@ export default async function MesEvenementsPage() {
   if (!canCreateEvent(permissionUser)) {
     return (
       <main style={{ maxWidth: 1120, margin: '80px auto', padding: '0 clamp(14px, 2vw, 28px)', textAlign: 'center' }}>
-        <h1 style={{ font: '400 34px var(--font-open-sans)', color: '#fff', margin: '0 0 14px' }}>Accès restreint</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7, margin: '0 0 10px' }}>
+        <h1 style={{ font: '400 34px var(--font-open-sans)', color: 'var(--text)', margin: '0 0 14px' }}>Accès restreint</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', lineHeight: 1.7, margin: '0 0 10px' }}>
           {getCreateEventBlockedReason(permissionUser) ?? 'Cette section est réservée aux organisateurs.'}
         </p>
-        <p style={{ color: 'var(--text-faint)', fontSize: 12.5, lineHeight: 1.7 }}>
+        <p style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote-lg)', lineHeight: 1.7 }}>
           Pour créer des événements, tu dois avoir un compte organisateur validé.
         </p>
       </main>

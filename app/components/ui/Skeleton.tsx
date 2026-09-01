@@ -21,7 +21,7 @@ export function Skeleton({ width = '100%', height = 14, radius = 6, style }: Ske
         width,
         height,
         borderRadius: radius,
-        background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%)',
+        background: 'linear-gradient(90deg, var(--primary-a04) 25%, var(--primary-a10) 37%, var(--primary-a04) 63%)',
         backgroundSize: '400% 100%',
         animation: 'lb-skeleton-shimmer 1.4s ease infinite',
         ...style,

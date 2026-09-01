@@ -89,13 +89,13 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'var(--primary-a14)' },
   served: { label: 'Servi', color: 'var(--primary)', bg: 'var(--primary-a16)' },
-  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'rgba(224,90,170,0.2)' },
+  cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'var(--danger-fill)' },
 }
 
 let toastSeq = 0
 
 const sectionTitleStyle: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 'var(--font-size-footnote)',
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
@@ -531,19 +531,19 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
       <div className={styles.workspace}>
         <div className={styles.header}>
           <div>
-            <Link href="/my-shifts" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
+            <Link href="/my-shifts" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', textDecoration: 'none' }}>
               ← Événements
             </Link>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
               {/* Rang 1 (contrôle entrée pur) : jamais "Service sur place",
                   même une fois un billet scanné — il n'a accès qu'au contrôle
                   d'accès, jamais aux commandes (voir D4). */}
               {mode === 'service' && rank >= 2 ? 'Service sur place' : 'Contrôle des entrées'}
             </p>
-            <h1 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 5px', letterSpacing: '-0.3px' }}>
+            <h1 style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, margin: '0 0 5px', letterSpacing: '-0.3px' }}>
               {mode === 'service' && rank >= 2 ? `Billet ${ticketCode}` : mode === 'service' ? 'Billet scanné' : 'Scanner'}
             </h1>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>{eventName}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0 }}>{eventName}</p>
           </div>
           {mode === 'service' && (
             <Button type="button" variant="secondary" size="sm" onClick={resetToScan}>
@@ -554,24 +554,24 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
 
         {notice && (
           <div role="status" aria-live="polite" style={{ background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 14, padding: '8px 12px' }}>
-            <p style={{ fontSize: 12.5, color: 'var(--gold)', margin: 0 }}>{notice}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--gold)', margin: 0 }}>{notice}</p>
           </div>
         )}
 
         {mode === 'scan' ? (
           <div className={styles.scanGrid}>
             {checkinError && (
-              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.35)', borderRadius: 14, padding: '8px 12px' }}>
-                <p style={{ fontSize: 12.5, color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 6px' : 0 }}>{checkinError}</p>
+              <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 14, padding: '8px 12px' }}>
+                <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 6px' : 0 }}>{checkinError}</p>
                 {checkinErrorCode === 'auth_required' && (
-                  <Link href="/login" style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+                  <Link href="/login" style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
                     Se reconnecter
                   </Link>
                 )}
               </div>
             )}
 
-            <Card className={styles.cameraCard} style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+            <Card className={styles.cameraCard} style={{ boxShadow: '0 8px 24px var(--scrim-mid)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <h2 style={{ ...sectionTitleStyle, margin: 0 }}>Caméra</h2>
                 <Button type="button" variant="secondary" size="sm" onClick={() => setScanning((s) => !s)}>
@@ -581,7 +581,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               <CameraScanner active={scanning} onScan={handleScanValue} />
             </Card>
 
-            <Card className={styles.manualCard} style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+            <Card className={styles.manualCard} style={{ boxShadow: '0 8px 24px var(--scrim-mid)' }}>
               <h2 style={sectionTitleStyle}>Saisie manuelle</h2>
               <form
                 onSubmit={(e) => {
@@ -622,7 +622,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 className={styles.resultCard}
                 style={{
                   border: checkinResult.alreadyCheckedIn ? '1px solid var(--primary-a35)' : '1px solid var(--primary-a35)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                  boxShadow: '0 8px 24px var(--scrim-mid)',
                 }}
               >
                 {/* Même langage visuel icône-cercle + gros titre que
@@ -656,7 +656,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   </div>
                   <p
                     style={{
-                      fontSize: 15,
+                      fontSize: 'var(--font-size-headline)',
                       fontWeight: 800,
                       margin: 0,
                       letterSpacing: '-0.3px',
@@ -672,22 +672,22 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 12.5, color: 'var(--text)', margin: '0 0 4px' }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text)', margin: '0 0 4px' }}>
                     {checkinResult.ticket.place} · {fmtMoney(checkinResult.ticket.totalPrice, checkinResult.ticket.currency)}
                   </p>
                   {checkinResult.ticket.holderName && (
-                    <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
+                    <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: '0 0 4px' }}>Titulaire : {checkinResult.ticket.holderName}</p>
                   )}
                   {checkinResult.ticket.guestName && (
-                    <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
+                    <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: '0 0 4px' }}>Invité : {checkinResult.ticket.guestName}</p>
                   )}
                   {checkinResult.ticket.preorders.length > 0 && (
-                    <div style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '0 0 6px' }}>
+                    <div style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: '0 0 6px' }}>
                       <p style={{ margin: '0 0 3px' }}>Précommandes :</p>
                       {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '1px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
                     </div>
                   )}
-                  <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: 0 }}>
+                  <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: 0 }}>
                     {checkinResult.pointAwarded ? 'Point de fidélité crédité au titulaire.' : 'Pas de point de fidélité pour ce scan.'}
                   </p>
                 </div>
@@ -699,10 +699,10 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                 c'est le rôle du serveur (rang 2+) uniquement. Voir D4,
                 confirmé en réunion live le 11/08/2026. */}
             {rank >= 2 && (
-            <Card style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+            <Card style={{ boxShadow: '0 8px 24px var(--scrim-mid)' }}>
               <h2 style={sectionTitleStyle}>Commande de ce billet</h2>
               {items.length === 0 ? (
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Aucun article pour l&apos;instant.</p>
+                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Aucun article pour l&apos;instant.</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {items.map((item) => {
@@ -723,22 +723,22 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                     return (
                       <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                          <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
+                          <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                             {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
-                            {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2, fontSize: 11 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
+                            {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2, fontSize: 'var(--font-size-caption)' }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                           </p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
+                            <span style={{ fontSize: 'var(--font-size-caption-2)', fontWeight: 700, color: meta.color, background: meta.bg, padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>
                               {meta.label}
                             </span>
                             {item.paidAt && (
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 'var(--font-size-caption-2)',
                                   fontWeight: 700,
                                   color: 'var(--teal-solid)',
-                                  background: 'rgba(245,61,141,0.16)',
+                                  background: 'var(--primary-a16)',
                                   padding: '3px 9px',
                                   borderRadius: 999,
                                   whiteSpace: 'nowrap',
@@ -762,7 +762,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                               style={{
                                 border: '1px solid var(--primary-a04)',
                                 color: 'var(--primary)',
-                                background: busyKey === serveKey ? 'rgba(255,255,255,0.03)' : 'var(--primary-a10)',
+                                background: busyKey === serveKey ? 'var(--fill-secondary)' : 'var(--primary-a10)',
                                 minWidth: 64,
                               }}
                             >
@@ -806,7 +806,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                 Confirmer
                               </Button>
                             </div>
-                            <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0 }}>Motif obligatoire.</p>
+                            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: 0 }}>Motif obligatoire.</p>
                           </div>
                         )}
                       </div>
@@ -822,15 +822,15 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             <section className={styles.menuPanel}>
               <h2 style={{ ...sectionTitleStyle, marginBottom: 12 }}>Ajouter au menu</h2>
               {menu.length === 0 ? (
-                <Card style={{ padding: '28px 18px', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 4px' }}>Aucune carte disponible</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>L&apos;organisateur n&apos;a pas publié de menu pour cet événement.</p>
+                <Card style={{ padding: '28px 18px', textAlign: 'center', boxShadow: '0 8px 24px var(--scrim-mid)' }}>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 700, margin: '0 0 4px' }}>Aucune carte disponible</p>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0 }}>L&apos;organisateur n&apos;a pas publié de menu pour cet événement.</p>
                 </Card>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {groups.map(([category, catItems]) => (
                     <div key={category}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         {category}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -843,7 +843,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                               key={menuItem.name}
                               style={{
                                 borderRadius: 11,
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                                boxShadow: '0 8px 24px var(--scrim-mid)',
                                 padding: '10px 12px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -851,11 +851,11 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                 gap: 10,
                               }}
                             >
-                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 9, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 17 }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={34} height={34} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
+                          {(menuItem.imageUrl || menuItem.emoji) && <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 9, overflow: 'hidden', display: 'grid', placeItems: 'center', background: 'var(--surface-2)', fontSize: 'var(--font-size-title-5)' }}>{menuItem.imageUrl ? <Image src={menuItem.imageUrl} alt="" width={34} height={34} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span aria-hidden="true">{menuItem.emoji}</span>}</div>}
                               <div style={{ minWidth: 0, flex: 1 }}>
-                                <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
-                                {menuItem.description && <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
-                                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)', margin: '3px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
+                                <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, margin: 0 }}>{menuItem.name}</p>
+                                {menuItem.description && <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>{menuItem.description}</p>}
+                                <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)', margin: '3px 0 0' }}>{fmtMoney(menuItem.price, currency)}</p>
                               </div>
                               {editable ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
@@ -897,8 +897,8 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
         >
           <div className={styles.payBarInner}>
             <div>
-              <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>À encaisser</span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>
+              <span style={{ display: 'block', fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-muted)' }}>À encaisser</span>
+              <span style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--gold)' }}>{fmtMoney(unpaidTotal, currency)}</span>
             </div>
             {rank >= 2 && (
               <Button
@@ -939,14 +939,14 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             key={t.id}
             style={{
               background: 'var(--surface-2)',
-              border: '1px solid rgba(224,90,170,0.4)',
+              border: '1px solid var(--danger-border)',
               color: 'var(--text)',
               borderRadius: 12,
               padding: '10px 16px',
-              fontSize: 13,
+              fontSize: 'var(--font-size-callout)',
               maxWidth: 400,
               textAlign: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              boxShadow: '0 8px 24px rgba(var(--black-rgb), .40)',
             }}
           >
             {t.message}
@@ -978,14 +978,14 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             </>
           }
         >
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
             Confirmer l&apos;encaissement de {fmtMoney(unpaidTotal, currency)} pour ce ticket.
           </p>
         </Modal>
       )}
       {confirmRemoveItem && (
         <Modal onClose={() => setConfirmRemoveItem(null)} title="Retirer cette ligne ?">
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
             « {confirmRemoveItem.item.name} » sera retiré de la commande de ce billet.
           </p>
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -1024,7 +1024,7 @@ function StepButton({ label, disabled, onClick }: { label: string; disabled: boo
         minHeight: 38,
         padding: 0,
         borderRadius: '50%',
-        fontSize: 16,
+        fontSize: 'var(--font-size-headline-lg)',
       }}
     >
       {label}

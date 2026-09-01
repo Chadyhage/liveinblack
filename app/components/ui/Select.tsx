@@ -85,7 +85,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
     }
   }
 
-  const sizeStyle = size === 'sm' ? { minHeight: 'var(--control-height-sm)', padding: '7px 10px', fontSize: 14 } : { minHeight: 'var(--control-height-md)', padding: '8px 12px', fontSize: 14.5 }
+  const sizeStyle = size === 'sm' ? { minHeight: 'var(--control-height-sm)', padding: '7px 10px', fontSize: 'var(--font-size-body-sm)' } : { minHeight: 'var(--control-height-md)', padding: '8px 12px', fontSize: 'var(--font-size-body-lg)' }
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
@@ -113,7 +113,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
           gap: 6,
           background: 'var(--surface-2)',
           color: selected ? 'var(--text)' : 'var(--text-faint)',
-          border: `1px solid ${invalid ? '#ff5b5b' : open ? 'var(--teal)' : 'var(--border-strong)'}`,
+          border: `1px solid ${invalid ? 'var(--danger)' : open ? 'var(--teal)' : 'var(--border-strong)'}`,
           borderRadius: 'var(--radius-md)',
           fontFamily: 'inherit',
           fontWeight: 600,
@@ -149,10 +149,10 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
             background: 'var(--surface-2)',
             border: '1px solid var(--border-strong)',
             borderRadius: 'var(--radius-md)',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
+            boxShadow: 'none',
           }}
         >
-          {options.length === 0 && <li style={{ padding: '9px 10px', fontSize: 13, color: 'var(--text-faint)' }}>Aucune option</li>}
+          {options.length === 0 && <li style={{ padding: '9px 10px', fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Aucune option</li>}
           {options.map((opt, i) => {
             const isSelected = opt.value === value
             const isActive = i === activeIndex
@@ -171,10 +171,10 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
                   alignItems: 'center',
                   padding: '6px 9px',
                   borderRadius: 9,
-                  fontSize: 13,
+                  fontSize: 'var(--font-size-callout)',
                   fontWeight: isSelected ? 700 : 500,
-                  color: opt.disabled ? 'var(--text-faint)' : isSelected ? 'var(--teal)' : 'var(--text)',
-                  background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
+                  color: opt.disabled ? 'var(--text-faint)' : isSelected ? 'var(--accent-text)' : 'var(--text)',
+                  background: isActive ? 'var(--primary-a08)' : 'transparent',
                   cursor: opt.disabled ? 'not-allowed' : 'pointer',
                 }}
               >

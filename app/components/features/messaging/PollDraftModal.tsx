@@ -6,10 +6,10 @@ import { ModalActions, ModalShell } from './MessagingModals'
 const inputStyle: React.CSSProperties = {
   width: '100%',
   borderRadius: 14,
-  border: '1px solid rgba(255,255,255,.12)',
-  background: 'rgba(118,118,128,.16)',
+  border: '1px solid var(--border)',
+  background: 'var(--field-bg)',
   color: 'var(--text)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   marginBottom: 10,
   fontFamily: 'inherit',
 }
@@ -54,7 +54,7 @@ export default function PollDraftModal({
           style={{ ...inputStyle, border: duplicateIndexes.has(i) ? '1px solid var(--pink)' : inputStyle.border }}
         />
       ))}
-      {hasDuplicate ? <p style={{ fontSize: 11.5, color: 'var(--pink)', margin: '-6px 0 10px' }}>Deux options ne peuvent pas être identiques.</p> : null}
+      {hasDuplicate ? <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--pink)', margin: '-6px 0 10px' }}>Deux options ne peuvent pas être identiques.</p> : null}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {draft.options.length < 6 ? (
           <Button variant="secondary" onClick={() => onChange({ ...draft, options: [...draft.options, ''] })} size="sm" style={{ borderRadius: 999 }}>

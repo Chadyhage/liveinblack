@@ -59,7 +59,7 @@ export function NewGroupModal({ friends, onCreate, onClose, onGoToFriends, onPic
         <label style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, cursor: 'pointer' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {avatarDataUrl ? <img src={avatarDataUrl} alt="Avatar du groupe" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover' }} /> : renderGroupAvatar(name, null, 52)}
-          <span style={{ fontSize: 12, color: 'var(--teal)' }}>Choisir une photo</span>
+          <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--teal)' }}>Choisir une photo</span>
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; setAvatarDataUrl(await onPickAvatar(file)) }} />
         </label>
         <p style={sectionLabelStyle}>{name}</p>
@@ -67,7 +67,7 @@ export function NewGroupModal({ friends, onCreate, onClose, onGoToFriends, onPic
           {selected.map((f) => (
             <div key={f.userId} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface)', borderRadius: 999, padding: '4px 10px 4px 4px' }}>
               {renderAvatar(f.userId, f.name, 22)}
-              <span style={{ fontSize: 12, color: 'var(--text)' }}>{f.name}</span>
+              <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text)' }}>{f.name}</span>
             </div>
           ))}
         </div>
@@ -85,10 +85,10 @@ export function NewGroupModal({ friends, onCreate, onClose, onGoToFriends, onPic
       <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un ami…" style={inputStyle} />
       <div style={{ maxHeight: 220, overflowY: 'auto', marginBottom: 14 }}>
         {filtered.map((f) => (
-          <Checkbox key={f.userId} checked={memberIds.has(f.userId)} onChange={() => toggleMember(f.userId)} style={{ ...rowButtonStyle, cursor: 'pointer' }} label={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{renderAvatar(f.userId, f.name, 32)}<span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{f.name}</span></span>} />
+          <Checkbox key={f.userId} checked={memberIds.has(f.userId)} onChange={() => toggleMember(f.userId)} style={{ ...rowButtonStyle, cursor: 'pointer' }} label={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{renderAvatar(f.userId, f.name, 32)}<span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', fontWeight: 400 }}>{f.name}</span></span>} />
         ))}
-        {filtered.length === 0 && friends.length === 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}><p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Tu n&apos;as pas encore d&apos;amis. Ajoute-en pour pouvoir créer un groupe.</p><Button variant="secondary" onClick={onGoToFriends} size="sm" style={{ borderRadius: 999 }}>Ajouter un ami</Button></div>}
-        {filtered.length === 0 && friends.length > 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
+        {filtered.length === 0 && friends.length === 0 && <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}><p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>Tu n&apos;as pas encore d&apos;amis. Ajoute-en pour pouvoir créer un groupe.</p><Button variant="secondary" onClick={onGoToFriends} size="sm" style={{ borderRadius: 999 }}>Ajouter un ami</Button></div>}
+        {filtered.length === 0 && friends.length > 0 && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Aucun ami trouvé.</p>}
       </div>
       <ModalActions onCancel={onClose} onConfirm={() => setStep(2)} confirmLabel="Suivant" disabled={!name.trim() || memberIds.size === 0} />
     </ModalShell>
@@ -138,7 +138,7 @@ export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissN
                 {renderAvatar(user.userId, user.name, 40)}
                 <span style={{ minWidth: 0, flex: 1 }}>
                   <strong className={styles.modalPersonName} style={{ display: 'block' }}>{user.name}</strong>
-                  <span style={{ display: 'block', overflow: 'hidden', color: 'var(--text-faint)', fontSize: 12, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</span>
+                  <span style={{ display: 'block', overflow: 'hidden', color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote)', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</span>
                 </span>
                 <Button variant="secondary" size="sm" onClick={() => void sendRequest(user.email)}>Ajouter</Button>
               </div>
@@ -146,12 +146,12 @@ export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissN
           </div>
         ) : null}
       </div>
-      {received.length > 0 && <div style={{ marginBottom: 16 }}><p style={sectionLabelStyle}>Demandes reçues</p>{received.map((r) => <div key={r.id} style={rowStyle}><span style={{ fontSize: 13, color: 'var(--text)' }}>{r.fromName}</span><div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" onClick={() => onAction(r.id, 'accept')} size="sm" style={{ borderRadius: 999 }}>Accepter</Button><Button variant="danger" onClick={() => onAction(r.id, 'decline')} size="sm" style={{ borderRadius: 999 }}>Refuser</Button></div></div>)}</div>}
-      {sent.length > 0 && <div style={{ marginBottom: 16 }}><p style={sectionLabelStyle}>Demandes envoyées</p>{sent.map((r) => <div key={r.id} style={rowStyle}><span style={{ fontSize: 13, color: 'var(--text)' }}>{r.toName}</span><Button variant="secondary" onClick={() => onAction(r.id, 'cancel')} size="sm" style={{ borderRadius: 999 }}>Annuler</Button></div>)}</div>}
+      {received.length > 0 && <div style={{ marginBottom: 16 }}><p style={sectionLabelStyle}>Demandes reçues</p>{received.map((r) => <div key={r.id} style={rowStyle}><span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{r.fromName}</span><div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" onClick={() => onAction(r.id, 'accept')} size="sm" style={{ borderRadius: 999 }}>Accepter</Button><Button variant="danger" onClick={() => onAction(r.id, 'decline')} size="sm" style={{ borderRadius: 999 }}>Refuser</Button></div></div>)}</div>}
+      {sent.length > 0 && <div style={{ marginBottom: 16 }}><p style={sectionLabelStyle}>Demandes envoyées</p>{sent.map((r) => <div key={r.id} style={rowStyle}><span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{r.toName}</span><Button variant="secondary" onClick={() => onAction(r.id, 'cancel')} size="sm" style={{ borderRadius: 999 }}>Annuler</Button></div>)}</div>}
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
         {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
-        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
+        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 'var(--font-size-caption-2)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
       </div>
     </ModalShell>
   )
@@ -170,15 +170,15 @@ export function GroupSettingsModal({ conversation, currentUserId, friends, addMe
           {renderGroupAvatar(conversation.name || '', conversation.avatar, 52)}
           {isAdmin && <input ref={groupAvatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) onUploadAvatar(file); e.target.value = '' }} onClick={(e) => e.stopPropagation()} />}
         </label>
-        {isAdmin ? <div style={{ flex: 1, display: 'flex', gap: 8 }}><Input value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginBottom: 0, flex: 1 }} /><Button variant="secondary" onClick={() => name.trim() && name.trim() !== conversation.name && onRename(name.trim())} size="sm" style={{ borderRadius: 999 }}>Renommer</Button></div> : <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{conversation.name}</p>}
+        {isAdmin ? <div style={{ flex: 1, display: 'flex', gap: 8 }}><Input value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginBottom: 0, flex: 1 }} /><Button variant="secondary" onClick={() => name.trim() && name.trim() !== conversation.name && onRename(name.trim())} size="sm" style={{ borderRadius: 999 }}>Renommer</Button></div> : <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{conversation.name}</p>}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <p style={{ ...sectionLabelStyle, margin: 0 }}>Membres ({conversation.members.length})</p>
         {isAdmin && <Button variant="secondary" onClick={() => setShowAddMember((v) => !v)} size="sm" style={{ borderRadius: 999 }}>+ Ajouter</Button>}
       </div>
-      {showAddMember && <div style={{ marginBottom: 12, background: 'var(--surface)', borderRadius: 10, padding: 10 }}><Input value={addMemberSearch} onChange={(e) => onAddMemberSearchChange(e.target.value)} placeholder="Rechercher un ami…" style={{ ...inputStyle, marginBottom: 8 }} /><div style={{ maxHeight: 140, overflowY: 'auto' }}>{addableFriends.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun ami à ajouter.</p>}{addableFriends.map((f) => <Button key={f.userId} variant="ghost" onClick={() => onAddMember(f.userId)} style={{ ...rowButtonStyle, fontWeight: 400 }}>{renderAvatar(f.userId, f.name, 28)}<span style={{ fontSize: 13, color: 'var(--text)' }}>{f.name}</span></Button>)}</div></div>}
-      <div style={{ marginBottom: 18 }}>{conversation.members.map((m) => <div key={m.userId} style={rowStyle}><div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>{renderAvatar(m.userId, m.name, 30)}<span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}{m.role === 'admin' && <em style={{ color: 'var(--gold)', fontStyle: 'normal', fontSize: 11 }}> · admin</em>}{m.muteUntilAt !== undefined && <em style={{ color: 'var(--pink)', fontStyle: 'normal', fontSize: 11 }}> · en sourdine</em>}</span></div>{isAdmin && m.userId !== currentUserId && <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>{m.role !== 'admin' && (m.muteUntilAt !== undefined ? <Button variant="secondary" onClick={() => onClearMute(m.userId)} size="sm" style={{ borderRadius: 999 }}>Réactiver</Button> : <Button variant="secondary" onClick={() => onOpenMuteDialog(m.userId, m.name)} size="sm" style={{ borderRadius: 999 }}>Sourdine</Button>)}<Button variant="secondary" onClick={() => onSetRole(m.userId, m.role === 'admin' ? 'member' : 'admin')} size="sm" style={{ borderRadius: 999 }}>{m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}</Button><Button variant="danger" onClick={() => onRemoveMember(m.userId, m.name)} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>Retirer</Button></div>}</div>)}</div>
-      <div style={{ display: 'flex', gap: 8 }}><Button variant="secondary" onClick={onLeave} size="sm" style={{ borderRadius: 999 }}>Quitter le groupe</Button>{isAdmin && <Button variant="danger" onClick={onDelete} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: '#c2347f' }}>Supprimer le groupe</Button>}</div>
+      {showAddMember && <div style={{ marginBottom: 12, background: 'var(--surface)', borderRadius: 10, padding: 10 }}><Input value={addMemberSearch} onChange={(e) => onAddMemberSearchChange(e.target.value)} placeholder="Rechercher un ami…" style={{ ...inputStyle, marginBottom: 8 }} /><div style={{ maxHeight: 140, overflowY: 'auto' }}>{addableFriends.length === 0 && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Aucun ami à ajouter.</p>}{addableFriends.map((f) => <Button key={f.userId} variant="ghost" onClick={() => onAddMember(f.userId)} style={{ ...rowButtonStyle, fontWeight: 400 }}>{renderAvatar(f.userId, f.name, 28)}<span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{f.name}</span></Button>)}</div></div>}
+      <div style={{ marginBottom: 18 }}>{conversation.members.map((m) => <div key={m.userId} style={rowStyle}><div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>{renderAvatar(m.userId, m.name, 30)}<span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}{m.role === 'admin' && <em style={{ color: 'var(--gold)', fontStyle: 'normal', fontSize: 'var(--font-size-caption)' }}> · admin</em>}{m.muteUntilAt !== undefined && <em style={{ color: 'var(--pink)', fontStyle: 'normal', fontSize: 'var(--font-size-caption)' }}> · en sourdine</em>}</span></div>{isAdmin && m.userId !== currentUserId && <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>{m.role !== 'admin' && (m.muteUntilAt !== undefined ? <Button variant="secondary" onClick={() => onClearMute(m.userId)} size="sm" style={{ borderRadius: 999 }}>Réactiver</Button> : <Button variant="secondary" onClick={() => onOpenMuteDialog(m.userId, m.name)} size="sm" style={{ borderRadius: 999 }}>Sourdine</Button>)}<Button variant="secondary" onClick={() => onSetRole(m.userId, m.role === 'admin' ? 'member' : 'admin')} size="sm" style={{ borderRadius: 999 }}>{m.role === 'admin' ? 'Retirer admin' : 'Nommer admin'}</Button><Button variant="danger" onClick={() => onRemoveMember(m.userId, m.name)} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--danger)' }}>Retirer</Button></div>}</div>)}</div>
+      <div style={{ display: 'flex', gap: 8 }}><Button variant="secondary" onClick={onLeave} size="sm" style={{ borderRadius: 999 }}>Quitter le groupe</Button>{isAdmin && <Button variant="danger" onClick={onDelete} size="sm" style={{ borderRadius: 999, background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--danger)' }}>Supprimer le groupe</Button>}</div>
     </ModalShell>
   )
 }
@@ -187,7 +187,7 @@ export function MuteMemberModal({ name, durations, onApply, onClose }: { name: s
   const [durationMs, setDurationMs] = useState<number | null>(durations[1]?.ms ?? null)
   return (
     <ModalShell title={`Mettre ${name} en sourdine`} onClose={onClose}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>{durations.map((d) => <Radio key={d.id} name="mute-duration" checked={durationMs === d.ms} onChange={() => setDurationMs(d.ms)} label={<span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 400 }}>{d.label}</span>} />)}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>{durations.map((d) => <Radio key={d.id} name="mute-duration" checked={durationMs === d.ms} onChange={() => setDurationMs(d.ms)} label={<span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', fontWeight: 400 }}>{d.label}</span>} />)}</div>
       <ModalActions onCancel={onClose} onConfirm={() => onApply(durationMs)} confirmLabel="Mettre en sourdine" />
     </ModalShell>
   )
@@ -200,22 +200,22 @@ export function ContactPanelModal({ conversationId, member, online, lastSeenAt, 
     <ModalShell title="Contact" onClose={onClose} wide>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         {renderAvatar(member.userId, member.name, 64, online, true)}
-        <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>
-        <p style={{ fontSize: 12, color: online ? '#F53D8D' : 'var(--text-faint)', margin: 0 }}>{online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}</p>
-        {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 13, color: 'var(--teal)', textDecoration: 'none' }}>{phone}</a>}
+        <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>
+        <p style={{ fontSize: 'var(--font-size-footnote)', color: online ? 'var(--primary)' : 'var(--text-faint)', margin: 0 }}>{online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}</p>
+        {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 'var(--font-size-callout)', color: 'var(--teal)', textDecoration: 'none' }}>{phone}</a>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Button variant="secondary" onClick={onClearHistory} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Vider l&apos;historique</Button>
         {isFriend && <Button variant="secondary" onClick={onRemoveFriend} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Retirer des amis</Button>}
-        {isBlocked ? <Button variant="secondary" onClick={onUnblock} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Débloquer</Button> : <Button variant="danger" onClick={onBlock} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#c2347f' }}>Bloquer</Button>}
-        <Button variant="danger" onClick={onReport} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#c2347f' }}>Signaler</Button>
+        {isBlocked ? <Button variant="secondary" onClick={onUnblock} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Débloquer</Button> : <Button variant="danger" onClick={onBlock} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--danger)' }}>Bloquer</Button>}
+        <Button variant="danger" onClick={onReport} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--danger)' }}>Signaler</Button>
       </div>
     </ModalShell>
   )
 }
 
-const inputStyle: CSSProperties = { width: '100%', borderRadius: 14, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(118,118,128,.16)', color: 'var(--text)', fontSize: 14, marginBottom: 10, fontFamily: 'inherit' }
-const fullRowButtonStyle: CSSProperties = { padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }
+const inputStyle: CSSProperties = { width: '100%', borderRadius: 14, border: '1px solid var(--border)', background: 'var(--field-bg)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', marginBottom: 10, fontFamily: 'inherit' }
+const fullRowButtonStyle: CSSProperties = { padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--font-size-callout)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }
 const rowStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--border)', gap: 8 }
 const rowButtonStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 4px', border: 'none', background: 'transparent', cursor: 'pointer' }
-const sectionLabelStyle: CSSProperties = { fontSize: 13, fontWeight: 650, color: 'var(--text-faint)', letterSpacing: '-0.01em', fontFamily: 'var(--font-interface), sans-serif', margin: '0 0 8px' }
+const sectionLabelStyle: CSSProperties = { fontSize: 'var(--font-size-callout)', fontWeight: 650, color: 'var(--text-faint)', letterSpacing: '-0.01em', fontFamily: 'var(--font-interface), sans-serif', margin: '0 0 8px' }

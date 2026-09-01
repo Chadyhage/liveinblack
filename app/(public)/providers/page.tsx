@@ -124,7 +124,7 @@ export default async function PublicPrestatairesPage({
               containerStyle={{ flex: 1, minWidth: 0 }}
               style={{ border: 0, background: 'transparent', boxShadow: 'none' }}
             />
-            <Button type="submit" className={styles.searchButton} style={{ minWidth: 136, minHeight: 40, borderRadius: 13, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 14.5 }}>
+            <Button type="submit" className={styles.searchButton} style={{ minWidth: 136, minHeight: 40, borderRadius: 13, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-lg)' }}>
               <Search size={19} strokeWidth={2.2} aria-hidden="true" />
               <span>Rechercher</span>
             </Button>
@@ -135,10 +135,10 @@ export default async function PublicPrestatairesPage({
               defaultValue={region}
               ariaLabel="Filtrer par région"
               options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]}
-              style={{ minHeight: 40, borderRadius: 15, background: 'rgba(255,255,255,.075)', borderColor: 'rgba(255,255,255,.14)', fontSize: 14, padding: '0 14px' }}
+              style={{ minHeight: 40, borderRadius: 15, background: 'var(--field-bg)', borderColor: 'var(--border)', fontSize: 'var(--font-size-body-sm)', padding: '0 14px' }}
             />
           </div>
-          <Button type="submit" variant="secondary" className={styles.filterButton} style={{ minHeight: 40, borderRadius: 15, background: 'rgba(255,255,255,.08)', color: '#f5f5f7', fontSize: 14.5 }}>Appliquer</Button>
+          <Button type="submit" variant="secondary" className={styles.filterButton} style={{ minHeight: 40, borderRadius: 15, background: 'var(--fill-secondary)', color: 'var(--text)', fontSize: 'var(--font-size-body-lg)' }}>Appliquer</Button>
         </form>
       </section>
 

@@ -15,13 +15,13 @@ function StarIcon({ fill, size, gradientId }: { fill: 'full' | 'half' | 'empty';
         <defs>
           <linearGradient id={id}>
             <stop offset="50%" stopColor={GOLD} />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.16)" />
+            <stop offset="50%" stopColor="var(--border-strong)" />
           </linearGradient>
         </defs>
       )}
       <path
         d="M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.44 6.2 20.5l1.1-6.47L2.6 9.45l6.5-.95z"
-        fill={fill === 'full' ? GOLD : fill === 'half' ? `url(#${id})` : 'rgba(255,255,255,0.16)'}
+        fill={fill === 'full' ? GOLD : fill === 'half' ? `url(#${id})` : 'var(--border-strong)'}
       />
     </svg>
   )

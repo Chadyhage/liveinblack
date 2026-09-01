@@ -27,7 +27,7 @@ export default function Pagination({ page, pageCount, onPageChange, totalItems, 
 
   return (
     <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
-      {rangeLabel && <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>{rangeLabel}</span>}
+      {rangeLabel && <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>{rangeLabel}</span>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
         <Button
           variant="ghost"
@@ -41,7 +41,7 @@ export default function Pagination({ page, pageCount, onPageChange, totalItems, 
         </Button>
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`gap-${i}`} style={{ fontSize: 12, color: 'var(--text-faint)', padding: '0 4px' }}>
+            <span key={`gap-${i}`} style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', padding: '0 4px' }}>
               …
             </span>
           ) : (

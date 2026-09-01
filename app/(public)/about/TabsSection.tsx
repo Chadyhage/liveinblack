@@ -83,11 +83,11 @@ export default function TabsSection() {
               variant="ghost"
               onClick={() => setActiveTab(t.id)}
               style={{
-                fontSize: 13.5,
+                fontSize: 'var(--font-size-body)',
                 fontWeight: 700,
                 padding: '8px 16px',
                 borderRadius: 999,
-                color: activeTab === t.id ? '#fff' : 'var(--text-muted)',
+                color: activeTab === t.id ? 'var(--text)' : 'var(--text-muted)',
                 background: activeTab === t.id ? `${t.color}22` : 'transparent',
                 border: `1px solid ${activeTab === t.id ? `${t.color}66` : 'var(--border)'}`,
               }}
@@ -109,17 +109,17 @@ export default function TabsSection() {
         }}
       >
         <div>
-          <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: current.color }}>{current.roleName}</span>
-          <h3 style={{ fontSize: 17, fontWeight: 800, margin: '6px 0 10px', letterSpacing: '-0.6px' }}>{current.label}</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.55, margin: '0 0 18px' }}>{current.description}</p>
-          <ActionLink href={current.href} style={{ color: current.id === 'organizer' ? '#fff' : 'var(--primary-ink)', background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color }}>
+          <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: current.color }}>{current.roleName}</span>
+          <h3 style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, margin: '6px 0 10px', letterSpacing: '-0.6px' }}>{current.label}</h3>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.55, margin: '0 0 18px' }}>{current.description}</p>
+          <ActionLink href={current.href} style={{ color: current.id === 'organizer' ? 'var(--image-text)' : 'var(--primary-ink)', background: current.id === 'organizer' ? 'var(--violet-cta)' : current.color }}>
             {current.cta}
           </ActionLink>
         </div>
-        <div style={{ overflow: 'hidden', borderRadius: 18, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.09)' }}>
+        <div style={{ overflow: 'hidden', borderRadius: 18, background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
           <div style={{ position: 'relative', minHeight: 160 }}>
             <Image src={current.image} alt={current.imageAlt} fill sizes="(max-width: 700px) calc(100vw - 80px), 42vw" style={{ objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 42%, rgba(5,5,8,.82))' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 42%, var(--media-scrim))' }} />
           </div>
           <div style={{ padding: '14px 14px 16px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
@@ -133,17 +133,17 @@ export default function TabsSection() {
                     borderRadius: '50%',
                     display: 'grid',
                     placeItems: 'center',
-                    background: '#090b13',
+                    background: 'var(--surface-2)',
                     border: `1px solid ${current.color}66`,
-                    color: current.color,
+                    color: 'var(--text)',
                     fontWeight: 700,
-                    fontSize: 11.5,
+                    fontSize: 'var(--font-size-caption-lg)',
                   }}
                 >
                   {number}
                 </div>
-                <p style={{ fontSize: 11.5, fontWeight: 700, margin: 0, color: 'rgba(255,255,255,.75)' }}>{title}</p>
-                <span style={{ display: 'block', fontSize: 10, lineHeight: 1.35, color: 'var(--text-faint)', marginTop: 3 }}>{detail}</span>
+                <p style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 700, margin: 0, color: 'var(--text-muted)' }}>{title}</p>
+                <span style={{ display: 'block', fontSize: 'var(--font-size-caption-2)', lineHeight: 1.35, color: 'var(--text-faint)', marginTop: 3 }}>{detail}</span>
               </div>
             ))}
           </div>

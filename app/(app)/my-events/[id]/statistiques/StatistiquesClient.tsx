@@ -94,11 +94,11 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <Link href="/my-events" aria-label="Retour" style={{ width: 38, height: 38, color: '#fff', fontSize: 18, textDecoration: 'none', padding: 0, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: 'rgba(255,255,255,.06)' }}>
+        <Link href="/my-events" aria-label="Retour" style={{ width: 38, height: 38, color: 'var(--text)', fontSize: 'var(--font-size-title-4)', textDecoration: 'none', padding: 0, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12, background: 'var(--fill-secondary)' }}>
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 style={{ font: '600 22px var(--font-open-sans)', color: '#fff', margin: 0 }}>{view.event.name}</h1>
+          <h1 style={{ font: '600 22px var(--font-open-sans)', color: 'var(--text)', margin: 0 }}>{view.event.name}</h1>
           <p style={{ font: '500 12px var(--font-open-sans)', color: 'var(--text-muted)', margin: '2px 0 0' }}>
             Statistiques · {view.event.dateDisplay || view.event.date} · {view.event.city}
           </p>
@@ -130,7 +130,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
           />
         </div>
         {hasActiveFilter && (
-          <Button variant="link" onClick={resetFilters} style={{ padding: '9px 12px', borderRadius: 10, color: 'var(--text-muted)', fontSize: 12 }}>
+          <Button variant="link" onClick={resetFilters} style={{ padding: '9px 12px', borderRadius: 10, color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)' }}>
             Réinitialiser
           </Button>
         )}
@@ -143,9 +143,9 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
             padding: '9px 16px',
             borderRadius: 10,
             border: '1px solid var(--border)',
-            background: 'rgba(255,255,255,0.05)',
-            color: stats.assignedTickets === 0 ? 'var(--text-faint)' : '#fff',
-            fontSize: 12.5,
+            background: 'var(--fill-secondary)',
+            color: stats.assignedTickets === 0 ? 'var(--text-faint)' : 'var(--text)',
+            fontSize: 'var(--font-size-footnote-lg)',
             fontWeight: 400,
           }}
         >
@@ -153,9 +153,9 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
         </Button>
       </div>
 
-      {isPending && <p style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 10 }}>Actualisation…</p>}
+      {isPending && <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', marginBottom: 10 }}>Actualisation…</p>}
       {filterError && (
-        <p role="status" style={{ color: 'var(--pink)', fontSize: 12, marginBottom: 10 }}>
+        <p role="status" style={{ color: 'var(--pink)', fontSize: 'var(--font-size-footnote)', marginBottom: 10 }}>
           Impossible d&rsquo;actualiser, réessaie.
         </p>
       )}
@@ -163,10 +163,10 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
       <div style={{ opacity: isPending ? 0.5 : 1, transition: 'opacity 0.15s' }}>
         {stats.assignedTickets === 0 ? (
           <Card style={{ padding: '50px 20px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 16px' }}>Aucune réservation enregistrée.</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', margin: '0 0 16px' }}>Aucune réservation enregistrée.</p>
             <Link
               href={`/events/${view.event.id}`}
-              style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 10, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 12.5, fontWeight: 700, textDecoration: 'none' }}
+              style={{ display: 'inline-block', padding: '10px 18px', borderRadius: 10, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, textDecoration: 'none' }}
             >
               Voir ma page événement
             </Link>
@@ -176,17 +176,17 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 18 }}>
               <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billets vendus</p>
-                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }}>{stats.assignedTickets}</p>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: 'var(--text)', margin: 0 }}>{stats.assignedTickets}</p>
               </Card>
               <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Billetterie + consommations</p>
-                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: '0 0 8px' }}>{formatMoney(stats.totalEstimatedRevenue, view.event.currency)}</p>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: 'var(--text)', margin: '0 0 8px' }}>{formatMoney(stats.totalEstimatedRevenue, view.event.currency)}</p>
                 <div style={{ display: 'grid', gap: 4, paddingLeft: 10, borderLeft: '2px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-caption)' }}>
                     <span style={{ color: 'var(--text-faint)' }}>Dont billetterie</span>
                     <span style={{ color: 'var(--text-muted)' }}>{formatMoney(stats.estimatedRevenue, view.event.currency)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-caption)' }}>
                     <span style={{ color: 'var(--text-faint)' }}>Dont précommandes</span>
                     <span style={{ color: 'var(--text-muted)' }}>{formatMoney(stats.preorderRevenue, view.event.currency)}</span>
                   </div>
@@ -194,13 +194,13 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
               </Card>
               <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de remplissage</p>
-                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }} title={stats.fillRate == null ? 'Pas encore de capacité renseignée pour ce calcul.' : undefined}>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: 'var(--text)', margin: 0 }} title={stats.fillRate == null ? 'Pas encore de capacité renseignée pour ce calcul.' : undefined}>
                   {pct(stats.fillRate)}
                 </p>
               </Card>
               <Card style={{ padding: '12px 14px' }}>
                 <p style={{ font: '600 10.5px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 6px' }}>Taux de présence</p>
-                <p style={{ font: '600 20px var(--font-open-sans)', color: '#fff', margin: 0 }} title={stats.attendanceRate == null ? "Disponible une fois l'événement passé et les entrées scannées." : undefined}>
+                <p style={{ font: '600 20px var(--font-open-sans)', color: 'var(--text)', margin: 0 }} title={stats.attendanceRate == null ? "Disponible une fois l'événement passé et les entrées scannées." : undefined}>
                   {pct(stats.attendanceRate)}
                 </p>
               </Card>
@@ -208,7 +208,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
 
             <div style={{ display: 'grid', gap: 8, marginBottom: 20 }}>
               {insights.map((insight, i) => (
-                <p key={i} style={{ fontSize: 12.5, color: TONE_COLOR[insight.tone] ?? 'var(--text-muted)', margin: 0, lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <p key={i} style={{ fontSize: 'var(--font-size-footnote-lg)', color: TONE_COLOR[insight.tone] ?? 'var(--text-muted)', margin: 0, lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center' }}>{TONE_PREFIX[insight.tone] ?? TONE_PREFIX.muted}</span> {insight.text}
                 </p>
               ))}
@@ -219,14 +219,14 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
               <div style={{ display: 'grid', gap: 8 }}>
                 {stats.byPlace.map((p) => (
                   <Card key={p.name} style={{ padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: stats.byPlace.length > 1 ? 6 : 0 }}>
-                      <span style={{ color: '#fff' }}>{p.name}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote-lg)', marginBottom: stats.byPlace.length > 1 ? 6 : 0 }}>
+                      <span style={{ color: 'var(--text)' }}>{p.name}</span>
                       <span style={{ color: 'var(--gold)' }}>
                         {p.count} ({p.paid} payant{p.paid > 1 ? 's' : ''} / {p.free} gratuit{p.free > 1 ? 's' : ''})
                       </span>
                     </div>
                     {stats.byPlace.length > 1 && (
-                      <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                      <div style={{ height: 6, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${maxPlaceCount ? (p.count / maxPlaceCount) * 100 : 0}%`, background: 'var(--teal)' }} />
                       </div>
                     )}
@@ -238,21 +238,21 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
             {(view.resaleStats.active + view.resaleStats.sold + view.resaleStats.suspended) > 0 && (
               <section style={{ marginBottom: 20 }}>
                 <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Revente officielle</h2>
-                <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '0 0 10px', lineHeight: 1.5 }}>
                   Vue d&apos;ensemble uniquement — l&apos;identité des vendeurs/acheteurs n&apos;est jamais communiquée à l&apos;organisateur.
                 </p>
                 <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>
+                    <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{view.resaleStats.active}</p>
+                    <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>
                   </Card>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Terminées</p>
+                    <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
+                    <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Terminées</p>
                   </Card>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{view.resaleStats.suspended}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Suspendues</p>
+                    <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{view.resaleStats.suspended}</p>
+                    <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Suspendues</p>
                   </Card>
                 </div>
               </section>
@@ -263,8 +263,8 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                 <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Précommandes consommées</h2>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {stats.preorderItems.map((item) => (
-                    <Card key={item.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', fontSize: 12.5 }}>
-                      <span style={{ color: '#fff' }}>
+                    <Card key={item.name} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', fontSize: 'var(--font-size-footnote-lg)' }}>
+                      <span style={{ color: 'var(--text)' }}>
                         {item.quantity}× {item.name}
                       </span>
                       <span style={{ color: 'var(--gold)', fontWeight: 600 }}>{formatMoney(item.revenue, view.event.currency)}</span>
@@ -279,30 +279,30 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                 <h2 style={{ font: '600 11px var(--font-open-sans)', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 10px' }}>Démographie</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Âge ({demographics.ageKnown} connu(s), {demographics.noAccount} sans compte)</p>
+                    <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: '0 0 8px' }}>Âge ({demographics.ageKnown} connu(s), {demographics.noAccount} sans compte)</p>
                     <div style={{ display: 'grid', gap: 6 }}>
                       {demographics.buckets.map((b) => (
-                        <div key={b.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <div key={b.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote)' }}>
                           <span style={{ color: 'var(--text-muted)' }}>{b.label}</span>
-                          <span style={{ color: '#fff' }}>{b.count}</span>
+                          <span style={{ color: 'var(--text)' }}>{b.count}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: '0 0 8px' }}>Genre ({demographics.genderKnown} connu(s))</p>
+                    <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: '0 0 8px' }}>Genre ({demographics.genderKnown} connu(s))</p>
                     <div style={{ display: 'grid', gap: 6 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote)' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Femme</span>
-                        <span style={{ color: '#fff' }}>{demographics.gender.femme}</span>
+                        <span style={{ color: 'var(--text)' }}>{demographics.gender.femme}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote)' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Homme</span>
-                        <span style={{ color: '#fff' }}>{demographics.gender.homme}</span>
+                        <span style={{ color: 'var(--text)' }}>{demographics.gender.homme}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote)' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Autre</span>
-                        <span style={{ color: '#fff' }}>{demographics.gender.autre}</span>
+                        <span style={{ color: 'var(--text)' }}>{demographics.gender.autre}</span>
                       </div>
                     </div>
                   </div>

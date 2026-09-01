@@ -29,10 +29,10 @@ export default function HeroScrollIndicator({ targetId }: { targetId?: string })
           left: '50%',
           bottom: 22,
           transform: 'translateX(-50%)',
-          border: '1px solid rgba(255,255,255,.18)',
-          background: 'rgba(18,18,20,.58)',
+          border: '1px solid var(--image-border)',
+          background: 'rgba(var(--night-rgb), .58)',
           backdropFilter: 'blur(14px)',
-          color: 'rgba(255,255,255,.78)',
+          color: 'var(--image-text-muted)',
         }}
         icon={
           <span style={{ display: 'inline-flex' }}>

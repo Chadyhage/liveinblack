@@ -9,10 +9,10 @@ import type { ConversationMember } from './types'
 export const inputStyle: React.CSSProperties = {
   width: '100%',
   borderRadius: 14,
-  border: '1px solid rgba(255,255,255,.12)',
-  background: 'rgba(118,118,128,.16)',
+  border: '1px solid var(--border)',
+  background: 'var(--field-bg)',
   color: 'var(--text)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   padding: '12px 18px',
   marginBottom: 10,
   fontFamily: 'inherit',
@@ -96,7 +96,7 @@ export default function MessagingComposer({
                 textAlign: 'left',
                 padding: '8px 12px',
                 color: 'var(--text)',
-                fontSize: 13,
+                fontSize: 'var(--font-size-callout)',
                 fontWeight: 400,
               }}
             >
@@ -119,7 +119,7 @@ export default function MessagingComposer({
             borderLeft: '3px solid var(--gold)',
           }}
         >
-          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 600, color: 'var(--gold)', margin: 0 }}>Modifier le message</p>
           <Button variant="ghost" aria-label="Annuler la modification" onClick={onCancelEdit} style={{ padding: 0 }}>
             <X size={14} />
           </Button>
@@ -140,8 +140,8 @@ export default function MessagingComposer({
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--teal)', margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
-            <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--teal)', margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {replyTo.preview}
             </p>
           </div>
@@ -169,17 +169,17 @@ export default function MessagingComposer({
           </Button>
           <div style={{ minWidth: 52, display: 'flex', alignItems: 'center', gap: 7 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pink)', animation: isRecordingPaused ? 'none' : 'lib-pulse 1.2s infinite' }} />
-            <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{formatRecordingDuration(recordDuration)}</span>
+            <span style={{ fontVariantNumeric: 'tabular-nums', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>{formatRecordingDuration(recordDuration)}</span>
           </div>
           <div aria-hidden="true" style={{ height: 30, flex: 1, minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, overflow: 'hidden' }}>
             {Array.from({ length: 22 }, (_, index) => (
-              <span key={index} style={{ width: 3, height: `${8 + ((index * 7) % 20)}px`, borderRadius: 3, background: index < 14 ? 'var(--teal-solid)' : 'rgba(245,245,247,.28)', opacity: isRecordingPaused ? .55 : 1 }} />
+              <span key={index} style={{ width: 3, height: `${8 + ((index * 7) % 20)}px`, borderRadius: 3, background: index < 14 ? 'var(--teal-solid)' : 'var(--fill-secondary)', opacity: isRecordingPaused ? .55 : 1 }} />
             ))}
           </div>
           <Button variant="secondary" onClick={onToggleRecordingPause} style={{ width: 42, height: 42, minWidth: 42, minHeight: 42, padding: 0, borderRadius: '50%' }} aria-label={isRecordingPaused ? 'Reprendre l’enregistrement' : 'Mettre en pause'}>
             {isRecordingPaused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}
           </Button>
-          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--teal-solid)', color: '#250817' }} aria-label="Envoyer le message vocal">
+          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--teal-solid)', color: 'var(--primary-ink)' }} aria-label="Envoyer le message vocal">
             <Send size={17} />
           </Button>
         </div>
@@ -242,7 +242,7 @@ export default function MessagingComposer({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#250817',
+                color: 'var(--primary-ink)',
                 background: busy ? 'var(--primary-a52)' : 'var(--teal-solid)',
                 cursor: busy ? 'default' : 'pointer',
                 flexShrink: 0,
@@ -263,7 +263,7 @@ export default function MessagingComposer({
                 padding: 0,
                 borderRadius: '50%',
                 background: 'var(--teal-solid)',
-                color: '#250817',
+                color: 'var(--primary-ink)',
                 flexShrink: 0,
               }}
               aria-label="Message vocal"
@@ -292,7 +292,7 @@ function ComposerIconButton({ title, onClick, children }: { title: string; onCli
         minHeight: 44,
         padding: 0,
         borderRadius: '50%',
-        fontSize: 14,
+        fontSize: 'var(--font-size-body-sm)',
       }}
     >
       {children}

@@ -21,17 +21,17 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
   padding: '11px 13px',
   borderRadius: 9,
-  border: '1px solid rgba(255,255,255,.13)',
-  background: '#0b0c12',
-  color: 'rgba(255,255,255,.92)',
+  border: '1px solid var(--border)',
+  background: 'var(--surface-2)',
+  color: 'var(--text)',
   outline: 'none',
-  fontSize: 13.5,
+  fontSize: 'var(--font-size-body)',
 }
 const labelStyle: React.CSSProperties = {
   font: `600 10.5px var(--font-open-sans)`,
   letterSpacing: '.05em',
   textTransform: 'uppercase',
-  color: 'rgba(255,255,255,.55)',
+  color: 'var(--text-faint)',
   display: 'block',
   marginBottom: 6,
 }
@@ -257,13 +257,13 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
       onClose={onClose}
       ariaLabel="Codes promo"
       padded
-      contentStyle={{ border: '1px solid rgba(255,255,255,.11)', boxShadow: '0 24px 64px rgba(0,0,0,.6)' }}
+      contentStyle={{ border: '1px solid var(--border)', boxShadow: '0 24px 64px rgba(var(--black-rgb), .60)' }}
     >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
-            <h2 style={{ font: `700 28px var(--font-open-sans)`, letterSpacing: '.03em', margin: 0, color: '#fff' }}>Codes promo</h2>
-            <p style={{ font: `500 12px var(--font-open-sans)`, color: 'rgba(255,255,255,.5)', margin: '5px 0 0' }}>
-              {event.name} · réduction appliquée <strong style={{ color: 'rgba(255,255,255,.75)' }}>par billet</strong>
+            <h2 style={{ font: `700 28px var(--font-open-sans)`, letterSpacing: '.03em', margin: 0, color: 'var(--text)' }}>Codes promo</h2>
+            <p style={{ font: `500 12px var(--font-open-sans)`, color: 'var(--text-faint)', margin: '5px 0 0' }}>
+              {event.name} · réduction appliquée <strong style={{ color: 'var(--text-muted)' }}>par billet</strong>
             </p>
           </div>
         </div>
@@ -271,19 +271,19 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
         {loading ? (
           <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width={16} height={16} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-              <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
-              <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={3} strokeLinecap="round">
+              <circle cx="12" cy="12" r="9" fill="none" stroke="var(--border-strong)" strokeWidth={3} />
+              <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="var(--text-muted)" strokeWidth={3} strokeLinecap="round">
                 <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
               </path>
             </svg>
             <Skeleton width={180} height={13} />
           </div>
         ) : loadError ? (
-          <p style={{ marginTop: 18, color: '#ff9ed2', font: `500 13px var(--font-open-sans)` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
+          <p style={{ marginTop: 18, color: 'var(--danger)', font: `500 13px var(--font-open-sans)` }}>Impossible de charger les codes promo — vérifie ta connexion.</p>
         ) : (
           <>
             {/* Création */}
-            <div style={{ marginTop: 18, padding: 15, borderRadius: 12, background: '#0e0f16', border: '1px solid rgba(255,255,255,.08)' }}>
+            <div style={{ marginTop: 18, padding: 15, borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--surface-2)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
                 <div>
                   <Label style={labelStyle}>Code</Label>
@@ -345,11 +345,11 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                             style={{
                               padding: '7px 11px',
                               borderRadius: 8,
-                              fontSize: 11.5,
+                              fontSize: 'var(--font-size-caption-lg)',
                               fontWeight: 700,
-                              border: active ? '1px solid var(--teal)' : '1px solid rgba(255,255,255,.14)',
-                              background: active ? 'var(--primary-a14)' : 'rgba(255,255,255,.05)',
-                              color: active ? 'var(--teal)' : 'rgba(255,255,255,.7)',
+                              border: active ? '1px solid var(--teal)' : '1px solid var(--border-strong)',
+                              background: active ? 'var(--primary-a14)' : 'var(--surface-2)',
+                              color: active ? 'var(--teal)' : 'var(--text-muted)',
                             }}
                           >
                             {p.type}
@@ -360,7 +360,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   </div>
                 )}
               </div>
-              {error && <p style={{ margin: '10px 0 0', color: '#ff9ed2', font: `500 12.5px var(--font-open-sans)` }}>{error}</p>}
+              {error && <p style={{ margin: '10px 0 0', color: 'var(--danger)', font: `500 12.5px var(--font-open-sans)` }}>{error}</p>}
               <Button
                 onClick={addCode}
                 loading={saving}
@@ -370,8 +370,8 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                   width: '100%',
                   minHeight: 44,
                   borderRadius: 10,
-                  background: saving ? 'rgba(255,255,255,.08)' : 'var(--gold)',
-                  color: saving ? 'rgba(255,255,255,.4)' : '#04040b',
+                  background: saving ? 'var(--surface-2)' : 'var(--gold)',
+                  color: saving ? 'var(--text-faint)' : 'var(--background)',
                   font: `700 13px var(--font-open-sans)`,
                   letterSpacing: '.03em',
                 }}
@@ -383,7 +383,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
             {/* Liste */}
             <div style={{ marginTop: 16 }}>
               {items.length === 0 ? (
-                <p style={{ color: 'rgba(255,255,255,.45)', font: `500 13px var(--font-open-sans)` }}>Aucun code promo sur cet événement pour l&apos;instant.</p>
+                <p style={{ color: 'var(--text-faint)', font: `500 13px var(--font-open-sans)` }}>Aucun code promo sur cet événement pour l&apos;instant.</p>
               ) : (
                 items.map((p) => {
                   const expired = !!p.expiresAt && new Date(p.expiresAt).getTime() < nowMs
@@ -399,20 +399,20 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                         gap: 12,
                         padding: '12px 14px',
                         borderRadius: 11,
-                        background: '#0e0f16',
-                        border: '1px solid rgba(255,255,255,.08)',
+                        background: 'var(--surface-2)',
+                        border: '1px solid var(--surface-2)',
                         marginBottom: 8,
                         opacity: off ? 0.55 : 1,
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, font: `700 14px var(--font-open-sans)`, letterSpacing: '.05em', color: '#fff' }}>
+                        <p style={{ margin: 0, font: `700 14px var(--font-open-sans)`, letterSpacing: '.05em', color: 'var(--text)' }}>
                           {p.code}
                           <span style={{ marginLeft: 9, font: `700 12px var(--font-open-sans)`, color: 'var(--teal)' }}>
                             {p.type === 'percent' ? `-${p.value} %` : `-${fmtMoney(p.value, currency)}`} / billet
                           </span>
                         </p>
-                        <p style={{ margin: '3px 0 0', font: `500 11.5px var(--font-open-sans)`, color: 'rgba(255,255,255,.45)' }}>
+                        <p style={{ margin: '3px 0 0', font: `500 11.5px var(--font-open-sans)`, color: 'var(--text-faint)' }}>
                           {Number(p.usedCount) || 0}
                           {(Number(p.maxUses) || 0) > 0 ? ` / ${p.maxUses}` : ''} utilisation{(Number(p.usedCount) || 0) > 1 ? 's' : ''}
                           {p.expiresAt ? ` · expire le ${new Date(p.expiresAt).toLocaleDateString('fr-FR')}` : ''}
@@ -431,9 +431,9 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                         style={{
                           padding: '8px 12px',
                           borderRadius: 8,
-                          border: '1px solid rgba(255,255,255,.14)',
-                          background: 'rgba(255,255,255,.06)',
-                          color: 'rgba(255,255,255,.8)',
+                          border: '1px solid var(--border-strong)',
+                          background: 'var(--surface-2)',
+                          color: 'var(--text)',
                           font: `600 11.5px var(--font-open-sans)`,
                           flexShrink: 0,
                         }}
@@ -447,9 +447,9 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                         style={{
                           padding: '8px 12px',
                           borderRadius: 8,
-                          border: '1px solid rgba(224,90,170,.4)',
-                          background: 'rgba(224,90,170,.10)',
-                          color: '#ff9ed2',
+                          border: '1px solid var(--danger-border)',
+                          background: 'var(--danger-fill)',
+                          color: 'var(--danger)',
                           font: `600 11.5px var(--font-open-sans)`,
                           flexShrink: 0,
                         }}
@@ -461,7 +461,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                 })
               )}
             </div>
-            <p style={{ margin: '12px 0 0', font: `500 11.5px var(--font-open-sans)`, color: 'rgba(255,255,255,.38)', lineHeight: 1.6 }}>
+            <p style={{ margin: '12px 0 0', font: `500 11.5px var(--font-open-sans)`, color: 'var(--text-faint)', lineHeight: 1.6 }}>
               L&apos;acheteur saisit le code dans le récap de réservation — la réduction s&apos;applique au prix de chaque billet (une table = une fois sur le prix de la table). Les utilisations se
               comptent à l&apos;encaissement.
             </p>
@@ -471,23 +471,23 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
     {/* Confirmation de suppression */}
       {confirmRemove && (
         <Modal onClose={() => setConfirmRemove(null)} maxWidth={440} hideClose zIndex={3010} ariaLabel="Supprimer le code promo" contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>Supprimer ce code promo ?</p>
-            <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
-              <strong style={{ color: '#fff' }}>{confirmRemove.code}</strong> sera définitivement supprimé, y compris son historique d&apos;utilisation ({Number(confirmRemove.usedCount) || 0}{' '}
+            <p style={{ font: `700 17px var(--font-open-sans)`, color: 'var(--text)', margin: 0 }}>Supprimer ce code promo ?</p>
+            <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
+              <strong style={{ color: 'var(--text)' }}>{confirmRemove.code}</strong> sera définitivement supprimé, y compris son historique d&apos;utilisation ({Number(confirmRemove.usedCount) || 0}{' '}
               utilisation{(Number(confirmRemove.usedCount) || 0) > 1 ? 's' : ''}). Pour le retirer sans perdre l&apos;historique, utilise plutôt « Désactiver ».
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
               <Button
                 variant="secondary"
                 onClick={() => setConfirmRemove(null)}
-                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px var(--font-open-sans)` }}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', color: 'var(--text)', font: `600 13.5px var(--font-open-sans)` }}
               >
                 Annuler
               </Button>
               <Button
                 variant="danger"
                 onClick={doConfirmRemove}
-                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px var(--font-open-sans)` }}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: 'var(--text)', font: `700 13.5px var(--font-open-sans)` }}
               >
                 Supprimer
               </Button>
@@ -496,11 +496,11 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
       )}
       {confirmToggle && (
         <Modal onClose={() => setConfirmToggle(null)} maxWidth={440} hideClose zIndex={3010} ariaLabel={confirmToggle.active === false ? 'Réactiver le code promo' : 'Désactiver le code promo'} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <p style={{ font: `700 17px var(--font-open-sans)`, color: '#fff', margin: 0 }}>
+            <p style={{ font: `700 17px var(--font-open-sans)`, color: 'var(--text)', margin: 0 }}>
               {confirmToggle.active === false ? 'Réactiver ce code promo ?' : 'Désactiver ce code promo ?'}
             </p>
-            <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.55 }}>
-              <strong style={{ color: '#fff' }}>{confirmToggle.code}</strong>{' '}
+            <p style={{ font: `500 13.5px var(--font-open-sans)`, color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>
+              <strong style={{ color: 'var(--text)' }}>{confirmToggle.code}</strong>{' '}
               {confirmToggle.active === false
                 ? 'redeviendra immédiatement disponible lors de la réservation.'
                 : 'ne pourra plus être utilisé pour de nouvelles réservations tant que tu ne le réactives pas.'}
@@ -509,14 +509,14 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
               <Button
                 variant="secondary"
                 onClick={() => setConfirmToggle(null)}
-                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', font: `600 13.5px var(--font-open-sans)` }}
+                style={{ flex: 1, padding: '11px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border-strong)', color: 'var(--text)', font: `600 13.5px var(--font-open-sans)` }}
               >
                 Annuler
               </Button>
               <Button
                 variant="danger"
                 onClick={doConfirmToggle}
-                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: '#fff', font: `700 13.5px var(--font-open-sans)` }}
+                style={{ flex: 1.4, padding: '11px', borderRadius: 12, background: 'var(--pink)', border: '1px solid transparent', color: 'var(--text)', font: `700 13.5px var(--font-open-sans)` }}
               >
                 {confirmToggle.active === false ? 'Réactiver' : 'Désactiver'}
               </Button>

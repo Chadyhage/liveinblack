@@ -34,7 +34,7 @@ const inquiryBtn: React.CSSProperties = {
   border: '1px solid var(--border-strong)',
   background: 'var(--violet-cta)',
   color: 'var(--primary-ink)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   fontWeight: 650,
   textTransform: 'none',
   letterSpacing: 'normal',
@@ -52,7 +52,7 @@ const primaryBtn: React.CSSProperties = {
   cursor: 'pointer',
   background: 'var(--violet-cta)',
   color: 'var(--primary-ink)',
-  fontSize: 13,
+  fontSize: 'var(--font-size-callout)',
   fontWeight: 500,
   textTransform: 'none',
   letterSpacing: 'normal',
@@ -64,7 +64,7 @@ const ghostBtn: React.CSSProperties = {
   border: '1px solid var(--border-strong)',
   background: 'var(--surface)',
   color: 'var(--text)',
-  fontSize: 13,
+  fontSize: 'var(--font-size-callout)',
   fontWeight: 600,
   cursor: 'pointer',
 }
@@ -215,18 +215,18 @@ export default function ProviderCatalogInquiry({
               )}
               <div style={{ minWidth: 0 }}>
                 {item.category && (
-                  <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 5px' }}>
                     {item.category}
                   </p>
                 )}
-                <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>{item.name}</p>
-                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--gold)', margin: '8px 0 0' }}>
+                <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>{item.name}</p>
+                <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--gold)', margin: '8px 0 0' }}>
                   {Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                 </p>
               </div>
             </Card>
 
-            <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
+            <Label style={{ display: 'block', fontSize: 'var(--font-size-footnote)', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
               Message
             </Label>
             <Textarea
@@ -241,16 +241,16 @@ export default function ProviderCatalogInquiry({
                 background: 'var(--obsidian)',
                 color: 'var(--text)',
                 padding: 14,
-                fontSize: 14,
+                fontSize: 'var(--font-size-body-sm)',
                 lineHeight: 1.55,
               }}
             />
-            <p style={{ fontSize: 11, lineHeight: 1.55, color: 'var(--text-faint)', margin: '9px 0 16px' }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', lineHeight: 1.55, color: 'var(--text-faint)', margin: '9px 0 16px' }}>
               Le prestataire recevra la fiche du service dans la conversation, puis ton message. Vous gérez ensuite les conditions et le paiement entre vous.
             </p>
 
             {error && (
-              <p role="alert" style={{ fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
+              <p role="alert" style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--accent-text)', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
                 {error}
               </p>
             )}

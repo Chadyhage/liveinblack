@@ -19,7 +19,7 @@ export default function ResetCookieConsentButton() {
       variant="secondary"
       onClick={reopenConsent}
       style={{
-        fontSize: 13,
+        fontSize: 'var(--font-size-callout)',
         minHeight: 44,
       }}
     >

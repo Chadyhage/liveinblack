@@ -290,7 +290,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           aria-expanded={mobileOpen}
           aria-controls="dashboard-mobile-navigation"
           icon={mobileOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
-          style={{ border: '1px solid rgba(255,255,255,.13)', borderRadius: 12, background: 'rgba(255,255,255,.08)', color: '#f5f5f7' }}
+          style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--fill-secondary)', color: 'var(--text)' }}
         />
       </div>
 
@@ -410,7 +410,7 @@ function SidebarItem({
             minHeight: 44,
             padding: '8px 7px 8px 10px',
             color: active ? 'var(--text)' : 'var(--text-muted)',
-            fontSize: 14.5,
+            fontSize: 'var(--font-size-body-lg)',
             fontWeight: active ? 700 : 600,
             textDecoration: 'none',
           }}
@@ -466,11 +466,11 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
       {!!badge && (
         <span
           style={{
-            fontSize: 10,
+            fontSize: 'var(--font-size-caption-2)',
             fontWeight: 800,
             lineHeight: 1.4,
-            color: '#fff',
-            background: 'rgba(224,90,170,0.85)',
+            color: 'var(--danger-ink)',
+            background: 'var(--primary-a85)',
             borderRadius: 999,
             padding: '1px 6px',
             flexShrink: 0,

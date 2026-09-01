@@ -47,13 +47,13 @@ export default function ImageCropperModal({ src, title, aspect, outputWidth, cir
 
   return (
     <Modal onClose={onCancel} zIndex={3200} ariaLabel={title} contentStyle={{ textAlign: 'center' }}>
-      <h2 id="image-crop-title" style={{ margin: 0, fontSize: 18 }}>{title}</h2>
-      <p style={{ margin: '5px 0 16px', color: 'var(--text-faint)', fontSize: 11 }}>Glisse l&apos;image pour la repositionner</p>
+      <h2 id="image-crop-title" style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>{title}</h2>
+      <p style={{ margin: '5px 0 16px', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption)' }}>Glisse l&apos;image pour la repositionner</p>
       <div
         onPointerDown={(event) => { setDragging(true); event.currentTarget.setPointerCapture(event.pointerId); dragStart.current = { x: event.clientX, y: event.clientY, ox: offset.x, oy: offset.y } }}
         onPointerMove={(event) => { if (dragging && dragStart.current) setOffset({ x: dragStart.current.ox + event.clientX - dragStart.current.x, y: dragStart.current.oy + event.clientY - dragStart.current.y }) }}
         onPointerUp={() => { setDragging(false); dragStart.current = null }}
-        style={{ width: previewWidth, height: previewHeight, maxWidth: '100%', margin: '0 auto 16px', position: 'relative', overflow: 'hidden', borderRadius: circular ? '50%' : 14, background: '#000', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+        style={{ width: previewWidth, height: previewHeight, maxWidth: '100%', margin: '0 auto 16px', position: 'relative', overflow: 'hidden', borderRadius: circular ? '50%' : 14, background: 'var(--surface-2)', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img ref={imageRef} src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, userSelect: 'none', transformOrigin: 'center' }} />
@@ -61,15 +61,15 @@ export default function ImageCropperModal({ src, title, aspect, outputWidth, cir
       <div role="group" aria-label="Repositionner l'image" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
         {[['←', -6, 0], ['↑', 0, -6], ['↓', 0, 6], ['→', 6, 0]].map(([glyph, dx, dy]) => <Button key={String(glyph)} type="button" variant="secondary" onClick={() => move(Number(dx), Number(dy))} style={controlButton}>{glyph}</Button>)}
       </div>
-      <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: 11, textAlign: 'left' }}>Zoom</label>
+      <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: 'var(--font-size-caption)', textAlign: 'left' }}>Zoom</label>
       <Slider accent="gold" min={1} max={3} step={0.01} value={zoom} onChange={(event) => setZoom(Number(event.target.value))} style={{ margin: '5px 0 18px' }} />
       <div style={{ display: 'flex', gap: 10 }}>
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={saving} style={{ ...actionButton, background: 'transparent', color: '#fff', border: '1px solid var(--border-strong)' }}>Annuler</Button>
-        <Button type="button" onClick={() => void confirm()} loading={saving} loadingText="Envoi…" style={{ ...actionButton, background: 'var(--gold)', color: '#181104', border: 0 }}>Valider</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={saving} style={{ ...actionButton, background: 'transparent', color: 'var(--text)', border: '1px solid var(--border-strong)' }}>Annuler</Button>
+        <Button type="button" onClick={() => void confirm()} loading={saving} loadingText="Envoi…" style={actionButton}>Valider</Button>
       </div>
     </Modal>
   )
 }
 
-const controlButton: React.CSSProperties = { width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: '#fff', cursor: 'pointer', fontSize: 17 }
+const controlButton: React.CSSProperties = { width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', cursor: 'pointer', fontSize: 'var(--font-size-title-5)' }
 const actionButton: React.CSSProperties = { flex: 1, minHeight: 44, borderRadius: 12, fontWeight: 800, cursor: 'pointer' }

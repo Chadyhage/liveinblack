@@ -54,7 +54,7 @@ export interface PlaylistClientProps {
 // Palette figée du redesign 2026-07 (voir CLAUDE.md) — les compositions avec
 // alpha (bordures/fonds teintés) ont besoin de la valeur hex brute, `var(--x)`
 // ne peut pas recevoir de suffixe alpha concaténé.
-const HEX = { teal: 'var(--primary)', gold: 'var(--primary)', violet: 'var(--primary)', pink: '#ff7b7b' }
+const HEX = { teal: 'var(--primary)', gold: 'var(--primary)', violet: 'var(--primary)', pink: 'var(--danger-text)' }
 const LIKE_BUDGET = 5
 
 let toastSeq = 0
@@ -83,7 +83,7 @@ const PARTICIPANT_TABS: { key: 'top' | 'mine' | 'rules'; label: string }[] = [
 // SVG icônes — ports directs de PlaylistSystem.jsx (mêmes tracés, sans les
 // props de couleur configurable inutiles ici : la couleur vient du contexte).
 function LockIcon() {
-  return <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)" xmlns="http://www.w3.org/2000/svg"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" /></svg>
+  return <svg width="30" height="30" viewBox="0 0 24 24" fill="var(--text-faint)" xmlns="http://www.w3.org/2000/svg"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" /></svg>
 }
 function TicketIcon({ done }: { done: boolean }) {
   if (done) {
@@ -94,14 +94,14 @@ function TicketIcon({ done }: { done: boolean }) {
     )
   }
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="rgba(255,255,255,0.25)" xmlns="http://www.w3.org/2000/svg">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-faint)" xmlns="http://www.w3.org/2000/svg">
       <path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z" />
     </svg>
   )
 }
 function ScanIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
       <line x1="7" y1="12" x2="17" y2="12" />
     </svg>
@@ -116,7 +116,7 @@ function HeadphonesIcon() {
 }
 function MusicNoteIcon({ opacity = 0.3 }: { opacity?: number }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill={`rgba(255,255,255,${opacity})`} xmlns="http://www.w3.org/2000/svg">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" color="var(--text-faint)" style={{ opacity }} xmlns="http://www.w3.org/2000/svg">
       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
     </svg>
   )
@@ -132,7 +132,7 @@ function HeartIcon({ filled, color }: { filled: boolean; color: string }) {
 // droite du champ de recherche quand aucune requête n'est en vol.
 function SearchIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -148,7 +148,7 @@ function TrashIcon() {
 }
 
 function PlayPauseGlyph({ playing }: { playing: boolean }) {
-  return <span style={{ fontSize: 11 }}>{playing ? '■' : '▶'}</span>
+  return <span style={{ fontSize: 'var(--font-size-caption)' }}>{playing ? '■' : '▶'}</span>
 }
 
 export default function PlaylistClient({
@@ -459,7 +459,7 @@ export default function PlaylistClient({
     return (
       <main style={{ width: '100%', minWidth: 0, padding: 'var(--space-6) var(--page-gutter) 90px' }}>
         <div style={{ marginBottom: 18 }}>
-          <Link href={`/events/${eventId}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
+          <Link href={`/events/${eventId}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← {eventName}
           </Link>
         </div>
@@ -472,14 +472,14 @@ export default function PlaylistClient({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(255,255,255,0.04)',
+              background: 'var(--surface-2)',
               border: '1px solid var(--border-strong)',
             }}
           >
             <LockIcon />
           </div>
-          <p style={{ fontWeight: 800, fontSize: 17, letterSpacing: '-0.4px', margin: 0 }}>Playlist réservée aux participants</p>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
+          <p style={{ fontWeight: 800, fontSize: 'var(--font-size-title-5)', letterSpacing: '-0.4px', margin: 0 }}>Playlist réservée aux participants</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
             Réserve ta place pour proposer tes sons et voter pour la playlist de la soirée.
           </p>
         </div>
@@ -497,7 +497,7 @@ export default function PlaylistClient({
       `}</style>
 
       <div style={{ marginBottom: 18 }}>
-        <Link href={`/events/${eventId}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14, color: 'var(--text-faint)', textDecoration: 'none' }}>
+        <Link href={`/events/${eventId}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', textDecoration: 'none' }}>
           ← {eventName}
         </Link>
       </div>
@@ -505,15 +505,15 @@ export default function PlaylistClient({
       {eventImage && (
         <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border-strong)', height: 120, marginBottom: 18 }}>
           <Image src={eventImage} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 640px" />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(6,8,14,0.95), rgba(6,8,14,0.35))' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--media-panel-deep), var(--scrim-mid))' }} />
           <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
             <p
               style={{
-                fontSize: 17,
+                fontSize: 'var(--font-size-title-5)',
                 fontWeight: 800,
                 letterSpacing: '-0.4px',
                 margin: 0,
-                textShadow: '0 2px 10px rgba(0,0,0,0.6)',
+                textShadow: '0 2px 10px rgba(var(--black-rgb), .60)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -522,7 +522,7 @@ export default function PlaylistClient({
               {eventName}
             </p>
             {(eventDateDisplay || eventCity) && (
-              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: '3px 0 0' }}>{[eventDateDisplay, eventCity].filter(Boolean).join(' · ')}</p>
+              <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '3px 0 0' }}>{[eventDateDisplay, eventCity].filter(Boolean).join(' · ')}</p>
             )}
           </div>
         </div>
@@ -531,8 +531,8 @@ export default function PlaylistClient({
       {effectiveCanModerate ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', margin: 0 }}>Gestion playlist</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '3px 0 0' }}>
+            <h1 style={{ fontSize: 'var(--font-size-title-4)', fontWeight: 800, letterSpacing: '-0.5px', margin: 0 }}>Gestion playlist</h1>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '3px 0 0' }}>
               {djStats.total} son{djStats.total > 1 ? 's' : ''} proposé{djStats.total > 1 ? 's' : ''} · tu gardes le contrôle final
             </p>
           </div>
@@ -540,7 +540,7 @@ export default function PlaylistClient({
             <Button variant="ghost" onClick={() => setPreviewMode(true)} style={ghostButtonStyle}>
               Aperçu participant
             </Button>
-            <Button variant="primary" onClick={handleExport} style={{ ...smallButtonStyle, background: 'var(--gold)', color: '#181203', border: 'none', fontWeight: 700 }}>
+            <Button variant="primary" onClick={handleExport} style={{ ...smallButtonStyle, background: 'var(--gold)', color: 'var(--primary-ink)', border: 'none', fontWeight: 700 }}>
               {copied ? 'Copié' : 'Exporter'}
             </Button>
           </div>
@@ -548,8 +548,8 @@ export default function PlaylistClient({
       ) : (
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <h1 style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.6px', margin: 0 }}>Playlist interactive</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>Propose tes sons, vote pour la soirée</p>
+            <h1 style={{ fontSize: 'var(--font-size-title-4)', fontWeight: 800, letterSpacing: '-0.6px', margin: 0 }}>Playlist interactive</h1>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '4px 0 0' }}>Propose tes sons, vote pour la soirée</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 22, flexShrink: 0 }}>
             {[0, 1, 2, 3, 4].map((i) => (
@@ -576,7 +576,7 @@ export default function PlaylistClient({
             borderRadius: 10,
             border: `1px solid ${HEX.gold}55`,
             background: 'var(--primary-a08)',
-            fontSize: 12,
+            fontSize: 'var(--font-size-footnote)',
             color: 'var(--gold)',
             marginBottom: 16,
             display: 'flex',
@@ -601,7 +601,7 @@ export default function PlaylistClient({
             padding: '12px 16px',
             borderRadius: 14,
             border: `1px solid ${HEX.gold}55`,
-            background: 'linear-gradient(135deg, var(--primary-a14), rgba(139,92,246,0.10))',
+            background: 'linear-gradient(135deg, var(--primary-a14), rgba(var(--violet-rgb), .10))',
             marginBottom: 18,
           }}
         >
@@ -611,16 +611,16 @@ export default function PlaylistClient({
               height: 40,
               borderRadius: 10,
               flexShrink: 0,
-              background: nowPlaying.cover ? `url(${nowPlaying.cover}) center/cover` : 'rgba(255,255,255,0.06)',
+              background: nowPlaying.cover ? `url(${nowPlaying.cover}) center/cover` : 'var(--surface-2)',
               border: `1px solid ${HEX.gold}66`,
             }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 10.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold)', margin: 0 }}>
+            <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold)', margin: 0 }}>
               En ce moment{effectiveCanModerate ? ' · affiché à la salle' : ''}
             </p>
-            <p style={{ fontSize: 15.5, fontWeight: 800, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nowPlaying.title}</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nowPlaying.artist}</p>
+            <p style={{ fontSize: 'var(--font-size-headline-xl)', fontWeight: 800, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nowPlaying.title}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nowPlaying.artist}</p>
           </div>
           {effectiveCanModerate && (
             <Button
@@ -654,14 +654,14 @@ export default function PlaylistClient({
               ['Joués', djStats.played, 'var(--violet)'],
             ].map(([label, value, color]) => (
               <div key={label as string} style={{ flex: 1, minWidth: 76, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 12px' }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>{label}</p>
-                <p style={{ fontSize: 17, fontWeight: 800, color: color as string, margin: '2px 0 0' }}>{value}</p>
+                <p style={{ fontSize: 'var(--font-size-caption-2)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>{label}</p>
+                <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: color as string, margin: '2px 0 0' }}>{value}</p>
               </div>
             ))}
           </div>
 
           <Card style={{ padding: 14, marginBottom: 16 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>Ajouter un son (auto-validé)</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, margin: '0 0 10px' }}>Ajouter un son (auto-validé)</p>
             <Input
               aria-label="Rechercher un titre ou un artiste"
               value={query}
@@ -680,7 +680,7 @@ export default function PlaylistClient({
                 disableAdd={false}
               />
             )}
-            {noResults && <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '10px 0 0', textAlign: 'center' }}>Aucun résultat pour « {trimmedQuery} »</p>}
+            {noResults && <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: '10px 0 0', textAlign: 'center' }}>Aucun résultat pour « {trimmedQuery} »</p>}
           </Card>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
@@ -692,7 +692,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: moderationTab === f.key ? 'var(--gold)' : 'var(--text-muted)',
-                  background: moderationTab === f.key ? 'var(--primary-a12)' : 'rgba(255,255,255,0.04)',
+                  background: moderationTab === f.key ? 'var(--primary-a12)' : 'var(--surface-2)',
                   borderColor: moderationTab === f.key ? `${HEX.gold}73` : 'var(--border)',
                 }}
               >
@@ -708,7 +708,7 @@ export default function PlaylistClient({
                 style={{
                   ...pillButtonStyle,
                   color: djSort === id ? 'var(--teal)' : 'var(--text-muted)',
-                  background: djSort === id ? 'var(--primary-a12)' : 'rgba(255,255,255,0.04)',
+                  background: djSort === id ? 'var(--primary-a12)' : 'var(--surface-2)',
                   borderColor: djSort === id ? `${HEX.teal}66` : 'var(--border)',
                 }}
               >
@@ -727,14 +727,14 @@ export default function PlaylistClient({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'var(--surface-2)',
                   border: '1px solid var(--border)',
                 }}
               >
                 <MusicNoteIcon opacity={0.35} />
               </div>
-              <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{moderationTab === 'all' ? 'Aucun son proposé pour l’instant' : 'Aucun son dans ce filtre'}</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, margin: 0 }}>{moderationTab === 'all' ? 'Aucun son proposé pour l’instant' : 'Aucun son dans ce filtre'}</p>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0, maxWidth: 300, lineHeight: 1.5 }}>
                 {moderationTab === 'all'
                   ? 'Les propositions des participants apparaîtront ici. Utilise la recherche ci-dessus pour ajouter le premier son.'
                   : 'Change de filtre pour voir les autres sons.'}
@@ -797,7 +797,7 @@ export default function PlaylistClient({
             <StatChip label="Dans la playlist" value={rankedSongs.length} />
           </div>
 
-          <div style={{ display: 'flex', gap: 6, padding: 5, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 16, marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 6, padding: 5, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, marginBottom: 16 }}>
             {PARTICIPANT_TABS.map((t) => {
               const active = participantTab === t.key
               return (
@@ -811,7 +811,7 @@ export default function PlaylistClient({
                     borderRadius: 12,
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: 13.5,
+                    fontSize: 'var(--font-size-body)',
                     fontWeight: active ? 800 : 600,
                     transition: 'all 0.2s',
                     color: active ? 'var(--primary-ink)' : 'var(--text-muted)',
@@ -830,7 +830,7 @@ export default function PlaylistClient({
               {rankedSongs.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '32px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                   <MusicNoteIcon opacity={0.12} />
-                  <p style={{ fontSize: 14, color: 'var(--text-faint)', margin: 0 }}>La playlist est vide — propose le premier son dans « Mes sons ».</p>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', margin: 0 }}>La playlist est vide — propose le premier son dans « Mes sons ».</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -847,10 +847,10 @@ export default function PlaylistClient({
                           display: 'flex',
                           alignItems: 'center',
                           gap: 11,
-                          background: rank === 1 ? '#14120d' : undefined,
+                          background: rank === 1 ? 'var(--media-canvas-soft)' : undefined,
                         }}
                       >
-                        <span style={{ fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: rank === 1 ? 'var(--gold)' : 'var(--text-faint)' }}>
+                        <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: rank === 1 ? 'var(--gold)' : 'var(--text-faint)' }}>
                           {rank}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -868,13 +868,13 @@ export default function PlaylistClient({
                             padding: '8px 14px',
                             borderRadius: 999,
                             flexShrink: 0,
-                            border: isMine ? '1px solid rgba(255,255,255,0.06)' : liked ? `1px solid ${HEX.teal}66` : '1px solid var(--border-strong)',
-                            background: isMine ? 'rgba(255,255,255,0.04)' : liked ? 'var(--primary-a16)' : 'rgba(255,255,255,0.08)',
+                            border: isMine ? '1px solid var(--surface-2)' : liked ? `1px solid ${HEX.teal}66` : '1px solid var(--border-strong)',
+                            background: isMine ? 'var(--surface-2)' : liked ? 'var(--primary-a16)' : 'var(--surface-2)',
                             cursor: isMine ? 'not-allowed' : 'pointer',
                           }}
                         >
-                          <HeartIcon filled={liked} color={isMine ? 'rgba(255,255,255,0.25)' : liked ? HEX.teal : 'rgba(255,255,255,0.55)'} />
-                          <span style={{ fontSize: 13.5, fontWeight: 700, color: isMine ? 'rgba(255,255,255,0.35)' : liked ? 'var(--teal)' : 'rgba(255,255,255,0.75)' }}>
+                          <HeartIcon filled={liked} color={isMine ? 'var(--text-faint)' : liked ? HEX.teal : 'var(--text-faint)'} />
+                          <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: isMine ? 'var(--text-faint)' : liked ? 'var(--teal)' : 'var(--text-muted)' }}>
                             {song.likedBy.length}
                           </span>
                         </Button>
@@ -890,8 +890,8 @@ export default function PlaylistClient({
             <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {!effectiveIsCheckedIn && (
                 <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, padding: '28px 20px', textAlign: 'center' }}>
-                  <p style={{ fontWeight: 800, fontSize: 17, letterSpacing: '-0.4px', margin: 0 }}>Conditions pour proposer un son</p>
-                  <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0, maxWidth: 320, lineHeight: 1.55 }}>
+                  <p style={{ fontWeight: 800, fontSize: 'var(--font-size-title-5)', letterSpacing: '-0.4px', margin: 0 }}>Conditions pour proposer un son</p>
+                  <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: 0, maxWidth: 320, lineHeight: 1.55 }}>
                     Pour proposer tes sons au DJ, tu dois remplir ces deux conditions :
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', maxWidth: 340 }}>
@@ -903,7 +903,7 @@ export default function PlaylistClient({
                         padding: '12px 14px',
                         borderRadius: 14,
                         border: effectiveHasTicket ? `1px solid ${HEX.teal}44` : '1px solid var(--border-strong)',
-                        background: effectiveHasTicket ? 'var(--primary-a04)' : 'rgba(255,255,255,0.03)',
+                        background: effectiveHasTicket ? 'var(--primary-a04)' : 'var(--surface-2)',
                       }}
                     >
                       <div
@@ -915,31 +915,31 @@ export default function PlaylistClient({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: effectiveHasTicket ? 'var(--primary-a10)' : 'rgba(255,255,255,0.05)',
+                          background: effectiveHasTicket ? 'var(--primary-a10)' : 'var(--surface-2)',
                         }}
                       >
                         <TicketIcon done={effectiveHasTicket} />
                       </div>
                       <div style={{ textAlign: 'left' }}>
-                        <p style={{ fontSize: 14.5, fontWeight: 700, color: effectiveHasTicket ? 'var(--teal)' : 'var(--text)', margin: 0 }}>
+                        <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, color: effectiveHasTicket ? 'var(--teal)' : 'var(--text)', margin: 0 }}>
                           {effectiveHasTicket ? 'Billet réservé' : 'Réserver un billet'}
                         </p>
-                        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>
+                        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '2px 0 0' }}>
                           {effectiveHasTicket ? `${ticketCount} billet${ticketCount > 1 ? 's' : ''} pour cet événement` : 'Tu dois avoir un billet pour cet événement'}
                         </p>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, border: '1px solid var(--border-strong)', background: 'rgba(255,255,255,0.03)' }}>
-                      <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, border: '1px solid var(--border-strong)', background: 'var(--surface-2)' }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 12, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-2)' }}>
                         <ScanIcon />
                       </div>
                       <div style={{ textAlign: 'left' }}>
-                        <p style={{ fontSize: 14.5, fontWeight: 700, margin: 0 }}>Scanner ton billet</p>
-                        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>Présente ton billet QR à l&apos;entrée de la soirée</p>
+                        <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, margin: 0 }}>Scanner ton billet</p>
+                        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Présente ton billet QR à l&apos;entrée de la soirée</p>
                       </div>
                     </div>
                   </div>
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0, lineHeight: 1.5 }}>
                     Une fois sur place et ton billet scanné, tu pourras proposer 1 son par billet au DJ.
                   </p>
                 </Card>
@@ -948,7 +948,7 @@ export default function PlaylistClient({
               {effectiveIsCheckedIn &&
                 (effectiveSongsRemaining > 0 ? (
                   <div>
-                    <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px' }}>
+                    <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 8px' }}>
                       Propose un son au DJ — <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{effectiveSongsRemaining} proposition{effectiveSongsRemaining > 1 ? 's' : ''} restante{effectiveSongsRemaining > 1 ? 's' : ''}</span>
                     </p>
                     <Input
@@ -969,24 +969,24 @@ export default function PlaylistClient({
                         disableAdd={false}
                       />
                     )}
-                    {noResults && <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '10px 0 0', textAlign: 'center' }}>Aucun résultat pour « {trimmedQuery} »</p>}
+                    {noResults && <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: '10px 0 0', textAlign: 'center' }}>Aucun résultat pour « {trimmedQuery} »</p>}
                   </div>
                 ) : (
                   <Card style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--teal)', margin: 0 }}>
+                    <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--teal)', margin: 0 }}>
                       {ticketCount <= 1 ? 'Ton son est dans la playlist' : `${mySongs.length} / ${ticketCount} sons proposés`}
                     </p>
-                    <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: 0 }}>Tu as utilisé toutes tes propositions · 1 son par billet réservé</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: 0 }}>Tu as utilisé toutes tes propositions · 1 son par billet réservé</p>
                   </Card>
                 ))}
 
               {effectiveIsCheckedIn && (
                 <div>
-                  <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '0 0 10px' }}>
+                  <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '0 0 10px' }}>
                     Mes sons proposés ({mySongs.length})
                   </p>
                   {mySongs.length === 0 ? (
-                    <p style={{ fontSize: 13.5, color: 'var(--text-faint)', margin: 0, textAlign: 'center', padding: '16px 0' }}>Tu n&apos;as pas encore proposé de son.</p>
+                    <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', margin: 0, textAlign: 'center', padding: '16px 0' }}>Tu n&apos;as pas encore proposé de son.</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {mySongs.map((song) => {
@@ -996,7 +996,7 @@ export default function PlaylistClient({
                         return (
                         <Card key={song.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           {rank >= 0 && (
-                            <span style={{ fontSize: 14, fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: 'var(--text-faint)' }}>
+                            <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 800, width: 18, textAlign: 'center', flexShrink: 0, color: 'var(--text-faint)' }}>
                               {rank + 1}
                             </span>
                           )}
@@ -1012,12 +1012,12 @@ export default function PlaylistClient({
                               padding: '8px 14px',
                               borderRadius: 999,
                               flexShrink: 0,
-                              border: '1px solid rgba(255,255,255,0.06)',
-                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid var(--surface-2)',
+                              background: 'var(--surface-2)',
                             }}
                           >
-                            <HeartIcon filled={false} color="rgba(255,255,255,0.25)" />
-                            <span style={{ fontSize: 13.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>{song.likedBy.length}</span>
+                            <HeartIcon filled={false} color="var(--text-faint)" />
+                            <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text-faint)' }}>{song.likedBy.length}</span>
                           </div>
                           <Button
                             variant="danger"
@@ -1042,7 +1042,7 @@ export default function PlaylistClient({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              background: 'rgba(224,90,170,0.14)',
+                              background: 'var(--danger-fill)',
                               border: `1px solid ${HEX.pink}8c`,
                               color: 'var(--pink)',
                             }}
@@ -1078,8 +1078,8 @@ export default function PlaylistClient({
                         </svg>
                       </span>
                       <div>
-                        <p style={{ fontSize: 14.5, fontWeight: 700, margin: 0 }}>{t}</p>
-                        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '2px 0 0', lineHeight: 1.45 }}>{d}</p>
+                        <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, margin: 0 }}>{t}</p>
+                        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '2px 0 0', lineHeight: 1.45 }}>{d}</p>
                       </div>
                     </div>
                   ))}
@@ -1091,8 +1091,8 @@ export default function PlaylistClient({
                   <HeadphonesIcon />
                 </div>
                 <div>
-                  <p style={{ fontSize: 14.5, fontWeight: 700, margin: 0 }}>{djName} garde le choix final</p>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '3px 0 0', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, margin: 0 }}>{djName} garde le choix final</p>
+                  <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '3px 0 0', lineHeight: 1.5 }}>
                     Le DJ peut ignorer la playlist, y ajouter ses propres sons ou retirer un contenu inapproprié. La playlist reste une suggestion de la salle.
                   </p>
                 </div>
@@ -1105,8 +1105,8 @@ export default function PlaylistClient({
       <ToastViewport items={toasts.map((toast) => ({ id: toast.id, message: toast.text, kind: toast.kind === 'ok' ? 'success' : 'error' }))} />
       {pendingConfirm && (
         <Modal onClose={() => setPendingConfirm(null)} dismissible ariaLabel={pendingConfirm.title} contentStyle={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 style={{ fontSize: 18, letterSpacing: '-.4px', margin: 0, color: '#fff' }}>{pendingConfirm.title}</h3>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,.74)', fontSize: 14, lineHeight: 1.55 }}>{pendingConfirm.message}</p>
+          <h3 style={{ fontSize: 'var(--font-size-title-4)', letterSpacing: '-.4px', margin: 0, color: 'var(--text)' }}>{pendingConfirm.title}</h3>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', lineHeight: 1.55 }}>{pendingConfirm.message}</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setPendingConfirm(null)} style={{ flex: 1 }}>
               Annuler
@@ -1138,8 +1138,8 @@ function SearchStatusGlyph({ searching }: { searching: boolean }) {
       style={{
         width: 13,
         height: 13,
-        border: '2px solid rgba(255,255,255,0.25)',
-        borderTopColor: 'rgba(255,255,255,0.8)',
+        border: '2px solid var(--text-faint)',
+        borderTopColor: 'var(--text)',
         borderRadius: '50%',
         display: 'inline-block',
         animation: 'lbSpin 0.7s linear infinite',
@@ -1166,7 +1166,7 @@ function SearchResultsList({
   disableAdd: boolean
 }) {
   return (
-    <div style={{ marginTop: 10, border: '1px solid var(--border-strong)', borderRadius: 14, overflow: 'hidden', background: 'var(--surface-2)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)' }}>
+    <div style={{ marginTop: 10, border: '1px solid var(--border-strong)', borderRadius: 14, overflow: 'hidden', background: 'var(--surface-2)', boxShadow: '0 24px 64px rgba(var(--black-rgb), .55)' }}>
       {results.map((r, i) => {
         // Cf. commentaire d'origine : plusieurs résultats iTunes peuvent
         // partager le même titre/artiste — l'index de la liste (toujours
@@ -1175,7 +1175,7 @@ function SearchResultsList({
         const previewKey = `preview-${busyKey}`
         const playing = playingKey === previewKey
         return (
-          <div key={busyKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 10, gap: 8, borderBottom: i < results.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+          <div key={busyKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 10, gap: 8, borderBottom: i < results.length - 1 ? '1px solid var(--surface-2)' : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11, flex: 1, minWidth: 0 }}>
               <Button
                 variant="ghost"
@@ -1198,14 +1198,14 @@ function SearchResultsList({
                 }}
               >
                 {r.previewUrl && (
-                  <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', color: '#fff' }}>
+                  <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim-mid)', color: 'var(--text)' }}>
                     <PlayPauseGlyph playing={playing} />
                   </span>
                 )}
               </Button>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</p>
-                <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</p>
+                <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {r.artist}
                   {r.duration ? ` · ${r.duration}` : ''}
                   {playing && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>▶ en cours</span>}
@@ -1258,7 +1258,7 @@ function SongRow({
           position: 'relative',
           padding: 0,
           border: playing ? `1px solid ${HEX.gold}90` : '1px solid var(--border-strong)',
-          background: song.cover ? `url(${song.cover}) center/cover` : 'rgba(255,255,255,0.05)',
+          background: song.cover ? `url(${song.cover}) center/cover` : 'var(--surface-2)',
           cursor: song.previewUrl ? 'pointer' : 'default',
         }}
       >
@@ -1268,24 +1268,24 @@ function SongRow({
           </span>
         )}
         {song.previewUrl && (
-          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', color: '#fff' }}>
+          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim-mid)', color: 'var(--text)' }}>
             <PlayPauseGlyph playing={playing} />
           </span>
         )}
       </Button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <p style={{ fontWeight: 700, fontSize: 15.5, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
+          <p style={{ fontWeight: 700, fontSize: 'var(--font-size-headline-xl)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
           {badge && (
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 10.5,
+                fontSize: 'var(--font-size-caption-2-lg)',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 color: badge.color,
-                background: 'rgba(255,255,255,0.06)',
+                background: 'var(--surface-2)',
                 border: `1px solid ${badge.color}55`,
                 borderRadius: 8,
                 padding: '3px 8px',
@@ -1295,7 +1295,7 @@ function SongRow({
             </span>
           )}
         </div>
-        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {song.artist}
           <span style={{ color: 'var(--text-faint)' }}> · {isMine ? 'ajouté par toi' : 'un invité'}</span>
           {playing && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>▶ en cours</span>}
@@ -1341,29 +1341,29 @@ function DjSongRow({
           position: 'relative',
           padding: 0,
           border: playing ? `1px solid ${HEX.gold}90` : '1px solid var(--border-strong)',
-          background: song.cover ? `url(${song.cover}) center/cover` : 'rgba(255,255,255,0.05)',
+          background: song.cover ? `url(${song.cover}) center/cover` : 'var(--surface-2)',
           cursor: song.previewUrl ? 'pointer' : 'default',
         }}
       >
         {song.previewUrl && (
-          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', color: '#fff' }}>
+          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim-mid)', color: 'var(--text)' }}>
             <PlayPauseGlyph playing={playing} />
           </span>
         )}
       </Button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <p style={{ fontWeight: 700, fontSize: 15, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
+          <p style={{ fontWeight: 700, fontSize: 'var(--font-size-headline)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{song.title}</p>
           {badge && (
             <span
               style={{
                 flexShrink: 0,
-                fontSize: 10.5,
+                fontSize: 'var(--font-size-caption-2-lg)',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 color: badge.color,
-                background: 'rgba(255,255,255,0.06)',
+                background: 'var(--surface-2)',
                 border: `1px solid ${badge.color}55`,
                 borderRadius: 8,
                 padding: '3px 8px',
@@ -1373,7 +1373,7 @@ function DjSongRow({
             </span>
           )}
         </div>
-        <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {song.artist} · <span style={{ color: 'var(--teal)' }}>{song.likedBy.length} like{song.likedBy.length > 1 ? 's' : ''}</span>
           {addedByMe && <span style={{ color: 'var(--text-faint)' }}> · ajouté par toi</span>}
           {playing && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>▶ en cours</span>}
@@ -1386,8 +1386,8 @@ function DjSongRow({
 function StatChip({ label, value, color }: { label: string; value: string | number; color?: string }) {
   return (
     <div style={{ flex: 1, minWidth: 92, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '10px 14px' }}>
-      <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>{label}</p>
-      <p style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.5px', color: color || 'var(--text)', margin: '3px 0 0' }}>{value}</p>
+      <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: 0 }}>{label}</p>
+      <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, letterSpacing: '-0.5px', color: color || 'var(--text)', margin: '3px 0 0' }}>{value}</p>
     </div>
   )
 }
@@ -1401,7 +1401,7 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid var(--border)',
   background: 'var(--surface-2)',
   color: 'var(--text)',
-  fontSize: 13.5,
+  fontSize: 'var(--font-size-body)',
   boxSizing: 'border-box',
 }
 
@@ -1412,7 +1412,7 @@ const smallButtonStyle: React.CSSProperties = {
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   fontWeight: 700,
   cursor: 'pointer',
 }
@@ -1424,7 +1424,7 @@ const ghostButtonStyle: React.CSSProperties = {
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   fontWeight: 700,
   cursor: 'pointer',
 }
@@ -1434,7 +1434,7 @@ const pillButtonStyle: React.CSSProperties = {
   padding: '10px 14px',
   borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   fontWeight: 700,
   cursor: 'pointer',
 }

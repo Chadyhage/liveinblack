@@ -75,8 +75,8 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
       </span>
       {(label || description) && (
         <span>
-          {label && <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{label}</span>}
-          {description && <span style={{ display: 'block', fontSize: 13.5, color: 'var(--text-faint)', marginTop: 3, lineHeight: 1.45 }}>{description}</span>}
+          {label && <span style={{ fontSize: 'var(--font-size-headline)', fontWeight: 600, color: 'var(--text)' }}>{label}</span>}
+          {description && <span style={{ display: 'block', fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', marginTop: 3, lineHeight: 1.45 }}>{description}</span>}
         </span>
       )}
     </label>

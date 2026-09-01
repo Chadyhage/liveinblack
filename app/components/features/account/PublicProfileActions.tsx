@@ -73,12 +73,12 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
         <Button type="button" variant="secondary" onClick={share} style={secondary}>{copied ? 'Lien copié' : 'Partager'}</Button>
         {!isSelf && <Button type="button" variant="secondary" onClick={() => requireAuth() && setReportOpen(true)} style={secondary}>Signaler</Button>}
       </div>
-      {status && !reportOpen && <p role="status" style={{ color: 'var(--text-muted)', fontSize: 12, margin: '8px 0 0' }}>{status}</p>}
+      {status && !reportOpen && <p role="status" style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', margin: '8px 0 0' }}>{status}</p>}
 
       {reportOpen && (
         <Modal onClose={() => setReportOpen(false)} ariaLabel={`Signaler ${displayName}`}>
           <form onSubmit={submitReport}>
-            <h2 id="profile-report-title" style={{ margin: '0 0 16px', fontSize: 21 }}>Signaler {displayName}</h2>
+            <h2 id="profile-report-title" style={{ margin: '0 0 16px', fontSize: 'var(--font-size-title-3-lg)' }}>Signaler {displayName}</h2>
             <Label htmlFor="profile-report-reason" style={label}>Motif</Label>
             <Select
               id="profile-report-reason"
@@ -95,7 +95,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
             />
             <Label htmlFor="profile-report-details" style={{ ...label, marginTop: 12 }}>Précisions facultatives</Label>
             <Textarea id="profile-report-details" value={details} onChange={(event) => setDetails(event.target.value)} maxLength={850} rows={4} style={input} />
-            {status && <p role="status" style={{ color: status.startsWith('Merci') ? 'var(--teal)' : 'var(--pink)', fontSize: 12 }}>{status}</p>}
+            {status && <p role="status" style={{ color: status.startsWith('Merci') ? 'var(--teal)' : 'var(--pink)', fontSize: 'var(--font-size-footnote)' }}>{status}</p>}
             <div style={{ display: 'flex', gap: 9, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setReportOpen(false)} style={{ ...secondary, flex: 1 }}>Fermer</Button><Button type="submit" disabled={busy} style={{ ...primary, flex: 1 }}>{busy ? 'Envoi…' : 'Envoyer'}</Button></div>
           </form>
         </Modal>
@@ -104,7 +104,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
   )
 }
 
-const primary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: 0, background: 'var(--teal-solid)', color: '#250817', fontWeight: 800, cursor: 'pointer' }
+const primary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: 0, background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 800, cursor: 'pointer' }
 const secondary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontWeight: 700, cursor: 'pointer' }
-const label: React.CSSProperties = { display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }
+const label: React.CSSProperties = { display: 'block', fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', marginBottom: 6 }
 const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--obsidian)', color: 'var(--text)' }

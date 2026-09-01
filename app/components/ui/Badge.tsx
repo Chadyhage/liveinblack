@@ -5,9 +5,9 @@ export type BadgeTone = 'teal' | 'gold' | 'pink' | 'violet' | 'danger' | 'neutra
 const TONE_STYLES: Record<BadgeTone, CSSProperties> = {
   teal: { background: 'var(--primary-a14)', color: 'var(--primary)' },
   gold: { background: 'var(--primary-a16)', color: 'var(--gold)' },
-  pink: { background: 'rgba(255,107,0,0.14)', color: 'var(--pink)' },
-  violet: { background: 'rgba(124,58,237,0.16)', color: 'var(--violet)' },
-  danger: { background: 'rgba(224,90,90,0.16)', color: '#e05a5a' },
+  pink: { background: 'var(--primary-a14)', color: 'var(--pink)' },
+  violet: { background: 'var(--violet-fill)', color: 'var(--violet)' },
+  danger: { background: 'var(--danger-fill)', color: 'var(--danger)' },
   neutral: { background: 'var(--surface-2)', color: 'var(--text-muted)' },
 }
 
@@ -20,7 +20,7 @@ export default function Badge({ tone = 'neutral', children }: { tone?: BadgeTone
         gap: 4,
         padding: '4px 10px',
         borderRadius: 'var(--radius-pill)',
-        fontSize: 12.5,
+        fontSize: 'var(--font-size-footnote-lg)',
         fontWeight: 800,
         letterSpacing: '.045em',
         textTransform: 'uppercase',

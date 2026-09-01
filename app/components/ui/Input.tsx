@@ -13,8 +13,8 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 }
 
 const SIZE_STYLES: Record<'sm' | 'md', CSSProperties> = {
-  sm: { minHeight: 'var(--control-height-sm)', padding: '8px 12px', fontSize: 14, lineHeight: 1.35, borderRadius: 'var(--radius-control)' },
-  md: { minHeight: 'var(--control-height-md)', padding: '10px 14px', fontSize: 15.5, lineHeight: 1.38, borderRadius: 'var(--radius-control)' },
+  sm: { minHeight: 'var(--control-height-sm)', padding: '8px 12px', fontSize: 'var(--font-size-body-sm)', lineHeight: 1.35, borderRadius: 'var(--radius-control)' },
+  md: { minHeight: 'var(--control-height-md)', padding: '10px 14px', fontSize: 'var(--font-size-headline-xl)', lineHeight: 1.38, borderRadius: 'var(--radius-control)' },
 }
 
 const ICON_OFFSET = 38
@@ -41,7 +41,7 @@ function ensurePlaceholderComfortStyle() {
   style.id = PLACEHOLDER_STYLE_ID
   style.textContent = `
     .lb-input-control::placeholder {
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-faint);
       opacity: 1;
       letter-spacing: 0;
       transform: none;
@@ -119,7 +119,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           width: '100%',
           background: 'var(--surface-2)',
           color: 'var(--text)',
-          border: `1px solid ${invalid ? '#ff5b5b' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
+          border: `1px solid ${invalid ? 'var(--danger)' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
           outline: 'none',
           fontFamily: 'inherit',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',

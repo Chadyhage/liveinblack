@@ -58,7 +58,7 @@ export function Avatar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#04040b',
+          color: 'var(--media-canvas)',
           fontWeight: 700,
           fontSize: size <= 32 ? 10 : 13,
         }}
@@ -74,7 +74,7 @@ export function Avatar({
             width: 10,
             height: 10,
             borderRadius: '50%',
-            background: online ? '#F53D8D' : 'rgba(255,255,255,0.2)',
+            background: online ? 'var(--primary)' : 'var(--fill-secondary)',
             border: '2px solid var(--obsidian)',
           }}
         />
@@ -194,7 +194,7 @@ export function MessageRow({
   if (message.type === 'system') {
     return (
       <div style={{ textAlign: 'center', padding: '4px 0' }}>
-        <span style={{ fontSize: 11.5, color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 20, padding: '4px 12px' }}>
+        <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 20, padding: '4px 12px' }}>
           {systemMessageLabel(message.content, currentUserId)}
         </span>
       </div>
@@ -226,9 +226,9 @@ export function MessageRow({
     >
       <div style={{ width: 26, flexShrink: 0 }}>{showAvatar ? <Avatar userId={message.senderId} name={message.senderName} size={26} src={members.find((member) => member.userId === message.senderId)?.avatarUrl} online={onlineForAvatar} showOnline /> : null}</div>
       <div style={{ maxWidth: '74%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', gap: 2, transform: `translateX(${swipeX}px)` }}>
-        {showSenderName ? <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>{message.senderName}</span> : null}
+        {showSenderName ? <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>{message.senderName}</span> : null}
         {message.forwardedFrom ? (
-          <span style={{ fontSize: 10.5, color: 'var(--text-faint)', paddingLeft: isMine ? 0 : 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+          <span style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', paddingLeft: isMine ? 0 : 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
             <CornerUpRight size={11} /> Transféré de {message.forwardedFrom.senderName}
           </span>
         ) : null}
@@ -244,8 +244,8 @@ export function MessageRow({
               cursor: 'pointer',
             }}
           >
-            <p style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>{replyPreview.senderName}</p>
-            <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>{replyPreview.senderName}</p>
+            <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {replyPreview.deletedForAll ? 'Message supprimé' : replyPreview.content || messageTypeLabel(replyPreview.type)}
             </p>
           </div>
@@ -262,7 +262,7 @@ export function MessageRow({
             border: `1px solid ${isMine ? 'var(--primary-a32)' : 'var(--border)'}`,
             maxWidth: '100%',
             cursor: 'context-menu',
-            boxShadow: highlighted ? '0 0 0 2px rgba(255,255,255,0.85)' : 'none',
+            boxShadow: highlighted ? '0 0 0 2px var(--primary-a65)' : 'none',
             transition: 'box-shadow 0.3s',
           }}
         >
@@ -286,27 +286,27 @@ export function MessageRow({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 3,
-                    fontSize: 11,
+                    fontSize: 'var(--font-size-caption)',
                     fontWeight: 400,
                     color: reactedByMe ? 'var(--teal)' : 'var(--text)',
                   }}
                 >
                   <span>{emoji}</span>
-                  <span style={{ fontSize: 9, color: reactedByMe ? 'var(--teal)' : 'var(--text-faint)' }}>{users.length}</span>
+                  <span style={{ fontSize: 'var(--font-size-mini)', color: reactedByMe ? 'var(--teal)' : 'var(--text-faint)' }}>{users.length}</span>
                 </Button>
               )
             })}
-            <Button variant="ghost" onClick={onOpenFullPicker} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '2px 6px', color: 'var(--text-faint)', fontSize: 11 }}>
+            <Button variant="ghost" onClick={onOpenFullPicker} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '2px 6px', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption)' }}>
               +
             </Button>
           </div>
         ) : null}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {message.starredByMe ? <span style={{ fontSize: 10, color: 'var(--gold)', display: 'inline-flex', alignItems: 'center' }}><Star size={10} /></span> : null}
-          <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{formatTime(message.createdAt)}</span>
+          {message.starredByMe ? <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--gold)', display: 'inline-flex', alignItems: 'center' }}><Star size={10} /></span> : null}
+          <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>{formatTime(message.createdAt)}</span>
           {isMine && message.readStatus ? (
-            <span style={{ fontSize: 9, color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
+            <span style={{ fontSize: 'var(--font-size-mini)', color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
               {message.readStatus === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
             </span>
           ) : null}
@@ -327,13 +327,13 @@ function MessageContent({
   onVote: (messageId: string, optionId: string) => void
   currentUserId: string
 }) {
-  if (message.deletedForAll) return <span style={{ fontSize: 12.5, color: 'var(--text-faint)', fontStyle: 'italic' }}>Message supprimé</span>
+  if (message.deletedForAll) return <span style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', fontStyle: 'italic' }}>Message supprimé</span>
 
   if (message.type === 'text') {
     return (
-      <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.45 }}>
+      <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.45 }}>
         <MentionText content={message.content ?? ''} members={members} />
-        {message.editedAt ? <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span> : null}
+        {message.editedAt ? <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', marginLeft: 5, fontStyle: 'italic' }}>(modifié)</span> : null}
       </p>
     )
   }
@@ -343,7 +343,7 @@ function MessageContent({
   if (message.type === 'story') return <StoryCard content={message.content} />
   if (message.type === 'event') return <EventCard content={message.content} />
   if (message.type === 'catalog_item') return <CatalogItemCard content={message.content} />
-  return <span style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>{message.content}</span>
+  return <span style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)' }}>{message.content}</span>
 }
 
 function MentionText({ content, members }: { content: string; members: ConversationMember[] }) {
@@ -390,13 +390,13 @@ function ImageBubble({ content, createdAt }: { content: string | null; createdAt
   const [zoomed, setZoomed] = useState(false)
   const { isExpired, hoursLeft } = usePhotoExpiry(createdAt)
 
-  if (!content) return <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>Photo</span>
+  if (!content) return <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Photo</span>
 
   if (isExpired) {
     return (
       <div style={{ width: 180, height: 90, borderRadius: 10, background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-        <span style={{ fontSize: 18, display: 'inline-flex', alignItems: 'center' }}><Hourglass size={18} /></span>
-        <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Photo expirée</span>
+        <span style={{ fontSize: 'var(--font-size-title-4)', display: 'inline-flex', alignItems: 'center' }}><Hourglass size={18} /></span>
+        <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>Photo expirée</span>
       </div>
     )
   }
@@ -407,7 +407,7 @@ function ImageBubble({ content, createdAt }: { content: string | null; createdAt
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={content} alt="Photo" onClick={() => setZoomed(true)} style={{ maxWidth: 220, maxHeight: 220, borderRadius: 10, display: 'block', cursor: 'zoom-in' }} />
         {hoursLeft <= 23 ? (
-          <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.65)', borderRadius: 6, padding: '2px 6px', fontSize: 10, fontWeight: 600, color: '#fff' }}>
+          <span style={{ position: 'absolute', top: 6, left: 6, background: 'var(--scrim-modal)', borderRadius: 6, padding: '2px 6px', fontSize: 'var(--font-size-caption-2)', fontWeight: 600, color: 'var(--image-text)' }}>
             {hoursLeft} h
           </span>
         ) : null}
@@ -415,7 +415,7 @@ function ImageBubble({ content, createdAt }: { content: string | null; createdAt
           href={content}
           download="photo.jpg"
           onClick={(event) => event.stopPropagation()}
-          style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(0,0,0,0.55)', borderRadius: 6, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', textDecoration: 'none' }}
+          style={{ position: 'absolute', bottom: 5, right: 5, background: 'rgba(var(--black-rgb), .55)', borderRadius: 6, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--image-text)', textDecoration: 'none' }}
         >
           <ArrowDown size={14} />
         </a>
@@ -493,14 +493,14 @@ function VoiceBubble({ content }: { content: string | null }) {
     }
   }
 
-  if (!content) return <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>Message vocal</span>
+  if (!content) return <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Message vocal</span>
 
   const activeBars = bars ?? Array.from({ length: VOICE_BARS }, () => 0.3)
   const fmt = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 190, maxWidth: 240 }}>
-      <Button variant="ghost" onClick={handlePlay} style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.16)', padding: 0, flexShrink: 0, color: '#fff' }}>
+      <Button variant="ghost" onClick={handlePlay} style={{ width: 44, height: 44, minHeight: 44, minWidth: 44, borderRadius: '50%', background: 'var(--fill-secondary)', padding: 0, flexShrink: 0, color: 'var(--text)' }}>
         {playing ? <Pause size={14} /> : <Play size={14} />}
       </Button>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, height: 24 }}>
@@ -511,26 +511,26 @@ function VoiceBubble({ content }: { content: string | null }) {
               width: 2.5,
               height: `${height * 100}%`,
               borderRadius: 2,
-              background: progress > 0 && index / activeBars.length <= progress ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: progress > 0 && index / activeBars.length <= progress ? 'var(--primary)' : 'var(--fill-secondary)',
             }}
           />
         ))}
       </div>
-      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', minWidth: 26, textAlign: 'right', flexShrink: 0 }}>{duration > 0 ? fmt(duration) : ''}</span>
+      <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-muted)', minWidth: 26, textAlign: 'right', flexShrink: 0 }}>{duration > 0 ? fmt(duration) : ''}</span>
     </div>
   )
 }
 
 function PollCard({ message, onVote, currentUserId }: { message: MessageView; onVote: (messageId: string, optionId: string) => void; currentUserId: string }) {
   const poll = message.poll
-  if (!poll) return <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>Sondage indisponible.</span>
+  if (!poll) return <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Sondage indisponible.</span>
 
   const totalVotes = poll.options.reduce((sum, option) => sum + option.voterIds.length, 0)
 
   return (
     <div style={{ minWidth: 220, maxWidth: 280 }}>
-      {poll.event ? <p style={{ fontSize: 11, color: 'var(--gold)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{poll.event.name}</p> : null}
-      <p style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 8px', color: 'var(--text)' }}>{poll.question}</p>
+      {poll.event ? <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--gold)', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{poll.event.name}</p> : null}
+      <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, margin: '0 0 8px', color: 'var(--text)' }}>{poll.question}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {poll.options.map((option) => {
           const pct = totalVotes ? Math.round((option.voterIds.length / totalVotes) * 100) : 0
@@ -551,9 +551,9 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
                 padding: '8px 10px',
                 borderRadius: 8,
                 border: votedByMe ? '1px solid var(--teal)' : '1px solid var(--border-strong)',
-                background: 'rgba(255,255,255,0.05)',
+                background: 'var(--fill-secondary)',
                 color: 'var(--text)',
-                fontSize: 12.5,
+                fontSize: 'var(--font-size-footnote-lg)',
                 fontWeight: 400,
                 textAlign: 'left',
                 overflow: 'hidden',
@@ -569,7 +569,7 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
           )
         })}
       </div>
-      <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '6px 0 0' }}>
+      <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '6px 0 0' }}>
         {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
       </p>
     </div>
@@ -581,7 +581,7 @@ function StoryCard({ content }: { content: string | null }) {
   try {
     story = content ? JSON.parse(content) : {}
   } catch {
-    return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Article</span>
+    return <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-muted)' }}>Article</span>
   }
 
   return (
@@ -590,8 +590,8 @@ function StoryCard({ content }: { content: string | null }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={story.imageUrl} alt={story.title} style={{ width: '100%', borderRadius: 6, maxHeight: 130, objectFit: 'cover', marginBottom: 8 }} />
       ) : null}
-      <p style={{ fontSize: 15, color: 'var(--text)', margin: '0 0 4px', fontWeight: 500 }}>{story.title}</p>
-      {story.text ? <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>{story.text}</p> : null}
+      <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text)', margin: '0 0 4px', fontWeight: 500 }}>{story.title}</p>
+      {story.text ? <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>{story.text}</p> : null}
     </div>
   )
 }
@@ -601,7 +601,7 @@ function EventCard({ content }: { content: string | null }) {
   try {
     event = content ? JSON.parse(content) : {}
   } catch {
-    return <span style={{ fontSize: 12, color: 'var(--gold)' }}>Événement</span>
+    return <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--gold)' }}>Événement</span>
   }
 
   const clickable = Boolean(event.id)
@@ -618,17 +618,17 @@ function EventCard({ content }: { content: string | null }) {
         ) : event.image ? (
           <NextImage src={event.image} alt={event.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ width: '100%', height: '100%', background: 'var(--fill-secondary)' }} />
         )}
         {priceLabel ? (
-          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10, fontWeight: 700, color: 'var(--gold)', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: 6 }}>
+          <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 'var(--font-size-caption-2)', fontWeight: 700, color: 'var(--gold)', background: 'rgba(var(--black-rgb), .60)', padding: '3px 8px', borderRadius: 6 }}>
             {priceLabel}
           </span>
         ) : null}
       </div>
       <div style={{ padding: '10px 12px' }}>
-        <p style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 3px', fontWeight: 600 }}>{event.name || 'Événement'}</p>
-        <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: 0, textTransform: 'uppercase' }}>{event.date || ''}</p>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', margin: '0 0 3px', fontWeight: 600 }}>{event.name || 'Événement'}</p>
+        <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: 0, textTransform: 'uppercase' }}>{event.date || ''}</p>
       </div>
     </a>
   )
@@ -639,7 +639,7 @@ function CatalogItemCard({ content }: { content: string | null }) {
   try {
     item = content ? JSON.parse(content) : {}
   } catch {
-    return <span style={{ fontSize: 11, color: 'var(--gold)' }}>Offre prestataire</span>
+    return <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--gold)' }}>Offre prestataire</span>
   }
 
   const clickable = Boolean(item.providerId)
@@ -655,12 +655,12 @@ function CatalogItemCard({ content }: { content: string | null }) {
         ) : item.image ? (
           <NextImage src={item.image} alt={item.name ?? ''} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 240px" />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.06)' }} />
+          <div style={{ width: '100%', height: '100%', background: 'var(--fill-secondary)' }} />
         )}
       </div>
       <div style={{ padding: '10px 12px' }}>
-        <p style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 3px', fontWeight: 600 }}>{item.name || 'Offre'}</p>
-        {item.category ? <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: 0, textTransform: 'uppercase' }}>{item.category}</p> : null}
+        <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', margin: '0 0 3px', fontWeight: 600 }}>{item.name || 'Offre'}</p>
+        {item.category ? <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: 0, textTransform: 'uppercase' }}>{item.category}</p> : null}
       </div>
     </a>
   )

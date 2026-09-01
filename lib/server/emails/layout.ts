@@ -22,26 +22,26 @@ export type EmailCategory =
   | 'messaging'
   | 'interest'
 
-type CategoryVisual = { label: string; icon: string; alt: string }
+type CategoryVisual = { label: string }
 
 const CATEGORY_VISUALS: Record<EmailCategory, CategoryVisual> = {
-  account: { label: 'Ton compte', icon: 'user-round-check', alt: 'Compte utilisateur' },
-  security: { label: 'Sécurité du compte', icon: 'shield-check', alt: 'Bouclier de sécurité' },
-  application: { label: 'Candidature', icon: 'file-check-2', alt: 'Dossier de candidature' },
-  provider: { label: 'Espace prestataire', icon: 'briefcase-business', alt: 'Mallette de prestataire' },
-  support: { label: 'Aide & contact', icon: 'mail', alt: 'Enveloppe de contact' },
-  ticket: { label: 'Billets', icon: 'ticket-check', alt: 'Billet validé' },
-  payment: { label: 'Paiement', icon: 'credit-card', alt: 'Carte de paiement' },
-  refund: { label: 'Remboursement', icon: 'refresh-ccw', alt: 'Remboursement' },
-  resale: { label: 'Revente officielle', icon: 'repeat-2', alt: 'Revente de billet' },
-  event: { label: 'Événements', icon: 'calendar-days', alt: 'Calendrier événementiel' },
-  payout: { label: 'Versements', icon: 'banknote', alt: 'Billet de banque' },
-  staff: { label: 'Équipe événement', icon: 'users-round', alt: 'Équipe' },
-  review: { label: 'Avis', icon: 'star', alt: 'Étoile d’avis' },
-  moderation: { label: 'Modération', icon: 'shield-alert', alt: 'Alerte de modération' },
-  agent: { label: 'Espace agent', icon: 'clipboard-check', alt: 'File d’opérations' },
-  messaging: { label: 'Messagerie', icon: 'message-circle', alt: 'Bulle de conversation' },
-  interest: { label: 'À ne pas manquer', icon: 'heart', alt: 'Événement suivi' },
+  account: { label: 'Ton compte' },
+  security: { label: 'Sécurité du compte' },
+  application: { label: 'Candidature' },
+  provider: { label: 'Espace prestataire' },
+  support: { label: 'Aide & contact' },
+  ticket: { label: 'Billets' },
+  payment: { label: 'Paiement' },
+  refund: { label: 'Remboursement' },
+  resale: { label: 'Revente officielle' },
+  event: { label: 'Événements' },
+  payout: { label: 'Versements' },
+  staff: { label: 'Équipe événement' },
+  review: { label: 'Avis' },
+  moderation: { label: 'Modération' },
+  agent: { label: 'Espace agent' },
+  messaging: { label: 'Messagerie' },
+  interest: { label: 'À ne pas manquer' },
 }
 
 function assetUrl(site: string, path: string): string {
@@ -52,10 +52,14 @@ function iconUrl(site: string, name: string): string {
   return assetUrl(site, `/images/email-icons/${name}.png`)
 }
 
+function brandAssetUrl(site: string, name: string): string {
+  return assetUrl(site, `/branding/${name}`)
+}
+
 function brandHeader(site: string): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr><td style="padding:28px 28px 22px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td valign="middle"><a href="${site}" aria-label="LIVE IN BLACK" style="font-family:${F.body};font-size:19px;font-weight:850;letter-spacing:.08em;color:${C.text};text-decoration:none;white-space:nowrap;">LIVE <span style="color:${C.primary};">IN</span> BLACK</a></td>
+      <td valign="middle"><a href="${site}" aria-label="LIVE IN BLACK" style="display:inline-block;text-decoration:none;"><img src="${brandAssetUrl(site, 'liveinblack-logo-horizontal.png')}" width="190" height="31" alt="LIVE IN BLACK" style="display:block;width:190px;max-width:100%;height:auto;border:0;"/></a></td>
       <td align="right" valign="middle" style="font-family:${F.body};font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${C.textFaint};">Notification</td>
     </tr></table></td></tr>
   </table>`
@@ -63,10 +67,7 @@ function brandHeader(site: string): string {
 
 function categoryHeader(site: string, category: EmailCategory): string {
   const visual = CATEGORY_VISUALS[category]
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr>
-    <td width="58" valign="middle"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" valign="middle" style="width:54px;height:54px;background:${C.primarySoft};border:1px solid ${C.borderStrong};border-radius:14px;"><img src="${iconUrl(site, visual.icon)}" width="28" height="28" alt="${visual.alt}" style="display:block;width:28px;height:28px;border:0;"/></td></tr></table></td>
-    <td valign="middle" style="padding-left:14px;"><p style="margin:0 0 5px;font-family:${F.body};font-size:11px;font-weight:800;line-height:1.2;letter-spacing:.09em;text-transform:uppercase;color:${C.primary};">LIVE IN BLACK</p><p style="margin:0;font-family:${F.body};font-size:14px;font-weight:700;line-height:1.3;color:${C.textMuted};">${visual.label}</p></td>
-  </tr></table>`
+  return `<p style="margin:0 0 20px;font-family:${F.body};font-size:12px;font-weight:800;line-height:1.2;letter-spacing:.09em;text-transform:uppercase;color:${C.primary};">${visual.label}</p>`
 }
 
 function footerLink(site: string, href: string, icon: string, label: string): string {
@@ -100,7 +101,7 @@ export function paragraph(html: string): string {
 }
 
 export function note(html: string): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;background:${C.surface2};border-left:3px solid ${C.primary};border-radius:10px;"><tr><td width="30" valign="top" style="padding:15px 0 15px 15px;"><span style="display:block;width:21px;height:21px;line-height:21px;border-radius:50%;background:${C.primarySoft};color:${C.primary};font-family:${F.body};font-size:12px;font-weight:850;text-align:center;">i</span></td><td style="padding:15px 16px 15px 9px;"><p style="font-family:${F.body};font-size:13px;color:${C.textMuted};line-height:1.55;margin:0;text-align:left;">${html}</p></td></tr></table>`
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;background:${C.surface2};border:1px solid ${C.border};border-radius:10px;"><tr><td style="padding:15px 16px;"><p style="font-family:${F.body};font-size:13px;color:${C.textMuted};line-height:1.55;margin:0;text-align:left;">${html}</p></td></tr></table>`
 }
 
 export type ButtonTone = 'primary' | 'outline' | 'danger'

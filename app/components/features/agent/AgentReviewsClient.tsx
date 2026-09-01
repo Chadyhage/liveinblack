@@ -237,7 +237,7 @@ export default function AgentReviewsClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(255,143,178,.35)" className={styles.error}>
+          <Card accent="var(--primary-a35)" className={styles.error}>
             <div><strong>Impossible de charger les avis</strong><p>Réessaie maintenant ou reconnecte-toi si le problème persiste.</p></div>
             <Button variant="secondary" onClick={loadList}>
               Recharger
@@ -251,7 +251,7 @@ export default function AgentReviewsClient() {
             size="sm"
             aria-pressed={statusFilter === 'all'}
             className={`${styles.metric}${statusFilter === 'all' ? ` ${styles.metricActive}` : ''}`}
-            style={{ display: 'grid', ...(statusFilter === 'all' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),rgba(255,255,255,.045))' } : {}) }}
+            style={{ display: 'grid', ...(statusFilter === 'all' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),var(--surface-2))' } : {}) }}
             onClick={() => setQueryParams({ status: null, page: null })}
           >
             <span className={styles.metricIcon}><Star size={18} aria-hidden="true" /></span><strong>{reviews.length}</strong><span>Tous les avis</span>
@@ -261,7 +261,7 @@ export default function AgentReviewsClient() {
             size="sm"
             aria-pressed={statusFilter === 'reported'}
             className={`${styles.metric}${statusFilter === 'reported' ? ` ${styles.metricActive} ${styles.metricUrgent}` : ''}`}
-            style={{ display: 'grid', ...(statusFilter === 'reported' ? { borderColor: 'rgba(255,143,178,.38)', background: 'linear-gradient(145deg,rgba(255,143,178,.1),rgba(255,255,255,.045))' } : {}) }}
+            style={{ display: 'grid', ...(statusFilter === 'reported' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),var(--surface-2))' } : {}) }}
             onClick={() => setQueryParams({ status: 'reported', page: null })}
           >
             <span className={`${styles.metricIcon} ${styles.urgentIcon}`}><Flag size={18} aria-hidden="true" /></span><strong>{reportedCount}</strong><span>À examiner</span>
@@ -271,7 +271,7 @@ export default function AgentReviewsClient() {
             size="sm"
             aria-pressed={statusFilter === 'published'}
             className={`${styles.metric}${statusFilter === 'published' ? ` ${styles.metricActive}` : ''}`}
-            style={{ display: 'grid', ...(statusFilter === 'published' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),rgba(255,255,255,.045))' } : {}) }}
+            style={{ display: 'grid', ...(statusFilter === 'published' ? { borderColor: 'var(--primary-a42)', background: 'linear-gradient(145deg,var(--primary-a10),var(--surface-2))' } : {}) }}
             onClick={() => setQueryParams({ status: 'published', page: null })}
           >
             <span className={styles.metricIcon}><CheckCircle2 size={18} aria-hidden="true" /></span><strong>{publishedCount}</strong><span>Publiés</span>

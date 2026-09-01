@@ -36,15 +36,14 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border: 1px solid rgba(255, 255, 255, .12);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: rgba(18, 14, 22, .88);
+  background: var(--modal-surface);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, .45),
-    0 0 0 1px rgba(245, 61, 141, .08) inset;
-  color: #f5f5f7;
+    0 0 0 1px var(--primary-a08) inset;
+  color: var(--text);
 }
 
 /* Header : icône + titre sur la même ligne */
@@ -67,18 +66,18 @@
 
 .title {
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--font-size-body);
   font-weight: 700;
   letter-spacing: -.018em;
-  color: #fff;
+  color: var(--text);
 }
 
 /* Corps */
 .body {
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--font-size-caption-lg);
   line-height: 1.55;
-  color: rgba(245, 245, 247, .5);
+  color: var(--text-muted);
 }
 
 .link {
@@ -105,7 +104,7 @@
   padding: 0 12px;
   border-radius: 12px;
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--font-size-footnote);
   font-weight: 700;
   letter-spacing: -.01em;
   cursor: pointer;
@@ -119,27 +118,27 @@
 
 /* Refuser — discret */
 .btnRefuse {
-  border: 1px solid rgba(255, 255, 255, .14);
-  background: rgba(255, 255, 255, .06);
-  color: rgba(245, 245, 247, .72);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 
 .btnRefuse:hover {
-  background: rgba(255, 255, 255, .1);
-  border-color: rgba(255, 255, 255, .22);
-  color: #fff;
+  background: var(--primary-a08);
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 /* Accepter — accent rose */
 .btnAccept {
-  border: 1px solid var(--primary-a35);
-  background: var(--primary-a12);
-  color: #fff;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-ink);
 }
 
 .btnAccept:hover {
-  background: var(--primary-a20);
-  border-color: var(--primary-a55);
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
 }
 
 /* Focus visible accessible */

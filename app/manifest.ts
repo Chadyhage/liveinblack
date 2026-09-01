@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { STATIC_THEME } from '@/lib/shared/staticTheme'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -10,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     display_override: ['standalone', 'minimal-ui', 'browser'],
-    background_color: '#191218',
-    theme_color: '#191218',
+    background_color: STATIC_THEME.darkBackground,
+    theme_color: STATIC_THEME.darkBackground,
     orientation: 'portrait-primary',
     lang: 'fr-BJ',
     dir: 'ltr',

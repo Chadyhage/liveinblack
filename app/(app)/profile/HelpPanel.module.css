@@ -12,8 +12,8 @@
 
 .faqTitle {
   margin: 0 0 14px;
-  color: #fff;
-  font-size: 22px;
+  color: var(--text);
+  font-size: var(--font-size-title-2);
   font-weight: 760;
   line-height: 1.18;
   letter-spacing: -.025em;
@@ -24,21 +24,21 @@
   overflow: hidden;
   border-radius: 8px !important;
   border-color: var(--primary-a20) !important;
-  background: rgba(255, 255, 255, .04) !important;
+  background: var(--surface-2) !important;
 }
 
 .contact h2 {
   margin: 0 0 8px;
-  color: #fff;
-  font-size: 22px;
+  color: var(--text);
+  font-size: var(--font-size-title-2);
   line-height: 1.18;
   letter-spacing: -.03em;
 }
 
 .contact p {
   margin: 0 0 16px;
-  color: rgba(245, 245, 247, .72);
-  font-size: 15.5px;
+  color: var(--text-muted);
+  font-size: var(--font-size-headline-xl);
   line-height: 1.55;
 }
 
@@ -46,8 +46,8 @@
   display: block;
   margin: 12px 0 6px;
   overflow-wrap: anywhere;
-  color: #fff;
-  font-size: 14.5px;
+  color: var(--text);
+  font-size: var(--font-size-body-lg);
   line-height: 1.4;
 }
 
@@ -56,7 +56,7 @@
   display: inline-flex;
   align-items: center;
   color: var(--primary);
-  font-size: 14.5px;
+  font-size: var(--font-size-body-lg);
   font-weight: 650;
   text-decoration: none;
 }

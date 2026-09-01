@@ -16,10 +16,10 @@ export interface EventSearchResult {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   borderRadius: 14,
-  border: '1px solid rgba(255,255,255,.12)',
-  background: 'rgba(118,118,128,.16)',
+  border: '1px solid var(--border)',
+  background: 'var(--field-bg)',
   color: 'var(--text)',
-  fontSize: 14,
+  fontSize: 'var(--font-size-body-sm)',
   marginBottom: 10,
   fontFamily: 'inherit',
 }
@@ -70,10 +70,10 @@ export default function EventPickerModal({
   return (
     <ModalShell title="Partager un événement" onClose={onClose} wide>
       <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un événement…" style={inputStyle} autoFocus />
-      {searching ? <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 8px' }}>Recherche…</p> : null}
+      {searching ? <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '0 0 8px' }}>Recherche…</p> : null}
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
         {!searching && trimmedQuery && visibleResults.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Aucun événement trouvé.</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>Aucun événement trouvé.</p>
         ) : null}
         {visibleResults.map((ev) => (
           <div key={ev.id} style={{ ...rowButtonStyle, alignItems: 'center', display: 'flex', gap: 10 }}>
@@ -81,16 +81,16 @@ export default function EventPickerModal({
               {ev.image ? <NextImage src={ev.image} alt="" width={44} height={44} style={{ objectFit: 'cover' }} /> : null}
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ev.name}
               </p>
-              <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>{[ev.date, ev.city].filter(Boolean).join(' · ')}</p>
+              <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>{[ev.date, ev.city].filter(Boolean).join(' · ')}</p>
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <Button variant="secondary" size="sm" onClick={() => onShare(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
+              <Button variant="secondary" size="sm" onClick={() => onShare(ev.id)} style={{ fontSize: 'var(--font-size-caption-lg)', padding: '6px 10px', whiteSpace: 'nowrap' }}>
                 Partager
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => onPoll(ev.id)} style={{ fontSize: 11.5, padding: '6px 10px', whiteSpace: 'nowrap' }}>
+              <Button variant="ghost" size="sm" onClick={() => onPoll(ev.id)} style={{ fontSize: 'var(--font-size-caption-lg)', padding: '6px 10px', whiteSpace: 'nowrap' }}>
                 Sondage
               </Button>
             </div>

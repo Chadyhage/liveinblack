@@ -46,7 +46,7 @@ interface ToastState {
   kind: 'success' | 'error'
 }
 
-const sectionTitleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<string, string> = { organisateur: 'Organisateur', prestataire: 'Prestataire', client: 'Client', agent: 'Agent' }
 
@@ -217,9 +217,9 @@ export default function AgentDeletionClient() {
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--deletions">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {listError && (
-          <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={loadList} style={{ fontSize: 12.5 }}>
+          <Card style={{ border: '1px solid var(--danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
+            <Button variant="secondary" onClick={loadList} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
               Recharger
             </Button>
           </Card>
@@ -253,13 +253,13 @@ export default function AgentDeletionClient() {
         <SlideOverModal onClose={closeDetail} ariaLabel="Détail de la demande de suppression">
           <div style={{ minHeight: '100%', padding: '26px 26px 40px' }}>
             {detailError ? (
-              <Card style={{ border: '1px solid rgba(224,90,170,0.35)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. La demande n’existe peut-être plus, ou une erreur serveur est survenue.</p>
+              <Card style={{ border: '1px solid var(--danger-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. La demande n’existe peut-être plus, ou une erreur serveur est survenue.</p>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
+                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                     Réessayer
                   </Button>
-                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 12.5 }}>
+                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                     Fermer
                   </Button>
                 </div>
@@ -298,14 +298,14 @@ function RequestCard({ request, onClick }: { request: DeletionRequestSummary; on
       <Avatar src={null} name={request.userName || request.userEmail || '?'} size="md" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{request.userName || request.userEmail}</span>
-          <span style={{ fontSize: 12, padding: '2px 6px', borderRadius: 6, background: 'rgba(224,90,170,0.14)', color: 'var(--pink)' }}>{ROLE_LABEL[request.userRole] || request.userRole || '—'}</span>
+          <span style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{request.userName || request.userEmail}</span>
+          <span style={{ fontSize: 'var(--font-size-footnote)', padding: '2px 6px', borderRadius: 6, background: 'var(--danger-fill)', color: 'var(--pink)' }}>{ROLE_LABEL[request.userRole] || request.userRole || '—'}</span>
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '2px 0 0' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '2px 0 0' }}>
           {request.userEmail} · Demandé le {fmtDateTime(request.requestedAt)}
         </p>
         {request.reason && (
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '6px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>« {request.reason} »</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: '6px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>« {request.reason} »</p>
         )}
       </div>
     </Button>
@@ -339,24 +339,24 @@ function DetailPanel({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h2 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: 0 }}>{detail.userName || detail.userEmail}</h2>
-          <span style={{ fontSize: 12, padding: '3px 8px', borderRadius: 999, background: 'rgba(224,90,170,0.16)', color: 'var(--pink)', fontWeight: 700 }}>En attente</span>
+          <h2 style={{ fontSize: 'var(--font-size-title-4-lg)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>{detail.userName || detail.userEmail}</h2>
+          <span style={{ fontSize: 'var(--font-size-footnote)', padding: '3px 8px', borderRadius: 999, background: 'var(--danger-fill)', color: 'var(--pink)', fontWeight: 700 }}>En attente</span>
         </div>
-        <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '4px 0 0' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '4px 0 0' }}>
           {detail.userEmail} · {ROLE_LABEL[detail.userRole] || detail.userRole || '—'} · Demandé le {fmtDateTime(detail.requestedAt)}
         </p>
       </div>
 
       <div>
         <p style={sectionTitleStyle}>Raison invoquée</p>
-        <p style={{ fontSize: 13.5, color: '#fff', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{detail.reason || '—'}</p>
+        <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text)', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{detail.reason || '—'}</p>
       </div>
 
       {hasBlockers && (
-        <div style={{ padding: '12px 14px', background: 'rgba(224,90,170,0.08)', border: '1px solid rgba(224,90,170,0.28)', borderRadius: 10 }}>
-          <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Bloque l’approbation</p>
+        <div style={{ padding: '12px 14px', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 10 }}>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Bloque l’approbation</p>
           {detail.audit.blockers.map((b, i) => (
-            <p key={i} style={{ fontSize: 12.5, color: 'rgba(224,90,170,0.9)', margin: '0 0 5px', lineHeight: 1.5 }}>
+            <p key={i} style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--danger)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {b.label}
             </p>
           ))}
@@ -364,10 +364,10 @@ function DetailPanel({
       )}
 
       {detail.audit.warnings.length > 0 && (
-        <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.22)', borderRadius: 10 }}>
-          <p style={{ fontSize: 14, fontWeight: 400, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Ce qui se passera à l’approbation</p>
+        <div style={{ padding: '12px 14px', background: 'rgba(var(--warning-rgb), .06)', border: '1px solid rgba(var(--warning-rgb), .22)', borderRadius: 10 }}>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--warning-text)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Ce qui se passera à l’approbation</p>
           {detail.audit.warnings.map((w, i) => (
-            <p key={i} style={{ fontSize: 12.5, color: 'rgba(245,158,11,0.85)', margin: '0 0 5px', lineHeight: 1.5 }}>
+            <p key={i} style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'rgba(var(--warning-rgb), .85)', margin: '0 0 5px', lineHeight: 1.5 }}>
               • {w.label}
             </p>
           ))}
@@ -386,17 +386,17 @@ function DetailPanel({
             style={{
               borderRadius: 3,
               fontWeight: 500,
-              fontSize: 13,
+              fontSize: 'var(--font-size-callout)',
               textTransform: 'none',
               letterSpacing: 'normal',
-              background: '#c2347f',
+              background: 'var(--danger)',
               opacity: hasBlockers ? 0.45 : 1,
             }}
           >
             Approuver la suppression (irréversible)
           </Button>
 
-          <Label style={{ fontSize: 12, color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</Label>
+          <Label style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', display: 'block', marginBottom: -2 }}>Note pour l&apos;utilisateur (optionnel, visible si refusé)</Label>
           <Textarea
             style={{ minHeight: 60 }}
             placeholder="Ex : merci de préciser la raison de ta demande…"
@@ -411,7 +411,7 @@ function DetailPanel({
             disabled={actionBusy || rejecting}
             loading={rejecting}
             loadingText="…"
-            style={{ borderRadius: 10, fontSize: 13, fontWeight: 600 }}
+            style={{ borderRadius: 10, fontSize: 'var(--font-size-callout)', fontWeight: 600 }}
           >
             Refuser la demande
           </Button>
@@ -420,8 +420,8 @@ function DetailPanel({
 
       {confirmApprove && (
         <Modal onClose={() => setConfirmApprove(false)} hideClose dismissible={!actionBusy} ariaLabel="Confirmer la suppression définitive" contentStyle={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: 19, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</h2>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
+          <h2 style={{ fontSize: 'var(--font-size-title-4-lg)', fontWeight: 700, color: 'var(--text)', margin: '0 0 8px' }}>Supprimer définitivement le compte de {detail.userName || detail.userEmail} ?</h2>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '0 0 18px', lineHeight: 1.6 }}>
             Ses données personnelles seront anonymisées, sa vitrine publique retirée, et son compte définitivement inaccessible. Les billets, commandes et avis restent archivés (obligation légale). Action irréversible.
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -429,7 +429,7 @@ function DetailPanel({
               variant="secondary"
               onClick={() => setConfirmApprove(false)}
               disabled={actionBusy}
-              style={{ flex: 1, borderRadius: 8, fontSize: 13 }}
+              style={{ flex: 1, borderRadius: 8, fontSize: 'var(--font-size-callout)' }}
             >
               Annuler
             </Button>
@@ -439,7 +439,7 @@ function DetailPanel({
               disabled={actionBusy}
               loading={actionBusy}
               loadingText="…"
-              style={{ flex: 1, borderRadius: 3, fontWeight: 500, background: '#c2347f', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ flex: 1, borderRadius: 3, fontWeight: 500, background: 'var(--danger)', fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal' }}
             >
               Confirmer la suppression
             </Button>

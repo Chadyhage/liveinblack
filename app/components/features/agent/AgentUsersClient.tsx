@@ -78,16 +78,16 @@ interface BadgeColors {
   bg: string
 }
 const ROLE_BADGE: Record<Role, BadgeColors> = {
-  client: { color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' },
+  client: { color: 'var(--muted-chip)', border: 'var(--muted-chip-border)', bg: 'var(--muted-chip-fill)' },
   organisateur: { color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' },
-  prestataire: { color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' },
+  prestataire: { color: 'var(--pink)', border: 'var(--danger-border)', bg: 'var(--danger-fill)' },
   agent: { color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' },
 }
 
 function statusLabel(u: UserSummary): { label: string } & BadgeColors {
-  if (u.disabled) return { label: 'DÉSACTIVÉ', color: '#8b8f9c', border: 'rgba(139,143,156,0.35)', bg: 'rgba(139,143,156,0.14)' }
+  if (u.disabled) return { label: 'DÉSACTIVÉ', color: 'var(--muted-chip)', border: 'var(--muted-chip-border)', bg: 'var(--muted-chip-fill)' }
   if (u.status === 'pending') return { label: 'EN ATTENTE', color: 'var(--gold)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' }
-  if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'rgba(224,90,170,0.35)', bg: 'rgba(224,90,170,0.14)' }
+  if (u.status === 'rejected') return { label: 'REFUSÉ', color: 'var(--pink)', border: 'var(--danger-border)', bg: 'var(--danger-fill)' }
   return { label: 'ACTIF', color: 'var(--primary)', border: 'var(--primary-a35)', bg: 'var(--primary-a14)' }
 }
 
@@ -98,7 +98,7 @@ function fmtDate(iso: string | null): string {
 
 function Badge({ label, color, border, bg }: { label: string } & BadgeColors) {
   return (
-    <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${border}`, background: bg, color, letterSpacing: '0.04em' }}>
+    <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, padding: '2px 8px', borderRadius: 8, border: `1px solid ${border}`, background: bg, color, letterSpacing: '0.04em' }}>
       {label}
     </span>
   )
@@ -366,9 +366,9 @@ export default function AgentUsersClient() {
     <main className="lb-dashboard-page lb-agent-screen lb-agent-screen--users">
       <div className={styles.pageStack}>
         {listError && (
-          <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
-            <Button variant="secondary" onClick={triggerReload} style={{ fontSize: 12.5 }}>
+          <Card accent="var(--danger-border)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Recharge la page ; si ça persiste, reconnecte-toi (droits agent).</p>
+            <Button variant="secondary" onClick={triggerReload} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
               Recharger
             </Button>
           </Card>
@@ -481,13 +481,13 @@ export default function AgentUsersClient() {
         <SlideOverModal onClose={closeDetail} ariaLabel="Détail du compte">
           <div className={styles.inspectorBody}>
             {detailError ? (
-              <Card accent="rgba(224,90,170,0.35)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le compte n’existe peut-être plus, ou une erreur serveur est survenue.</p>
+              <Card accent="var(--danger-border)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Lecture impossible. Le compte n’existe peut-être plus, ou une erreur serveur est survenue.</p>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 12.5 }}>
+                  <Button variant="secondary" onClick={() => setDetailRetry((n) => n + 1)} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                     Réessayer
                   </Button>
-                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 12.5 }}>
+                  <Button variant="ghost" onClick={closeDetail} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
                     Fermer
                   </Button>
                 </div>
@@ -574,7 +574,7 @@ function DetailPanel({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 18,
+            fontSize: 'var(--font-size-title-4)',
             fontWeight: 700,
             color: 'var(--teal)',
           }}
@@ -582,11 +582,11 @@ function DetailPanel({
           {(detail.displayName || '?').charAt(0).toUpperCase()}
         </div>
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#fff', margin: 0 }}>{detail.displayName}</h2>
+          <h2 style={{ fontSize: 'var(--font-size-title-3)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{detail.displayName}</h2>
           {(detail.role === 'organisateur' || detail.role === 'prestataire') && detail.displayName !== detail.personalName && (
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '3px 0 0' }}>{detail.personalName}</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '3px 0 0' }}>{detail.personalName}</p>
           )}
-          <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '3px 0 0', overflowWrap: 'anywhere' }}>{detail.email}</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: '3px 0 0', overflowWrap: 'anywhere' }}>{detail.email}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
           <Badge label={ROLE_LABEL[detail.role]} {...ROLE_BADGE[detail.role]} />
@@ -622,7 +622,7 @@ function DetailPanel({
                 background: 'var(--primary-a12)',
                 border: '1px solid var(--primary-a04)',
                 color: 'var(--teal)',
-                fontSize: 14,
+                fontSize: 'var(--font-size-body-sm)',
                 textTransform: 'none',
                 letterSpacing: 'normal',
               }}
@@ -641,7 +641,7 @@ function DetailPanel({
                 borderRadius: 3,
                 fontWeight: 500,
                 border: '1px solid var(--border-strong)',
-                fontSize: 14,
+                fontSize: 'var(--font-size-body-sm)',
                 textTransform: 'none',
                 letterSpacing: 'normal',
               }}
@@ -659,7 +659,7 @@ function DetailPanel({
               borderRadius: 3,
               fontWeight: 500,
               background: 'transparent',
-              fontSize: 14,
+              fontSize: 'var(--font-size-body-sm)',
               textTransform: 'none',
               letterSpacing: 'normal',
             }}
@@ -681,7 +681,7 @@ function DetailPanel({
                     variant="primary"
                     onClick={onSaveEdit}
                     disabled={editBusy}
-                    style={{ padding: '0 14px', borderRadius: 8, border: '1px solid var(--border-strong)', fontSize: 12.5 }}
+                    style={{ padding: '0 14px', borderRadius: 8, border: '1px solid var(--border-strong)', fontSize: 'var(--font-size-footnote-lg)' }}
                   >
                     OK
                   </Button>
@@ -690,7 +690,7 @@ function DetailPanel({
                     onClick={() => setEditField(null)}
                     disabled={editBusy}
                     aria-label="Annuler"
-                    style={{ padding: '0 14px', borderRadius: 10, background: 'transparent', border: '1px solid var(--border-strong)', color: 'rgba(255,255,255,0.7)', fontSize: 15 }}
+                    style={{ padding: '0 14px', borderRadius: 10, background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: 'var(--font-size-headline)' }}
                   >
                     <X size={14} />
                   </Button>
@@ -710,8 +710,8 @@ function DetailPanel({
                     textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontSize: 13, color: 'var(--text-faint)' }}>{f.label}</span>
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)', overflowWrap: 'anywhere' }}>{f.current || '—'}</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>{f.label}</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', overflowWrap: 'anywhere' }}>{f.current || '—'}</span>
                 </Button>
               )}
             </div>
@@ -722,13 +722,13 @@ function DetailPanel({
       <section className={`${styles.inspectorSection} ${styles.dangerSection}`}>
         <p className={styles.inspectorTitle}>Contrôle du compte</p>
         {detail.superAdmin ? (
-          <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>Ce compte super-admin est protégé — aucune action de suspension possible.</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>Ce compte super-admin est protégé — aucune action de suspension possible.</p>
         ) : detail.disabled ? (
           <Button
             variant="primary"
             onClick={() => setPendingAccountAction('enable')}
             disabled={actionBusy}
-            style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, border: '1px solid var(--border-strong)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+            style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, border: '1px solid var(--border-strong)', fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal' }}
           >
             Réactiver le compte
           </Button>
@@ -738,7 +738,7 @@ function DetailPanel({
               variant="secondary"
               onClick={() => setConfirmDisable(true)}
               disabled={actionBusy}
-              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'var(--primary-a14)', border: '1px solid var(--primary-a55)', color: 'var(--gold)', fontSize: 13, textTransform: 'none', letterSpacing: 'normal' }}
+              style={{ width: '100%', padding: '12px 0', borderRadius: 3, fontWeight: 500, background: 'var(--primary-a14)', border: '1px solid var(--primary-a55)', color: 'var(--gold)', fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal' }}
             >
               Suspendre le compte
             </Button>

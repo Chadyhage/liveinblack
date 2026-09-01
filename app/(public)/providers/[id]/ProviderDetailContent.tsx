@@ -111,32 +111,32 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(providerJsonLd).replace(/</g, '\\u003c') }} />
       <div style={{ padding: 'var(--space-4) var(--page-gutter) 0' }}>
-        <Link href="/providers" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
+        <Link href="/providers" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-body-sm)', fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← Prestataires
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, .14)', borderRadius: 'var(--radius-card)', background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(0,0,0,.32)' }}>
+      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 'var(--radius-card)', background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(var(--black-rgb), .24)' }}>
         <Image src={reliablePhotoUrl(provider.coverUrl, id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(12, 12, 16, 0.85) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, var(--media-scrim) 100%)' }} />
       </div>
 
       <div style={{ padding: '0 var(--page-gutter) var(--space-8)', marginTop: -36, position: 'relative', zIndex: 2 }}>
-        <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid #1c1c1e', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
+        <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid var(--surface)', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-size-large-title)', fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(var(--black-rgb), .30)' }}>
           {provider.photoUrl ? (
             <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
           ) : (
             provider.name[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 'clamp(24px, 2.5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em', margin: '12px 0 0', color: '#fff' }}>{provider.name}</h1>
-        {provider.headline && <p style={{ fontSize: 16, color: 'rgba(245, 245, 247, .76)', margin: '6px 0 0', lineHeight: 1.45 }}>{provider.headline}</p>}
+        <h1 className="font-display" style={{ fontSize: 'clamp(24px, 2.5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em', margin: '12px 0 0', color: 'var(--text)' }}>{provider.name}</h1>
+        {provider.headline && <p style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>{provider.headline}</p>}
         <div style={{ marginTop: 12 }}>
           <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
           {categories.map((c) => (
-            <span key={c.id} style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 13, fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '5px 12px', borderRadius: 999 }}>
+            <span key={c.id} style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '5px 12px', borderRadius: 999 }}>
               {c.label}
             </span>
           ))}
@@ -145,26 +145,26 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, alignItems: 'start', marginTop: 12 }}>
           {provider.description && (
             <Section title="À propos">
-              <p style={{ fontSize: 15.5, color: 'rgba(245, 245, 247, .82)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0 }}>{provider.description}</p>
+              <p style={{ fontSize: 'var(--font-size-headline-xl)', color: 'var(--text-muted)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0 }}>{provider.description}</p>
             </Section>
           )}
 
           <Section title="Coordonnées">
-            <p style={{ fontSize: 15, color: 'rgba(245, 245, 247, .82)', margin: 0, fontWeight: 600 }}>
+            <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>
               {[provider.city || provider.location, provider.country].filter(Boolean).join(', ')}
             </p>
             {provider.zonesIntervention?.length ? (
-              <p style={{ fontSize: 13.5, color: 'rgba(245, 245, 247, .65)', margin: '4px 0 0' }}>
+              <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '4px 0 0' }}>
                 Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
               </p>
             ) : null}
             {websiteUrl && (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--control-height-md)', fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--control-height-md)', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
                 🌐 {provider.website}
               </a>
             )}
             {provider.phone && (
-              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 14.5, fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
                 📞 {provider.phone}
               </a>
             )}
@@ -174,7 +174,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
             <Section title="Réseaux">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {socialEntries.map(([key, value]) => (
-                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', fontSize: 14, fontWeight: 650, color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 'var(--radius-control)', padding: '0 14px' }}>
+                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', fontWeight: 650, color: 'var(--text)', textDecoration: 'none', background: 'var(--fill-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-control)', padding: '0 14px' }}>
                     {SOCIAL_LABELS[key] || key}
                   </a>
                 ))}
@@ -189,7 +189,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
               {visibleCatalog.map((item) => {
                 const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
                 return (
-                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)', borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,.055)', boxShadow: '0 14px 40px rgba(0,0,0,.22)' }}>
+                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 'var(--radius-card)', background: 'var(--card-bg)', boxShadow: '0 14px 40px rgba(var(--black-rgb), .16)' }}>
                     {item.media?.[0]?.url && (
                       <div style={{ aspectRatio: '16/9', position: 'relative' }}>
                         {item.media[0].type === 'video' ? (
@@ -201,15 +201,15 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                     )}
                     <div style={{ padding: '14px 16px 16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{ fontSize: 16.5, fontWeight: 800, color: '#fff' }}>{item.name}</span>
+                        <span style={{ fontSize: 'var(--font-size-headline-xxl)', fontWeight: 800, color: 'var(--text)' }}>{item.name}</span>
                         {item.price != null && (
-                          <span style={{ fontSize: 15.5, fontWeight: 800, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 'var(--font-size-headline-xl)', fontWeight: 800, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
                             {fmtMoney(item.price, item.currency || provider.catalogCurrency)}
                             {item.unit ? ` / ${item.unit}` : ''}
                           </span>
                         )}
                       </div>
-                      {item.description && <p style={{ fontSize: 14, color: 'rgba(245, 245, 247, .7)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.description}</p>}
+                      {item.description && <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.description}</p>}
                       {!isSelf && canOrderCatalog && (
                         <div style={{ marginTop: 12 }}>
                           <ProviderCatalogInquiry
@@ -245,7 +245,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                 <Link
                   key={ev.id}
                   href={`/events/${ev.id}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 'var(--radius-card)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 'var(--radius-card)', background: 'var(--card-bg)', border: '1px solid var(--border)', textDecoration: 'none' }}
                 >
                   {ev.imageUrl && (
                     <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 10, overflow: 'hidden', position: 'relative' }}>
@@ -253,8 +253,8 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
                     </div>
                   )}
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                    <p style={{ margin: '3px 0 0', fontSize: 13, color: 'rgba(245, 245, 247, .6)' }}>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>
                       {ev.dateDisplay}
                       {ev.city ? ` · ${ev.city}` : ''}
                     </p>
@@ -274,7 +274,7 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="lb-detail-section" style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 13.5, fontWeight: 800, margin: '0 0 10px', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
+      <h2 style={{ fontSize: 'var(--font-size-body)', fontWeight: 800, margin: '0 0 10px', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
       {children}
     </section>
   )

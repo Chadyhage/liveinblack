@@ -219,10 +219,10 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             padding: '12px 14px',
             marginBottom: 14,
             borderRadius: 12,
-            border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'rgba(224,90,170,0.5)'}`,
-            background: 'rgba(12,12,22,0.96)',
+            border: `1px solid ${message.type === 'success' ? 'var(--primary-a20)' : 'var(--danger)'}`,
+            background: 'var(--surface)',
             color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
-            fontSize: 13,
+            fontSize: 'var(--font-size-callout)',
           }}
         >
           {message.text}
@@ -232,12 +232,12 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       {payoutGapLabel && (
         <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid var(--primary-a35)', background: 'var(--primary-a08)' }}>
           <p style={{ font: '700 14px var(--font-open-sans)', color: 'var(--gold)', margin: '0 0 6px' }}>Configure ton encaissement pour être payé</p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 12px' }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 12px' }}>
             Tu as des événements dont la recette reste en attente : il te manque {payoutGapLabel}. Sans ça, l&rsquo;argent n&rsquo;est pas versé automatiquement.
           </p>
           <Link
             href="/organizer-studio?tab=paiements"
-            style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 12, textDecoration: 'none' }}
+            style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 'var(--font-size-footnote)', textDecoration: 'none' }}
           >
             Configurer mon encaissement
           </Link>
@@ -248,34 +248,34 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         <Button
           variant="ghost"
           onClick={startCreate}
-          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--primary-a04)', background: 'linear-gradient(135deg,var(--primary-a14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--primary-a04)', background: 'linear-gradient(135deg,var(--primary-a14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
         >
-          <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
-          <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Créer un événement</p>
-          <p style={{ fontSize: 13, lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Configure le lieu, les billets et toutes les options.</p>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
+          <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>Créer un événement</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Configure le lieu, les billets et toutes les options.</p>
         </Button>
         <Link
           href="/organizer-studio"
-          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
         >
-          <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Audience</p>
-          <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Ma page publique</p>
-          <p style={{ fontSize: 13, lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Présente ton univers et configure tes encaissements.</p>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Audience</p>
+          <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>Ma page publique</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Présente ton univers et configure tes encaissements.</p>
         </Link>
         <Link
           href="/my-shifts"
-          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(0,0,0,.16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
         >
-          <p style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Entrée</p>
-          <p style={{ fontSize: 17, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>Scanner les billets</p>
-          <p style={{ fontSize: 13, lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Contrôle les QR codes et suis les entrées en direct.</p>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Entrée</p>
+          <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>Scanner les billets</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Contrôle les QR codes et suis les entrées en direct.</p>
         </Link>
       </div>
 
       <OrganizerAnalytics events={events} />
 
       <section style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>
           Mes soirées en cours
         </p>
         {upcomingEvents.length === 0 ? (
@@ -295,30 +295,30 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {cancelledEvents.length > 0 && (
         <section style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
               <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', flexShrink: 0 }} />
+                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : 'var(--surface-2)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
-                  <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0 }}>
+                  <p style={{ color: 'var(--text)', fontSize: 'var(--font-size-body)', margin: '0 0 2px' }}>{event.name}</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', margin: 0 }}>
                     {event.dateDisplay || event.date} · {event.city}
                   </p>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(224,90,170,0.15)', color: 'var(--pink)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>Annulé</span>
+                <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--danger-fill)', color: 'var(--pink)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, textTransform: 'uppercase' }}>Annulé</span>
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => hideCancelledEvent(event.id)}
-                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 11.5 }}
+                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-caption-lg)' }}
                 >
                   Retirer de ma liste
                 </Button>
               </Card>
             ))}
           </div>
-          <p style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 10, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', marginTop: 10, lineHeight: 1.6 }}>
             Les événements annulés restent accessibles aux personnes ayant déjà un billet (elles voient ton message d&rsquo;annulation). « Retirer de ma liste » les enlève seulement de ton tableau de bord.
           </p>
         </section>
@@ -326,19 +326,19 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {pastEvents.length > 0 && (
         <section>
-          <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {pagedPastEvents.map((event) => (
               <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : '#10131d', flexShrink: 0 }} />
+                <div style={{ width: 52, height: 52, borderRadius: 8, background: event.imageUrl ? `url(${event.imageUrl}) center/cover` : 'var(--surface-2)', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#fff', fontSize: 13.5, margin: '0 0 2px' }}>{event.name}</p>
-                  <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0 }}>
+                  <p style={{ color: 'var(--text)', fontSize: 'var(--font-size-body)', margin: '0 0 2px' }}>{event.name}</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', margin: 0 }}>
                     {event.dateDisplay || event.date} · {event.city}
                   </p>
                 </div>
-                <span style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>Terminé</span>
-                <span style={{ color: 'var(--gold)', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, textTransform: 'uppercase' }}>Terminé</span>
+                <span style={{ color: 'var(--gold)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   {event.ticketCount} billet(s) · {formatMoney(event.revenue, event.currency)}
                 </span>
                 <Link

@@ -33,10 +33,10 @@ export default function LegalBackButton() {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        background: 'rgba(255,255,255,0.06)',
+        background: 'var(--fill-secondary)',
         border: '1px solid var(--border)',
         color: 'var(--text-muted)',
-        fontSize: 14,
+        fontSize: 'var(--font-size-body-sm)',
         fontWeight: 600,
       }}
     >

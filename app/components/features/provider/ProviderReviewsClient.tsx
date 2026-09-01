@@ -17,9 +17,9 @@ import { Button, Card, Textarea, Label, Modal, SlideOverModal } from '@/app/comp
 const GOLD = 'var(--primary)'
 const TEAL = 'var(--primary)'
 
-const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 12, fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px var(--border)' }
-const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', cursor: 'pointer', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: 600 }
-const disabledBtn: React.CSSProperties = { background: 'rgba(255,255,255,.07)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.06)', cursor: 'not-allowed', boxShadow: 'none' }
+const primaryBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 'var(--radius-pill)', border: '1px solid transparent', cursor: 'pointer', background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-footnote)', fontWeight: 800, textTransform: 'none', letterSpacing: 'normal', boxShadow: '0 6px 20px var(--border)' }
+const ghostBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 38, padding: '8px 13px', borderRadius: 10, border: '1px solid var(--border-strong)', cursor: 'pointer', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-footnote)', fontWeight: 600 }
+const disabledBtn: React.CSSProperties = { background: 'var(--surface-2)', color: 'var(--text-faint)', border: '1px solid var(--border)', cursor: 'not-allowed', boxShadow: 'none' }
 
 function fmtDate(iso: string): string {
   try {
@@ -167,14 +167,14 @@ export default function ProviderReviewsClient({
   return (
     <section style={{ marginTop: 18 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 9, flexWrap: 'wrap' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
-        {count > 0 && <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)' }}>{count} avis</span>}
+        <h2 style={{ fontSize: 'var(--font-size-title-4)', fontWeight: 700, letterSpacing: '-.3px', margin: 0 }}>Avis clients</h2>
+        {count > 0 && <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)' }}>{count} avis</span>}
       </div>
 
-      <Card style={{ padding: 14, boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
+      <Card style={{ padding: 14, boxShadow: '0 8px 24px var(--scrim-mid)' }}>
         {count === 0 ? (
           <div>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
               {`${providerName || 'Ce prestataire'} n’a pas encore reçu d’avis.${!isSelf ? ' Tu as travaillé avec ce prestataire ? Ton retour aidera les prochains clients.' : ''}`}
             </p>
             {!isSelf && (
@@ -187,26 +187,26 @@ export default function ProviderReviewsClient({
           <>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ textAlign: 'center', minWidth: 88 }}>
-                <p style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1.5px', color: '#fff', margin: 0, lineHeight: 1 }}>
+                <p style={{ fontSize: 'var(--font-size-display-sm)', fontWeight: 800, letterSpacing: '-1.5px', color: 'var(--text)', margin: 0, lineHeight: 1 }}>
                   {String(avg).replace('.', ',')}
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.4)' }}> / 5</span>
+                  <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text-faint)' }}> / 5</span>
                 </p>
                 <div style={{ marginTop: 5 }}>
                   <Stars value={avg} size={15} />
                 </div>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '4px 0 0' }}>Basée sur {count} avis</p>
+                <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '4px 0 0' }}>Basée sur {count} avis</p>
               </div>
               <div style={{ flex: '1 1 190px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {([5, 4, 3, 2, 1] as const).map((n) => (
                   <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,.55)', width: 10, textAlign: 'right' }}>{n}</span>
+                    <span style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 700, color: 'var(--text-faint)', width: 10, textAlign: 'right' }}>{n}</span>
                     <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.44 6.2 20.5l1.1-6.47L2.6 9.45l6.5-.95z" fill={GOLD} />
                     </svg>
-                    <div style={{ flex: 1, height: 7, borderRadius: 999, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, height: 7, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
                       <div style={{ width: `${count ? Math.round((dist[n] / count) * 100) : 0}%`, height: '100%', borderRadius: 999, background: GOLD }} />
                     </div>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', width: 22 }}>{dist[n]}</span>
+                    <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', width: 22 }}>{dist[n]}</span>
                   </div>
                 ))}
               </div>
@@ -222,41 +222,41 @@ export default function ProviderReviewsClient({
               {reviews.map((review) => {
                 const isMine = Boolean(myReview) && myReview!.id === review.id
                 return (
-                  <article key={review.id} style={{ padding: 12, borderRadius: 11, border: '1px solid rgba(255,255,255,.07)', background: 'rgba(255,255,255,.02)' }}>
+                  <article key={review.id} style={{ padding: 12, borderRadius: 11, border: '1px solid var(--surface-2)', background: 'var(--surface)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                       <Stars value={review.rating} size={13} />
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>{review.authorName || 'Membre'}</span>
+                      <span style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text)' }}>{review.authorName || 'Membre'}</span>
                       {review.verified && (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: TEAL, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>
+                        <span style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, color: TEAL, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>
                           Avis vérifié
                         </span>
                       )}
-                      <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.38)' }}>
+                      <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>
                         {fmtDate(review.createdAt)}
                         {review.edited ? ' · modifié' : ''}
                       </span>
                     </div>
-                    <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: '7px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: '7px 0 0', wordBreak: 'break-word' }}>{review.comment}</p>
 
                     {review.reply?.text && (
-                      <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)' }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: GOLD, margin: '0 0 5px' }}>Réponse de {providerName || 'du prestataire'}</p>
-                        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.66)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
+                      <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--border-strong)' }}>
+                        <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: GOLD, margin: '0 0 5px' }}>Réponse de {providerName || 'du prestataire'}</p>
+                        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0, wordBreak: 'break-word' }}>{review.reply.text}</p>
                       </div>
                     )}
 
                     <div style={{ display: 'flex', gap: 10, marginTop: 7 }}>
                       {isMine ? (
                         <>
-                          <Button variant="link" onClick={openForm} style={{ fontSize: 11.5, fontWeight: 700, color: TEAL, textDecoration: 'none' }}>
+                          <Button variant="link" onClick={openForm} style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 700, color: TEAL, textDecoration: 'none' }}>
                             Modifier
                           </Button>
-                          <Button variant="link" onClick={() => setConfirmRemove(true)} style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
+                          <Button variant="link" onClick={() => setConfirmRemove(true)} style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 600, color: 'var(--text-faint)', textDecoration: 'none' }}>
                             Retirer
                           </Button>
                         </>
                       ) : (
-                        <Button variant="link" onClick={() => openReport(review)} style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.38)', textDecoration: 'none' }}>
+                        <Button variant="link" onClick={() => openReport(review)} style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 600, color: 'var(--text-faint)', textDecoration: 'none' }}>
                           Signaler
                         </Button>
                       )}
@@ -277,26 +277,26 @@ export default function ProviderReviewsClient({
         >
 
           <div style={{ textAlign: 'center', padding: '6px 0 2px' }}>
-            <p style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Note (obligatoire)</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--text-faint)', margin: '0 0 6px' }}>Note (obligatoire)</p>
             <StarInput value={formRating} onChange={setFormRating} />
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', margin: '6px 0 0', minHeight: 16 }}>{['', 'Décevant', 'Moyen', 'Bien', 'Très bien', 'Excellent'][formRating] || 'Touche les étoiles pour noter'}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '6px 0 0', minHeight: 16 }}>{['', 'Décevant', 'Moyen', 'Bien', 'Très bien', 'Excellent'][formRating] || 'Touche les étoiles pour noter'}</p>
           </div>
 
-          <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', margin: '14px 0 8px' }}>Ton avis</Label>
+          <Label style={{ display: 'block', fontSize: 'var(--font-size-footnote)', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '14px 0 8px' }}>Ton avis</Label>
           <Textarea
             value={formComment}
             onChange={(e) => setFormComment(e.target.value.slice(0, REVIEW_COMMENT_MAX))}
             rows={5}
             placeholder="Raconte ton expérience : qualité de la prestation, ponctualité, communication…"
-            style={{ minHeight: 120, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 14, fontSize: 14, lineHeight: 1.55 }}
+            style={{ minHeight: 120, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--field-bg)', color: 'var(--text)', padding: 14, fontSize: 'var(--font-size-body-sm)', lineHeight: 1.55 }}
           />
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 0', textAlign: 'right' }}>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '7px 0 0', textAlign: 'right' }}>
             {formComment.trim().length} / {REVIEW_COMMENT_MAX}
           </p>
-          <p style={{ fontSize: 11, lineHeight: 1.55, color: 'rgba(255,255,255,.42)', margin: '6px 0 14px' }}>Ton avis est publié avec ton nom d&rsquo;affichage. Les avis contraires aux règles peuvent être retirés par la modération.</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', lineHeight: 1.55, color: 'var(--text-faint)', margin: '6px 0 14px' }}>Ton avis est publié avec ton nom d&rsquo;affichage. Les avis contraires aux règles peuvent être retirés par la modération.</p>
 
           {formErr && (
-            <p role="alert" style={{ fontSize: 12.5, color: '#ff8fb2', background: 'rgba(194,52,127,.12)', border: '1px solid rgba(194,52,127,.4)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
+            <p role="alert" style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--accent-text)', background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 10, padding: '10px 12px', margin: '0 0 12px' }}>
               {formErr}
             </p>
           )}
@@ -325,7 +325,7 @@ export default function ProviderReviewsClient({
         >
           {reportDone ? (
             <div style={{ textAlign: 'center', padding: '14px 0 6px' }}>
-              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>{typeof reportDone === 'string' ? reportDone : 'Ton signalement a été transmis. Notre équipe va examiner cet avis.'}</p>
+              <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>{typeof reportDone === 'string' ? reportDone : 'Ton signalement a été transmis. Notre équipe va examiner cet avis.'}</p>
               <Button onClick={() => setReportTarget(null)} style={{ ...primaryBtn, minWidth: 160 }}>
                 Fermer
               </Button>
@@ -345,26 +345,26 @@ export default function ProviderReviewsClient({
                       minHeight: 44,
                       padding: '11px 14px',
                       borderRadius: 12,
-                      fontSize: 13.5,
+                      fontSize: 'var(--font-size-body)',
                       fontWeight: 600,
-                      background: reportReason === reason.id ? 'rgba(143,86,255,.16)' : 'rgba(255,255,255,.05)',
-                      border: reportReason === reason.id ? '1px solid rgba(143,86,255,.6)' : '1px solid rgba(255,255,255,.10)',
-                      color: reportReason === reason.id ? '#cdb4ff' : 'rgba(255,255,255,.78)',
+                      background: reportReason === reason.id ? 'var(--primary-a16)' : 'var(--surface-2)',
+                      border: reportReason === reason.id ? '1px solid var(--primary-a60)' : '1px solid var(--border)',
+                      color: reportReason === reason.id ? 'var(--violet)' : 'var(--text-muted)',
                     }}
                   >
                     {reason.label}
                   </Button>
                 ))}
               </div>
-              <Label style={{ display: 'block', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 8 }}>Ajouter une précision (facultatif)</Label>
+              <Label style={{ display: 'block', fontSize: 'var(--font-size-footnote)', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>Ajouter une précision (facultatif)</Label>
               <Textarea
                 value={reportDetails}
                 onChange={(e) => setReportDetails(e.target.value.slice(0, 500))}
                 rows={3}
                 placeholder="Explique en quelques mots ce qui pose problème…"
-                style={{ minHeight: 76, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: '#0b0c12', color: 'rgba(255,255,255,.92)', padding: 12, fontSize: 13.5, lineHeight: 1.5 }}
+                style={{ minHeight: 76, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--field-bg)', color: 'var(--text)', padding: 12, fontSize: 'var(--font-size-body)', lineHeight: 1.5 }}
               />
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,.38)', margin: '7px 0 16px', textAlign: 'right' }}>
+              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '7px 0 16px', textAlign: 'right' }}>
                 {reportDetails.length} / 500
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
@@ -388,7 +388,7 @@ export default function ProviderReviewsClient({
 
       {confirmRemove && (
         <Sheet compact onClose={() => !removeBusy && setConfirmRemove(false)} title="Retirer votre avis ?">
-          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,.6)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
+          <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>Ton avis et ta note ne seront plus visibles sur la page de {providerName || 'ce prestataire'}.</p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={() => setConfirmRemove(false)} disabled={removeBusy} style={{ ...ghostBtn, flex: 1 }}>
               Annuler
@@ -398,7 +398,7 @@ export default function ProviderReviewsClient({
               onClick={handleRemoveOwn}
               loading={removeBusy}
               loadingText="Retrait…"
-              style={{ ...primaryBtn, flex: 1.2, background: '#c2347f', boxShadow: 'none' }}
+              style={{ ...primaryBtn, flex: 1.2, background: 'var(--danger)', color: 'var(--danger-ink)', boxShadow: 'none' }}
             >
               Retirer mon avis
             </Button>

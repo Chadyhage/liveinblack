@@ -30,9 +30,9 @@ export const metadata: Metadata = {
 // fond/bordure translucides cohérents avec `color`.
 const ROLE_META: Record<string, { label: string; color: string; soft: string; border: string; desc: string }> = {
   serveur: { label: 'Serveur', color: 'var(--teal)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Prends et sers les commandes au bar' },
-  scan: { label: 'Contrôle entrée', color: '#8b5cf6', soft: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.35)', desc: "Scanne les billets à l'entrée" },
+  scan: { label: 'Contrôle entrée', color: 'var(--violet-text)', soft: 'rgba(var(--violet-rgb), .12)', border: 'var(--violet-border)', desc: "Scanne les billets à l'entrée" },
   manager: { label: 'Manager', color: 'var(--gold)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Gestion complète de la soirée' },
-  dj: { label: 'DJ', color: '#e05aaa', soft: 'rgba(224, 90, 170, 0.12)', border: 'rgba(224, 90, 170, 0.35)', desc: 'Gère la playlist interactive de la soirée' },
+  dj: { label: 'DJ', color: 'var(--danger)', soft: 'var(--danger-fill)', border: 'var(--danger-border)', desc: 'Gère la playlist interactive de la soirée' },
   // 'vendeur' (#C, lib/server/agentSales.ts) ajouté après le reste de cette
   // page — manquait ici, ce qui faisait tomber sur le fallback générique
   // (couleur grise, description vide) ET, pire, redirigeait vers le scanner
@@ -43,7 +43,7 @@ const ROLE_META: Record<string, { label: string; color: string; soft: string; bo
   // /scanner (index), voir lib/server/staffEvents.ts.
   owner: { label: 'Organisateur', color: 'var(--primary)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: "Ton événement — ouvre le scan pour contrôler l'entrée" },
 }
-const FALLBACK_ROLE_META = { label: '', color: 'var(--text-faint)', soft: 'rgba(255, 255, 255, 0.06)', border: 'rgba(255, 255, 255, 0.14)', desc: '' }
+const FALLBACK_ROLE_META = { label: '', color: 'var(--text-faint)', soft: 'var(--fill-secondary)', border: 'var(--border)', desc: '' }
 
 // DJ → gestion de la playlist (#75/#47) ; vendeur → l'espace de vente sur
 // place (#C) ; tout autre rôle staff (scan, serveur, manager) → le scanner,
@@ -76,14 +76,14 @@ export default async function MesSoireesPage() {
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div>
         <header style={{ marginBottom: 18 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(26px,3.2vw,34px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes soirées</h1>
-          <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 13, lineHeight: 1.42 }}>Accède aux événements pour lesquels tu fais partie de l’équipe.</p>
+          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(26px,3.2vw,34px)', fontWeight: 720, letterSpacing: '-.045em' }}>Mes soirées</h1>
+          <p style={{ maxWidth: 650, margin: '7px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-callout)', lineHeight: 1.42 }}>Accède aux événements pour lesquels tu fais partie de l’équipe.</p>
         </header>
         {events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <Mascot mood="sleeping" size={154} />
-            <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
-            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.45 }}>
+            <p style={{ fontWeight: 700, fontSize: 'var(--font-size-headline-lg)', color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.45 }}>
               Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), ou dès que tu crées toi-même un événement, elle apparaît ici.
             </p>
           </div>
@@ -97,13 +97,13 @@ export default async function MesSoireesPage() {
                 <Card
                   key={ev.eventId}
                   accent={ev.live ? meta.border : undefined}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, boxShadow: '0 8px 24px var(--scrim-mid)' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ minWidth: 0 }}>
                       <p
                         style={{
-                          fontSize: 16,
+                          fontSize: 'var(--font-size-headline-lg)',
                           fontWeight: 800,
                           letterSpacing: '-0.4px',
                           color: 'var(--text)',
@@ -114,12 +114,12 @@ export default async function MesSoireesPage() {
                       >
                         {ev.eventName || 'Événement'}
                       </p>
-                      {dateLine && <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '4px 0 0' }}>{dateLine}</p>}
+                      {dateLine && <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '4px 0 0' }}>{dateLine}</p>}
                     </div>
                     <span
                       style={{
                         flexShrink: 0,
-                        fontSize: 11,
+                        fontSize: 'var(--font-size-caption)',
                         fontWeight: 700,
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase',
@@ -136,15 +136,15 @@ export default async function MesSoireesPage() {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     {ev.live ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, color: meta.color }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-caption-lg)', fontWeight: 700, color: meta.color }}>
                         <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color }} /> En cours
                       </span>
                     ) : ev.started ? (
-                      <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Soirée terminée</span>
+                      <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>Soirée terminée</span>
                     ) : (
-                      <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>À venir</span>
+                      <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>À venir</span>
                     )}
-                    <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>· {meta.desc}</span>
+                    <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>· {meta.desc}</span>
                   </div>
 
                   <Link
@@ -155,11 +155,11 @@ export default async function MesSoireesPage() {
                       minHeight: 'var(--density-action-min)',
                       borderRadius: 'var(--radius-control)',
                       border: '1px solid var(--border-strong)',
-                      fontSize: 14,
+                      fontSize: 'var(--font-size-body-sm)',
                       fontWeight: 700,
                       textTransform: 'none',
                       letterSpacing: 'normal',
-                      color: 'var(--obsidian)',
+                      color: 'var(--primary-ink)',
                       background: meta.color,
                       display: 'flex',
                       alignItems: 'center',

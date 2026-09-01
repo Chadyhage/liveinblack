@@ -1,12 +1,12 @@
 .page {
   --notification-accent: var(--primary);
-  --notification-surface: rgba(22, 23, 27, .94);
-  --notification-surface-soft: rgba(255, 255, 255, .035);
+  --notification-surface: var(--surface);
+  --notification-surface-soft: var(--surface-2);
   box-sizing: border-box;
   min-height: calc(100dvh - 38px);
   margin-top: 4px !important;
   padding-block: var(--space-4) var(--space-5) !important;
-  background: rgba(10, 10, 13, .96);
+  background: var(--background);
 }
 
 .content { width: min(100%, 1540px); margin-inline: auto; }
@@ -24,7 +24,7 @@
   min-width: 0;
   gap: 10px;
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, .09);
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--notification-surface);
 }
@@ -40,14 +40,14 @@
 .headingIcon { width: 40px; height: 40px; border-radius: var(--radius-control); }
 .heading h1 {
   margin: 0;
-  color: #f7f7f8;
-  font-size: 25px;
+  color: var(--text);
+  font-size: var(--font-size-title-1-lg);
   font-weight: 860;
   letter-spacing: 0;
   line-height: 1;
   text-transform: uppercase;
 }
-.heading p { margin: 4px 0 0; color: rgba(245, 245, 247, .58); font-size: 14px; line-height: 1.4; }
+.heading p { margin: 4px 0 0; color: var(--text-muted); font-size: var(--font-size-body-sm); line-height: 1.4; }
 
 .headerAside {
   display: grid;
@@ -66,14 +66,14 @@
   min-width: 0;
   min-height: 76px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, .085);
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--notification-surface);
 }
 .statLabel {
   display: block;
-  color: rgba(245, 245, 247, .5);
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: var(--font-size-footnote);
   font-weight: 760;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -81,8 +81,8 @@
 .statValue {
   display: block;
   margin-top: 2px;
-  color: #fff;
-  font-size: 19px;
+  color: var(--text);
+  font-size: var(--font-size-title-4-lg);
   font-weight: 840;
   letter-spacing: 0;
   line-height: 1;
@@ -90,8 +90,8 @@
 .statHint {
   display: block;
   margin-top: 2px;
-  color: rgba(245, 245, 247, .54);
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: var(--font-size-footnote);
   line-height: 1.2;
 }
 
@@ -108,12 +108,12 @@
 }
 .pushIcon { width: 28px; height: 28px; border-radius: 9px; }
 .pushCopy { display: grid; gap: 3px; min-width: 0; }
-.pushCopy strong { color: #f5f5f7; font-size: 14px; }
-.pushCopy span { color: rgba(245, 245, 247, .56); font-size: 13px; }
+.pushCopy strong { color: var(--text); font-size: var(--font-size-body-sm); }
+.pushCopy span { color: var(--text-muted); font-size: var(--font-size-callout); }
 
 .inbox {
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .1);
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--notification-surface);
 }
@@ -123,11 +123,11 @@
   justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid var(--border);
   background: var(--notification-surface-soft);
 }
-.inboxHeader h2 { margin: 0; color: #f5f5f7; font-size: 13px; font-weight: 780; letter-spacing: -.02em; }
-.inboxHeader p { margin: 3px 0 0; color: rgba(245, 245, 247, .58); font-size: 12px; }
+.inboxHeader h2 { margin: 0; color: var(--text); font-size: var(--font-size-callout); font-weight: 780; letter-spacing: -.02em; }
+.inboxHeader p { margin: 3px 0 0; color: var(--text-muted); font-size: var(--font-size-footnote); }
 .totalBadge {
   display: inline-flex;
   align-items: center;
@@ -135,9 +135,9 @@
   min-height: 26px;
   padding: 0 9px;
   border-radius: 999px;
-  color: rgba(245, 245, 247, .72);
-  background: rgba(255, 255, 255, .07);
-  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  font-size: var(--font-size-footnote);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -149,7 +149,7 @@
   padding: 12px;
 }
 
-.notificationShell { position: relative; min-width: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.09); border-radius: var(--radius-control); background: rgba(255,255,255,.025); }
+.notificationShell { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); }
 .notificationShell.unread { border-color: var(--primary-a20); background: var(--primary-a05); }
 
 .notification {
@@ -166,11 +166,11 @@
   border-radius: 0 !important;
   color: inherit !important;
   text-align: left;
-  background: rgba(255, 255, 255, .025);
+  background: var(--surface);
   box-shadow: none;
   transition: background-color .16s ease, border-color .16s ease !important;
 }
-.notification:hover { background: rgba(255,255,255,.045); }
+.notification:hover { background: var(--surface-2); }
 .notification:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .notificationShell.unread::before {
   content: '';
@@ -187,10 +187,10 @@
   width: 36px;
   height: 36px;
   margin-top: 1px;
-  border: 1px solid rgba(255, 255, 255, .09);
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  color: rgba(245, 245, 247, .72);
-  background: rgba(255, 255, 255, .04);
+  color: var(--text-muted);
+  background: var(--surface-2);
 }
 .unread .notificationIcon { color: var(--primary); border-color: var(--border); background: var(--primary-a07); }
 .notificationContent { grid-column: 2; display: grid; gap: 4px; min-width: 0; padding-top: 1px; padding-right: 1px; }
@@ -211,7 +211,7 @@
   border-radius: 999px;
   color: var(--primary);
   background: var(--primary-a08);
-  font-size: 12px;
+  font-size: var(--font-size-footnote);
   font-weight: 720;
   letter-spacing: .03em;
   text-transform: uppercase;
@@ -221,14 +221,14 @@
   align-items: center;
   gap: 6px;
   overflow: hidden;
-  color: rgba(245, 245, 247, .96);
-  font-size: 15px;
+  color: var(--text);
+  font-size: var(--font-size-headline);
   font-weight: 800;
   line-height: 1.18;
   text-overflow: ellipsis;
   white-space: normal;
 }
-.unread .notificationTitle { color: #f7f7f8; font-weight: 780; }
+.unread .notificationTitle { color: var(--text); font-weight: 780; }
 .unreadDot { width: 5px; height: 5px; flex: 0 0 auto; border-radius: 999px; background: var(--primary); }
 .notificationMeta {
   display: flex;
@@ -236,13 +236,13 @@
   justify-content: flex-end;
   gap: 8px;
   min-width: 48px;
-  color: rgba(245, 245, 247, .45);
-  font-size: 12px;
+  color: var(--text-faint);
+  font-size: var(--font-size-footnote);
   font-weight: 650;
 }
-.expandIcon { color: rgba(245,245,247,.48); transition: transform .16s ease; }
-.notificationDetail { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding:0 16px 16px 66px; border-top:1px solid rgba(255,255,255,.065); }
-.notificationDetail p { max-width:760px; margin:14px 0 0; color:rgba(245,245,247,.68); font-size:14px; line-height:1.55; }
+.expandIcon { color: var(--text-faint); transition: transform .16s ease; }
+.notificationDetail { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding:0 16px 16px 66px; border-top:1px solid var(--border); }
+.notificationDetail p { max-width:760px; margin:14px 0 0; color:var(--text-muted); font-size: var(--font-size-body-sm); line-height:1.55; }
 .notificationAction { display: none; }
 .emptyState { padding: 16px 12px; }
 
@@ -256,8 +256,8 @@
   .headerAside { grid-template-columns: 1fr; justify-items: stretch; min-width: 0; }
   .headerAside > button { width: 100% !important; }
   .headingIcon { width: 34px; height: 34px; }
-  .heading h1 { font-size: 24px; }
-  .heading p { font-size: 14px; }
+  .heading h1 { font-size: var(--font-size-title-1); }
+  .heading p { font-size: var(--font-size-body-sm); }
   .statsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .statCard:last-child { grid-column: 1 / -1; }
   .pushCard { grid-template-columns: 30px minmax(0, 1fr); }
@@ -270,7 +270,7 @@
   .notificationMeta { min-width: 35px; }
   .notificationMeta svg { display: none; }
   .notificationTopRow { align-items: flex-start; }
-  .notificationTitle { font-size: 14px; }
+  .notificationTitle { font-size: var(--font-size-body-sm); }
   .notificationDetail { align-items:stretch; flex-direction:column; padding:0 12px 14px; }
 }
 

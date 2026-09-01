@@ -11,11 +11,11 @@ import { Button, Input, Label, Mascot } from '@/app/components/ui'
 // cohérent avec le reste des pages de confirmation « one-shot ».
 
 const COLORS = { teal: 'var(--primary)', pink: 'var(--pink)' }
-const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }
-const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
+const labelStyle: React.CSSProperties = { fontSize: 'var(--font-size-footnote)', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }
+const btnSolid = (bg: string, fg = 'var(--primary-ink)'): React.CSSProperties => ({
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 'var(--font-size-body-lg)', fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
-  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
+  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(var(--black-rgb), .30)',
 })
 
 function checkPasswordStrength(pwd: string) {
@@ -81,8 +81,8 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
     <div className="lb-auth-state" style={{ width: '100%', maxWidth: 760, margin: '0 auto', textAlign: state === 'form' ? 'left' : 'center' }}>
         {state === 'form' && (
           <>
-            <h1 className="font-display" style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', color: '#fff', margin: '0 0 8px' }}>Nouveau mot de passe</h1>
-            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6, margin: '0 0 24px', overflowWrap: 'break-word' }}>Choisis un nouveau mot de passe pour {email}.</p>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, letterSpacing: '-0.4px', color: 'var(--text)', margin: '0 0 8px' }}>Nouveau mot de passe</h1>
+            <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px', overflowWrap: 'break-word' }}>Choisis un nouveau mot de passe pour {email}.</p>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <Label style={labelStyle} htmlFor="reset-password">Nouveau mot de passe</Label>
@@ -101,7 +101,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                     variant="link"
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
-                    style={{ position: 'absolute', right: 6, top: '50%', minWidth: 64, minHeight: 44, padding: 0, transform: 'translateY(-50%)', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
+                    style={{ position: 'absolute', right: 6, top: '50%', minWidth: 64, minHeight: 44, padding: 0, transform: 'translateY(-50%)', fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
                   >
                     {showPwd ? 'Cacher' : 'Voir'}
                   </Button>
@@ -112,10 +112,10 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: -4 }}>
                   <div style={{ display: 'flex', gap: 4 }}>
                     {[1, 2, 3].map((i) => (
-                      <div key={i} style={{ flex: 1, height: 5, borderRadius: 2, background: i <= pwdStrength.score ? pwdStrength.color : 'rgba(255,255,255,0.08)', transition: 'background 0.3s' }} />
+                      <div key={i} style={{ flex: 1, height: 5, borderRadius: 2, background: i <= pwdStrength.score ? pwdStrength.color : 'var(--fill-secondary)', transition: 'background 0.3s' }} />
                     ))}
                   </div>
-                  <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: pwdStrength.color, margin: 0 }}>{pwdStrength.label}</p>
+                  <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '0.04em', color: pwdStrength.color, margin: 0 }}>{pwdStrength.label}</p>
                 </div>
               )}
 
@@ -123,8 +123,8 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                 <Label style={labelStyle} htmlFor="reset-password-confirm">Confirmer le mot de passe</Label>
                 <Input id="reset-password-confirm" name="new-password" type="password" autoComplete="new-password" placeholder="Mot de passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
               </div>
-              {error && <p style={{ fontSize: 12, color: COLORS.pink, margin: 0 }}>{error}</p>}
-              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)', '#250817'), marginTop: 4 }}>
+              {error && <p style={{ fontSize: 'var(--font-size-footnote)', color: COLORS.pink, margin: 0 }}>{error}</p>}
+              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)'), marginTop: 4 }}>
                 Changer mon mot de passe
               </Button>
             </form>
@@ -134,12 +134,12 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
         {state === 'success' && (
           <>
             <Mascot mood="success" size={156} />
-            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.6px', color: '#fff', margin: '0 0 10px' }}>Mot de passe changé</h1>
-            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-xl)', fontWeight: 800, letterSpacing: '-0.6px', color: 'var(--text)', margin: '0 0 10px' }}>Mot de passe changé</h1>
+            <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55, overflowWrap: 'break-word' }}>
               Le mot de passe de {email} a été changé. Tu peux maintenant te connecter avec ton nouveau mot de passe.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)', '#250817')}>Se connecter</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)')}>Se connecter</Button>
             </div>
           </>
         )}
@@ -147,12 +147,12 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
         {state === 'invalid' && (
           <>
             <Mascot mood="error" size={148} />
-            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien invalide ou expiré</h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1-lg)', fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien invalide ou expiré</h1>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Ce lien de réinitialisation n&apos;est plus valable. Redemande-en un nouveau depuis la page de connexion.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', 'var(--danger-ink)')}>Retour à la connexion</Button>
             </div>
           </>
         )}
@@ -160,12 +160,12 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
         {state === 'missing' && (
           <>
             <Mascot mood="confused" size={148} />
-            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien de réinitialisation introuvable</h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1-lg)', fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>Lien de réinitialisation introuvable</h1>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Cette page s&apos;utilise uniquement depuis le lien reçu par email. Demande un nouveau lien depuis la page de connexion.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', '#141007')}>Retour à la connexion</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--gold)', 'var(--danger-ink)')}>Retour à la connexion</Button>
             </div>
           </>
         )}

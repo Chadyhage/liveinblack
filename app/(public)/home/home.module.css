@@ -1,8 +1,8 @@
 .home {
   width: 100%;
   overflow: clip;
-  color: #f5f5f7;
-  background: rgba(5, 5, 6, .7);
+  color: var(--text);
+  background: var(--surface-2);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -80,7 +80,7 @@
   content: '';
   width: 10px;
   height: 10px;
-  border: 1px solid rgba(255,255,255,.78);
+  border: 1px solid var(--image-text-muted);
   border-radius: 50%;
   background: transparent;
 }
@@ -92,8 +92,8 @@
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(90deg, rgba(5, 5, 7, .96) 0%, rgba(5, 5, 7, .84) 42%, rgba(5, 5, 7, .24) 75%, rgba(5, 5, 7, .52) 100%),
-    linear-gradient(0deg, #050506 0%, transparent 34%, rgba(5, 5, 7, .2) 100%);
+    linear-gradient(90deg, rgba(var(--media-black-rgb), .96) 0%, rgba(var(--media-black-rgb), .84) 42%, rgba(var(--media-black-rgb), .24) 75%, rgba(var(--media-black-rgb), .52) 100%),
+    linear-gradient(0deg, var(--media-canvas) 0%, transparent 34%, rgba(var(--media-black-rgb), .20) 100%);
 }
 
 .heroContent {
@@ -112,7 +112,7 @@
 .heroTitle {
   max-width: 780px;
   margin: 16px 0 22px;
-  color: #fff;
+  color: var(--image-text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   font-size: clamp(44px, 5.7vw, 84px);
   line-height: .98;
@@ -122,13 +122,13 @@
 }
 
 .heroTitle span {
-  color: rgba(255, 255, 255, .88);
+  color: var(--image-text-muted);
 }
 
 .heroDescription {
   max-width: 660px;
   margin: 22px 0 34px;
-  color: rgba(255, 255, 255, .85);
+  color: var(--image-text-muted);
   font-size: clamp(17px, 1.45vw, 22px);
   line-height: 1.45;
   text-wrap: balance;
@@ -151,7 +151,7 @@
   padding: 12px 28px;
   border: 1px solid transparent;
   border-radius: 16px;
-  font-size: 16.5px;
+  font-size: var(--font-size-headline-xxl);
   font-weight: 750;
   letter-spacing: -.01em;
   line-height: 1.2;
@@ -165,10 +165,15 @@
 }
 
 .secondaryButton {
-  color: #fff;
-  border-color: rgba(255, 255, 255, .34);
-  background: rgba(255, 255, 255, .1);
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--fill-secondary);
   backdrop-filter: blur(18px);
+}
+
+.hero .secondaryButton {
+  color: var(--image-text);
+  border-color: var(--image-border);
 }
 
 .primaryButton:hover,
@@ -187,7 +192,7 @@
 
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible {
-  outline: 3px solid rgba(245, 61, 141, .52);
+  outline: 3px solid var(--primary-a52);
   outline-offset: 3px;
 }
 
@@ -199,8 +204,8 @@
   padding: 0;
   list-style: none;
   flex-wrap: wrap;
-  color: rgba(255, 255, 255, .82);
-  font-size: 15px;
+  color: var(--image-text-muted);
+  font-size: var(--font-size-headline);
   font-weight: 650;
 }
 
@@ -236,7 +241,7 @@
 .sectionEyebrow {
   margin: 0 0 6px;
   color: var(--primary);
-  font-size: 13px;
+  font-size: var(--font-size-callout);
   line-height: 1.3;
   font-weight: 700;
   letter-spacing: .04em;
@@ -245,7 +250,7 @@
 
 .sectionTitle {
   margin: 0;
-  color: #f5f5f7;
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   font-size: clamp(22px, 2.5vw, 32px);
   line-height: 1.1;
@@ -257,8 +262,8 @@
 .sectionDescription {
   max-width: 680px;
   margin: 8px 0 0;
-  color: rgba(255, 255, 255, .72);
-  font-size: 15.5px;
+  color: var(--text-muted);
+  font-size: var(--font-size-headline-xl);
   line-height: 1.45;
 }
 
@@ -282,7 +287,7 @@
   overflow-x: auto;
   padding: 4px 4px 14px;
   scroll-snap-type: x proximity;
-  scrollbar-color: rgba(255, 255, 255, .22) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 .finalSection {
@@ -293,18 +298,18 @@
   max-width: 860px;
   margin: 0 auto;
   padding: clamp(20px, 3vw, 32px);
-  border: 1px solid rgba(255, 255, 255, .12);
+  border: 1px solid var(--border);
   border-radius: 24px;
   text-align: center;
-  background: rgba(255, 255, 255, .055);
+  background: var(--card-bg);
 }
 
 .home :global(.lb-card) {
   max-width: 360px !important;
   width: 100% !important;
-  border-color: rgba(255, 255, 255, .12) !important;
+  border-color: var(--border) !important;
   border-radius: 24px !important;
-  background: rgba(255, 255, 255, .055) !important;
+  background: var(--card-bg) !important;
 }
 
 .home :global(.lb-card.lb-split-card) {
@@ -331,7 +336,7 @@
 .splitCardMediaOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 40%, rgba(22, 22, 26, 0.96) 100%);
+  background: linear-gradient(90deg, transparent 40%, var(--surface-2) 100%);
 }
 
 .splitCardContent {
@@ -339,7 +344,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: rgba(22, 22, 26, 0.96);
+  background: var(--surface-2);
 }
 
 @media (max-width: 768px) {
@@ -354,7 +359,7 @@
     min-height: 220px;
   }
   .splitCardMediaOverlay {
-    background: linear-gradient(180deg, transparent 35%, rgba(22, 22, 26, 0.96) 100%);
+    background: linear-gradient(180deg, transparent 35%, var(--surface-2) 100%);
   }
   .splitCardContent {
     padding: 20px;
@@ -363,7 +368,7 @@
 
 .home :global(.lb-card:hover) {
   transform: scale(1.006);
-  border-color: rgba(255, 255, 255, .22) !important;
+  border-color: var(--border-strong) !important;
 }
 
 @media (max-width: 900px) {
@@ -387,7 +392,7 @@
 
   .heroOverlay {
     background:
-      linear-gradient(0deg, #050506 0%, rgba(5, 5, 7, .82) 58%, rgba(5, 5, 7, .42) 100%);
+      linear-gradient(0deg, var(--media-canvas) 0%, var(--media-scrim) 58%, rgba(var(--media-black-rgb), .42) 100%);
   }
 
   .heroTitle {
@@ -398,7 +403,7 @@
 
   .heroDescription {
     margin-top: 6px;
-    font-size: 11.5px;
+    font-size: var(--font-size-caption-lg);
     line-height: 1.32;
   }
 
@@ -414,7 +419,7 @@
   .heroProof {
     gap: 5px 12px;
     margin-top: 8px;
-    font-size: 10.5px;
+    font-size: var(--font-size-caption-2-lg);
   }
 
   .section,
@@ -428,7 +433,7 @@
   }
 
   .sectionDescription {
-    font-size: 10.5px;
+    font-size: var(--font-size-caption-2-lg);
   }
 
   .mobileRail {

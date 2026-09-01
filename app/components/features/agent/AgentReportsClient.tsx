@@ -186,21 +186,21 @@ export default function AgentReportsClient() {
         </div>
 
         {listError && (
-          <Card accent="rgba(224,90,170,.35)" className={styles.error} role="alert">
+          <Card accent="var(--danger-border)" className={styles.error} role="alert">
             <div className={styles.errorCopy}><AlertTriangle size={20} aria-hidden="true" /><div><strong>Impossible de charger les signalements</strong><p>Vérifie ta connexion ou reconnecte-toi si tes droits agent ont changé.</p></div></div>
             <Button variant="secondary" onClick={() => loadList(filter)}>Réessayer</Button>
           </Card>
         )}
 
         <div className={styles.metrics} aria-label="Filtrer les signalements">
-          <Card className={styles.metric} style={{ '--metric-color': '#c4a7ff' } as React.CSSProperties}>
+          <Card className={styles.metric} style={{ '--metric-color': 'var(--violet-text)' } as React.CSSProperties}>
             <span className={styles.metricTop}><span className={styles.metricIcon}><MessageSquareWarning size={18} aria-hidden="true" /></span><strong className={styles.metricValue}>{totalCount}</strong></span>
             <span className={styles.metricLabel}>Tous les signalements</span>
           </Card>
           {(
             [
-              { key: 'open' as const, label: 'À traiter', color: '#ff8fb2', count: counts?.open ?? (filter === 'open' ? reports.length : 0), icon: Clock3 },
-              { key: 'handled' as const, label: 'Traités', color: '#ff8fb2', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
+              { key: 'open' as const, label: 'À traiter', color: 'var(--accent-text)', count: counts?.open ?? (filter === 'open' ? reports.length : 0), icon: Clock3 },
+              { key: 'handled' as const, label: 'Traités', color: 'var(--accent-text)', count: counts?.handled ?? (filter === 'handled' ? reports.length : 0), icon: CheckCircle2 },
             ]
           ).map((f) => {
             const active = f.key === filter

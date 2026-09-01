@@ -26,8 +26,8 @@ export function LoadingPlacesModal({ onClose, ariaLabel }: { onClose: () => void
     <Modal onClose={onClose} hideClose ariaLabel={ariaLabel} contentStyle={{ width: 40, height: 40, background: 'none', border: 'none', boxShadow: 'none', padding: 0, borderRadius: 0, maxHeight: 'none', overflowY: 'visible' }}>
       <div style={{ position: 'relative', width: 40, height: 40 }} aria-label={ariaLabel}>
         <svg width={40} height={40} viewBox="0 0 24 24" style={{ display: 'inline-block' }} aria-hidden="true">
-          <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={3} />
-          <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="var(--fill-secondary)" strokeWidth={3} />
+          <path d="M21 12a9 9 0 00-9-9" fill="none" stroke="var(--text)" strokeWidth={3} strokeLinecap="round">
             <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite" />
           </path>
         </svg>

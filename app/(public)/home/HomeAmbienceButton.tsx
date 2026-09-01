@@ -21,10 +21,10 @@ export default function HomeAmbienceButton() {
         marginTop: 28,
         padding: '8px 15px',
         borderRadius: 999,
-        border: `1px solid ${state.playing ? 'var(--primary-a42)' : 'rgba(255,255,255,.12)'}`,
+        border: `1px solid ${state.playing ? 'var(--primary-a42)' : 'var(--border)'}`,
         background: state.playing ? 'var(--primary-a09)' : 'transparent',
         color: state.playing ? 'var(--teal)' : 'var(--text-faint)',
-        fontSize: 11.5,
+        fontSize: 'var(--font-size-caption-lg)',
         backdropFilter: 'blur(12px)',
       }}
     >

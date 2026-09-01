@@ -42,9 +42,9 @@ export function emptyMenuItem(): MenuItemRow {
   }
 }
 
-const CARD_SHADOW = '0 8px 24px rgba(0,0,0,0.35)'
+const CARD_SHADOW = '0 8px 24px rgba(var(--black-rgb), .20)'
 
-function IconClose({ size = 12, color = 'rgba(255,255,255,0.5)' }: { size?: number; color?: string }) {
+function IconClose({ size = 12, color = 'var(--text-muted)' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" aria-hidden="true">
       <line x1="18" y1="6" x2="6" y2="18" />
@@ -71,7 +71,7 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
         width: 40,
         height: 22,
         borderRadius: 12,
-        background: value ? 'var(--teal)' : 'rgba(255,255,255,0.08)',
+        background: value ? 'var(--teal)' : 'var(--surface-2)',
         position: 'relative',
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'background 0.2s',
@@ -85,11 +85,11 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
           top: 4,
           width: 16,
           height: 16,
-          background: 'white',
+          background: 'var(--primary-ink)',
           borderRadius: '50%',
           transition: 'left 0.2s',
           left: value ? 24 : 4,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+          boxShadow: '0 1px 4px rgba(var(--black-rgb), .40)',
         }}
       />
     </div>
@@ -134,7 +134,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
   return (
     <Card style={{ boxShadow: CARD_SHADOW, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10, opacity: disabled ? 0.55 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: 14, fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif' }}>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif' }}>
           Article {index + 1}
         </p>
         {onRemove && (
@@ -145,7 +145,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
             disabled={disabled}
             style={{ display: 'flex', alignItems: 'center', padding: 2 }}
           >
-            <IconClose size={12} color="rgba(220,100,100,0.9)" />
+            <IconClose size={12} color="var(--danger)" />
           </Button>
         )}
       </div>
@@ -158,7 +158,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
               variant="ghost"
               onClick={() => set('imageUrl', null)}
               aria-label="Retirer la photo"
-              style={{ position: 'absolute', top: -10, right: -10, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', border: '7px solid var(--surface)', background: 'var(--pink)', color: '#fff', padding: 0, fontSize: 16 }}
+              style={{ position: 'absolute', top: -10, right: -10, width: 38, height: 38, minHeight: 38, minWidth: 38, borderRadius: '50%', border: '7px solid var(--surface)', background: 'var(--pink)', color: 'var(--primary-ink)', padding: 0, fontSize: 'var(--font-size-headline-lg)' }}
             >
               ×
             </Button>
@@ -176,7 +176,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         </div>
       </div>
       {onUploadImage && (
-        <label style={{ alignSelf: 'flex-start', padding: '6px 9px', borderRadius: 8, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.05)', color: 'var(--text-muted)', fontSize: 10.5, fontWeight: 700, cursor: disabled || imageUploading ? 'not-allowed' : 'pointer' }}>
+        <label style={{ alignSelf: 'flex-start', padding: '6px 9px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, cursor: disabled || imageUploading ? 'not-allowed' : 'pointer' }}>
           {imageUploading ? 'Envoi de la photo…' : item.imageUrl ? 'Changer la photo' : 'Ajouter une photo'}
           <input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || imageUploading} style={{ display: 'none' }} onChange={async (event) => {
             const file = event.target.files?.[0]
@@ -188,7 +188,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
           }} />
         </label>
       )}
-      {imageError && <p role="alert" style={{ margin: '-4px 0 0', color: 'var(--pink)', fontSize: 11 }}>{imageError}</p>}
+      {imageError && <p role="alert" style={{ margin: '-4px 0 0', color: 'var(--pink)', fontSize: 'var(--font-size-caption)' }}>{imageError}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div>
@@ -215,8 +215,8 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
         <div>
-          <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Disponible à la commande</p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Masque temporairement cet article sans le supprimer.</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text)', margin: 0 }}>Disponible à la commande</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Masque temporairement cet article sans le supprimer.</p>
         </div>
         <Toggle value={item.available !== false} disabled={disabled} onChange={() => set('available', item.available === false)} />
       </div>
@@ -226,7 +226,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
           variant="ghost"
           onClick={() => setShowDesc(true)}
           disabled={disabled}
-          style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', textAlign: 'left', padding: 0, justifyContent: 'flex-start' }}
+          style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', textAlign: 'left', padding: 0, justifyContent: 'flex-start' }}
         >
           + Ajouter une description
         </Button>
@@ -244,10 +244,10 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid var(--border)' }}>
         <div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.93)' }}>Option show</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Option show</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 2 }}>Mise en scène spéciale à la livraison</p>
         </div>
         <Toggle
           value={item.hasShow}
@@ -263,21 +263,21 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
 
       {item.hasShow && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, borderLeft: '2px solid var(--border)' }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>Shows disponibles pour cet article</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>Shows disponibles pour cet article</p>
           {item.showOptions.map((option, optionIndex) => (
             <Card key={option.id} style={{ boxShadow: CARD_SHADOW, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Input style={{ flex: 1, fontSize: 12 }} placeholder={`Show ${optionIndex + 1} — ex: pancartes + étincelles`} value={option.label} disabled={disabled} onChange={(e) => updateShowOption(option.id, { label: e.target.value })} />
-                <Button variant="ghost" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ padding: 5 }}><IconClose size={13} color="rgba(220,100,100,.9)" /></Button>
+                <Input style={{ flex: 1, fontSize: 'var(--font-size-footnote)' }} placeholder={`Show ${optionIndex + 1} — ex: pancartes + étincelles`} value={option.label} disabled={disabled} onChange={(e) => updateShowOption(option.id, { label: e.target.value })} />
+                <Button variant="ghost" disabled={disabled} onClick={() => set('showOptions', item.showOptions.filter((entry) => entry.id !== option.id))} aria-label={`Supprimer le show ${optionIndex + 1}`} style={{ padding: 5 }}><IconClose size={13} color="var(--danger)" /></Button>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>Demander une information au client</span>
+                <span style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)' }}>Demander une information au client</span>
                 <Toggle value={option.requiresInfo} disabled={disabled} onChange={() => updateShowOption(option.id, { requiresInfo: !option.requiresInfo, ...(!option.requiresInfo ? {} : { infoPrompt: '' }) })} />
               </div>
-              {option.requiresInfo && <Input style={{ fontSize: 12 }} placeholder="Ex: Prénom à écrire sur la pancarte ?" value={option.infoPrompt} disabled={disabled} onChange={(e) => updateShowOption(option.id, { infoPrompt: e.target.value })} />}
+              {option.requiresInfo && <Input style={{ fontSize: 'var(--font-size-footnote)' }} placeholder="Ex: Prénom à écrire sur la pancarte ?" value={option.infoPrompt} disabled={disabled} onChange={(e) => updateShowOption(option.id, { infoPrompt: e.target.value })} />}
               {placeTypes.length > 1 && (
-                <div style={{ paddingTop: 5, borderTop: '1px solid rgba(255,255,255,.05)' }}>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,.45)', margin: '0 0 6px' }}>Masquer ce show pour :</p>
+                <div style={{ paddingTop: 5, borderTop: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '0 0 6px' }}>Masquer ce show pour :</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {placeTypes.map((placeType) => {
                       const excluded = option.excludedPlaces.includes(placeType)
@@ -287,7 +287,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                           variant="ghost"
                           disabled={disabled}
                           onClick={() => updateShowOption(option.id, { excludedPlaces: excluded ? option.excludedPlaces.filter((value) => value !== placeType) : [...option.excludedPlaces, placeType] })}
-                          style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid rgba(224,90,170,.5)' : '1px solid rgba(255,255,255,.1)', background: excluded ? 'rgba(224,90,170,.14)' : '#0b0c12', color: excluded ? '#ff9ed2' : 'rgba(255,255,255,.55)' }}
+                          style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, padding: '5px 8px', borderRadius: 8, border: excluded ? '1px solid var(--primary-a42)' : '1px solid var(--border)', background: excluded ? 'var(--primary-a14)' : 'var(--surface-2)', color: excluded ? 'var(--accent-text)' : 'var(--text-muted)' }}
                         >
                           {excluded ? '× ' : ''}{placeType}
                         </Button>
@@ -298,13 +298,13 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
               )}
             </Card>
           ))}
-          <Button variant="secondary" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ fontSize: 12, color: 'var(--gold)', border: '1px solid var(--primary-a35)', borderRadius: 9, background: 'var(--primary-a08)' }}>+ Ajouter un show</Button>
+          <Button variant="secondary" disabled={disabled || item.showOptions.length >= 20} onClick={addShowOption} style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--gold)', border: '1px solid var(--primary-a35)', borderRadius: 9, background: 'var(--primary-a08)' }}>+ Ajouter un show</Button>
         </div>
       )}
 
       {placeTypes.length > 1 && (
-        <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>Exclure de certaines places :</p>
+        <div style={{ paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 8 }}>Exclure de certaines places :</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {placeTypes.map((pt) => {
               const isExcluded = item.excludedPlaces.includes(pt)
@@ -315,13 +315,13 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
                   disabled={disabled}
                   onClick={() => set('excludedPlaces', isExcluded ? item.excludedPlaces.filter((x) => x !== pt) : [...item.excludedPlaces, pt])}
                   style={{
-                    fontSize: 11,
+                    fontSize: 'var(--font-size-caption)',
                     fontWeight: 600,
                     padding: '5px 10px',
                     borderRadius: 8,
-                    border: isExcluded ? '1px solid rgba(224,90,170,0.5)' : '1px solid rgba(255,255,255,0.10)',
-                    background: isExcluded ? 'rgba(224,90,170,0.14)' : '#0b0c12',
-                    color: isExcluded ? '#ff9ed2' : 'rgba(255,255,255,0.55)',
+                    border: isExcluded ? '1px solid var(--primary-a42)' : '1px solid var(--border)',
+                    background: isExcluded ? 'var(--primary-a14)' : 'var(--surface-2)',
+                    color: isExcluded ? 'var(--accent-text)' : 'var(--text-muted)',
                   }}
                 >
                   {isExcluded ? (

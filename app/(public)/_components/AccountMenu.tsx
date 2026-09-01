@@ -164,7 +164,7 @@ export default function AccountMenu({
         >
           <Avatar src={user.image} name={user.name || user.email || '?'} size="sm" style={{ width: 34, height: 34 }} />
           {user.name && (
-            <span className="lb-acct-name" style={{ fontSize: 13, fontWeight: 700, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className="lb-acct-name" style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.name.split(' ')[0]}
             </span>
           )}
@@ -182,7 +182,7 @@ export default function AccountMenu({
               background: 'var(--surface-2)',
               border: '1px solid var(--border)',
               borderRadius: 14,
-              boxShadow: '0 20px 48px rgba(0,0,0,.5)',
+              boxShadow: '0 20px 48px rgba(var(--black-rgb), .50)',
               overflow: 'hidden',
               zIndex: 60,
               padding: 6,
@@ -190,7 +190,7 @@ export default function AccountMenu({
             }}
           >
             {user.name && (
-              <p style={{ margin: 0, padding: '8px 10px 6px', fontSize: 12.5, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p style={{ margin: 0, padding: '8px 10px 6px', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user.name}
               </p>
             )}
@@ -217,7 +217,7 @@ export default function AccountMenu({
                   padding: '8px 10px',
                   borderRadius: 8,
                   color: 'var(--text)',
-                  fontSize: 12.5,
+                  fontSize: 'var(--font-size-footnote-lg)',
                   fontWeight: 600,
                   justifyContent: 'flex-start',
                   textAlign: 'left',
@@ -248,7 +248,7 @@ export default function AccountMenu({
                 padding: '8px 10px',
                 borderRadius: 8,
                 color: 'var(--pink)',
-                fontSize: 12.5,
+                fontSize: 'var(--font-size-footnote-lg)',
                 fontWeight: 700,
                 justifyContent: 'flex-start',
                 textAlign: 'left',
@@ -286,7 +286,7 @@ function MenuLink({ href, onClick, icon, label, badge }: { href: string; onClick
           padding: '8px 10px',
           borderRadius: 8,
           color: 'var(--text)',
-          fontSize: 12.5,
+          fontSize: 'var(--font-size-footnote-lg)',
           fontWeight: 600,
           textDecoration: 'none',
         }}
@@ -301,8 +301,8 @@ function MenuLink({ href, onClick, icon, label, badge }: { href: string; onClick
             padding: '0 4px',
             borderRadius: 999,
             background: 'var(--pink)',
-            color: '#fff',
-            fontSize: 10,
+            color: 'var(--primary-ink)',
+            fontSize: 'var(--font-size-caption-2)',
             fontWeight: 800,
             display: 'flex',
             alignItems: 'center',

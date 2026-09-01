@@ -27,22 +27,22 @@ const COLORS = {
   pink: 'var(--pink)',
   gold: 'var(--gold)',
   violet: 'var(--violet)',
-  muted: 'rgba(255,255,255,0.55)',
+  muted: 'var(--text-faint)',
 }
 const CARD: React.CSSProperties = {
   background: 'var(--surface-2)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+  boxShadow: '0 24px 64px rgba(var(--black-rgb), .55)',
 }
 const btnSolid = (bg: string, fg: string): React.CSSProperties => ({
-  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 14.5, fontWeight: 500,
+  padding: '14px 20px', borderRadius: 3, cursor: 'pointer', fontSize: 'var(--font-size-body-lg)', fontWeight: 500,
   textTransform: 'none', letterSpacing: 'normal',
-  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
+  border: 'none', width: '100%', color: fg, background: bg, boxShadow: '0 8px 22px rgba(var(--black-rgb), .30)',
 })
 const btnGhostS: React.CSSProperties = {
-  padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 600, width: '100%',
-  color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+  padding: '13px 20px', borderRadius: 12, cursor: 'pointer', fontSize: 'var(--font-size-body-sm)', fontWeight: 600, width: '100%',
+  color: 'var(--text)', background: 'var(--fill-secondary)', border: '1px solid var(--border)',
 }
 
 const SUPPORT_EMAIL = 'hagechady@liveinblack.com'
@@ -52,7 +52,7 @@ const TERMINAL_FEDAPAY_STATUSES = ['canceled', 'declined', 'expired']
 
 type State = 'loading' | 'success' | 'pending' | 'cancelled' | 'error'
 
-function IconMail({ size = 16, color = '#141007' }: { size?: number; color?: string }) {
+function IconMail({ size = 16, color = 'var(--primary-ink)' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -205,11 +205,11 @@ export default function PaymentSuccessClient({
 
         {state === 'loading' && (
           <>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: COLORS.teal, animation: 'lib-pay-spin 0.9s linear infinite' }} />
-            <h1 className="font-display" style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: 0 }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', margin: '0 auto 26px', border: '3px solid var(--fill-secondary)', borderTopColor: COLORS.teal, animation: 'lib-pay-spin 0.9s linear infinite' }} />
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1)', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: 0 }}>
               Confirmation du paiement…
             </h1>
-            <p style={{ fontSize: 14, color: COLORS.muted, marginTop: 12, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: COLORS.muted, marginTop: 12, lineHeight: 1.6 }}>
               Ne ferme pas cette page, on prépare tes billets.
             </p>
           </>
@@ -218,12 +218,12 @@ export default function PaymentSuccessClient({
         {state === 'success' && (
           <>
             <Mascot mood="success" size={156} />
-            <h1 className="font-display" style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.8px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)', margin: '0 0 10px' }}>
               Paiement confirmé
             </h1>
-            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
+            <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <Button onClick={() => router.push('/profile/billets')} style={btnSolid('var(--teal-solid)', '#250817')}>Voir mes billets</Button>
+              <Button onClick={() => router.push('/profile/billets')} style={btnSolid('var(--teal-solid)', 'var(--primary-ink)')}>Voir mes billets</Button>
               <Button variant="secondary" onClick={() => router.push('/events')} style={btnGhostS}>Découvrir d&apos;autres événements</Button>
             </div>
           </>
@@ -232,17 +232,17 @@ export default function PaymentSuccessClient({
         {state === 'pending' && (
           <>
             <Mascot mood="sleeping" size={148} />
-            <h1 className="font-display" style={{ fontSize: 27, fontWeight: 800, letterSpacing: '-0.7px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-xl-lg)', fontWeight: 800, letterSpacing: '-0.7px', color: 'var(--text)', margin: '0 0 10px' }}>
               Paiement bien reçu
             </h1>
-            <p style={{ fontSize: 14.5, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
-              On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: '#fff' }}>Mes billets</strong> d&apos;ici quelques instants — inutile de repayer.
+            <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+              On finalise {eventName ? '« ' + eventName + ' »' : 'ta réservation'}. Tes billets arrivent dans <strong style={{ color: 'var(--text)' }}>Mes billets</strong> d&apos;ici quelques instants — inutile de repayer.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <Button onClick={() => router.push('/profile/billets')} style={{ ...btnSolid('var(--violet-cta)', '#fff'), border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 6px 20px rgba(122,59,242,0.35)' }}>Voir mes billets</Button>
+              <Button onClick={() => router.push('/profile/billets')} style={{ ...btnSolid('var(--violet-cta)', 'var(--primary-ink)'), border: '1px solid var(--border)', boxShadow: '0 6px 20px var(--violet-border)' }}>Voir mes billets</Button>
               <Button variant="secondary" onClick={() => setAttempt((a) => a + 1)} style={btnGhostS}>Vérifier maintenant</Button>
             </div>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 14 }}>
+            <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 14 }}>
               {attempt < MAX_AUTO_ATTEMPTS ? 'Vérification automatique en cours…' : 'Tes billets apparaîtront dans « Mes billets » dès confirmation.'}
             </p>
           </>
@@ -251,15 +251,15 @@ export default function PaymentSuccessClient({
         {state === 'cancelled' && (
           <>
             <Mascot mood="confused" size={148} />
-            <h1 className="font-display" style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff', margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-xl)', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', margin: '0 0 10px' }}>
               Paiement annulé
             </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
               Aucun montant n&apos;a été débité. Tu peux retourner à l&apos;événement et réessayer quand tu veux.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
               {eventId && (
-                <Button onClick={() => router.push(`/events/${eventId}`)} style={btnSolid(COLORS.gold, '#141007')}>
+                <Button onClick={() => router.push(`/events/${eventId}`)} style={btnSolid(COLORS.gold, 'var(--primary-ink)')}>
                   Retourner à l&apos;événement
                 </Button>
               )}
@@ -271,19 +271,19 @@ export default function PaymentSuccessClient({
         {state === 'error' && (
           <>
             <Mascot mood="error" size={148} />
-            <h1 className="font-display" style={{ fontSize: 25, fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
+            <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-1-lg)', fontWeight: 800, letterSpacing: '-0.5px', color: COLORS.pink, margin: '0 0 10px' }}>
               Une erreur est survenue
             </h1>
-            <p style={{ fontSize: 14, color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>{errorMsg}</p>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', color: COLORS.muted, margin: 0, lineHeight: 1.6 }}>{errorMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <Button onClick={copySupport} style={{ ...btnSolid(COLORS.gold, '#141007'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
-                <IconMail size={16} color="#141007" />
+              <Button onClick={copySupport} style={{ ...btnSolid(COLORS.gold, 'var(--primary-ink)'), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+                <IconMail size={16} />
                 {copied ? 'Adresse copiée' : "Copier l'email du support"}
               </Button>
               <Button variant="secondary" onClick={() => router.push('/profile/billets')} style={btnGhostS}>Voir mes billets</Button>
-              <Button variant="ghost" onClick={() => router.push('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'rgba(255,255,255,0.55)' }}>Retour à l&apos;accueil</Button>
+              <Button variant="ghost" onClick={() => router.push('/')} style={{ ...btnGhostS, border: 'none', background: 'none', color: 'var(--text-muted)' }}>Retour à l&apos;accueil</Button>
             </div>
-            <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', marginTop: 16 }}>{SUPPORT_EMAIL}</p>
           </>
         )}
       </Card>

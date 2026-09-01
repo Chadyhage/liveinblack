@@ -82,11 +82,11 @@ function DiscArt({ size, imgSrc, bgPosition, filter, spinning, ring }: { size: n
         backgroundSize: 'cover',
         backgroundPosition: bgPosition,
         filter,
-        boxShadow: ring ? `0 0 0 2px var(--obsidian), 0 0 0 3.5px var(--primary), 0 6px 16px rgba(0,0,0,0.5)` : '0 4px 10px rgba(0,0,0,0.4)',
+        boxShadow: ring ? `0 0 0 2px var(--obsidian), 0 0 0 3.5px var(--primary), 0 6px 16px rgba(var(--black-rgb), .50)` : '0 4px 10px rgba(var(--black-rgb), .40)',
         position: 'relative',
       }}
     >
-      <span style={{ position: 'absolute', inset: '38%', borderRadius: '50%', background: 'rgba(4,4,11,0.88)', border: '1px solid rgba(255,255,255,0.18)' }} />
+      <span style={{ position: 'absolute', inset: '38%', borderRadius: '50%', background: 'rgba(var(--media-black-rgb), .88)', border: '1px solid var(--image-border)' }} />
     </span>
   )
 }
@@ -302,7 +302,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
         }
         .mp-chip { transition: opacity 0.3s ease; }
         .mp-res { background: transparent; transition: background 0.15s; }
-        .mp-res:hover { background: rgba(255,255,255,0.06); }
+        .mp-res:hover { background: var(--surface); }
         .mp-disc-card { transition: border-color 0.2s, transform 0.2s; }
         .mp-disc-card:hover { transform: translateY(-1px); }
         @media (prefers-reduced-motion: reduce) {
@@ -317,10 +317,10 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
         // toujours, en un clic" sans reproduire l'emprise visuelle habituelle.
         <IconButton
           label="Rouvrir l'ambiance musicale"
-          icon={<Music4 size={16} strokeWidth={1.8} color="rgba(255,255,255,0.7)" aria-hidden="true" />}
+          icon={<Music4 size={16} strokeWidth={1.8} color="var(--text-muted)" aria-hidden="true" />}
           onClick={reopenPlayer}
           size={38}
-          style={{ borderRadius: '50%', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 8px 20px rgba(0,0,0,0.5)', transition: 'transform 0.15s cubic-bezier(0.3,0.9,0.3,1), background .16s ease, border-color .16s ease' }}
+          style={{ borderRadius: '50%', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', boxShadow: '0 8px 20px rgba(var(--black-rgb), .50)', transition: 'transform 0.15s cubic-bezier(0.3,0.9,0.3,1), background .16s ease, border-color .16s ease' }}
           onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.94)' }}
           onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
@@ -342,7 +342,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
             width: 348,
             background: 'var(--surface-2)',
             borderRadius: 'var(--radius-xl)',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+            boxShadow: '0 24px 64px rgba(var(--black-rgb), .55)',
             maxHeight: 'calc(100vh - 200px)',
             overflowY: 'auto',
             opacity: 1,
@@ -351,7 +351,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 2px' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Ambiance</span>
+            <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Ambiance</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <IconButton label="Un disque au hasard" icon={<Shuffle size={14} strokeWidth={2.4} aria-hidden="true" />} tone="accent" size={32} onClick={() => playRandom()} />
               <IconButton label="Réduire" icon={<ChevronDown size={16} strokeWidth={2.2} aria-hidden="true" />} size={32} onClick={collapsePanel} />
@@ -366,7 +366,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               position: 'relative',
               borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-strong)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+              boxShadow: '0 8px 24px var(--scrim-mid)',
               marginBottom: 16,
               overflow: 'hidden',
             }}
@@ -386,7 +386,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(180deg, rgba(10,10,14,0.35) 0%, rgba(10,10,14,0.9) 100%)',
+                background: 'linear-gradient(180deg, var(--scrim-mid) 0%, rgba(var(--night-rgb), .90) 100%)',
                 zIndex: 1,
               }}
             />
@@ -395,12 +395,12 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               <DiscArt size={56} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning={st.playing} ring />
               <div style={{ flex: 1, minWidth: 0, lineHeight: 1.2 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--image-text)', letterSpacing: '0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {track ? track.title : current.name}
                   </p>
                   {st.playing && <EqBars active color={accent} />}
                 </div>
-                <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'rgba(255,255,255,0.62)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-footnote-lg)', color: 'var(--image-text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {track ? track.artist || 'Extrait 30 s' : st.playing ? 'En lecture…' : current.desc}
                 </p>
               </div>
@@ -410,7 +410,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                     label="Disque suivant"
                     icon={<SkipForward size={16} strokeWidth={2.2} aria-hidden="true" />}
                     size={36}
-                    style={{ color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}
+                    style={{ color: 'var(--image-text-muted)', background: 'var(--fill-secondary)', border: '1px solid var(--border)' }}
                     onClick={nextDisc}
                   />
                 )}
@@ -418,7 +418,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                   label={st.playing ? 'Mettre en pause' : 'Jouer'}
                   icon={st.playing ? <Pause size={17} strokeWidth={2.8} aria-hidden="true" /> : <Play size={17} strokeWidth={2.8} fill="var(--primary-ink)" aria-hidden="true" />}
                   size={42}
-                  style={{ borderRadius: '50%', border: 'none', background: accent, color: 'var(--primary-ink)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', transition: 'transform 0.15s cubic-bezier(0.3,0.9,0.3,1)' }}
+                  style={{ borderRadius: '50%', border: 'none', background: accent, color: 'var(--primary-ink)', boxShadow: '0 4px 12px rgba(var(--black-rgb), .40)', transition: 'transform 0.15s cubic-bezier(0.3,0.9,0.3,1)' }}
                   onClick={() => toggle(track ? undefined : current.id)}
                 />
               </div>
@@ -439,9 +439,9 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                 border: '1px solid var(--border-strong)',
                 borderRadius: 'var(--radius-pill)',
                 padding: '11px 36px 11px 12px',
-                fontSize: 13,
+                fontSize: 'var(--font-size-callout)',
                 fontWeight: 500,
-                color: 'rgba(255,255,255,0.92)',
+                color: 'var(--image-text)',
                 outline: 'none',
               }}
             />
@@ -456,8 +456,8 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                   width: 14,
                   height: 14,
                   borderRadius: '50%',
-                  border: '2px solid rgba(255,255,255,0.25)',
-                  borderTopColor: '#fff',
+                  border: '2px solid var(--image-border)',
+                  borderTopColor: 'var(--image-text)',
                   display: 'inline-block',
                 }}
               />
@@ -491,11 +491,11 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                   {r.cover ? (
                     <Image src={r.cover} alt="" width={32} height={32} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                   ) : (
-                    <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
+                    <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface)', flexShrink: 0 }} />
                   )}
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.2 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</span>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{r.artist}</span>
+                    <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</span>
+                    <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{r.artist}</span>
                   </span>
                 </Button>
               ))}
@@ -503,7 +503,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
           )}
 
           {query.trim().length >= 2 && !searching && results.length === 0 && (
-            <p style={{ margin: '0 0 10px', padding: '0 2px', fontSize: 11.5, color: 'var(--text-faint)' }}>Aucun résultat pour cette recherche.</p>
+            <p style={{ margin: '0 0 10px', padding: '0 2px', fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)' }}>Aucun résultat pour cette recherche.</p>
           )}
 
           {/* Liste des ambiances — rangée compacte type "file d'attente" plutôt
@@ -534,11 +534,11 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
                 >
                   <DiscArt size={28} imgSrc={asset.img} bgPosition={asset.bgPosition} filter={asset.filter} spinning={isCur && st.playing} />
                   <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.1, flex: 1 }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: isCur ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.01em' }}>{d.name}</span>
+                    <span style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: isCur ? 'var(--text)' : 'var(--text-muted)', letterSpacing: '0.01em' }}>{d.name}</span>
                     <span
                       style={{
-                        fontSize: 10.5,
-                        color: isCur ? 'rgba(255,255,255,0.6)' : 'var(--text-faint)',
+                        fontSize: 'var(--font-size-caption-2-lg)',
+                        color: 'var(--text-faint)',
                         letterSpacing: '0.01em',
                         marginTop: 1,
                         whiteSpace: 'nowrap',
@@ -556,7 +556,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 2px 0' }}>
-            <span style={{ color: 'rgba(255,255,255,0.52)', display: 'inline-flex' }}>{volumeIcon}</span>
+            <span style={{ color: 'var(--text-faint)', display: 'inline-flex' }}>{volumeIcon}</span>
             <Slider
               accent="teal"
               min={0}
@@ -583,14 +583,14 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               borderRadius: 'var(--radius-pill)',
               background: 'var(--surface-2)',
               border: '1px solid var(--border-strong)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              boxShadow: '0 8px 24px rgba(var(--black-rgb), .50)',
               display: 'flex',
               alignItems: 'center',
               gap: 7,
             }}
           >
             {st.playing && <EqBars active color={accent} />}
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chipLabel}</span>
+            <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chipLabel}</span>
           </Button>
         </span>
         <span className="amp-trigger amp-press" style={{ display: 'inline-flex', position: 'relative' }}>
@@ -601,7 +601,7 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               st.playing ? (
                 <DiscArt size={38} imgSrc={activeAsset.img} bgPosition={activeAsset.bgPosition} filter={activeAsset.filter} spinning ring={false} />
               ) : (
-                <Music4 size={24} strokeWidth={1.8} color="rgba(255,255,255,0.8)" aria-hidden="true" />
+                <Music4 size={24} strokeWidth={1.8} color="var(--text-muted)" aria-hidden="true" />
               )
             }
             onClick={togglePanel}
@@ -610,14 +610,14 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
               borderRadius: '50%',
               background: 'var(--surface-2)',
               border: `2px solid ${st.playing ? accent : 'var(--border-strong)'}`,
-              boxShadow: st.playing ? `0 0 0 4px var(--primary-a14), 0 10px 28px rgba(0,0,0,0.55)` : '0 10px 28px rgba(0,0,0,0.55)',
+              boxShadow: st.playing ? `0 0 0 4px var(--primary-a14), 0 10px 28px rgba(var(--black-rgb), .55)` : '0 10px 28px rgba(var(--black-rgb), .55)',
               transition: 'border-color 0.3s, box-shadow 0.3s',
             }}
           />
           {st.playing && (
             <span
               aria-hidden="true"
-              style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(0,0,0,0.4)', pointerEvents: 'none' }}
+              style={{ position: 'absolute', top: 4, right: 4, width: 9, height: 9, borderRadius: '50%', background: accent, border: '1px solid rgba(var(--black-rgb), .40)', pointerEvents: 'none' }}
             />
           )}
         </span>

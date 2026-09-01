@@ -11,7 +11,7 @@ const CARD: React.CSSProperties = {
   background: 'var(--surface)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-lg)',
-  boxShadow: '0 18px 46px rgba(0,0,0,0.22)',
+  boxShadow: '0 18px 46px rgba(var(--black-rgb), .22)',
 }
 
 type FormState = { name: string; email: string; subject: string; message: string }
@@ -85,7 +85,7 @@ export default function ContactClient() {
         position: 'relative',
         zIndex: 1,
         padding: '20px clamp(14px, 2vw, 28px) 48px',
-        background: 'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, #07080d 100%)',
+        background: 'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, var(--media-canvas) 100%)',
       }}
     >
       <div style={{ maxWidth: 1560, margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -94,11 +94,11 @@ export default function ContactClient() {
           <div>
             <h1
               className="font-display"
-              style={{ fontSize: 16, letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
+              style={{ fontSize: 'var(--font-size-headline-lg)', letterSpacing: '.01em', color: 'var(--text)', margin: 0, lineHeight: 1.15 }}
             >
               Contact
             </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '4px 0 0' }}>
               Une question, un souci, une suggestion ? Écris-nous, on te répond au plus vite.
             </p>
           </div>
@@ -109,8 +109,8 @@ export default function ContactClient() {
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '18px 8px' }}>
               <Mascot mood="message" size={104} />
-              <h2 style={{ fontSize: 16, color: 'rgba(255,255,255,0.93)', margin: '0 0 10px' }}>Message envoyé</h2>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
+              <h2 style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text)', margin: '0 0 10px' }}>Message envoyé</h2>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
               </p>
               <Button variant="secondary" onClick={() => setStatus('idle')}>
@@ -130,7 +130,7 @@ export default function ContactClient() {
                     placeholder="Ton nom"
                     autoComplete="name"
                   />
-                  {errors.name && <p style={{ fontSize: 12, color: '#ff5b5b', margin: '6px 0 0' }}>{errors.name}</p>}
+                  {errors.name && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', margin: '6px 0 0' }}>{errors.name}</p>}
                 </div>
 
                 <div>
@@ -144,7 +144,7 @@ export default function ContactClient() {
                     placeholder="ton@email.com"
                     autoComplete="email"
                   />
-                  {errors.email && <p style={{ fontSize: 12, color: '#ff5b5b', margin: '6px 0 0' }}>{errors.email}</p>}
+                  {errors.email && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', margin: '6px 0 0' }}>{errors.email}</p>}
                 </div>
 
                 <div>
@@ -156,7 +156,7 @@ export default function ContactClient() {
                     invalid={Boolean(errors.subject)}
                     placeholder="En quelques mots"
                   />
-                  {errors.subject && <p style={{ fontSize: 12, color: '#ff5b5b', margin: '6px 0 0' }}>{errors.subject}</p>}
+                  {errors.subject && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', margin: '6px 0 0' }}>{errors.subject}</p>}
                 </div>
 
                 <div>
@@ -169,11 +169,11 @@ export default function ContactClient() {
                     placeholder="Décris-nous ta demande..."
                     rows={6}
                   />
-                  {errors.message && <p style={{ fontSize: 12, color: '#ff5b5b', margin: '6px 0 0' }}>{errors.message}</p>}
+                  {errors.message && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', margin: '6px 0 0' }}>{errors.message}</p>}
                 </div>
 
                 {status === 'error' && (
-                  <p style={{ fontSize: 13, color: '#ff5b5b', margin: 0 }}>{errorMessage}</p>
+                  <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--danger)', margin: 0 }}>{errorMessage}</p>
                 )}
 
                 <Button type="submit" loading={status === 'submitting'} loadingText="Envoi en cours..." fullWidth>
@@ -186,23 +186,23 @@ export default function ContactClient() {
 
         <Card style={{ boxShadow: CARD.boxShadow, padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <h2 style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Un délai de réponse rapide</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+            <h2 style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Un délai de réponse rapide</h2>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               L&apos;équipe LIVEINBLACK répond généralement sous 24 à 48h ouvrées. Pour une urgence liée à un
               événement en cours, précise-le dans l&apos;objet de ton message.
             </p>
           </div>
           <div>
-            <h2 style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Avant d&apos;écrire</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+            <h2 style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Avant d&apos;écrire</h2>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               La plupart des questions sur les billets, remboursements ou ton compte trouvent une réponse plus
               rapide directement depuis ton espace « Mon profil » ou la page{' '}
               <a href="/about" style={{ color: 'var(--teal)' }}>C&apos;est quoi</a>.
             </p>
           </div>
           <div>
-            <h2 style={{ fontSize: 14, color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Tu es organisateur ou prestataire ?</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
+            <h2 style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', margin: '0 0 5px', fontWeight: 800 }}>Tu es organisateur ou prestataire ?</h2>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               Pour une question sur ton dossier ou tes paiements, passe plutôt par la messagerie intégrée depuis
               ton espace connecté — la réponse y sera plus rapide et centralisée avec ton compte.
             </p>

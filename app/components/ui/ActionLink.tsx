@@ -12,8 +12,8 @@ export interface ActionLinkProps extends Omit<ComponentProps<typeof Link>, 'chil
 
 const TONES: Record<Tone, CSSProperties> = {
   primary: { background: 'var(--primary)', color: 'var(--primary-ink)', border: '1px solid transparent' },
-  secondary: { background: 'rgba(255,255,255,.07)', color: '#f5f5f7', border: '1px solid rgba(255,255,255,.15)' },
-  ghost: { background: 'transparent', color: 'var(--primary)', border: '1px solid transparent' },
+  secondary: { background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border-strong)' },
+  ghost: { background: 'transparent', color: 'var(--accent-text)', border: '1px solid transparent' },
 }
 
 /** Lien d’action du design system. Il conserve la sémantique d’un lien tout en partageant l’apparence et la zone tactile des boutons. */
@@ -30,7 +30,7 @@ export default function ActionLink({ children, tone = 'primary', icon, fullWidth
         justifyContent: 'center',
         gap: 8,
         borderRadius: 'var(--radius-control)',
-        fontSize: 15,
+        fontSize: 'var(--font-size-headline)',
         fontWeight: 700,
         lineHeight: 1.2,
         textAlign: 'center',

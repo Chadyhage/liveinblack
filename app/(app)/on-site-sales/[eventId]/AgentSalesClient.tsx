@@ -121,25 +121,25 @@ export default function AgentSalesClient({
 
   return (
     <main style={{ width: '100%', padding: 'var(--space-4) var(--page-gutter) 56px' }}>
-      <h1 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 3px' }}>Vente sur place</h1>
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '0 0 10px' }}>{eventName}</p>
+      <h1 style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, margin: '0 0 3px' }}>Vente sur place</h1>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '0 0 10px' }}>{eventName}</p>
 
       <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 'var(--space-2)', marginBottom: 16 }}>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
+          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
+          <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash en attente</p>
+          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{dashboard.cashPending}</p>
+          <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash en attente</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash réglé</p>
+          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.cashSettled}</p>
+          <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Cash réglé</p>
         </Card>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
-          <p style={{ fontSize: 10.5, color: 'var(--text-faint)', margin: '2px 0 0' }}>Mobile Money</p>
+          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--violet)', margin: 0 }}>{dashboard.momoSales}</p>
+          <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Mobile Money</p>
         </Card>
       </div>
 
@@ -214,7 +214,7 @@ export default function AgentSalesClient({
               variant="secondary"
               onClick={() => setMethod('cash')}
               fullWidth
-              style={{ flex: 1, borderRadius: 'var(--radius-control)', background: method === 'cash' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'cash' ? '#1a1508' : 'var(--text)' }}
+              style={{ flex: 1, borderRadius: 'var(--radius-control)', background: method === 'cash' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'cash' ? 'var(--primary-ink)' : 'var(--text)' }}
             >
               Espèces
             </Button>
@@ -222,7 +222,7 @@ export default function AgentSalesClient({
               variant="secondary"
               onClick={() => setMethod('momo')}
               fullWidth
-              style={{ flex: 1, borderRadius: 'var(--radius-control)', background: method === 'momo' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'momo' ? '#1a1508' : 'var(--text)' }}
+              style={{ flex: 1, borderRadius: 'var(--radius-control)', background: method === 'momo' ? 'var(--gold)' : 'var(--obsidian)', color: method === 'momo' ? 'var(--primary-ink)' : 'var(--text)' }}
             >
               Mobile Money
             </Button>
@@ -281,7 +281,7 @@ export default function AgentSalesClient({
           Encaisser la vente
         </Button>
 
-        {result && <p style={{ fontSize: 12.5, color: result.kind === 'ok' ? 'var(--teal)' : '#e05aaa', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
+        {result && <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: result.kind === 'ok' ? 'var(--teal)' : 'var(--danger)', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
       </Card>
 
       <ConfirmDialog
@@ -289,13 +289,13 @@ export default function AgentSalesClient({
         title="Confirmer la vente"
         body={
           <>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {selectedPlace ? `${selectedPlace.type} · ${effectiveQty} billet${effectiveQty > 1 ? 's' : ''}` : 'Vente en cours'}
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 800, color: 'var(--gold)' }}>
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-title-4)', fontWeight: 800, color: 'var(--gold)' }}>
               {fmtMoney(saleAmount, currency)}
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {method === 'cash'
                 ? `Paiement en espèces · ${settlementMode === 'agent_settles' ? 'règlement manuel par l’agent' : 'prélèvement immédiat sur le solde organisateur'}`
                 : `Paiement Mobile Money · ${momoNumber.trim() || 'numéro à confirmer'}`}

@@ -81,7 +81,7 @@ export function ConfirmModal({
 }) {
   return (
     <ModalShell title={title} onClose={onCancel}>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 8px' }}>{message}</p>
+      <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '0 0 8px' }}>{message}</p>
       <ModalActions onCancel={onCancel} onConfirm={onConfirm} confirmLabel={confirmLabel} />
     </ModalShell>
   )

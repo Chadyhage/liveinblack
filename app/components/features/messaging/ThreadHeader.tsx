@@ -19,7 +19,7 @@ function HeaderIconButton({ title, onClick, children }: { title: string; onClick
         minHeight: 44,
         padding: 0,
         borderRadius: '50%',
-        fontSize: 14,
+        fontSize: 'var(--font-size-body-sm)',
       }}
     >
       {children}
@@ -57,15 +57,15 @@ export default function ThreadHeader({
               e.stopPropagation()
               onBack()
             }}
-            style={{ color: 'var(--text-faint)', fontSize: 18, marginRight: 4, display: 'inline-flex', alignItems: 'center' }}
+            style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-title-4)', marginRight: 4, display: 'inline-flex', alignItems: 'center' }}
           >
             <ArrowLeft size={18} />
           </span>
         ) : null}
         {avatar}
         <div style={{ minWidth: 0 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</h2>
-          <p style={{ fontSize: 11, color: subtitle === 'En ligne' ? '#F53D8D' : 'var(--text-faint)', margin: 0 }}>{subtitle}</p>
+          <h2 style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, margin: 0, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</h2>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: subtitle === 'En ligne' ? 'var(--primary)' : 'var(--text-faint)', margin: 0 }}>{subtitle}</p>
         </div>
       </Button>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>

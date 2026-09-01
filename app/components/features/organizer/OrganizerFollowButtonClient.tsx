@@ -128,7 +128,7 @@ export default function OrganizerFollowButtonClient({
   const style: React.CSSProperties = following
     ? { ...base, background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', color: 'var(--primary)' }
     : appearance === 'premium'
-      ? { ...base, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)' }
+      ? { ...base, background: 'var(--fill-secondary)', color: 'var(--text)' }
       : appearance === 'outline'
         ? { ...base, background: 'transparent', border: '1px solid var(--primary-a55)', color: 'var(--text)' }
         : { ...base, background: 'var(--primary)', color: 'var(--primary-ink)' }
@@ -161,7 +161,7 @@ export default function OrganizerFollowButtonClient({
             border: '1px solid var(--border)',
             borderRadius: 10,
             overflow: 'hidden',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+            boxShadow: '0 12px 32px rgba(var(--black-rgb), .40)',
           }}
         >
           <Button
@@ -172,7 +172,7 @@ export default function OrganizerFollowButtonClient({
               setMenuOpen(false)
               setConfirmUnfollow(true)
             }}
-            style={{ display: 'block', width: '100%', borderRadius: 'var(--radius-md)', padding: '10px 16px', background: 'rgba(255,123,123,0.14)', color: 'var(--pink)', border: 'none', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap' }}
+            style={{ display: 'block', width: '100%', borderRadius: 'var(--radius-md)', padding: '10px 16px', background: 'rgba(var(--danger-soft-rgb), .14)', color: 'var(--pink)', border: 'none', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, whiteSpace: 'nowrap' }}
           >
             Se désabonner
           </Button>
@@ -195,13 +195,13 @@ export default function OrganizerFollowButtonClient({
             </>
           }
         >
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 14 }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
             Tu ne recevras plus les alertes et actualités de {organizerName}.
           </p>
         </Modal>
       )}
 
-      {error && <p style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, fontSize: 11.5, color: 'var(--pink)', whiteSpace: 'nowrap' }}>{error}</p>}
+      {error && <p style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, fontSize: 'var(--font-size-caption-lg)', color: 'var(--pink)', whiteSpace: 'nowrap' }}>{error}</p>}
     </div>
   )
 }

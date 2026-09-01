@@ -105,7 +105,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
     <main className="lb-dashboard-page">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+          <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
@@ -113,8 +113,8 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
         </div>
 
         <header>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
-          <p style={{ maxWidth: 620, margin: '5px 0 0', color: 'rgba(245,245,247,.62)', fontSize: 12, lineHeight: 1.35 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
+          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
+          <p style={{ maxWidth: 620, margin: '5px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', lineHeight: 1.35 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
         </header>
 
         {follows.length === 0 ? (
@@ -124,7 +124,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
             action={
               <Link
                 href="/organizers"
-                style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 11, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}
+                style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 11, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 'var(--font-size-callout)', textDecoration: 'none' }}
               >
                 Découvrir les organisateurs
               </Link>
@@ -155,8 +155,8 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 16px' }}>
                       <Avatar src={s.avatarUrl || placeholderPhotoUrl(`${s.organizerId}-avatar`, 160, 160)} name={s.name} size="lg" />
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <Link href={`/organizers/${s.slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 15, fontWeight: 750, color: '#fff', textDecoration: 'none' }}>{s.name}</Link>
-                        {(s.city || s.country) && <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '-4px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
+                        <Link href={`/organizers/${s.slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-headline)', fontWeight: 750, color: 'var(--text)', textDecoration: 'none' }}>{s.name}</Link>
+                        {(s.city || s.country) && <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: '-4px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
                       </div>
                       <OrganizerFollowButtonClient organizerId={s.organizerId} organizerName={s.name} initialFollowing={false} isAuthenticated compact onFollow={() => addFollow(s)} />
                     </div>
@@ -215,14 +215,14 @@ function FollowCard({
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '14px 16px 12px' }}>
         <Avatar src={follow.organizerAvatarUrl || placeholderPhotoUrl(`${follow.organizerId}-avatar`, 160, 160)} name={follow.organizerName} size="lg" />
         <div style={{ flex: 1, minWidth: 120 }}>
-          <h2 style={{ fontSize: 14.5, fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
+          <h2 style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
           {(follow.organizerCity || follow.organizerCountry) && (
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '1px 0 0' }}>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>
+            <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: '1px 0 0' }}>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>
           )}
         </div>
         <Link
           href={`/organizers/${follow.organizerSlug}`}
-          style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', padding: '6px 10px', borderRadius: 999, border: '1px solid var(--border-strong)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
+          style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', padding: '6px 10px', borderRadius: 999, border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 'var(--font-size-footnote)', fontWeight: 700, textDecoration: 'none' }}
         >
           Voir la page
         </Link>
@@ -235,9 +235,9 @@ function FollowCard({
           checked={follow.notificationsEnabled}
           onChange={toggleMaster}
           disabled={savingMaster}
-          style={{ fontSize: 12, color: '#fff' }}
+          style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text)' }}
         />
-        <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 11.5 }}>
+        <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 'var(--font-size-caption-lg)' }}>
           {expanded ? 'Masquer les réglages' : 'Personnaliser les alertes'}
         </Button>
       </div>
@@ -250,7 +250,7 @@ function FollowCard({
               label={label}
               checked={follow.alerts[key]}
               onChange={() => toggleAlert(key)}
-              style={{ fontSize: 11.5, color: '#fff', background: 'rgba(255,255,255,0.04)', borderRadius: 9, padding: '7px 9px' }}
+              style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text)', background: 'var(--fill-secondary)', borderRadius: 9, padding: '7px 9px' }}
             />
           ))}
         </div>

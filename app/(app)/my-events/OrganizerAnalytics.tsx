@@ -30,8 +30,8 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
   if (totalTickets === 0) {
     return (
       <Card style={{ marginBottom: 16 }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>Aucune vente pour l&rsquo;instant.</p>
-        <p style={{ color: 'var(--text-faint)', fontSize: 12, margin: '4px 0 0' }}>Tes ventes apparaîtront ici dès le premier billet.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-callout)', margin: 0 }}>Aucune vente pour l&rsquo;instant.</p>
+        <p style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote)', margin: '4px 0 0' }}>Tes ventes apparaîtront ici dès le premier billet.</p>
       </Card>
     )
   }
@@ -57,7 +57,7 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '0 0 8px' }}>
-          <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>
+          <span style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>
             Revenus billetterie + précommandes
           </span>
           <svg
@@ -78,7 +78,7 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {[...byCurrency.entries()].map(([currency, totals]) => (
             <span key={currency} style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ font: '600 26px var(--font-open-sans)', color: '#fff' }}>{formatMoney(totals.revenue, currency)}</span>
+              <span style={{ font: '600 26px var(--font-open-sans)', color: 'var(--text)' }}>{formatMoney(totals.revenue, currency)}</span>
               {byCurrency.size > 1 && <span style={{ font: '600 11px var(--font-open-sans)', color: 'var(--text-faint)' }}>{currency}</span>}
             </span>
           ))}
@@ -90,17 +90,17 @@ export default function OrganizerAnalytics({ events }: { events: OrganizerEventV
         )}
       </Button>
       <Card style={{ padding: '16px 18px' }}>
-        <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Billets émis</p>
-        <p style={{ font: '600 26px var(--font-open-sans)', color: '#fff', margin: 0 }}>{totalTickets}</p>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 8px' }}>Billets émis</p>
+        <p style={{ font: '600 26px var(--font-open-sans)', color: 'var(--text)', margin: 0 }}>{totalTickets}</p>
       </Card>
 
       {topEvents.length > 0 && (
         <Card style={{ gridColumn: '1 / -1', padding: '16px 18px' }}>
-          <p style={{ fontSize: 14, fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Par événement</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Par événement</p>
           <div style={{ display: 'grid', gap: 8 }}>
             {topEvents.map((e) => {
               const fill = Math.min(100, Math.round((e.soldCount / e.totalCapacity) * 100))
-              return <div key={e.id} style={{ display: 'grid', gap: 5 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5 }}><span style={{ color: '#fff' }}>{e.name}</span><span style={{ color: 'var(--gold)', fontWeight: 600 }}>{e.soldCount}/{e.totalCapacity} · {fill}% · {formatMoney(e.revenue, e.currency)}</span></div><div aria-label={`Remplissage ${fill} %`} style={{ height: 5, borderRadius: 999, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}><div style={{ width: `${fill}%`, height: '100%', borderRadius: 999, background: fill >= 90 ? 'var(--teal)' : 'var(--gold)' }} /></div></div>
+              return <div key={e.id} style={{ display: 'grid', gap: 5 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 'var(--font-size-footnote-lg)' }}><span style={{ color: 'var(--text)' }}>{e.name}</span><span style={{ color: 'var(--gold)', fontWeight: 600 }}>{e.soldCount}/{e.totalCapacity} · {fill}% · {formatMoney(e.revenue, e.currency)}</span></div><div aria-label={`Remplissage ${fill} %`} style={{ height: 5, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}><div style={{ width: `${fill}%`, height: '100%', borderRadius: 999, background: fill >= 90 ? 'var(--teal)' : 'var(--gold)' }} /></div></div>
             })}
           </div>
         </Card>

@@ -298,7 +298,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           height: 60,
           borderRadius: '50%',
           background: user.avatarUrl ? `url(${user.avatarUrl}) center/cover` : 'var(--border)',
-          fontSize: 18,
+          fontSize: 'var(--font-size-title-4)',
           fontWeight: 800,
           color: 'var(--gold)',
           position: 'relative',
@@ -318,14 +318,14 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           ariaLabel="Recadrer la photo de profil"
           contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, textAlign: 'center', maxHeight: 'none', overflowY: 'visible' }}
         >
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>Recadrer la photo</h2>
-            <p style={{ fontSize: 11, color: 'var(--text-faint)', textTransform: 'uppercase', margin: '0 0 16px' }}>Glisse pour repositionner</p>
+            <h2 style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--text)', margin: '0 0 4px' }}>Recadrer la photo</h2>
+            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', textTransform: 'uppercase', margin: '0 0 16px' }}>Glisse pour repositionner</p>
             <div
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerLeave={onPointerUp}
-              style={{ width: PREVIEW, height: PREVIEW, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 16px', position: 'relative', background: '#000', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+              style={{ width: PREVIEW, height: PREVIEW, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 16px', position: 'relative', background: 'var(--media-canvas)', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
             >
               {/* Image locale temporaire : le canvas de recadrage lit naturalWidth/naturalHeight. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -361,7 +361,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
                   variant="secondary"
                   aria-label={control.label}
                   onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
-                  style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 11, fontSize: 16 }}
+                  style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 11, fontSize: 'var(--font-size-headline-lg)' }}
                 >
                   {control.glyph}
                 </Button>
@@ -417,9 +417,9 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
   const tokens = q.split(/\s+/).filter(Boolean)
   const filtered = filterSettingEntries(entries, query)
   const settingGroups = [
-    { id: 'profil', title: 'Profil et préférences', shortTitle: 'Profil', description: 'Identité, téléphone et goûts', ids: ['identite', 'goûts'], icon: UserRound, color: '#70b7ff' },
-    { id: 'privacy', title: 'Confidentialité et données', shortTitle: 'Confidentialité', description: 'Visibilité, recommandations et export', ids: ['visibilite', 'confidentialite', 'mes donnees'], icon: ShieldCheck, color: '#ff8fb2' },
-    { id: 'security', title: 'Connexion et sécurité', shortTitle: 'Sécurité', description: 'E-mail, mot de passe et compte', ids: ['email', 'mot de passe', 'danger'], icon: KeyRound, color: '#c4a7ff' },
+    { id: 'profil', title: 'Profil et préférences', shortTitle: 'Profil', description: 'Identité, téléphone et goûts', ids: ['identite', 'goûts'], icon: UserRound, color: 'var(--sky)' },
+    { id: 'privacy', title: 'Confidentialité et données', shortTitle: 'Confidentialité', description: 'Visibilité, recommandations et export', ids: ['visibilite', 'confidentialite', 'mes donnees'], icon: ShieldCheck, color: 'var(--accent-text)' },
+    { id: 'security', title: 'Connexion et sécurité', shortTitle: 'Sécurité', description: 'E-mail, mot de passe et compte', ids: ['email', 'mot de passe', 'danger'], icon: KeyRound, color: 'var(--violet-text)' },
   ]
   const visibleGroups = tokens.length > 0 ? settingGroups : settingGroups.filter((group) => group.id === activeGroup)
 
@@ -472,11 +472,11 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
 }
 
 function EyebrowLabel({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>{children}</p>
+  return <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>{children}</p>
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
-  return <p style={{ fontSize: 12.5, color: kind === 'ok' ? 'var(--teal)' : '#ff7b7b', margin: '10px 0 0' }}>{text}</p>
+  return <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: kind === 'ok' ? 'var(--teal)' : 'var(--danger-text)', margin: '10px 0 0' }}>{text}</p>
 }
 
 // Champ mot de passe avec bouton "Voir"/"Cacher" — même pattern que
@@ -511,7 +511,7 @@ function PasswordField({
         variant="link"
         onClick={() => setShow((v) => !v)}
         icon={show ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}
+        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', gap: 5, fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}
       >
         {show ? 'Cacher' : 'Voir'}
       </Button>
@@ -639,7 +639,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
         <Input aria-label="Nom" value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
       </div>
       {onCooldown && nextChangeDate && (
-        <p style={{ fontSize: 12, color: 'var(--gold)', margin: '0 0 10px' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--gold)', margin: '0 0 10px' }}>
           Prochain changement possible le {nextChangeDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       )}
@@ -661,7 +661,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
         />
         <Input aria-label="Numéro de téléphone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ flex: 1 }} />
       </div>
-      <p style={{ fontSize: 13.5, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Utilisé pour te contacter et partagé avec les organisateurs/prestataires avec qui tu échanges en messagerie.
       </p>
       <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
@@ -679,7 +679,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           min={minBirthDate}
           max={maxBirthDate}
           onChange={(event) => setBirthDate(event.target.value)}
-          style={{ flex: 1, colorScheme: 'dark' }}
+          style={{ flex: 1, colorScheme: 'light dark' }}
         />
         <Select
           aria-label="Genre"
@@ -693,7 +693,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           ]}
         />
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
         Optionnel — sert uniquement aux statistiques anonymes des organisateurs. Jamais affiché sur ton profil, jamais utilisé comme contrôle d&apos;âge.
       </p>
       <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
@@ -712,10 +712,10 @@ function VisibilityCard({ user }: { user: ProfilUser }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <p style={{ fontSize: 13, color: '#fff', margin: 0, fontWeight: 600 }}>{name}</p>
-            <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '2px 0 0' }}>Nom du compte</p>
+            <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{name}</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Nom du compte</p>
           </div>
-          <p style={{ fontSize: 11.5, color: 'var(--text-muted)', textAlign: 'right', maxWidth: 190, margin: 0 }}>Conversations, demandes d&apos;amis, guestlists, équipes de soirée, billets.</p>
+          <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', textAlign: 'right', maxWidth: 190, margin: 0 }}>Conversations, demandes d&apos;amis, guestlists, équipes de soirée, billets.</p>
         </div>
       </div>
     </Card>
@@ -731,7 +731,7 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
   return (
     <Card>
       <EyebrowLabel>Mes goûts — recommandations</EyebrowLabel>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
         Optionnel. Sert uniquement à te proposer les bonnes soirées sur l&apos;accueil (« Nos recommandations pour toi »). Jamais partagé avec les organisateurs.
       </p>
       {tags.length > 0 ? (
@@ -744,7 +744,7 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
           {overflow > 0 && <Badge tone="neutral">+{overflow}</Badge>}
         </div>
       ) : (
-        <p style={{ fontSize: 12.5, color: 'var(--text-faint)', margin: '0 0 14px' }}>Tu n&apos;as pas encore renseigné tes goûts.</p>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '0 0 14px' }}>Tu n&apos;as pas encore renseigné tes goûts.</p>
       )}
       <Button onClick={() => setOpen(true)} variant="primary" style={goldButtonStyle}>
         {tags.length > 0 ? 'Modifier mes goûts' : 'Renseigner mes goûts'}
@@ -765,8 +765,8 @@ function PrivacyToggle({ label, hint, value, onChange }: { label: string; hint: 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0' }}>
       <div style={{ maxWidth: 260 }}>
-        <p style={{ fontSize: 13, color: '#fff', margin: '0 0 2px', fontWeight: 600 }}>{label}</p>
-        <p style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0, lineHeight: 1.4 }}>{hint}</p>
+        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: '0 0 2px', fontWeight: 600 }}>{label}</p>
+        <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0, lineHeight: 1.4 }}>{hint}</p>
       </div>
       <Switch checked={value} onChange={(e) => onChange(e.target.checked)} />
     </div>
@@ -856,7 +856,7 @@ function DataExportCard() {
   return (
     <Card>
       <EyebrowLabel>Mes données</EyebrowLabel>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
+      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
         Télécharge une copie de toutes les données personnelles associées à ton compte (profil, billets, commandes,
         messages que tu as envoyés, amis, avis, événements suivis…) au format JSON — droit d&apos;accès et droit à la
         portabilité (articles 15 et 20 du RGPD).
@@ -917,17 +917,17 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
     <Card>
       <EyebrowLabel>Adresse e-mail</EyebrowLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', marginBottom: 14 }}>
-        <span style={{ fontSize: 13, color: '#fff', flex: 1 }}>{user.email}</span>
+        <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', flex: 1 }}>{user.email}</span>
         <Badge tone="teal">Actuel</Badge>
       </div>
 
       {user.pendingEmail ? (
         <div style={{ padding: 14, borderRadius: 10, background: 'var(--primary-a08)', border: '1px solid var(--primary-a24)' }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)', margin: '0 0 4px' }}>Vérification en attente</p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--gold)', margin: '0 0 4px' }}>Vérification en attente</p>
+          <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: '0 0 10px', lineHeight: 1.5 }}>
             Un lien a été envoyé à {user.pendingEmail}. Ouvre-le pour confirmer le changement.
           </p>
-          <Button onClick={() => setConfirmCancelRequest(true)} disabled={cancelling} variant="link" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+          <Button onClick={() => setConfirmCancelRequest(true)} disabled={cancelling} variant="link" style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)' }}>
             Annuler la demande
           </Button>
         </div>
@@ -1021,24 +1021,24 @@ function PasswordCard({ email }: { email: string }) {
       <PasswordField value={newPassword} onChange={setNewPassword} placeholder="8 caractères, 1 majuscule, 1 chiffre" style={{ marginBottom: strength ? 6 : 10 }} />
       {strength && (
         <div style={{ marginBottom: 10 }}>
-          <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: 4 }}>
+          <div style={{ height: 3, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden', marginBottom: 4 }}>
             <div style={{ height: '100%', width: `${strength.pct}%`, background: strength.color }} />
           </div>
-          <span style={{ fontSize: 10.5, color: strength.color, fontWeight: 700 }}>FORCE : {strength.label}</span>
+          <span style={{ fontSize: 'var(--font-size-caption-2-lg)', color: strength.color, fontWeight: 700 }}>FORCE : {strength.label}</span>
         </div>
       )}
       <PasswordField
         value={confirmPassword}
         onChange={setConfirmPassword}
         placeholder="Confirmer le nouveau mot de passe"
-        style={{ marginBottom: 12, border: mismatch ? '1px solid #ff7b7b' : undefined }}
+        style={{ marginBottom: 12, border: mismatch ? '1px solid var(--danger-text)' : undefined }}
       />
       <Button onClick={submit} disabled={saving || !currentPassword || !newPassword || !confirmPassword} loading={saving} loadingText="Mise à jour…" variant="primary" style={goldButtonStyle}>
         Mettre à jour le mot de passe
       </Button>
       {msg && <Toast text={msg.text} kind={msg.kind} />}
       <div style={{ marginTop: 14 }}>
-        <Button onClick={sendReset} disabled={resetSending} variant="link" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+        <Button onClick={sendReset} disabled={resetSending} variant="link" style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)' }}>
           Mot de passe oublié ? Recevoir un lien de réinitialisation
         </Button>
       </div>
@@ -1086,12 +1086,12 @@ function DangerZoneCard() {
   return (
     <Card>
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 16px' }} />
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Zone de danger</p>
+      <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Zone de danger</p>
 
       {pendingSubmitted ? (
-        <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(224,90,170,0.35)', background: 'rgba(224,90,170,0.08)' }}>
-          <p style={{ fontSize: 13, color: '#fff', fontWeight: 700, margin: '0 0 4px' }}>Demande de suppression envoyée</p>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid var(--danger-border)', background: 'var(--danger-fill)' }}>
+          <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', fontWeight: 700, margin: '0 0 4px' }}>Demande de suppression envoyée</p>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
             Ta demande de suppression a été transmise à l&apos;équipe LIVEINBLACK. Ton compte reste actif en attendant sa validation.
           </p>
         </div>
@@ -1099,7 +1099,7 @@ function DangerZoneCard() {
         <Button
           onClick={() => setShowConfirm(true)}
           variant="secondary"
-          style={{ padding: '11px 18px', borderRadius: 7, border: '1px solid rgba(255,107,0,0.4)', background: 'transparent', color: 'var(--pink)', fontSize: 13 }}
+          style={{ padding: '11px 18px', borderRadius: 7, border: '1px solid var(--primary-a42)', background: 'transparent', color: 'var(--pink)', fontSize: 'var(--font-size-callout)' }}
         >
           Supprimer mon compte
         </Button>
@@ -1123,7 +1123,7 @@ function DangerZoneCard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <Label>Confirme avec ton mot de passe</Label>
           <PasswordField value={password} onChange={setPassword} placeholder="Mot de passe" autoFocus />
-          {error ? <p style={{ fontSize: 12, color: '#ff7b7b', margin: 0 }}>{error}</p> : null}
+          {error ? <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger-text)', margin: 0 }}>{error}</p> : null}
         </div>
       </ConfirmDialog>
     </Card>
@@ -1165,14 +1165,14 @@ export function SupportPanel() {
   return (
     <main className="lb-dashboard-page lb-dashboard-page--medium">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 15, fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
           <ArrowLeft size={17} aria-hidden="true" />
           Profil
         </Link>
 
         <header style={{ marginBottom: 10 }}>
-          <h1 style={{ margin: 0, color: '#f5f5f7', fontSize: 'clamp(32px,3.6vw,44px)', fontWeight: 760, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
-          <p style={{ maxWidth: 680, margin: '10px 0 0', color: 'rgba(245,245,247,.72)', fontSize: 16, lineHeight: 1.55 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
+          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(32px,3.6vw,44px)', fontWeight: 760, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
+          <p style={{ maxWidth: 680, margin: '10px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-headline-lg)', lineHeight: 1.55 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
         </header>
 
         <div className={helpStyles.grid}>
