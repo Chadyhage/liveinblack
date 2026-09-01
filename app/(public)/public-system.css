@@ -5,6 +5,7 @@
 
 .lb-public-layout main { font-family: var(--public-font); }
 .lb-public-layout main { background-color: var(--background) !important; }
+.lb-public-layout main.lb-auth-split { background: var(--obsidian) !important; background-color: var(--obsidian) !important; }
 .lb-public-layout main h1,
 .lb-public-layout main h2,
 .lb-public-layout main h3 {
@@ -57,7 +58,7 @@
 .lb-public-detail-page {
   max-width: var(--public-detail-max) !important;
   padding: var(--public-content-padding) !important;
-  padding-top: 20px !important;
+  padding-top: clamp(88px, 9vw, 115px) !important;
   background: transparent;
 }
 
@@ -108,18 +109,18 @@
   overflow: hidden;
   border-color: var(--border) !important;
   border-radius: 16px !important;
-  background: var(--surface) !important;
+  background: transparent !important;
   box-shadow: none;
 }
 .lb-auth-form .lb-role-card button { min-height: 64px !important; padding: 10px !important; }
-.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(var(--primary-rgb), .48) !important; background: rgba(var(--primary-rgb), .065) !important; }
-.lb-auth-form [role="tablist"] { min-height: 38px; padding: 3px !important; border-radius: 11px !important; background: var(--surface-2) !important; }
+.lb-auth-form .lb-role-card:hover { transform: none !important; border-color: rgba(var(--primary-rgb), .48) !important; background: var(--fill-secondary) !important; }
+.lb-auth-form [role="tablist"] { min-height: 38px; padding: 3px !important; border-radius: 11px !important; background: transparent !important; border: 1px solid var(--border); }
 .lb-auth-form [role="tab"] { min-height: 32px; border-radius: 9px !important; }
 .lb-auth-state {
   padding: clamp(24px, 4.2vw, 40px) !important;
   border: 1px solid var(--border);
   border-radius: 28px;
-  background: var(--card-bg);
+  background: transparent !important;
   box-shadow: none;
 }
 .lb-auth-state > div:first-child { box-shadow: none; }

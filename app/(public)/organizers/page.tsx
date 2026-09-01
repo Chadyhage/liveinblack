@@ -98,7 +98,6 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="organizers-title">
-        <p className={styles.eyebrow}>L’annuaire LIVEINBLACK</p>
         <h1 id="organizers-title">Suivez celles et ceux qui créent l’émotion.</h1>
         <p className={styles.intro}>Découvrez leur univers, suivez leur actualité et retrouvez leurs prochains rendez-vous.</p>
 

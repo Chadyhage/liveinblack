@@ -2,10 +2,11 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  padding: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card-bg);
+  border-radius: 28px;
+  background: var(--surface);
   color: var(--text);
   text-decoration: none;
   transition: transform 220ms ease, border-color 220ms ease, background 220ms ease;
@@ -14,14 +15,15 @@
 .card:hover {
   transform: translateY(-3px);
   border-color: var(--border-strong);
-  background: var(--fill-secondary);
+  background: var(--surface-2);
 }
 
 .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
 
 .visual {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 16 / 10;
+  border-radius: 20px;
   overflow: hidden;
 }
 

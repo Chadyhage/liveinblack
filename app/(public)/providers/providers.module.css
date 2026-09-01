@@ -4,10 +4,7 @@
   overflow: hidden;
   color: var(--text);
   font-family: var(--providers-font);
-  background:
-    radial-gradient(circle at 12% 4%, var(--primary-a07), transparent 28%),
-    radial-gradient(circle at 88% 18%, var(--primary-a06), transparent 30%),
-    var(--background);
+  background: var(--obsidian);
 }
 
 .hero {

@@ -28,7 +28,7 @@
   height: min(66vh, 760px);
   display: grid;
   align-items: center;
-  padding: clamp(56px, 8vh, 96px) max(var(--public-page-gutter), calc((100vw - var(--public-page-max)) / 2)) clamp(54px, 7vh, 88px);
+  padding: clamp(92px, 11vh, 130px) max(var(--public-page-gutter), calc((100vw - var(--public-page-max)) / 2)) clamp(54px, 7vh, 88px);
   overflow: hidden;
   isolation: isolate;
   text-align: left;

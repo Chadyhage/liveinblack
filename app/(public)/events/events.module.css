@@ -17,7 +17,7 @@
 .eyebrow,
 .sectionKicker {
   margin: 0;
-  color: var(--primary);
+  color: var(--text);
   font-size: var(--font-size-body);
   font-weight: 700;
   letter-spacing: .04em;

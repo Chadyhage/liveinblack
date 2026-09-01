@@ -138,7 +138,6 @@ export default async function EventsPage({
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="events-title">
-        <p className={styles.eyebrow}>La programmation</p>
         <h1 id="events-title">Trouvez votre prochaine expérience.</h1>
         <p className={styles.intro}>
           Concerts, soirées et rendez-vous culturels choisis pour vous. Recherchez simplement, puis réservez en quelques instants.

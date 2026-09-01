@@ -16,7 +16,7 @@ export default function EventListCard({ event, reason, eager = false }: { event:
 
   return (
     <Link href={`/events/${event.id}`} className={styles.card}>
-      <div className={styles.visual} style={{ background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, var(--surface-2))` }}>
+      <div className={styles.visual} style={{ background: 'var(--surface-2)' }}>
         <Image
           src={reliablePhotoUrl(event.imageUrl, event.id, 900, 560)}
           alt=""

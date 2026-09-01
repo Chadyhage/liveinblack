@@ -160,11 +160,6 @@ export default async function AccueilPage() {
             <Link href="/events" className={styles.primaryButton} data-growth-event="cta_click" data-growth-surface="home_hero" data-growth-target="events">Voir les événements</Link>
             <Link href={session?.user ? '/profile/billets' : '/login?mode=register'} className={styles.secondaryButton} data-growth-event="cta_click" data-growth-surface="home_hero" data-growth-target={session?.user ? 'tickets' : 'signup'}>{session?.user ? 'Mes billets' : 'Créer un compte'}</Link>
           </div>
-          <ul className={styles.heroProof} aria-label="Avantages">
-            <li>Compte gratuit</li>
-            <li>Billet instantané</li>
-            <li>Accessible sur le web</li>
-          </ul>
         </div>
         <HeroScrollIndicator />
       </section>
@@ -198,7 +193,7 @@ export default async function AccueilPage() {
                     className="lb-card"
                     style={{ ...card, flexShrink: 0, width: 'clamp(280px,24vw,320px)', overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit', scrollSnapAlign: 'start' }}
                   >
-                    <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${'var(--violet)'}44, var(--obsidian))` }}>
+                    <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-2)' }}>
                     <Image
                       src={reliablePhotoUrl(e.imageUrl, e.id, 440, 248, HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length])}
                       alt={e.name}
@@ -294,7 +289,7 @@ export default async function AccueilPage() {
                 const coverImage = reliablePhotoUrl(p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl, p.userId, 440, 248, HOME_PROVIDER_FALLBACKS[index % HOME_PROVIDER_FALLBACKS.length])
                 return (
                   <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ position: 'relative', aspectRatio: '16/9', background: `linear-gradient(135deg, ${pc.color}44, ${pc.color}12 55%, var(--obsidian))`, overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-2)', overflow: 'hidden' }}>
                       <Image src={coverImage} alt="" fill loading={index === 0 ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 280px" />
                       <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--image-text)', background: 'var(--media-panel)', border: `1px solid ${pc.color}`, padding: '5px 11px', borderRadius: 999 }}>
                         {pc.label}
@@ -364,43 +359,101 @@ export default async function AccueilPage() {
 
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 20 }}>
-          <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--primary)' }}>
-            <div className={styles.splitCardInner}>
-              <div className={styles.splitCardMedia} style={{ position: 'relative', overflow: 'hidden', minHeight: 280, height: '100%' }}>
-                <Image src="/images/live-in-black/home/home-split-organizer-control.png" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
-                <div className={styles.splitCardMediaOverlay} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 24 }}>
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 24,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
+                <Image src="/images/live-in-black/home/home-split-organizer-control.png" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
               </div>
-              <div className={styles.splitCardContent}>
-                <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: 0 }}>Organisateur</p>
-                <h3 style={{ fontSize: 'var(--font-size-title-3)', fontWeight: 800, margin: '8px 0 12px', letterSpacing: '-.02em', lineHeight: 1.25 }}>Crée, vends, gère tes soirées</h3>
-                <ul style={{ ...featList, margin: 0 }}>
+              <div style={{ padding: '0 8px 12px' }}>
+                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 8px' }}>Organisateur</p>
+                <h3 style={{ fontSize: 'clamp(20px, 2.2vw, 24px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-.02em', lineHeight: 1.25, color: 'var(--text)' }}>Crée, vends, gère tes soirées</h3>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
-                    <li key={f} style={{ ...featItem, fontSize: 'var(--font-size-body)', margin: '4px 0' }}><span style={{ color: 'var(--primary)' }}>◆</span> {f}</li>
+                    <li key={f} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.45 }}>
+                      <span style={{ color: 'var(--primary)', fontSize: 12, flexShrink: 0 }}>◆</span>
+                      <span>{f}</span>
+                    </li>
                   ))}
                 </ul>
-                <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 18, minHeight: 42, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-lg)', fontWeight: 700 }}>Créer un espace organisateur</Link>
               </div>
             </div>
-          </Card>
-          <Card accent="var(--border-strong)" className="lb-split-card" style={{ ...CARD_OVERRIDE, padding: 0, overflow: 'hidden', borderLeft: '3px solid var(--gold)' }}>
-            <div className={styles.splitCardInner}>
-              <div className={styles.splitCardMedia} style={{ position: 'relative', overflow: 'hidden', minHeight: 280, height: '100%' }}>
-                <Image src="/images/live-in-black/home/home-split-provider-crew.png" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 340px" />
-                <div className={styles.splitCardMediaOverlay} />
+            <div style={{ padding: '0 8px 8px' }}>
+              <Link href="/login?mode=register" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                minHeight: 48,
+                padding: '12px 20px',
+                borderRadius: 14,
+                background: 'var(--primary)',
+                color: '#FFFFFF',
+                fontSize: 'var(--font-size-body-lg)',
+                fontWeight: 750,
+                textDecoration: 'none',
+              }}>
+                Créer un espace organisateur
+              </Link>
+            </div>
+          </div>
+
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 24,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
+                <Image src="/images/live-in-black/home/home-split-provider-crew.png" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
               </div>
-              <div className={styles.splitCardContent}>
-                <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, letterSpacing: '3.2px', textTransform: 'uppercase', fontFamily: 'var(--font-display), sans-serif', color: 'var(--gold)', margin: 0 }}>Prestataire</p>
-                <h3 style={{ fontSize: 'var(--font-size-title-3)', fontWeight: 800, margin: '8px 0 12px', letterSpacing: '-.02em', lineHeight: 1.25 }}>Développe ton activité</h3>
-                <ul style={{ ...featList, margin: 0 }}>
+              <div style={{ padding: '0 8px 12px' }}>
+                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 8px' }}>Prestataire</p>
+                <h3 style={{ fontSize: 'clamp(20px, 2.2vw, 24px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-.02em', lineHeight: 1.25, color: 'var(--text)' }}>Développe ton activité</h3>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
-                    <li key={f} style={{ ...featItem, fontSize: 'var(--font-size-body)', margin: '4px 0' }}><span style={{ color: 'var(--gold)' }}>◆</span> {f}</li>
+                    <li key={f} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.45 }}>
+                      <span style={{ color: 'var(--gold)', fontSize: 12, flexShrink: 0 }}>◆</span>
+                      <span>{f}</span>
+                    </li>
                   ))}
                 </ul>
-                <Link href="/login?mode=register" style={{ ...btnSolid, marginTop: 18, minHeight: 42, background: 'var(--gold)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-lg)', fontWeight: 700 }}>Devenir prestataire</Link>
               </div>
             </div>
-          </Card>
+            <div style={{ padding: '0 8px 8px' }}>
+              <Link href="/login?mode=register" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                minHeight: 48,
+                padding: '12px 20px',
+                borderRadius: 14,
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--text)',
+                fontSize: 'var(--font-size-body-lg)',
+                fontWeight: 750,
+                textDecoration: 'none',
+              }}>
+                Devenir prestataire
+              </Link>
+            </div>
+          </div>
         </div>
       </Section>}
 

@@ -442,11 +442,11 @@ export default function AuthForm() {
         .lb-banner-fade { animation: lb-fade-in 0.22s ease }
       `}</style>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 10 }}>
         <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-4)', letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
-        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '8px 0 0' }}>
+        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '4px 0 0' }}>
           {mode === 'login' ? 'Connecte-toi pour retrouver tes billets et tes soirées.' : "Crée ton compte pour découvrir ce qui se passe près de toi."}
         </p>
       </div>
@@ -460,7 +460,7 @@ export default function AuthForm() {
             { value: 'login', label: 'Connexion' },
             { value: 'register', label: 'Inscription' },
           ]}
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: 10 }}
         />
 
         {mode === 'login' && loginError && (

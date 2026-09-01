@@ -40,7 +40,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
         width: '100%',
         background: 'var(--surface-2)',
         color: 'var(--text)',
-        border: `1px solid ${invalid ? 'var(--danger)' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
+        border: `1px solid ${invalid ? 'var(--danger)' : focused ? 'var(--primary)' : 'var(--border-strong)'}`,
         outline: 'none',
         fontFamily: 'inherit',
         minHeight: 84,

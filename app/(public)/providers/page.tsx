@@ -105,7 +105,6 @@ export default async function PublicPrestatairesPage({
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="providers-title">
-        <p className={styles.eyebrow}>L’annuaire LIVEINBLACK</p>
         <h1 id="providers-title">Les talents derrière chaque expérience.</h1>
         <p className={styles.intro}>
           DJ, lieux, photographes, traiteurs et équipes techniques : trouvez le partenaire qui donnera vie à votre prochain événement.

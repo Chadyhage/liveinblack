@@ -185,7 +185,7 @@ export default async function EventDetailContent({
       </div>}
 
       {/* HERO */}
-      <div className={styles.hero} style={{ position: 'relative', margin: '12px 0 0', borderRadius: 20, overflow: 'hidden', height: 220, background: `linear-gradient(135deg, ${event.color || 'var(--primary)'}99, var(--surface))`, boxShadow: '0 16px 48px rgba(var(--black-rgb), .32)' }}>
+      <div className={styles.hero} style={{ position: 'relative', margin: '12px 0 0', borderRadius: 20, overflow: 'hidden', height: 220, background: 'var(--surface-2)', boxShadow: '0 16px 48px rgba(var(--black-rgb), .32)' }}>
         <Image
           src={reliablePhotoUrl(event.imageUrl, event.id, 880, 495)}
           alt={event.name}

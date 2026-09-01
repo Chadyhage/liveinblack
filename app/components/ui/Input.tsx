@@ -119,7 +119,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           width: '100%',
           background: 'var(--surface-2)',
           color: 'var(--text)',
-          border: `1px solid ${invalid ? 'var(--danger)' : focused ? 'var(--teal)' : 'var(--border-strong)'}`,
+          border: `1px solid ${invalid ? 'var(--danger)' : focused ? 'var(--primary)' : 'var(--border-strong)'}`,
           outline: 'none',
           fontFamily: 'inherit',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',

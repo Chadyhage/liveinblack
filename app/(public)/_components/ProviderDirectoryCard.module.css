@@ -5,7 +5,7 @@
   padding: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 28px;
   background: var(--surface);
   color: var(--text);
   text-decoration: none;
@@ -16,7 +16,7 @@
 .card:hover { transform: translateY(-3px); border-color: var(--border-strong); background: var(--surface-2); box-shadow: 0 24px 64px var(--scrim-soft); }
 .card:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
 
-.visual { position: relative; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden; }
+.visual { position: relative; aspect-ratio: 16 / 10; border-radius: 20px; overflow: hidden; }
 .cover { object-fit: cover; transition: transform 500ms cubic-bezier(.2, .7, .2, 1); }
 .card:hover .cover { transform: scale(1.04); }
 .scrim { position: absolute; inset: 0; background: transparent; }
