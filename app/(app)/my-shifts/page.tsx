@@ -81,7 +81,7 @@ export default async function MesSoireesPage() {
         </header>
         {events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 18px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <Mascot mood="sleeping" size={154} />
+            <Mascot mood="sleeping" size={250} />
             <p style={{ fontWeight: 700, fontSize: 'var(--font-size-headline-lg)', color: 'var(--text)', margin: 0 }}>Aucune soirée pour l&apos;instant</p>
             <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0, maxWidth: 340, lineHeight: 1.45 }}>
               Quand un organisateur t&apos;ajoute à l&apos;équipe d&apos;une soirée (serveur, contrôle entrée ou DJ), ou dès que tu crées toi-même un événement, elle apparaît ici.

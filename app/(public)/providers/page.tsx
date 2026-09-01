@@ -188,7 +188,7 @@ export default async function PublicPrestatairesPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <Mascot mood="search" size={164} />
+            <Mascot mood="search" size={250} />
             <h3>Aucun prestataire trouvé</h3>
             <p>Élargissez la zone, changez de métier ou essayez une autre recherche.</p>
             <Link href="/providers">Voir tous les prestataires</Link>

@@ -108,7 +108,7 @@ export default function ContactClient() {
         <Card style={{ boxShadow: CARD.boxShadow, padding: '16px 14px', maxWidth: 860 }}>
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '18px 8px' }}>
-              <Mascot mood="message" size={104} />
+              <Mascot mood="message" size={180} />
               <h2 style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.

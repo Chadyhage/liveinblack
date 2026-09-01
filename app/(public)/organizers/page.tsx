@@ -149,7 +149,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             })}
           </div>
         ) : (
-          <div className={styles.empty}><Mascot mood="search" size={164} /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
+          <div className={styles.empty}><Mascot mood="search" size={250} /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
         )}
 
         <PageLinks page={requestedPage} pageCount={totalPages} makeHref={makeHref} totalItems={total} pageSize={pageSize} />

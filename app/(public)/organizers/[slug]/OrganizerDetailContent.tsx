@@ -124,7 +124,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
         <Section title="Événements à venir">
           {upcoming.length === 0 ? (
             <div style={{ padding: '16px 0', textAlign: 'center' }}>
-              <Mascot mood="sleeping" size={96} />
+              <Mascot mood="sleeping" size={180} />
               <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-faint)', margin: '8px 0 0' }}>Aucun événement à venir pour le moment.</p>
             </div>
           ) : (

@@ -532,7 +532,7 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
 function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
   return (
     <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
-      <Mascot mood="sleeping" size={126} />
+      <Mascot mood="sleeping" size={180} />
       <p style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text-muted)', margin: 0 }}>{text}</p>
       <Link href={ctaHref} style={{ ...btnGhost, minHeight: 44, marginTop: 16, padding: '12px 20px', display: 'inline-flex' }}>{ctaLabel}</Link>
     </Card>
