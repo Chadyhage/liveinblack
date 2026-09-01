@@ -6,6 +6,7 @@ import User from '@/lib/models/User'
 import { issueVerificationToken } from '@/lib/auth/verification-tokens'
 import { emailVerificationEmail } from '@/lib/server/emails'
 import { sendEmail } from '@/lib/server/email'
+import { runObservedRoute } from '@/lib/server/observability'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 import { isPasswordPolicyCompliant } from '@/lib/shared/passwordPolicy'
 
@@ -29,71 +30,73 @@ function normalizePhone(phone: string) {
 }
 
 export async function POST(req: Request) {
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null))
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
-  }
-  const { email, password, firstName, lastName, phone, birthYear, gender } = parsed.data
-
-  const rateLimit = await checkRateLimit({
-    scope: 'auth-register-ip',
-    identifier: getRequestIp(req),
-    limit: 10,
-    windowMs: 60 * 60 * 1000,
-  })
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'rate_limited' },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
-    )
-  }
-
-  await getDb()
-
-  const existing = await User.findOne({ email }).lean()
-  if (existing) {
-    return NextResponse.json({ error: 'email_taken' }, { status: 409 })
-  }
-
-  // Doublon téléphone : fidèle à doEmailRegister (old/src/pages/LoginPage.jsx)
-  // — le blocage ne s'applique QUE si le compte détenteur du numéro est
-  // vérifié (emailVerifiedAt posé). Un ghost account (jamais vérifié) ne doit
-  // pas verrouiller un numéro pour toujours.
-  const normalizedPhone = phone ? normalizePhone(phone) : ''
-  if (normalizedPhone.length >= 6) {
-    const verifiedWithPhone = await User.find(
-      { phone: { $exists: true, $ne: '' }, emailVerifiedAt: { $ne: null } },
-      { phone: 1 }
-    ).lean()
-    const phoneTaken = verifiedWithPhone.some((u) => normalizePhone(u.phone || '') === normalizedPhone)
-    if (phoneTaken) {
-      return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+  return runObservedRoute(req, { route: '/api/auth/register', operation: 'auth_register' }, async () => {
+    const parsed = bodySchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
     }
-  }
+    const { email, password, firstName, lastName, phone, birthYear, gender } = parsed.data
 
-  const passwordHash = await bcrypt.hash(password, 12)
-  const user = await User.create({
-    email,
-    passwordHash,
-    firstName,
-    lastName,
-    phone: phone || '',
-    birthYear: birthYear ?? null,
-    gender: gender ?? null,
-    roles: ['client'],
-    activeRole: 'client',
-    status: 'active',
+    const rateLimit = await checkRateLimit({
+      scope: 'auth-register-ip',
+      identifier: getRequestIp(req),
+      limit: 10,
+      windowMs: 60 * 60 * 1000,
+    })
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'rate_limited' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      )
+    }
+
+    await getDb()
+
+    const existing = await User.findOne({ email }).lean()
+    if (existing) {
+      return NextResponse.json({ error: 'email_taken' }, { status: 409 })
+    }
+
+    // Doublon téléphone : fidèle à doEmailRegister (old/src/pages/LoginPage.jsx)
+    // — le blocage ne s'applique QUE si le compte détenteur du numéro est
+    // vérifié (emailVerifiedAt posé). Un ghost account (jamais vérifié) ne doit
+    // pas verrouiller un numéro pour toujours.
+    const normalizedPhone = phone ? normalizePhone(phone) : ''
+    if (normalizedPhone.length >= 6) {
+      const verifiedWithPhone = await User.find(
+        { phone: { $exists: true, $ne: '' }, emailVerifiedAt: { $ne: null } },
+        { phone: 1 }
+      ).lean()
+      const phoneTaken = verifiedWithPhone.some((u) => normalizePhone(u.phone || '') === normalizedPhone)
+      if (phoneTaken) {
+        return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12)
+    const user = await User.create({
+      email,
+      passwordHash,
+      firstName,
+      lastName,
+      phone: phone || '',
+      birthYear: birthYear ?? null,
+      gender: gender ?? null,
+      roles: ['client'],
+      activeRole: 'client',
+      status: 'active',
+    })
+
+    const token = await issueVerificationToken(String(user._id), email, 'verify-email')
+    const verifyLink = `${SITE}/verify-email?email=${encodeURIComponent(email)}&token=${token}`
+    const emailResult = await sendEmail(email, emailVerificationEmail(verifyLink, SITE))
+    if (!emailResult.ok) {
+      // Le compte est créé même si l'email échoue à partir — l'utilisateur peut
+      // redemander l'envoi plus tard (pas de rollback : mieux vaut un compte non
+      // vérifié qu'une inscription perdue à cause d'un souci Resend ponctuel).
+      console.error('[register] verification email failed for', email, emailResult.error)
+    }
+
+    return NextResponse.json({ ok: true, id: String(user._id) }, { status: 201 })
   })
-
-  const token = await issueVerificationToken(String(user._id), email, 'verify-email')
-  const verifyLink = `${SITE}/verify-email?email=${encodeURIComponent(email)}&token=${token}`
-  const emailResult = await sendEmail(email, emailVerificationEmail(verifyLink, SITE))
-  if (!emailResult.ok) {
-    // Le compte est créé même si l'email échoue à partir — l'utilisateur peut
-    // redemander l'envoi plus tard (pas de rollback : mieux vaut un compte non
-    // vérifié qu'une inscription perdue à cause d'un souci Resend ponctuel).
-    console.error('[register] verification email failed for', email, emailResult.error)
-  }
-
-  return NextResponse.json({ ok: true, id: String(user._id) }, { status: 201 })
 }

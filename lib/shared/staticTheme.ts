@@ -6,6 +6,6 @@ export const STATIC_THEME = {
   imageBlack: '#08090b',
   imageText: '#f7f7f8',
   imageTextMuted: '#c7c8ca',
-  eventDefaultColor: '#c8a96e',
-  eventDefaultAccentColor: '#e8d49e',
+  eventDefaultColor: '#2a2a2f',
+  eventDefaultAccentColor: '#f53d8d',
 } as const

@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Suivre les metriques Vercel Pro qui prouvent que le plan est exploite et sous controle.",
+  "dashboardCadence": "weekly",
+  "items": [
+    {
+      "key": "spend",
+      "label": "Depense mensuelle",
+      "dashboard": "Team Settings > Billing > Spend Management",
+      "owner": "owner-billing",
+      "cadence": "weekly",
+      "healthySignal": "Seuil configure, alertes 50/75/100 actives, webhook Spend Management configure.",
+      "actionIfBad": "Ajuster budget, activer auto-maintenance si accepte, revoir Functions/Image/CDN les plus couteux."
+    },
+    {
+      "key": "edge-requests",
+      "label": "Edge Requests",
+      "dashboard": "Usage > Edge Requests",
+      "owner": "ops",
+      "cadence": "weekly",
+      "healthySignal": "Hausse proportionnelle au trafic reel, pas de pic anormal sur /api/search ou /api/checkout.",
+      "actionIfBad": "Analyser logs, durcir Firewall, augmenter cache ou limiter les endpoints chers."
+    },
+    {
+      "key": "data-transfer",
+      "label": "Fast Data Transfer",
+      "dashboard": "Usage > Fast Data Transfer",
+      "owner": "ops",
+      "cadence": "weekly",
+      "healthySignal": "Trafic CDN coherent avec ventes et campagnes marketing.",
+      "actionIfBad": "Verifier images lourdes, pages publiques, bots et cache headers."
+    },
+    {
+      "key": "functions",
+      "label": "Functions compute",
+      "dashboard": "Usage > Functions",
+      "owner": "engineering",
+      "cadence": "weekly",
+      "healthySignal": "Durees stables sur checkout, webhooks, search et crons; pas de timeout recurrent.",
+      "actionIfBad": "Lire runtime logs, isoler route lente, migrer traitement long vers Workflow/Queues."
+    },
+    {
+      "key": "image-optimization",
+      "label": "Image Optimization",
+      "dashboard": "Usage > Image Optimization",
+      "owner": "growth",
+      "cadence": "weekly",
+      "healthySignal": "Transformations et cache writes restent lies aux nouvelles images utiles.",
+      "actionIfBad": "Controler tailles upload, formats, priorites above-fold et remotePatterns."
+    },
+    {
+      "key": "cache-isr",
+      "label": "Cache / ISR",
+      "dashboard": "Usage > Data Cache / ISR",
+      "owner": "engineering",
+      "cadence": "weekly",
+      "healthySignal": "Cache hit ratio eleve sur pages publiques et recherche.",
+      "actionIfBad": "Revoir revalidate, tags, s-maxage et Edge Config publicCacheTtlSeconds."
+    },
+    {
+      "key": "web-vitals",
+      "label": "Web Vitals",
+      "dashboard": "Speed Insights",
+      "owner": "product",
+      "cadence": "weekly",
+      "healthySignal": "LCP < 2.5s, INP < 200ms, CLS < 0.1 sur routes importantes.",
+      "actionIfBad": "Optimiser image LCP, scripts tiers, composants client et chargement donnees."
+    },
+    {
+      "key": "security-pressure",
+      "label": "Pression Firewall",
+      "dashboard": "Firewall > Events",
+      "owner": "ops",
+      "cadence": "weekly",
+      "healthySignal": "Les regles log montrent peu de faux positifs et les attaques repetitives sont identifiees.",
+      "actionIfBad": "Passer progressivement de log vers rate_limit, challenge ou deny."
+    }
+  ]
+}

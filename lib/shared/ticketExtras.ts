@@ -141,7 +141,7 @@ export async function downloadTicketPNG(input: TicketCardExportInput): Promise<{
       ctx.fill()
     })
 
-    ctx.fillStyle = input.color || '#c8a96e'
+    ctx.fillStyle = input.color || '#f53d8d'
     ctx.font = '700 22px Inter, sans-serif'
     ctx.fillText('LIVE IN BLACK · BILLET OFFICIEL', 60, 70)
 
@@ -243,7 +243,7 @@ export async function shareStory(input: StoryImageInput): Promise<{ ok: boolean;
     ctx.fillStyle = overlay
     ctx.fillRect(0, 0, W, H)
 
-    ctx.fillStyle = input.color || '#c8a96e'
+    ctx.fillStyle = input.color || '#f53d8d'
     ctx.font = '700 32px Inter, sans-serif'
     ctx.fillText("J'AI MA PLACE", 70, H - 340)
 

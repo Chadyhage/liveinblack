@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { listTicketForResale } from '@/lib/server/events/resale'
+import { getVercelOpsConfig } from '@/lib/server/vercelEdgeConfig'
 
 const bodySchema = z.object({ ticketCode: z.string().trim().min(1), resalePrice: z.number().positive() })
 
 export async function POST(req: Request) {
+  const opsConfig = await getVercelOpsConfig()
+  if (opsConfig.maintenanceMode) return NextResponse.json({ error: 'maintenance_mode' }, { status: 503 })
+  if (!opsConfig.ticketResaleEnabled) return NextResponse.json({ error: 'resale_disabled' }, { status: 503 })
+
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
 

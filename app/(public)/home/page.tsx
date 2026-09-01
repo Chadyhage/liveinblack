@@ -489,7 +489,7 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false, f
   const isRanking = Boolean(badge)
   return (
     <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
-      <div style={{ position: 'relative', aspectRatio: '16/9', background: event.color || 'var(--surface-2)' }}>
+      <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-2)' }}>
         <Image
           src={reliablePhotoUrl(event.imageUrl, event.id, 460, 259, fallbackImage)}
           alt={event.name}

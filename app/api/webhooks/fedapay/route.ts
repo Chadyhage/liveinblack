@@ -2,6 +2,7 @@ export const maxDuration = 60;
 import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { getDb } from '@/lib/db/mongoose'
+import { runObservedRoute } from '@/lib/server/observability'
 import { verifyWebhookSignature, isApprovedTransactionEvent } from '@/lib/server/payments/fedapayClient'
 import { fulfillOrder } from '@/lib/server/payments/fulfillOrder'
 import { releaseOrder } from '@/lib/server/events/orders'
@@ -38,90 +39,92 @@ function isFedapayWebhookBody(value: unknown): value is FedapayWebhookBody {
 }
 
 export async function POST(req: Request) {
-  const secret = process.env.FEDAPAY_WEBHOOK_SECRET
-  if (!secret) return NextResponse.json({ error: 'webhook_not_configured' }, { status: 500 })
+  return runObservedRoute(req, { route: '/api/webhooks/fedapay', operation: 'fedapay_webhook' }, async () => {
+    const secret = process.env.FEDAPAY_WEBHOOK_SECRET
+    if (!secret) return NextResponse.json({ error: 'webhook_not_configured' }, { status: 500 })
 
-  const rawBody = await req.text()
-  const signature = req.headers.get('x-fedapay-signature')
-  if (!verifyWebhookSignature(rawBody, signature, secret)) {
-    return NextResponse.json({ error: 'invalid_signature' }, { status: 400 })
-  }
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(rawBody)
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
-  }
-  if (!isFedapayWebhookBody(parsed)) {
-    return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
-  }
-  const body = parsed
-
-  await getDb()
-
-  try {
-    const { name, entity } = body
-    if (name.startsWith('payout.')) {
-      const payout = await reconcileEventPayout(entity.id, entity.status)
-      return NextResponse.json({ received: true, payout })
+    const rawBody = await req.text()
+    const signature = req.headers.get('x-fedapay-signature')
+    if (!verifyWebhookSignature(rawBody, signature, secret)) {
+      return NextResponse.json({ error: 'invalid_signature' }, { status: 400 })
     }
 
-    if (isApprovedTransactionEvent(name, entity)) {
-      // Un paiement approuvé peut être un BILLET ou un ABONNEMENT prestataire :
-      // on regarde le registre serveur (User.pendingFedapaySubTxnId) plutôt que
-      // les métadonnées brutes de l'événement pour router vers le bon traitement
-      // (même prudence que le legacy fedapay_txns.kind).
-      const pendingSubUser = await User.findOne({ pendingFedapaySubTxnId: String(entity.id) }).select('_id').lean()
-      if (pendingSubUser) {
-        await handleFedapaySubscriptionPayment(pendingSubUser._id.toString(), entity)
-        revalidateTag('public-providers', { expire: 0 })
-        return NextResponse.json({ received: true })
-      }
-
-      const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
-      if (!order) return NextResponse.json({ received: true, ignored: 'no_matching_order' })
-      if (order.kind === 'resale') {
-        await fulfillResaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
-        return NextResponse.json({ received: true })
-      }
-      if (order.kind === 'agent_sale') {
-        await fulfillAgentSaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
-        return NextResponse.json({ received: true })
-      }
-      if (order.kind === 'seat_hold_deposit') {
-        await activateSeatHold(order._id.toString())
-        return NextResponse.json({ received: true })
-      }
-      const result = await fulfillOrder(order._id.toString(), { rail: 'fedapay', paidAmountMinor: entity.amount })
-      if (result.status === 'locked') {
-        return NextResponse.json({ error: 'fulfillment_in_progress' }, { status: 500 })
-      }
-      if (result.status === 'ok' && order.completesSeatHoldId) {
-        await completeSeatHold(order.completesSeatHoldId, order._id.toString())
-      }
-    } else if (
-      name === 'transaction.canceled' ||
-      name === 'transaction.declined' ||
-      (name === 'transaction.updated' && ['canceled', 'declined', 'expired'].includes(entity.status || ''))
-    ) {
-      const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
-      if (order) {
-        if (order.kind === 'resale') await releaseResaleOrder(order._id.toString())
-        else if (order.kind === 'agent_sale') await releaseAgentSaleOrder(order._id.toString())
-        else if (order.kind === 'seat_hold_deposit') await releaseSeatHoldDepositOrder(order._id.toString(), releaseOrder)
-        else await releaseOrder(order._id.toString(), null)
-
-        // Refus/annulation FedaPay explicite (pas un simple panier abandonné,
-        // cf. checkout.session.expired côté Stripe qui ne déclenche jamais cet
-        // email — l'intention de payer était réelle ici).
-        const evName = (await Event.findById(order.eventId).select('name').lean())?.name || 'ton événement'
-        await notifyUserById(order.userId, () => paymentFailedEmail(evName, `${SITE}/events/${encodeURIComponent(order.eventId)}`, null, SITE))
-      }
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(rawBody)
+    } catch {
+      return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
     }
-    return NextResponse.json({ received: true })
-  } catch (err) {
-    console.error('[webhooks/fedapay] handler error:', err)
-    return NextResponse.json({ error: 'internal_error' }, { status: 500 })
-  }
+    if (!isFedapayWebhookBody(parsed)) {
+      return NextResponse.json({ error: 'invalid_payload' }, { status: 400 })
+    }
+    const body = parsed
+
+    await getDb()
+
+    try {
+      const { name, entity } = body
+      if (name.startsWith('payout.')) {
+        const payout = await reconcileEventPayout(entity.id, entity.status)
+        return NextResponse.json({ received: true, payout })
+      }
+
+      if (isApprovedTransactionEvent(name, entity)) {
+        // Un paiement approuvé peut être un BILLET ou un ABONNEMENT prestataire :
+        // on regarde le registre serveur (User.pendingFedapaySubTxnId) plutôt que
+        // les métadonnées brutes de l'événement pour router vers le bon traitement
+        // (même prudence que le legacy fedapay_txns.kind).
+        const pendingSubUser = await User.findOne({ pendingFedapaySubTxnId: String(entity.id) }).select('_id').lean()
+        if (pendingSubUser) {
+          await handleFedapaySubscriptionPayment(pendingSubUser._id.toString(), entity)
+          revalidateTag('public-providers', { expire: 0 })
+          return NextResponse.json({ received: true })
+        }
+
+        const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
+        if (!order) return NextResponse.json({ received: true, ignored: 'no_matching_order' })
+        if (order.kind === 'resale') {
+          await fulfillResaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
+          return NextResponse.json({ received: true })
+        }
+        if (order.kind === 'agent_sale') {
+          await fulfillAgentSaleOrder(order._id.toString(), { paidAmountMinor: entity.amount })
+          return NextResponse.json({ received: true })
+        }
+        if (order.kind === 'seat_hold_deposit') {
+          await activateSeatHold(order._id.toString())
+          return NextResponse.json({ received: true })
+        }
+        const result = await fulfillOrder(order._id.toString(), { rail: 'fedapay', paidAmountMinor: entity.amount })
+        if (result.status === 'locked') {
+          return NextResponse.json({ error: 'fulfillment_in_progress' }, { status: 500 })
+        }
+        if (result.status === 'ok' && order.completesSeatHoldId) {
+          await completeSeatHold(order.completesSeatHoldId, order._id.toString())
+        }
+      } else if (
+        name === 'transaction.canceled' ||
+        name === 'transaction.declined' ||
+        (name === 'transaction.updated' && ['canceled', 'declined', 'expired'].includes(entity.status || ''))
+      ) {
+        const order = await Order.findOne({ fedapayTxnId: String(entity.id) }).lean()
+        if (order) {
+          if (order.kind === 'resale') await releaseResaleOrder(order._id.toString())
+          else if (order.kind === 'agent_sale') await releaseAgentSaleOrder(order._id.toString())
+          else if (order.kind === 'seat_hold_deposit') await releaseSeatHoldDepositOrder(order._id.toString(), releaseOrder)
+          else await releaseOrder(order._id.toString(), null)
+
+          // Refus/annulation FedaPay explicite (pas un simple panier abandonné,
+          // cf. checkout.session.expired côté Stripe qui ne déclenche jamais cet
+          // email — l'intention de payer était réelle ici).
+          const evName = (await Event.findById(order.eventId).select('name').lean())?.name || 'ton événement'
+          await notifyUserById(order.userId, () => paymentFailedEmail(evName, `${SITE}/events/${encodeURIComponent(order.eventId)}`, null, SITE))
+        }
+      }
+      return NextResponse.json({ received: true })
+    } catch (err) {
+      console.error('[webhooks/fedapay] handler error:', err)
+      return NextResponse.json({ error: 'internal_error' }, { status: 500 })
+    }
+  })
 }

@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Revue obligatoire avant migration d'un premier traitement vers Vercel Workflows/Queues.",
+  "firstRecommendedBatch": ["resale-expiry", "payouts"],
+  "principle": "Garder le Cron Job Vercel comme declencheur, puis deplacer l'orchestration longue dans un workflow durable avec steps idempotentes.",
+  "checks": [
+    {
+      "key": "candidate-priority",
+      "label": "Candidat prioritaire choisi",
+      "required": true,
+      "howToVerify": "Choisir un candidat high dans config/vercel-workflow-candidates.json, idealement resale-expiry avant payouts si l'equipe veut reduire le risque financier.",
+      "riskIfMissing": "La migration commence par un flux trop large ou non critique, sans gain Pro clair."
+    },
+    {
+      "key": "cron-trigger-preserved",
+      "label": "Cron declencheur conserve",
+      "required": true,
+      "howToVerify": "La route cron existante reste declaree dans vercel.json et lance le workflow au lieu de bloquer sur tout le traitement.",
+      "riskIfMissing": "Le planning production peut changer sans intention explicite."
+    },
+    {
+      "key": "idempotency-key",
+      "label": "Idempotence par entite",
+      "required": true,
+      "howToVerify": "Chaque step qui modifie billet, paiement, rappel ou notification utilise une cle stable par entite et operation.",
+      "riskIfMissing": "Les retries peuvent doubler un payout, une notification ou une mutation de billet."
+    },
+    {
+      "key": "step-boundaries",
+      "label": "Frontieres de steps claires",
+      "required": true,
+      "howToVerify": "La logique Node.js, base de donnees, email/push et paiement reste dans des fonctions \"use step\"; le workflow orchestre seulement.",
+      "riskIfMissing": "Le sandbox workflow peut echouer sur du code serveur classique."
+    },
+    {
+      "key": "error-policy",
+      "label": "Politique d'erreur explicite",
+      "required": true,
+      "howToVerify": "Les erreurs transitoires sont retryables; les erreurs definitives sont journalisees et ne bouclent pas inutilement.",
+      "riskIfMissing": "Une panne fournisseur peut bloquer tout le lot ou consommer inutilement."
+    },
+    {
+      "key": "observability",
+      "label": "Observabilite conservee",
+      "required": true,
+      "howToVerify": "runVercelCron continue de logger le declenchement, et les steps ajoutent un statut lisible par run/workflow.",
+      "riskIfMissing": "La migration rend les echecs moins visibles qu'avant."
+    },
+    {
+      "key": "rollback-path",
+      "label": "Retour arriere simple",
+      "required": true,
+      "howToVerify": "Le cron peut revenir a l'ancien traitement par flag ou changement minimal si le workflow montre une anomalie.",
+      "riskIfMissing": "Une erreur workflow devient un incident long a corriger."
+    }
+  ]
+}

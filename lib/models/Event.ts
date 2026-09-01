@@ -117,8 +117,8 @@ const eventSchema = new Schema(
 
     imageUrl: { type: String, default: null },
     videoUrl: { type: String, default: null },
-    color: { type: String, default: '#c8a96e' },
-    accentColor: { type: String, default: '#e8d49e' },
+    color: { type: String, default: '#2a2a2f' },
+    accentColor: { type: String, default: '#f53d8d' },
 
     places: { type: [placeSchema], default: [] },
 

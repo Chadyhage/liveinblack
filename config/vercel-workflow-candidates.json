@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Identifier les traitements cron ou post-reponse qui meritent une migration vers Vercel Workflow/Queues pour retries, reprise apres crash et orchestration durable.",
+  "candidates": [
+    {
+      "key": "resale-expiry",
+      "route": "/api/cron/resale-expiry",
+      "currentSchedule": "*/15 * * * *",
+      "priority": "high",
+      "target": "workflow",
+      "reason": "Traitement frequent, lie aux billets et a l'etat financier potentiel; doit etre retryable sans doublons.",
+      "firstStep": "Extraire expireStaleResaleListings en step idempotente puis orchestrer par workflow declenche par cron."
+    },
+    {
+      "key": "event-recap",
+      "route": "/api/cron/event-recap",
+      "currentSchedule": "0 * * * *",
+      "priority": "medium",
+      "target": "workflow",
+      "reason": "Envoi de rappels potentiellement multi-destinataires; beneficie de retries par organisateur/evenement.",
+      "firstStep": "Decouper sendEventRecapReminders en step de selection puis step d'envoi retryable."
+    },
+    {
+      "key": "cash-sale-reminders",
+      "route": "/api/cron/cash-sale-reminders",
+      "currentSchedule": "0 10 * * *",
+      "priority": "medium",
+      "target": "workflow",
+      "reason": "Envois transactionnels quotidiens; les echecs transitoires email/push ne doivent pas perdre tout le lot.",
+      "firstStep": "Ajouter une step par rappel avec cle d'idempotence notification."
+    },
+    {
+      "key": "interested-event-reminders",
+      "route": "/api/cron/interested-event-reminders",
+      "currentSchedule": "0 11 * * *",
+      "priority": "medium",
+      "target": "workflow",
+      "reason": "Rappels audience; migration utile pour reprise partielle et limitation de pression fournisseur.",
+      "firstStep": "Separer selection des destinataires et envoi avec retries controles."
+    },
+    {
+      "key": "payouts",
+      "route": "/api/cron/payouts",
+      "currentSchedule": "0 8 * * *",
+      "priority": "high",
+      "target": "workflow",
+      "reason": "Flux financier; doit avoir audit trail, etapes durables et erreurs explicitement reprises.",
+      "firstStep": "Encapsuler chaque payout organisateur dans une step idempotente avec journal."
+    },
+    {
+      "key": "email-push-retries",
+      "route": "post-response",
+      "currentSchedule": "event-driven",
+      "priority": "medium",
+      "target": "queue",
+      "reason": "Les retries email/push ne doivent pas bloquer les requetes utilisateur ni disparaitre apres un crash.",
+      "firstStep": "Ajouter une file dediee aux notifications avec dedupe par destinataire/type/evenement."
+    }
+  ]
+}

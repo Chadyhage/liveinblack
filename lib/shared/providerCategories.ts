@@ -9,18 +9,18 @@ export type ProviderCategory = {
 }
 
 export const PROVIDER_CATEGORIES: ProviderCategory[] = [
-  { id: 'artiste', label: 'Artistes, DJ & animation', singular: 'Artiste / DJ / animation', icon: 'mic', color: '#e05aaa', description: 'DJ, musicien, danseur, MC, performeur, animation…' },
-  { id: 'salle', label: 'Salles & lieux', singular: 'Salle / lieu', icon: 'building', color: '#8b5cf6', description: 'Club, rooftop, loft, domaine, espace de réception…' },
-  { id: 'materiel', label: 'Technique & matériel', singular: 'Technique / matériel', icon: 'speaker', color: '#F53D8D', description: 'Son, lumière, scène, vidéo, mobilier, structures…' },
-  { id: 'food', label: 'Food & boissons', singular: 'Food / boissons', icon: 'cart', color: '#c8a96e', description: 'Traiteur, bar, cocktails, food truck, pâtisserie…' },
-  { id: 'photo_video', label: 'Photo & vidéo', singular: 'Photo / vidéo', icon: 'camera', color: '#38bdf8', description: 'Photographe, vidéaste, photobooth, drone, montage…' },
-  { id: 'decoration', label: 'Décoration & scénographie', singular: 'Décoration / scénographie', icon: 'sparkle', color: '#f472b6', description: 'Décoration, fleurs, scénographie, design d’espace…' },
-  { id: 'securite', label: 'Sécurité & accueil', singular: 'Sécurité / accueil', icon: 'shield', color: '#60a5fa', description: 'Sécurité, agents d’accueil, contrôle, vestiaire…' },
-  { id: 'transport', label: 'Transport & logistique', singular: 'Transport / logistique', icon: 'truck', color: '#fb923c', description: 'Navettes, chauffeurs, livraison, montage et logistique…' },
-  { id: 'staff', label: 'Équipe & renfort événementiel', singular: 'Équipe événementielle', icon: 'users', color: '#a78bfa', description: 'Serveurs, hôtes, techniciens, régisseurs, personnel…' },
-  { id: 'communication', label: 'Communication & création', singular: 'Communication / création', icon: 'megaphone', color: '#ff8fb2', description: 'Graphisme, réseaux sociaux, promotion, impression…' },
-  { id: 'bien_etre', label: 'Beauté & bien-être', singular: 'Beauté / bien-être', icon: 'heart', color: '#fda4af', description: 'Maquillage, coiffure, stylisme et préparation…' },
-  { id: 'autre', label: 'Autres services', singular: 'Service événementiel', icon: 'grid', color: '#94a3b8', description: 'Toute autre activité utile à un événement.' },
+  { id: 'artiste', label: 'Artistes, DJ & animation', singular: 'Artiste / DJ / animation', icon: 'mic', color: 'var(--primary)', description: 'DJ, musicien, danseur, MC, performeur, animation…' },
+  { id: 'salle', label: 'Salles & lieux', singular: 'Salle / lieu', icon: 'building', color: 'var(--primary)', description: 'Club, rooftop, loft, domaine, espace de réception…' },
+  { id: 'materiel', label: 'Technique & matériel', singular: 'Technique / matériel', icon: 'speaker', color: 'var(--primary)', description: 'Son, lumière, scène, vidéo, mobilier, structures…' },
+  { id: 'food', label: 'Food & boissons', singular: 'Food / boissons', icon: 'cart', color: 'var(--primary)', description: 'Traiteur, bar, cocktails, food truck, pâtisserie…' },
+  { id: 'photo_video', label: 'Photo & vidéo', singular: 'Photo / vidéo', icon: 'camera', color: 'var(--primary)', description: 'Photographe, vidéaste, photobooth, drone, montage…' },
+  { id: 'decoration', label: 'Décoration & scénographie', singular: 'Décoration / scénographie', icon: 'sparkle', color: 'var(--primary)', description: 'Décoration, fleurs, scénographie, design d’espace…' },
+  { id: 'securite', label: 'Sécurité & accueil', singular: 'Sécurité / accueil', icon: 'shield', color: 'var(--primary)', description: 'Sécurité, agents d’accueil, contrôle, vestiaire…' },
+  { id: 'transport', label: 'Transport & logistique', singular: 'Transport / logistique', icon: 'truck', color: 'var(--primary)', description: 'Navettes, chauffeurs, livraison, montage et logistique…' },
+  { id: 'staff', label: 'Équipe & renfort événementiel', singular: 'Équipe événementielle', icon: 'users', color: 'var(--primary)', description: 'Serveurs, hôtes, techniciens, régisseurs, personnel…' },
+  { id: 'communication', label: 'Communication & création', singular: 'Communication / création', icon: 'megaphone', color: 'var(--primary)', description: 'Graphisme, réseaux sociaux, promotion, impression…' },
+  { id: 'bien_etre', label: 'Beauté & bien-être', singular: 'Beauté / bien-être', icon: 'heart', color: 'var(--primary)', description: 'Maquillage, coiffure, stylisme et préparation…' },
+  { id: 'autre', label: 'Autres services', singular: 'Service événementiel', icon: 'grid', color: 'var(--primary)', description: 'Toute autre activité utile à un événement.' },
 ]
 
 // Port de CATALOG_CATEGORIES (src/utils/services.js) — libellés de

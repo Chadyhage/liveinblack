@@ -190,8 +190,8 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     currency,
     imageUrl: input.imageUrl || null,
     videoUrl: input.videoUrl || null,
-    color: input.color || '#c8a96e',
-    accentColor: input.accentColor || '#e8d49e',
+    color: '#2a2a2f',
+    accentColor: '#f53d8d',
     places,
     playlist: Boolean(input.playlist),
     preorder: Boolean(input.preorder),
@@ -277,8 +277,8 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
   if (input.tags !== undefined) event.tags = input.tags
   if (input.musicStyles !== undefined) event.musicStyles = input.musicStyles
   if (input.ambiances !== undefined) event.ambiances = input.ambiances
-  if (input.color !== undefined) event.color = input.color
-  if (input.accentColor !== undefined) event.accentColor = input.accentColor
+  event.color = '#2a2a2f'
+  event.accentColor = '#f53d8d'
 
   // Champs verrouillés dès la première vente — ignorés silencieusement (pas
   // d'erreur) si `locked`, exactement fidèle à la désactivation visuelle du
@@ -499,8 +499,8 @@ export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, ev
       currency: eventCurrency(event),
       imageUrl: event.imageUrl ?? null,
       videoUrl: event.videoUrl ?? null,
-      color: event.color ?? '#c8a96e',
-      accentColor: event.accentColor ?? '#e8d49e',
+      color: event.color ?? '#2a2a2f',
+      accentColor: event.accentColor ?? '#f53d8d',
       places: (event.places || []).map((p) => ({
         id: p.id,
         type: p.type,

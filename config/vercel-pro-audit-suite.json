@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Suite d'audit unique pour piloter l'utilisation Vercel Pro a 100% utile.",
+  "principle": "Les audits locaux peuvent tourner sans mutation. Les audits live restent separes et explicites.",
+  "commands": [
+    {
+      "key": "pro-local",
+      "label": "Diagnostic local global",
+      "command": "npm run audit:vercel-pro",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "env",
+      "label": "Variables Vercel",
+      "command": "npm run audit:vercel-env",
+      "scope": "live-read",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass-after-live-access"
+    },
+    {
+      "key": "firewall",
+      "label": "Revue Firewall",
+      "command": "npm run audit:vercel-firewall",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "spend",
+      "label": "Revue Spend Management",
+      "command": "npm run audit:vercel-spend",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "webhooks",
+      "label": "Revue Account Webhook",
+      "command": "npm run audit:vercel-webhooks",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "drain",
+      "label": "Revue Log Drain",
+      "command": "npm run audit:vercel-drain",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "workflows",
+      "label": "Revue Workflows/Queues",
+      "command": "npm run audit:vercel-workflows",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "usage",
+      "label": "Plan Usage Pro",
+      "command": "npm run audit:vercel-usage",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "live-gates",
+      "label": "Portes live",
+      "command": "npm run audit:vercel-live-gates",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "activation-order",
+      "label": "Ordre activation",
+      "command": "npm run audit:vercel-activation-order",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "completion",
+      "label": "Completion stricte",
+      "command": "npm run audit:vercel-completion",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "fail-until-live-proof"
+    },
+    {
+      "key": "evidence-recorder",
+      "label": "Outil de consignation des preuves",
+      "command": "npm run ops:vercel:evidence:record",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "next-action",
+      "label": "Prochaine action Vercel Pro",
+      "command": "npm run ops:vercel:next-action",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "live",
+      "label": "Audit Vercel live",
+      "command": "npm run audit:vercel-live",
+      "scope": "live-read",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass-after-live-actions"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { initiateResaleOrder, releaseResaleOrder } from '@/lib/server/events/resale'
 import Order from '@/lib/models/Order'
 import stripe from '@/lib/server/payments/stripeClient'
+import { getVercelOpsConfig } from '@/lib/server/vercelEdgeConfig'
 
 // Miroir de /api/checkout (achat neuf), pour l'achat d'un billet REVENDU.
 // Aucun stock à décrémenter (lib/server/resale.ts::initiateResaleOrder gère
@@ -15,6 +16,11 @@ const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 const bodySchema = z.object({ listingId: z.string().min(1) })
 
 export async function POST(req: Request) {
+  const opsConfig = await getVercelOpsConfig()
+  if (opsConfig.maintenanceMode) return NextResponse.json({ error: 'maintenance_mode' }, { status: 503 })
+  if (!opsConfig.checkoutEnabled) return NextResponse.json({ error: 'checkout_disabled' }, { status: 503 })
+  if (!opsConfig.ticketResaleEnabled) return NextResponse.json({ error: 'resale_disabled' }, { status: 503 })
+
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
 
