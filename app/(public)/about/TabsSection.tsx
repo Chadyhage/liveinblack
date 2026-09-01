@@ -21,7 +21,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
       'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.',
     cta: 'Créer mon compte',
     href: '/login?mode=register',
-    image: '/images/live-in-black/about/about-tab-client-ticket-friends.png',
+    image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80',
     imageAlt: 'Un public profite d’une soirée Live in Black',
   },
   {
@@ -33,7 +33,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
       'Crée et publie ton événement, vends tes billets en ligne, gère ta guestlist, scanne les entrées et suis tes ventes en temps réel — POS sur place inclus.',
     cta: 'Devenir organisateur',
     href: '/organizer-signup',
-    image: '/images/live-in-black/about/about-tab-organizer-sales-tablet.png',
+    image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80',
     imageAlt: 'Une organisatrice supervise son événement en coulisses',
   },
   {
@@ -44,7 +44,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
     description: 'DJ, salle, sono, traiteur… Crée ta vitrine publique, sois visible des organisateurs et reçois des demandes de devis directement.',
     cta: 'Devenir prestataire',
     href: '/provider-signup',
-    image: '/images/live-in-black/about/about-tab-provider-side-stage.png',
+    image: 'https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80',
     imageAlt: 'Un photographe professionnel intervient pendant un événement',
   },
 ]

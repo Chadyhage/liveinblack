@@ -5,7 +5,7 @@ import { getMyApplication } from '@/lib/server/provider/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 
 // Portrait éditorial créé sur mesure pour le parcours organisateur.
-const HERO_IMG = '/images/live-in-black/auth/auth-organizer-backstage-ops.png'
+const HERO_IMG = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80'
 import OrganizerOnboardingWizard from '@/app/components/features/organizer/OrganizerOnboardingWizard'
 
 // Route unique "Devenir organisateur" — publique (mode anonyme, pas de

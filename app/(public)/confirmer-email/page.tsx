@@ -15,7 +15,7 @@ export default async function ConfirmEmailChangePage({
 }) {
   const params = await searchParams
   return (
-    <AuthSplitLayout heroImage="/images/live-in-black/auth/auth-confirm-email-devices.png">
+    <AuthSplitLayout heroImage="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=80">
       <ConfirmEmailChangeClient email={params.email || null} token={params.token || null} />
     </AuthSplitLayout>
   )

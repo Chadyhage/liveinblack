@@ -190,7 +190,8 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px));
-  gap: var(--public-grid-gap);
+  gap: 16px;
+  align-items: stretch;
   margin-top: 16px;
 }
 

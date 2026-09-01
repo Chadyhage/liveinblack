@@ -56,15 +56,15 @@ const ACTUALITE_ACCENTS: Record<string, { dot: string; soft: string; border: str
 }
 
 const HOME_EVENT_FALLBACKS = [
-  '/images/live-in-black/home/home-card-event-palms.png',
-  '/images/live-in-black/home/home-card-event-rooftop-dj.png',
-  '/images/live-in-black/home/home-card-event-live-band.png',
+  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
 ]
 
 const HOME_PROVIDER_FALLBACKS = [
-  '/images/live-in-black/home/home-card-provider-crew.png',
-  '/images/live-in-black/home/home-card-provider-dj-booth.png',
-  '/images/live-in-black/home/home-card-provider-photo-gear.png',
+  'https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80',
 ]
 
 function firstOfferImage(catalog: CatalogItem[] = []): string | null {
@@ -345,9 +345,9 @@ export default async function AccueilPage() {
       {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
         <div className={styles.contentGrid}>
           {[
-            ['01', '/images/live-in-black/home/home-step-discover-cotonou.png', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
-            ['02', '/images/live-in-black/home/home-step-reserve-mobile.png', 'Des amis réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
-            ['03', '/images/live-in-black/home/home-step-qr-entry.png', 'Un billet numérique est contrôlé à l’entrée d’un événement', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
+            ['01', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
+            ['02', 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80', 'Des amis réservent leur billet depuis un téléphone', 'Réserve ton billet', 'Choisis ton offre et paie en quelques secondes dans un parcours clair et sécurisé.'],
+            ['03', 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80', 'Un billet numérique est contrôlé à l’entrée d’un événement', 'Présente ton QR', 'Retrouve ton billet dans ton compte, fais-le scanner à l’entrée et profite.'],
           ].map(([n, src, alt, title, description]) => (
             <EditorialImageCard key={n} src={src} alt={alt} badge={n} title={title} description={description} />
           ))}
@@ -371,7 +371,7 @@ export default async function AccueilPage() {
           }}>
             <div>
               <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
-                <Image src="/images/live-in-black/home/home-split-organizer-control.png" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
+                <Image src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
               </div>
               <div style={{ padding: '0 8px 12px' }}>
@@ -418,7 +418,7 @@ export default async function AccueilPage() {
           }}>
             <div>
               <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
-                <Image src="/images/live-in-black/home/home-split-provider-crew.png" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
+                <Image src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
               </div>
               <div style={{ padding: '0 8px 12px' }}>
