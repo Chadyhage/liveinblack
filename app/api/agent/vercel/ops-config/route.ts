@@ -1267,7 +1267,7 @@ async function getRecentChanges() {
 
 export async function GET() {
   const session = await auth()
-  if (!requireAgent(session?.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!session?.user || !requireAgent(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const config = await getVercelOpsConfig()
   const { writable } = writableState()
@@ -1294,7 +1294,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   const session = await auth()
-  if (!requireAgent(session?.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!session?.user || !requireAgent(session.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const { writable, token, teamId, edgeConfigId } = writableState()
   if (!writable) return NextResponse.json({ error: 'edge_config_write_not_configured' }, { status: 503 })
@@ -1315,12 +1315,13 @@ export async function PATCH(req: Request) {
 
   if (!res.ok) return NextResponse.json({ error: 'edge_config_update_failed' }, { status: 502 })
   await getDb()
+  const actorUser = session.user;
   await VercelOpsConfigChange.insertMany(
     items
       .filter((item) => before[item.configKey] !== item.value)
       .map((item) => ({
-        actorUserId: session.user.id,
-        actorEmail: session.user.email || null,
+        actorUserId: actorUser.id,
+        actorEmail: actorUser.email || null,
         key: item.configKey,
         edgeConfigKey: item.key,
         previousValue: before[item.configKey],
