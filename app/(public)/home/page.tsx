@@ -308,7 +308,7 @@ export default async function AccueilPage() {
                       {(p.city || p.location || p.country) && (
                         <p style={{ fontSize: 'var(--font-size-headline-xl)', color: 'var(--text-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>{[p.city || p.location, p.country].filter(Boolean).join(' · ')}</p>
                       )}
-                      <span style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--border)', fontSize: 'var(--font-size-headline-xl)', fontWeight: 800, color: 'var(--teal)' }}>Voir le profil →</span>
+                      <span style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--border)', fontSize: 'var(--font-size-headline-xl)', fontWeight: 800, color: 'var(--primary)' }}>Voir le profil →</span>
                     </div>
                   </Link>
                 )
@@ -470,11 +470,11 @@ export default async function AccueilPage() {
             <Link href="/events" className={styles.secondaryButton} data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="events">Découvrir les événements</Link>
           </div>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 18 }}>
-            <Link href="/organizer-signup" data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="organizer_signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontSize: 'var(--font-size-callout)', fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
+            <Link href="/organizer-signup" data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="organizer_signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--primary)', fontSize: 'var(--font-size-callout)', fontWeight: 800, textDecoration: 'none' }}>Devenir organisateur →</Link>
             <Link href="/provider-signup" data-growth-event="cta_click" data-growth-surface="home_final" data-growth-target="provider_signup" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--gold)', fontSize: 'var(--font-size-callout)', fontWeight: 800, textDecoration: 'none' }}>Devenir prestataire →</Link>
           </div>
           {!session?.user && <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', marginTop: 24 }}>
-            Déjà un compte ? <Link href="/login" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--teal)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
+            Déjà un compte ? <Link href="/login" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' }}>Me connecter</Link>
           </p>}
         </div>
       </section>

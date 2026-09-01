@@ -33,7 +33,7 @@ export default function NotFound() {
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,
-          background: 'var(--teal-solid)',
+          background: 'var(--primary)',
           color: 'var(--primary-ink)',
           fontSize: 'var(--font-size-body)',
           fontWeight: 700,

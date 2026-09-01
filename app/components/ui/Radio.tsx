@@ -57,7 +57,7 @@ const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            border: `1.5px solid ${isChecked ? 'var(--teal-solid)' : 'var(--border-strong)'}`,
+            border: `1.5px solid ${isChecked ? 'var(--primary)' : 'var(--border-strong)'}`,
             background: 'var(--surface-2)',
             display: 'flex',
             alignItems: 'center',
@@ -65,7 +65,7 @@ const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
             transition: 'border-color 0.12s ease',
           }}
         >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--teal-solid)', opacity: isChecked ? 1 : 0, transition: 'opacity 0.1s ease' }} />
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', opacity: isChecked ? 1 : 0, transition: 'opacity 0.1s ease' }} />
         </span>
       </span>
       {(label || description) && (

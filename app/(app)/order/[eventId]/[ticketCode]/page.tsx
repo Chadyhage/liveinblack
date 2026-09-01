@@ -101,7 +101,7 @@ function GateScreen({
         </div>
         <h1 style={{ fontWeight: 800, fontSize: 'var(--font-size-headline-lg)', color: accent, margin: '0 0 10px', letterSpacing: '-.03em' }}>{title}</h1>
         <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.6 }}>{message}</p>
-        <Link href={backHref} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+        <Link href={backHref} style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
           ← {backLabel}
         </Link>
       </div>

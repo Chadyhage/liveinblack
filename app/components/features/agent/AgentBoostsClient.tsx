@@ -118,7 +118,7 @@ export default function AgentBoostsClient({ embedded = false }: { embedded?: boo
           <>
             <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
               {[
-                { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--teal)' },
+                { label: 'Boosts actifs', value: String(data.active.length), color: 'var(--primary)' },
                 { label: 'Conflits à traiter', value: String(data.conflicts.length), color: data.conflicts.length > 0 ? 'var(--danger)' : 'var(--text-muted)' },
                 { label: 'Revenus boosts', value: fmtMoney(data.totalRevenue, 'EUR'), color: 'var(--gold)' },
               ].map((k) => (

@@ -534,7 +534,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
             <Link href="/my-shifts" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', textDecoration: 'none' }}>
               ← Événements
             </Link>
-            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
               {/* Rang 1 (contrôle entrée pur) : jamais "Service sur place",
                   même une fois un billet scanné — il n'a accès qu'au contrôle
                   d'accès, jamais aux commandes (voir D4). */}
@@ -564,7 +564,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
               <div className={styles.fullWidth} role="alert" aria-live="assertive" style={{ background: 'var(--danger-fill)', border: '1px solid var(--danger-border)', borderRadius: 14, padding: '8px 12px' }}>
                 <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--pink)', margin: checkinErrorCode === 'auth_required' ? '0 0 6px' : 0 }}>{checkinError}</p>
                 {checkinErrorCode === 'auth_required' && (
-                  <Link href="/login" style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>
+                  <Link href="/login" style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
                     Se reconnecter
                   </Link>
                 )}
@@ -649,7 +649,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5-6a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     ) : (
-                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-solid)" strokeWidth={2.5}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                     )}
@@ -660,12 +660,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                       fontWeight: 800,
                       margin: 0,
                       letterSpacing: '-0.3px',
-                      // --teal-solid ici (pas --teal) : le badge "Servi" d'une
-                      // ligne de commande, plus bas sur cette même page, utilise
-                      // déjà --teal — deux informations différentes (validité
-                      // d'entrée vs statut d'un article) méritent des teintes
-                      // légèrement distinctes plutôt que la même partout.
-                      color: checkinResult.alreadyCheckedIn ? 'var(--gold)' : 'var(--teal-solid)',
+                      color: checkinResult.alreadyCheckedIn ? 'var(--gold)' : 'var(--primary)',
                     }}
                   >
                     {checkinResult.alreadyCheckedIn ? 'Déjà entré' : 'Billet valide'}
@@ -684,7 +679,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                   {checkinResult.ticket.preorders.length > 0 && (
                     <div style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: '0 0 6px' }}>
                       <p style={{ margin: '0 0 3px' }}>Précommandes :</p>
-                      {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '1px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--teal)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
+                      {checkinResult.ticket.preorders.map((p, index) => <p key={`${p.name}-${index}`} style={{ margin: '1px 0' }}>{p.name} ×{p.qty}{p.showLabel ? <span style={{ color: 'var(--primary)' }}> · Show : {p.showLabel}{p.showInfo ? ` (${p.showInfo})` : ''}</span> : null}</p>)}
                     </div>
                   )}
                   <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: 0 }}>
@@ -725,7 +720,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                           <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                             {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
-                            {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2, fontSize: 'var(--font-size-caption)' }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
+                            {item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 2, fontSize: 'var(--font-size-caption)' }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                           </p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                             <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--gold)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>
@@ -737,7 +732,7 @@ export default function ScannerClient({ eventId, eventName, currency, menu, rank
                                 style={{
                                   fontSize: 'var(--font-size-caption-2)',
                                   fontWeight: 700,
-                                  color: 'var(--teal-solid)',
+                                  color: 'var(--primary)',
                                   background: 'var(--primary-a16)',
                                   padding: '3px 9px',
                                   borderRadius: 999,

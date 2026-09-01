@@ -33,7 +33,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,
-          background: 'var(--teal-solid)',
+          background: 'var(--primary)',
           color: 'var(--primary-ink)',
         }}
       >

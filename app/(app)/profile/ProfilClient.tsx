@@ -476,7 +476,7 @@ function EyebrowLabel({ children }: { children: React.ReactNode }) {
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
-  return <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: kind === 'ok' ? 'var(--teal)' : 'var(--danger-text)', margin: '10px 0 0' }}>{text}</p>
+  return <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: kind === 'ok' ? 'var(--primary)' : 'var(--danger-text)', margin: '10px 0 0' }}>{text}</p>
 }
 
 // Champ mot de passe avec bouton "Voir"/"Cacher" — même pattern que

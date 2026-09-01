@@ -26,7 +26,7 @@ function checkPasswordStrength(pwd: string) {
   if (/[0-9]/.test(pwd)) score++
   if (score <= 1) return { score, label: 'Faible', color: 'var(--pink)' }
   if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
-  return { score, label: 'Fort', color: 'var(--teal)' }
+  return { score, label: 'Fort', color: 'var(--primary)' }
 }
 
 type State = 'form' | 'success' | 'invalid' | 'missing'
@@ -137,7 +137,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                 <Input id="reset-password-confirm" name="new-password" type="password" autoComplete="new-password" placeholder="Mot de passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
               </div>
               {error && <p style={{ fontSize: 'var(--font-size-footnote)', color: COLORS.pink, margin: 0 }}>{error}</p>}
-              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)'), marginTop: 4 }}>
+              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--primary)'), marginTop: 4 }}>
                 Changer mon mot de passe
               </Button>
             </form>
@@ -152,7 +152,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
               Le mot de passe de {email} a été changé. Tu peux maintenant te connecter avec ton nouveau mot de passe.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)')}>Se connecter</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--primary)')}>Se connecter</Button>
             </div>
           </>
         )}

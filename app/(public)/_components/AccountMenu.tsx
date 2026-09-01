@@ -225,7 +225,7 @@ export default function AccountMenu({
               >
                 <LayoutDashboard size={14} />
                 <span style={{ flex: 1 }}>{d.label}</span>
-                {d.role === user.activeRole && <Check size={13} color="var(--teal)" />}
+                {d.role === user.activeRole && <Check size={13} color="var(--primary)" />}
               </Button>
             ))}
             {/* Point de sortie explicite vers le site public — la nav

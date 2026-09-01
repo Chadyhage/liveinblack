@@ -24,7 +24,7 @@ export default function PublicAboutPage() {
         <h1 className="font-display" style={{ fontSize: 'clamp(28px,6vw,48px)', letterSpacing: '.01em', lineHeight: 1.04, margin: '14px 0 0' }}>
           Toute la nuit,
           <br />
-          <span style={{ color: 'var(--teal)' }}>au même endroit.</span>
+          <span style={{ color: 'var(--primary)' }}>au même endroit.</span>
         </h1>
         <p style={{ fontSize: 'clamp(14px,3vw,16px)', color: 'var(--text-muted)', margin: '14px auto 0', maxWidth: 760, lineHeight: 1.55 }}>
           Live in Black est la marketplace de la nuit et de l&apos;événementiel. On réunit ceux qui font la fête, ceux qui l&apos;organisent et ceux qui la rendent

@@ -14,7 +14,7 @@ export interface SliderProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
 // vers --primary, voir DESIGN_SYSTEM.md — gold reste distinct pour un futur
 // re-thème sans toucher aux appelants).
 export default function Slider({ accent = 'teal', style, ...rest }: SliderProps) {
-  const accentVar = accent === 'gold' ? 'var(--gold)' : 'var(--teal-solid)'
+  const accentVar = accent === 'gold' ? 'var(--gold)' : 'var(--primary)'
   return (
     <input
       type="range"

@@ -214,7 +214,7 @@ function HeaderSearch() {
 function QuickResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 'var(--font-size-caption-2)', fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
+      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 'var(--font-size-caption-2)', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
       {children}
     </div>
   )

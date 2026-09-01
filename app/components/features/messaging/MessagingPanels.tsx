@@ -59,7 +59,7 @@ export function NewGroupModal({ friends, onCreate, onClose, onGoToFriends, onPic
         <label style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, cursor: 'pointer' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {avatarDataUrl ? <img src={avatarDataUrl} alt="Avatar du groupe" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover' }} /> : renderGroupAvatar(name, null, 52)}
-          <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--teal)' }}>Choisir une photo</span>
+          <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--primary)' }}>Choisir une photo</span>
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; setAvatarDataUrl(await onPickAvatar(file)) }} />
         </label>
         <p style={sectionLabelStyle}>{name}</p>
@@ -151,7 +151,7 @@ export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissN
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
         {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
-        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 'var(--font-size-caption-2)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
+        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 'var(--font-size-caption-2)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--primary)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
       </div>
     </ModalShell>
   )
@@ -202,7 +202,7 @@ export function ContactPanelModal({ conversationId, member, online, lastSeenAt, 
         {renderAvatar(member.userId, member.name, 64, online, true)}
         <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>
         <p style={{ fontSize: 'var(--font-size-footnote)', color: online ? 'var(--primary)' : 'var(--text-faint)', margin: 0 }}>{online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}</p>
-        {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 'var(--font-size-callout)', color: 'var(--teal)', textDecoration: 'none' }}>{phone}</a>}
+        {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 'var(--font-size-callout)', color: 'var(--primary)', textDecoration: 'none' }}>{phone}</a>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Button variant="secondary" onClick={onClearHistory} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Vider l&apos;historique</Button>

@@ -15,7 +15,7 @@ const TABS: Array<{ id: TabId; label: string; color: string; roleName: string; d
   {
     id: 'client',
     label: 'Tu sors',
-    color: 'var(--teal)',
+    color: 'var(--primary)',
     roleName: 'Le Clubber',
     description:
       'Découvre les meilleures soirées près de chez toi, réserve en quelques secondes, reçois ton billet QR instantanément et cumule des points à chaque sortie.',

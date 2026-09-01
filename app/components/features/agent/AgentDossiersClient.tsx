@@ -184,7 +184,7 @@ const TARIF_TYPE_LABEL: Record<string, string> = {
   personne: 'Par personne',
 }
 
-const sectionTitleStyle: React.CSSProperties = { fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 // Les couleurs `var(--*)` ne supportent pas la concaténation d'un canal alpha
 // hexadécimal (`${'var(--gold)'}22` produit une chaîne CSS invalide) — voir
@@ -723,7 +723,7 @@ function DetailPanel({
       <div>
         <p style={sectionTitleStyle}>Complétude</p>
         <div style={{ height: 6, borderRadius: 999, background: 'var(--surface-2)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--teal)' : completeness >= 50 ? 'var(--gold)' : 'var(--danger)' }} />
+          <div style={{ height: '100%', width: `${completeness}%`, background: completeness >= 80 ? 'var(--primary)' : completeness >= 50 ? 'var(--gold)' : 'var(--danger)' }} />
         </div>
         <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '4px 0 0' }}>{completeness}%</p>
       </div>
@@ -769,7 +769,7 @@ function DetailPanel({
                       {doc.size ? ` · ${Math.round(doc.size / 1024)}ko` : ''}
                     </span>
                     {doc.url ? (
-                      <a href={doc.url} target="_blank" rel="noreferrer" style={{ color: 'var(--teal)' }}>
+                      <a href={doc.url} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>
                         Voir →
                       </a>
                     ) : (
@@ -870,7 +870,7 @@ function DossierActions({
 }) {
   const [confirmReactivate, setConfirmReactivate] = useState(false)
   const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal', width: '100%' }
-  const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--primary-ink)' }
+  const teal: React.CSSProperties = { ...btnBase, background: 'var(--primary)', color: 'var(--primary-ink)' }
   const amber: React.CSSProperties = { ...btnBase, background: 'var(--warning-text)', color: 'var(--primary-ink)' }
   const pink: React.CSSProperties = { ...btnBase, background: 'var(--primary)', color: 'var(--primary-ink)' }
   const blue: React.CSSProperties = { ...btnBase, background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border-strong)' }

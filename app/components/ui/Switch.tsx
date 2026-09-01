@@ -50,8 +50,8 @@ const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
             position: 'absolute',
             inset: 0,
             borderRadius: 999,
-            background: isChecked ? 'var(--teal-solid)' : 'var(--surface-2)',
-            border: `1.5px solid ${isChecked ? 'var(--teal-solid)' : 'var(--border-strong)'}`,
+            background: isChecked ? 'var(--primary)' : 'var(--surface-2)',
+            border: `1.5px solid ${isChecked ? 'var(--primary)' : 'var(--border-strong)'}`,
             transition: 'background 0.15s ease, border-color 0.15s ease',
           }}
         >

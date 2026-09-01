@@ -16,8 +16,8 @@
   inset: -12px;
   z-index: -2;
   background: url('/media1.jpg') 58% center / cover no-repeat;
-  opacity: .26;
-  filter: blur(3px);
+  opacity: .08;
+  filter: blur(4px);
   transform: scale(1.04);
 }
 
@@ -26,9 +26,7 @@
   position: fixed;
   inset: 0;
   z-index: -1;
-  background:
-    radial-gradient(circle at 78% 8%, var(--primary-a06), transparent 32%),
-    linear-gradient(115deg, var(--page-overlay), var(--page-overlay) 58%, var(--page-overlay));
+  background: linear-gradient(115deg, var(--page-overlay), var(--page-overlay) 58%, var(--page-overlay));
 }
 
 .layout { min-height: 100dvh; display: flex; align-items: flex-start; overflow-x: clip; overflow-y: visible; }

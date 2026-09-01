@@ -24,12 +24,12 @@ export const metadata: Metadata = {
 
 // `soft`/`border` sont des rgba() FIXES, jamais dérivées de `color` par
 // concaténation de chaîne (ex. `${meta.color}55`) — quand color vaut
-// `var(--teal)`, ça produirait littéralement `var(--teal)55`, une valeur CSS
+// `var(--primary)`, ça produirait littéralement `var(--primary)55`, une valeur CSS
 // invalide (on ne peut pas suffixer un canal alpha à une custom property).
 // Un rgba() précalculé par rôle est la seule façon correcte de garder un
 // fond/bordure translucides cohérents avec `color`.
 const ROLE_META: Record<string, { label: string; color: string; soft: string; border: string; desc: string }> = {
-  serveur: { label: 'Serveur', color: 'var(--teal)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Prends et sers les commandes au bar' },
+  serveur: { label: 'Serveur', color: 'var(--primary)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Prends et sers les commandes au bar' },
   scan: { label: 'Contrôle entrée', color: 'var(--violet-text)', soft: 'rgba(var(--violet-rgb), .12)', border: 'var(--violet-border)', desc: "Scanne les billets à l'entrée" },
   manager: { label: 'Manager', color: 'var(--gold)', soft: 'var(--primary-a12)', border: 'var(--primary-a35)', desc: 'Gestion complète de la soirée' },
   dj: { label: 'DJ', color: 'var(--danger)', soft: 'var(--danger-fill)', border: 'var(--danger-border)', desc: 'Gère la playlist interactive de la soirée' },

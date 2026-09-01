@@ -178,7 +178,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
                   alignSelf: 'flex-start',
                   padding: '7px 12px',
                   borderRadius: 999,
-                  background: 'var(--teal-solid)',
+                  background: 'var(--primary)',
                   color: 'var(--primary-ink)',
                   fontWeight: 700,
                   fontSize: 'var(--font-size-footnote)',
@@ -303,7 +303,7 @@ function Section({
   const { pageItems, pageCount } = pagedSlice(groups, page, GROUP_PAGE_SIZE)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
+      <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
       <div className="ticket-wallet-section-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: 8, alignItems: 'start' }}>
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
@@ -341,7 +341,7 @@ function EmptyWallet() {
       <p style={{ maxWidth: 520, fontSize: 'var(--font-size-headline-xl)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.55 }}>Tes billets achetés apparaîtront ici, avec leur QR code et toutes les informations utiles pour entrer à l’événement.</p>
       <Link
         href="/events"
-        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 'var(--font-size-headline)', textDecoration: 'none' }}
+        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 'var(--font-size-headline)', textDecoration: 'none' }}
       >
         Découvrir les événements
       </Link>
@@ -427,7 +427,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
           {cancelled && <Pill color="var(--danger)" bg="var(--danger-fill)">Annulé</Pill>}
           {past && !cancelled && <Pill color="var(--text-faint)" bg="var(--surface-2)">Terminé</Pill>}
-          <Pill color="var(--teal)" bg="var(--primary-a10)">
+          <Pill color="var(--primary)" bg="var(--primary-a10)">
             {group.myTickets.length} billet{group.myTickets.length > 1 ? 's' : ''}
           </Pill>
         </div>
@@ -614,7 +614,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
             transform: 'translateX(-50%)',
             padding: '6px 14px',
             borderRadius: 999,
-            background: toast.kind === 'ok' ? 'var(--teal-solid)' : 'var(--pink)',
+            background: toast.kind === 'ok' ? 'var(--primary)' : 'var(--pink)',
             color: toast.kind === 'ok' ? 'var(--primary-ink)' : 'var(--text)',
             fontSize: 'var(--font-size-caption-lg)',
             fontWeight: 700,
@@ -626,7 +626,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
         <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--violet)', fontWeight: 700 }}>
           {assignedCount}/{hostedSeats.length} attribuées
         </span>
@@ -643,7 +643,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <div>
                   <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>Place {i + 1}</p>
-                  <p style={{ fontSize: 'var(--font-size-caption-lg)', margin: '1px 0 0', color: seat.assignedTo ? 'var(--teal)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
+                  <p style={{ fontSize: 'var(--font-size-caption-lg)', margin: '1px 0 0', color: seat.assignedTo ? 'var(--primary)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
                     {seat.assignedTo ? `Attribuée à ${seat.assignedName || 'un invité'}` : pendingEmail ? `Invitation envoyée à ${pendingEmail}` : 'Libre — à toi'}
                     {seat.assignedTo && (
                       <span style={{ marginLeft: 6, color: seat.checkedInAt ? 'var(--pink)' : 'var(--text-faint)' }}>
@@ -715,7 +715,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                     size="sm"
                     onClick={() => sendInvite(seat.ticketCode)}
                     disabled={busyCode === seat.ticketCode || !emailDraft.trim()}
-                    style={smallBtnStyle('var(--teal-solid)', 'var(--primary-ink)')}
+                    style={smallBtnStyle('var(--primary)', 'var(--primary-ink)')}
                   >
                     Donner
                   </Button>
@@ -959,7 +959,7 @@ function PremiumTicketCard({
                 </p>
                 <p style={{ fontWeight: 850, fontSize: 'var(--font-size-title-4)', color: 'var(--text)', lineHeight: 1.12, margin: 0, maxWidth: 270 }}>{event?.name ?? 'Événement'}</p>
               </div>
-              <Pill color={inactive ? 'var(--text-faint)' : 'var(--primary-ink)'} bg={inactive ? 'var(--surface-2)' : 'var(--teal-solid)'}>
+              <Pill color={inactive ? 'var(--text-faint)' : 'var(--primary-ink)'} bg={inactive ? 'var(--surface-2)' : 'var(--primary)'}>
                 {inactive ? inactiveLabel : countdown || 'Valide'}
               </Pill>
             </div>
@@ -1029,7 +1029,7 @@ function PremiumTicketCard({
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', marginBottom: 4 }}>
               <span>
                 {item.name} ×{item.qty}
-                {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
+                {item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
               </span>
               <span style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
             </div>
@@ -1056,7 +1056,7 @@ function PremiumTicketCard({
                   <span style={{ color: 'var(--text-muted)' }}>
                     {it.name} ×{it.quantity}
                   </span>
-                  <span style={{ color: it.status === 'served' ? 'var(--teal)' : 'var(--gold)', fontWeight: 700, fontSize: 'var(--font-size-caption)' }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
+                  <span style={{ color: it.status === 'served' ? 'var(--primary)' : 'var(--gold)', fontWeight: 700, fontSize: 'var(--font-size-caption)' }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
                 </div>
               ))}
               <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '8px 0 0', lineHeight: 1.5 }}>
@@ -1089,7 +1089,7 @@ function PremiumTicketCard({
               {event && (
                 <Link
                   href={`/order/${event.id}/${ticket.ticketCode}`}
-                  style={{ ...actionBtnStyle(false), background: 'var(--teal-solid)', color: 'var(--primary-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  style={{ ...actionBtnStyle(false), background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   title="Commander sur place"
                 >
                   <ExternalLink size={15} aria-hidden="true" />

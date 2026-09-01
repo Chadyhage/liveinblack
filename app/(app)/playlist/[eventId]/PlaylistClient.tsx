@@ -649,7 +649,7 @@ export default function PlaylistClient({
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
             {[
               ['Proposés', djStats.total, 'var(--text)'],
-              ['Likes', djStats.likes, 'var(--teal)'],
+              ['Likes', djStats.likes, 'var(--primary)'],
               ['À jouer', djStats.validated, 'var(--gold)'],
               ['Joués', djStats.played, 'var(--violet)'],
             ].map(([label, value, color]) => (
@@ -707,7 +707,7 @@ export default function PlaylistClient({
                 onClick={() => setDjSort(id)}
                 style={{
                   ...pillButtonStyle,
-                  color: djSort === id ? 'var(--teal)' : 'var(--text-muted)',
+                  color: djSort === id ? 'var(--primary)' : 'var(--text-muted)',
                   background: djSort === id ? 'var(--primary-a12)' : 'var(--surface-2)',
                   borderColor: djSort === id ? `${HEX.teal}66` : 'var(--border)',
                 }}
@@ -793,7 +793,7 @@ export default function PlaylistClient({
         <>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
             <StatChip label="Tes sons" value={`${mySongs.length} / ${ticketCount}`} color="var(--gold)" />
-            <StatChip label="Likes restants" value={`${likesRemaining} / ${LIKE_BUDGET}`} color="var(--teal)" />
+            <StatChip label="Likes restants" value={`${likesRemaining} / ${LIKE_BUDGET}`} color="var(--primary)" />
             <StatChip label="Dans la playlist" value={rankedSongs.length} />
           </div>
 
@@ -815,7 +815,7 @@ export default function PlaylistClient({
                     fontWeight: active ? 800 : 600,
                     transition: 'all 0.2s',
                     color: active ? 'var(--primary-ink)' : 'var(--text-muted)',
-                    background: active ? 'var(--teal-solid)' : 'transparent',
+                    background: active ? 'var(--primary)' : 'transparent',
                   }}
                 >
                   {t.label}
@@ -874,7 +874,7 @@ export default function PlaylistClient({
                           }}
                         >
                           <HeartIcon filled={liked} color={isMine ? 'var(--text-faint)' : liked ? HEX.teal : 'var(--text-faint)'} />
-                          <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: isMine ? 'var(--text-faint)' : liked ? 'var(--teal)' : 'var(--text-muted)' }}>
+                          <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: isMine ? 'var(--text-faint)' : liked ? 'var(--primary)' : 'var(--text-muted)' }}>
                             {song.likedBy.length}
                           </span>
                         </Button>
@@ -921,7 +921,7 @@ export default function PlaylistClient({
                         <TicketIcon done={effectiveHasTicket} />
                       </div>
                       <div style={{ textAlign: 'left' }}>
-                        <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, color: effectiveHasTicket ? 'var(--teal)' : 'var(--text)', margin: 0 }}>
+                        <p style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 700, color: effectiveHasTicket ? 'var(--primary)' : 'var(--text)', margin: 0 }}>
                           {effectiveHasTicket ? 'Billet réservé' : 'Réserver un billet'}
                         </p>
                         <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '2px 0 0' }}>
@@ -973,7 +973,7 @@ export default function PlaylistClient({
                   </div>
                 ) : (
                   <Card style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--teal)', margin: 0 }}>
+                    <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
                       {ticketCount <= 1 ? 'Ton son est dans la playlist' : `${mySongs.length} / ${ticketCount} sons proposés`}
                     </p>
                     <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: 0 }}>Tu as utilisé toutes tes propositions · 1 son par billet réservé</p>
@@ -1072,7 +1072,7 @@ export default function PlaylistClient({
                     ['Le classement est indicatif', 'Il aide le DJ, mais ne décide pas à sa place'],
                   ].map(([t, d]) => (
                     <div key={t} style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
-                      <span style={{ marginTop: 3, flexShrink: 0, color: 'var(--teal)' }}>
+                      <span style={{ marginTop: 3, flexShrink: 0, color: 'var(--primary)' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
@@ -1374,7 +1374,7 @@ function DjSongRow({
           )}
         </div>
         <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {song.artist} · <span style={{ color: 'var(--teal)' }}>{song.likedBy.length} like{song.likedBy.length > 1 ? 's' : ''}</span>
+          {song.artist} · <span style={{ color: 'var(--primary)' }}>{song.likedBy.length} like{song.likedBy.length > 1 ? 's' : ''}</span>
           {addedByMe && <span style={{ color: 'var(--text-faint)' }}> · ajouté par toi</span>}
           {playing && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>▶ en cours</span>}
         </p>

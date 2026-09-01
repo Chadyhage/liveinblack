@@ -14,7 +14,7 @@ import type { getMySubscriptionOverview } from '@/lib/server/provider/providerSu
 // le calcul. L'historique vient du registre webhook Mongo, jamais du client.
 
 type SubscriptionOverview = Awaited<ReturnType<typeof getMySubscriptionOverview>>
-const C = { obsidian: 'var(--obsidian)', teal: 'var(--teal)', gold: 'var(--gold)', pink: 'var(--pink)' }
+const C = { obsidian: 'var(--obsidian)', teal: 'var(--primary)', gold: 'var(--gold)', pink: 'var(--pink)' }
 const CARD_SHADOW = '0 18px 46px rgba(var(--black-rgb), .22)'
 const primaryButton: React.CSSProperties = { background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-sm)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal' }
 
@@ -172,7 +172,7 @@ export default function SubscriptionPanel({ profile, subscription }: { profile: 
         </Card>
 
         <Card style={{ padding: 18, marginTop: 16, boxShadow: CARD_SHADOW }}>
-          <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Historique des paiements</h2>
+          <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Historique des paiements</h2>
           <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '0 0 4px' }}>Tes reçus d&rsquo;abonnement.</p>
           {subscription.payments.length === 0 ? (
             <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '16px 0 0' }}>Aucun paiement confirmé dans cet historique.</p>

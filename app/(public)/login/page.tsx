@@ -19,7 +19,7 @@ export default function LoginPage() {
         <>
           LES MEILLEURES SOIRÉES,
           <br />
-          <span style={{ color: 'var(--teal)' }}>AU BOUT DES DOIGTS.</span>
+          <span style={{ color: 'var(--primary)' }}>AU BOUT DES DOIGTS.</span>
         </>
       }
     >
@@ -33,7 +33,7 @@ export default function LoginPage() {
 function AuthFormFallback() {
   return (
     <div aria-label="Chargement du formulaire" style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
-      <h1 className="font-display" style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--teal)', margin: '0 0 10px' }}>Connexion</h1>
+      <h1 className="font-display" style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--primary)', margin: '0 0 10px' }}>Connexion</h1>
       <div className="lb-loading-panel" style={{ minHeight: 220 }}>
         <span>Préparation du formulaire…</span>
       </div>

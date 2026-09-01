@@ -46,7 +46,7 @@ export default function Avatar({ src, name, size = 'md', style }: AvatarProps) {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--teal-solid)',
+        background: 'var(--primary)',
         color: '#ffffff',
         fontWeight: 800,
         fontSize: FONT_PX[size],

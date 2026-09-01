@@ -290,7 +290,7 @@ export default function OrganizerOnboardingWizard({
         <Card style={{ padding: mode === 'anonymous' ? '12px 16px' : 24 }}>
           {step === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 6 : 14 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: mode === 'anonymous' ? '6px 10px' : 14 }}>
                 <div>
                   <Label style={labelStyle}>Nom commercial / Établissement {requiredMark}</Label>
@@ -382,7 +382,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Description de l&apos;activité</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Description de l&apos;activité</h2>
               <div>
                 <Label style={labelStyle}>Type d&apos;établissement {requiredMark}</Label>
                 <Select
@@ -500,7 +500,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
               <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0 }}>Comment tu seras payé</p>
               <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                 LIVEINBLACK collecte les paiements de tes billets et te reverse ta part directement sur ton compte bancaire. Les reversements sont gérés de façon
@@ -528,7 +528,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
               <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                 Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité. Ils sont stockés de façon privée et accessibles uniquement à
                 l&apos;équipe LIVEINBLACK. Formats acceptés : PDF, JPG, PNG — 10 Mo max par fichier.

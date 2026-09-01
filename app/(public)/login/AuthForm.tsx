@@ -36,7 +36,7 @@ function checkPasswordStrength(pwd: string) {
   if (/[0-9]/.test(pwd)) score++
   if (score <= 1) return { score, label: 'Faible', color: 'var(--pink)' }
   if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
-  return { score, label: 'Fort', color: 'var(--teal)' }
+  return { score, label: 'Fort', color: 'var(--primary)' }
 }
 
 const btnPrimary: React.CSSProperties = {
@@ -109,7 +109,7 @@ function RoleIcon({ role, size = 18 }: { role: RegRole; size?: number }) {
   )
 }
 
-// Hex littéraux ici (et pas var(--teal)/var(--violet)/var(--gold)) car on a
+// Hex littéraux ici (et pas var(--primary)/var(--violet)/var(--gold)) car on a
 // besoin de suffixer une transparence (1a/3a) — mêmes valeurs que les vars.
 const ROLE_CARDS: { role: RegRole; title: string; desc: string; badge: string | null; accent: string }[] = [
   { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: 'var(--primary)' },
@@ -374,7 +374,7 @@ export default function AuthForm() {
       <div style={{ width: '100%', maxWidth: 440, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
               <path d="M2 7l10 7 10-7" />
             </svg>
@@ -396,7 +396,7 @@ export default function AuthForm() {
           <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>L&apos;email peut arriver dans les spams ou courriers indésirables.</p>
 
           {resendSent && (
-            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--teal)', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--primary)', margin: 0, lineHeight: 1.5 }}>
               Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
             </p>
           )}
@@ -443,7 +443,7 @@ export default function AuthForm() {
       `}</style>
 
       <div style={{ marginBottom: 6 }}>
-        <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-5)', letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
+        <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-5)', letterSpacing: '.02em', margin: 0, color: 'var(--primary)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
         <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '3px 0 0' }}>
@@ -803,7 +803,7 @@ export default function AuthForm() {
           ) : (
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round">
+                <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="4" width="20" height="16" rx="2" />
                   <path d="M2 7l10 7 10-7" />
                 </svg>

@@ -3,12 +3,12 @@
 /* Design system LIVEINBLACK (voir CLAUDE.md) : surfaces opaques, CTA pleins,
    pas de glow néon ni de glassmorphism de contenu (blur toléré : nav/header). */
 :root {
-  --obsidian-rgb: 25, 18, 24;
-  --surface-rgb: 36, 26, 35;
-  --surface-2-rgb: 29, 20, 28;
+  --obsidian-rgb: 10, 10, 13;
+  --surface-rgb: 18, 18, 22;
+  --surface-2-rgb: 24, 24, 29;
   --primary-rgb: 245, 61, 141;
   --primary-strong-rgb: 224, 45, 125;
-  --primary-deep-rgb: 58, 24, 39;
+  --primary-deep-rgb: 20, 18, 22;
   --primary-ink-rgb: 255, 255, 255;
   --text-rgb: 255, 255, 255;
   --text-soft-rgb: 255, 255, 255;
@@ -42,8 +42,8 @@
   --card-border: rgba(var(--text-rgb), 0.12);
   color-scheme: dark;
   /* Aliases de compatibilité : l'ancienne palette converge vers le rose primaire. */
-  --teal: var(--text);
-  --teal-solid: var(--text-faint);
+  --teal: var(--primary);
+  --teal-solid: var(--primary);
   --gold: var(--text-faint);
   --pink: rgb(var(--primary-rgb));
   --violet: var(--text-muted);
@@ -284,8 +284,8 @@
   --primary-strong: rgb(var(--primary-strong-rgb));
   --primary-ink: rgb(var(--primary-ink-rgb));
   --accent-text: var(--primary);
-  --teal: var(--text);
-  --teal-solid: var(--text-muted);
+  --teal: var(--primary);
+  --teal-solid: var(--primary);
   --gold: var(--text-muted);
   --pink: rgb(var(--primary-rgb));
   --violet: var(--text-faint);

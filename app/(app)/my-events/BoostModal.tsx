@@ -110,7 +110,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
     const status = slotStatus(position)
     if (status === 'held') return 'var(--gold)'
     if (status === 'active') return 'var(--pink)'
-    return 'var(--teal)'
+    return 'var(--primary)'
   }
 
   async function confirmBoost() {
@@ -160,7 +160,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
   return (
     <SlideOverModal onClose={onClose} ariaLabel="Promouvoir l’événement" padded>
         <div style={{ marginBottom: 20, paddingRight: 24 }}>
-          <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
+          <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Booster mon événement</h2>
           <p
             style={{
               fontWeight: 600,
@@ -197,7 +197,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
         ) : step === 'pay' && chosen && chosenTier ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div style={{ padding: 18, border: '1px solid var(--primary-a32)', borderRadius: 14, background: 'var(--surface-2)' }}>
-              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 Récapitulatif avant paiement
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 0', fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>
@@ -270,7 +270,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
             <div>
-              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
+              <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>
                 1. Choisis ta position
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -324,7 +324,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10, marginBottom: 9 }}>
                 <div>
-                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 5px' }}>
                     2. Choisis la durée
                   </p>
                   <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>{activePlan.description}</p>
@@ -367,7 +367,7 @@ export default function BoostModal({ event, onClose }: BoostModalProps) {
                         opacity: disabled ? 0.38 : 1,
                       }}
                     >
-                      <span style={{ display: 'block', fontWeight: 600, fontSize: 'var(--font-size-caption)', letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--teal)' : 'var(--text-faint)' }}>
+                      <span style={{ display: 'block', fontWeight: 600, fontSize: 'var(--font-size-caption)', letterSpacing: '0.05em', textTransform: 'uppercase', color: selected ? 'var(--primary)' : 'var(--text-faint)' }}>
                         {tier.label}
                       </span>
                       <strong style={{ display: 'block', fontWeight: 700, fontSize: 'var(--font-size-title-5)', marginTop: 8, whiteSpace: 'nowrap', color: selected ? 'var(--text)' : activePlan.color }}>

@@ -347,9 +347,9 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                               borderRadius: 8,
                               fontSize: 'var(--font-size-caption-lg)',
                               fontWeight: 700,
-                              border: active ? '1px solid var(--teal)' : '1px solid var(--border-strong)',
+                              border: active ? '1px solid var(--primary)' : '1px solid var(--border-strong)',
                               background: active ? 'var(--primary-a14)' : 'var(--surface-2)',
-                              color: active ? 'var(--teal)' : 'var(--text-muted)',
+                              color: active ? 'var(--primary)' : 'var(--text-muted)',
                             }}
                           >
                             {p.type}
@@ -408,7 +408,7 @@ export default function PromoCodesPanel({ event, onClose }: PromoCodesPanelProps
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ margin: 0, font: `700 14px var(--font-open-sans)`, letterSpacing: '.05em', color: 'var(--text)' }}>
                           {p.code}
-                          <span style={{ marginLeft: 9, font: `700 12px var(--font-open-sans)`, color: 'var(--teal)' }}>
+                          <span style={{ marginLeft: 9, font: `700 12px var(--font-open-sans)`, color: 'var(--primary)' }}>
                             {p.type === 'percent' ? `-${p.value} %` : `-${fmtMoney(p.value, currency)}`} / billet
                           </span>
                         </p>

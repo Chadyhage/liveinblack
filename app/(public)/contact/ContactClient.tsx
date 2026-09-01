@@ -197,7 +197,7 @@ export default function ContactClient() {
             <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               La plupart des questions sur les billets, remboursements ou ton compte trouvent une réponse plus
               rapide directement depuis ton espace « Mon profil » ou la page{' '}
-              <a href="/about" style={{ color: 'var(--teal)' }}>C&apos;est quoi</a>.
+              <a href="/about" style={{ color: 'var(--primary)' }}>C&apos;est quoi</a>.
             </p>
           </div>
           <div>

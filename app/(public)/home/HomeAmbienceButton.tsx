@@ -23,7 +23,7 @@ export default function HomeAmbienceButton() {
         borderRadius: 999,
         border: `1px solid ${state.playing ? 'var(--primary-a42)' : 'var(--border)'}`,
         background: state.playing ? 'var(--primary-a09)' : 'transparent',
-        color: state.playing ? 'var(--teal)' : 'var(--text-faint)',
+        color: state.playing ? 'var(--primary)' : 'var(--text-faint)',
         fontSize: 'var(--font-size-caption-lg)',
         backdropFilter: 'blur(12px)',
       }}
