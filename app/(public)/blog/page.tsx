@@ -86,7 +86,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero}>
-        <p className={styles.eyebrow}>Le journal LIVEINBLACK</p>
         <h1>Les idées qui font vivre la scène.</h1>
         <p>Guides, conseils et actualités pour organiser, soutenir et vivre des événements mémorables.</p>
         <Link href="/blog/benin" className={styles.hubLink}>Explorer le hub événementiel Bénin <ArrowUpRight size={16} aria-hidden="true" /></Link>
@@ -121,7 +120,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             ))}
           </div>
         ) : (
-          <div className={styles.empty}><Mascot mood="sleeping" size={164} /><h3>Aucun article pour le moment</h3><p>De nouveaux contenus arrivent régulièrement.</p></div>
+          <div className={styles.empty}><Mascot mood="sleeping" size={250} /><h3>Aucun article pour le moment</h3><p>De nouveaux contenus arrivent régulièrement.</p></div>
         )}
 
         <PageLinks page={page} pageCount={pageCount} makeHref={makeHref} totalItems={totalCount} pageSize={PAGE_SIZE} />

@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { Bell, BookOpen, CalendarDays, CreditCard, FileText, Flag, Globe, LayoutDashboard, Menu, MessageCircle, Newspaper, Settings, Star, Trash2, UserRound, Users, X } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, CreditCard, FileText, Flag, Globe, LayoutDashboard, Menu, MessageCircle, Newspaper, ServerCog, Settings, Star, Trash2, UserRound, Users, X } from 'lucide-react'
 import { Button, IconButton } from '@/app/components/ui'
 import AccountMenu from '@/app/(public)/_components/AccountMenu'
 import styles from './AgentWorkspaceShell.module.css'
 
 const GROUPS = [
-  { title: 'Pilotage', links: [{ href: '/agent', label: 'Centre de contrôle', icon: LayoutDashboard }] },
+  { title: 'Pilotage', links: [{ href: '/agent', label: 'Centre de contrôle', icon: LayoutDashboard }, { href: '/agent/vercel', label: 'Ops Vercel', icon: ServerCog }] },
   { title: 'Opérations', links: [{ href: '/agent/comptes', label: 'Comptes', icon: Users }, { href: '/agent/evenements', label: 'Événements', icon: CalendarDays }, { href: '/agent/dossiers', label: 'Dossiers', icon: FileText }, { href: '/agent/paiements', label: 'Finance', icon: CreditCard }] },
   { title: 'Confiance', links: [{ href: '/agent/signalements', label: 'Signalements', icon: Flag }, { href: '/agent/avis', label: 'Avis', icon: Star }, { href: '/agent/suppressions', label: 'Suppressions', icon: Trash2 }] },
   { title: 'Publication', links: [{ href: '/agent/actualite', label: 'Accueil public', icon: Newspaper }, { href: '/agent/blog', label: 'Blog', icon: BookOpen }] },
@@ -20,6 +20,7 @@ const GROUPS = [
 
 const AGENT_PAGE_TITLES: Record<string, string> = {
   '/agent': 'Centre de contrôle',
+  '/agent/vercel': 'Ops Vercel',
   '/agent/comptes': 'Comptes',
   '/agent/evenements': 'Événements',
   '/agent/dossiers': 'Dossiers',

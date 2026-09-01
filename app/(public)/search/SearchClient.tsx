@@ -50,7 +50,6 @@ export default function SearchClient({ initialQuery }: { initialQuery: string })
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
-        <p className={styles.eyebrow}><Sparkles size={15} aria-hidden="true" /> Explorer LIVEINBLACK</p>
         <h1>Trouve ce que tu cherches</h1>
         <p>Événements, organisateurs et prestataires du Bénin réunis dans une recherche rapide.</p>
         <form className={styles.searchForm} action="/search" method="get" onSubmit={submit} role="search">

@@ -215,7 +215,7 @@ export default function ProviderCatalogInquiry({
               )}
               <div style={{ minWidth: 0 }}>
                 {item.category && (
-                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 5px' }}>
                     {item.category}
                   </p>
                 )}

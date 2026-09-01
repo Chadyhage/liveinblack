@@ -125,4 +125,18 @@ if (!load.ok) {
   process.exit(load.code)
 }
 
-console.log(`✅ Déploiement + validations OK (${baseUrl})`)
+const logs = run(process.platform === 'win32' ? 'cmd' : 'sh', [
+  process.platform === 'win32' ? '/c' : '-lc',
+  `LIB_WEB_BASE_URL=${baseUrl} npm run ops:vercel:logs`,
+], {
+  LIB_WEB_BASE_URL: baseUrl,
+  VERCEL_LOGS_SINCE: process.env.VERCEL_LOGS_SINCE ?? '1h',
+})
+
+if (!logs.ok) {
+  console.error('Scan logs Vercel KO.')
+  console.error(logs.output.trim())
+  process.exit(logs.code)
+}
+
+console.log(`✅ Déploiement + validations + logs OK (${baseUrl})`)

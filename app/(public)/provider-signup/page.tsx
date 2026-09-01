@@ -5,7 +5,7 @@ import { getMyApplication } from '@/lib/server/provider/applications'
 import AuthSplitLayout from '../_components/AuthSplitLayout'
 
 // Portrait éditorial créé sur mesure pour le parcours prestataire.
-const HERO_IMG = '/images/live-in-black/auth/auth-provider-av-dj-team.png'
+const HERO_IMG = 'https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80'
 import PrestataireOnboardingWizard from '@/app/components/features/provider/PrestataireOnboardingWizard'
 
 // Route unique "Devenir prestataire" — publique (mode anonyme, pas de

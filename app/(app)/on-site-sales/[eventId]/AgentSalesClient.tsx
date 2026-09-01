@@ -126,7 +126,7 @@ export default function AgentSalesClient({
 
       <div className="lb-responsive-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 'var(--space-2)', marginBottom: 16 }}>
         <Card style={CARD_STYLE}>
-          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{dashboard.totalSales}</p>
+          <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{dashboard.totalSales}</p>
           <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Vendus</p>
         </Card>
         <Card style={CARD_STYLE}>
@@ -281,7 +281,7 @@ export default function AgentSalesClient({
           Encaisser la vente
         </Button>
 
-        {result && <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: result.kind === 'ok' ? 'var(--teal)' : 'var(--danger)', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
+        {result && <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: result.kind === 'ok' ? 'var(--primary)' : 'var(--danger)', margin: 0, lineHeight: 1.5 }}>{result.text}</p>}
       </Card>
 
       <ConfirmDialog

@@ -53,7 +53,7 @@ const ROLE_LABEL: Record<DashboardStats['roleBreakdown'][number]['role'], string
   prestataire: 'Prestataire',
 }
 const ROLE_COLOR: Record<DashboardStats['roleBreakdown'][number]['role'], string> = {
-  client: 'var(--teal)',
+  client: 'var(--primary)',
   organisateur: 'var(--gold)',
   prestataire: 'var(--danger)',
 }

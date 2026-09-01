@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Revue obligatoire avant activation live du webhook Vercel Account.",
+  "applyCommand": "npm run ops:vercel:webhooks:setup -- --apply",
+  "defaultEndpoint": "/api/ops/vercel-events",
+  "defaultEvents": ["deployment.created", "deployment.ready"],
+  "checks": [
+    {
+      "key": "endpoint-choice",
+      "label": "Endpoint plateforme choisi",
+      "required": true,
+      "howToVerify": "PUBLIC_SITE_URL ou VERCEL_ACCOUNT_WEBHOOK_URL pointe vers /api/ops/vercel-events sur le domaine production.",
+      "riskIfMissing": "Les evenements Vercel peuvent etre envoyes au mauvais environnement."
+    },
+    {
+      "key": "signature-secret",
+      "label": "Signature HMAC active",
+      "required": true,
+      "howToVerify": "VERCEL_ACCOUNT_WEBHOOK_SECRET est stocke et l'endpoint verifie x-vercel-signature sur le raw body.",
+      "riskIfMissing": "Un tiers pourrait injecter de faux evenements plateforme."
+    },
+    {
+      "key": "project-scope",
+      "label": "Scope limite au projet",
+      "required": true,
+      "howToVerify": "Le script cree le webhook avec --project sur le projectId Vercel courant.",
+      "riskIfMissing": "Le site peut recevoir des evenements inutiles d'autres projets du compte."
+    },
+    {
+      "key": "event-selection",
+      "label": "Evenements limites",
+      "required": true,
+      "howToVerify": "Commencer avec deployment.created et deployment.ready; etendre VERCEL_ACCOUNT_WEBHOOK_EVENTS seulement si utile.",
+      "riskIfMissing": "Trop de bruit operationnel et moins de signaux vraiment actionnables."
+    },
+    {
+      "key": "retention",
+      "label": "Retention limitee",
+      "required": true,
+      "howToVerify": "Les evenements plateforme expirent apres 90 jours dans VercelPlatformEvent.",
+      "riskIfMissing": "Accumulation inutile d'historique technique."
+    },
+    {
+      "key": "agent-visibility",
+      "label": "Visibilite agent",
+      "required": true,
+      "howToVerify": "/agent/vercel affiche les signaux plateforme et l'etat du secret webhook.",
+      "riskIfMissing": "Le webhook est actif mais invisible pour l'equipe operationnelle."
+    }
+  ]
+}

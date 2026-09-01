@@ -97,7 +97,7 @@ function toDraft(p: Post): Draft {
   }
 }
 
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', marginBottom: 8 }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', marginBottom: 8 }
 
 export default function AgentBlogClient() {
   const [posts, setPosts] = useState<Post[]>([])

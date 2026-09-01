@@ -44,7 +44,7 @@ export default function StarredModal({
       {messages.map((m) => (
         <div key={m.id} style={rowStyle}>
           <Button variant="ghost" onClick={() => onJumpTo(m.conversationId)} style={{ textAlign: 'left', flex: 1, minWidth: 0, fontWeight: 400, display: 'block', padding: 0 }}>
-            <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 600, color: m.senderId === currentUserId ? 'var(--teal)' : 'var(--text-muted)', margin: 0 }}>{m.senderName}</p>
+            <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 600, color: m.senderId === currentUserId ? 'var(--primary)' : 'var(--text-muted)', margin: 0 }}>{m.senderName}</p>
             <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {m.content || messageTypeLabel(m.type)}
             </p>

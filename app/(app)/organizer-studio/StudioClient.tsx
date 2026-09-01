@@ -317,7 +317,7 @@ export default function StudioClient({
             borderRadius: 12,
             border: `1px solid ${message.type === 'success' ? 'var(--primary-a05)' : 'var(--danger-border)'}`,
             background: 'var(--surface-2)',
-            color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
+            color: message.type === 'success' ? 'var(--primary)' : 'var(--danger)',
             fontSize: 'var(--font-size-callout)',
           }}
         >
@@ -362,7 +362,7 @@ export default function StudioClient({
       <div className="studio-profile-grid">
         {/* Informations publiques */}
         <Card>
-          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Informations publiques</h2>
+          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Informations publiques</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '112px 1fr', gap: 10, marginBottom: 12 }}>
             <div>
@@ -370,7 +370,7 @@ export default function StudioClient({
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt={`Logo de ${profile.publicName}`} width={88} height={88} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--primary)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
               <label style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', marginTop: 8, padding: '0 12px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--font-size-body)', cursor: 'pointer' }}>
@@ -440,9 +440,9 @@ export default function StudioClient({
                       style={{
                         padding: '7px 11px',
                         borderRadius: 20,
-                        border: `1px solid ${sel ? 'var(--teal)' : 'var(--border)'}`,
+                        border: `1px solid ${sel ? 'var(--primary)' : 'var(--border)'}`,
                         background: sel ? 'var(--primary-a14)' : 'var(--surface)',
-                        color: sel ? 'var(--teal)' : 'var(--text-muted)',
+                        color: sel ? 'var(--primary)' : 'var(--text-muted)',
                         fontSize: 'var(--font-size-footnote-lg)',
                         fontWeight: 600,
                       }}
@@ -506,7 +506,7 @@ export default function StudioClient({
 
         {/* Aperçu + statut */}
         <Card>
-          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Aperçu de ma page</h2>
+          <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }}>Aperçu de ma page</h2>
           <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', background: 'var(--surface-2)' }}>
             <div style={{ height: 84, background: profile.bannerUrl ? `url(${profile.bannerUrl}) center/cover` : 'linear-gradient(135deg, var(--primary-a12), var(--primary-a12))' }} />
             <div style={{ padding: 12 }}>
@@ -514,7 +514,7 @@ export default function StudioClient({
                 {profile.avatarUrl ? (
                   <NextImage src={profile.avatarUrl} alt="" width={48} height={48} style={{ objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--teal)' }}>{profile.publicName[0] || 'O'}</span>
+                  <span style={{ fontSize: 'var(--font-size-title-5)', color: 'var(--primary)' }}>{profile.publicName[0] || 'O'}</span>
                 )}
               </div>
               <h3 style={{ font: '600 18px var(--font-open-sans)', color: 'var(--text)', margin: '8px 0 0' }}>{profile.publicName || 'Ton nom public'}</h3>
@@ -545,7 +545,7 @@ export default function StudioClient({
       <Card style={{ marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
           <div>
-            <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
+            <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Galerie photos & vidéos</h2>
             <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>Images 10 Mo max. Vidéos 8 Mo max. 12 médias au maximum recommandé pour une page lisible (non bloquant).</p>
           </div>
           <label style={{ padding: '8px 13px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontSize: 'var(--font-size-caption-lg)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', cursor: 'pointer' }}>
@@ -810,7 +810,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
 
   return (
     <Card style={{ display: 'grid', gap: 10 }} id="encaissement">
-      <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
+      <h2 style={{ fontSize: 'var(--font-size-callout)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Encaissement</h2>
 
       <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface)' }}>
         {status.mode === 'manual' ? (
@@ -820,7 +820,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div>
                   {status.amountDueCents > 0 && <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--gold)', margin: 0 }}>{fmtMoney(status.amountDueCents / 100, 'EUR')}</p>}
-                  {status.amountDueXOF > 0 && <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{fmtMoney(status.amountDueXOF, 'XOF')}</p>}
+                  {status.amountDueXOF > 0 && <p style={{ fontSize: 'var(--font-size-headline)', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{fmtMoney(status.amountDueXOF, 'XOF')}</p>}
                 </div>
                 <Button
                   onClick={requestPayout}
@@ -837,7 +837,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           </>
         ) : status.connected && status.chargesEnabled ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--primary-a14)', color: 'var(--teal)', fontSize: 'var(--font-size-caption)', fontWeight: 700 }}>Compte connecté</span>
+            <span style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--primary-a14)', color: 'var(--primary)', fontSize: 'var(--font-size-caption)', fontWeight: 700 }}>Compte connecté</span>
             <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: 0 }}>Les paiements sont versés automatiquement sur ton compte bancaire (2-7 jours ouvrés).</p>
           </div>
         ) : (

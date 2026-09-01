@@ -434,7 +434,7 @@ export default function EventCheckoutPanel({
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
+      <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: '0 0 12px' }}>Réservation</h2>
 
       {cancelNoticeVisible && (
         <div
@@ -666,7 +666,7 @@ export default function EventCheckoutPanel({
                         padding: '10px 16px',
                         borderRadius: 9,
                         border: 'none',
-                        background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--teal-solid)',
+                        background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--primary)',
                         color: !promoInput.trim() ? 'var(--text-faint)' : 'var(--primary-ink)',
                         fontSize: 'var(--font-size-footnote-lg)',
                         fontWeight: 700,
@@ -689,8 +689,8 @@ export default function EventCheckoutPanel({
 
             {promoApplied && promoUnitDiscount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--teal)' }}>Réduction</span>
-                <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--teal)' }}>− {fmtMoney(promoUnitDiscount * lineQty, currency)}</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--primary)' }}>Réduction</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--primary)' }}>− {fmtMoney(promoUnitDiscount * lineQty, currency)}</span>
               </div>
             )}
 
@@ -807,7 +807,7 @@ export default function EventCheckoutPanel({
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px' }}>
             <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)' }}>Total</span>
-            <span style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, color: 'var(--teal)' }}>{fmtMoney(grandTotal, currency)}</span>
+            <span style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, color: 'var(--primary)' }}>{fmtMoney(grandTotal, currency)}</span>
           </div>
 
           {eventMinAge >= 18 && (
@@ -942,14 +942,14 @@ export default function EventCheckoutPanel({
 
       {showConfirmation && selectedPlace && (
         <Modal onClose={() => setShowConfirmation(false)} dismissible={!submitting} ariaLabel="Récapitulatif de la commande">
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 'var(--font-size-title-2)' }}>Récapitulatif</h3></div></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--primary)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 'var(--font-size-title-2)' }}>Récapitulatif</h3></div></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />
               <SummaryRow label="Quantité" value={String(lineQty)} />
               {Array.from({ length: ticketCount }, (_, ticketIndex) => {
                 const entries = Object.entries(preordersByTicket[ticketIndex] || {}).filter(([, count]) => count > 0)
                 if (!entries.length) return null
-                return <div key={ticketIndex} style={{ padding: '8px 10px', borderRadius: 9, background: 'var(--fill-secondary)' }}><p style={{ margin: '0 0 6px', color: 'var(--gold)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>Billet {ticketIndex + 1}</p>{entries.map(([name, count]) => { const show = showsByTicket[ticketIndex]?.[name]; return <div key={name} style={{ marginBottom: 4 }}><SummaryRow label={name} value={`${count}×`} />{show && <p style={{ margin: '2px 0 0', color: 'var(--teal)', fontSize: 'var(--font-size-caption-2-lg)' }}>{show.showLabel}{show.showInfo ? ` · ${show.showInfo}` : ''}</p>}</div> })}</div>
+                return <div key={ticketIndex} style={{ padding: '8px 10px', borderRadius: 9, background: 'var(--fill-secondary)' }}><p style={{ margin: '0 0 6px', color: 'var(--gold)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>Billet {ticketIndex + 1}</p>{entries.map(([name, count]) => { const show = showsByTicket[ticketIndex]?.[name]; return <div key={name} style={{ marginBottom: 4 }}><SummaryRow label={name} value={`${count}×`} />{show && <p style={{ margin: '2px 0 0', color: 'var(--primary)', fontSize: 'var(--font-size-caption-2-lg)' }}>{show.showLabel}{show.showInfo ? ` · ${show.showInfo}` : ''}</p>}</div> })}</div>
               })}
               {promoApplied && <SummaryRow label={`Code ${promoApplied}`} value={`− ${fmtMoney(promoUnitDiscount * lineQty, currency)}`} accent />}
               {fee > 0 && <SummaryRow label="Frais de service" value={fmtMoney(fee, currency)} />}

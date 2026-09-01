@@ -62,7 +62,7 @@ async function parseJson<T>(res: Response): Promise<T | ApiErrorResponse> {
 
 const STATUS_META: Record<OrderItemStatus, { label: string; color: string; bg: string }> = {
   sent: { label: 'En cours', color: 'var(--gold)', bg: 'var(--primary-a14)' },
-  served: { label: 'Servi', color: 'var(--teal)', bg: 'var(--primary-a16)' },
+  served: { label: 'Servi', color: 'var(--primary)', bg: 'var(--primary-a16)' },
   cancelled: { label: 'Annulé', color: 'var(--pink)', bg: 'var(--danger-fill)' },
 }
 let toastSeq = 0
@@ -214,7 +214,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
           <Link href="/profile" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', color: 'var(--text-faint)', textDecoration: 'none' }}>
             ← Retour
           </Link>
-          <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
+          <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 4px' }}>
             Service sur place
           </p>
           <h1 style={{ fontSize: 'var(--font-size-title-4)', fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.3px' }}>Commander</h1>
@@ -243,7 +243,7 @@ export default function CommanderClient({ eventId, ticketCode, eventName, curren
                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, margin: 0, color: 'var(--text)', minWidth: 0 }}>
                       {item.name} <span style={{ color: 'var(--text-faint)', fontWeight: 500 }}>×{item.quantity}</span>
-                      {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
+                      {item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--text)' }}>{fmtMoney(item.unitPriceMinor * item.quantity, currency)}</span>

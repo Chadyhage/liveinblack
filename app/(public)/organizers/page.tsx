@@ -98,7 +98,6 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="organizers-title">
-        <p className={styles.eyebrow}>L’annuaire LIVEINBLACK</p>
         <h1 id="organizers-title">Suivez celles et ceux qui créent l’émotion.</h1>
         <p className={styles.intro}>Découvrez leur univers, suivez leur actualité et retrouvez leurs prochains rendez-vous.</p>
 
@@ -150,7 +149,7 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
             })}
           </div>
         ) : (
-          <div className={styles.empty}><Mascot mood="search" size={164} /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
+          <div className={styles.empty}><Mascot mood="search" size={250} /><h3>Aucun organisateur trouvé</h3><p>Élargissez la région ou essayez une autre recherche.</p><Link href="/organizers">Voir tous les organisateurs</Link></div>
         )}
 
         <PageLinks page={requestedPage} pageCount={totalPages} makeHref={makeHref} totalItems={total} pageSize={pageSize} />

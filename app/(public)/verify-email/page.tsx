@@ -15,7 +15,7 @@ export default async function VerifyEmailPage({
 }) {
   const params = await searchParams
   return (
-    <AuthSplitLayout heroImage="/images/live-in-black/auth/auth-verify-email-lounge.png">
+    <AuthSplitLayout heroImage="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80">
       <VerifyEmailClient email={params.email || null} token={params.token || null} />
     </AuthSplitLayout>
   )

@@ -17,6 +17,7 @@ import {
   Star,
   Newspaper,
   BookOpen,
+  ServerCog,
   Settings,
   ShieldCheck,
   KeyRound,
@@ -105,6 +106,7 @@ export const ROLE_NAV: Record<Role, DashboardNavItem[]> = {
   // `?tab=X` pour la navigation principale (liens de sidebar = vraies URLs).
   agent: [
     { label: 'Tableau de bord', href: '/agent', icon: Briefcase },
+    { label: 'Ops Vercel', href: '/agent/vercel', icon: ServerCog },
     { label: 'Comptes', href: '/agent/comptes', icon: Users },
     { label: 'Événements', href: '/agent/evenements', icon: CalendarDays },
     { label: 'Dossiers', href: '/agent/dossiers', icon: FileText },

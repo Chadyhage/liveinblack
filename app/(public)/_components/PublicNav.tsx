@@ -98,6 +98,7 @@ function HeaderSearch() {
         <Input
           className="lb-header-search__input"
           type="search"
+          leftIcon={<Search size={16} strokeWidth={2.2} aria-hidden="true" />}
           value={value}
           onChange={(e) => {
             const nextValue = e.target.value
@@ -111,37 +112,18 @@ function HeaderSearch() {
           aria-label="Recherche globale (événements, organisateurs, prestataires)"
           containerStyle={{ flex: 1, minWidth: 0 }}
           style={{
-            width: 172,
+            width: 'clamp(500px, 42vw, 680px)',
             minHeight: 38,
             height: 38,
-            padding: '0 7px 0 12px',
-            border: 0,
-            background: 'transparent',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: 12,
+            background: 'rgba(255, 255, 255, 0.04)',
             color: 'var(--text)',
             fontSize: 'var(--font-size-body)',
             fontFamily: 'inherit',
             boxShadow: 'none',
           }}
         />
-        <Button
-          type="submit"
-          variant="ghost"
-          className="lb-header-search__button"
-          aria-label="Lancer la recherche"
-          style={{
-            width: 38,
-            minWidth: 38,
-            height: 38,
-            minHeight: 38,
-            padding: 0,
-            border: 0,
-            borderRadius: 10,
-            background: 'var(--primary)',
-            color: 'var(--primary-ink)',
-          }}
-        >
-          <Search size={18} strokeWidth={2} aria-hidden="true" />
-        </Button>
       </form>
 
       {showDropdown && (
@@ -232,7 +214,7 @@ function HeaderSearch() {
 function QuickResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 'var(--font-size-caption-2)', fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
+      <p style={{ padding: '8px 12px 3px', margin: 0, fontSize: 'var(--font-size-caption-2)', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</p>
       {children}
     </div>
   )
@@ -320,11 +302,13 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
     <header
       className="lb-public-nav lb-apple-header"
       style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-        padding: '10px clamp(10px, 2vw, 24px) 0',
-        background: 'linear-gradient(180deg, rgba(var(--media-black-rgb), .42), transparent)',
+        position: 'fixed',
+        top: 12,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+        pointerEvents: 'none',
+        padding: '0 clamp(10px, 2vw, 24px)',
       }}
     >
       <div className="lb-public-nav__inner">
@@ -366,7 +350,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           <HeaderSearch />
         </span>
         {status === 'authenticated' && session?.user && <AccountMenu user={session.user} />}
-        {status !== 'authenticated' && !isLoginPage && (
+        {status !== 'authenticated' && (
           <>
             <Link
               href="/login"
@@ -498,7 +482,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
               </Link>
             )
           })}
-          {status !== 'authenticated' && !isLoginPage && (
+          {status !== 'authenticated' && (
             <div className="lb-mobile-auth-actions">
               <Link
                 href="/login"
@@ -523,26 +507,27 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
 
       <style>{`
         .lb-public-nav__inner {
+          pointer-events: auto;
           width: 100%;
-          max-width: 1380px;
-          min-height: 48px;
+          max-width: var(--public-page-max);
+          min-height: 56px;
           margin: 0 auto;
-          padding: 4px 6px 4px 10px;
+          padding: 4px 10px 4px 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: clamp(8px, 1.2vw, 14px);
-          border: 1px solid var(--border);
-          border-radius: 17px;
-          background: var(--modal-surface);
-          -webkit-backdrop-filter: blur(30px) saturate(170%);
-          backdrop-filter: blur(30px) saturate(170%);
-          box-shadow: none;
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          border-radius: 20px;
+          background: rgba(22, 22, 26, 0.82);
+          -webkit-backdrop-filter: blur(32px) saturate(180%);
+          backdrop-filter: blur(32px) saturate(180%);
+          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.42);
           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
         }
         .lb-public-nav__brand {
-          min-height: 54px;
-          height: 54px;
+          min-height: 58px;
+          height: 58px;
           display: inline-flex;
           align-items: center;
           flex-shrink: 0;
@@ -552,8 +537,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         }
         .lb-public-nav__brand-logo {
           width: auto;
-          height: 42px;
-          max-width: min(50vw, 250px);
+          height: 54px;
+          max-width: min(50vw, 280px);
           object-fit: contain;
         }
         .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
@@ -574,7 +559,18 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           font-weight: 600;
           letter-spacing: -.01em;
         }
-        .lb-navlink-active { color: var(--text); background: var(--surface-2); box-shadow: none; }
+        .lb-navlink-active { color: var(--text) !important; font-weight: 750 !important; background: transparent !important; box-shadow: none; }
+        .lb-navlink-active::after {
+          content: "";
+          position: absolute;
+          bottom: 3px;
+          left: 12px;
+          right: 12px;
+          height: 3px;
+          border-radius: 99px;
+          background: var(--primary);
+          box-shadow: 0 2px 8px var(--primary-a42);
+        }
         .lb-nav-auth {
           min-height: 42px;
           height: 42px;
@@ -616,8 +612,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           display: flex;
           align-items: center;
           min-height: 42px;
-          height: 42px;
-          padding: 2px 2px 2px 2px;
+        .lb-header-search__form {
+          min-height: 38px;
+          height: 38px;
+          padding: 0;
           border: 1px solid var(--border);
           border-radius: 12px;
           background: var(--surface-2);
@@ -628,23 +626,6 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           background: var(--surface-2);
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
-        .lb-header-search__button {
-          width: 38px;
-          height: 38px;
-          flex: 0 0 38px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 !important;
-          border: 0;
-          border-radius: 10px;
-          background: var(--primary);
-          color: var(--primary-ink);
-          cursor: pointer;
-          transition: color 160ms ease, background 160ms ease;
-        }
-        .lb-header-search__button:hover { color: var(--primary-ink); background: var(--primary-strong); }
-        .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
           .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }

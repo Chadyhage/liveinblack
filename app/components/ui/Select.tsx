@@ -113,7 +113,7 @@ export default function Select({ value, onChange, options, placeholder = 'Sélec
           gap: 6,
           background: 'var(--surface-2)',
           color: selected ? 'var(--text)' : 'var(--text-faint)',
-          border: `1px solid ${invalid ? 'var(--danger)' : open ? 'var(--teal)' : 'var(--border-strong)'}`,
+          border: `1px solid ${invalid ? 'var(--danger)' : open ? 'var(--primary)' : 'var(--border-strong)'}`,
           borderRadius: 'var(--radius-md)',
           fontFamily: 'inherit',
           fontWeight: 600,

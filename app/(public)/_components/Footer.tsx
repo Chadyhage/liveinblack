@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { ArrowUpRight } from 'lucide-react'
 import { LEGAL } from '@/lib/shared/legal'
 import styles from './Footer.module.css'
@@ -36,7 +39,11 @@ const FOOTER_GROUPS = [
   },
 ]
 
+const NO_FOOTER_ROUTES = ['/login', '/organizer-signup', '/provider-signup', '/reset-password', '/verify-email', '/confirmer-email']
+
 export default function Footer() {
+  const pathname = usePathname()
+  if (NO_FOOTER_ROUTES.includes(pathname)) return null
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>

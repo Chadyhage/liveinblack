@@ -140,7 +140,7 @@ export default function MessagingComposer({
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--teal)', margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
+            <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: 'var(--primary)', margin: '0 0 1px' }}>Répondre à {replyTo.senderName}</p>
             <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {replyTo.preview}
             </p>
@@ -173,13 +173,13 @@ export default function MessagingComposer({
           </div>
           <div aria-hidden="true" style={{ height: 30, flex: 1, minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, overflow: 'hidden' }}>
             {Array.from({ length: 22 }, (_, index) => (
-              <span key={index} style={{ width: 3, height: `${8 + ((index * 7) % 20)}px`, borderRadius: 3, background: index < 14 ? 'var(--teal-solid)' : 'var(--fill-secondary)', opacity: isRecordingPaused ? .55 : 1 }} />
+              <span key={index} style={{ width: 3, height: `${8 + ((index * 7) % 20)}px`, borderRadius: 3, background: index < 14 ? 'var(--primary)' : 'var(--fill-secondary)', opacity: isRecordingPaused ? .55 : 1 }} />
             ))}
           </div>
           <Button variant="secondary" onClick={onToggleRecordingPause} style={{ width: 42, height: 42, minWidth: 42, minHeight: 42, padding: 0, borderRadius: '50%' }} aria-label={isRecordingPaused ? 'Reprendre l’enregistrement' : 'Mettre en pause'}>
             {isRecordingPaused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}
           </Button>
-          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--teal-solid)', color: 'var(--primary-ink)' }} aria-label="Envoyer le message vocal">
+          <Button variant="primary" onClick={onSendRecording} style={{ borderRadius: '50%', width: 44, height: 44, minHeight: 44, minWidth: 44, padding: 0, background: 'var(--primary)', color: 'var(--primary-ink)' }} aria-label="Envoyer le message vocal">
             <Send size={17} />
           </Button>
         </div>
@@ -243,7 +243,7 @@ export default function MessagingComposer({
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--primary-ink)',
-                background: busy ? 'var(--primary-a52)' : 'var(--teal-solid)',
+                background: busy ? 'var(--primary-a52)' : 'var(--primary)',
                 cursor: busy ? 'default' : 'pointer',
                 flexShrink: 0,
               }}
@@ -262,7 +262,7 @@ export default function MessagingComposer({
                 minHeight: 44,
                 padding: 0,
                 borderRadius: '50%',
-                background: 'var(--teal-solid)',
+                background: 'var(--primary)',
                 color: 'var(--primary-ink)',
                 flexShrink: 0,
               }}

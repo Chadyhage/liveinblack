@@ -24,7 +24,7 @@ export default function ProviderDirectoryCard({ provider, eager = false }: { pro
 
   return (
     <Link href={`/providers/${encodeURIComponent(provider.userId)}`} className={styles.card}>
-      <div className={styles.visual} style={{ background: `linear-gradient(135deg, ${primaryCategory.color}55, var(--surface-2))` }}>
+      <div className={styles.visual} style={{ background: 'var(--surface-2)' }}>
         <Image
           src={coverImage}
           alt=""

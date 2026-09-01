@@ -138,7 +138,6 @@ export default async function EventsPage({
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="events-title">
-        <p className={styles.eyebrow}>La programmation</p>
         <h1 id="events-title">Trouvez votre prochaine expérience.</h1>
         <p className={styles.intro}>
           Concerts, soirées et rendez-vous culturels choisis pour vous. Recherchez simplement, puis réservez en quelques instants.
@@ -212,7 +211,7 @@ export default async function EventsPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <Mascot mood="search" size={164} />
+            <Mascot mood="search" size={250} />
             <h3>Aucun événement trouvé</h3>
             <p>Essayez une autre ville, un autre artiste ou affichez toute la programmation.</p>
             <Link href="/events">Voir tous les événements</Link>

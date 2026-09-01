@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Preuves necessaires avant de declarer que Vercel Pro est utilise a 100% utile.",
+  "principle": "Le code prepare une brique; seule une preuve live/dashboard ou un rejet explicite la finalise.",
+  "requirements": [
+    {
+      "key": "decisions-finalised",
+      "label": "Toutes les decisions Pro sont finalisees",
+      "status": "pending-live",
+      "evidenceSource": "config/vercel-pro-decisions.json",
+      "evidenceRequired": "Chaque item est en status active ou rejected.",
+      "currentEvidence": "Des items restent en prepared tant que les portes live ne sont pas fermees.",
+      "nextAction": "Fermer les portes live puis mettre a jour chaque status avec sa preuve."
+    },
+    {
+      "key": "live-gates-closed",
+      "label": "Toutes les portes live sont fermees",
+      "status": "pending-live",
+      "evidenceSource": "config/vercel-live-activation-gates.json + Vercel live/dashboard",
+      "evidenceRequired": "Firewall publie, Spend Management finalise, Account Webhook live, Drain approuve/active ou rejete, premier Workflow migre ou decision explicitement rejetee.",
+      "currentEvidence": "Les portes sont documentees et ordonnees, mais pas toutes prouvees live.",
+      "nextAction": "Executer l'ordre recommande dans config/vercel-pro-activation-order.json."
+    },
+    {
+      "key": "agent-dashboard-operational",
+      "label": "Le tableau agent montre le 100%",
+      "status": "prepared",
+      "evidenceSource": "/agent/vercel",
+      "evidenceRequired": "Barometre, feuille de route, suivi usage, portes live et ordre recommande sont visibles aux agents.",
+      "currentEvidence": "L'API agent expose decisions, usage, portes live et ordre recommande.",
+      "nextAction": "Verifier visuellement apres prochain demarrage local/deploy."
+    },
+    {
+      "key": "live-audit-clean",
+      "label": "L'audit live confirme Vercel",
+      "status": "pending-live",
+      "evidenceSource": "npm run audit:vercel-live",
+      "evidenceRequired": "Projet, env, domains, deployments, firewall, drains, Edge Config et webhooks sont conformes.",
+      "currentEvidence": "Audit live prepare; dernier etat connu confirme Edge Config et Firewall draft, mais pas toutes les portes finales.",
+      "nextAction": "Relancer audit:vercel-live apres les activations."
+    },
+    {
+      "key": "local-audits-clean",
+      "label": "Les audits locaux couvrent toutes les briques",
+      "status": "prepared",
+      "evidenceSource": "npm run audit:vercel-pro et audits specialises",
+      "evidenceRequired": "audit:vercel-pro, audit:vercel-env, audit:vercel-firewall, audit:vercel-spend, audit:vercel-webhooks, audit:vercel-drain, audit:vercel-workflows, audit:vercel-usage, audit:vercel-live-gates et audit:vercel-activation-order sont disponibles.",
+      "currentEvidence": "Les commandes specialisees sont preparees; execution non lancee dans ce tour.",
+      "nextAction": "Executer les audits quand l'equipe veut une validation formelle."
+    }
+  ]
+}

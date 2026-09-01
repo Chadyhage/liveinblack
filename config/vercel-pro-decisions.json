@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "principle": "Chaque brique Vercel Pro pertinente doit etre activee, preparee avec une action live explicite, ou rejetee avec une raison produit/cout.",
+  "items": [
+    {
+      "key": "hosting-cdn-ci",
+      "label": "Hosting, CDN et CI",
+      "status": "active",
+      "evidence": "Projet Vercel lie, vercel.json Next.js, domaines et deployments audites par audit:vercel-live.",
+      "nextAction": "Garder le suivi via audit:vercel-live et ops:deploy:prod."
+    },
+    {
+      "key": "web-analytics",
+      "label": "Web Analytics",
+      "status": "active",
+      "evidence": "@vercel/analytics est installe et charge dans le layout global.",
+      "nextAction": "Suivre les conversions dans le dashboard Vercel."
+    },
+    {
+      "key": "speed-insights",
+      "label": "Speed Insights",
+      "status": "active",
+      "evidence": "@vercel/speed-insights est installe et charge dans le layout global.",
+      "nextAction": "Surveiller LCP, INP et CLS par route cle."
+    },
+    {
+      "key": "cron-jobs",
+      "label": "Cron Jobs",
+      "status": "active",
+      "evidence": "Les crons sont declares dans vercel.json et wraps par runVercelCron.",
+      "nextAction": "Brancher alerting via webhooks/drain."
+    },
+    {
+      "key": "runtime-logs",
+      "label": "Runtime logs et scan post-deploy",
+      "status": "active",
+      "evidence": "ops:vercel:logs est integre a ops:deploy:prod et les routes critiques ont des logs structures.",
+      "nextAction": "Completer avec Log Drain si approuve."
+    },
+    {
+      "key": "edge-config",
+      "label": "Edge Config et flags live",
+      "status": "active",
+      "evidence": "Edge Config liveinblack-ops creee, liee production/development, consommee par le runtime et pilotable par /agent/vercel.",
+      "nextAction": "Ajouter preview via VERCEL_PREVIEW_GIT_BRANCH si l'equipe veut des flags par branche."
+    },
+    {
+      "key": "firewall-waf",
+      "label": "Firewall / WAF",
+      "status": "prepared",
+      "evidence": "Regles de protection stagees en brouillon Vercel, revue pre-publication dans config/vercel-firewall-review.json et audits audit:vercel-live/audit:vercel-firewall.",
+      "nextAction": "Executer la revue, verifier le dashboard Firewall Traffic, puis publier humainement: vercel firewall publish --yes."
+    },
+    {
+      "key": "spend-management",
+      "label": "Spend Management",
+      "status": "prepared",
+      "evidence": "Endpoint /api/ops/vercel-spend, revue config/vercel-spend-management-review.json, audit audit:vercel-spend et auto-maintenance optionnelle via Edge Config.",
+      "nextAction": "Completer la checklist Billing: montant, notifications, webhook, secret et decision auto-maintenance."
+    },
+    {
+      "key": "account-webhooks",
+      "label": "Account webhooks",
+      "status": "prepared",
+      "evidence": "Endpoint /api/ops/vercel-events, script ops:vercel:webhooks:setup, revue config/vercel-account-webhook-review.json et audit audit:vercel-webhooks disponibles.",
+      "nextAction": "Completer la revue endpoint/scope/events/secret puis lancer le setup apply pour creer le webhook plateforme live."
+    },
+    {
+      "key": "log-drain",
+      "label": "Log Drain / Observability Plus",
+      "status": "prepared",
+      "evidence": "Endpoint /api/ops/vercel-drain, script ops:vercel:drain:setup, revue config/vercel-drain-activation-review.json et audit audit:vercel-drain disponibles avec signature HMAC.",
+      "nextAction": "Completer la revue de destination/retention/anti-boucle puis obtenir accord explicite avant activation live."
+    },
+    {
+      "key": "functions-fluid-compute",
+      "label": "Functions et Fluid Compute",
+      "status": "active",
+      "evidence": "Routes critiques avec maxDuration, logs structures et scan runtime.",
+      "nextAction": "Surveiller durees et timeouts dans Vercel Usage."
+    },
+    {
+      "key": "usage-dashboard",
+      "label": "Usage dashboard et rituels cout/perf",
+      "status": "active",
+      "evidence": "Metriques suivies dans config/vercel-usage-watchlist.json, audit dedie audit:vercel-usage et affichage dans /agent/vercel.",
+      "nextAction": "Ouvrir Vercel Usage chaque semaine et traiter les anomalies via la feuille de route agent."
+    },
+    {
+      "key": "cache-isr",
+      "label": "Cache public / ISR",
+      "status": "active",
+      "evidence": "Routes avec revalidate, unstable_cache, tags et headers s-maxage.",
+      "nextAction": "Mesurer cache hit ratio dans Usage."
+    },
+    {
+      "key": "image-optimization",
+      "label": "Image Optimization",
+      "status": "active",
+      "evidence": "next.config.ts configure les images distantes.",
+      "nextAction": "Suivre transformations et cache dans Usage."
+    },
+    {
+      "key": "blob-storage",
+      "label": "Vercel Blob",
+      "status": "rejected",
+      "evidence": "Cloudinary gere deja les medias transformes et documents prives.",
+      "nextAction": "Reconsiderer Blob seulement pour de nouveaux fichiers simples sans transformation."
+    },
+    {
+      "key": "workflows-queues",
+      "label": "Workflows / Queues",
+      "status": "prepared",
+      "evidence": "Candidats priorises dans config/vercel-workflow-candidates.json, revue config/vercel-workflow-activation-review.json et audit dedie audit:vercel-workflows.",
+      "nextAction": "Migrer resale-expiry en premier avec cron declencheur, steps idempotentes, politique d'erreur et rollback simple; puis traiter payouts apres observation."
+    },
+    {
+      "key": "ai-gateway",
+      "label": "AI Gateway",
+      "status": "rejected",
+      "evidence": "Aucune feature IA production dans le site actuellement.",
+      "nextAction": "Reconsiderer si une feature IA est ajoutee."
+    },
+    {
+      "key": "sandbox",
+      "label": "Vercel Sandbox",
+      "status": "rejected",
+      "evidence": "Aucune execution de code utilisateur ou agentique cote produit.",
+      "nextAction": "Reconsiderer uniquement si une execution de code isolee devient necessaire."
+    }
+  ]
+}

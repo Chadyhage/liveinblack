@@ -1,4 +1,4 @@
-.page{min-height:calc(100dvh - 68px);padding-bottom:40px;color:var(--text);background:radial-gradient(circle at 14% 0%,var(--primary-a07),transparent 27%),var(--obsidian)}
+.page{min-height:calc(100dvh - 68px);padding-bottom:40px;color:var(--text);background:var(--obsidian)}
 .hero{max-width:var(--public-page-max);margin:0 auto;padding:var(--public-hero-padding);text-align:center}
 .eyebrow{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;color:var(--primary);font-size: var(--font-size-body);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .hero h1{margin:8px auto 0;font-size: var(--font-size-display-xl);line-height:1.08;letter-spacing:-.04em}

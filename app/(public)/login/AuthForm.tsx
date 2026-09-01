@@ -36,7 +36,7 @@ function checkPasswordStrength(pwd: string) {
   if (/[0-9]/.test(pwd)) score++
   if (score <= 1) return { score, label: 'Faible', color: 'var(--pink)' }
   if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
-  return { score, label: 'Fort', color: 'var(--teal)' }
+  return { score, label: 'Fort', color: 'var(--primary)' }
 }
 
 const btnPrimary: React.CSSProperties = {
@@ -109,7 +109,7 @@ function RoleIcon({ role, size = 18 }: { role: RegRole; size?: number }) {
   )
 }
 
-// Hex littéraux ici (et pas var(--teal)/var(--violet)/var(--gold)) car on a
+// Hex littéraux ici (et pas var(--primary)/var(--violet)/var(--gold)) car on a
 // besoin de suffixer une transparence (1a/3a) — mêmes valeurs que les vars.
 const ROLE_CARDS: { role: RegRole; title: string; desc: string; badge: string | null; accent: string }[] = [
   { role: 'client', title: 'Client', desc: 'Découvre des événements et réserve tes places', badge: null, accent: 'var(--primary)' },
@@ -371,10 +371,10 @@ export default function AuthForm() {
   // ── "Vérifie ton email" screen ──
   if (registeredEmail) {
     return (
-      <div style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
+      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={44} height={44} viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
               <path d="M2 7l10 7 10-7" />
             </svg>
@@ -396,7 +396,7 @@ export default function AuthForm() {
           <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: 0 }}>L&apos;email peut arriver dans les spams ou courriers indésirables.</p>
 
           {resendSent && (
-            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--teal)', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--primary)', margin: 0, lineHeight: 1.5 }}>
               Si un compte existe avec cette adresse et n&apos;est pas encore vérifié, un nouvel email vient de partir.
             </p>
           )}
@@ -428,7 +428,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="lb-auth-form" style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
+    <div className="lb-auth-form" style={{ width: '100%', maxWidth: 600, margin: '0 auto', padding: '0 4px' }}>
       <style>{`
         @keyframes lb-spin { to { transform: rotate(360deg) } }
         .lb-role-card:hover { transform: translateY(-2px); border-color: var(--border-strong) !important; background: var(--fill-secondary) !important }
@@ -442,11 +442,11 @@ export default function AuthForm() {
         .lb-banner-fade { animation: lb-fade-in 0.22s ease }
       `}</style>
 
-      <div style={{ marginBottom: 16 }}>
-        <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-4)', letterSpacing: '.02em', margin: 0, color: 'var(--teal)' }}>
+      <div style={{ marginBottom: 6 }}>
+        <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-5)', letterSpacing: '.02em', margin: 0, color: 'var(--primary)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
-        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: '8px 0 0' }}>
+        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '3px 0 0' }}>
           {mode === 'login' ? 'Connecte-toi pour retrouver tes billets et tes soirées.' : "Crée ton compte pour découvrir ce qui se passe près de toi."}
         </p>
       </div>
@@ -460,7 +460,7 @@ export default function AuthForm() {
             { value: 'login', label: 'Connexion' },
             { value: 'register', label: 'Inscription' },
           ]}
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: 10 }}
         />
 
         {mode === 'login' && loginError && (
@@ -514,14 +514,14 @@ export default function AuthForm() {
                   aria-describedby={loginError ? 'login-error' : undefined}
                   style={{ paddingRight: 56 }}
                 />
-                <span className="lb-toggle-btn" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                <span className="lb-toggle-btn" style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
                   <Button
                     variant="ghost"
                     onClick={() => setShowLoginPwd((v) => !v)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)', color: 'inherit' }}
+                    aria-label={showLoginPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, color: 'inherit' }}
                   >
-                    <IconEye open={showLoginPwd} />
-                    {showLoginPwd ? 'Cacher' : 'Voir'}
+                    <IconEye open={showLoginPwd} size={16} />
                   </Button>
                 </span>
               </div>
@@ -592,169 +592,171 @@ export default function AuthForm() {
 
         {/* REGISTER — STEP 2 : formulaire client */}
         {mode === 'register' && regStep === 2 && (
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 0 }}>
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
               <Button
                 variant="ghost"
                 onClick={() => { setRegStep(1); setRegError('') }}
-                style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}
+                style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, padding: 0 }}
               >
                 <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
-                Retour
+                Changer de rôle
               </Button>
-              <span style={{ marginLeft: 'auto', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '3px 8px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--fill-secondary)' }}>
+              <span style={{ marginLeft: 'auto', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '2px 8px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--fill-secondary)' }}>
                 Client
               </span>
             </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <Label htmlFor="reg-firstname">Prénom</Label>
-                <Input id="reg-firstname" name="given-name" type="text" autoComplete="given-name" placeholder="Jean" disabled={regLoading} value={firstName} onChange={(e) => setFirstName(e.target.value)} invalid={regError === 'Le prénom est requis.'} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <Label htmlFor="reg-lastname">Nom</Label>
-                <Input id="reg-lastname" name="family-name" type="text" autoComplete="family-name" placeholder="Dupont" disabled={regLoading} value={lastName} onChange={(e) => setLastName(e.target.value)} invalid={regError === 'Le nom est requis.'} />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
               <div>
-                <Label htmlFor="reg-birth-year">Année de naissance</Label>
+                <Label htmlFor="reg-firstname" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Prénom</Label>
+                <Input id="reg-firstname" name="given-name" type="text" autoComplete="given-name" placeholder="Jean" disabled={regLoading} value={firstName} onChange={(e) => setFirstName(e.target.value)} invalid={regError === 'Le prénom est requis.'} style={{ minHeight: 38, padding: '6px 10px' }} />
+              </div>
+              <div>
+                <Label htmlFor="reg-lastname" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Nom</Label>
+                <Input id="reg-lastname" name="family-name" type="text" autoComplete="family-name" placeholder="Dupont" disabled={regLoading} value={lastName} onChange={(e) => setLastName(e.target.value)} invalid={regError === 'Le nom est requis.'} style={{ minHeight: 38, padding: '6px 10px' }} />
+              </div>
+
+              <div>
+                <Label htmlFor="reg-email" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Email</Label>
+                <Input id="reg-email" name="email" type="text" inputMode="email" autoComplete="email" placeholder="ton@email.com" disabled={regLoading} value={regEmail} onChange={(e) => setRegEmail(e.target.value)} invalid={regError === 'Adresse email invalide.'} style={{ minHeight: 38, padding: '6px 10px' }} />
+              </div>
+
+              <div>
+                <Label htmlFor="reg-phone" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Téléphone (optionnel)</Label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ minWidth: 105, flexShrink: 0 }}>
+                    <Select
+                      aria-label="Indicatif pays"
+                      value={dialCode}
+                      onChange={(value) => setDialCode(value)}
+                      disabled={regLoading}
+                      options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
+                      style={{ minHeight: 38, padding: '0 8px' }}
+                    />
+                  </div>
+                  <Input
+                    id="reg-phone"
+                    name="tel-national"
+                    type="tel"
+                    autoComplete="tel-national"
+                    placeholder="06 00 00 00 00"
+                    disabled={regLoading}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    invalid={regError === 'Numéro de téléphone invalide.'}
+                    style={{ flex: 1, minHeight: 38, padding: '6px 10px' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="reg-password" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Mot de passe</Label>
+                <div style={{ position: 'relative' }}>
+                  <Input
+                    id="reg-password"
+                    name="new-password"
+                    type={showRegPwd ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="8+ car., 1 maj., 1 chif."
+                    disabled={regLoading}
+                    value={regPwd}
+                    onChange={(e) => setRegPwd(e.target.value)}
+                    style={{ minHeight: 38, padding: '6px 40px 6px 10px' }}
+                  />
+                  <span className="lb-toggle-btn" style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowRegPwd((v) => !v)}
+                      aria-label={showRegPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, color: 'inherit' }}
+                    >
+                      <IconEye open={showRegPwd} size={15} />
+                    </Button>
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="reg-password-confirm" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Confirmer le mot de passe</Label>
+                <Input
+                  id="reg-password-confirm"
+                  name="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Répète ton mot de passe"
+                  disabled={regLoading}
+                  value={regPwdConfirm}
+                  onChange={(e) => setRegPwdConfirm(e.target.value)}
+                  invalid={regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm}
+                  style={{ minHeight: 38, padding: '6px 10px' }}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="reg-birth-year" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Année de naissance (opt.)</Label>
                 <Select
                   id="reg-birth-year"
                   value={birthYear}
                   onChange={(value) => setBirthYear(value)}
                   disabled={regLoading}
-                  placeholder="Non renseignée"
+                  placeholder="Année"
                   options={Array.from({ length: 68 }, (_, index) => new Date().getFullYear() - 13 - index).map((year) => ({ value: String(year), label: String(year) }))}
+                  style={{ minHeight: 38, padding: '0 8px' }}
                 />
               </div>
+
               <div>
-                <Label htmlFor="reg-gender">Genre</Label>
+                <Label htmlFor="reg-gender" style={{ marginBottom: 2, fontSize: 'var(--font-size-footnote)' }}>Genre (optionnel)</Label>
                 <Select
                   id="reg-gender"
                   value={gender}
                   onChange={(value) => setGender(value)}
                   disabled={regLoading}
-                  placeholder="Non renseigné"
+                  placeholder="Genre"
                   options={[
                     { value: 'femme', label: 'Femme' },
                     { value: 'homme', label: 'Homme' },
                     { value: 'autre', label: 'Autre' },
                   ]}
+                  style={{ minHeight: 38, padding: '0 8px' }}
                 />
-              </div>
-              <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--text-faint)', lineHeight: 1.5 }}>Optionnel · utilisé uniquement dans des statistiques anonymes, jamais affiché sur ton profil.</p>
-            </div>
-
-            <div>
-              <Label htmlFor="reg-email">Email</Label>
-              <Input id="reg-email" name="email" type="text" inputMode="email" autoComplete="email" placeholder="ton@email.com" disabled={regLoading} value={regEmail} onChange={(e) => setRegEmail(e.target.value)} invalid={regError === 'Adresse email invalide.'} />
-            </div>
-
-            <div>
-              <Label htmlFor="reg-phone">Téléphone (optionnel)</Label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ maxWidth: 110, flexShrink: 0 }}>
-                  <Select
-                    aria-label="Indicatif pays"
-                    value={dialCode}
-                    onChange={(value) => setDialCode(value)}
-                    disabled={regLoading}
-                    options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.name} ${r.dial}` }))}
-                  />
-                </div>
-                <Input
-                  id="reg-phone"
-                  name="tel-national"
-                  type="tel"
-                  autoComplete="tel-national"
-                  placeholder="06 00 00 00 00"
-                  disabled={regLoading}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  invalid={regError === 'Numéro de téléphone invalide.'}
-                  style={{ flex: 1 }}
-                />
-              </div>
-              <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '6px 0 0' }}>Sans l&apos;indicatif pays, déjà sélectionné à gauche.</p>
-            </div>
-
-            <div>
-              <Label htmlFor="reg-password">Mot de passe</Label>
-              <div style={{ position: 'relative' }}>
-                <Input
-                  id="reg-password"
-                  name="new-password"
-                  type={showRegPwd ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  placeholder="Mot de passe"
-                  disabled={regLoading}
-                  value={regPwd}
-                  onChange={(e) => setRegPwd(e.target.value)}
-                  style={{ paddingRight: 56 }}
-                />
-                <span className="lb-toggle-btn" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowRegPwd((v) => !v)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)', color: 'inherit' }}
-                  >
-                    <IconEye open={showRegPwd} />
-                    {showRegPwd ? 'Cacher' : 'Voir'}
-                  </Button>
-                </span>
               </div>
             </div>
 
             {regPwd.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: -4 }}>
-                <div style={{ display: 'flex', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 8px', background: 'var(--fill-secondary)', borderRadius: 8, marginTop: 2 }}>
+                <div style={{ display: 'flex', gap: 3, width: 55, flexShrink: 0 }}>
                   {[1, 2, 3].map((i) => (
-                    <div key={i} style={{ flex: 1, height: 5, borderRadius: 2, background: i <= pwdStrength.score ? pwdStrength.color : 'var(--fill-secondary)', transition: 'background 0.3s' }} />
+                    <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= pwdStrength.score ? pwdStrength.color : 'var(--border-strong)', transition: 'background 0.3s' }} />
                   ))}
                 </div>
-                <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '0.04em', color: pwdStrength.color, margin: 0 }}>{pwdStrength.label}</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
+                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, color: pwdStrength.color, margin: 0, whiteSpace: 'nowrap' }}>{pwdStrength.label}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
                   {[
-                    { ok: regPwd.length >= 8, text: '8 caractères min.' },
-                    { ok: /[A-Z]/.test(regPwd), text: 'Majuscule' },
-                    { ok: /[0-9]/.test(regPwd), text: 'Chiffre' },
+                    { ok: regPwd.length >= 8, text: '8+ car.' },
+                    { ok: /[A-Z]/.test(regPwd), text: '1 maj.' },
+                    { ok: /[0-9]/.test(regPwd), text: '1 chif.' },
                   ].map((r) => (
-                    <span key={r.text} style={{ fontSize: 'var(--font-size-caption)', fontWeight: 600, color: r.ok ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                      {r.ok ? <IconCheck /> : <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor', opacity: 0.6, display: 'inline-block' }} />} {r.text}
+                    <span key={r.text} style={{ fontSize: 'var(--font-size-caption-2)', fontWeight: 600, color: r.ok ? 'var(--primary)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      {r.ok ? <IconCheck size={9} /> : '•'} {r.text}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            <div>
-              <Label htmlFor="reg-password-confirm">Confirmer le mot de passe</Label>
-              <Input
-                id="reg-password-confirm"
-                name="new-password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Mot de passe"
-                disabled={regLoading}
-                value={regPwdConfirm}
-                onChange={(e) => setRegPwdConfirm(e.target.value)}
-                invalid={regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm}
-              />
-            </div>
-            {regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm && <p style={{ ...errorText, marginTop: -6 }}>Les mots de passe ne correspondent pas</p>}
+            {regPwdConfirm.length >= regPwd.length && regPwd !== regPwdConfirm && (
+              <p style={{ ...errorText, margin: 0 }}>Les mots de passe ne correspondent pas</p>
+            )}
 
-            <Button type="submit" variant="primary" disabled={regLoading} loading={regLoading} loadingText="Création…" style={{ ...btnPrimary, marginTop: 4 }}>
+            <Button type="submit" variant="primary" disabled={regLoading} loading={regLoading} loadingText="Création…" style={{ ...btnPrimary, minHeight: 40, marginTop: 4 }}>
               Créer mon compte
             </Button>
-            <p style={{ textAlign: 'center', fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0', lineHeight: 1.6 }}>
-              En créant ton compte, tu acceptes nos{' '}
-              <a href="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>CGU</a> et notre{' '}
-              <a href="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>Politique de confidentialité</a>.
+            <p style={{ textAlign: 'center', fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', margin: 0, lineHeight: 1.3 }}>
+              En créant ton compte, tu acceptes nos <a href="/terms" style={{ color: 'var(--text-muted)' }}>CGU</a> et notre <a href="/privacy" style={{ color: 'var(--text-muted)' }}>Politique de confidentialité</a>.
             </p>
           </form>
         )}
@@ -762,59 +764,59 @@ export default function AuthForm() {
 
       {showForgotModal && (
         <Modal onClose={closeForgotModal} maxWidth={400} zIndex={100} ariaLabel="Mot de passe oublié" contentStyle={{ padding: '22px 20px' }}>
-            {!forgotSubmitted ? (
-              <>
-                <h2 id="forgot-modal-title" style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
-                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
-                  Entre ton adresse email, on t&apos;envoie un lien pour choisir un nouveau mot de passe.
-                </p>
-                <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div>
-                    <Label htmlFor="forgot-email">Email</Label>
-                    <Input
-                      ref={forgotEmailRef}
-                      id="forgot-email"
-                      name="email"
-                      type="text"
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="ton@email.com"
-                      disabled={forgotLoading}
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      aria-invalid={Boolean(forgotError)}
-                      aria-describedby={forgotError ? 'forgot-email-error' : undefined}
-                      invalid={Boolean(forgotError)}
-                    />
-                  </div>
-                  {forgotError && <p id="forgot-email-error" role="alert" style={errorText}>{forgotError}</p>}
-                  <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                    <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '10px 13px', borderRadius: 12, fontSize: 'var(--font-size-callout)' }}>
-                      Annuler
-                    </Button>
-                    <Button type="submit" variant="primary" disabled={forgotLoading} loading={forgotLoading} loadingText="Envoi…" style={{ ...btnPrimary, flex: 1, fontSize: 'var(--font-size-body)' }}>
-                      Envoyer le lien
-                    </Button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <path d="M2 7l10 7 10-7" />
-                  </svg>
+          {!forgotSubmitted ? (
+            <>
+              <h2 id="forgot-modal-title" style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 8px' }}>Mot de passe oublié</h2>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
+                Entre ton adresse email, on t&apos;envoie un lien pour choisir un nouveau mot de passe.
+              </p>
+              <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <Input
+                    ref={forgotEmailRef}
+                    id="forgot-email"
+                    name="email"
+                    type="text"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="ton@email.com"
+                    disabled={forgotLoading}
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    aria-invalid={Boolean(forgotError)}
+                    aria-describedby={forgotError ? 'forgot-email-error' : undefined}
+                    invalid={Boolean(forgotError)}
+                  />
                 </div>
-                <h2 id="forgot-modal-title" style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>Vérifie ta boîte mail</h2>
-                <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                  Si un compte existe avec cette adresse, tu vas recevoir un email avec un lien pour réinitialiser ton mot de passe.
-                </p>
-                <Button variant="primary" onClick={closeForgotModal} style={{ ...btnGold, marginTop: 4 }}>
-                  Fermer
-                </Button>
+                {forgotError && <p id="forgot-email-error" role="alert" style={errorText}>{forgotError}</p>}
+                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                  <Button variant="secondary" onClick={closeForgotModal} style={{ flex: 1, padding: '10px 13px', borderRadius: 12, fontSize: 'var(--font-size-callout)' }}>
+                    Annuler
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={forgotLoading} loading={forgotLoading} loadingText="Envoi…" style={{ ...btnPrimary, flex: 1, fontSize: 'var(--font-size-body)' }}>
+                    Envoyer le lien
+                  </Button>
+                </div>
+              </form>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M2 7l10 7 10-7" />
+                </svg>
               </div>
-            )}
+              <h2 id="forgot-modal-title" style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>Vérifie ta boîte mail</h2>
+              <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                Si un compte existe avec cette adresse, tu vas recevoir un email avec un lien pour réinitialiser ton mot de passe.
+              </p>
+              <Button variant="primary" onClick={closeForgotModal} style={{ ...btnGold, marginTop: 4 }}>
+                Fermer
+              </Button>
+            </div>
+          )}
         </Modal>
       )}
     </div>

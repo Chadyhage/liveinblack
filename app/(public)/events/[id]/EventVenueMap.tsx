@@ -52,7 +52,7 @@ export default function EventVenueMap({ address }: { address: string }) {
               href={googleMapsHref}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ flex: 1, minHeight: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}
+              style={{ flex: 1, minHeight: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, textDecoration: 'none', textAlign: 'center' }}
             >
               Ouvrir dans Google Maps
             </a>

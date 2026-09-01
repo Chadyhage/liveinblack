@@ -150,7 +150,7 @@ function InterestCard({ item, inactive, onRemoved }: { item: EventInterestItemVi
       className={ev ? 'lb-card' : undefined}
       style={{ padding: 0, overflow: 'hidden', opacity: inactive ? 0.72 : 1, cursor: ev ? 'pointer' : 'default', position: 'relative', borderRadius: 8 }}
     >
-      <div className={styles.image} style={{ background: ev?.color || 'var(--surface-3)' }}>
+      <div className={styles.image} style={{ background: 'var(--surface-3)' }}>
         {ev && (
           <Image src={ev.imageUrl || placeholderPhotoUrl(ev.id, 720, 440)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 50vw" />
         )}

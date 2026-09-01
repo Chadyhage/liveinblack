@@ -576,7 +576,7 @@ function DetailPanel({
             justifyContent: 'center',
             fontSize: 'var(--font-size-title-4)',
             fontWeight: 700,
-            color: 'var(--teal)',
+            color: 'var(--primary)',
           }}
         >
           {(detail.displayName || '?').charAt(0).toUpperCase()}
@@ -621,7 +621,7 @@ function DetailPanel({
                 fontWeight: 500,
                 background: 'var(--primary-a12)',
                 border: '1px solid var(--primary-a04)',
-                color: 'var(--teal)',
+                color: 'var(--primary)',
                 fontSize: 'var(--font-size-body-sm)',
                 textTransform: 'none',
                 letterSpacing: 'normal',

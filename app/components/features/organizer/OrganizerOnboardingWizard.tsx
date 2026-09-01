@@ -45,8 +45,8 @@ const EMPTY_FORM: OrganizerFormData = {
   description: '',
 }
 
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', outline: 'none' }
-const labelStyle: React.CSSProperties = { fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', display: 'block', marginBottom: 6 }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', minHeight: 38, padding: '6px 10px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', outline: 'none' }
+const labelStyle: React.CSSProperties = { fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', display: 'block', marginBottom: 2 }
 const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   padding: '13px 26px',
   borderRadius: 3,
@@ -268,41 +268,37 @@ export default function OrganizerOnboardingWizard({
 
   return (
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 8 : 20 }}>
         <div>
-          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 6px' }}>Demande d&apos;espace</p>
-          <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 6px' }}>Compte Organisateur</h1>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Demande d&apos;espace</p>
+          <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 4px' }}>Compte Organisateur</h1>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
             <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
             <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
           </div>
-          <div style={{ height: 6, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
+          <div style={{ height: 5, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
           </div>
         </div>
 
-        <Card style={{ padding: 24 }}>
+        <Card style={{ padding: mode === 'anonymous' ? '12px 16px' : 24 }}>
           {step === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
-              {/* Grille responsive (2 colonnes dès que la place le permet, 1
-                  sous ~460px de large) au lieu d'un empilement systématique
-                  sur une seule colonne — le formulaire n'utilisait qu'une
-                  fraction de la largeur disponible dans AuthSplitLayout. */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <Label style={labelStyle}>Nom de l&apos;établissement / commercial {requiredMark}</Label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 6 : 14 }}>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Informations de l&apos;établissement</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: mode === 'anonymous' ? '6px 10px' : 14 }}>
+                <div>
+                  <Label style={labelStyle}>Nom commercial / Établissement {requiredMark}</Label>
                   <Input aria-label="Nom de l’établissement ou nom commercial" style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
-                  <Input aria-label="Numéro SIRET ou SIREN" style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou au moins 3 zéros si tu n'en as pas" />
+                  <Input aria-label="Numéro SIRET ou SIREN" style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres ou 000" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
@@ -315,31 +311,25 @@ export default function OrganizerOnboardingWizard({
                     placeholder="contact@monclub.com"
                   />
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
+                <div>
                   <Label style={labelStyle}>Téléphone professionnel {requiredMark}</Label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Select
-                      aria-label="Indicatif téléphonique professionnel"
-                      value={form.telephoneProCode}
-                      onChange={(value) => set('telephoneProCode', value)}
-                      options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.country} ${r.dial}` }))}
-                    />
-                    <Input aria-label="Téléphone professionnel" style={inputStyle} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="Téléphone professionnel" />
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ minWidth: 105, flexShrink: 0 }}>
+                      <Select
+                        aria-label="Indicatif"
+                        value={form.telephoneProCode}
+                        onChange={(value) => set('telephoneProCode', value)}
+                        options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
+                        style={{ minHeight: 38, padding: '0 8px' }}
+                      />
+                    </div>
+                    <Input aria-label="Téléphone pro" style={{ ...inputStyle, flex: 1 }} value={form.telephonePro} onChange={(e) => set('telephonePro', e.target.value)} placeholder="06 00 00 00 00" />
                   </div>
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <Checkbox
-                    label="Pas de lieu fixe (établissement en ligne / itinérant)"
-                    checked={form.noFixedAddress}
-                    onChange={(e) => set('noFixedAddress', e.target.checked)}
-                  />
+                <div>
+                  <Label style={labelStyle}>Adresse de l&apos;établissement</Label>
+                  <Input aria-label="Adresse de l’établissement" style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} disabled={form.noFixedAddress} placeholder="Adresse physique" />
                 </div>
-                {!form.noFixedAddress && (
-                  <div>
-                    <Label style={labelStyle}>Adresse de l&apos;établissement {requiredMark}</Label>
-                    <Input aria-label="Adresse de l’établissement" style={inputStyle} value={form.adresseEtablissement} onChange={(e) => set('adresseEtablissement', e.target.value)} />
-                  </div>
-                )}
                 <div>
                   <Label style={labelStyle}>Site web / Instagram</Label>
                   <Input aria-label="Site web ou compte Instagram" style={inputStyle} value={form.siteWeb} onChange={(e) => set('siteWeb', e.target.value)} placeholder="https://… ou @nom" />
@@ -348,43 +338,43 @@ export default function OrganizerOnboardingWizard({
 
               {mode === 'anonymous' && (
                 <>
-                  <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                  <h3 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ton compte de connexion</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <Label style={labelStyle}>Adresse e-mail (identifiant de connexion) {requiredMark}</Label>
-                      <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+                  <div style={{ margin: '2px 0 0' }}>
+                    <Checkbox
+                      label="Pas de lieu fixe (établissement en ligne / itinérant)"
+                      checked={form.noFixedAddress}
+                      onChange={(e) => set('noFixedAddress', e.target.checked)}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
+                    <div>
+                      <Label style={labelStyle}>Adresse e-mail (identifiant connexion) {requiredMark}</Label>
+                      <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="ton@email.com" />
                     </div>
                     <div>
-                      <Label style={labelStyle}>Mot de passe {requiredMark}</Label>
-                      <div style={{ position: 'relative' }}>
-                        <Input
-                          aria-label="Mot de passe"
-                          style={{ ...inputStyle, paddingRight: 56 }}
-                          type={showRegPassword ? 'text' : 'password'}
-                          value={regPassword}
-                          onChange={(e) => setRegPassword(e.target.value)}
-                          placeholder="Minimum 8 caractères"
-                        />
-                        <Button
-                          variant="link"
-                          type="button"
-                          aria-pressed={showRegPassword}
-                          aria-label={showRegPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
-                          onClick={() => setShowRegPassword((v) => !v)}
-                          style={{ position: 'absolute', right: 6, top: '50%', minWidth: 64, minHeight: 44, padding: 0, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
-                        >
-                          <IconEye open={showRegPassword} />
-                          {showRegPassword ? 'Cacher' : 'Voir'}
-                        </Button>
+                      <Label style={labelStyle}>Mot de passe & confirmation {requiredMark}</Label>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                          <Input
+                            aria-label="Mot de passe"
+                            style={{ ...inputStyle, paddingRight: 36 }}
+                            type={showRegPassword ? 'text' : 'password'}
+                            value={regPassword}
+                            onChange={(e) => setRegPassword(e.target.value)}
+                            placeholder="8+ car."
+                          />
+                          <Button
+                            variant="ghost"
+                            type="button"
+                            onClick={() => setShowRegPassword((v) => !v)}
+                            style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', padding: 0, color: 'var(--text-muted)' }}
+                          >
+                            <IconEye open={showRegPassword} size={13} />
+                          </Button>
+                        </div>
+                        <Input aria-label="Confirmation" style={{ ...inputStyle, flex: 1 }} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} placeholder="Confirmer" />
                       </div>
                     </div>
-                    <div>
-                      <Label style={labelStyle}>Confirmer le mot de passe {requiredMark}</Label>
-                      <Input aria-label="Confirmation du mot de passe" style={inputStyle} type="password" value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
-                    </div>
                   </div>
-                  <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>Tu te connecteras avec l&apos;adresse e-mail indiquée ci-dessus (identifiant de connexion), pas nécessairement l&apos;email professionnel.</p>
                 </>
               )}
             </div>
@@ -392,7 +382,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Description de l&apos;activité</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Description de l&apos;activité</h2>
               <div>
                 <Label style={labelStyle}>Type d&apos;établissement {requiredMark}</Label>
                 <Select
@@ -510,7 +500,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
               <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0 }}>Comment tu seras payé</p>
               <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
                 LIVEINBLACK collecte les paiements de tes billets et te reverse ta part directement sur ton compte bancaire. Les reversements sont gérés de façon
@@ -538,7 +528,7 @@ export default function OrganizerOnboardingWizard({
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
+              <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Documents justificatifs</h2>
               <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                 Ces documents nous permettent de vérifier ton identité et la légitimité de ton activité. Ils sont stockés de façon privée et accessibles uniquement à
                 l&apos;équipe LIVEINBLACK. Formats acceptés : PDF, JPG, PNG — 10 Mo max par fichier.

@@ -70,7 +70,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
           <ArrowLeft size={16} /> Organisateurs
         </Link>
       </div>
-      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid var(--border)', background: 'linear-gradient(135deg, var(--surface-2), var(--primary-a22))', boxShadow: '0 16px 48px rgba(var(--black-rgb), .32)' }}>
+      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', borderRadius: 'var(--radius-card)', overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--surface-2)', boxShadow: '0 16px 48px rgba(var(--black-rgb), .32)' }}>
         <Image src={reliablePhotoUrl(organizer.bannerUrl, organizer.userId, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 960px" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, var(--media-scrim) 100%)' }} />
       </div>
@@ -124,7 +124,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
         <Section title="Événements à venir">
           {upcoming.length === 0 ? (
             <div style={{ padding: '16px 0', textAlign: 'center' }}>
-              <Mascot mood="sleeping" size={96} />
+              <Mascot mood="sleeping" size={180} />
               <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-faint)', margin: '8px 0 0' }}>Aucun événement à venir pour le moment.</p>
             </div>
           ) : (
@@ -134,7 +134,7 @@ export default async function OrganizerDetailContent({ slug }: { slug: string })
                 const min = prices.length ? Math.min(...prices) : null
                 return (
                   <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
-                    <div style={{ aspectRatio: '16/9', position: 'relative', background: `linear-gradient(135deg, ${e.color || 'var(--primary)'}33, var(--obsidian))` }}>
+                    <div style={{ aspectRatio: '16/9', position: 'relative', background: 'linear-gradient(135deg, var(--primary-a14), var(--obsidian))' }}>
                       {e.imageUrl && (
                         <Image src={reliablePhotoUrl(e.imageUrl, e.id, 480, 270)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 45vw, 240px" />
                       )}

@@ -159,12 +159,12 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
               </p>
             ) : null}
             {websiteUrl && (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--control-height-md)', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--control-height-md)', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
                 🌐 {provider.website}
               </a>
             )}
             {provider.phone && (
-              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
+              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--primary)', marginTop: 6, textDecoration: 'none' }}>
                 📞 {provider.phone}
               </a>
             )}

@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { fulfillResaleOrder, initiateResaleOrder, releaseResaleOrder } from '@/lib/server/events/resale'
 import Order from '@/lib/models/Order'
 import { createTransaction, createToken, isFedapayConfigured } from '@/lib/server/payments/fedapayClient'
+import { getVercelOpsConfig } from '@/lib/server/vercelEdgeConfig'
 
 // Miroir de /api/checkout/fedapay (achat neuf), pour l'achat d'un billet
 // REVENDU sur le rail XOF/mobile money.
@@ -14,6 +15,11 @@ const MIN_XOF = 100
 const bodySchema = z.object({ listingId: z.string().min(1) })
 
 export async function POST(req: Request) {
+  const opsConfig = await getVercelOpsConfig()
+  if (opsConfig.maintenanceMode) return NextResponse.json({ error: 'maintenance_mode' }, { status: 503 })
+  if (!opsConfig.checkoutEnabled) return NextResponse.json({ error: 'checkout_disabled' }, { status: 503 })
+  if (!opsConfig.ticketResaleEnabled) return NextResponse.json({ error: 'resale_disabled' }, { status: 503 })
+
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'auth_required' }, { status: 401 })
   const requestHost = req.headers.get('x-forwarded-host') || req.headers.get('host')

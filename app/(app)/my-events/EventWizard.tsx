@@ -925,7 +925,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   <video src={videoPreview} controls muted playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'cover', background: 'var(--surface-2)' }} />
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderTop: '1px solid var(--surface-2)' }}>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
+                      <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{videoName || 'Vidéo d’aperçu'}</p>
                       <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '3px 0 0' }}>Elle se lance après 1 seconde de survol sur les cartes événement.</p>
                     </div>
                     <Button
@@ -944,7 +944,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   onClick={() => videoInputRef.current?.click()}
                   style={{ minHeight: 118, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 13, padding: 16, border: 0, background: 'transparent', textAlign: 'left' }}
                 >
-                  <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'var(--primary-a10)', border: '1px solid var(--focus-ring-color)', color: 'var(--teal)', flexShrink: 0 }}>
+                  <span style={{ width: 42, height: 42, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'var(--primary-a10)', border: '1px solid var(--focus-ring-color)', color: 'var(--primary)', flexShrink: 0 }}>
                     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
@@ -1037,7 +1037,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                             justifyContent: 'center',
                             border: a.providerId ? '1px solid var(--primary-a42)' : '1px solid var(--border-strong)',
                             background: a.providerId ? 'var(--primary-a14)' : 'var(--surface-2)',
-                            color: a.providerId ? 'var(--teal)' : 'var(--text-muted)',
+                            color: a.providerId ? 'var(--primary)' : 'var(--text-muted)',
                             fontSize: 'var(--font-size-headline)',
                             fontWeight: 800,
                           }}
@@ -1053,7 +1053,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                         </Button>
                       </div>
                       {a.providerId && (
-                        <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--teal)', margin: '0 0 0 138px' }}>
+                        <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--primary)', margin: '0 0 0 138px' }}>
                           Lié à un profil prestataire — alimentera son historique d&apos;événements.
                         </p>
                       )}
@@ -1173,7 +1173,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   label={mstyle}
                   active={musicStyles.includes(mstyle)}
                   onClick={() => setMusicStyles((cur) => (cur.includes(mstyle) ? cur.filter((x) => x !== mstyle) : [...cur, mstyle]))}
-                  accent="var(--teal)"
+                  accent="var(--primary)"
                 />
               ))}
             </div>
@@ -1215,7 +1215,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     borderRadius: 10,
                     border: minAge === value ? '1px solid var(--primary-a55)' : '1px solid var(--border)',
                     background: minAge === value ? 'var(--primary-a12)' : 'var(--surface)',
-                    color: minAge === value ? 'var(--teal)' : 'var(--text-muted)',
+                    color: minAge === value ? 'var(--primary)' : 'var(--text-muted)',
                     fontSize: 'var(--font-size-footnote)',
                     fontWeight: 600,
                     letterSpacing: '0.04em',
@@ -1258,16 +1258,16 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Places &amp; Prix</p>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Places &amp; Prix</p>
             <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Configure chaque type de place que tu veux proposer.</p>
           </div>
 
           {(() => {
             const isXof = currency === 'XOF'
             return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', borderLeft: `3px solid ${isXof ? 'var(--teal)' : 'var(--gold)'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-2)', borderLeft: `3px solid ${isXof ? 'var(--primary)' : 'var(--gold)'}` }}>
                 {isXof ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true">
                     <rect x="7" y="2" width="10" height="20" rx="2" />
                     <line x1="11" y1="18" x2="13" y2="18" />
                   </svg>
@@ -1278,7 +1278,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                   </svg>
                 )}
                 <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                  Tu fixes tes prix en <strong style={{ color: isXof ? 'var(--teal)' : 'var(--gold)' }}>{currencySymbol(currency)}</strong> — paiement par {payRailLabel(currency)}.
+                  Tu fixes tes prix en <strong style={{ color: isXof ? 'var(--primary)' : 'var(--gold)' }}>{currencySymbol(currency)}</strong> — paiement par {payRailLabel(currency)}.
                 </p>
               </div>
             )
@@ -1384,7 +1384,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                 </div>
                 {place.groupType === 'group' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <p style={{ ...S.label, color: 'var(--teal)' }}>Capacité du groupe</p>
+                    <p style={{ ...S.label, color: 'var(--primary)' }}>Capacité du groupe</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       <NumberInputField
                         label="Min personnes"
@@ -1496,7 +1496,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                               style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 'var(--font-size-footnote-lg)', padding: '8px 10px' }}
                             />
                             {stillInMenu && (
-                              <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--teal)', margin: '4px 0 0' }}>Correspond à un article de ta précommande.</p>
+                              <p style={{ fontSize: 'var(--font-size-caption-2-lg)', color: 'var(--primary)', margin: '4px 0 0' }}>Correspond à un article de ta précommande.</p>
                             )}
                           </div>
                           <Input
@@ -1513,7 +1513,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           />
                           <span
                             title="Inclus gratuitement dans le billet"
-                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid var(--primary-a35)', background: 'var(--primary-a14)', color: 'var(--teal)' }}
+                            style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, fontSize: 'var(--font-size-caption)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', border: '1px solid var(--primary-a35)', background: 'var(--primary-a14)', color: 'var(--primary)' }}
                           >
                             Offert
                           </span>
@@ -1542,7 +1542,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                           onClick={() =>
                             setPlaces((prev) => prev.map((p) => (p.key === place.key ? { ...p, included: [...p.included, { name: menuChoices[0].name.trim(), qty: 1 }] } : p)))
                           }
-                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', color: 'var(--teal)', fontSize: 'var(--font-size-footnote)' }}
+                          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--primary-a14)', border: '1px solid var(--primary-a35)', color: 'var(--primary)', fontSize: 'var(--font-size-footnote)' }}
                         >
                           + Inclure un article du menu
                         </Button>
@@ -1567,7 +1567,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
+            <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 4px' }}>Lieu &amp; infos pratiques</p>
             <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)' }}>Indique où se déroulera ton événement.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
@@ -1580,7 +1580,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
               <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {regions.map((r) => (
-                  <Pill key={r.id} label={`${r.flag} ${r.name}`} active={region === r.name} disabled={locked} onClick={() => setRegion(r.name)} accent="var(--teal)" />
+                  <Pill key={r.id} label={`${r.flag} ${r.name}`} active={region === r.name} disabled={locked} onClick={() => setRegion(r.name)} accent="var(--primary)" />
                 ))}
               </div>
               {errors.region && <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--danger)', marginTop: 6 }}>{errors.region}</p>}
@@ -1596,7 +1596,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {/* ── Step 3 : Options avancées ── */}
       {step === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Options avancées</p>
 
           <Card accent="var(--primary-a14)" style={{ padding: '12px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ flex: 1 }}>
@@ -1604,10 +1604,10 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
               <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 4, lineHeight: 1.6 }}>Billet numérique unique scanné à l&apos;entrée — obligatoire</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
+              <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Inclus</span>
             </div>
           </Card>
 
@@ -1707,7 +1707,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
       {/* ── Step 4 : Récapitulatif & publication ── */}
       {step === 4 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Récapitulatif &amp; publication</p>
+          <p style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Récapitulatif &amp; publication</p>
 
           {imagePreview && (
             <div style={{ borderRadius: 8, overflow: 'hidden', aspectRatio: '16/9' }}>

@@ -9,7 +9,6 @@ import { Providers } from "./providers";
 import CookieConsentBanner from "./components/layout/CookieConsentBanner";
 import GoogleAnalytics from "./components/layout/GoogleAnalytics";
 import GrowthAnalytics from "./components/layout/GrowthAnalytics";
-import ThemeModeToggle from "./components/layout/ThemeModeToggle";
 import { STATIC_THEME } from "@/lib/shared/staticTheme";
 
 // Police variable déjà distribuée avec la version verrouillée de Next.js.
@@ -148,22 +147,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: STATIC_THEME.lightBackground },
-    { media: "(prefers-color-scheme: dark)", color: STATIC_THEME.darkBackground },
-  ],
-  colorScheme: "light dark",
+  themeColor: STATIC_THEME.darkBackground,
+  colorScheme: "dark",
 };
 
 const themeBootScript = `
 try {
-  var key = 'lib_theme';
-  var stored = window.localStorage.getItem(key);
-  var mode = stored === 'light' || stored === 'dark'
-    ? stored
-    : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  document.documentElement.dataset.theme = mode;
-  document.documentElement.style.colorScheme = mode;
+  window.localStorage.setItem('lib_theme', 'dark');
+  document.documentElement.dataset.theme = 'dark';
+  document.documentElement.style.colorScheme = 'dark';
 } catch (_) {}
 `;
 
@@ -173,7 +165,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr-BJ" className={`${interfaceFont.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="fr-BJ" data-theme="dark" style={{ colorScheme: 'dark' }} className={`${interfaceFont.variable} h-full antialiased`} suppressHydrationWarning>
       <head><style>{'nextjs-portal{display:none!important}'}</style></head>
       <body className="min-h-full flex flex-col">
         <Script id="lib-theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeBootScript }} />
@@ -183,7 +175,6 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
         />
         <Providers>{children}</Providers>
-        <ThemeModeToggle />
         <CookieConsentBanner />
         <Suspense fallback={null}>
           <GrowthAnalytics />

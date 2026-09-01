@@ -4,10 +4,7 @@
   overflow: hidden;
   color: var(--text);
   font-family: var(--providers-font);
-  background:
-    radial-gradient(circle at 12% 4%, var(--primary-a07), transparent 28%),
-    radial-gradient(circle at 88% 18%, var(--primary-a06), transparent 30%),
-    var(--background);
+  background: var(--obsidian);
 }
 
 .hero {
@@ -181,7 +178,7 @@
 .activeFilters strong { color: var(--text); }
 .activeFilters a { min-height: 34px; display: inline-flex; align-items: center; gap: 7px; color: var(--primary); font-weight: 650; text-decoration: none; white-space: nowrap; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px)); gap: var(--public-grid-gap); margin-top: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px)); gap: 16px; align-items: stretch; margin-top: 16px; }
 .pagination { margin-top: 24px; }
 
 .emptyState { max-width: 760px; min-height: 440px; margin: 28px auto 0; padding: clamp(36px, 6vw, 72px); text-align: center; }
@@ -211,7 +208,6 @@
 @media (max-width: 1020px) {
   .searchPanel { grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); }
   .filterButton { grid-column: 1 / -1; }
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cta { grid-template-columns: auto 1fr; }
   .cta > a { grid-column: 2; justify-self: start; }
 }

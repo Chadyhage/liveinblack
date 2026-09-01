@@ -34,7 +34,7 @@ export default function HomeGreeting({ firstName }: { firstName: string }) {
         fontSize: 'clamp(15px, 3.4vw, 19px)',
         fontWeight: 700,
         letterSpacing: '.02em',
-        color: 'var(--teal)',
+        color: 'var(--primary)',
         margin: '20px 0 0',
       }}
     >

@@ -1,14 +1,14 @@
 .root { width: 100%; padding-top: clamp(12px, 2vw, 24px); }
 .grid { display: grid; grid-template-columns: minmax(220px, 260px) minmax(0, 1fr); gap: 14px; align-items: start; }
-.identity { position: sticky; top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 14px !important; border-radius: 18px !important; background: linear-gradient(155deg, var(--card-bg), var(--fill-secondary)) !important; border: 1px solid var(--border) !important; }
+.identity { position: sticky; top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 14px !important; border-radius: 18px !important; background: var(--card-bg) !important; border: 1px solid var(--border) !important; }
 .identity h1 { margin: 6px 0 0; color: var(--text); font-size: var(--font-size-title-4); font-weight: 800; letter-spacing: -.02em; text-align: center; }
 .email { max-width: 100%; margin: 0; overflow: hidden; color: var(--text-muted); font-size: var(--font-size-body); text-overflow: ellipsis; white-space: nowrap; }
 .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; }
 .editLink { min-height: var(--control-height-md); display: inline-flex; align-items: center; color: var(--primary); font-size: var(--font-size-body-sm); font-weight: 700; text-decoration: none; }
 .logout { margin-top: 6px !important; border-radius: 12px !important; border-color: var(--primary-a35) !important; color: var(--primary) !important; font-size: var(--font-size-body-lg) !important; }
 .content { display: flex; flex-direction: column; gap: 12px; }
-.points { position: relative; min-height: 84px; overflow: hidden; padding: 16px 18px !important; border-radius: 18px !important; border: 1px solid var(--border) !important; background: linear-gradient(125deg, var(--primary-a10), var(--fill-secondary)) !important; }
-.points::after { content: ""; position: absolute; width: 112px; height: 112px; right: -44px; bottom: -68px; border-radius: 50%; background: var(--primary-a12); }
+.points { position: relative; min-height: 84px; overflow: hidden; padding: 16px 18px !important; border-radius: 18px !important; border: 1px solid var(--border) !important; background: var(--card-bg) !important; }
+.points::after { content: ""; position: absolute; width: 112px; height: 112px; right: -44px; bottom: -68px; border-radius: 50%; background: var(--fill-secondary); }
 .pointsLabel { margin: 0; color: var(--primary); font-size: var(--font-size-footnote); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .pointsValue { display: block; margin: 6px 0 2px; color: var(--text); font-size: clamp(22px, 2vw, 28px); font-weight: 800; letter-spacing: -.03em; }
 .pointsText { max-width: 600px; margin: 0; color: var(--text-muted); font-size: var(--font-size-body); line-height: 1.45; }

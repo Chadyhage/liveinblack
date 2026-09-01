@@ -6,7 +6,7 @@ export type BoostTier = { label: string; price: number; days: number }
 export type BoostPlan = { position: number; label: string; description: string; color: string; tiers: BoostTier[] }
 
 export const BOOST_PLANS: readonly BoostPlan[] = Object.freeze([
-  { position: 1, label: 'Top 1', description: 'Position n°1 · Visibilité maximale', color: '#c8a96e', tiers: [
+  { position: 1, label: 'Top 1', description: 'Position n°1 · Visibilité maximale', color: '#f53d8d', tiers: [
     { label: '1 jour', price: 9.99, days: 1 }, { label: '3 jours', price: 24.99, days: 3 },
     { label: '1 semaine', price: 49.99, days: 7 }, { label: '1 mois', price: 149.99, days: 30 },
   ] },
@@ -14,7 +14,7 @@ export const BOOST_PLANS: readonly BoostPlan[] = Object.freeze([
     { label: '1 jour', price: 6.99, days: 1 }, { label: '3 jours', price: 16.99, days: 3 },
     { label: '1 semaine', price: 34.99, days: 7 }, { label: '1 mois', price: 99.99, days: 30 },
   ] },
-  { position: 3, label: 'Top 3', description: 'Position n°3 · Haute visibilité', color: 'rgba(200,169,110,0.6)', tiers: [
+  { position: 3, label: 'Top 3', description: 'Position n°3 · Haute visibilité', color: 'rgba(245,61,141,0.6)', tiers: [
     { label: '1 jour', price: 3.99, days: 1 }, { label: '3 jours', price: 9.99, days: 3 },
     { label: '1 semaine', price: 19.99, days: 7 }, { label: '1 mois', price: 59.99, days: 30 },
   ] },

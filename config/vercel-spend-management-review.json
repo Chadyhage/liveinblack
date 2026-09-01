@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Revue Spend Management Vercel Pro avant de considerer le controle budget comme finalise.",
+  "dashboard": "Team Settings > Billing > Spend Management",
+  "endpoint": "/api/ops/vercel-spend",
+  "secretEnv": "VERCEL_SPEND_WEBHOOK_SECRET",
+  "autoMaintenanceEnv": "VERCEL_SPEND_AUTO_MAINTENANCE",
+  "checks": [
+    {
+      "key": "budget-amount",
+      "label": "Montant mensuel defini",
+      "required": true,
+      "howToVerify": "Un Owner/Billing confirme dans Vercel Billing qu'un montant mensuel Spend Management est actif.",
+      "riskIfMissing": "Les depenses metered peuvent monter sans garde-fou budget."
+    },
+    {
+      "key": "notifications",
+      "label": "Notifications 50/75/100",
+      "required": true,
+      "howToVerify": "Verifier que les notifications web/email sont actives pour Owner/Billing, et SMS a 100% si souhaite.",
+      "riskIfMissing": "L'equipe peut rater les seuils avant la coupure manuelle."
+    },
+    {
+      "key": "webhook-url",
+      "label": "Webhook Spend branche",
+      "required": true,
+      "howToVerify": "Le webhook Billing pointe vers https://domaine-production/api/ops/vercel-spend.",
+      "riskIfMissing": "Le tableau /agent/vercel ne recevra aucun signal budget."
+    },
+    {
+      "key": "signature-secret",
+      "label": "Secret webhook synchronise",
+      "required": true,
+      "howToVerify": "VERCEL_SPEND_WEBHOOK_SECRET est present dans Vercel Production et Development.",
+      "riskIfMissing": "Les payloads Vercel seront rejetes ou non verifies."
+    },
+    {
+      "key": "auto-maintenance-decision",
+      "label": "Decision auto-maintenance prise",
+      "required": true,
+      "howToVerify": "VERCEL_SPEND_AUTO_MAINTENANCE vaut 0 pour action manuelle ou 1 pour couper automatiquement checkout a 100%.",
+      "riskIfMissing": "Personne ne sait si le seuil 100% agit ou alerte seulement."
+    },
+    {
+      "key": "agent-visibility",
+      "label": "Visibilite agent",
+      "required": true,
+      "howToVerify": "/agent/vercel affiche le statut webhook budget et les prochains evenements Spend.",
+      "riskIfMissing": "Le controle budget reste cache dans Vercel Billing."
+    }
+  ]
+}

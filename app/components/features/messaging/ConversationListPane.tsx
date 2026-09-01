@@ -151,14 +151,14 @@ export default function ConversationListPane({
                     {conv.mutedForMe ? <span style={{ fontSize: 'var(--font-size-caption)', opacity: 0.6, display: 'inline-flex', alignItems: 'center' }}><BellOff size={12} /></span> : null}
                     {conv.unreadCount > 0
                       ? conv.mutedForMe
-                        ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--teal-solid)', display: 'inline-block' }} />
+                        ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--primary)', display: 'inline-block' }} />
                         : (
                           <span
                             style={{
                               fontSize: 'var(--font-size-caption)',
                               fontWeight: 700,
                               color: 'var(--primary-ink)',
-                              background: 'var(--teal-solid)',
+                              background: 'var(--primary)',
                               borderRadius: 999,
                               padding: '1px 6px',
                             }}

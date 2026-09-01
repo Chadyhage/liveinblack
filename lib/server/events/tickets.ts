@@ -261,7 +261,7 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
             time: ev.time ?? '',
             city: ev.city ?? '',
             imageUrl: ev.imageUrl ?? null,
-            color: ev.color ?? '#c8a96e',
+            color: ev.color ?? '#2a2a2f',
             cancelled: Boolean(ev.cancelled),
             minAge: ev.minAge ?? 18,
             hasPlaylist: Boolean(ev.playlist),

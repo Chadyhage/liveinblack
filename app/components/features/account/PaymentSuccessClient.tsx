@@ -223,7 +223,7 @@ export default function PaymentSuccessClient({
             </h1>
             <p style={{ fontSize: 'var(--font-size-body-lg)', color: 'var(--text-muted)', margin: 0, lineHeight: 1.55 }}>{successMsg}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 30 }}>
-              <Button onClick={() => router.push('/profile/billets')} style={btnSolid('var(--teal-solid)', 'var(--primary-ink)')}>Voir mes billets</Button>
+              <Button onClick={() => router.push('/profile/billets')} style={btnSolid('var(--primary)', 'var(--primary-ink)')}>Voir mes billets</Button>
               <Button variant="secondary" onClick={() => router.push('/events')} style={btnGhostS}>Découvrir d&apos;autres événements</Button>
             </div>
           </>
