@@ -98,6 +98,7 @@ function HeaderSearch() {
         <Input
           className="lb-header-search__input"
           type="search"
+          leftIcon={<Search size={16} strokeWidth={2.2} aria-hidden="true" />}
           value={value}
           onChange={(e) => {
             const nextValue = e.target.value
@@ -111,10 +112,9 @@ function HeaderSearch() {
           aria-label="Recherche globale (événements, organisateurs, prestataires)"
           containerStyle={{ flex: 1, minWidth: 0 }}
           style={{
-            width: 172,
+            width: 250,
             minHeight: 38,
             height: 38,
-            padding: '0 7px 0 12px',
             border: 0,
             background: 'transparent',
             color: 'var(--text)',
@@ -123,25 +123,6 @@ function HeaderSearch() {
             boxShadow: 'none',
           }}
         />
-        <Button
-          type="submit"
-          variant="ghost"
-          className="lb-header-search__button"
-          aria-label="Lancer la recherche"
-          style={{
-            width: 38,
-            minWidth: 38,
-            height: 38,
-            minHeight: 38,
-            padding: 0,
-            border: 0,
-            borderRadius: 10,
-            background: 'var(--primary)',
-            color: 'var(--primary-ink)',
-          }}
-        >
-          <Search size={18} strokeWidth={2} aria-hidden="true" />
-        </Button>
       </form>
 
       {showDropdown && (
@@ -616,8 +597,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           display: flex;
           align-items: center;
           min-height: 42px;
-          height: 42px;
-          padding: 2px 2px 2px 2px;
+        .lb-header-search__form {
+          min-height: 38px;
+          height: 38px;
+          padding: 0;
           border: 1px solid var(--border);
           border-radius: 12px;
           background: var(--surface-2);
@@ -628,23 +611,6 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           background: var(--surface-2);
         }
         .lb-header-search__input { width: 100% !important; min-width: 0; outline: none; }
-        .lb-header-search__button {
-          width: 38px;
-          height: 38px;
-          flex: 0 0 38px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 !important;
-          border: 0;
-          border-radius: 10px;
-          background: var(--primary);
-          color: var(--primary-ink);
-          cursor: pointer;
-          transition: color 160ms ease, background 160ms ease;
-        }
-        .lb-header-search__button:hover { color: var(--primary-ink); background: var(--primary-strong); }
-        .lb-header-search__button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
         @media (max-width: 640px) {
           .lb-public-nav { padding: 7px 8px 0 !important; }
           .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }

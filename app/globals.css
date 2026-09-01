@@ -9,7 +9,7 @@
   --primary-rgb: 245, 61, 141;
   --primary-strong-rgb: 224, 45, 125;
   --primary-deep-rgb: 58, 24, 39;
-  --primary-ink-rgb: 5, 5, 5;
+  --primary-ink-rgb: 255, 255, 255;
   --text-rgb: 255, 255, 255;
   --text-soft-rgb: 255, 255, 255;
   --black-rgb: 0, 0, 0;
@@ -18,7 +18,7 @@
   --canvas-rgb: 5, 5, 6;
   --neutral-rgb: 118, 118, 128;
   --muted-rgb: 139, 143, 156;
-  --success-rgb: 52, 199, 89;
+  --success-rgb: 245, 61, 141;
   --warning-rgb: 245, 158, 11;
   --info-rgb: 59, 130, 246;
   --sky-rgb: 112, 183, 255;

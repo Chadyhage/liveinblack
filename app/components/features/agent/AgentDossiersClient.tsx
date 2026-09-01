@@ -870,7 +870,7 @@ function DossierActions({
 }) {
   const [confirmReactivate, setConfirmReactivate] = useState(false)
   const btnBase: React.CSSProperties = { borderRadius: 3, fontWeight: 500, fontSize: 'var(--font-size-callout)', textTransform: 'none', letterSpacing: 'normal', width: '100%' }
-  const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--obsidian)' }
+  const teal: React.CSSProperties = { ...btnBase, background: 'var(--teal)', color: 'var(--primary-ink)' }
   const amber: React.CSSProperties = { ...btnBase, background: 'var(--warning-text)', color: 'var(--primary-ink)' }
   const pink: React.CSSProperties = { ...btnBase, background: 'var(--primary)', color: 'var(--primary-ink)' }
   const blue: React.CSSProperties = { ...btnBase, background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border-strong)' }

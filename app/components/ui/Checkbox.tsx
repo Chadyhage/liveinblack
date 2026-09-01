@@ -69,7 +69,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
           }}
         >
           <svg width="11" height="9" viewBox="0 0 11 9" fill="none" style={{ opacity: isChecked ? 1 : 0, transition: 'opacity 0.1s ease' }}>
-            <path d="M1 4.2L4 7.2L10 1" stroke="var(--obsidian)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M1 4.2L4 7.2L10 1" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
       </span>

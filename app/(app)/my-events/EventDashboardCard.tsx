@@ -26,7 +26,7 @@ function statusBadge(event: OrganizerEventView): { label: string; background: st
   if (event.cancelled) return { label: 'Annulé', background: 'var(--danger)', color: 'var(--danger-ink)' }
   if (event.postponed) return { label: 'Reporté', background: 'var(--gold)', color: 'var(--obsidian)' }
   if (event.publishAt && new Date(event.publishAt).getTime() > Date.now()) return { label: 'Programmé', background: 'var(--violet)', color: 'var(--primary-ink)' }
-  return { label: 'Publié', background: 'var(--teal)', color: 'var(--obsidian)' }
+  return { label: 'Publié', background: 'var(--teal)', color: 'var(--primary-ink)' }
 }
 
 export default function EventDashboardCard({

@@ -311,7 +311,7 @@ async function main() {
       region: region.name,
       currency,
       imageUrl: customPhotoUrl(i),
-      color: pick(['#c8a96e', '#4ee8c8', '#e05aaa', '#8b5cf6']),
+      color: pick(['#c8a96e', '#F53D8D', '#e05aaa', '#8b5cf6']),
       places,
       preorder: hasMenu,
       menu: hasMenu ? pickN(MENU_ITEMS, randInt(1, MENU_ITEMS.length)) : null,
