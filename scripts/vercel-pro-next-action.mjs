@@ -23,6 +23,25 @@ function readJson(relativePath) {
   }
 }
 
+function evidenceRecordCommand({ key, nextAction, decisionKey, completionStatus = 'complete' }) {
+  const parts = [
+    `npm run ops:vercel:evidence:record -- --key ${key}`,
+    `--status ${completionStatus}`,
+    '--evidence "preuve live observee"',
+    `--next "${nextAction || 'Relancer audit:vercel-pro-suite -- --strict --include-live'}"`,
+  ]
+  if (completionStatus === 'complete') {
+    parts.push('--confirm-final')
+  }
+  if (decisionKey) {
+    parts.push(`--decision-key ${decisionKey}`)
+    parts.push('--decision-status active')
+    parts.push('--decision-evidence "preuve live observee"')
+    parts.push('--decision-next "surveiller dans /agent/vercel"')
+  }
+  return parts.join(' ')
+}
+
 const order = readJson('config/vercel-pro-activation-order.json')
 const gatesPlan = readJson('config/vercel-live-activation-gates.json')
 const completion = readJson('config/vercel-pro-completion-evidence.json')
@@ -41,13 +60,35 @@ const openSteps = steps.filter((step) => {
   return !decision || (decision.status !== 'active' && decision.status !== 'rejected')
 })
 const nextStep = openSteps[0]
+const remainingDecisions = decisionItems.filter((item) => item.status !== 'active' && item.status !== 'rejected')
+const remainingGates = gates.filter((gate) => {
+  const decision = decisionByKey.get(gate.decisionKey)
+  return !decision || (decision.status !== 'active' && decision.status !== 'rejected')
+})
+const missingRequirements = requirements.filter((item) => item.status !== 'complete')
+const proofDebt = [
+  ...remainingDecisions.map((item) => ({ label: item.label, source: 'decision', status: item.status, nextAction: item.nextAction, proofCommand: evidenceRecordCommand({ key: 'decisions-finalised', nextAction: item.nextAction, decisionKey: item.key, completionStatus: 'pending-live' }) })),
+  ...remainingGates.map((gate) => ({ label: gate.label, source: 'porte live', status: gate.status, nextAction: gate.safeNextAction, proofCommand: evidenceRecordCommand({ key: 'live-gates-closed', nextAction: gate.safeNextAction, decisionKey: gate.decisionKey, completionStatus: 'pending-live' }) })),
+  ...missingRequirements.map((item) => ({ label: item.label, source: 'preuve stricte', status: item.status, nextAction: item.nextAction, proofCommand: evidenceRecordCommand({ key: item.key, nextAction: item.nextAction }) })),
+]
 const completionScore = requirements.length > 0
   ? Math.round((requirements.filter((item) => item.status === 'complete').length / requirements.length) * 100)
   : 0
 
 console.log(`Prochaine action Vercel Pro: ${nextStep ? nextStep.label : 'aucune action ouverte'}`)
 console.log(`Preuves completion: ${completionScore}%`)
+console.log(`Dette de preuve: ${proofDebt.length} item(s) ouvert(s) (${remainingDecisions.length} decision(s), ${remainingGates.length} porte(s), ${missingRequirements.length} preuve(s))`)
 console.log('')
+
+if (proofDebt.length > 0) {
+  console.log('Dette de preuve 100%:')
+  for (const item of proofDebt.slice(0, 8)) {
+    console.log(`- [${item.source}] ${item.label} - ${item.status}: ${item.nextAction}`)
+    if (item.proofCommand) console.log(`  preuve: ${item.proofCommand}`)
+  }
+  if (proofDebt.length > 8) console.log(`- ... ${proofDebt.length - 8} autre(s) item(s) a fermer`)
+  console.log('')
+}
 
 if (!nextStep) {
   console.log('Toutes les etapes ordonnees semblent finalisees dans le registre decisions.')

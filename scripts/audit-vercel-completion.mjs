@@ -28,6 +28,8 @@ const decisions = readJson('config/vercel-pro-decisions.json')
 const gates = readJson('config/vercel-live-activation-gates.json')
 const order = readJson('config/vercel-pro-activation-order.json')
 const pkg = readJson('package.json') ?? {}
+const allowedRequirementStatuses = new Set(['pending-live', 'prepared', 'complete'])
+const allowedDecisionStatuses = new Set(['planned', 'prepared', 'active', 'rejected'])
 
 const requirements = Array.isArray(completion?.requirements) ? completion.requirements : []
 const decisionItems = Array.isArray(decisions?.items) ? decisions.items : []
@@ -54,18 +56,24 @@ const requiredScripts = [
 const completeRequirements = requirements.filter((item) =>
   item.key &&
   item.label &&
-  item.status &&
+  allowedRequirementStatuses.has(item.status) &&
   item.evidenceSource &&
   item.evidenceRequired &&
   item.currentEvidence &&
   item.nextAction
 )
+const invalidRequirements = requirements.filter((item) => !allowedRequirementStatuses.has(item.status))
+const invalidDecisions = decisionItems.filter((item) => !allowedDecisionStatuses.has(item.status))
 const finalisedDecisions = decisionItems.filter((item) => item.status === 'active' || item.status === 'rejected')
+const incompleteFinalDecisions = finalisedDecisions.filter((item) => !item.evidence || !item.nextAction)
 const allScriptsPresent = requiredScripts.every((script) => Boolean(scripts[script]))
 const gatesCoveredByOrder = gateItems.length > 0 && gateItems.every((gate) => orderSteps.some((step) => step.gateKey === gate.key))
 const prepared =
   requirements.length > 0 &&
   completeRequirements.length === requirements.length &&
+  invalidRequirements.length === 0 &&
+  invalidDecisions.length === 0 &&
+  incompleteFinalDecisions.length === 0 &&
   gateItems.length >= 5 &&
   orderSteps.length >= gateItems.length &&
   gatesCoveredByOrder &&
@@ -81,6 +89,8 @@ console.log(`Exigences documentees: ${completeRequirements.length}/${requirement
 console.log(`Decisions finalisees: ${finalisedDecisions.length}/${decisionItems.length}`)
 console.log(`Portes live couvertes par ordre: ${gatesCoveredByOrder ? 'OK' : 'NON'}`)
 console.log(`Audits disponibles: ${requiredScripts.filter((script) => Boolean(scripts[script])).length}/${requiredScripts.length}`)
+console.log(`Statuts invalides: ${invalidRequirements.length + invalidDecisions.length}`)
+console.log(`Decisions finales sans preuve: ${incompleteFinalDecisions.length}`)
 console.log('')
 
 for (const requirement of requirements) {
@@ -94,6 +104,25 @@ if (!allScriptsPresent) {
   console.log('Audits manquants:')
   for (const script of requiredScripts.filter((name) => !scripts[name])) {
     console.log(`- ${script}`)
+  }
+}
+
+if (invalidRequirements.length > 0 || invalidDecisions.length > 0) {
+  console.log('')
+  console.log('Statuts invalides:')
+  for (const item of invalidRequirements) {
+    console.log(`- exigence ${item.key || 'sans-cle'}: ${item.status || 'status manquant'}`)
+  }
+  for (const item of invalidDecisions) {
+    console.log(`- decision ${item.key || 'sans-cle'}: ${item.status || 'status manquant'}`)
+  }
+}
+
+if (incompleteFinalDecisions.length > 0) {
+  console.log('')
+  console.log('Decisions finales sans preuve exploitable:')
+  for (const item of incompleteFinalDecisions) {
+    console.log(`- ${item.key || 'sans-cle'}: evidence=${item.evidence ? 'OK' : 'manquante'}, nextAction=${item.nextAction ? 'OK' : 'manquante'}`)
   }
 }
 

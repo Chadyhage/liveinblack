@@ -85,6 +85,8 @@ interface AuditSuiteCommand {
   command: string
   scope: string
   requiredFor100: boolean
+  requiresExplicitApproval?: boolean
+  approvalReason?: string
   expectedBeforeLiveComplete: string
 }
 
@@ -141,6 +143,22 @@ interface RiskCostSummary {
     severity: 'low' | 'medium' | 'high'
     reason: string
     nextAction: string
+    proofCommand?: string
+  }>
+}
+
+interface EvidenceFreshnessSummary {
+  fresh: boolean
+  oldestDays: number
+  staleCount: number
+  tone: 'teal' | 'gold' | 'danger' | 'neutral'
+  verdict: string
+  items: Array<{
+    key: string
+    label: string
+    updatedAt: string
+    ageDays: number
+    stale: boolean
   }>
 }
 
@@ -151,6 +169,34 @@ interface ProUtilizationModeSummary {
   summary: string
   nextActionLabel: string
   nextActionCommand: string
+}
+
+interface LiveActivationReadinessSummary {
+  ready: boolean
+  tone: 'teal' | 'gold' | 'danger' | 'neutral'
+  label: string
+  summary: string
+  requiredBeforeAction: string[]
+  nextSafeCommand: string
+}
+
+interface ProofDebtSummary {
+  unavailable: boolean
+  totalOpen: number
+  remainingDecisions: number
+  remainingGates: number
+  missingRequirements: number
+  tone: 'teal' | 'gold' | 'danger' | 'neutral'
+  label: string
+  summary: string
+  items: Array<{
+    key: string
+    label: string
+    source: 'decision' | 'live-gate' | 'strict-proof'
+    status: string
+    nextAction: string
+    proofCommand?: string
+  }>
 }
 
 interface NextProofCaptureSummary {
@@ -196,18 +242,23 @@ function buildEvidenceRecordCommand({
   key,
   nextAction,
   decisionKey,
+  completionStatus = 'complete',
 }: {
   key: string
   nextAction?: string
   decisionKey?: string
+  completionStatus?: 'pending-live' | 'prepared' | 'complete'
 }) {
   const next = nextAction || 'Relancer audit:vercel-pro-suite -- --strict --include-live'
   const parts = [
     `npm run ops:vercel:evidence:record -- --key ${key}`,
-    '--status complete',
-    '--evidence "preuve live observee"',
+    `--status ${completionStatus}`,
+  '--evidence "preuve live observee"',
     `--next "${next}"`,
   ]
+  if (completionStatus === 'complete') {
+    parts.push('--confirm-final')
+  }
   if (decisionKey) {
     parts.push(`--decision-key ${decisionKey}`)
     parts.push('--decision-status active')
@@ -539,6 +590,7 @@ async function getAuditSuiteSummary() {
       total: commands.length,
       local: commands.filter((item) => item.scope === 'local').length,
       liveRead: commands.filter((item) => item.scope === 'live-read').length,
+      explicitApproval: commands.filter((item) => item.requiresExplicitApproval === true).length,
       strictExpectedFailures: commands.filter((item) => item.expectedBeforeLiveComplete === 'fail-until-live-proof').length,
       commands: commands.map((item) => ({
         key: item.key,
@@ -546,6 +598,8 @@ async function getAuditSuiteSummary() {
         command: item.command,
         scope: item.scope,
         requiredFor100: item.requiredFor100,
+        requiresExplicitApproval: item.requiresExplicitApproval === true,
+        approvalReason: item.approvalReason,
         expectedBeforeLiveComplete: item.expectedBeforeLiveComplete,
       })),
     }
@@ -554,6 +608,7 @@ async function getAuditSuiteSummary() {
       total: 0,
       local: 0,
       liveRead: 0,
+      explicitApproval: 0,
       strictExpectedFailures: 0,
       commands: [],
     }
@@ -622,6 +677,7 @@ async function getNextActionSummary(): Promise<NextActionSummary> {
         key: 'live-gates-closed',
         nextAction: `continuer avec la prochaine porte apres ${nextStep.label}`,
         decisionKey: gate?.decisionKey,
+        completionStatus: 'pending-live',
       }),
       dashboardHref: dashboardTarget.href,
       dashboardLabel: dashboardTarget.label,
@@ -795,6 +851,7 @@ async function getLiveEvidenceMatrixSummary(): Promise<LiveEvidenceMatrixSummary
           key: 'live-gates-closed',
           nextAction: `preuve live recue pour ${gate.label}`,
           decisionKey: gate.decisionKey,
+          completionStatus: 'pending-live',
         }),
         dashboardHref: dashboard.href,
         dashboardLabel: dashboard.label,
@@ -817,6 +874,55 @@ async function getLiveEvidenceMatrixSummary(): Promise<LiveEvidenceMatrixSummary
       explicitApproval: 0,
       items: [],
     }
+  }
+}
+
+async function getEvidenceFreshnessSummary(): Promise<EvidenceFreshnessSummary> {
+  const files = [
+    { key: 'decisions', label: 'Décisions Pro', path: 'config/vercel-pro-decisions.json' },
+    { key: 'live-gates', label: 'Portes live', path: 'config/vercel-live-activation-gates.json' },
+    { key: 'activation-order', label: 'Ordre activation', path: 'config/vercel-pro-activation-order.json' },
+    { key: 'completion', label: 'Preuves strictes', path: 'config/vercel-pro-completion-evidence.json' },
+    { key: 'audit-suite', label: 'Suite audit', path: 'config/vercel-pro-audit-suite.json' },
+    { key: 'usage-watchlist', label: 'Usage watchlist', path: 'config/vercel-usage-watchlist.json' },
+  ]
+  const now = Date.now()
+  const staleAfterDays = 14
+  const items = await Promise.all(files.map(async (file) => {
+    try {
+      const text = await fs.readFile(path.join(process.cwd(), file.path), 'utf8')
+      const parsed = JSON.parse(text) as { updatedAt?: string }
+      const updatedAt = parsed.updatedAt || 'inconnu'
+      const time = Date.parse(updatedAt)
+      const ageDays = Number.isFinite(time) ? Math.max(0, Math.floor((now - time) / 86400000)) : staleAfterDays + 1
+      return {
+        key: file.key,
+        label: file.label,
+        updatedAt,
+        ageDays,
+        stale: ageDays > staleAfterDays,
+      }
+    } catch {
+      return {
+        key: file.key,
+        label: file.label,
+        updatedAt: 'manquant',
+        ageDays: staleAfterDays + 1,
+        stale: true,
+      }
+    }
+  }))
+  const staleCount = items.filter((item) => item.stale).length
+  const oldestDays = items.reduce((max, item) => Math.max(max, item.ageDays), 0)
+  return {
+    fresh: staleCount === 0,
+    oldestDays,
+    staleCount,
+    tone: staleCount > 0 ? 'gold' : 'teal',
+    verdict: staleCount > 0
+      ? 'Certaines preuves ou decisions doivent etre relues avant de declarer le 100% live.'
+      : 'Les registres de preuves Vercel Pro sont frais pour continuer la fermeture du 100%.',
+    items,
   }
 }
 
@@ -853,6 +959,122 @@ async function getProUtilizationModeSummary(): Promise<ProUtilizationModeSummary
     summary: 'Le code et les outils sont prêts; il reste à capturer les preuves live/dashboard avant de déclarer le 100%.',
     nextActionLabel: nextProof.guidance,
     nextActionCommand: nextProof.proofCommand,
+  }
+}
+
+async function getProofDebtSummary(): Promise<ProofDebtSummary> {
+  try {
+    const [decisionsText, gatesText, completionText] = await Promise.all([
+      fs.readFile(path.join(process.cwd(), 'config/vercel-pro-decisions.json'), 'utf8'),
+      fs.readFile(path.join(process.cwd(), 'config/vercel-live-activation-gates.json'), 'utf8'),
+      fs.readFile(path.join(process.cwd(), 'config/vercel-pro-completion-evidence.json'), 'utf8'),
+    ])
+    const decisions = JSON.parse(decisionsText) as { items?: ProDecisionItem[] }
+    const gatesPlan = JSON.parse(gatesText) as { gates?: LiveActivationGate[] }
+    const completion = JSON.parse(completionText) as { requirements?: CompletionRequirement[] }
+    const decisionItems = Array.isArray(decisions.items) ? decisions.items : []
+    const gates = Array.isArray(gatesPlan.gates) ? gatesPlan.gates : []
+    const requirements = Array.isArray(completion.requirements) ? completion.requirements : []
+    const decisionByKey = new Map(decisionItems.map((item) => [item.key, item]))
+    const remainingDecisions = decisionItems.filter((item) => item.status !== 'active' && item.status !== 'rejected')
+    const remainingGates = gates.filter((gate) => {
+      const decision = decisionByKey.get(gate.decisionKey)
+      return !decision || (decision.status !== 'active' && decision.status !== 'rejected')
+    })
+    const missingRequirements = requirements.filter((item) => item.status !== 'complete')
+    const items = [
+      ...remainingDecisions.map((item) => ({ key: item.key, label: item.label, source: 'decision' as const, status: item.status, nextAction: item.nextAction, proofCommand: buildEvidenceRecordCommand({ key: 'decisions-finalised', nextAction: item.nextAction, decisionKey: item.key, completionStatus: 'pending-live' }) })),
+      ...remainingGates.map((gate) => ({ key: gate.key, label: gate.label, source: 'live-gate' as const, status: gate.status, nextAction: gate.safeNextAction, proofCommand: buildEvidenceRecordCommand({ key: 'live-gates-closed', nextAction: gate.safeNextAction, decisionKey: gate.decisionKey, completionStatus: 'pending-live' }) })),
+      ...missingRequirements.map((item) => ({ key: item.key, label: item.label, source: 'strict-proof' as const, status: item.status, nextAction: item.nextAction, proofCommand: buildEvidenceRecordCommand({ key: item.key, nextAction: item.nextAction }) })),
+    ]
+    const totalOpen = items.length
+    return {
+      unavailable: false,
+      totalOpen,
+      remainingDecisions: remainingDecisions.length,
+      remainingGates: remainingGates.length,
+      missingRequirements: missingRequirements.length,
+      tone: totalOpen === 0 ? 'teal' : remainingGates.some((gate) => gate.status === 'requires-explicit-approval') ? 'danger' : 'gold',
+      label: totalOpen === 0 ? 'Aucune dette' : totalOpen + ' preuve(s) a fermer',
+      summary: totalOpen === 0
+        ? 'Toutes les decisions, portes live et preuves strictes sont fermees dans les registres locaux.'
+        : 'Le 100% reste ouvert tant que cette dette de preuve n est pas fermee ou explicitement rejetee.',
+      items,
+    }
+  } catch {
+    return {
+      unavailable: true,
+      totalOpen: 0,
+      remainingDecisions: 0,
+      remainingGates: 0,
+      missingRequirements: 0,
+      tone: 'neutral',
+      label: 'Dette indisponible',
+      summary: 'Impossible de lire les registres locaux de preuve Vercel Pro.',
+      items: [],
+    }
+  }
+}
+
+async function getLiveActivationReadinessSummary(): Promise<LiveActivationReadinessSummary> {
+  const [freshness, riskCost, nextProof, matrix] = await Promise.all([
+    getEvidenceFreshnessSummary(),
+    getRiskCostSummary(),
+    getNextProofCaptureSummary(),
+    getLiveEvidenceMatrixSummary(),
+  ])
+
+  if (matrix.open === 0) {
+    return {
+      ready: true,
+      tone: 'teal',
+      label: 'Feu vert: 100% pret a prouver',
+      summary: 'Aucune porte live ne reste ouverte. La prochaine action sure est de relancer la suite stricte avec lecture live pour verrouiller la preuve finale.',
+      requiredBeforeAction: ['Relancer la suite stricte avec include-live.', 'Consigner toute preuve dashboard manquante avant de clore le goal.'],
+      nextSafeCommand: 'npm run audit:vercel-pro-suite -- --strict --include-live',
+    }
+  }
+
+  if (!freshness.fresh) {
+    return {
+      ready: false,
+      tone: 'gold',
+      label: 'Feu orange: preuves a rafraichir',
+      summary: 'Certaines preuves locales sont trop anciennes pour autoriser sereinement une activation live. On relit et on capture d abord la prochaine preuve.',
+      requiredBeforeAction: ['Rafraichir les registres obsoletes.', 'Relancer la commande de preuve conseillee avant toute mutation live.'],
+      nextSafeCommand: nextProof.proofCommand,
+    }
+  }
+
+  if (riskCost.explicitApproval > 0) {
+    return {
+      ready: false,
+      tone: 'danger',
+      label: 'Pause: accord humain requis',
+      summary: 'Au moins une action restante peut toucher directement au live, au cout ou a la securite. Elle ne doit pas etre automatisee sans validation explicite.',
+      requiredBeforeAction: ['Obtenir l accord explicite avant action live.', 'Ouvrir le dashboard concerne et verifier le scope equipe/projet.', 'Consigner la preuve apres activation ou rejet.'],
+      nextSafeCommand: nextProof.proofCommand,
+    }
+  }
+
+  if (riskCost.liveMutation > 0) {
+    return {
+      ready: false,
+      tone: 'gold',
+      label: 'Feu orange: revue dashboard avant live',
+      summary: 'Les prerequis sont frais, mais il reste une action dashboard ou une mutation live. La route sure est de capturer la preuve, puis seulement appliquer.',
+      requiredBeforeAction: ['Faire la revue dashboard ciblee.', 'Verifier que la commande proposee reste en lecture ou en dry-run.', 'Consigner la preuve avant de passer a l etape suivante.'],
+      nextSafeCommand: nextProof.proofCommand,
+    }
+  }
+
+  return {
+    ready: false,
+    tone: 'neutral',
+    label: 'Preparation continue',
+    summary: 'Il reste des actions non dangereuses a documenter avant de declarer Vercel Pro exploite a 100%.',
+    requiredBeforeAction: ['Executer la prochaine action recommandee.', 'Verifier le resultat avant de fermer la preuve.'],
+    nextSafeCommand: nextProof.proofCommand,
   }
 }
 
@@ -1064,7 +1286,10 @@ export async function GET() {
   const liveEvidenceMatrix = await getLiveEvidenceMatrixSummary()
   const nextProofCapture = await getNextProofCaptureSummary()
   const proUtilizationMode = await getProUtilizationModeSummary()
-  return NextResponse.json({ ok: true, config, writable, changes, opsStatus: opsStatus(), proDecisions, usageWatchlist, liveActivationGates, activationOrder, completionEvidence, auditSuite, nextAction, actionBlockers, dashboardLinks, riskCost, completionVerdict, liveEvidenceMatrix, nextProofCapture, proUtilizationMode })
+  const evidenceFreshness = await getEvidenceFreshnessSummary()
+  const liveActivationReadiness = await getLiveActivationReadinessSummary()
+  const proofDebt = await getProofDebtSummary()
+  return NextResponse.json({ ok: true, config, writable, changes, opsStatus: opsStatus(), proDecisions, usageWatchlist, liveActivationGates, activationOrder, completionEvidence, auditSuite, nextAction, actionBlockers, dashboardLinks, riskCost, completionVerdict, liveEvidenceMatrix, nextProofCapture, proUtilizationMode, evidenceFreshness, liveActivationReadiness, proofDebt })
 }
 
 export async function PATCH(req: Request) {
@@ -1121,5 +1346,8 @@ export async function PATCH(req: Request) {
   const liveEvidenceMatrix = await getLiveEvidenceMatrixSummary()
   const nextProofCapture = await getNextProofCaptureSummary()
   const proUtilizationMode = await getProUtilizationModeSummary()
-  return NextResponse.json({ ok: true, config, writable: true, changes, opsStatus: opsStatus(), proDecisions, usageWatchlist, liveActivationGates, activationOrder, completionEvidence, auditSuite, nextAction, actionBlockers, dashboardLinks, riskCost, completionVerdict, liveEvidenceMatrix, nextProofCapture, proUtilizationMode })
+  const evidenceFreshness = await getEvidenceFreshnessSummary()
+  const liveActivationReadiness = await getLiveActivationReadinessSummary()
+  const proofDebt = await getProofDebtSummary()
+  return NextResponse.json({ ok: true, config, writable: true, changes, opsStatus: opsStatus(), proDecisions, usageWatchlist, liveActivationGates, activationOrder, completionEvidence, auditSuite, nextAction, actionBlockers, dashboardLinks, riskCost, completionVerdict, liveEvidenceMatrix, nextProofCapture, proUtilizationMode, evidenceFreshness, liveActivationReadiness, proofDebt })
 }
