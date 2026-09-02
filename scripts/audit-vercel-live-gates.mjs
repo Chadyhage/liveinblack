@@ -28,21 +28,30 @@ const decisions = readJson('config/vercel-pro-decisions.json')
 const gates = Array.isArray(gatePlan?.gates) ? gatePlan.gates : []
 const decisionItems = Array.isArray(decisions?.items) ? decisions.items : []
 const decisionKeys = new Set(decisionItems.map((item) => item.key).filter(Boolean))
+const allowedGateStatuses = new Set([
+  'manual-live-action',
+  'manual-dashboard-action',
+  'safe-apply-after-review',
+  'requires-explicit-approval',
+  'implementation-action',
+])
 const completeGates = gates.filter((gate) =>
   gate.key &&
   gate.label &&
   gate.decisionKey &&
-  gate.status &&
+  allowedGateStatuses.has(gate.status) &&
   gate.evidenceRequired &&
   gate.safeNextAction &&
   gate.riskIfForced
 )
 const linkedGates = gates.filter((gate) => gate.decisionKey && decisionKeys.has(gate.decisionKey))
-const ready = gates.length > 0 && completeGates.length === gates.length && linkedGates.length === gates.length
+const invalidStatusGates = gates.filter((gate) => !allowedGateStatuses.has(gate.status))
+const ready = gates.length > 0 && completeGates.length === gates.length && linkedGates.length === gates.length && invalidStatusGates.length === 0
 
 console.log(`Audit portes live Vercel Pro: ${ready ? 'pret' : 'incomplet'}`)
 console.log(`Portes documentees: ${completeGates.length}/${gates.length}`)
 console.log(`Portes reliees au registre decisions: ${linkedGates.length}/${gates.length}`)
+console.log(`Statuts portes invalides: ${invalidStatusGates.length}`)
 console.log('')
 
 for (const gate of gates) {
@@ -51,6 +60,14 @@ for (const gate of gates) {
   console.log(`${complete && linked ? 'OK ' : 'NON'} ${gate.label || gate.key} — ${gate.status || 'status manquant'}`)
   console.log(`   Preuve attendue: ${gate.evidenceRequired || 'manquante'}`)
   console.log(`   Action sure: ${gate.safeNextAction || 'manquante'}`)
+}
+
+if (invalidStatusGates.length > 0) {
+  console.log('')
+  console.log('Portes avec statut invalide:')
+  for (const gate of invalidStatusGates) {
+    console.log(`- ${gate.key || 'sans-cle'}: ${gate.status || 'status manquant'}`)
+  }
 }
 
 console.log('')

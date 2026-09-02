@@ -98,6 +98,78 @@
       "command": "npm run ops:vercel:evidence:record",
       "scope": "local",
       "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Consigne une preuve qui peut faire passer une decision ou exigence en statut final.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "env-sync",
+      "label": "Outil synchronisation variables Vercel",
+      "command": "npm run ops:vercel:env:sync",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Synchronise des variables Vercel et peut modifier la configuration des environnements.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "firewall-stage",
+      "label": "Outil preparation Firewall Vercel",
+      "command": "npm run ops:vercel:firewall:stage",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Prepare des regles Firewall qui peuvent changer le filtrage du trafic.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "edge-config-setup",
+      "label": "Outil setup Edge Config",
+      "command": "npm run ops:vercel:edge-config:setup",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Configure Edge Config, un levier runtime utilise par le site.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "edge-config-activate",
+      "label": "Outil activation Edge Config",
+      "command": "npm run ops:vercel:edge-config:activate",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Active Edge Config et peut changer le comportement runtime sans redeploiement.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "webhooks-setup",
+      "label": "Outil setup Account Webhooks",
+      "command": "npm run ops:vercel:webhooks:setup",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Configure des webhooks compte qui recevront des evenements plateforme.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "drain-setup",
+      "label": "Outil setup Log Drain",
+      "command": "npm run ops:vercel:drain:setup",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Configure un Log Drain qui exporte les journaux vers une destination externe.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "logs",
+      "label": "Outil lecture logs Vercel",
+      "command": "npm run ops:vercel:logs",
+      "scope": "live-read",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Lit les logs Vercel live et peut exposer des donnees operationnelles sensibles.",
       "expectedBeforeLiveComplete": "manual-input-tool"
     },
     {

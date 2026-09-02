@@ -18,8 +18,15 @@
 }
 
 @keyframes greetingFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero {
@@ -49,7 +56,9 @@
   transition: opacity 700ms ease;
 }
 
-.heroImageActive { opacity: 1; }
+.heroImageActive {
+  opacity: 1;
+}
 
 .heroCarouselControls {
   position: absolute;
@@ -85,7 +94,10 @@
   background: transparent;
 }
 
-.heroCarouselDotActive::after { border-color: var(--primary); background: var(--primary); }
+.heroCarouselDotActive::after {
+  border-color: var(--primary);
+  background: var(--primary);
+}
 
 .heroOverlay {
   position: absolute;
@@ -241,7 +253,7 @@
 
 .sectionHeader {
   max-width: 760px;
-  margin-bottom: clamp(18px, 2vw, 26px);
+  margin-bottom: 14px;
 }
 
 .sectionEyebrow {
@@ -399,16 +411,20 @@
   .home :global(.lb-card.lb-split-card) {
     max-width: 100% !important;
   }
+
   .splitCardInner {
     grid-template-columns: 1fr;
   }
+
   .splitCardMedia {
     height: 220px;
     min-height: 220px;
   }
+
   .splitCardMediaOverlay {
     background: rgba(var(--night-rgb), .18);
   }
+
   .splitCardContent {
     padding: 20px;
   }
@@ -705,7 +721,11 @@
     padding: 34px 16px 34px;
     align-items: end;
   }
-  .heroCarouselControls { display: none; }
+
+  .heroCarouselControls {
+    right: 16px;
+    bottom: 16px;
+  }
 
   .heroImage {
     object-position: 60% center;
@@ -770,7 +790,7 @@
     display: none;
   }
 
-  .mobileRail > * {
+  .mobileRail>* {
     width: min(76vw, 300px) !important;
     min-width: min(76vw, 300px);
     scroll-snap-align: start;

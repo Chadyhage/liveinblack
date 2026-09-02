@@ -60,6 +60,7 @@ interface ProDecisionSummary {
     label: string
     status: 'active' | 'prepared' | 'planned' | 'rejected'
     nextAction: string
+    proofCommand?: string
   }>
 }
 
@@ -128,6 +129,7 @@ interface AuditSuiteSummary {
   total: number
   local: number
   liveRead: number
+  explicitApproval: number
   strictExpectedFailures: number
   commands: Array<{
     key: string
@@ -135,6 +137,8 @@ interface AuditSuiteSummary {
     command: string
     scope: string
     requiredFor100: boolean
+    requiresExplicitApproval?: boolean
+    approvalReason?: string
     expectedBeforeLiveComplete: string
   }>
 }
@@ -219,6 +223,21 @@ interface RiskCostSummary {
   }>
 }
 
+interface EvidenceFreshnessSummary {
+  fresh: boolean
+  oldestDays: number
+  staleCount: number
+  tone: 'teal' | 'gold' | 'danger' | 'neutral'
+  verdict: string
+  items: Array<{
+    key: string
+    label: string
+    updatedAt: string
+    ageDays: number
+    stale: boolean
+  }>
+}
+
 interface ProUtilizationModeSummary {
   mode: 'prepared' | 'live-proof-needed' | 'proved'
   tone: 'teal' | 'gold' | 'danger' | 'neutral'
@@ -226,6 +245,34 @@ interface ProUtilizationModeSummary {
   summary: string
   nextActionLabel: string
   nextActionCommand: string
+}
+
+interface LiveActivationReadinessSummary {
+  ready: boolean
+  tone: 'teal' | 'gold' | 'danger' | 'neutral'
+  label: string
+  summary: string
+  requiredBeforeAction: string[]
+  nextSafeCommand: string
+}
+
+interface ProofDebtSummary {
+  unavailable: boolean
+  totalOpen: number
+  remainingDecisions: number
+  remainingGates: number
+  missingRequirements: number
+  tone: 'teal' | 'gold' | 'danger' | 'neutral'
+  label: string
+  summary: string
+  items: Array<{
+    key: string
+    label: string
+    source: 'decision' | 'live-gate' | 'strict-proof'
+    status: string
+    nextAction: string
+    proofCommand?: string
+  }>
 }
 
 interface NextProofCaptureSummary {
@@ -330,6 +377,9 @@ export default function AgentVercelOpsClient() {
   const [liveEvidenceMatrix, setLiveEvidenceMatrix] = useState<LiveEvidenceMatrixSummary | null>(null)
   const [nextProofCapture, setNextProofCapture] = useState<NextProofCaptureSummary | null>(null)
   const [proUtilizationMode, setProUtilizationMode] = useState<ProUtilizationModeSummary | null>(null)
+  const [evidenceFreshness, setEvidenceFreshness] = useState<EvidenceFreshnessSummary | null>(null)
+  const [liveActivationReadiness, setLiveActivationReadiness] = useState<LiveActivationReadinessSummary | null>(null)
+  const [proofDebt, setProofDebt] = useState<ProofDebtSummary | null>(null)
   const [changes, setChanges] = useState<OpsConfigChange[]>([])
   const [configWritable, setConfigWritable] = useState(false)
   const [source, setSource] = useState<EventSource>('all')
@@ -429,6 +479,9 @@ export default function AgentVercelOpsClient() {
       setLiveEvidenceMatrix(data.liveEvidenceMatrix ?? null)
       setNextProofCapture(data.nextProofCapture ?? null)
       setProUtilizationMode(data.proUtilizationMode ?? null)
+      setEvidenceFreshness(data.evidenceFreshness ?? null)
+      setLiveActivationReadiness(data.liveActivationReadiness ?? null)
+      setProofDebt(data.proofDebt ?? null)
       setConfigWritable(Boolean(data.writable))
       setChanges(data.changes ?? [])
     } catch {
@@ -465,6 +518,9 @@ export default function AgentVercelOpsClient() {
       setLiveEvidenceMatrix(data.liveEvidenceMatrix ?? null)
       setNextProofCapture(data.nextProofCapture ?? null)
       setProUtilizationMode(data.proUtilizationMode ?? null)
+      setEvidenceFreshness(data.evidenceFreshness ?? null)
+      setLiveActivationReadiness(data.liveActivationReadiness ?? null)
+      setProofDebt(data.proofDebt ?? null)
       setConfigWritable(Boolean(data.writable))
       setChanges(data.changes ?? [])
     } catch {
@@ -546,7 +602,13 @@ export default function AgentVercelOpsClient() {
 
       {proUtilizationMode ? <ProUtilizationModeCard mode={proUtilizationMode} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
 
+      {liveActivationReadiness ? <LiveActivationReadinessCard readiness={liveActivationReadiness} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+
+      {proofDebt ? <ProofDebtCard proofDebt={proofDebt} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+
       {completionVerdict ? <CompletionVerdictCard verdict={completionVerdict} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+
+      {evidenceFreshness ? <EvidenceFreshnessCard freshness={evidenceFreshness} /> : null}
 
       {nextAction ? <NextActionCard nextAction={nextAction} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
 
@@ -738,6 +800,7 @@ export default function AgentVercelOpsClient() {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Badge tone="neutral">{auditSuite.local} local</Badge>
               <Badge tone="gold">{auditSuite.liveRead} live-read</Badge>
+              <Badge tone="danger">{auditSuite.explicitApproval} approbation</Badge>
             </div>
           </div>
           {auditSuite.commands.length === 0 ? (
@@ -750,6 +813,8 @@ export default function AgentVercelOpsClient() {
                   label={command.label}
                   command={command.command}
                   scope={command.scope}
+                  requiresExplicitApproval={command.requiresExplicitApproval === true}
+                  approvalReason={command.approvalReason}
                   expectedBeforeLiveComplete={command.expectedBeforeLiveComplete}
                   copiedCommand={copiedCommand}
                   onCopyCommand={copyCommand}
@@ -978,6 +1043,127 @@ function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; 
         <span style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote-lg)' }}>{label}</span>
       </div>
     </div>
+  )
+}
+
+function EvidenceFreshnessCard({ freshness }: { freshness: EvidenceFreshnessSummary }) {
+  return (
+    <Card style={{ marginBottom: 18 }} accent={freshness.fresh ? 'var(--primary-a35)' : 'var(--warning)'}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Fraîcheur des preuves</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+            Les registres doivent rester récents pour que le 100% ne repose pas sur une vieille photo du compte.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Badge tone={freshness.tone}>{freshness.staleCount} obsolète(s)</Badge>
+          <Badge tone="neutral">max {freshness.oldestDays}j</Badge>
+        </div>
+      </div>
+      <p style={{ margin: '0 0 12px', color: freshness.fresh ? 'var(--primary)' : 'var(--text)', fontWeight: 700 }}>
+        {freshness.verdict}
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 10 }}>
+        {freshness.items.map((item) => (
+          <div key={item.key} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 12, display: 'grid', gap: 6, background: 'var(--surface)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <strong>{item.label}</strong>
+              <Badge tone={item.stale ? 'gold' : 'teal'}>{item.stale ? 'À relire' : 'Frais'}</Badge>
+            </div>
+            <span style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote-lg)' }}>{item.updatedAt} · {item.ageDays}j</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+
+function ProofDebtCard({ proofDebt, copiedCommand, onCopyCommand }: { proofDebt: ProofDebtSummary; copiedCommand: string | null; onCopyCommand: (command: string) => void }) {
+  const sourceLabel = { decision: 'Decision', 'live-gate': 'Porte live', 'strict-proof': 'Preuve stricte' } as const
+  return (
+    <Card style={{ marginBottom: 18 }} accent={proofDebt.tone === 'danger' ? 'var(--danger)' : proofDebt.tone === 'teal' ? 'var(--primary-a35)' : proofDebt.tone === 'gold' ? 'var(--warning)' : 'var(--border)'}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Dette de preuve 100%</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+            Ce qui reste a fermer avant de pouvoir dire que Vercel Pro est vraiment exploite a 100%.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Badge tone={proofDebt.tone}>{proofDebt.label}</Badge>
+          {proofDebt.unavailable ? (
+            <Badge tone="gold">registre a relire</Badge>
+          ) : (
+            <>
+              <Badge tone="neutral">{proofDebt.remainingDecisions} decision(s)</Badge>
+              <Badge tone="neutral">{proofDebt.remainingGates} porte(s)</Badge>
+              <Badge tone="neutral">{proofDebt.missingRequirements} preuve(s)</Badge>
+            </>
+          )}
+        </div>
+      </div>
+      <p style={{ margin: '0 0 12px', color: proofDebt.tone === 'danger' ? 'var(--danger)' : 'var(--text)', fontWeight: 700 }}>
+        {proofDebt.summary}
+      </p>
+      {proofDebt.unavailable ? (
+        <p style={{ margin: 0, color: 'var(--warning)', fontSize: 'var(--font-size-body-sm)', fontWeight: 700 }}>
+          Les registres locaux doivent etre relus avant de conclure sur la dette de preuve.
+        </p>
+      ) : proofDebt.items.length === 0 ? (
+        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Aucune dette de preuve ouverte dans les registres locaux.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: 10 }}>
+          {proofDebt.items.slice(0, 8).map((item) => (
+            <div key={`${item.source}-${item.key}`} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 10, display: 'grid', gap: 6, background: 'var(--surface-subtle)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <strong>{item.label}</strong>
+                <Badge tone={item.source === 'live-gate' ? 'gold' : 'neutral'}>{sourceLabel[item.source]}</Badge>
+              </div>
+              <span style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote-lg)' }}>Statut: {item.status}</span>
+              <span style={{ color: 'var(--text)', fontSize: 'var(--font-size-footnote-lg)' }}>Action: {item.nextAction}</span>
+              {item.proofCommand ? <CommandLine label="Commande preuve" command={item.proofCommand} copied={copiedCommand === item.proofCommand} onCopy={onCopyCommand} muted /> : null}
+            </div>
+          ))}
+          {proofDebt.items.length > 8 ? (
+            <div style={{ border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: 10, color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote-lg)' }}>
+              +{proofDebt.items.length - 8} autre(s) dette(s) a fermer dans les registres.
+            </div>
+          ) : null}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function LiveActivationReadinessCard({ readiness, copiedCommand, onCopyCommand }: { readiness: LiveActivationReadinessSummary; copiedCommand: string | null; onCopyCommand: (command: string) => void }) {
+  return (
+    <Card style={{ marginBottom: 18 }} accent={readiness.tone === 'danger' ? 'var(--danger)' : readiness.tone === 'teal' ? 'var(--primary-a35)' : readiness.tone === 'gold' ? 'var(--warning)' : 'var(--border)'}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Feu vert activation live</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+            Decision simple avant de toucher au dashboard Vercel Pro: continuer, revoir, ou attendre un accord humain.
+          </p>
+        </div>
+        <Badge tone={readiness.tone}>{readiness.ready ? 'pret' : 'pause controlee'}</Badge>
+      </div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: 14, padding: 12, background: 'var(--surface-subtle)' }}>
+          <strong style={{ display: 'block', marginBottom: 4 }}>{readiness.label}</strong>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>{readiness.summary}</p>
+        </div>
+        {readiness.requiredBeforeAction.length > 0 ? (
+          <div style={{ display: 'grid', gap: 6 }}>
+            {readiness.requiredBeforeAction.map((item) => (
+              <div key={item} style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>- {item}</div>
+            ))}
+          </div>
+        ) : null}
+        <CommandLine label="Commande sure maintenant" command={readiness.nextSafeCommand} copied={copiedCommand === readiness.nextSafeCommand} onCopy={onCopyCommand} />
+      </div>
+    </Card>
   )
 }
 
@@ -1587,6 +1773,8 @@ function AuditCommandRow({
   label,
   command,
   scope,
+  requiresExplicitApproval,
+  approvalReason,
   expectedBeforeLiveComplete,
   copiedCommand,
   onCopyCommand,
@@ -1594,6 +1782,8 @@ function AuditCommandRow({
   label: string
   command: string
   scope: string
+  requiresExplicitApproval?: boolean
+  approvalReason?: string
   expectedBeforeLiveComplete: string
   copiedCommand: string | null
   onCopyCommand: (command: string) => void
@@ -1608,11 +1798,16 @@ function AuditCommandRow({
     <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 12, display: 'grid', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         <strong>{label}</strong>
-        <Badge tone={tone}>{scopeLabel}</Badge>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <Badge tone={tone}>{scopeLabel}</Badge>
+          {requiresExplicitApproval ? <Badge tone="danger">Approbation requise</Badge> : null}
+        </div>
       </div>
       <CommandLine label="Commande" command={command} copied={copiedCommand === command} onCopy={onCopyCommand} muted />
       <span style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote-lg)' }}>
-        {expectedBeforeLiveComplete === 'fail-until-live-proof'
+        {requiresExplicitApproval
+          ? approvalReason || 'Levier sensible: a lancer seulement apres validation humaine explicite.'
+          : expectedBeforeLiveComplete === 'fail-until-live-proof'
           ? 'Peut echouer tant que les preuves live manquent.'
           : scope === 'live-read'
             ? 'Lit Vercel: a lancer quand on veut verifier le vrai etat du compte.'
