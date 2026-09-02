@@ -318,67 +318,67 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
           ariaLabel="Recadrer la photo de profil"
           contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, textAlign: 'center', maxHeight: 'none', overflowY: 'visible' }}
         >
-            <h2 style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--text)', margin: '0 0 4px' }}>Recadrer la photo</h2>
-            <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', textTransform: 'uppercase', margin: '0 0 16px' }}>Glisse pour repositionner</p>
-            <div
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerLeave={onPointerUp}
-              style={{ width: PREVIEW, height: PREVIEW, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 16px', position: 'relative', background: 'var(--media-canvas)', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-            >
-              {/* Image locale temporaire : le canvas de recadrage lit naturalWidth/naturalHeight. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                ref={imgRef}
-                src={cropSrc}
-                alt=""
-                draggable={false}
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '50%',
-                  width: `${zoom * 100}%`,
-                  height: 'auto',
-                  minWidth: '100%',
-                  minHeight: '100%',
-                  transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
-                  objectFit: 'cover',
-                  userSelect: 'none',
-                }}
-              />
-            </div>
-            <div role="group" aria-label="Repositionner la photo" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
-              {[
-                { label: 'Déplacer la photo vers la gauche', glyph: '←', dx: -6, dy: 0 },
-                { label: 'Déplacer la photo vers le haut', glyph: '↑', dx: 0, dy: -6 },
-                { label: 'Déplacer la photo vers le bas', glyph: '↓', dx: 0, dy: 6 },
-                { label: 'Déplacer la photo vers la droite', glyph: '→', dx: 6, dy: 0 },
-              ].map((control) => (
-                <Button
-                  key={control.label}
-                  type="button"
-                  variant="secondary"
-                  aria-label={control.label}
-                  onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
-                  style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 11, fontSize: 'var(--font-size-headline-lg)' }}
-                >
-                  {control.glyph}
-                </Button>
-              ))}
-            </div>
-            {/* Curseur de zoom natif conservé : Input/Select ne couvrent pas
+          <h2 style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 800, color: 'var(--text)', margin: '0 0 4px' }}>Recadrer la photo</h2>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', textTransform: 'uppercase', margin: '0 0 16px' }}>Glisse pour repositionner</p>
+          <div
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+            style={{ width: PREVIEW, height: PREVIEW, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 16px', position: 'relative', background: 'var(--media-canvas)', cursor: dragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+          >
+            {/* Image locale temporaire : le canvas de recadrage lit naturalWidth/naturalHeight. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={cropSrc}
+              alt=""
+              draggable={false}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                width: `${zoom * 100}%`,
+                height: 'auto',
+                minWidth: '100%',
+                minHeight: '100%',
+                transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+                objectFit: 'cover',
+                userSelect: 'none',
+              }}
+            />
+          </div>
+          <div role="group" aria-label="Repositionner la photo" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
+            {[
+              { label: 'Déplacer la photo vers la gauche', glyph: '←', dx: -6, dy: 0 },
+              { label: 'Déplacer la photo vers le haut', glyph: '↑', dx: 0, dy: -6 },
+              { label: 'Déplacer la photo vers le bas', glyph: '↓', dx: 0, dy: 6 },
+              { label: 'Déplacer la photo vers la droite', glyph: '→', dx: 6, dy: 0 },
+            ].map((control) => (
+              <Button
+                key={control.label}
+                type="button"
+                variant="secondary"
+                aria-label={control.label}
+                onClick={() => setOffset((current) => ({ x: current.x + control.dx, y: current.y + control.dy }))}
+                style={{ width: 38, height: 38, minHeight: 38, minWidth: 38, padding: 0, borderRadius: 11, fontSize: 'var(--font-size-headline-lg)' }}
+              >
+                {control.glyph}
+              </Button>
+            ))}
+          </div>
+          {/* Curseur de zoom natif conservé : Input/Select ne couvrent pas
                 type="range" (rendu/accentColor spécifique), donc laissé natif
                 comme indiqué dans la consigne de swap. */}
-            <Slider accent="gold" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ marginBottom: 18 }} />
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Button onClick={() => setCropSrc(null)} variant="secondary" style={{ flex: 1, padding: '9px 0', borderRadius: 10 }}>
-                Annuler
-              </Button>
-              <Button onClick={saveAvatar} disabled={saving} loading={saving} loadingText="Enregistrement…" variant="primary" style={{ flex: 1, padding: '9px 0', ...goldButtonStyle }}>
-                Valider
-              </Button>
-            </div>
+          <Slider accent="gold" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ marginBottom: 18 }} />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button onClick={() => setCropSrc(null)} variant="secondary" style={{ flex: 1, padding: '9px 0', borderRadius: 10 }}>
+              Annuler
+            </Button>
+            <Button onClick={saveAvatar} disabled={saving} loading={saving} loadingText="Enregistrement…" variant="primary" style={{ flex: 1, padding: '9px 0', ...goldButtonStyle }}>
+              Valider
+            </Button>
+          </div>
         </Modal>
       )}
     </>
@@ -445,26 +445,26 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
         </div>
 
         <section className="settings-content" aria-live="polite">
-            {filtered.length === 0 ? (
-              <div className="settings-empty">
-                <Search size={25} aria-hidden="true" />
-                <h2>Aucun résultat</h2>
-                <p>Aucun réglage ne correspond à « {query} ». Essaie « e-mail », « téléphone » ou « confidentialité ».</p>
-                <Button onClick={() => setQuery('')} variant="secondary">Effacer la recherche</Button>
-              </div>
-            ) : (
-              <div className="settings-groups">
-                {tokens.length > 0 && <div className="settings-results-heading"><p>Résultats de recherche</p><h2>{filtered.length} réglage{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}</h2></div>}
-                {visibleGroups.map((group) => {
-                  const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
-                  if (groupEntries.length === 0) return null
-                  return <section key={group.id} className="settings-group" aria-labelledby={`settings-group-${group.id}`}>
-                    {tokens.length > 0 && <h3 id={`settings-group-${group.id}`}>{group.title}</h3>}
-                    <div className="settings-card-grid">{groupEntries.map((entry) => <div key={entry.id} id={`setting-${entry.id}`}>{entry.render({ user, setUser })}</div>)}</div>
-                  </section>
-                })}
-              </div>
-            )}
+          {filtered.length === 0 ? (
+            <div className="settings-empty">
+              <Search size={25} aria-hidden="true" />
+              <h2>Aucun résultat</h2>
+              <p>Aucun réglage ne correspond à « {query} ». Essaie « e-mail », « téléphone » ou « confidentialité ».</p>
+              <Button onClick={() => setQuery('')} variant="secondary">Effacer la recherche</Button>
+            </div>
+          ) : (
+            <div className="settings-groups">
+              {tokens.length > 0 && <div className="settings-results-heading"><p>Résultats de recherche</p><h2>{filtered.length} réglage{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}</h2></div>}
+              {visibleGroups.map((group) => {
+                const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
+                if (groupEntries.length === 0) return null
+                return <section key={group.id} className="settings-group" aria-labelledby={`settings-group-${group.id}`}>
+                  {tokens.length > 0 && <h3 id={`settings-group-${group.id}`}>{group.title}</h3>}
+                  <div className="settings-card-grid">{groupEntries.map((entry) => <div key={entry.id} id={`setting-${entry.id}`}>{entry.render({ user, setUser })}</div>)}</div>
+                </section>
+              })}
+            </div>
+          )}
         </section>
       </div>
     </main>

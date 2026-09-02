@@ -469,11 +469,12 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
             fontSize: 'var(--font-size-caption-2)',
             fontWeight: 800,
             lineHeight: 1.4,
-            color: 'var(--danger-ink)',
-            background: 'var(--primary-a85)',
+            color: '#fff',
+            background: 'var(--primary)',
             borderRadius: 999,
             padding: '1px 6px',
             flexShrink: 0,
+            boxShadow: '0 2px 6px rgba(var(--primary-rgb), 0.35)',
           }}
         >
           {badge}

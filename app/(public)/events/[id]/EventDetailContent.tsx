@@ -300,16 +300,6 @@ export default async function EventDetailContent({
           {(event.location || event.city) && (
             <Section title="Lieu">
               <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{[event.location, event.city, event.region].filter(Boolean).join(', ')}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-                <a
-                  href={`https://www.google.com/maps/search/${encodeURIComponent([event.location, event.city].filter(Boolean).join(', '))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--primary)', textDecoration: 'none' }}
-                >
-                  📍 Ouvrir dans Google Maps →
-                </a>
-              </div>
               <EventVenueMap address={[event.location, event.city, event.region].filter(Boolean).join(', ')} />
             </Section>
           )}
