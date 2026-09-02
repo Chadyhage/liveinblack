@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
@@ -9,7 +10,7 @@ import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import { getMyProfile } from '@/lib/server/users/profile'
 import { listActiveInterestSignals } from '@/lib/server/events/eventInterests'
 import { getRecommendedEvents, type RecommendationPreferences } from '@/lib/shared/recommendations'
-import { Button, HiddenField, Input, Mascot, PageLinks } from '@/app/components/ui'
+import { Button, HiddenField, Input, PageLinks } from '@/app/components/ui'
 import EventListCard from '../_components/EventListCard'
 import styles from './events.module.css'
 
@@ -138,6 +139,7 @@ export default async function EventsPage({
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="events-title">
+        <p className={styles.heroEyebrow}>La sélection LIVEINBLACK</p>
         <h1 id="events-title">Trouvez votre prochaine expérience.</h1>
         <p className={styles.intro}>
           Concerts, soirées et rendez-vous culturels choisis pour vous. Recherchez simplement, puis réservez en quelques instants.
@@ -159,7 +161,6 @@ export default async function EventsPage({
           <Button
             type="submit"
             className={styles.searchButton}
-            style={{ minWidth: 144, minHeight: 36, borderRadius: 15, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-sm)' }}
           >
             <Search size={19} strokeWidth={2.2} aria-hidden="true" />
             <span>Rechercher</span>
@@ -211,10 +212,22 @@ export default async function EventsPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <Mascot mood="search" size={250} />
-            <h3>Aucun événement trouvé</h3>
-            <p>Essayez une autre ville, un autre artiste ou affichez toute la programmation.</p>
-            <Link href="/events">Voir tous les événements</Link>
+            <div className={styles.emptyVisual} aria-hidden="true">
+              <Image
+                src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80"
+                alt=""
+                fill
+                className={styles.emptyImage}
+                sizes="(max-width: 640px) 100vw, 38vw"
+              />
+              <span>Prochainement</span>
+            </div>
+            <div className={styles.emptyContent}>
+              <p className={styles.emptyEyebrow}>{hasFilters ? 'Aucun résultat' : 'Programmation en préparation'}</p>
+              <h3>{hasFilters ? 'Cette recherche ne correspond à aucun événement.' : 'La prochaine expérience se prépare.'}</h3>
+              <p>{hasFilters ? 'Essayez une autre ville, un autre artiste ou repartez de toute la sélection.' : 'De nouvelles soirées, concerts et rencontres seront bientôt disponibles sur LIVEINBLACK.'}</p>
+              <Link href={hasFilters ? '/events' : '/home'}>{hasFilters ? 'Effacer les filtres' : 'Retour à l’accueil'} <span aria-hidden="true">↗</span></Link>
+            </div>
           </div>
         )}
 

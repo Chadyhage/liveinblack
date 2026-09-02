@@ -2,7 +2,7 @@
   width: 100%;
   overflow: clip;
   color: var(--text);
-  background: var(--surface-2);
+  background: var(--obsidian);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -24,8 +24,8 @@
 
 .hero {
   position: relative;
-  min-height: min(66vh, 760px);
-  height: min(66vh, 760px);
+  min-height: min(72svh, 820px);
+  height: min(72svh, 820px);
   display: grid;
   align-items: center;
   padding: clamp(92px, 11vh, 130px) max(var(--public-page-gutter), calc((100vw - var(--public-page-max)) / 2)) clamp(54px, 7vh, 88px);
@@ -91,9 +91,7 @@
   position: absolute;
   inset: 0;
   z-index: -2;
-  background:
-    linear-gradient(90deg, rgba(var(--media-black-rgb), .96) 0%, rgba(var(--media-black-rgb), .84) 42%, rgba(var(--media-black-rgb), .24) 75%, rgba(var(--media-black-rgb), .52) 100%),
-    linear-gradient(0deg, var(--media-canvas) 0%, transparent 34%, rgba(var(--media-black-rgb), .20) 100%);
+  background: rgba(var(--media-black-rgb), .62);
 }
 
 .heroContent {
@@ -110,18 +108,23 @@
 }
 
 .heroTitle {
-  max-width: 780px;
+  max-width: 860px;
   margin: 16px 0 22px;
   color: var(--image-text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(44px, 5.7vw, 84px);
-  line-height: .98;
-  font-weight: 850;
-  letter-spacing: -.055em;
+  font-size: clamp(42px, 4.8vw, 72px);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -.045em;
   text-wrap: balance;
 }
 
-.heroTitle span {
+.heroTitleLine {
+  display: block;
+  white-space: nowrap;
+}
+
+.heroTitleAccent {
   color: var(--image-text-muted);
 }
 
@@ -129,7 +132,7 @@
   max-width: 660px;
   margin: 22px 0 34px;
   color: var(--image-text-muted);
-  font-size: clamp(17px, 1.45vw, 22px);
+  font-size: clamp(17px, 1.45vw, 21px);
   line-height: 1.45;
   text-wrap: balance;
 }
@@ -148,12 +151,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 28px;
+  padding: 12px 26px;
   border: 1px solid transparent;
-  border-radius: 16px;
-  font-size: var(--font-size-headline-xxl);
-  font-weight: 750;
-  letter-spacing: -.01em;
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-headline);
+  font-weight: 700;
+  letter-spacing: 0;
   line-height: 1.2;
   text-decoration: none;
   transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, opacity 160ms ease;
@@ -178,7 +181,7 @@
 
 .primaryButton:hover,
 .secondaryButton:hover {
-  transform: scale(1.02);
+  transform: translateY(-1px);
 }
 
 .primaryButton:hover {
@@ -228,23 +231,26 @@
 .newsSection {
   width: min(100%, var(--public-page-max));
   margin: 0 auto;
-  padding: clamp(16px, 2vw, 28px) var(--public-page-gutter);
+  padding: clamp(32px, 4vw, 58px) var(--public-page-gutter);
 }
 
 .newsSection {
-  padding-top: 10px;
-  padding-bottom: 16px;
+  padding-top: 22px;
+  padding-bottom: 24px;
 }
 
-.sectionHeader { max-width: 760px; margin-bottom: 14px; }
+.sectionHeader {
+  max-width: 760px;
+  margin-bottom: clamp(18px, 2vw, 26px);
+}
 
 .sectionEyebrow {
-  margin: 0 0 6px;
+  margin: 0 0 7px;
   color: var(--primary);
   font-size: var(--font-size-callout);
   line-height: 1.3;
   font-weight: 700;
-  letter-spacing: .04em;
+  letter-spacing: .05em;
   text-transform: uppercase;
 }
 
@@ -252,25 +258,26 @@
   margin: 0;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: clamp(22px, 2.4vw, 32px);
   line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -.03em;
+  font-weight: 500;
+  letter-spacing: -.025em;
+  text-transform: none;
   text-wrap: balance;
 }
 
 .sectionDescription {
   max-width: 680px;
-  margin: 8px 0 0;
+  margin: 9px 0 0;
   color: var(--text-muted);
   font-size: var(--font-size-headline-xl);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .contentGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 360px));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 268px), 1fr));
+  gap: clamp(12px, 1.4vw, 20px);
   align-items: stretch;
 }
 
@@ -279,6 +286,27 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
+}
+
+.benefitGrid :global(.lb-card) {
+  min-height: 138px;
+  padding: 22px 18px !important;
+  background: var(--surface) !important;
+}
+
+.benefitTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-title-4);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.benefitDescription {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-body);
+  line-height: 1.55;
 }
 
 .horizontalRail {
@@ -291,21 +319,41 @@
 }
 
 .finalSection {
-  padding: 16px var(--public-page-gutter) clamp(24px, 3vw, 42px);
+  padding: clamp(32px, 5vw, 68px) var(--public-page-gutter) clamp(36px, 5vw, 70px);
 }
 
 .finalCard {
-  max-width: 860px;
+  max-width: 920px;
   margin: 0 auto;
-  padding: clamp(20px, 3vw, 32px);
+  padding: clamp(28px, 4vw, 48px);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   text-align: center;
-  background: var(--card-bg);
+  background: var(--surface);
+}
+
+.finalTitle {
+  max-width: 700px;
+  margin: 0 auto;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -.03em;
+  text-transform: none;
+}
+
+.finalDescription {
+  max-width: 470px;
+  margin: 18px auto 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-body-lg);
+  line-height: 1.55;
 }
 
 .home :global(.lb-card) {
-  max-width: 360px !important;
+  max-width: none !important;
   width: 100% !important;
   border-color: var(--border) !important;
   border-radius: 24px !important;
@@ -336,7 +384,7 @@
 .splitCardMediaOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 40%, var(--surface-2) 100%);
+  background: rgba(var(--night-rgb), .18);
 }
 
 .splitCardContent {
@@ -359,7 +407,7 @@
     min-height: 220px;
   }
   .splitCardMediaOverlay {
-    background: linear-gradient(180deg, transparent 35%, var(--surface-2) 100%);
+    background: rgba(var(--night-rgb), .18);
   }
   .splitCardContent {
     padding: 20px;
@@ -367,44 +415,316 @@
 }
 
 .home :global(.lb-card:hover) {
-  transform: scale(1.006);
-  border-color: var(--border-strong) !important;
+  transform: translateY(-3px);
+  border-color: var(--primary-a42) !important;
+}
+
+.home :global(.lb-editorial-card) {
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.home :global(.lb-editorial-card__media) { aspect-ratio: 16 / 10; }
+
+.home :global(.lb-editorial-card__body) { padding: 22px 20px 24px; }
+
+.home :global(.lb-editorial-card__body > p:first-child) {
+  color: var(--primary);
+  font-size: var(--font-size-caption) !important;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.home :global(.lb-editorial-card__body h3) {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif !important;
+  font-size: clamp(21px, 2vw, 26px) !important;
+  font-weight: 750;
+  line-height: 1.16;
+  letter-spacing: -.02em;
+  text-transform: none;
+}
+
+.roleGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(18px, 2.4vw, 28px);
+}
+
+.roleCard {
+  min-height: 390px;
+  display: grid;
+  grid-template-columns: minmax(300px, .82fr) minmax(0, 1.18fr);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.roleCardProvider .roleVisual {
+  grid-column: 2;
+  grid-row: 1;
+  border-right: 0;
+  border-left: 1px solid var(--border);
+}
+
+.roleCardProvider .roleBody {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.roleVisual {
+  position: relative;
+  min-height: 390px;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.roleImage { object-fit: cover; }
+
+.roleImageScrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--media-black-rgb), .42);
+}
+
+.roleNumber {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  color: var(--primary);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.roleVisualCaption {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  margin: 0;
+  color: var(--image-text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(23px, 2.4vw, 32px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -.03em;
+}
+
+.roleBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.roleContent { padding: clamp(30px, 4vw, 46px) clamp(26px, 4vw, 48px) 20px; }
+
+.roleEyebrow {
+  margin: 0 0 10px;
+  color: var(--primary);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.roleTitle {
+  max-width: 520px;
+  margin: 0;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(22px, 2.3vw, 30px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -.025em;
+  text-transform: none;
+}
+
+.roleSummary {
+  max-width: 580px;
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-body-lg);
+  line-height: 1.55;
+}
+
+.roleFeatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roleFeature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: var(--font-size-body);
+  line-height: 1.45;
+}
+
+.roleFeatureMark {
+  width: 12px;
+  height: 1px;
+  flex: 0 0 12px;
+  margin-top: .7em;
+  background: var(--primary);
+}
+
+.roleActionWrap { padding: 8px clamp(26px, 4vw, 48px) clamp(28px, 3.5vw, 40px); }
+
+.roleAction {
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  gap: 10px;
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-body-sm);
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-decoration: none;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease;
+}
+
+.roleAction:hover { transform: translateY(-2px); }
+.roleActionPrimary { color: var(--primary-ink); background: var(--primary); }
+.roleActionSecondary { color: var(--text); border-color: var(--border-strong); background: var(--fill-secondary); }
+
+.emptyState {
+  min-height: 260px;
+  display: grid;
+  grid-template-columns: minmax(260px, 36%) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.emptyStateVisual {
+  position: relative;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 24px;
+  border-right: 1px solid var(--border);
+  background: var(--obsidian);
+}
+
+.emptyStateImage {
+  object-fit: cover;
+}
+
+.emptyStateVisual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--media-black-rgb), .48);
+}
+
+.emptyStateIndex {
+  position: relative;
+  z-index: 1;
+  color: var(--primary);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.emptyStateVisualLabel {
+  position: relative;
+  z-index: 1;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1;
+}
+
+.emptyStateCopy {
+  align-self: center;
+  max-width: 680px;
+  padding: clamp(30px, 5vw, 58px);
+}
+
+.emptyStateEyebrow {
+  margin: 0 0 12px;
+  color: var(--primary);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.emptyStateText {
+  margin: 0;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(20px, 2.2vw, 28px);
+  font-weight: 500;
+  letter-spacing: -.03em;
+  line-height: 1.12;
+}
+
+.emptyStateDescription {
+  max-width: 570px;
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-body-lg);
+  line-height: 1.55;
+}
+
+.emptyStateAction {
+  min-height: 46px;
+  gap: 10px;
+  margin-top: 24px;
+  padding-inline: 20px;
 }
 
 @media (max-width: 900px) {
   .benefitGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .roleCard { grid-template-columns: minmax(240px, .78fr) minmax(0, 1.22fr); }
 }
 
 @media (max-width: 640px) {
   .hero {
-    min-height: min(66svh, 520px);
-    height: min(66svh, 520px);
+    min-height: min(66svh, 560px);
+    height: min(66svh, 560px);
     padding: 34px 16px 34px;
     align-items: end;
   }
-  .heroCarouselControls { right: 16px; bottom: 16px; }
+  .heroCarouselControls { display: none; }
 
   .heroImage {
     object-position: 60% center;
   }
 
   .heroOverlay {
-    background:
-      linear-gradient(0deg, var(--media-canvas) 0%, var(--media-scrim) 58%, rgba(var(--media-black-rgb), .42) 100%);
+    background: rgba(var(--media-black-rgb), .66);
   }
 
   .heroTitle {
-    font-size: clamp(28px, 8vw, 36px);
+    font-size: clamp(27px, 7.6vw, 34px);
     line-height: .98;
-    letter-spacing: -.052em;
+    letter-spacing: -.045em;
   }
 
   .heroDescription {
-    margin-top: 6px;
-    font-size: var(--font-size-caption-lg);
-    line-height: 1.32;
+    margin-top: 0;
+    font-size: var(--font-size-footnote-lg);
+    line-height: 1.45;
   }
 
   .heroActions {
@@ -424,16 +744,16 @@
 
   .section,
   .newsSection {
-    padding-right: 16px;
-    padding-left: 16px;
+    padding: 32px 16px;
   }
 
   .sectionHeader {
-    margin-bottom: 6px;
+    margin-bottom: 20px;
   }
 
   .sectionDescription {
-    font-size: var(--font-size-caption-2-lg);
+    margin-top: 12px;
+    font-size: var(--font-size-footnote-lg);
   }
 
   .mobileRail {
@@ -459,6 +779,48 @@
   .benefitGrid {
     gap: 5px;
   }
+
+  .benefitGrid :global(.lb-card) { min-height: 132px; padding: 18px 16px !important; }
+  .benefitTitle { margin-top: 0; font-size: var(--font-size-title-5); }
+  .benefitDescription { font-size: var(--font-size-footnote-lg); }
+
+  .roleCard {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .roleCardProvider .roleVisual { order: 0; border-left: 0; }
+  .roleCardProvider .roleBody { order: 1; }
+  .roleVisual { min-height: 220px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .roleVisualCaption { font-size: 24px; }
+  .roleContent { padding: 26px 20px 16px; }
+  .roleTitle { font-size: 24px; }
+  .roleSummary { font-size: var(--font-size-body); }
+  .roleFeatures { grid-template-columns: 1fr; margin-top: 22px; }
+  .roleActionWrap { padding: 6px 20px 24px; }
+  .roleAction { width: 100%; }
+  .finalTitle { font-size: clamp(28px, 9vw, 36px); }
+  .finalDescription { font-size: var(--font-size-body); }
+
+  .emptyState {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .emptyStateVisual {
+    min-height: 132px;
+    padding: 18px 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .emptyStateVisualLabel { font-size: 22px; }
+  .emptyStateCopy { max-width: none; padding: 24px 20px 26px; }
+  .emptyStateText { font-size: clamp(20px, 6.2vw, 25px); }
+  .emptyStateDescription { font-size: var(--font-size-body); }
+  .emptyStateAction { width: 100%; margin-top: 20px; }
+  .home :global([data-home-scroll-indicator]) { display: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

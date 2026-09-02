@@ -50,7 +50,7 @@ export default function Footer() {
         <div className={styles.top}>
           <div className={styles.brandBlock}>
             <Link href="/home" className={styles.brand} aria-label="LIVEINBLACK, accueil">
-              <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} />
+              <Image src="/branding/liveinblack-logo-header.png" alt="LIVEINBLACK" width={1876} height={285} className={styles.brandLogo} />
             </Link>
             <p>La scène qui rassemble les publics, les artistes et les professionnels autour d’expériences mémorables.</p>
             <Link href="/events" className={styles.primaryLink}>

@@ -22,7 +22,7 @@ import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import HomeGreeting from './HomeGreeting'
 import HeroScrollIndicator from './HeroScrollIndicator'
 import HomeHeroCarousel from './HomeHeroCarousel'
-import { ActionLink, Card, EditorialImageCard, Mascot } from '@/app/components/ui'
+import { ActionLink, Card, EditorialImageCard } from '@/app/components/ui'
 import styles from './home.module.css'
 
 export const metadata: Metadata = {
@@ -149,9 +149,8 @@ export default async function AccueilPage() {
           <p className={styles.heroEyebrow}>Votre nuit, simplement.</p>
           {session?.user && <HomeGreeting firstName={session.user.name ? session.user.name.trim().split(' ')[0] : ''} />}
           <h1 className={styles.heroTitle}>
-            Les meilleures soirées.
-            <br />
-            <span>à portée de main.</span>
+            <span className={styles.heroTitleLine}>Les meilleures soirées.</span>
+            <span className={`${styles.heroTitleLine} ${styles.heroTitleAccent}`}>à portée de main.</span>
           </h1>
           <p className={styles.heroDescription}>
             Découvre les événements qui te ressemblent et réserve ton billet en quelques secondes.
@@ -250,7 +249,7 @@ export default async function AccueilPage() {
         <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
           <Card
             accent="var(--primary-a35)"
-            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),var(--card-bg)),var(--surface)' }}
+            style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'var(--surface)' }}
           >
             <p style={{ margin: 0, color: 'var(--accent-text)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
             <h2 style={{ margin: '7px 0 5px', fontSize: 'var(--font-size-headline-lg)' }}>Des soirées vraiment faites pour toi</h2>
@@ -263,7 +262,7 @@ export default async function AccueilPage() {
       {/* ÉVÉNEMENTS À DÉCOUVRIR */}
       {(!session?.user || recommendations.length === 0) && <Section eyebrow="À l'affiche" title="Des soirées à découvrir" sub="Explore librement. Pour réserver et garder ton billet, il te suffit d'un compte.">
         {events.length === 0 ? (
-          <EmptyCard text="De nouvelles soirées arrivent très vite." ctaHref="/events" ctaLabel="Voir la page événements" />
+          <EmptyCard kind="events" ctaHref="/events" ctaLabel="Explorer les événements" />
         ) : (
           <>
             <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
@@ -279,7 +278,7 @@ export default async function AccueilPage() {
       {/* PRESTATAIRES À LA UNE */}
       <Section eyebrow="L'annuaire" title="Les prestataires de la nuit" sub="DJ, salles, sono, boissons… Trouve le bon prestataire et contacte-le en un clic.">
         {featuredProviders.length === 0 ? (
-          <EmptyCard text="Les premiers prestataires arrivent très vite." ctaHref="/providers" ctaLabel="Voir l'annuaire" />
+          <EmptyCard kind="providers" ctaHref="/providers" ctaLabel="Explorer l’annuaire" />
         ) : (
           <>
             <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
@@ -331,8 +330,8 @@ export default async function AccueilPage() {
             ['Favoris', 'Sauvegarde les événements qui te plaisent.'],
           ].map(([t, d]) => (
             <Card key={t} accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: '18px 16px' }}>
-              <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 650, margin: 0 }}>{t}</p>
-              <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text-muted)', margin: '7px 0 0', lineHeight: 1.5 }}>{d}</p>
+              <p className={styles.benefitTitle}>{t}</p>
+              <p className={styles.benefitDescription}>{d}</p>
             </Card>
           ))}
         </div>
@@ -359,101 +358,64 @@ export default async function AccueilPage() {
 
       {/* ORGANISATEURS + PRESTATAIRES */}
       {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 24 }}>
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 24,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}>
-            <div>
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
-                <Image src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
-              </div>
-              <div style={{ padding: '0 8px 12px' }}>
-                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 8px' }}>Organisateur</p>
-                <h3 style={{ fontSize: 'clamp(20px, 2.2vw, 24px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-.02em', lineHeight: 1.25, color: 'var(--text)' }}>Crée, vends, gère tes soirées</h3>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className={styles.roleGrid}>
+          <article className={`${styles.roleCard} ${styles.roleCardOrganizer}`}>
+            <div className={styles.roleVisual}>
+              <Image src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80" alt="Organisateur préparant un événement" fill className={styles.roleImage} sizes="(max-width: 640px) 100vw, 42vw" />
+              <div className={styles.roleImageScrim} />
+              <span className={styles.roleNumber}>01</span>
+              <p className={styles.roleVisualCaption}>Tout piloter.<br />Au même endroit.</p>
+            </div>
+            <div className={styles.roleBody}>
+              <div className={styles.roleContent}>
+                <p className={styles.roleEyebrow}>Organisateur</p>
+                <h3 className={styles.roleTitle}>Crée, vends, gère tes soirées</h3>
+                <p className={styles.roleSummary}>De la mise en ligne au contrôle des entrées, pilote ton événement depuis un seul espace.</p>
+                <ul className={styles.roleFeatures}>
                   {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
-                    <li key={f} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.45 }}>
-                      <span style={{ color: 'var(--primary)', fontSize: 12, flexShrink: 0 }}>◆</span>
+                    <li key={f} className={styles.roleFeature}>
+                      <span className={styles.roleFeatureMark} aria-hidden="true" />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
               </div>
+              <div className={styles.roleActionWrap}>
+                <Link href="/login?mode=register" className={`${styles.roleAction} ${styles.roleActionPrimary}`}>
+                  Créer un espace organisateur <span aria-hidden="true">↗</span>
+                </Link>
+              </div>
             </div>
-            <div style={{ padding: '0 8px 8px' }}>
-              <Link href="/login?mode=register" style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                minHeight: 48,
-                padding: '12px 20px',
-                borderRadius: 14,
-                background: 'var(--primary)',
-                color: '#FFFFFF',
-                fontSize: 'var(--font-size-body-lg)',
-                fontWeight: 750,
-                textDecoration: 'none',
-              }}>
-                Créer un espace organisateur
-              </Link>
-            </div>
-          </div>
+          </article>
 
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 24,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}>
-            <div>
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
-                <Image src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
-              </div>
-              <div style={{ padding: '0 8px 12px' }}>
-                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 8px' }}>Prestataire</p>
-                <h3 style={{ fontSize: 'clamp(20px, 2.2vw, 24px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-.02em', lineHeight: 1.25, color: 'var(--text)' }}>Développe ton activité</h3>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <article className={`${styles.roleCard} ${styles.roleCardProvider}`}>
+            <div className={styles.roleVisual}>
+              <Image src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80" alt="Prestataire événementiel en action" fill className={styles.roleImage} sizes="(max-width: 640px) 100vw, 42vw" />
+              <div className={styles.roleImageScrim} />
+              <span className={styles.roleNumber}>02</span>
+              <p className={styles.roleVisualCaption}>Ton savoir-faire.<br />Bien présenté.</p>
+            </div>
+            <div className={styles.roleBody}>
+              <div className={styles.roleContent}>
+                <p className={styles.roleEyebrow}>Prestataire</p>
+                <h3 className={styles.roleTitle}>Développe ton activité</h3>
+                <p className={styles.roleSummary}>Mets en avant ton expertise et transforme ta visibilité en nouvelles opportunités.</p>
+                <ul className={styles.roleFeatures}>
                   {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
-                    <li key={f} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.45 }}>
-                      <span style={{ color: 'var(--gold)', fontSize: 12, flexShrink: 0 }}>◆</span>
+                    <li key={f} className={styles.roleFeature}>
+                      <span className={styles.roleFeatureMark} aria-hidden="true" />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
               </div>
+              <div className={styles.roleActionWrap}>
+                <Link href="/login?mode=register" className={`${styles.roleAction} ${styles.roleActionSecondary}`}>
+                  Devenir prestataire <span aria-hidden="true">↗</span>
+                </Link>
+              </div>
             </div>
-            <div style={{ padding: '0 8px 8px' }}>
-              <Link href="/login?mode=register" style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                minHeight: 48,
-                padding: '12px 20px',
-                borderRadius: 14,
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border-strong)',
-                color: 'var(--text)',
-                fontSize: 'var(--font-size-body-lg)',
-                fontWeight: 750,
-                textDecoration: 'none',
-              }}>
-                Devenir prestataire
-              </Link>
-            </div>
-          </div>
+          </article>
         </div>
       </Section>}
 
@@ -461,8 +423,8 @@ export default async function AccueilPage() {
       {/* CTA FINAL */}
       <section className={styles.finalSection}>
         <div className={styles.finalCard}>
-          <h2 style={{ fontSize: 'clamp(28px,6vw,42px)', letterSpacing: '-.04em', margin: 0 }}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
-          <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text-muted)', margin: '12px auto 0', maxWidth: 440, lineHeight: 1.5 }}>
+          <h2 className={styles.finalTitle}>{session?.user ? 'Ta prochaine sortie commence ici' : 'Rejoins Live in Black'}</h2>
+          <p className={styles.finalDescription}>
             {session?.user ? 'Retrouve tes recommandations et tous tes billets au même endroit.' : 'Découvre les meilleures soirées autour de toi, et ne rate plus jamais une sortie.'}
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 26 }}>
@@ -498,7 +460,7 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false, f
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 100vw, 230px"
         />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(var(--media-black-rgb), .74),transparent 58%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(var(--media-black-rgb), .16)' }} />
         {badge ? (
           <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 'var(--font-size-title-4)', lineHeight: 1, fontWeight: 900, color: badge === '01' ? 'var(--gold)' : 'var(--image-text)' }}>{badge}</span>
         ) : (
@@ -529,20 +491,49 @@ function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: s
   )
 }
 
-function EmptyCard({ text, ctaHref, ctaLabel }: { text: string; ctaHref: string; ctaLabel: string }) {
+const EMPTY_STATE_CONTENT = {
+  events: {
+    index: '01',
+    visualLabel: 'Agenda',
+    image: HOME_EVENT_FALLBACKS[0],
+    eyebrow: 'Programmation en cours',
+    title: 'Les prochaines expériences se préparent.',
+    description: 'Notre sélection s’enrichit bientôt de nouvelles soirées, concerts et rendez-vous à vivre.',
+  },
+  providers: {
+    index: '02',
+    visualLabel: 'Talents',
+    image: HOME_PROVIDER_FALLBACKS[0],
+    eyebrow: 'Annuaire en préparation',
+    title: 'Les talents qui font vivre la nuit arrivent.',
+    description: 'DJ, lieux, technique et création rejoignent progressivement notre sélection de professionnels.',
+  },
+} as const
+
+function EmptyCard({ kind, ctaHref, ctaLabel }: { kind: keyof typeof EMPTY_STATE_CONTENT; ctaHref: string; ctaLabel: string }) {
+  const content = EMPTY_STATE_CONTENT[kind]
+
   return (
-    <Card accent="var(--border-strong)" style={{ ...CARD_OVERRIDE, padding: 24, textAlign: 'center', maxWidth: 460, margin: '0 auto' }}>
-      <Mascot mood="sleeping" size={180} />
-      <p style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text-muted)', margin: 0 }}>{text}</p>
-      <Link href={ctaHref} style={{ ...btnGhost, minHeight: 44, marginTop: 16, padding: '12px 20px', display: 'inline-flex' }}>{ctaLabel}</Link>
-    </Card>
+    <article className={styles.emptyState}>
+      <div className={styles.emptyStateVisual} aria-hidden="true">
+        <Image src={content.image} alt="" fill className={styles.emptyStateImage} sizes="(max-width: 640px) 100vw, 36vw" />
+        <span className={styles.emptyStateIndex}>{content.index}</span>
+        <span className={styles.emptyStateVisualLabel}>{content.visualLabel}</span>
+      </div>
+      <div className={styles.emptyStateCopy}>
+        <p className={styles.emptyStateEyebrow}>{content.eyebrow}</p>
+        <h3 className={styles.emptyStateText}>{content.title}</h3>
+        <p className={styles.emptyStateDescription}>{content.description}</p>
+        <Link href={ctaHref} className={`${styles.primaryButton} ${styles.emptyStateAction}`}>
+          {ctaLabel}
+          <span aria-hidden="true">↗</span>
+        </Link>
+      </div>
+    </article>
   )
 }
 
 const card: React.CSSProperties = { maxWidth: 360, width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 24, boxShadow: '0 20px 56px rgba(var(--black-rgb), .22)', overflow: 'hidden' }
 const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
-const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 14, fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnGhost: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 14, fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text)', background: 'var(--fill-secondary)', border: '1px solid var(--border)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnSolid: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 14, fontSize: 'var(--font-size-headline)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-const featList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }
-const featItem: React.CSSProperties = { fontSize: 'var(--font-size-headline-lg)', lineHeight: 1.45, color: 'var(--text-muted)', display: 'flex', gap: 8, alignItems: 'baseline' }
+const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 'var(--radius-control)', fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const btnGhost: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 'var(--radius-control)', fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text)', background: 'var(--fill-secondary)', border: '1px solid var(--border)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }

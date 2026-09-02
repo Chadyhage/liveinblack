@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import AccountMenu from './AccountMenu'
-import { Button, IconButton, Input } from '@/app/components/ui'
+import { IconButton, Input } from '@/app/components/ui'
 import { LogIn, Menu, Search, UserPlus, X } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -259,8 +259,6 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
   )
   const pathname = usePathname()
   const { data: session, status } = useSession()
-  const isLoginPage = pathname === '/login'
-
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1100px)')
     function handleChange(event: MediaQueryListEvent) {
@@ -318,10 +316,10 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
         aria-label="LIVEINBLACK — Accueil"
       >
         <Image
-          src="/branding/liveinblack-logo-horizontal.png"
+          src="/branding/liveinblack-logo-header.png"
           alt="LIVEINBLACK"
-          width={614}
-          height={217}
+          width={1876}
+          height={285}
           className="lb-public-nav__brand-logo"
           priority
         />
@@ -536,9 +534,9 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           border-radius: 12px;
         }
         .lb-public-nav__brand-logo {
-          width: auto;
-          height: 54px;
-          max-width: min(50vw, 280px);
+          width: clamp(128px, 11vw, 156px);
+          height: auto;
+          max-width: none;
           object-fit: contain;
         }
         .lb-public-nav__links { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
@@ -611,8 +609,6 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           width: clamp(160px, 13vw, 216px);
           display: flex;
           align-items: center;
-          min-height: 42px;
-        .lb-header-search__form {
           min-height: 38px;
           height: 38px;
           padding: 0;
@@ -630,7 +626,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           .lb-public-nav { padding: 7px 8px 0 !important; }
           .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
           .lb-public-nav__brand { height: 46px; min-height: 46px; }
-          .lb-public-nav__brand-logo { height: 33px; max-width: min(52vw, 190px); }
+          .lb-public-nav__brand-logo { width: min(34vw, 132px); height: auto; max-width: none; }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }
