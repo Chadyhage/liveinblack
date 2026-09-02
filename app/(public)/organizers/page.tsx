@@ -130,17 +130,21 @@ export default async function PublicOrganizersPage({ searchParams }: { searchPar
                 <article key={organizer.userId} className={styles.card}>
                   <Link href={`/organizers/${organizer.slug}`} className={styles.cardLink} aria-label={`Découvrir ${organizer.publicName}`}>
                     <div className={styles.visual}>
-                      <Image src={reliablePhotoUrl(organizer.bannerUrl, organizer.userId, 900, 600)} alt="" fill loading={index < 4 ? 'eager' : undefined} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, (max-width:1440px) 24vw, 210px" />
+                      <Image src={reliablePhotoUrl(organizer.bannerUrl, organizer.userId, 900, 560)} alt="" fill loading={index < 4 ? 'eager' : undefined} className={styles.cover} sizes="(max-width:680px) calc(100vw - 40px), (max-width:1020px) 46vw, (max-width:1440px) 24vw, 210px" />
                       <div className={styles.scrim} />
-                      <div className={styles.avatar}>{organizer.avatarUrl ? <Image src={organizer.avatarUrl} alt="" fill sizes="72px" /> : organizer.publicName?.[0]?.toUpperCase()}</div>
+                      <div className={styles.avatar}>{organizer.avatarUrl ? <Image src={organizer.avatarUrl} alt="" fill sizes="44px" /> : organizer.publicName?.[0]?.toUpperCase()}</div>
                     </div>
                     <div className={styles.cardBody}>
+                      <p className={styles.category}>Organisateur</p>
                       <h3>{organizer.publicName}</h3>
-                      {(organizer.city || zones.length > 0) && <p className={styles.location}><MapPin size={18} aria-hidden="true" />{[organizer.city, ...zones].filter(Boolean).slice(0, 3).join(' · ')}</p>}
-                      <p className={styles.description}>{organizer.shortDescription || 'Découvrez sa programmation et son univers.'}</p>
-                      <div className={styles.stats}><span><Users size={18} aria-hidden="true" />{organizer.followersCount || 0} abonné{(organizer.followersCount || 0) > 1 ? 's' : ''}</span></div>
-                      {organizer.nextEvent && <div className={styles.nextEvent}><span>Prochain événement</span><strong>{organizer.nextEvent.name}</strong></div>}
-                      <div className={styles.discover}>Découvrir la page <ArrowUpRight size={19} aria-hidden="true" /></div>
+                      <div className={styles.meta}>
+                        {(organizer.city || zones.length > 0) && <span><MapPin size={18} aria-hidden="true" />{[organizer.city, ...zones].filter(Boolean).slice(0, 2).join(' · ')}</span>}
+                        <span><Users size={18} aria-hidden="true" />{organizer.followersCount || 0} abonné{(organizer.followersCount || 0) > 1 ? 's' : ''}</span>
+                      </div>
+                      <div className={styles.footer}>
+                        <span className={styles.footerText}>{organizer.nextEvent ? organizer.nextEvent.name : 'Voir la programmation'}</span>
+                        <span className={styles.discover}>Découvrir <ArrowUpRight size={18} aria-hidden="true" /></span>
+                      </div>
                     </div>
                   </Link>
                   {!isSelf && <div className={styles.follow}><OrganizerFollowButtonClient organizerId={organizer.userId} organizerName={organizer.publicName} initialFollowing={followedIds.has(organizer.userId)} isAuthenticated={Boolean(session?.user)} appearance="premium" /></div>}
