@@ -2,8 +2,7 @@
 // Distincts des emails "abonnés" de templates/followers.ts — ici on
 // s'adresse aux gens qui ont VRAIMENT un billet payé.
 //
-// ⚠️ Pas encore branchés — voir lib/server/organizerEventLifecycle.ts (annulation
-// /report), lib/server/eventRefunds.ts + fedapayRefunds.ts (remboursement).
+// Branchés depuis les parcours annulation/report et dossiers RefundCase.
 import type { Email } from '../types'
 import { DEFAULT_SITE, EMAIL_COLORS as C } from '../theme'
 import { scopedWrap, heading, paragraph, note, button, escapeHtml } from '../layout'
@@ -14,15 +13,50 @@ export function eventCancelledRefundEmail(eventName: string, amountLabel: string
   const evName = escapeHtml(eventName)
   const inner = `
     ${heading(`${eventName} est annulé`, 'danger')}
-    ${paragraph(`<strong style="color:inherit;">${evName}</strong> a été annulé. Tu es automatiquement remboursé de <strong style="color:inherit;">${amountLabel}</strong>.`)}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> a été annulé. Un dossier de remboursement de <strong style="color:inherit;">${amountLabel}</strong> est ouvert.`)}
     ${reason ? paragraph(`<strong style="color:inherit;">Motif :</strong> ${escapeHtml(reason)}`) : ''}
-    ${note(`Le remboursement apparaîtra sur ton moyen de paiement sous ${delayLabel}.`)}
+    ${note(`Le dossier sera traité ${delayLabel}. Live In Black suit l'opération, mais le remboursement est financé et exécuté par l'organisateur.`)}
     ${button(`${site}/events`, "Découvrir d'autres événements", 'outline')}
   `
   return {
-    subject: `${eventName} est annulé — tu es remboursé`,
-    html: wrap(inner, { site, preheader: `Remboursement automatique de ${amountLabel}.` }),
-    inApp: { type: 'refund', title: `${eventName} est annulé`, body: `Tu es remboursé de ${amountLabel}.`, link: `${site}/events`, push: true },
+    subject: `${eventName} est annulé — dossier de remboursement ouvert`,
+    html: wrap(inner, { site, preheader: `Dossier de remboursement de ${amountLabel}.` }),
+    inApp: { type: 'refund', title: `${eventName} est annulé`, body: `Dossier de remboursement de ${amountLabel}.`, link: `${site}/profile/billets`, push: true },
+  }
+}
+
+export function eventCancelledCashPickupEmail(
+  eventName: string,
+  amountLabel: string,
+  pickupCode: string,
+  refundPointName: string,
+  refundPointAddress: string,
+  reason: string | null,
+  site: string = DEFAULT_SITE
+): Email {
+  const evName = escapeHtml(eventName)
+  const point = escapeHtml(refundPointName)
+  const address = escapeHtml(refundPointAddress)
+  const code = escapeHtml(pickupCode)
+  const inner = `
+    ${heading(`${eventName} est annulé`, 'danger')}
+    ${paragraph(`<strong style="color:inherit;">${evName}</strong> a été annulé. Ton remboursement de <strong style="color:inherit;">${amountLabel}</strong> est prévu en retrait espèces au point attribué.`)}
+    ${reason ? paragraph(`<strong style="color:inherit;">Motif :</strong> ${escapeHtml(reason)}`) : ''}
+    ${note(`<strong>Code de retrait :</strong> ${code}<br/><strong>Point :</strong> ${point}<br/><strong>Adresse :</strong> ${address}`)}
+    ${paragraph(`Toute personne présentant ce code valide peut retirer le montant exact. Garde-le confidentiel : une fois validé par l'agent avec signature, il devient définitivement inutilisable.`)}
+    ${button(`${site}/profile/billets`, 'Voir mon dossier', 'primary')}
+    ${button(`${site}/profile/billets`, 'Je ne peux pas me déplacer', 'outline')}
+  `
+  return {
+    subject: `${eventName} est annulé — code de retrait ${pickupCode.slice(-4)}`,
+    html: wrap(inner, { site, preheader: `Retrait espèces de ${amountLabel} au point ${refundPointName}.` }),
+    inApp: {
+      type: 'refund',
+      title: `${eventName} est annulé`,
+      body: `Code ${pickupCode.slice(-4)} · ${amountLabel} à retirer au point ${refundPointName}.`,
+      link: `${site}/profile/billets`,
+      push: true,
+    },
   }
 }
 

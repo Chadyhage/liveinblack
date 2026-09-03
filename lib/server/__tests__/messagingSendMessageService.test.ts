@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { sendMessageForCaller, type SendMessageDependencies } from '../messaging/messagingSendMessageService'
+import type { SendableType } from '../messaging/messagingSendUtils'
 
 describe('messagingSendMessageService', () => {
   const conversation = { _id: 'conv-1', participantIds: ['u1', 'u2'] } as never
@@ -10,7 +11,7 @@ describe('messagingSendMessageService', () => {
   beforeEach(() => {
     deps = {
       loadParticipantConversation: vi.fn().mockResolvedValue({ ok: true, conversation }),
-      isSendableType: vi.fn((type: string): type is 'text' => type === 'text'),
+      isSendableType: vi.fn((type: string): type is SendableType => type === 'text') as unknown as SendMessageDependencies['isSendableType'],
       resolveSendMessageContent: vi.fn().mockResolvedValue({ ok: true, content: 'Salut' }),
       validateMessageContentLength: vi.fn().mockReturnValue({ ok: true }),
       assertCanSendInConversation: vi.fn().mockResolvedValue({ ok: true }),

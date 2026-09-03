@@ -16,6 +16,17 @@ vi.mock('../../models/User', () => ({
 
 describe('groupMemberService', () => {
   const caller = { id: 'u1' }
+  type GroupMemberFixture = { userId: string; name: string; role: 'admin' | 'member' }
+  type GroupConversationFixture = {
+    _id: string
+    name: string
+    members: GroupMemberFixture[]
+    participantIds: string[]
+    mutedUserIds: string[]
+    memberMuteUntil: Map<string, string>
+    toObject: ReturnType<typeof vi.fn>
+    save: ReturnType<typeof vi.fn>
+  }
   const baseConversation = {
     _id: 'conv-1',
     name: 'Groupe test',
@@ -26,7 +37,7 @@ describe('groupMemberService', () => {
     participantIds: ['u1', 'u2'],
     mutedUserIds: [],
     memberMuteUntil: new Map<string, string>(),
-    toObject: vi.fn(function toObject() {
+    toObject: vi.fn(function toObject(this: GroupConversationFixture) {
       return {
         _id: this._id,
         name: this.name,
@@ -36,7 +47,7 @@ describe('groupMemberService', () => {
       }
     }),
     save: vi.fn().mockResolvedValue(undefined),
-  } as never
+  } satisfies GroupConversationFixture
 
   let deps: GroupMemberDependencies
 
@@ -63,7 +74,7 @@ describe('groupMemberService', () => {
           toObject: vi.fn(() => conversation),
           save: vi.fn().mockResolvedValue(undefined),
         },
-        members: conversation.members,
+        members: conversation.members as GroupMemberFixture[],
       }),
       resolveDisplayName: vi.fn().mockResolvedValue('Alice A'),
       appendGroupSystemMessage: vi.fn().mockResolvedValue(undefined),
@@ -74,7 +85,7 @@ describe('groupMemberService', () => {
         name: (conversationLike as { name: string }).name,
         type: 'group',
         participantIds: (conversationLike as { participantIds: string[] }).participantIds,
-        members: (conversationLike as { members: Array<{ userId: string; name: string; role: 'admin' | 'member' }> }).members,
+        members: (conversationLike as { members: GroupMemberFixture[] }).members,
       }) as never),
       maxMembersTotal: 3,
       site: 'https://liveinblack.com',
@@ -136,12 +147,12 @@ describe('groupMemberService', () => {
         mutedUserIds: ['u2'],
         memberMuteUntil: new Map([['u2', '']]),
         save: vi.fn().mockResolvedValue(undefined),
-      },
+      } as GroupConversationFixture,
       members: [
         { userId: 'u1', name: 'Alice A', role: 'admin' as const },
         { userId: 'u2', name: 'Bob B', role: 'member' as const },
-      ],
-    })
+      ] as GroupMemberFixture[],
+    } as never)
 
     const result = await removeGroupMemberForCaller(caller, { conversationId: 'conv-1', userId: 'u2' }, deps)
 

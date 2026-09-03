@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   assignStablePlaceIds,
   normalizeMenuItems,
+  parseBeninLocalDateTime,
   placeConsumed,
   shouldSendEventRecap,
   toEventDates,
@@ -30,11 +31,15 @@ describe('organizerEventUtils', () => {
     expect(validatePlaces([{ id: '', type: 'VIP', price: 10, total: 10, groupType: 'group', groupMin: -1, groupMax: 4 }])).toBe('invalid_group_min')
     expect(validatePlaces([{ id: '', type: 'VIP', price: 10, total: 10, groupType: 'group', groupMin: 2, groupMax: -1 }])).toBe('invalid_group_max')
     expect(validatePlaces([{ id: '', type: 'VIP', price: 10, total: 10, groupType: 'group', groupMin: 5, groupMax: 4 }])).toBe('group_max_below_min')
+    expect(validatePlaces([{ id: '', type: 'Invitation', price: 0, total: 10 }])).toBe('paid_event_required')
     expect(validatePlaces([{ id: '', type: 'OK', price: 10, total: 10 }])).toBeNull()
   })
 
   it('normalise le menu et active les items par défaut', () => {
-    const [item] = normalizeMenuItems([{ name: 'Cocktail', hasShow: false }])
+    const [item] = normalizeMenuItems([{ name: 'Cocktail', hasShow: false }]) as unknown as Array<{
+      available: boolean
+      showOptions: unknown[]
+    }>
     expect(item.available).toBe(true)
     expect(item.showOptions).toEqual([])
 
@@ -60,6 +65,11 @@ describe('organizerEventUtils', () => {
 
   it('formate la date événement en libellé FR majuscule', () => {
     expect(toEventDates('2026-12-31')).toContain('2026')
+  })
+
+  it('interprète les datetime-local comme heure locale Bénin UTC+1', () => {
+    expect(parseBeninLocalDateTime('2026-09-10T20:00')?.toISOString()).toBe('2026-09-10T19:00:00.000Z')
+    expect(parseBeninLocalDateTime('2026-09-10T20:00:30')?.toISOString()).toBe('2026-09-10T19:00:30.000Z')
   })
 
   it('détermine si un rappel organisateur doit partir dans la bonne fenêtre', () => {

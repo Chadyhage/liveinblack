@@ -157,13 +157,15 @@ describeIntegration('updateProviderProfile', () => {
     const userId = await seedUser()
     await getOrCreateMyProviderProfile({ id: userId })
 
-    const result = await updateProviderProfile({
-      id: userId,
-      socialLinks: {
+    const result = await updateProviderProfile(
+      { id: userId },
+      {
+        socialLinks: {
         instagram: '@djkayo',
         website: 'djkayo.com',
+        },
       },
-    })
+    )
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.profile.socialLinks.instagram).toBe('https://instagram.com/djkayo')

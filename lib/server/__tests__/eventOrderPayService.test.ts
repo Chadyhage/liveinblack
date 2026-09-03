@@ -26,7 +26,7 @@ describe('eventOrderPayService', () => {
     deps = {
       loadEventContext: vi.fn().mockResolvedValue({
         ok: true,
-        ctx: { rank: 2, role: 'serveur', event: {} },
+        ctx: { rank: 2, role: 'serveur', event: {} as never },
       }),
       resolveCallerName: vi.fn().mockResolvedValue('Alice A'),
       appendLog: vi.fn().mockResolvedValue(undefined),
@@ -38,7 +38,7 @@ describe('eventOrderPayService', () => {
   it('refuse un non staff caissable', async () => {
     vi.mocked(deps.loadEventContext).mockResolvedValueOnce({
       ok: true,
-      ctx: { rank: 1, role: 'scan', event: {} },
+      ctx: { rank: 1, role: 'scan', event: {} as never },
     })
 
     await expect(
@@ -70,7 +70,16 @@ describe('eventOrderPayService', () => {
   })
 
   it('encaisse les lignes payables et journalise le total', async () => {
-    const items = [
+    const items: Array<{
+      ticketId: string
+      kind: string
+      status: string
+      paidAt: Date | null
+      unitPriceMinor: number
+      quantity: number
+      paidBy?: string
+      paidByName?: string | null
+    }> = [
       { ticketId: 'T1', kind: 'order', status: 'sent', paidAt: null, unitPriceMinor: 500, quantity: 2 },
       { ticketId: 'T1', kind: 'included', status: 'sent', paidAt: null, unitPriceMinor: 0, quantity: 1 },
       { ticketId: 'T1', kind: 'preorder', status: 'sent', paidAt: null, unitPriceMinor: 1000, quantity: 1 },

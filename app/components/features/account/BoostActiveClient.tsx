@@ -68,7 +68,7 @@ export default function BoostActiveClient({ sessionId, boostId }: { sessionId: s
       }
       if (data.boostStatus === 'refunded_conflict') {
         setState('error')
-        setErrorMsg('Ce créneau a été pris au même instant par un autre paiement. Ton paiement a été remboursé automatiquement ; aucun nouveau paiement n’est nécessaire.')
+        setErrorMsg('Ce créneau a été pris au même instant par un autre paiement. Contacte le support avec ton reçu : Live In Black suivra la régularisation sans te demander de repayer.')
         return
       }
       if (data.boostStatus !== 'active') {

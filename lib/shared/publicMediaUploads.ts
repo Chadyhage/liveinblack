@@ -11,7 +11,7 @@ export const PUBLIC_MEDIA_MIME_TYPES = [
   'video/quicktime',
 ] as const
 export const PUBLIC_MEDIA_FORMATS = ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm', 'mov'] as const
-export const PUBLIC_MEDIA_PURPOSES = ['event', 'organizer-gallery', 'provider-catalog'] as const
+export const PUBLIC_MEDIA_PURPOSES = ['event', 'organizer-gallery', 'provider-catalog', 'refund-proof'] as const
 
 export const publicMediaUploadReferenceSchema = z.object({
   publicId: z.string().min(1).max(500),

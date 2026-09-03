@@ -73,6 +73,9 @@
 .amounts > div { min-width: 0; padding: 8px; border-radius: 10px; background: var(--surface-2); }
 .amounts span { display: block; color: var(--text-muted); font-size: var(--font-size-footnote); }
 .amounts strong { display: block; margin-top: 3px; overflow: hidden; color: var(--text); font-size: var(--font-size-headline); font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.pointForm { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.pointForm > :nth-child(3),.pointForm > :nth-child(4) { grid-column: 1 / -1; }
+.pointAgents { margin: 0; color: var(--text-muted); font-size: var(--font-size-footnote); line-height: 1.4; overflow-wrap: anywhere; }
 .dateLine { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: var(--font-size-footnote); }
 .note { display: flex; align-items: flex-start; gap: 7px; padding: 9px 10px; border: 1px solid rgba(var(--gold-rgb), .24); border-radius: 11px; background: rgba(var(--gold-rgb), .075); color: var(--text); font-size: var(--font-size-footnote); line-height: 1.4; }
 .note svg { flex: 0 0 auto; margin-top: 1px; color: var(--gold-text); }
@@ -99,6 +102,12 @@
 .confirmIcon { width: 42px; height: 42px; display: grid; place-items: center; margin: 0 auto 10px; border-radius: 14px; background: rgba(var(--gold-rgb), .12); color: var(--gold-text); }
 .confirmTitle { margin: 0; color: var(--text); font-size: var(--font-size-headline-lg); font-weight: 740; line-height: 1.24; text-align: center; letter-spacing: -.025em; }
 .confirmHelper { margin: 7px 0 12px; color: var(--text-muted); font-size: var(--font-size-footnote); line-height: 1.45; text-align: center; }
+.refundProofForm { display: grid; gap: 10px; margin: 14px 0; }
+.signatureField { display: grid; gap: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.signatureHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--text); font-size: var(--font-size-footnote); font-weight: 760; }
+.signatureClear { min-height: 28px !important; padding: 0 9px !important; font-size: var(--font-size-caption-lg) !important; }
+.signatureCanvas { width: 100%; height: 142px; display: block; border: 1px dashed var(--border-strong); border-radius: 10px; background: #fff; cursor: crosshair; touch-action: none; }
+.signatureHint { margin: 0; color: var(--text-muted); font-size: var(--font-size-caption-lg); line-height: 1.35; }
 .confirmWarning { display: flex; align-items: flex-start; gap: 7px; padding: 10px 11px; border: 1px solid var(--primary-a28); border-radius: 11px; background: var(--primary-a08); color: var(--text); font-size: var(--font-size-footnote); line-height: 1.4; }
 .confirmWarning svg { flex: 0 0 auto; color: var(--accent-text); }
 .confirmActions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 12px; }
@@ -110,4 +119,4 @@
 
 @media (max-width: 1050px) { .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 700px) { .hero { min-height: 0; align-items: flex-start; flex-direction: column; padding: 12px; } .heroActions { width: 100%; flex-wrap: wrap; } .heroActions > * { flex: 1; } .actionPill { justify-content: center; } .workspace { padding: 10px; } .cardGrid,.loadingGrid { grid-template-columns: 1fr; } }
-@media (max-width: 520px) { .metrics { grid-template-columns: 1fr; } .metric { min-height: 66px !important; } .sectionHeader { align-items: flex-start; flex-direction: column; } .cardTop { flex-direction: column; } .status { align-self: flex-start; } .amountRow { align-items: flex-start; flex-direction: column; gap: 4px; } .amounts,.metaGrid,.confirmActions { grid-template-columns: 1fr; } .queueHeader { grid-template-columns: auto minmax(0,1fr); } .queueHeader > span { display: none; } .confirmTitle { font-size: var(--font-size-body-sm); } }
+@media (max-width: 520px) { .metrics { grid-template-columns: 1fr; } .metric { min-height: 66px !important; } .sectionHeader { align-items: flex-start; flex-direction: column; } .cardTop { flex-direction: column; } .status { align-self: flex-start; } .amountRow { align-items: flex-start; flex-direction: column; gap: 4px; } .amounts,.metaGrid,.confirmActions,.pointForm { grid-template-columns: 1fr; } .pointForm > :nth-child(3),.pointForm > :nth-child(4) { grid-column: auto; } .queueHeader { grid-template-columns: auto minmax(0,1fr); } .queueHeader > span { display: none; } .confirmTitle { font-size: var(--font-size-body-sm); } }

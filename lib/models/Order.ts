@@ -42,11 +42,10 @@ const orderSchema = new Schema(
     currency: { type: String, enum: ['EUR', 'XOF'], required: true },
     feeMinor: { type: Number, default: 0 },
 
-    // Assurance-annulation optionnelle, choisie par l'ACHETEUR au checkout
-    // (lib/shared/fees.ts::CANCELLATION_PROTECTION, +10% du prix total) —
-    // donne droit à un remboursement à tout moment avant l'événement (hors
-    // billet déjà scanné), voir lib/server/clientRefunds.ts. Figée à l'achat,
-    // jamais modifiable après coup (pas de route pour l'ajouter a posteriori).
+    // Option d'annulation volontaire, choisie par l'acheteur au checkout
+    // uniquement si l'organisateur l'a activée sur la catégorie de billet et
+    // si la fermeture billetterie - 48h n'est pas atteinte. Elle rembourse le
+    // prix facial uniquement et reste figée à l'achat.
     cancellationProtectionPurchased: { type: Boolean, default: false },
     cancellationProtectionFeeMinor: { type: Number, default: 0 },
 
@@ -59,6 +58,7 @@ const orderSchema = new Schema(
 
     sellerUid: { type: String, default: null },
     connectMode: { type: String, enum: ['auto', 'ledger', 'none'], default: 'none' },
+    fedapaySubAccountReference: { type: String, default: null },
 
     // 'cash' (#C) : vente espèces par un agent — jamais de session Stripe/
     // FedaPay, statut posé directement à 'paid' de façon synchrone (voir
@@ -113,10 +113,9 @@ const orderSchema = new Schema(
     // renseigne jamais ces deux champs). 'postponed_declined' = le client a
     // refusé la nouvelle date proposée après un report.
     clientRefundRequestedAt: { type: Date, default: null },
-    // 'cancellation_protection' = remboursement libre couvert par le
-    // supplément payé à l'achat (cancellationProtectionPurchased), sans
-    // condition de report/annulation.
-    clientRefundReason: { type: String, enum: ['postponed_declined', 'cancellation_protection', null], default: null },
+    // 'cancellation_option' = option d'annulation volontaire achetée au
+    // checkout, utilisable strictement avant fermeture billetterie - 48h.
+    clientRefundReason: { type: String, enum: ['postponed_declined', 'cancellation_option', null], default: null },
   },
   { timestamps: true }
 )

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { listMyTickets } from '@/lib/server/events/tickets'
+import { listParticipantRefundCases } from '@/lib/server/refunds/refundCases'
 import BilletsClient from './BilletsClient'
 
 // Ancien panneau interne "Mes billets" de ProfilClient.tsx (état local
@@ -18,6 +19,7 @@ export default async function BilletsPage() {
 
   const caller = { id: session.user.id }
   const ticketsResult = await listMyTickets(caller.id)
+  const refunds = await listParticipantRefundCases(caller.id)
 
-  return <BilletsClient groups={ticketsResult.ok ? ticketsResult.groups : []} currentUserId={caller.id} />
+  return <BilletsClient groups={ticketsResult.ok ? ticketsResult.groups : []} currentUserId={caller.id} initialRefunds={refunds} />
 }

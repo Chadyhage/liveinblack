@@ -8,11 +8,9 @@ export const metadata: Metadata = {
   alternates: { canonical: '/terms' },
 }
 
-// Port de src/pages/CGUPage.jsx — CGU + CGV — marketplace billetterie &
-// services événementiels. Couvre le rôle d'intermédiaire technique
-// d'encaissement, les frais de service, la commission, le droit de
-// rétractation (exception billetterie L221-28 12°), les remboursements et
-// les reversements vendeurs.
+// CGU + CGV — marketplace billetterie & services événementiels. Les règles
+// billetterie du lancement Bénin suivent le document fonctionnel
+// annulation/report/remboursement du 31/08/2026.
 export default function CGUPage() {
   const sections: LegalSection[] = [
     {
@@ -35,14 +33,14 @@ ${LEGAL.brand} agit en qualité d'intermédiaire technique. ${LEGAL.brand} n'est
     {
       n: '04',
       title: 'Rôle de la plateforme et encaissement pour compte de tiers',
-      body: `Pour les ventes réalisées via la plateforme (billets, services), ${LEGAL.brand} encaisse les paiements pour le compte de l'organisateur ou du prestataire vendeur, via ses prestataires de services de paiement : Stripe (zone euro) et FedaPay (zone FCFA — mobile money et cartes au Togo, Bénin et pays couverts). ${LEGAL.brand} agit comme mandataire d'encaissement : les sommes correspondant au prix de la prestation appartiennent au vendeur et lui sont reversées, déduction faite de la commission applicable.
+      body: `Pour le lancement billetterie au Bénin, les paiements sont encaissés en francs CFA (XOF) via FedaPay Marketplace, qui répartit les montants entre ${LEGAL.brand} et l'organisateur vendeur. Pour les autres services ou zones maintenus hors de ce périmètre, d'autres rails de paiement peuvent exister selon la devise et le pays. ${LEGAL.brand} agit comme mandataire technique d'encaissement : les sommes correspondant au prix de la prestation appartiennent au vendeur et lui sont reversées selon le parcours applicable.
 
 ${LEGAL.brand} n'est pas partie au contrat de vente conclu entre l'acheteur et le vendeur. La responsabilité de la fourniture du billet, de l'accès à l'événement ou de l'exécution du service incombe exclusivement au vendeur.`,
     },
     {
       n: '05',
       title: 'Prix, frais de service et commission',
-      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Des frais de service ${LEGAL.brand} sont ajoutés au prix et payés par l'acheteur : en zone euro, actuellement 5 % + 0,49 € par billet, plafonnés à 2,50 € par billet ; en zone FCFA, actuellement 5 % + 300 FCFA par billet, plafonnés à 1 500 FCFA par billet. Aucuns frais ne s'appliquent aux billets gratuits. Les frais de service sont affichés clairement avant la validation du paiement.
+      body: `Le prix des billets et des prestations est fixé librement par l'organisateur ou le prestataire. Pour la billetterie XOF du lancement Bénin, les frais de service ${LEGAL.brand} sont de 5 % du prix facial, avec un minimum de 200 FCFA et un plafond de 1 500 FCFA par entrée payante. L'option d'annulation volontaire, lorsqu'elle est activée par l'organisateur sur une catégorie éligible, coûte 10 % du prix facial et reste plafonnée à 5 000 FCFA ; elle n'est proposée que pour les billets d'au moins 5 000 FCFA. Les frais de service, options et frais techniques de paiement sont affichés avant validation.
 
 Pour les prestations de services réservées et payées via la plateforme, une commission (actuellement 10 %) est prélevée sur le montant dû au prestataire. Les options de mise en avant (« boosts », placements sponsorisés, abonnements) sont des services payants distincts, facturés directement par ${LEGAL.brand}. Les frais de service et commissions ne sont pas remboursables, sauf disposition légale impérative contraire.`,
     },
@@ -54,7 +52,9 @@ Pour les prestations de services réservées et payées via la plateforme, une c
     {
       n: '07',
       title: 'Annulation et remboursement',
-      body: `En cas d'annulation d'un événement par l'organisateur, l'acheteur est remboursé du prix du billet. Le remboursement est traité par l'organisateur via la plateforme ; ${LEGAL.brand} facilite l'opération sans en être le débiteur final.
+      body: `En cas d'annulation d'un événement par l'organisateur ou de report refusé dans le délai affiché, le dossier de remboursement est créé dans ${LEGAL.brand}. Le parcours par défaut est un retrait en espèces au point de remboursement attribué, avec un code unique. Si l'acheteur confirme qu'il ne peut pas se déplacer, ce choix est irréversible : le code est annulé et le dossier bascule vers un remboursement individuel à effectuer par l'organisateur.
+
+Pour une annulation d'événement ou un report refusé dans les 24 heures suivant la notification, le montant suivi par ${LEGAL.brand} comprend le prix facial, les frais de service et les options achetées ; les frais techniques de paiement ne sont remboursés que s'ils sont effectivement récupérables. Pour une annulation volontaire couverte par l'option d'annulation, seul le prix facial est remboursé individuellement par l'organisateur. Aucun remboursement n'est exécuté par FedaPay : FedaPay intervient uniquement pour l'encaissement initial et la répartition Marketplace.
 
 Toute demande de remboursement, contestation ou litige relatif à un événement ou à une prestation doit être adressée en priorité au vendeur concerné. ${LEGAL.brand} peut intervenir à titre de facilitateur mais n'est pas garant du remboursement dû par un vendeur défaillant.`,
     },
@@ -73,7 +73,7 @@ Faute de compte associé à chaque participant, ${LEGAL.brand} n'est techniqueme
     {
       n: '10',
       title: 'Reversements aux vendeurs',
-      body: `Les sommes dues aux vendeurs (prix de la prestation, après commission) leur sont reversées sur le compte bancaire qu'ils ont renseigné. Pour les vendeurs situés dans un pays pris en charge par Stripe, le reversement est automatisé via Stripe Connect. Pour les vendeurs situés dans un pays non pris en charge par Stripe, ${LEGAL.brand} procède au reversement par un autre moyen (virement, paiement mobile) après réception de la demande, dans un délai raisonnable. Le vendeur est responsable de l'exactitude de ses coordonnées de paiement et de ses obligations fiscales et déclaratives.`,
+      body: `Dans le parcours billetterie Bénin, la part vendeur est répartie dès le paiement par FedaPay Marketplace : ${LEGAL.brand} ne conserve pas l'argent de l'organisateur jusqu'à la fin de l'événement. L'organisateur reste donc responsable de conserver une trésorerie suffisante pour financer les remboursements dus en cas d'annulation, de report ou d'option d'annulation valable. Pour les autres services ou zones, les reversements suivent le rail de paiement applicable. Le vendeur est responsable de l'exactitude de ses coordonnées de paiement et de ses obligations fiscales et déclaratives.`,
     },
     {
       n: '11',

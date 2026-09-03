@@ -7,7 +7,7 @@ describe('messagingViews', () => {
       _id: 'conv_1',
       type: 'group',
       participantIds: ['u1', 'u2'],
-      members: [{ userId: 'u1', name: 'Alice', role: 'admin', avatarUrl: null }],
+      members: [{ userId: 'u1', name: 'Alice', role: 'admin' }],
       name: 'Salon',
       avatar: 'https://img.test/group.jpg',
       mutedUserIds: ['u2'],

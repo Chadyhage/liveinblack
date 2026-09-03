@@ -86,6 +86,9 @@ const REFUND_ERROR_LABELS: Record<string, string> = {
   already_requested: 'Une demande de remboursement a déjà été envoyée pour ce billet.',
   not_eligible: 'Ce billet n’est pas éligible au remboursement.',
   free_ticket_not_refundable: 'Ce billet est gratuit, il n’y a rien à rembourser.',
+  xof_required: 'Ce remboursement suit le parcours de lancement au Bénin, en FCFA uniquement.',
+  event_cancelled_cash_pickup_created: 'L’événement est annulé : ton dossier de retrait au point de remboursement est créé automatiquement.',
+  ticket_listed_for_resale: 'Retire d’abord ce billet de la revente avant de demander un remboursement.',
 }
 
 const RESELL_ERROR_LABELS: Record<string, string> = {
@@ -810,11 +813,21 @@ function PremiumTicketCard({
   const [resellErr, setResellErr] = useState<string | null>(null)
   const [withdrawState, setWithdrawState] = useState<'idle' | 'busy' | 'err'>('idle')
   const [activeListing, setActiveListing] = useState(ticket.activeListing)
+  const [nowTs, setNowTs] = useState(() => Date.now())
   const qrExportRef = useRef<HTMLCanvasElement>(null)
 
   const ticketUrl = `${SITE}/ticket/${ticket.ticketToken}`
   const countdown = event ? countdownLabel(event.date) : null
   const preorderTotal = ticket.preorders.reduce((sum, p) => sum + p.price * p.qty, 0)
+  const refundWindowTs = event?.refundWindowClosesAt ? new Date(event.refundWindowClosesAt).getTime() : NaN
+  const reportRefundOpen = Boolean(event?.postponed && Number.isFinite(refundWindowTs) && nowTs < refundWindowTs)
+  const canShowRefundButton = Boolean(ticket.orderId && (ticket.cancellationProtectionPurchased || reportRefundOpen))
+
+  useEffect(() => {
+    if (!event?.postponed || !Number.isFinite(refundWindowTs)) return
+    const interval = window.setInterval(() => setNowTs(Date.now()), 1000)
+    return () => window.clearInterval(interval)
+  }, [event?.postponed, refundWindowTs])
 
   function flash(msg: string) {
     setFlashMsg(msg)
@@ -1154,7 +1167,7 @@ function PremiumTicketCard({
                   {`${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
                 </Button>
               )}
-              {(event?.postponed || ticket.cancellationProtectionPurchased) && ticket.orderId && (
+              {canShowRefundButton && (
                 <Button
                   variant="danger"
                   size="sm"
@@ -1223,7 +1236,7 @@ function PremiumTicketCard({
                 }
               >
                 <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
-                  Tu demandes le remboursement de ce billet. Les frais de service ne sont pas remboursés et le billet sera désactivé si la demande est acceptée.
+                  Tu demandes un remboursement irréversible. Le QR code sera désactivé immédiatement ; l’option d’annulation rembourse seulement le prix facial, tandis qu’un report refusé suit le dossier de remboursement prévu pour l’événement.
                 </p>
               </Modal>
             )}

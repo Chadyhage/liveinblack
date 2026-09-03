@@ -3,36 +3,16 @@ import { getDb } from '@/lib/db/mongoose'
 import Event from '@/lib/models/Event'
 import Order, { type OrderDoc } from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import { refundStripeOrder } from '../events/eventRefunds'
-import { recordFedapayRefund } from './fedapayRefunds'
 import { notifyUserById } from '@/lib/server/emails/notify'
 import { sendEmail } from '@/lib/server/email'
-import { refundConfirmedEmail, refundFailedEmail } from '@/lib/server/emails'
+import { refundConfirmedEmail } from '@/lib/server/emails'
 import type { Email } from '@/lib/server/emails/types'
 import { fmtMoney } from '@/lib/shared/money'
 import { extractTicketCode, verifyTicketToken } from '../events/ticketToken'
+import { createClientInitiatedRefundCase } from '@/lib/server/refunds/refundCases'
+import { computeRefundableMinor, isBeforeCancellationOptionDeadline } from '@/lib/shared/refundPolicy'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
-
-// Même formule que refundStripeOrder/recordFedapayRefund (montant HORS frais
-// de service, jamais remboursés) — dupliquée uniquement pour l'affichage
-// dans l'email, ces fonctions ne retournent pas le montant.
-function grossRefundMajor(order: { isTable: boolean; qty: number; unitPriceMinor: number; preorders: { price: number; qty: number }[]; currency: string }): number {
-  const seatCount = order.isTable ? 1 : order.qty
-  const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
-  const grossMinor = Math.max(0, order.unitPriceMinor * seatCount + preorderTotal)
-  return grossMinor / (order.currency === 'XOF' ? 1 : 100)
-}
-
-// Demande de remboursement déclenchée par le CLIENT (politique
-// d'annulation/remboursement §2 — "modification importante" non traitée ici,
-// aucun champ Event ne la distingue encore d'un report, voir plan). Contexte :
-// une annulation d'événement rembourse déjà tout le monde automatiquement
-// (organizerEventLifecycle.ts::cancelOrganizerEvent) — le SEUL cas qui
-// nécessite une action du client est un REPORT qu'il refuse de suivre. On ne
-// réimplémente jamais la logique Stripe/FedaPay : refundStripeOrder /
-// recordFedapayRefund (déjà idempotentes via EventRefund) sont réutilisées
-// telles quelles.
 
 export interface RefundCaller {
   id: string
@@ -50,29 +30,19 @@ export type RefundRequestResult =
 async function processOrderRefund(order: HydratedDocument<OrderDoc>, notifyEmail: (email: Email) => Promise<void>): Promise<RefundRequestResult> {
   if (order.status !== 'paid') return { ok: false, status: 409, error: 'order_not_paid' }
   if (order.clientRefundRequestedAt) return { ok: false, status: 409, error: 'already_requested' }
-  // Un billet gratuit (rail 'free') n'a aucun paiement Stripe/FedaPay à
-  // rembourser — sans ce garde, le ternaire ci-dessous retomberait sur
-  // recordFedapayRefund() faute de rail 'stripe', renvoyant une erreur
-  // technique opaque au lieu d'un refus métier clair.
   if (order.rail === 'free') return { ok: false, status: 409, error: 'free_ticket_not_refundable' }
+  if (order.currency !== 'XOF') return { ok: false, status: 409, error: 'xof_required' }
 
   const event = await Event.findById(order.eventId)
   if (!event) return { ok: false, status: 404, error: 'event_not_found' }
 
-  // L'annulation totale rembourse déjà tout automatiquement — rien à faire ici.
-  if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled_auto_refunded' }
-
-  // Assurance-annulation (lib/shared/fees.ts::CANCELLATION_PROTECTION) : le
-  // client a payé un supplément à l'achat pour un droit de remboursement
-  // SANS condition de report/fenêtre — bypasse les deux vérifications
-  // suivantes, mais jamais le garde-fou "billet déjà scanné" ci-dessous (le
-  // service a déjà été rendu, l'assurance ne couvre pas un simple regret
-  // après coup une fois entré).
-  const coveredByProtection = order.cancellationProtectionPurchased
+  const coveredByProtection = order.cancellationProtectionPurchased && isBeforeCancellationOptionDeadline(event.closingDate)
+  const cause = coveredByProtection ? 'cancellation_option' : 'postponed_declined'
 
   if (!coveredByProtection) {
+    if (event.cancelled) return { ok: false, status: 409, error: 'event_cancelled_cash_pickup_created' }
     if (!event.postponedFrom) return { ok: false, status: 409, error: 'not_eligible' }
-    if (!event.refundWindowClosesAt || Date.now() > event.refundWindowClosesAt.getTime()) {
+    if (!event.refundWindowClosesAt || Date.now() >= event.refundWindowClosesAt.getTime()) {
       return { ok: false, status: 409, error: 'refund_window_closed' }
     }
   }
@@ -85,20 +55,11 @@ async function processOrderRefund(order: HydratedDocument<OrderDoc>, notifyEmail
   const anyListedForResale = await Ticket.exists({ orderId: String(order._id), resaleListingId: { $ne: null } })
   if (anyListedForResale) return { ok: false, status: 409, error: 'ticket_listed_for_resale' }
 
-  const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
-  // Ne marque la demande comme traitée qu'en cas de succès — un échec (ex.
-  // erreur Stripe transitoire) doit laisser le client réessayer, jamais le
-  // bloquer derrière `already_requested` sans qu'aucun remboursement ait eu lieu.
-  if (!result.ok) {
-    await notifyEmail(refundFailedEmail(event.name, null, `${SITE}/help`, SITE))
-    return { ok: false, status: 502, error: 'refund_failed' }
-  }
+  const result = await createClientInitiatedRefundCase(order, cause, order.userId)
+  if (!result.ok) return result
 
-  order.clientRefundRequestedAt = new Date()
-  order.clientRefundReason = coveredByProtection ? 'cancellation_protection' : 'postponed_declined'
-  await order.save()
-
-  await notifyEmail(refundConfirmedEmail(event.name, fmtMoney(grossRefundMajor(order), order.currency), 'quelques jours ouvrés', SITE))
+  const amount = computeRefundableMinor(order, cause) / (order.currency === 'XOF' ? 1 : 100)
+  await notifyEmail(refundConfirmedEmail(event.name, fmtMoney(amount, order.currency), 'dans les meilleurs délais', SITE))
 
   return { ok: true, refunded: true }
 }

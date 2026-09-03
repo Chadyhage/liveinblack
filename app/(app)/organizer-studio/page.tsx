@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { getOrCreateMyOrganizerProfile } from '@/lib/server/organizer/organizerProfile'
 import { getPayoutStatus } from '@/lib/server/organizer/organizerPayouts'
 import { listPayoutMomos } from '@/lib/server/organizer/organizerPayoutMomos'
+import { listOrganizerRefundCases } from '@/lib/server/refunds/refundCases'
 import StudioClient from './StudioClient'
 
 // Port de OrganizerPublicStudio.jsx (#7 phase organisateur, tâche #81) — page
@@ -23,10 +24,11 @@ export default async function MaPageOrganisateurPage() {
   if (session.user.activeRole !== 'organisateur' && session.user.activeRole !== 'agent') redirect('/my-events')
 
   const caller = { id: session.user.id }
-  const [profileResult, payoutStatusResult, momosResult] = await Promise.all([
+  const [profileResult, payoutStatusResult, momosResult, refunds] = await Promise.all([
     getOrCreateMyOrganizerProfile(caller),
     getPayoutStatus(caller),
     listPayoutMomos(caller),
+    listOrganizerRefundCases(caller.id),
   ])
 
   if (!profileResult.ok) redirect('/my-events')
@@ -36,6 +38,8 @@ export default async function MaPageOrganisateurPage() {
       initialProfile={profileResult.profile}
       initialPayoutStatus={payoutStatusResult.ok ? payoutStatusResult.view : { mode: 'none', connected: false, chargesEnabled: false, country: null, amountDueCents: 0, amountDueXOF: 0 }}
       initialMomos={momosResult.ok ? momosResult.momos : {}}
+      initialFedapaySubAccountReference={momosResult.ok ? momosResult.fedapaySubAccountReference : null}
+      initialRefunds={refunds}
     />
   )
 }

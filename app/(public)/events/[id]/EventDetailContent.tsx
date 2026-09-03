@@ -150,6 +150,7 @@ export default async function EventDetailContent({
     groupType: (p.groupType === 'group' ? 'group' : 'solo') as 'group' | 'solo',
     groupMin: p.groupMin ?? 0,
     groupMax: p.groupMax ?? 0,
+    cancellationOptionEnabled: Boolean(p.cancellationOptionEnabled),
     photos: p.photos ?? [],
     included: p.included ?? [],
   }))
@@ -372,6 +373,7 @@ export default async function EventDetailContent({
           blockedReason={blockedReason}
           loginHref={loginHref}
           paymentCancelled={paiement === 'annule'}
+          closingDate={event.closingDate ? new Date(event.closingDate).toISOString() : null}
         />
       ) : checkoutPlaces.length > 0 ? (
         <div style={{ padding: '20px 16px 0', textAlign: 'center' }}>

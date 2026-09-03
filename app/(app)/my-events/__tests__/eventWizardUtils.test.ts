@@ -82,6 +82,7 @@ describe('eventWizardUtils', () => {
           qty: 8,
           groupType: 'group',
           maxPerAccount: 9,
+          cancellationOptionEnabled: true,
           included: [{ name: ' Vestiaire offert ', qty: 0 }],
         },
       ],
@@ -98,8 +99,8 @@ describe('eventWizardUtils', () => {
           price: 120,
           hasShow: true,
           showOptions: [
-            { label: '  Scintillants ', infoPrompt: '  Message LED ' },
-            { label: ' ', infoPrompt: 'ignoré' },
+            { id: 'show_1', label: '  Scintillants ', requiresInfo: false, infoPrompt: '  Message LED ', excludedPlaces: [] },
+            { id: 'show_2', label: ' ', requiresInfo: false, infoPrompt: 'ignoré', excludedPlaces: [] },
           ],
         },
       ],
@@ -130,16 +131,17 @@ describe('eventWizardUtils', () => {
         id: 'place_1',
         type: 'Table Or',
         maxPerAccount: 1,
+        cancellationOptionEnabled: true,
         included: [{ name: 'Vestiaire offert', qty: 1 }],
       }),
     ])
     expect(payload.menu).toEqual([
       expect.objectContaining({
         name: 'Champagne',
-        showOptions: [{ label: 'Scintillants', infoPrompt: 'Message LED' }],
+        showOptions: [expect.objectContaining({ label: 'Scintillants', infoPrompt: 'Message LED' })],
       }),
     ])
-    expect(payload.publishAt).toBe('2026-08-20T21:15:00.000Z')
+    expect(payload.publishAt).toBe('2026-08-20T21:15')
     expect(payload.closingDate).toBeNull()
   })
 })

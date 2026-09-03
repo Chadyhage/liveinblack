@@ -5,8 +5,7 @@ import Event from '@/lib/models/Event'
 // Port en LECTURE SEULE de la section « Boosts » de src/pages/AgentPage.jsx
 // (tab === 'boosts', #9 phase agent/admin). Le legacy n'a AUCUNE action de
 // mutation ici — l'agent surveille seulement les créneaux Top 1/2/3 vendus et
-// les conflits (remboursés automatiquement par le webhook, voir
-// lib/server/finalizeBoost.ts) ; ce panneau reste donc read-only à l'identique.
+// les conflits de paiement ; ce panneau reste donc read-only à l'identique.
 
 export interface AgentBoostView {
   id: string

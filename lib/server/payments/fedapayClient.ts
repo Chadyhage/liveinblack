@@ -65,6 +65,7 @@ export async function createTransaction({
   customer,
   metadata,
   reference,
+  subAccountsCommissions,
 }: {
   description: string
   amount: number
@@ -72,6 +73,7 @@ export async function createTransaction({
   customer?: { email: string; firstname?: string } | null
   metadata?: Record<string, string>
   reference?: string
+  subAccountsCommissions?: Array<{ reference: string; amount: number }>
 }): Promise<FedapayTransaction> {
   const payload = {
     description: String(description || 'LIVEINBLACK').slice(0, 255),
@@ -80,6 +82,7 @@ export async function createTransaction({
     ...(callbackUrl ? { callback_url: callbackUrl } : {}),
     ...(metadata ? { custom_metadata: metadata } : {}),
     ...(reference ? { merchant_reference: String(reference).slice(0, 100) } : {}),
+    ...(subAccountsCommissions?.length ? { sub_accounts_commisssions: subAccountsCommissions } : {}),
   }
   try {
     const data = await fdRequest<Record<string, unknown>>('POST', '/transactions', { ...payload, ...(customer ? { customer } : {}) })

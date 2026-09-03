@@ -7,6 +7,7 @@ import { releaseOrder } from '@/lib/server/events/orders'
 import Order from '@/lib/models/Order'
 import { fulfillOrder } from '@/lib/server/payments/fulfillOrder'
 import { createTransaction, createToken, isFedapayConfigured } from '@/lib/server/payments/fedapayClient'
+import { fedapayMarketplaceCommissions } from '@/lib/server/payments/fedapayMarketplace'
 
 // Paiement du SOLDE d'un blocage de place actif — rail FedaPay/XOF.
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -33,6 +34,10 @@ export async function POST(req: Request) {
   if (amountTotal < MIN_XOF) {
     await releaseOrder(orderId, session.user.id)
     return NextResponse.json({ error: 'amount_below_minimum' }, { status: 400 })
+  }
+  if (order.sellerUid && !order.fedapaySubAccountReference && process.env.NODE_ENV === 'production') {
+    await releaseOrder(orderId, session.user.id)
+    return NextResponse.json({ error: 'fedapay_marketplace_account_required' }, { status: 409 })
   }
 
   if (!isFedapayConfigured() && process.env.NODE_ENV !== 'production') {
@@ -64,6 +69,7 @@ export async function POST(req: Request) {
       customer: session.user.email ? { email: session.user.email } : null,
       metadata: { orderId },
       reference: orderId,
+      subAccountsCommissions: fedapayMarketplaceCommissions(order.fedapaySubAccountReference, order.unitPriceMinor),
     })
     const tok = await createToken(txn.id)
 

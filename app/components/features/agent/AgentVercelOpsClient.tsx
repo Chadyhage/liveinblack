@@ -558,6 +558,9 @@ export default function AgentVercelOpsClient() {
       }
     }
     run()
+    // Chargement initial d'une ressource externe ; les mises à jour arrivent
+    // après le fetch et `loadConfig` reste réutilisée par les actions UI.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadConfig()
     return () => {
       cancelled = true

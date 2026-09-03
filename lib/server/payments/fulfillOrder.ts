@@ -10,8 +10,7 @@ import GroupMembership from '@/lib/models/GroupMembership'
 import SeatHold from '@/lib/models/SeatHold'
 import { registerPromoUse } from '../events/promos'
 import { generateUniqueTicketCode } from '../events/ticketCode'
-import { refundStripeOrder } from '../events/eventRefunds'
-import { recordFedapayRefund } from './fedapayRefunds'
+import { createRefundCaseForOrder } from '@/lib/server/refunds/refundCases'
 import { notifyUserById } from '@/lib/server/emails/notify'
 import { paymentFailedEmail, ticketPurchaseConfirmedEmail, groupPurchaseConfirmedEmail, firstSaleEmail, salesMilestoneEmail } from '@/lib/server/emails'
 import { fmtMoney } from '@/lib/shared/money'
@@ -77,8 +76,11 @@ export async function fulfillOrder(
       { $set: { reason: !event ? 'event_deleted_before_fulfillment' : 'paid_after_cancel', eventId: order.eventId, details: {} } },
       { upsert: true }
     )
-    if (opts.rail === 'stripe') await refundStripeOrder(order as OrderDoc & { _id: mongoose.Types.ObjectId })
-    else await recordFedapayRefund(order as OrderDoc & { _id: mongoose.Types.ObjectId })
+    order.status = 'paid'
+    order.paid = true
+    order.settled = true
+    await order.save()
+    await createRefundCaseForOrder(order, 'event_cancelled', { flow: 'cash_pickup', actorRole: 'system' })
     return { status: 'refunded_cancelled_event' }
   }
 
@@ -200,10 +202,11 @@ export async function fulfillOrder(
   if (!recheck || recheck.cancelled) {
     await Ticket.updateMany({ ticketCode: { $in: ticketCodes } }, { $set: { revoked: true } })
     if (order.isTable) await GroupMembership.deleteOne({ eventId: order.eventId, userId: order.userId, tableId: tableId as string })
-    order.status = 'cancelled'
+    order.status = 'paid'
+    order.paid = true
+    order.settled = true
     await order.save()
-    if (opts.rail === 'stripe') await refundStripeOrder(order as OrderDoc & { _id: mongoose.Types.ObjectId })
-    else await recordFedapayRefund(order as OrderDoc & { _id: mongoose.Types.ObjectId })
+    await createRefundCaseForOrder(order, 'event_cancelled', { flow: 'cash_pickup', actorRole: 'system' })
     return { status: 'refunded_cancelled_event' }
   }
 

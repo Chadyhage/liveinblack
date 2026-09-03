@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Plus,
   AlertCircle,
+  HandCoins,
 } from 'lucide-react'
 import { SOCIAL_NETWORKS, type SocialNetworkKey } from '@/lib/shared/social'
 import { regions } from '@/lib/shared/regions'
@@ -72,6 +73,24 @@ export interface PayoutStatusView {
   amountDueXOF: number
 }
 
+export interface OrganizerRefundCaseView {
+  id: string
+  cause: string
+  flow: string
+  status: string
+  amountXOF: number
+  paymentRail?: string | null
+  individualDestinationType?: string | null
+  originalPaymentDestinationMasked?: string | null
+  declaredReference?: string | null
+  declaredChannel?: string | null
+  proofs?: unknown[]
+  contestReason?: string | null
+  contestResolution?: string | null
+  contestResolvedAt?: string | null
+  createdAt?: string | null
+}
+
 const ZONE_OPTIONS = [{ id: 'international', name: 'International', flag: '🌍' }, ...regions]
 const subscribeToNothing = () => () => {}
 
@@ -111,10 +130,14 @@ export default function StudioClient({
   initialProfile,
   initialPayoutStatus,
   initialMomos,
+  initialFedapaySubAccountReference,
+  initialRefunds,
 }: {
   initialProfile: OrganizerProfileView
   initialPayoutStatus: PayoutStatusView
   initialMomos: Record<string, string>
+  initialFedapaySubAccountReference: string | null
+  initialRefunds: OrganizerRefundCaseView[]
 }) {
   const [profile, setProfile] = useState(initialProfile)
   const [saving, setSaving] = useState(false)
@@ -126,7 +149,7 @@ export default function StudioClient({
   const publicOrigin = useSyncExternalStore(subscribeToNothing, () => window.location.origin, () => '')
   const [crop, setCrop] = useState<{ kind: 'avatar' | 'banner'; src: string } | null>(null)
   
-  const [tab, setTab] = useQueryParamState<'page' | 'media' | 'paiements'>('tab', 'page')
+  const [tab, setTab] = useQueryParamState<'page' | 'media' | 'paiements' | 'remboursements'>('tab', 'page')
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#encaissement') setTab('paiements')
@@ -506,6 +529,16 @@ export default function StudioClient({
             >
               <Wallet size={15} />
               Encaissements
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'remboursements'}
+              onClick={() => setTab('remboursements')}
+              className={`studio-tab-btn ${tab === 'remboursements' ? 'active' : ''}`}
+            >
+              <HandCoins size={15} />
+              Remboursements
             </button>
           </div>
         </div>
@@ -1114,7 +1147,11 @@ export default function StudioClient({
 
         {/* ─────────────────── TAB 3: ENCAISSEMENTS ─────────────────── */}
         {tab === 'paiements' && (
-          <PayoutSection initialStatus={initialPayoutStatus} initialMomos={initialMomos} />
+          <PayoutSection initialStatus={initialPayoutStatus} initialMomos={initialMomos} initialFedapaySubAccountReference={initialFedapaySubAccountReference} />
+        )}
+
+        {tab === 'remboursements' && (
+          <OrganizerRefundsSection initialRefunds={initialRefunds} />
         )}
       </div>
 
@@ -1157,15 +1194,269 @@ export default function StudioClient({
   )
 }
 
+const REFUND_STATUS_LABELS: Record<string, string> = {
+  code_active: 'Retrait espèces en attente',
+  switched_individual: 'Individuel à préparer',
+  individual_generated: 'Individuel à préparer',
+  info_required: 'Coordonnées à vérifier',
+  to_refund: 'À rembourser',
+  declared: 'Déclaré au participant',
+  reimbursed: 'Remboursé',
+  contested: 'Contesté',
+  contest_resolved: 'Contestation traitée',
+  technical_failure: 'Incident technique',
+}
+
+const REFUND_CAUSE_LABELS: Record<string, string> = {
+  event_cancelled: 'Événement annulé',
+  postponed_declined: 'Report refusé',
+  cancellation_option: 'Option d’annulation',
+}
+
+function OrganizerRefundsSection({ initialRefunds }: { initialRefunds: OrganizerRefundCaseView[] }) {
+  const [refunds, setRefunds] = useState(initialRefunds)
+  const [declareCase, setDeclareCase] = useState<OrganizerRefundCaseView | null>(null)
+  const [resolveCase, setResolveCase] = useState<OrganizerRefundCaseView | null>(null)
+  const [reference, setReference] = useState('')
+  const [channel, setChannel] = useState('')
+  const [proofUrl, setProofUrl] = useState('')
+  const [proofUpload, setProofUpload] = useState<PublicMediaUploadReference | null>(null)
+  const [resolution, setResolution] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+
+  async function refresh() {
+    const res = await fetch('/api/organizer-refunds')
+    const data = await res.json().catch(() => null)
+    if (res.ok && Array.isArray(data?.refunds)) setRefunds(data.refunds)
+  }
+
+  async function submitDeclaration() {
+    if (!declareCase) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const res = await fetch(`/api/organizer-refunds/${declareCase.id}/declare`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference, channel, proofUrl, proofUpload: proofUpload || undefined }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'failed')
+      setDeclareCase(null)
+      setReference('')
+      setChannel('')
+      setProofUrl('')
+      setProofUpload(null)
+      await refresh()
+      setMessage('Remboursement déclaré au participant.')
+    } catch (error) {
+      const message = error instanceof Error && error.message === 'reference_already_used'
+        ? 'Cette référence a déjà été utilisée sur un autre remboursement. Vérifie la référence officielle.'
+        : "La déclaration n'a pas pu être enregistrée. Vérifie la référence, le canal et la preuve."
+      setMessage(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleProofFile(file: File | null) {
+    if (!file) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const upload = await uploadPublicMedia(file, 'refund-proof')
+      setProofUpload(upload)
+      setProofUrl('')
+      setMessage('Preuve téléversée. Tu peux maintenant déclarer le remboursement.')
+    } catch {
+      setMessage("La preuve n'a pas pu être téléversée. Utilise une image valide ou colle une URL de preuve.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function submitContestResolution() {
+    if (!resolveCase) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const res = await fetch(`/api/organizer-refunds/${resolveCase.id}/resolve-contest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'failed')
+      setResolveCase(null)
+      setResolution('')
+      await refresh()
+      setMessage('Contestation marquée comme traitée.')
+    } catch {
+      setMessage("La contestation n'a pas pu être traitée. Ajoute une décision claire et réessaie.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const declarable = refunds.filter((refund) => refund.flow === 'individual' && ['individual_generated', 'to_refund', 'contested'].includes(refund.status))
+
+  async function verifyDestination(refund: OrganizerRefundCaseView) {
+    setBusy(true)
+    setMessage('')
+    try {
+      const res = await fetch(`/api/organizer-refunds/${refund.id}/verify-destination`, { method: 'POST' })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'failed')
+      await refresh()
+      setMessage('Coordonnées vérifiées. Le dossier est prêt à rembourser.')
+    } catch {
+      setMessage("Les coordonnées n'ont pas pu être vérifiées. Réessaie après contrôle.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Card style={{ padding: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <h2 style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: 0 }}>Dossiers de remboursement</h2>
+          <a href="/api/organizer-refunds?format=csv" style={{ minHeight: 36, display: 'inline-flex', alignItems: 'center', padding: '0 12px', borderRadius: 999, border: '1px solid var(--border)', color: 'var(--primary)', textDecoration: 'none', fontSize: 'var(--font-size-footnote)', fontWeight: 800 }}>
+            Export CSV
+          </a>
+        </div>
+        <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', lineHeight: 1.55 }}>
+          Les montants sont calculés par Live In Black et ne sont pas modifiables. Déclare ici uniquement les remboursements individuels que tu as réellement exécutés.
+        </p>
+        {message && <p style={{ margin: '12px 0 0', color: 'var(--primary)', fontWeight: 700 }}>{message}</p>}
+      </Card>
+
+      {refunds.length === 0 ? (
+        <Card style={{ padding: 20 }}>
+          <p style={{ margin: 0, color: 'var(--text-muted)' }}>Aucun dossier de remboursement pour l’instant.</p>
+        </Card>
+      ) : (
+        <div style={{ display: 'grid', gap: 12 }}>
+          {refunds.map((refund) => (
+            <Card key={refund.id} style={{ padding: 16, display: 'grid', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div>
+                  <p style={{ margin: 0, color: 'var(--gold)', fontSize: 'var(--font-size-caption)', letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 800 }}>{REFUND_CAUSE_LABELS[refund.cause] || refund.cause}</p>
+                  <h3 style={{ margin: '5px 0 0', color: 'var(--text)', fontSize: 'var(--font-size-title-4)' }}>{fmtMoney(refund.amountXOF, 'XOF')}</h3>
+                </div>
+                <span style={{ alignSelf: 'start', padding: '5px 10px', borderRadius: 999, background: 'var(--primary-a10)', color: 'var(--primary)', fontSize: 'var(--font-size-caption-lg)', fontWeight: 800 }}>{REFUND_STATUS_LABELS[refund.status] || refund.status}</span>
+              </div>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', lineHeight: 1.5 }}>
+                {refund.flow === 'cash_pickup'
+                  ? 'Retrait espèces géré par le point attribué. Il sort de ta liste individuelle sauf si le participant bascule vers “Je ne peux pas me déplacer”.'
+                  : refund.individualDestinationType === 'locked_mobile_money'
+                    ? `Mobile Money d'origine verrouillé : ${refund.originalPaymentDestinationMasked || 'numéro masqué'}.`
+                    : 'Remboursement individuel à effectuer sur le compte vérifié fourni par le participant.'}
+              </p>
+              {refund.contestReason && <p style={{ margin: 0, color: 'var(--danger)', fontSize: 'var(--font-size-footnote)' }}>Contestation : {refund.contestReason}</p>}
+              {refund.contestResolution && <p style={{ margin: 0, color: 'var(--primary)', fontSize: 'var(--font-size-footnote)' }}>Décision : {refund.contestResolution}</p>}
+              {refund.declaredReference && <p style={{ margin: 0, color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-lg)' }}>Référence : {refund.declaredReference} · {refund.declaredChannel || 'canal non précisé'}</p>}
+              {Array.isArray(refund.proofs) && refund.proofs.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {refund.proofs.map((proof, index) => {
+                    const item = proof && typeof proof === 'object' ? proof as { url?: unknown; label?: unknown } : null
+                    const url = typeof item?.url === 'string' ? item.url : ''
+                    const label = typeof item?.label === 'string' && item.label.trim() ? item.label : `Preuve ${index + 1}`
+                    return url ? (
+                      <a key={`${url}-${index}`} href={url} target="_blank" rel="noreferrer" download style={{ color: 'var(--primary)', fontSize: 'var(--font-size-footnote)', fontWeight: 800 }}>
+                        {label}
+                      </a>
+                    ) : null
+                  })}
+                </div>
+              )}
+              {refund.status === 'info_required' && (
+                <Button variant="secondary" onClick={() => void verifyDestination(refund)} disabled={busy}>Vérifier les coordonnées</Button>
+              )}
+              {declarable.some((item) => item.id === refund.id) && (
+                <Button variant="primary" onClick={() => setDeclareCase(refund)}>Déclarer le remboursement effectué</Button>
+              )}
+              {refund.status === 'contested' && (
+                <Button variant="secondary" onClick={() => setResolveCase(refund)}>Marquer la contestation traitée</Button>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {declareCase && (
+        <Modal
+          onClose={() => setDeclareCase(null)}
+          title="Déclarer un remboursement"
+          subtitle={`${fmtMoney(declareCase.amountXOF, 'XOF')} · montant non modifiable`}
+          ariaLabel="Déclarer un remboursement individuel"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setDeclareCase(null)} disabled={busy}>Annuler</Button>
+              <Button variant="primary" onClick={() => void submitDeclaration()} disabled={busy || !reference.trim() || !channel.trim() || (!proofUrl.trim() && !proofUpload)} loading={busy} loadingText="Enregistrement…">
+                Déclarer
+              </Button>
+            </>
+          }
+        >
+          <div style={{ display: 'grid', gap: 10 }}>
+            <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Référence officielle du transfert" />
+            <Input value={channel} onChange={(e) => setChannel(e.target.value)} placeholder="Canal utilisé : MTN, Moov, banque…" />
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => void handleProofFile(e.target.files?.[0] || null)}
+              disabled={busy}
+              style={{ color: 'var(--text)', fontSize: 'var(--font-size-footnote)' }}
+            />
+            {proofUpload && <p style={{ margin: 0, color: 'var(--primary)', fontSize: 'var(--font-size-caption-lg)', fontWeight: 800 }}>Preuve téléversée et prête à être vérifiée.</p>}
+            <Input value={proofUrl} onChange={(e) => { setProofUrl(e.target.value); setProofUpload(null) }} placeholder="Ou colle une URL de preuve lisible" />
+            <p style={{ margin: 0, color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-lg)', lineHeight: 1.5 }}>Une fois déclaré, le participant peut confirmer la réception ou ouvrir une contestation. Aucun second remboursement automatique n’est lancé.</p>
+          </div>
+        </Modal>
+      )}
+
+      {resolveCase && (
+        <Modal
+          onClose={() => setResolveCase(null)}
+          title="Traiter la contestation"
+          subtitle="La preuve et la référence restent conservées ; aucun second paiement automatique n’est lancé."
+          ariaLabel="Traiter une contestation de remboursement"
+          actions={
+            <>
+              <Button variant="secondary" onClick={() => setResolveCase(null)} disabled={busy}>Annuler</Button>
+              <Button variant="primary" onClick={() => void submitContestResolution()} disabled={busy || !resolution.trim()} loading={busy} loadingText="Enregistrement…">
+                Enregistrer la décision
+              </Button>
+            </>
+          }
+        >
+          <Textarea value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Décision communiquée au client : transfert réussi, erreur corrigée, opérateur à contacter…" rows={5} />
+        </Modal>
+      )}
+    </div>
+  )
+}
+
 // ───────────────────────── Encaissement (Stripe Connect + Mobile Money) ─────
 
-function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutStatusView; initialMomos: Record<string, string> }) {
+function PayoutSection({
+  initialStatus,
+  initialMomos,
+  initialFedapaySubAccountReference,
+}: {
+  initialStatus: PayoutStatusView
+  initialMomos: Record<string, string>
+  initialFedapaySubAccountReference: string | null
+}) {
   const [status, setStatus] = useState(initialStatus)
   const [connecting, setConnecting] = useState(false)
   const [requesting, setRequesting] = useState(false)
   const [payoutMessage, setPayoutMessage] = useState('')
 
   const [momos, setMomos] = useState(initialMomos)
+  const [fedapaySubAccountReference, setFedapaySubAccountReference] = useState(initialFedapaySubAccountReference || '')
   const [openCountries, setOpenCountries] = useState<string[]>(Object.keys(initialMomos))
   const [addSel, setAddSel] = useState('')
   const [savingMomos, setSavingMomos] = useState(false)
@@ -1241,7 +1532,11 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
     const payload: Record<string, string> = {}
     for (const c of openCountries) if (momos[c]?.trim()) payload[c] = momos[c].trim()
     try {
-      const res = await fetch('/api/organizers/me/payout-momos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ momos: payload }) })
+      const res = await fetch('/api/organizers/me/payout-momos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ momos: payload, fedapaySubAccountReference }),
+      })
       const data = await res.json()
       if (!res.ok || !data.ok) {
         const errorText = typeof data.error === 'string' ? data.error : 'Numéro invalide.'
@@ -1252,11 +1547,14 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
         return
       }
       setMomos(data.momos)
+      setFedapaySubAccountReference(data.fedapaySubAccountReference || '')
       const n = Object.keys(data.momos).length
       setMomoMessage(
-        n
-          ? 'Numéros enregistrés avec succès. Chaque événement est versé sur le numéro correspondant à son pays.'
-          : "Aucun numéro enregistré — tes recettes Mobile Money resteront en attente jusqu'à l'ajout d'un compte."
+        data.fedapaySubAccountReference && data.momos?.bj
+          ? 'Compte FedaPay Marketplace Bénin enregistré. Tes ventes XOF peuvent être réparties immédiatement par FedaPay.'
+          : n
+            ? 'Numéros enregistrés. Ajoute aussi la référence du sous-compte FedaPay Marketplace pour publier au Bénin.'
+            : "Aucun numéro enregistré — ajoute ton numéro Bénin et ta référence FedaPay Marketplace avant de publier."
       )
     } catch {
       setMomoMessage('Enregistrement impossible — vérifie ta connexion.')
@@ -1331,7 +1629,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
               Paiements par Carte Bancaire (Stripe Connect)
             </h3>
             <p style={{ margin: '2px 0 0', fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)' }}>
-              Versements automatiques sur compte bancaire européen ou international sous 2 à 7 jours ouvrés.
+              Hors lancement Bénin : ce rail reste réservé aux événements carte/EUR existants. Les événements Bénin utilisent FedaPay Marketplace en XOF.
             </p>
           </div>
         </div>
@@ -1412,6 +1710,22 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           )}
         </div>
 
+        <div style={{ padding: 14, borderRadius: 14, border: '1px solid var(--border)', background: 'var(--surface-2)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label htmlFor="fedapay-sub-account" style={{ fontWeight: 750, fontSize: 'var(--font-size-body-sm)', color: 'var(--text)' }}>
+            Référence du sous-compte FedaPay Marketplace Bénin
+          </label>
+          <Input
+            id="fedapay-sub-account"
+            placeholder="Ex. SAC_xxxxx ou référence fournie par FedaPay"
+            value={fedapaySubAccountReference}
+            onChange={(e) => setFedapaySubAccountReference(e.target.value)}
+            style={{ fontSize: 'var(--font-size-footnote)' }}
+          />
+          <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>
+            Obligatoire au lancement Bénin : FedaPay répartit immédiatement la part organisateur vers ce sous-compte, tandis que Live In Black conserve ses frais de service.
+          </span>
+        </div>
+
         {openCountries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '36px 18px', background: 'var(--surface-2)', borderRadius: 12, border: '1px dashed var(--border)' }}>
             <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
@@ -1468,7 +1782,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
                     style={{ fontSize: 'var(--font-size-footnote)' }}
                   />
                   <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>
-                    {region?.momoOperators ? `Opérateurs acceptés : ${region.momoOperators.join(', ')}` : 'Opérateurs nationaux'}
+                    {region ? `Opérateurs Mobile Money nationaux · format ${region.dial}` : 'Opérateurs nationaux'}
                   </span>
                 </div>
               )
@@ -1482,7 +1796,7 @@ function PayoutSection({ initialStatus, initialMomos }: { initialStatus: PayoutS
           </div>
         )}
 
-        {openCountries.length > 0 && (
+        {(openCountries.length > 0 || fedapaySubAccountReference.trim()) && (
           <Button
             onClick={saveMomos}
             loading={savingMomos}

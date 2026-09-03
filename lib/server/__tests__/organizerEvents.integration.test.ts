@@ -64,8 +64,8 @@ function baseForm(overrides: Partial<EventFormInput> = {}): EventFormInput {
   return {
     name: 'Soirée Test',
     date: '2026-12-31',
-    city: 'Lomé',
-    region: 'Togo',
+    city: 'Cotonou',
+    region: 'Bénin',
     places: [{ id: '', type: 'Standard', price: 20, total: 100 }],
     ...overrides,
   }
@@ -83,14 +83,14 @@ describeIntegration('organizerEvents (intégration, vraie base) — CRUD événe
       expect(doc?.organizerId).toBe('org-1')
       expect(doc?.createdBy).toBe('org-1')
       expect(doc?.places[0].id).toBeTruthy()
+      expect(doc?.places[0].cancellationOptionEnabled).toBe(false)
     })
 
-    it('dérive EUR pour la France', async () => {
+    it('refuse les événements hors Bénin pour le lancement', async () => {
       const result = await createOrganizerEvent({ id: 'org-1' }, 'Organisateur Test', baseForm({ city: 'Paris', region: 'France' }))
-      expect(result.ok).toBe(true)
-      if (!result.ok) return
-      const doc = await Event.findById(result.eventId).lean()
-      expect(doc?.currency).toBe('EUR')
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error).toBe('benin_launch_region_required')
     })
 
     it('refuse une place de groupe sans prix', async () => {
@@ -99,6 +99,21 @@ describeIntegration('organizerEvents (intégration, vraie base) — CRUD événe
       expect(result.ok).toBe(false)
       if (result.ok) return
       expect(result.error).toBe('group_place_requires_price')
+    })
+
+    it("enregistre l'activation de l'option d'annulation par catégorie", async () => {
+      const result = await createOrganizerEvent(
+        { id: 'org-1' },
+        'Organisateur Test',
+        baseForm({ places: [{ id: '', type: 'Standard', price: 10000, total: 100, cancellationOptionEnabled: true }] })
+      )
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      const detail = await getMyOrganizerEventDetail({ id: 'org-1' }, result.eventId)
+      expect(detail.ok).toBe(true)
+      if (!detail.ok) return
+      expect(detail.event.places[0].cancellationOptionEnabled).toBe(true)
     })
   })
 

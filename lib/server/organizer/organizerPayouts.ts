@@ -78,7 +78,7 @@ export async function startStripeConnectOnboarding(caller: PayoutCaller, input: 
       const link = await stripe.accountLinks.create({ account: user.stripeAccountId, refresh_url, return_url, type: 'account_onboarding' })
       return { ok: true, url: link.url }
     } catch (err) {
-      // Même garde que refundStripeOrder (lib/server/eventRefunds.ts) : une
+      // Même garde que les autres intégrations Stripe : une
       // panne Stripe (clé absente en sandbox, indisponibilité API, compte
       // Connect invalide) ne doit jamais faire planter la route avec un 500
       // vide — l'organisateur doit repartir avec un message actionnable.

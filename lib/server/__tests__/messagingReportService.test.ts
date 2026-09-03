@@ -49,7 +49,6 @@ describe('messagingReportService', () => {
 
     expect(result).toEqual({ ok: true })
     expect(Report.create).toHaveBeenCalledWith({
-      fromId: 'u1',
       fromId: callerId,
       fromName: 'Alice A',
       targetId,

@@ -17,7 +17,7 @@ describe('providerProfileUtils', () => {
       city: ' Paris ',
       regionId: 'idf',
       website: '',
-      socialLinks: { instagram: '', tiktok: '', snapchat: '', x: '', facebook: '', youtube: '', website: ' https://site.test ' },
+      socialLinks: { instagram: '', tiktok: '', x: '', facebook: '', youtube: '', linkedin: '', website: ' https://site.test ' },
       prestataireTypes: ['dj'],
       zonesIntervention: ['idf'],
     })
@@ -28,7 +28,7 @@ describe('providerProfileUtils', () => {
       city: 'Paris',
       regionId: 'idf',
       website: 'https://legacy.test',
-      socialLinks: { instagram: '', tiktok: '', snapchat: '', x: '', facebook: '', youtube: '', website: 'https://site.test' },
+      socialLinks: { instagram: '', tiktok: '', x: '', facebook: '', youtube: '', linkedin: '', website: 'https://site.test' },
       prestataireTypes: ['dj'],
       zonesIntervention: ['idf'],
     })

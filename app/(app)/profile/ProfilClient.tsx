@@ -1134,7 +1134,7 @@ function DangerZoneCard() {
 
 const FAQ = [
   { q: 'Comment réserver un billet ?', a: 'Va sur l’onglet Événements, sélectionne la soirée de ton choix et clique sur Réservation. Choisis ton type de place et confirme.' },
-  { q: 'Puis-je annuler ma réservation ?', a: 'Les réservations sont fermes et définitives. En cas d’annulation d’événement par l’organisateur, un remboursement sera traité sous 5 jours ouvrés.' },
+  { q: 'Puis-je annuler ma réservation ?', a: 'Les réservations sont fermes et définitives hors option d’annulation valide. En cas d’annulation d’événement ou de report refusé dans les 24 heures, un dossier de remboursement est créé et traité dans les meilleurs délais.' },
   { q: 'Comment utiliser mes points ?', a: 'Tu gagnes 1 point par ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs (accès prioritaire, réductions, cadeaux).' },
   { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
 ]

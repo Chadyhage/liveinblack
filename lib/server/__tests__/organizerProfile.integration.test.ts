@@ -213,7 +213,19 @@ describeIntegration('organizerProfile (intégration, vraie base) — studio "Ma 
 
     const result = await uploadOrganizerProfileMedia(
       { id: userId },
-      { kind: 'avatar', upload: { url: 'https://cdn.test/video.mp4', resourceType: 'video', purpose: 'organizer-gallery' } }
+      {
+        kind: 'avatar',
+        upload: {
+          publicId: 'video',
+          format: 'mp4',
+          resourceType: 'video',
+          deliveryType: 'upload',
+          bytes: 1234,
+          version: 1,
+          signature: 'sig',
+          intentToken: 'intent',
+        },
+      }
     )
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toBe('invalid_media_type')
