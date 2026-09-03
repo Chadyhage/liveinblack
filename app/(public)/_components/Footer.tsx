@@ -41,9 +41,16 @@ const FOOTER_GROUPS = [
 
 const NO_FOOTER_ROUTES = ['/login', '/organizer-signup', '/provider-signup', '/reset-password', '/verify-email', '/confirmer-email']
 
+function shouldHideFooter(pathname: string) {
+  return NO_FOOTER_ROUTES.includes(pathname)
+    || pathname.startsWith('/providers/')
+    || pathname.startsWith('/events/')
+    || pathname.startsWith('/organizers/')
+}
+
 export default function Footer() {
   const pathname = usePathname()
-  if (NO_FOOTER_ROUTES.includes(pathname)) return null
+  if (shouldHideFooter(pathname)) return null
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>

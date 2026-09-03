@@ -268,19 +268,19 @@ export default function OrganizerOnboardingWizard({
 
   return (
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 8 : 20 }}>
-        <div>
+      <div style={{ maxWidth: mode === 'anonymous' ? 560 : 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 12 : 20 }}>
+        <div style={{ textAlign: mode === 'anonymous' ? 'center' : 'left' }}>
           <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 4px' }}>Compte Organisateur</h1>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ position: 'relative', display: 'flex', justifyContent: mode === 'anonymous' ? 'center' : 'space-between', marginBottom: 6 }}>
             <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
-            <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
+            <span style={{ position: mode === 'anonymous' ? 'absolute' : 'static', right: 0, fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
           </div>
           <div style={{ height: 5, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
@@ -345,14 +345,14 @@ export default function OrganizerOnboardingWizard({
                       onChange={(e) => set('noFixedAddress', e.target.checked)}
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
+                  <div className="lb-organizer-auth-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
                     <div>
                       <Label style={labelStyle}>Adresse e-mail (identifiant connexion) {requiredMark}</Label>
                       <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="ton@email.com" />
                     </div>
                     <div>
                       <Label style={labelStyle}>Mot de passe & confirmation {requiredMark}</Label>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div className="lb-organizer-password-grid" style={{ display: 'flex', gap: 6 }}>
                         <div style={{ position: 'relative', flex: 1 }}>
                           <Input
                             aria-label="Mot de passe"

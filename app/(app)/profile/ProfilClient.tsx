@@ -119,16 +119,15 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
 
   return (
     <main className={`profile-main lb-dashboard-page ${overviewStyles.root}`}>
-      <style>{`
-        .profile-quick-grid-density { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
-        .profile-settings { padding-bottom: 96px; }
-        @media (max-width: 780px) { .profile-quick-grid-density { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
-        @media (max-width: 480px) { .profile-quick-grid-density { grid-template-columns: minmax(0, 1fr) !important; } .profile-settings { padding-bottom: 72px; } }
-      `}</style>
+      <header className={overviewStyles.pageHeader}>
+        <p className={overviewStyles.eyebrow}>Espace client</p>
+        <h1>Bonjour {user.firstName || 'à toi'}</h1>
+        <p>Retrouve ton compte, tes billets et tes préférences au même endroit.</p>
+      </header>
       <div className={overviewStyles.grid}>
         <Card className={overviewStyles.identity}>
           <AvatarUpload user={user} setUser={setUser} />
-          <h1>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h1>
+          <h2>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
           <p className={overviewStyles.email}>{user.email}</p>
           <div className={overviewStyles.badges}>
             {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
@@ -159,11 +158,11 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
             </Card>
           )}
 
-          <div className={`${overviewStyles.quickGrid} profile-quick-grid-density`}>
-            <QuickAccessCard href="/profile/parametres" icon={<Settings size={19} />} label="Paramètres du compte" imagePosition="0% 0%" />
-            <QuickAccessCard href="/profile/billets" icon={<Ticket size={19} />} label="Mes billets" imagePosition="100% 0%" />
-            <QuickAccessCard href="/profile/interested-events" icon={<Heart size={19} />} label="Mes favoris" imagePosition="0% 100%" />
-            <QuickAccessCard href="/help" icon={<LifeBuoy size={19} />} label="Aide & FAQ" imagePosition="100% 100%" />
+          <div className={overviewStyles.quickGrid}>
+            <QuickAccessCard href="/profile/parametres" icon={<Settings size={19} />} label="Paramètres du compte" imagePosition="0% 17%" />
+            <QuickAccessCard href="/profile/billets" icon={<Ticket size={19} />} label="Mes billets" imagePosition="100% 17%" />
+            <QuickAccessCard href="/profile/interested-events" icon={<Heart size={19} />} label="Mes favoris" imagePosition="0% 83%" />
+            <QuickAccessCard href="/help" icon={<LifeBuoy size={19} />} label="Aide & FAQ" imagePosition="100% 83%" />
           </div>
         </div>
       </div>
@@ -191,14 +190,13 @@ function QuickAccessCard({ href, icon, label, imagePosition }: { href: string; i
     <Link
       href={href}
       className={overviewStyles.quickLink}
-      style={{ minHeight: 250, display: 'grid', gridTemplateRows: 'minmax(0, 2fr) minmax(82px, 1fr)', overflow: 'hidden' }}
     >
       <span
         className={overviewStyles.quickImage}
         aria-hidden="true"
-        style={{ minHeight: 166, display: 'block', backgroundImage: "url('/images/profile/profile-navigation-sprite.png')", backgroundSize: '200% 200%', backgroundRepeat: 'no-repeat', backgroundPosition: imagePosition }}
+        style={{ backgroundPosition: imagePosition }}
       />
-      <span className={overviewStyles.quickContent} style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+      <span className={overviewStyles.quickContent}>
         <span className={overviewStyles.quickIcon}>{icon}</span>
         <span className={overviewStyles.quickLabel}>{label}</span>
       </span>
@@ -291,6 +289,7 @@ function AvatarUpload({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
       <Button
         type="button"
         variant="ghost"
+        className={overviewStyles.avatarButton}
         aria-label="Changer la photo de profil"
         onClick={() => fileInputRef.current?.click()}
         style={{
@@ -425,7 +424,6 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
 
   return (
     <main className="profile-settings lb-dashboard-page">
-      <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>Paramètres</h1>
       <style>{`
         @media (max-width: 480px) {
           .profile-settings { padding-bottom: 120px; }
@@ -444,6 +442,35 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
           </div>
         </div>
 
+        <header className="settings-header">
+          <div>
+            <h1>Paramètres</h1>
+            <p>Gère ton profil, tes préférences de confidentialité et la sécurité de ton compte.</p>
+          </div>
+        </header>
+
+        <nav className="settings-tabs" aria-label="Catégories des paramètres">
+          {settingGroups.map((group) => {
+            const Icon = group.icon
+            const active = group.id === activeGroup && tokens.length === 0
+            return (
+              <Link
+                key={group.id}
+                href={`/profile/parametres?section=${group.id}`}
+                className={`settings-nav-item${active ? ' settings-nav-item--active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+                style={{ '--setting-color': 'var(--primary)' } as React.CSSProperties}
+              >
+                <span className="settings-nav-icon"><Icon size={16} aria-hidden="true" /></span>
+                <span>
+                  <strong>{group.shortTitle}</strong>
+                  <small>{group.description}</small>
+                </span>
+              </Link>
+            )
+          })}
+        </nav>
+
         <section className="settings-content" aria-live="polite">
           {filtered.length === 0 ? (
             <div className="settings-empty">
@@ -459,7 +486,10 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
                 const groupEntries = filtered.filter((entry) => group.ids.includes(entry.id))
                 if (groupEntries.length === 0) return null
                 return <section key={group.id} className="settings-group" aria-labelledby={`settings-group-${group.id}`}>
-                  {tokens.length > 0 && <h3 id={`settings-group-${group.id}`}>{group.title}</h3>}
+                  <div className="settings-group-heading">
+                    <h2 id={`settings-group-${group.id}`}>{group.title}</h2>
+                    <p>{group.description}</p>
+                  </div>
                   <div className="settings-card-grid">{groupEntries.map((entry) => <div key={entry.id} id={`setting-${entry.id}`}>{entry.render({ user, setUser })}</div>)}</div>
                 </section>
               })}
@@ -631,75 +661,58 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
   }
 
   return (
-    <Card>
-      <EyebrowLabel>Informations personnelles</EyebrowLabel>
-      <Label>Prénom / Nom</Label>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8, opacity: onCooldown ? 0.5 : 1 }}>
-        <Input aria-label="Prénom" value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
-        <Input aria-label="Nom" value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
+    <Card className="settings-identity-card">
+      <header className="settings-personal-heading">
+        <h3>Informations personnelles</h3>
+        <p>Modifie uniquement la partie dont tu as besoin.</p>
+      </header>
+
+      <div className="settings-personal-sections">
+        <section className="settings-personal-section">
+          <div className="settings-personal-section-heading">
+            <h4>Identité</h4>
+            <p>Le nom utilisé sur ton compte.</p>
+          </div>
+          <Label>Prénom et nom</Label>
+          <div className="settings-personal-fields" style={{ opacity: onCooldown ? 0.5 : 1 }}>
+            <Input aria-label="Prénom" value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
+            <Input aria-label="Nom" value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
+          </div>
+          {onCooldown && nextChangeDate && <p className="settings-personal-note">Prochain changement le {nextChangeDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
+          <Button onClick={saveName} disabled={saving || !nameChanged || onCooldown} loading={saving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer le nom</Button>
+          {msg && <Toast text={msg.text} kind={msg.kind} />}
+        </section>
+
+        <section className="settings-personal-section">
+          <div className="settings-personal-section-heading">
+            <h4>Téléphone</h4>
+            <p>Pour les échanges liés à tes réservations.</p>
+          </div>
+          <Label>Numéro</Label>
+          <div className="settings-phone-fields">
+            <Select aria-label="Indicatif téléphonique" value={dialCode} onChange={setDialCode} options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))} size="sm" />
+            <Input aria-label="Numéro de téléphone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro" />
+          </div>
+          <p className="settings-personal-note">Partagé uniquement avec les professionnels avec qui tu échanges.</p>
+          <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer le téléphone</Button>
+          {phoneMsg && <Toast text={phoneMsg.text} kind={phoneMsg.kind} />}
+        </section>
+
+        <section className="settings-personal-section">
+          <div className="settings-personal-section-heading">
+            <h4>Informations facultatives</h4>
+            <p>Utilisées uniquement pour des statistiques anonymes.</p>
+          </div>
+          <Label>Date de naissance et genre</Label>
+          <div className="settings-personal-fields profile-demo-row">
+            <Input aria-label="Date de naissance" type="date" value={birthDate} min={minBirthDate} max={maxBirthDate} onChange={(event) => setBirthDate(event.target.value)} style={{ colorScheme: 'light dark' }} />
+            <Select aria-label="Genre" value={gender} onChange={setGender} placeholder="Genre —" options={[{ value: 'femme', label: 'Femme' }, { value: 'homme', label: 'Homme' }, { value: 'autre', label: 'Autre' }]} />
+          </div>
+          <p className="settings-personal-note">Ces informations ne sont jamais affichées sur ton profil.</p>
+          <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer ces infos</Button>
+          {demoMsg && <Toast text={demoMsg.text} kind={demoMsg.kind} />}
+        </section>
       </div>
-      {onCooldown && nextChangeDate && (
-        <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--gold)', margin: '0 0 10px' }}>
-          Prochain changement possible le {nextChangeDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      )}
-      <Button onClick={saveName} disabled={saving || !nameChanged || onCooldown} loading={saving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
-        Enregistrer le nom
-      </Button>
-      {msg && <Toast text={msg.text} kind={msg.kind} />}
-
-      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
-
-      <Label>Téléphone</Label>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <Select
-          aria-label="Indicatif téléphonique"
-          value={dialCode}
-          onChange={setDialCode}
-          options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))}
-          size="sm"
-        />
-        <Input aria-label="Numéro de téléphone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro sans l'indicatif" style={{ flex: 1 }} />
-      </div>
-      <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
-        Utilisé pour te contacter et partagé avec les organisateurs/prestataires avec qui tu échanges en messagerie.
-      </p>
-      <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
-        Enregistrer le téléphone
-      </Button>
-      {phoneMsg && <Toast text={phoneMsg.text} kind={phoneMsg.kind} />}
-
-      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
-
-      <div className="profile-demo-row" style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <Input
-          aria-label="Date de naissance"
-          type="date"
-          value={birthDate}
-          min={minBirthDate}
-          max={maxBirthDate}
-          onChange={(event) => setBirthDate(event.target.value)}
-          style={{ flex: 1, colorScheme: 'light dark' }}
-        />
-        <Select
-          aria-label="Genre"
-          value={gender}
-          onChange={setGender}
-          placeholder="Genre —"
-          options={[
-            { value: 'femme', label: 'Femme' },
-            { value: 'homme', label: 'Homme' },
-            { value: 'autre', label: 'Autre' },
-          ]}
-        />
-      </div>
-      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 12px' }}>
-        Optionnel — sert uniquement aux statistiques anonymes des organisateurs. Jamais affiché sur ton profil, jamais utilisé comme contrôle d&apos;âge.
-      </p>
-      <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>
-        Enregistrer ces infos
-      </Button>
-      {demoMsg && <Toast text={demoMsg.text} kind={demoMsg.kind} />}
     </Card>
   )
 }

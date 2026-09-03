@@ -249,6 +249,14 @@ function isCurrentPath(pathname: string, href: string) {
 // liens publics, un pour le dashboard) était confus — un seul point d'entrée,
 // comme sur Facebook mobile.
 const PRIMARY_HREFS = ['/home', '/events', '/providers', '/organizers']
+const NO_PUBLIC_NAV_ROUTES = ['/login', '/provider-signup', '/organizer-signup']
+
+function shouldHidePublicNav(pathname: string) {
+  return NO_PUBLIC_NAV_ROUTES.includes(pathname)
+    || pathname.startsWith('/providers/')
+    || pathname.startsWith('/events/')
+    || pathname.startsWith('/organizers/')
+}
 
 export default function PublicNav({ dashboardLinks }: { dashboardLinks?: DashboardNavLink[] } = {}) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -269,7 +277,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
   }, [])
 
   useEffect(() => {
-    if (!mobileOpen) return
+    if (!mobileOpen || shouldHidePublicNav(pathname)) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     function handleKeyDown(event: KeyboardEvent) {
@@ -280,7 +288,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [mobileOpen])
+  }, [mobileOpen, pathname])
 
   // Au-delà de 1100px le bouton hamburger disparaît (cf. règle CSS
   // .lb-navlink-mobile plus bas) : sans ce listener, un tiroir resté ouvert
@@ -295,6 +303,8 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
     mq.addEventListener('change', handleChange)
     return () => mq.removeEventListener('change', handleChange)
   }, [mobileOpen])
+
+  if (shouldHidePublicNav(pathname)) return null
 
   return (
     <header
@@ -534,7 +544,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           border-radius: 12px;
         }
         .lb-public-nav__brand-logo {
-          width: clamp(128px, 11vw, 156px);
+          width: clamp(112px, 9.5vw, 136px);
           height: auto;
           max-width: none;
           object-fit: contain;
@@ -626,7 +636,7 @@ export default function PublicNav({ dashboardLinks }: { dashboardLinks?: Dashboa
           .lb-public-nav { padding: 7px 8px 0 !important; }
           .lb-public-nav__inner { min-height: 44px; padding: 4px 6px 4px 8px; gap: 5px; border-radius: 15px; }
           .lb-public-nav__brand { height: 46px; min-height: 46px; }
-          .lb-public-nav__brand-logo { width: min(34vw, 132px); height: auto; max-width: none; }
+          .lb-public-nav__brand-logo { width: min(30vw, 116px); height: auto; max-width: none; }
           .lb-header-search, .lb-header-search form { width: 100% !important; }
           .lb-header-search__input { width: auto !important; flex: 1; }
         }

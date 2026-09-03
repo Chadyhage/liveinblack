@@ -1,10 +1,11 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import { ArrowUpRight, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import { getProviderCategories, PROVIDER_CATEGORIES } from '@/lib/shared/providerCategories'
 import { getRegionName } from '@/lib/shared/locations'
 import { regions } from '@/lib/shared/regions'
-import { Button, HiddenField, Input, Mascot, PageLinks } from '@/app/components/ui'
+import { Button, HiddenField, Input, PageLinks } from '@/app/components/ui'
 import FilterSelect from '../_components/FilterSelect'
 import ProviderDirectoryCard from '../_components/ProviderDirectoryCard'
 import styles from './providers.module.css'
@@ -105,6 +106,7 @@ export default async function PublicPrestatairesPage({
     <main className={styles.page}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }} />
       <section className={styles.hero} aria-labelledby="providers-title">
+        <p className={styles.heroEyebrow}>L’annuaire des professionnels</p>
         <h1 id="providers-title">Les talents derrière chaque expérience.</h1>
         <p className={styles.intro}>
           DJ, lieux, photographes, traiteurs et équipes techniques : trouvez le partenaire qui donnera vie à votre prochain événement.
@@ -123,7 +125,7 @@ export default async function PublicPrestatairesPage({
               containerStyle={{ flex: 1, minWidth: 0 }}
               style={{ border: 0, background: 'transparent', boxShadow: 'none' }}
             />
-            <Button type="submit" className={styles.searchButton} style={{ minWidth: 136, minHeight: 40, borderRadius: 13, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-lg)' }}>
+            <Button type="submit" className={styles.searchButton}>
               <Search size={19} strokeWidth={2.2} aria-hidden="true" />
               <span>Rechercher</span>
             </Button>
@@ -134,10 +136,10 @@ export default async function PublicPrestatairesPage({
               defaultValue={region}
               ariaLabel="Filtrer par région"
               options={[{ value: '', label: 'Toutes les régions' }, ...regions.map((item) => ({ value: item.id, label: `${item.flag} ${item.name}` }))]}
-              style={{ minHeight: 40, borderRadius: 15, background: 'var(--field-bg)', borderColor: 'var(--border)', fontSize: 'var(--font-size-body-sm)', padding: '0 14px' }}
+              style={{ minHeight: 42, borderRadius: 'var(--radius-control)', background: 'var(--field-bg)', borderColor: 'var(--border)', fontSize: 'var(--font-size-body-sm)', padding: '0 14px' }}
             />
           </div>
-          <Button type="submit" variant="secondary" className={styles.filterButton} style={{ minHeight: 40, borderRadius: 15, background: 'var(--fill-secondary)', color: 'var(--text)', fontSize: 'var(--font-size-body-lg)' }}>Appliquer</Button>
+          <Button type="submit" variant="secondary" className={styles.filterButton}>Appliquer</Button>
         </form>
       </section>
 
@@ -147,25 +149,26 @@ export default async function PublicPrestatairesPage({
             <p className={styles.sectionKicker}><SlidersHorizontal size={18} aria-hidden="true" /> Explorer</p>
             <h2 id="directory-title">Tous les prestataires</h2>
           </div>
-          <p className={styles.resultCount} aria-live="polite">{filtered.length} profil{filtered.length > 1 ? 's' : ''}</p>
-          <p style={{ color: 'var(--text-muted)' }} aria-live="polite">{total} résultat{total > 1 ? 's' : ''} au total</p>
+          <p className={styles.resultCount} aria-live="polite">{total} profil{total > 1 ? 's' : ''}</p>
         </div>
 
-        <nav className={styles.categories} aria-label="Filtrer par métier">
-          <Link href={categoryHref()} className={`${styles.categoryChip} ${!category ? styles.categoryChipActive : ''}`} aria-current={!category ? 'page' : undefined}>
-            Tous <span>{providers.length}</span>
-          </Link>
-          {PROVIDER_CATEGORIES.filter((item) => counts.get(item.id)).map((item) => (
-            <Link
-              key={item.id}
-              href={categoryHref(item.id)}
-              className={`${styles.categoryChip} ${category === item.id ? styles.categoryChipActive : ''}`}
-              aria-current={category === item.id ? 'page' : undefined}
-            >
-              {item.label} <span>{counts.get(item.id) || 0}</span>
+        {(total > 0 || hasFilters) && (
+          <nav className={styles.categories} aria-label="Filtrer par métier">
+            <Link href={categoryHref()} className={`${styles.categoryChip} ${!category ? styles.categoryChipActive : ''}`} aria-current={!category ? 'page' : undefined}>
+              Tous <span>{total}</span>
             </Link>
-          ))}
-        </nav>
+            {PROVIDER_CATEGORIES.filter((item) => counts.get(item.id)).map((item) => (
+              <Link
+                key={item.id}
+                href={categoryHref(item.id)}
+                className={`${styles.categoryChip} ${category === item.id ? styles.categoryChipActive : ''}`}
+                aria-current={category === item.id ? 'page' : undefined}
+              >
+                {item.label} <span>{counts.get(item.id) || 0}</span>
+              </Link>
+            ))}
+          </nav>
+        )}
 
         {hasFilters && (
           <div className={styles.activeFilters}>
@@ -188,10 +191,24 @@ export default async function PublicPrestatairesPage({
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <Mascot mood="search" size={250} />
-            <h3>Aucun prestataire trouvé</h3>
-            <p>Élargissez la zone, changez de métier ou essayez une autre recherche.</p>
-            <Link href="/providers">Voir tous les prestataires</Link>
+            <div className={styles.emptyVisual} aria-hidden="true">
+              <Image
+                src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80"
+                alt=""
+                fill
+                className={styles.emptyImage}
+                sizes="(max-width: 680px) 100vw, 38vw"
+              />
+              <span>Talents</span>
+            </div>
+            <div className={styles.emptyContent}>
+              <p className={styles.emptyEyebrow}>{hasFilters ? 'Aucun résultat' : 'Annuaire en préparation'}</p>
+              <h3>{hasFilters ? 'Aucun professionnel ne correspond à ces critères.' : 'Les talents qui font vivre vos événements arrivent.'}</h3>
+              <p>{hasFilters ? 'Essayez un autre métier, une autre région ou repartez de tout l’annuaire.' : 'DJ, lieux, image, son et création rejoignent progressivement notre sélection.'}</p>
+              <Link href={hasFilters ? '/providers' : '/provider-signup'}>
+                {hasFilters ? 'Effacer les filtres' : 'Proposer mes services'} <span aria-hidden="true">↗</span>
+              </Link>
+            </div>
           </div>
         )}
 
@@ -199,15 +216,17 @@ export default async function PublicPrestatairesPage({
           <PageLinks page={safePage} pageCount={totalPages} makeHref={makeHref} totalItems={total} pageSize={pageSize} />
         </div>
 
-        <aside className={styles.cta}>
-          <span className={styles.ctaIcon} aria-hidden="true"><Sparkles size={26} /></span>
-          <div>
-            <p className={styles.ctaKicker}>Professionnels</p>
-            <h2>Votre savoir-faire mérite d’être vu.</h2>
-            <p>Créez votre vitrine, présentez vos offres et échangez directement avec les organisateurs.</p>
-          </div>
-          <Link href="/provider-signup">Devenir prestataire <ArrowUpRight size={19} aria-hidden="true" /></Link>
-        </aside>
+        {filtered.length > 0 && (
+          <aside className={styles.cta}>
+            <span className={styles.ctaIcon} aria-hidden="true"><Sparkles size={26} /></span>
+            <div>
+              <p className={styles.ctaKicker}>Professionnels</p>
+              <h2>Votre savoir-faire mérite d’être vu.</h2>
+              <p>Créez votre vitrine, présentez vos offres et échangez directement avec les organisateurs.</p>
+            </div>
+            <Link href="/provider-signup">Devenir prestataire <ArrowUpRight size={19} aria-hidden="true" /></Link>
+          </aside>
+        )}
       </section>
     </main>
   )

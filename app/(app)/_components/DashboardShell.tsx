@@ -309,7 +309,7 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <Link href="/profile" className={styles.brand} aria-label="LIVEINBLACK — vue d’ensemble">
-              <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} priority />
+              <Image src="/branding/liveinblack-logo-header.png" alt="LIVEINBLACK" width={1876} height={285} className={styles.brandLogo} priority />
             </Link>
             <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
             <div className={styles.account}>
@@ -407,8 +407,8 @@ function SidebarItem({
             minWidth: 0,
             alignItems: 'center',
             gap: 9,
-            minHeight: 44,
-            padding: '8px 7px 8px 10px',
+            minHeight: 42,
+            padding: '7px 10px 7px 13px',
             color: active ? 'var(--text)' : 'var(--text-muted)',
             fontSize: 'var(--font-size-body-lg)',
             fontWeight: active ? 700 : 600,
@@ -450,8 +450,8 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
         display: 'flex',
         alignItems: 'center',
         gap: 9,
-        minHeight: compact ? 42 : 46,
-        padding: compact ? '8px 11px' : '10px 12px',
+        minHeight: compact ? 40 : 44,
+        padding: compact ? '7px 13px' : '8px 14px',
         borderRadius: 'var(--radius-control)',
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
         background: active ? 'var(--primary-a12)' : 'transparent',

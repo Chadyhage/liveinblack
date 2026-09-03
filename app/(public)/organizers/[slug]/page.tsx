@@ -1,16 +1,14 @@
 import type { Metadata } from 'next'
 import { getOrganizerBySlug } from '@/lib/server/organizer/organizers'
 import OrganizerDetailContent from './OrganizerDetailContent'
+import styles from './OrganizerDetailContent.module.css'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 export const dynamic = 'force-dynamic'
 
-// Le rendu proprement dit vit dans OrganizerDetailContent.tsx, partagé avec
-// la route interceptée app/(public)/@modal/(.)organizers/[slug]/page.tsx qui
-// affiche ce même contenu en modal glissante quand on navigue depuis une
-// carte organisateur ; cette page-ci reste la cible link-based (visite
-// directe, refresh, nouvel onglet).
+// La fiche reste une page dédiée : le clic et le rafraîchissement gardent le
+// même rendu et le même comportement de retour vers l'annuaire.
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -33,7 +31,7 @@ export default async function PublicOrganizerPage({ params }: { params: Promise<
   const { slug } = await params
 
   return (
-    <main className="lb-public-detail-page" style={{ maxWidth: 1260, margin: '0 auto', padding: '8px clamp(8px, 1vw, 14px) 30px', width: '100%' }}>
+    <main className={`lb-public-detail-page ${styles.detailPage}`}>
       <OrganizerDetailContent slug={slug} />
     </main>
   )

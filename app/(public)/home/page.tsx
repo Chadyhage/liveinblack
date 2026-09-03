@@ -1,4 +1,4 @@
-import { ActionLink, Card, EditorialImageCard } from '@/app/components/ui'
+import { Card, EditorialImageCard } from '@/app/components/ui'
 import { auth } from '@/auth'
 import { hasAuthSessionCookie } from '@/lib/server/authSessionCookie'
 import { listActiveInterestSignals } from '@/lib/server/events/eventInterests'
@@ -236,10 +236,7 @@ export default async function AccueilPage() {
         )}
 
         {session?.user && recommendations.length > 0 && (
-          <Section eyebrow="Rien que pour toi" title="Nos recommandations pour toi" sub="Selon tes goûts, tes favoris et tes réservations.">
-            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-18px 0 16px' }}>
-              <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, textDecoration: 'none' }}>Régler mes goûts →</Link>
-            </div>
+          <Section eyebrow="Rien que pour toi" title="Nos recommandations pour toi" sub="Selon tes goûts, tes favoris et tes réservations." actionHref="/profile" actionLabel="Régler mes goûts">
             <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
               {recommendations.map(({ event, reason }, index) => <HomeEventCard key={event.id} event={event} reason={reason} fallbackImage={HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length]} />)}
             </div>
@@ -250,7 +247,7 @@ export default async function AccueilPage() {
           <section style={{ maxWidth: 860, margin: '38px auto 0', padding: '0 22px' }}>
             <Card
               accent="var(--primary-a35)"
-              style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'linear-gradient(120deg,var(--primary-a12),var(--card-bg)),var(--surface)' }}
+              style={{ borderRadius: card.borderRadius, boxShadow: card.boxShadow, padding: '22px 24px', background: 'var(--surface)' }}
             >
               <p style={{ margin: 0, color: 'var(--accent-text)', fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '.07em' }}>Personnalise ton expérience</p>
               <h2 style={{ margin: '7px 0 5px', fontSize: 'var(--font-size-headline-lg)' }}>Des soirées vraiment faites pour toi</h2>
@@ -261,25 +258,22 @@ export default async function AccueilPage() {
         )}
 
         {/* ÉVÉNEMENTS À DÉCOUVRIR */}
-        {(!session?.user || recommendations.length === 0) && <Section eyebrow="À l'affiche" title="Des soirées à découvrir" sub="Explore librement. Pour réserver et garder ton billet, il te suffit d'un compte.">
+        {(!session?.user || recommendations.length === 0) && <Section eyebrow="À l'affiche" title="Des soirées à découvrir" sub="Explore librement. Pour réserver et garder ton billet, il te suffit d'un compte." actionHref="/events" actionLabel="Tout voir">
           {events.length === 0 ? (
-            <EmptyCard text="De nouvelles soirées arrivent très vite." ctaHref="/events" ctaLabel="Voir la page événements" />
+            <EmptyCard kind="events" ctaHref="/events" ctaLabel="Explorer les événements" />
           ) : (
             <>
               <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
                 {events.map((event, index) => <HomeEventCard key={event.id} event={event} eager={index === 0} fallbackImage={HOME_EVENT_FALLBACKS[index % HOME_EVENT_FALLBACKS.length]} />)}
-              </div>
-              <div style={{ textAlign: 'center', marginTop: 22 }}>
-                <Link href="/events" style={btnGhost}>Tout voir</Link>
               </div>
             </>
           )}
         </Section>}
 
         {/* PRESTATAIRES À LA UNE */}
-        <Section eyebrow="L'annuaire" title="Les prestataires de la nuit" sub="DJ, salles, sono, boissons… Trouve le bon prestataire et contacte-le en un clic.">
+        <Section eyebrow="L'annuaire" title="Les prestataires de la nuit" sub="DJ, salles, sono, boissons… Trouve le bon prestataire et contacte-le en un clic." actionHref="/providers" actionLabel="Tous les prestataires">
           {featuredProviders.length === 0 ? (
-            <EmptyCard text="Les premiers prestataires arrivent très vite." ctaHref="/providers" ctaLabel="Voir l'annuaire" />
+            <EmptyCard kind="providers" ctaHref="/providers" ctaLabel="Explorer l’annuaire" />
           ) : (
             <>
               <div className={`${styles.contentGrid} ${styles.mobileRail}`}>
@@ -288,7 +282,7 @@ export default async function AccueilPage() {
                   const pc = categories[0] || getProviderCategory(p.prestataireType)
                   const coverImage = reliablePhotoUrl(p.coverUrl || firstOfferImage(p.catalog) || p.photoUrl, p.userId, 440, 248, HOME_PROVIDER_FALLBACKS[index % HOME_PROVIDER_FALLBACKS.length])
                   return (
-                    <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
+                    <Link key={p.userId} href={`/providers/${encodeURIComponent(p.userId)}`} className={`lb-card ${styles.compactSquareCard}`} style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
                       <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-2)', overflow: 'hidden' }}>
                         <Image src={coverImage} alt="" fill loading={index === 0 ? 'eager' : undefined} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 280px" />
                         <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--image-text)', background: 'var(--media-panel)', border: `1px solid ${pc.color}`, padding: '5px 11px', borderRadius: 999 }}>
@@ -314,15 +308,12 @@ export default async function AccueilPage() {
                   )
                 })}
               </div>
-              <div style={{ textAlign: 'center', marginTop: 22 }}>
-                <Link href="/providers" style={btnGhost}>Tous les prestataires</Link>
-              </div>
             </>
           )}
         </Section>
 
         {/* POURQUOI CRÉER UN COMPTE */}
-        {!session?.user && <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :">
+        {!session?.user && <Section eyebrow="Ton compte" title="Pourquoi créer un compte ?" sub="Gratuit, en 30 secondes. Et tu débloques tout ça :" actionHref="/login?mode=register" actionLabel="Créer mon compte">
           <div className={styles.benefitGrid}>
             {[
               ['Réserve tes billets', 'Paiement sécurisé, billet instantané.'],
@@ -336,13 +327,10 @@ export default async function AccueilPage() {
               </Card>
             ))}
           </div>
-          <div style={{ textAlign: 'center', marginTop: 26 }}>
-            <Link href="/login?mode=register" className={styles.primaryButton}>Créer mon compte gratuitement</Link>
-          </div>
         </Section>}
 
         {/* COMMENT ÇA MARCHE */}
-        {!session?.user && <Section eyebrow="Simple" title="Comment ça marche">
+        {!session?.user && <Section eyebrow="Simple" title="Comment ça marche" actionHref="/about" actionLabel="En savoir plus">
           <div className={styles.contentGrid}>
             {[
               ['01', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80', 'Deux amis découvrent les lieux de sortie disponibles', 'Découvre une soirée', 'Parcours les événements près de chez toi et trouve l’ambiance qui te ressemble.'],
@@ -352,108 +340,68 @@ export default async function AccueilPage() {
               <EditorialImageCard key={n} src={src} alt={alt} badge={n} title={title} description={description} />
             ))}
           </div>
-          <div style={{ marginTop: 28, textAlign: 'center' }}>
-            <ActionLink href="/about">Découvrir le fonctionnement complet</ActionLink>
-          </div>
         </Section>}
 
         {/* ORGANISATEURS + PRESTATAIRES */}
-        {!session?.user && <Section eyebrow="Tu fais vivre la nuit ?" title="Organisateurs & prestataires">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 24 }}>
-            <div style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 24,
-              padding: 16,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              <div>
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
-                  <Image src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80" alt="Organisateur de soirée" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
-                </div>
-                <div style={{ padding: '0 8px 12px' }}>
-                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 8px' }}>Organisateur</p>
-                  <h3 style={{ fontSize: 'clamp(20px, 2.2vw, 24px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-.02em', lineHeight: 1.25, color: 'var(--text)' }}>Crée, vends, gère tes soirées</h3>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {['Crée et publie ton événement', 'Vends tes billets en ligne', 'Gère les invités & la guestlist', 'Scanne les QR à l\'entrée', 'Précommandes & POS sur place', 'Booste ta visibilité', 'Statistiques en temps réel'].map((f) => (
-                      <li key={f} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.45 }}>
-                        <span style={{ color: 'var(--primary)', fontSize: 12, flexShrink: 0 }}>◆</span>
-                        <span>{f}</span>
+        {!session?.user && <Section className={styles.roleSection} eyebrow="Pour les professionnels" title="Organisateurs & prestataires" sub="Deux espaces dédiés pour faire connaître ton activité et gérer chaque opportunité simplement.">
+          <div className={styles.roleGrid}>
+            <article className={styles.roleCard}>
+              <div className={styles.roleVisual}>
+                <Image src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80" alt="Organisateur préparant un événement" fill className={styles.roleImage} sizes="(max-width: 640px) 100vw, 42vw" />
+                <div className={styles.roleImageScrim} />
+                <span className={styles.roleNumber}>01</span>
+                <p className={styles.roleVisualCaption}>Tout piloter.<br />Au même endroit.</p>
+              </div>
+              <div className={styles.roleBody}>
+                <div className={styles.roleContent}>
+                  <p className={styles.roleEyebrow}>Organisateur</p>
+                  <h3 className={styles.roleTitle}>Crée, vends et gère tes soirées</h3>
+                  <p className={styles.roleSummary}>De la publication au contrôle des entrées, pilote ton événement depuis un seul espace.</p>
+                  <ul className={styles.roleFeatures}>
+                    {['Publie tes événements', 'Vends tes billets', 'Gère les entrées', 'Suis tes résultats'].map((feature) => (
+                      <li key={feature} className={styles.roleFeature}>
+                        <span className={styles.roleFeatureMark} aria-hidden="true" />
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
+                <div className={styles.roleActionWrap}>
+                  <Link href="/organizer-signup" className={`${styles.roleAction} ${styles.roleActionPrimary}`}>
+                    Créer un espace organisateur <span aria-hidden="true">↗</span>
+                  </Link>
+                </div>
               </div>
-              <div style={{ padding: '0 8px 8px' }}>
-                <Link href="/login?mode=register" style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%',
-                  minHeight: 48,
-                  padding: '12px 20px',
-                  borderRadius: 14,
-                  background: 'var(--primary)',
-                  color: '#FFFFFF',
-                  fontSize: 'var(--font-size-body-lg)',
-                  fontWeight: 750,
-                  textDecoration: 'none',
-                }}>
-                  Créer un espace organisateur
-                </Link>
-              </div>
-            </div>
+            </article>
 
-            <div style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 24,
-              padding: 16,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              <div>
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', borderRadius: 16, overflow: 'hidden', marginBottom: 20 }}>
-                  <Image src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80" alt="Prestataire événementiel" fill style={{ objectFit: 'cover' }} sizes="(max-width: 900px) 100vw, 540px" />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6))' }} />
-                </div>
-                <div style={{ padding: '0 8px 12px' }}>
-                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 8px' }}>Prestataire</p>
-                  <h3 style={{ fontSize: 'clamp(20px, 2.2vw, 24px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-.02em', lineHeight: 1.25, color: 'var(--text)' }}>Développe ton activité</h3>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {['Crée un profil public (vitrine)', 'Présente tes services & ton portfolio', 'Sois visible des organisateurs & clients', 'Reçois des demandes et devis', 'DJ, photo, vidéo, déco, sécurité…', 'Gère tes commandes'].map((f) => (
-                      <li key={f} style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.45 }}>
-                        <span style={{ color: 'var(--gold)', fontSize: 12, flexShrink: 0 }}>◆</span>
-                        <span>{f}</span>
+            <article className={styles.roleCard}>
+              <div className={styles.roleVisual}>
+                <Image src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?auto=format&fit=crop&w=1200&q=80" alt="Prestataire événementiel en action" fill className={styles.roleImage} sizes="(max-width: 640px) 100vw, 42vw" />
+                <div className={styles.roleImageScrim} />
+                <span className={styles.roleNumber}>02</span>
+                <p className={styles.roleVisualCaption}>Ton savoir-faire.<br />Bien présenté.</p>
+              </div>
+              <div className={styles.roleBody}>
+                <div className={styles.roleContent}>
+                  <p className={styles.roleEyebrow}>Prestataire</p>
+                  <h3 className={styles.roleTitle}>Développe ton activité</h3>
+                  <p className={styles.roleSummary}>Présente ton expertise et transforme ta visibilité en nouvelles opportunités.</p>
+                  <ul className={styles.roleFeatures}>
+                    {['Présente tes services', 'Expose ton portfolio', 'Reçois des demandes', 'Échange avec tes clients'].map((feature) => (
+                      <li key={feature} className={styles.roleFeature}>
+                        <span className={styles.roleFeatureMark} aria-hidden="true" />
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
+                <div className={styles.roleActionWrap}>
+                  <Link href="/provider-signup" className={`${styles.roleAction} ${styles.roleActionSecondary}`}>
+                    Devenir prestataire <span aria-hidden="true">↗</span>
+                  </Link>
+                </div>
               </div>
-              <div style={{ padding: '0 8px 8px' }}>
-                <Link href="/login?mode=register" style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%',
-                  minHeight: 48,
-                  padding: '12px 20px',
-                  borderRadius: 14,
-                  background: 'var(--surface-2)',
-                  border: '1px solid var(--border-strong)',
-                  color: 'var(--text)',
-                  fontSize: 'var(--font-size-body-lg)',
-                  fontWeight: 750,
-                  textDecoration: 'none',
-                }}>
-                  Devenir prestataire
-                </Link>
-              </div>
-            </div>
+            </article>
           </div>
         </Section>}
 
@@ -488,7 +436,7 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false, f
   const minPrice = prices.length ? Math.min(...prices) : null
   const isRanking = Boolean(badge)
   return (
-    <Link href={`/events/${event.id}`} className="lb-card" style={{ ...card, overflow: 'hidden', display: 'block', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
+    <Link href={`/events/${event.id}`} className={`lb-card ${styles.compactSquareCard}`} style={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', color: 'inherit', textDecoration: 'none', position: 'relative' }}>
       <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-2)' }}>
         <Image
           src={reliablePhotoUrl(event.imageUrl, event.id, 460, 259, fallbackImage)}
@@ -516,15 +464,24 @@ function HomeEventCard({ event, badge, boosted = false, reason, eager = false, f
   )
 }
 
-function Section({ eyebrow, title, sub, children }: { eyebrow?: string; title: string; sub?: string; children: React.ReactNode }) {
+function Section({ className, eyebrow, title, sub, actionHref, actionLabel, children }: { className?: string; eyebrow?: string; title: string; sub?: string; actionHref?: string; actionLabel?: string; children: React.ReactNode }) {
   return (
-    <section className={styles.section}>
-      <header className={styles.sectionHeader}>
-        {eyebrow && <p className={styles.sectionEyebrow}>{eyebrow}</p>}
-        <h2 className={styles.sectionTitle}>{title}</h2>
-        {sub && <p className={styles.sectionDescription}>{sub}</p>}
-      </header>
-      {children}
+    <section className={`${styles.section}${className ? ` ${className}` : ''}`}>
+      <div className={styles.sectionInner}>
+        <div className={styles.sectionHeadingRow}>
+          <header className={styles.sectionHeader}>
+            {eyebrow && <p className={styles.sectionEyebrow}>{eyebrow}</p>}
+            <h2 className={styles.sectionTitle}>{title}</h2>
+            {sub && <p className={styles.sectionDescription}>{sub}</p>}
+          </header>
+          {actionHref && actionLabel && (
+            <Link href={actionHref} className={styles.sectionHeaderAction}>
+              {actionLabel}<span aria-hidden="true">↗</span>
+            </Link>
+          )}
+        </div>
+        {children}
+      </div>
     </section>
   )
 }
@@ -549,7 +506,7 @@ const EMPTY_STATE_CONTENT = {
 } as const
 
 function EmptyCard({ kind, ctaHref, ctaLabel }: { kind: keyof typeof EMPTY_STATE_CONTENT; ctaHref: string; ctaLabel: string }) {
-  const content = EMPTY_STATE_CONTENT[kind]
+  const content = EMPTY_STATE_CONTENT[kind] ?? EMPTY_STATE_CONTENT.events
 
   return (
     <article className={styles.emptyState}>
@@ -574,4 +531,3 @@ function EmptyCard({ kind, ctaHref, ctaLabel }: { kind: keyof typeof EMPTY_STATE
 const card: React.CSSProperties = { maxWidth: 360, width: '100%', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 24, boxShadow: '0 20px 56px rgba(var(--black-rgb), .22)', overflow: 'hidden' }
 const CARD_OVERRIDE: React.CSSProperties = { background: card.background, borderRadius: card.borderRadius, boxShadow: card.boxShadow }
 const btnPrimary: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 'var(--radius-control)', fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
-const btnGhost: React.CSSProperties = { minHeight: 44, padding: '10px 18px', borderRadius: 'var(--radius-control)', fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text)', background: 'var(--fill-secondary)', border: '1px solid var(--border)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }

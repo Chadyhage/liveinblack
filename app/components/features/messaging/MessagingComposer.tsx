@@ -196,7 +196,7 @@ export default function MessagingComposer({
                   layout="grid"
                   items={[
                     { label: 'Photo', icon: <ImageIcon size={22} />, onClick: onOpenPhotoPicker },
-                    { label: 'Appareil photo', icon: <Camera size={22} />, onClick: onOpenCamera },
+                    { label: 'Caméra', icon: <Camera size={22} />, onClick: onOpenCamera },
                     { label: 'Sondage', icon: <BarChart3 size={22} />, onClick: onOpenPoll },
                     { label: 'Événement', icon: <CalendarDays size={22} />, onClick: onOpenEventShare },
                   ]}

@@ -1,12 +1,17 @@
 .root {
-  width: 100%;
-  padding-top: clamp(12px, 2vw, 24px);
+  width: 100% !important;
+  padding-top: clamp(16px, 2vw, 24px);
 }
+
+.pageHeader { margin-bottom: 16px; }
+.eyebrow { margin: 0 0 6px; color: var(--primary); font-size: var(--font-size-footnote); font-weight: 500; letter-spacing: .05em; text-transform: uppercase; }
+.pageHeader h1 { margin: 0; color: var(--text); font-size: clamp(27px, 3vw, 38px); font-weight: 500; line-height: 1.08; letter-spacing: -.035em; }
+.pageHeader > p:last-child { max-width: 620px; margin: 7px 0 0; color: var(--text-muted); font-size: var(--font-size-body); line-height: 1.5; }
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(270px, 292px) minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
@@ -16,18 +21,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 18px 14px !important;
+  gap: 7px;
+  padding: 16px 14px !important;
   border-radius: 18px !important;
   background: var(--card-bg) !important;
   border: 1px solid var(--border) !important;
 }
 
-.identity h1 {
+.identity h2 {
   margin: 6px 0 0;
   color: var(--text);
   font-size: var(--font-size-title-4);
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: -.02em;
   text-align: center;
 }
@@ -56,16 +61,16 @@
   align-items: center;
   color: var(--primary);
   font-size: var(--font-size-body-sm);
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
 }
 
 .logout {
   margin-top: 6px !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-control) !important;
   border-color: var(--primary-a35) !important;
   color: var(--primary) !important;
-  font-size: var(--font-size-body-lg) !important;
+  font-size: var(--font-size-body-sm) !important;
 }
 
 .content {
@@ -76,7 +81,7 @@
 
 .points {
   position: relative;
-  min-height: 84px;
+  min-height: 0;
   overflow: hidden;
   padding: 16px 18px !important;
   border-radius: 18px !important;
@@ -99,7 +104,7 @@
   margin: 0;
   color: var(--primary);
   font-size: var(--font-size-footnote);
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -109,7 +114,7 @@
   margin: 6px 0 2px;
   color: var(--text);
   font-size: clamp(22px, 2vw, 28px);
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: -.03em;
 }
 
@@ -123,21 +128,27 @@
 
 .quickGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  align-items: start;
 }
 
 .quickLink {
-  min-height: 250px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   display: grid;
-  grid-template-rows: minmax(0, 2fr) minmax(82px, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: 18px;
   background: var(--card-bg);
   color: var(--text);
   text-decoration: none;
   transition: border-color .2s ease, background .2s ease;
+}
+
+@media (max-width: 1350px) {
+  .quickGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .quickLink:hover {
@@ -146,24 +157,24 @@
 }
 
 .quickImage {
-  min-height: 166px;
   display: block;
   background-image: url('/images/profile/profile-navigation-sprite.png');
-  background-size: 200% 200%;
+  background-size: 200% auto;
   background-repeat: no-repeat;
+  background-color: var(--surface-2);
 }
 
 .quickContent {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 9px;
+  padding: 11px 12px;
 }
 
 .quickIcon {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: 10px;
@@ -173,7 +184,7 @@
 
 .quickLabel {
   font-size: var(--font-size-body-sm);
-  font-weight: 750;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -186,6 +197,14 @@
   text-decoration: none !important;
 }
 
+.avatarButton {
+  width: 64px !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
 @media (max-width: 780px) {
   .grid {
     grid-template-columns: 1fr;
@@ -196,19 +215,11 @@
     top: 0;
   }
 
-  .quickGrid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .quickGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 480px) {
-  .quickGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .quickLink {
-    min-height: 260px;
-  }
+  .quickGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .root {
     padding-bottom: 90px;
