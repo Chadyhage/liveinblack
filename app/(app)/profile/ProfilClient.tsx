@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { ArrowLeft, Heart, KeyRound, LifeBuoy, Search, Settings, ShieldCheck, Ticket, UserRound } from 'lucide-react'
+import { ArrowLeft, CircleHelp, Heart, KeyRound, LifeBuoy, Mail, Search, Settings, ShieldCheck, Ticket, UserRound } from 'lucide-react'
 import PreferencesModal, { summarizePreferences, type Preferences } from './PreferencesWizard'
 import { getPasswordStrength } from '@/lib/shared/ticketExtras'
 import { regions } from '@/lib/shared/regions'
@@ -121,49 +121,63 @@ function MainView({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUser
     <main className={`profile-main lb-dashboard-page ${overviewStyles.root}`}>
       <header className={overviewStyles.pageHeader}>
         <p className={overviewStyles.eyebrow}>Espace client</p>
-        <h1>Bonjour {user.firstName || 'à toi'}</h1>
-        <p>Retrouve ton compte, tes billets et tes préférences au même endroit.</p>
+        <h1>Mon profil</h1>
+        <p>Gère ton identité et retrouve rapidement les éléments importants de ton compte.</p>
       </header>
       <div className={overviewStyles.grid}>
         <Card className={overviewStyles.identity}>
-          <AvatarUpload user={user} setUser={setUser} />
-          <h2>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
-          <p className={overviewStyles.email}>{user.email}</p>
-          <div className={overviewStyles.badges}>
-            {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
-            {!isOrganizer && <Badge tone="gold">{user.points || 0} pts</Badge>}
+          <div className={overviewStyles.avatarArea}>
+            <AvatarUpload user={user} setUser={setUser} />
           </div>
-          {/* Le nom/téléphone/année de naissance s'éditent sur Paramètres du
-              compte (formulaires plus lourds) — lien direct ici pour ne pas
-              faire deviner où se trouve "modifier mes infos". */}
-          <Link href="/profile/parametres" className={overviewStyles.editLink}>
-            Modifier mes informations →
-          </Link>
-          <Button
-            onClick={() => setShowLogoutConfirm(true)}
-            variant="secondary"
-            fullWidth
-            className={overviewStyles.logout}
-          >
-            Se déconnecter
-          </Button>
+          <div className={overviewStyles.identityInfo}>
+            <p className={overviewStyles.welcome}>Bonjour {user.firstName || 'à toi'}</p>
+            <h2>{[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'}</h2>
+            <p className={overviewStyles.email}>{user.email}</p>
+            <div className={overviewStyles.badges}>
+              {roleInfo && <Badge tone={roleInfo.badgeTone}>{roleInfo.label}</Badge>}
+              {!isOrganizer && <Badge tone="gold">{user.points || 0} pts</Badge>}
+            </div>
+          </div>
+          <div className={overviewStyles.identityActions}>
+            {/* Le nom/téléphone/année de naissance s'éditent sur Paramètres du
+                compte (formulaires plus lourds) — lien direct ici pour ne pas
+                faire deviner où se trouve "modifier mes infos". */}
+            <Link href="/profile/parametres" className={overviewStyles.editLink}>
+              Modifier mes informations
+            </Link>
+            <Button
+              onClick={() => setShowLogoutConfirm(true)}
+              variant="secondary"
+              className={overviewStyles.logout}
+            >
+              Se déconnecter
+            </Button>
+          </div>
         </Card>
 
         <div className={overviewStyles.content}>
           {!isOrganizer && (
             <Card className={overviewStyles.points}>
-              <p className={overviewStyles.pointsLabel}>Tes points fidélité</p>
-              <strong className={overviewStyles.pointsValue}>{user.points || 0} point{user.points === 1 ? '' : 's'}</strong>
+              <div className={overviewStyles.pointsSummary}>
+                <p className={overviewStyles.pointsLabel}>Points fidélité</p>
+                <strong className={overviewStyles.pointsValue}>{user.points || 0}<span> pt{user.points === 1 ? '' : 's'}</span></strong>
+              </div>
               <p className={overviewStyles.pointsText}>Tu gagnes un point pour chaque ticket ou carré acheté. Ils seront bientôt échangeables contre des avantages exclusifs.</p>
             </Card>
           )}
 
-          <div className={overviewStyles.quickGrid}>
-            <QuickAccessCard href="/profile/parametres" icon={<Settings size={19} />} label="Paramètres du compte" imagePosition="0% 17%" />
-            <QuickAccessCard href="/profile/billets" icon={<Ticket size={19} />} label="Mes billets" imagePosition="100% 17%" />
-            <QuickAccessCard href="/profile/interested-events" icon={<Heart size={19} />} label="Mes favoris" imagePosition="0% 83%" />
-            <QuickAccessCard href="/help" icon={<LifeBuoy size={19} />} label="Aide & FAQ" imagePosition="100% 83%" />
-          </div>
+          <section className={overviewStyles.quickSection} aria-labelledby="profile-shortcuts-title">
+            <div className={overviewStyles.quickHeader}>
+              <h2 id="profile-shortcuts-title">Accès rapides</h2>
+              <p>Les raccourcis utiles pour gérer ton compte.</p>
+            </div>
+            <div className={overviewStyles.quickGrid}>
+              <QuickAccessCard href="/profile/parametres" icon={<Settings size={19} />} label="Paramètres du compte" imagePosition="0% 17%" />
+              <QuickAccessCard href="/profile/billets" icon={<Ticket size={19} />} label="Mes billets" imagePosition="100% 17%" />
+              <QuickAccessCard href="/profile/interested-events" icon={<Heart size={19} />} label="Mes favoris" imagePosition="0% 83%" />
+              <QuickAccessCard href="/help" icon={<LifeBuoy size={19} />} label="Aide & FAQ" imagePosition="100% 83%" />
+            </div>
+          </section>
         </div>
       </div>
 
@@ -502,7 +516,7 @@ export function SettingsPanel({ user, setUser, onBack }: { user: ProfilUser; set
 }
 
 function EyebrowLabel({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>{children}</p>
+  return <h3 className="settings-card-title">{children}</h3>
 }
 
 function Toast({ text, kind }: { text: string; kind: 'ok' | 'err' }) {
@@ -673,14 +687,18 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
             <h4>Identité</h4>
             <p>Le nom utilisé sur ton compte.</p>
           </div>
-          <Label>Prénom et nom</Label>
-          <div className="settings-personal-fields" style={{ opacity: onCooldown ? 0.5 : 1 }}>
-            <Input aria-label="Prénom" value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
-            <Input aria-label="Nom" value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
+          <div className="settings-personal-body">
+            <Label>Prénom et nom</Label>
+            <div className="settings-personal-fields" style={{ opacity: onCooldown ? 0.5 : 1 }}>
+              <Input aria-label="Prénom" value={firstName} onChange={(e) => !onCooldown && setFirstName(e.target.value)} placeholder="Ton prénom" disabled={onCooldown} />
+              <Input aria-label="Nom" value={lastName} onChange={(e) => !onCooldown && setLastName(e.target.value)} placeholder="Ton nom" disabled={onCooldown} />
+            </div>
+            {onCooldown && nextChangeDate && <p className="settings-personal-note">Prochain changement le {nextChangeDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
+            {msg && <Toast text={msg.text} kind={msg.kind} />}
           </div>
-          {onCooldown && nextChangeDate && <p className="settings-personal-note">Prochain changement le {nextChangeDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
-          <Button onClick={saveName} disabled={saving || !nameChanged || onCooldown} loading={saving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer le nom</Button>
-          {msg && <Toast text={msg.text} kind={msg.kind} />}
+          <div className="settings-personal-action">
+            <Button onClick={saveName} disabled={saving || !nameChanged || onCooldown} loading={saving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer</Button>
+          </div>
         </section>
 
         <section className="settings-personal-section">
@@ -688,14 +706,18 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
             <h4>Téléphone</h4>
             <p>Pour les échanges liés à tes réservations.</p>
           </div>
-          <Label>Numéro</Label>
-          <div className="settings-phone-fields">
-            <Select aria-label="Indicatif téléphonique" value={dialCode} onChange={setDialCode} options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))} size="sm" />
-            <Input aria-label="Numéro de téléphone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro" />
+          <div className="settings-personal-body">
+            <Label>Numéro</Label>
+            <div className="settings-phone-fields">
+              <Select aria-label="Indicatif téléphonique" value={dialCode} onChange={setDialCode} options={regions.map((r) => ({ value: r.dial, label: `${r.flag} ${r.dial}` }))} size="sm" />
+              <Input aria-label="Numéro de téléphone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numéro" />
+            </div>
+            <p className="settings-personal-note">Visible uniquement par les professionnels avec qui tu échanges.</p>
+            {phoneMsg && <Toast text={phoneMsg.text} kind={phoneMsg.kind} />}
           </div>
-          <p className="settings-personal-note">Partagé uniquement avec les professionnels avec qui tu échanges.</p>
-          <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer le téléphone</Button>
-          {phoneMsg && <Toast text={phoneMsg.text} kind={phoneMsg.kind} />}
+          <div className="settings-personal-action">
+            <Button onClick={savePhone} disabled={phoneSaving || !phoneChanged} loading={phoneSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer</Button>
+          </div>
         </section>
 
         <section className="settings-personal-section">
@@ -703,14 +725,18 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
             <h4>Informations facultatives</h4>
             <p>Utilisées uniquement pour des statistiques anonymes.</p>
           </div>
-          <Label>Date de naissance et genre</Label>
-          <div className="settings-personal-fields profile-demo-row">
-            <Input aria-label="Date de naissance" type="date" value={birthDate} min={minBirthDate} max={maxBirthDate} onChange={(event) => setBirthDate(event.target.value)} style={{ colorScheme: 'light dark' }} />
-            <Select aria-label="Genre" value={gender} onChange={setGender} placeholder="Genre —" options={[{ value: 'femme', label: 'Femme' }, { value: 'homme', label: 'Homme' }, { value: 'autre', label: 'Autre' }]} />
+          <div className="settings-personal-body">
+            <Label>Date de naissance et genre</Label>
+            <div className="settings-personal-fields profile-demo-row">
+              <Input aria-label="Date de naissance" type="date" value={birthDate} min={minBirthDate} max={maxBirthDate} onChange={(event) => setBirthDate(event.target.value)} style={{ colorScheme: 'light dark' }} />
+              <Select aria-label="Genre" value={gender} onChange={setGender} placeholder="Genre —" options={[{ value: 'femme', label: 'Femme' }, { value: 'homme', label: 'Homme' }, { value: 'autre', label: 'Autre' }]} />
+            </div>
+            <p className="settings-personal-note">Ces informations ne sont jamais affichées sur ton profil.</p>
+            {demoMsg && <Toast text={demoMsg.text} kind={demoMsg.kind} />}
           </div>
-          <p className="settings-personal-note">Ces informations ne sont jamais affichées sur ton profil.</p>
-          <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer ces infos</Button>
-          {demoMsg && <Toast text={demoMsg.text} kind={demoMsg.kind} />}
+          <div className="settings-personal-action">
+            <Button onClick={saveDemographics} disabled={demoSaving || demoUnchanged} loading={demoSaving} loadingText="Enregistrement…" variant="primary" style={goldButtonStyle}>Enregistrer</Button>
+          </div>
         </section>
       </div>
     </Card>
@@ -720,7 +746,7 @@ function IdentityCard({ user, setUser }: { user: ProfilUser; setUser: (u: Profil
 function VisibilityCard({ user }: { user: ProfilUser }) {
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Toi'
   return (
-    <Card>
+    <Card className="settings-visibility-card">
       <EyebrowLabel>Qui voit quoi ?</EyebrowLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
@@ -742,23 +768,25 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
   const overflow = tags.length - shown.length
 
   return (
-    <Card>
-      <EyebrowLabel>Mes goûts — recommandations</EyebrowLabel>
-      <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
-        Optionnel. Sert uniquement à te proposer les bonnes soirées sur l&apos;accueil (« Nos recommandations pour toi »). Jamais partagé avec les organisateurs.
-      </p>
-      {tags.length > 0 ? (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+    <Card className="settings-preferences-card">
+      <div className="settings-preferences-copy">
+        <h3>Mes goûts et recommandations</h3>
+        <p>Ces préférences améliorent les suggestions de soirées. Elles ne sont jamais partagées avec les organisateurs.</p>
+      </div>
+      <div className="settings-preferences-tags">
+        {tags.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {shown.map((t, i) => (
             <Badge key={i} tone="violet">
               {t}
             </Badge>
           ))}
           {overflow > 0 && <Badge tone="neutral">+{overflow}</Badge>}
-        </div>
-      ) : (
-        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '0 0 14px' }}>Tu n&apos;as pas encore renseigné tes goûts.</p>
-      )}
+          </div>
+        ) : (
+          <p>Tu n&apos;as pas encore renseigné tes goûts.</p>
+        )}
+      </div>
       <Button onClick={() => setOpen(true)} variant="primary" style={goldButtonStyle}>
         {tags.length > 0 ? 'Modifier mes goûts' : 'Renseigner mes goûts'}
       </Button>
@@ -776,10 +804,10 @@ function PreferencesCard({ user, setUser }: { user: ProfilUser; setUser: (u: Pro
 
 function PrivacyToggle({ label, hint, value, onChange }: { label: string; hint: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0' }}>
-      <div style={{ maxWidth: 260 }}>
-        <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: '0 0 2px', fontWeight: 600 }}>{label}</p>
-        <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0, lineHeight: 1.4 }}>{hint}</p>
+    <div className="settings-privacy-toggle">
+      <div>
+        <p>{label}</p>
+        <span>{hint}</span>
       </div>
       <Switch checked={value} onChange={(e) => onChange(e.target.checked)} />
     </div>
@@ -806,7 +834,7 @@ function PrivacyCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilU
   }
 
   return (
-    <Card>
+    <Card className="settings-privacy-card">
       <EyebrowLabel>Confidentialité</EyebrowLabel>
       <PrivacyToggle label="Statut en ligne" hint="Les autres voient quand tu es connecté·e." value={user.privacy.showOnline} onChange={(v) => toggle('showOnline', v)} />
       <PrivacyToggle label="Photo de profil" hint="Les autres voient ta photo (sinon : initiales)." value={user.privacy.showAvatar} onChange={(v) => toggle('showAvatar', v)} />
@@ -867,12 +895,10 @@ function DataExportCard() {
   }
 
   return (
-    <Card>
+    <Card className="settings-data-card">
       <EyebrowLabel>Mes données</EyebrowLabel>
       <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 14px' }}>
-        Télécharge une copie de toutes les données personnelles associées à ton compte (profil, billets, commandes,
-        messages que tu as envoyés, amis, avis, événements suivis…) au format JSON — droit d&apos;accès et droit à la
-        portabilité (articles 15 et 20 du RGPD).
+        Exporte une copie de tes données personnelles au format JSON, conformément à tes droits d&apos;accès et de portabilité.
       </p>
       <Button onClick={download} disabled={downloading} loading={downloading} loadingText="Préparation…" variant="primary" style={goldButtonStyle}>
         Télécharger mes données
@@ -927,7 +953,7 @@ function EmailCard({ user, setUser }: { user: ProfilUser; setUser: (u: ProfilUse
   }
 
   return (
-    <Card>
+    <Card className="settings-email-card">
       <EyebrowLabel>Adresse e-mail</EyebrowLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'var(--surface-2)', marginBottom: 14 }}>
         <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', flex: 1 }}>{user.email}</span>
@@ -1028,7 +1054,7 @@ function PasswordCard({ email }: { email: string }) {
   }
 
   return (
-    <Card>
+    <Card className="settings-password-card">
       <EyebrowLabel>Sécurité — Mot de passe</EyebrowLabel>
       <PasswordField value={currentPassword} onChange={setCurrentPassword} placeholder="Mot de passe actuel" style={{ marginBottom: 10 }} />
       <PasswordField value={newPassword} onChange={setNewPassword} placeholder="8 caractères, 1 majuscule, 1 chiffre" style={{ marginBottom: strength ? 6 : 10 }} />
@@ -1097,7 +1123,7 @@ function DangerZoneCard() {
   }
 
   return (
-    <Card>
+    <Card className="settings-danger-card">
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 16px' }} />
       <p style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>Zone de danger</p>
 
@@ -1147,13 +1173,20 @@ function DangerZoneCard() {
 
 const FAQ = [
   { q: 'Comment réserver un billet ?', a: 'Va sur l’onglet Événements, sélectionne la soirée de ton choix et clique sur Réservation. Choisis ton type de place et confirme.' },
+  { q: 'Où retrouver mes billets ?', a: 'Tes billets sont disponibles dans « Mes billets » depuis ton espace client. Tu peux y consulter tes places et les informations de chaque événement.' },
   { q: 'Puis-je annuler ma réservation ?', a: 'Les réservations sont fermes et définitives. En cas d’annulation d’événement par l’organisateur, un remboursement sera traité sous 5 jours ouvrés.' },
   { q: 'Comment utiliser mes points ?', a: 'Tu gagnes 1 point par ticket ou carré acheté. Les points seront bientôt échangeables contre des avantages exclusifs (accès prioritaire, réductions, cadeaux).' },
   { q: 'Comment créer un événement ?', a: "Rends-toi dans 'Mes Événements' via le menu. Tu peux créer et publier ton événement en 5 étapes simples." },
+  { q: 'Comment modifier mes informations personnelles ?', a: 'Ouvre « Paramètres », puis l’onglet « Profil ». Tu peux modifier séparément ton nom, ton téléphone et tes informations facultatives.' },
+  { q: 'J’ai oublié mon mot de passe, que faire ?', a: 'Depuis la page de connexion, utilise le lien de mot de passe oublié. Un lien sécurisé sera envoyé à l’adresse e-mail associée à ton compte.' },
+  { q: 'Comment contacter un prestataire ?', a: 'Ouvre la fiche du prestataire depuis l’annuaire, puis utilise le bouton de demande de devis pour démarrer un échange.' },
 ]
 
 export function SupportPanel() {
   const [copied, setCopied] = useState(false)
+  const [query, setQuery] = useState('')
+  const normalizedQuery = normalizeSettingsQuery(query)
+  const filteredFaq = FAQ.filter((item) => normalizeSettingsQuery(`${item.q} ${item.a}`).includes(normalizedQuery))
 
   async function copyEmail() {
     try {
@@ -1176,33 +1209,61 @@ export function SupportPanel() {
   }
 
   return (
-    <main className="lb-dashboard-page lb-dashboard-page--medium">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Link href="/profile" style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+    <main className={`lb-dashboard-page ${helpStyles.page}`}>
+      <div className={helpStyles.shell}>
+        <Link href="/profile" className={helpStyles.backLink}>
           <ArrowLeft size={17} aria-hidden="true" />
           Profil
         </Link>
 
-        <header style={{ marginBottom: 10 }}>
-          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(32px,3.6vw,44px)', fontWeight: 760, letterSpacing: '-.045em' }}>Aide & FAQ</h1>
-          <p style={{ maxWidth: 680, margin: '10px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-headline-lg)', lineHeight: 1.55 }}>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
+        <header className={helpStyles.header}>
+          <div className={helpStyles.heading}>
+            <span className={helpStyles.headingIcon} aria-hidden="true"><CircleHelp size={21} /></span>
+            <div>
+              <h1>Aide & FAQ</h1>
+              <p>Trouve rapidement une réponse ou contacte directement l’équipe LIVEINBLACK.</p>
+            </div>
+          </div>
+          <div className={helpStyles.search}>
+            <Search size={18} aria-hidden="true" />
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une question" aria-label="Rechercher dans la FAQ" />
+            {query ? <Button variant="ghost" size="sm" onClick={() => setQuery('')}>Effacer</Button> : null}
+          </div>
         </header>
 
         <div className={helpStyles.grid}>
           <Card className={helpStyles.faq}>
-            <h2 className={helpStyles.faqTitle}>Questions fréquentes</h2>
-            <Accordion items={FAQ.map((f) => ({ question: f.q, answer: f.a }))} />
+            <div className={helpStyles.faqHeader}>
+              <div>
+                <h2 className={helpStyles.faqTitle}>Questions fréquentes</h2>
+                <p>Billets, compte, événements et prestataires.</p>
+              </div>
+              <span>{filteredFaq.length} réponse{filteredFaq.length === 1 ? '' : 's'}</span>
+            </div>
+            {filteredFaq.length > 0 ? (
+              <div className={helpStyles.accordion}>
+                <Accordion items={filteredFaq.map((f) => ({ question: f.q, answer: f.a }))} />
+              </div>
+            ) : (
+              <div className={helpStyles.empty}>
+                <Search size={20} aria-hidden="true" />
+                <h3>Aucune réponse trouvée</h3>
+                <p>Essaie avec un autre mot ou contacte directement notre équipe.</p>
+                <Button variant="secondary" size="sm" onClick={() => setQuery('')}>Réinitialiser</Button>
+              </div>
+            )}
           </Card>
 
           <Card className={helpStyles.contact}>
+            <span className={helpStyles.contactIcon} aria-hidden="true"><Mail size={19} /></span>
             <h2>Besoin d’une réponse humaine ?</h2>
             <p>Écris-nous et notre équipe te répondra généralement sous 24 heures.</p>
-            <Button onClick={copyEmail} variant="primary" fullWidth>
+            <span className={helpStyles.email}>{SUPPORT_EMAIL}</span>
+            <Button onClick={copyEmail} variant="primary">
               {copied ? 'Adresse copiée' : "Copier l'adresse e-mail"}
             </Button>
-            <span className={helpStyles.email}>{SUPPORT_EMAIL}</span>
             <a href={`mailto:${SUPPORT_EMAIL}?subject=Support%20LIVEINBLACK`} className={helpStyles.mailLink}>
-              Ouvrir mon application mail →
+              Ouvrir mon application mail
             </a>
           </Card>
         </div>

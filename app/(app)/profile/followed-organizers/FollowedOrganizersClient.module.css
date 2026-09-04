@@ -207,8 +207,17 @@
 }
 
 .followActions {
+  justify-content: space-between;
   gap: 6px;
   margin-top: 10px;
+}
+
+.followBody .pageLink {
+  flex: 0 0 auto;
+}
+
+.followBody .followActions > :last-child {
+  margin-left: auto;
 }
 
 .pageLink {

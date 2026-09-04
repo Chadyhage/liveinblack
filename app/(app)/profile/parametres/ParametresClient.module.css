@@ -214,7 +214,8 @@
 
 .root :global(.settings-card-grid) {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: dense;
   gap: 10px;
   align-items: start;
 }
@@ -273,6 +274,91 @@
   grid-column: 1 / -1;
 }
 
+.root :global(#setting-goûts) {
+  grid-column: 1 / -1;
+}
+
+.root :global(#setting-confidentialite),
+.root :global(#setting-danger) {
+  grid-column: 1 / -1;
+}
+
+.root :global(.settings-card-title) {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  letter-spacing: -.015em;
+}
+
+.root :global(.settings-visibility-card),
+.root :global(.settings-data-card) {
+  min-height: 100%;
+}
+
+.root :global(.settings-privacy-card) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+
+.root :global(.settings-privacy-card > .settings-card-title) {
+  grid-column: 1 / -1;
+}
+
+.root :global(.settings-privacy-toggle) {
+  min-width: 0;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+}
+
+.root :global(.settings-privacy-toggle > div) { min-width: 0; }
+
+.root :global(.settings-privacy-toggle p) {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-body-sm);
+  font-weight: 500;
+}
+
+.root :global(.settings-privacy-toggle span) {
+  display: block;
+  max-width: 440px;
+  margin-top: 3px;
+  color: var(--text-faint);
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+}
+
+.root :global(.settings-data-card > button),
+.root :global(.settings-email-card > button),
+.root :global(.settings-password-card > button) {
+  width: auto !important;
+}
+
+.root :global(.settings-danger-card) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-color: var(--danger-border) !important;
+}
+
+.root :global(.settings-danger-card > hr) { display: none; }
+
+.root :global(.settings-danger-card > p:first-of-type) {
+  margin: 0 !important;
+  color: var(--danger-text) !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
 .root :global(.settings-card-grid .settings-identity-card) {
   padding: 0 !important;
   border: 0 !important;
@@ -298,25 +384,28 @@
 }
 
 .root :global(.settings-personal-sections) {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
 }
 
 .root :global(.settings-personal-section) {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface-2);
+  display: grid;
+  grid-template-columns: minmax(170px, .7fr) minmax(340px, 1.5fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  background: transparent;
+}
+
+.root :global(.settings-personal-section + .settings-personal-section) {
+  border-top: 1px solid var(--border);
 }
 
 .root :global(.settings-personal-section-heading) {
-  min-height: 48px;
-  margin-bottom: 10px;
+  min-width: 0;
 }
 
 .root :global(.settings-personal-section-heading h4) {
@@ -333,12 +422,16 @@
   line-height: 1.35;
 }
 
+.root :global(.settings-personal-body) {
+  min-width: 0;
+}
+
 .root :global(.settings-personal-fields),
 .root :global(.settings-phone-fields) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  margin-bottom: 8px;
+  margin: 5px 0 0;
 }
 
 .root :global(.settings-phone-fields) {
@@ -346,15 +439,51 @@
 }
 
 .root :global(.settings-personal-note) {
-  margin: 0 0 10px !important;
+  margin: 6px 0 0 !important;
   color: var(--text-faint) !important;
   font-size: var(--font-size-caption) !important;
   line-height: 1.4 !important;
 }
 
-.root :global(.settings-personal-section > button) {
-  align-self: flex-start;
-  margin-top: auto;
+.root :global(.settings-personal-action) {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.root :global(.settings-personal-action button) {
+  min-width: 112px;
+  white-space: nowrap;
+}
+
+.root :global(.settings-preferences-card) {
+  display: grid;
+  grid-template-columns: minmax(240px, .75fr) minmax(260px, 1.25fr) auto;
+  align-items: center;
+  gap: 24px;
+}
+
+.root :global(.settings-preferences-copy h3) {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+}
+
+.root :global(.settings-preferences-copy p),
+.root :global(.settings-preferences-tags > p) {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-footnote);
+  line-height: 1.5;
+}
+
+.root :global(.settings-preferences-tags) {
+  min-width: 0;
+}
+
+.root :global(.settings-preferences-card > button) {
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .root :global(.settings-empty) {
@@ -379,11 +508,20 @@
   .root :global(.settings-search) { width: 100%; }
   .root :global(.settings-tabs) { display: flex; overflow-x: auto; scrollbar-width: none; }
   .root :global(.settings-nav-item) { min-width: 152px; }
+  .root :global(.settings-card-grid) { grid-template-columns: 1fr; }
+  .root :global(#setting-confidentialite),
+  .root :global(#setting-danger) { grid-column: auto; }
+  .root :global(.settings-privacy-card) { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 1100px) {
-  .root :global(.settings-personal-sections) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .root :global(.settings-personal-section:last-child) { grid-column: 1 / -1; }
+  .root :global(.settings-personal-section) {
+    grid-template-columns: minmax(160px, .65fr) minmax(0, 1.35fr);
+    gap: 14px 18px;
+  }
+  .root :global(.settings-personal-action) { grid-column: 2; justify-content: flex-start; }
+  .root :global(.settings-preferences-card) { grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); gap: 14px 20px; }
+  .root :global(.settings-preferences-card > button) { grid-column: 2; justify-self: start; }
 }
 
 @media (max-width: 520px) {
@@ -395,9 +533,13 @@
   .root :global(.settings-card-grid .lb-card) { padding: 13px !important; }
   .root :global(.profile-demo-row) { flex-direction: column; }
   .root :global(.settings-card-grid .lb-card > div[style*="display: flex"]) { flex-wrap: wrap; }
-  .root :global(.settings-personal-sections) { grid-template-columns: 1fr; }
-  .root :global(.settings-personal-section:last-child) { grid-column: auto; }
+  .root :global(.settings-personal-section) { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
+  .root :global(.settings-personal-action) { grid-column: auto; justify-content: flex-start; }
+  .root :global(.settings-personal-action button) { width: auto !important; }
   .root :global(.settings-personal-fields) { grid-template-columns: 1fr; }
+  .root :global(.settings-preferences-card) { grid-template-columns: 1fr; gap: 12px; }
+  .root :global(.settings-preferences-card > button) { grid-column: auto; justify-self: start; }
+  .root :global(.settings-danger-card) { align-items: flex-start; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -19,6 +19,8 @@ import { Button, EmptyState } from '@/app/components/ui'
 import { isPushSupported, getPushPermissionState, subscribeToPush } from '@/lib/client/push'
 import styles from './NotificationsClient.module.css'
 
+type NotificationFilter = 'all' | 'unread' | 'read'
+
 export interface NotificationItemView {
   id: string
   type: string
@@ -86,6 +88,7 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported' | null>(null)
   const [pushSubscribing, setPushSubscribing] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<NotificationFilter>('all')
 
   useEffect(() => {
     getPushPermissionState().then((state) => setPushPermission(isPushSupported() ? state : 'unsupported'))
@@ -104,6 +107,11 @@ export default function NotificationsClient({ initialNotifications }: { initialN
   const unreadCount = notifications.filter((notification) => !notification.read).length
   const readCount = notifications.length - unreadCount
   const showPushCta = pushPermission === 'default'
+  const filteredNotifications = notifications.filter((notification) => {
+    if (filter === 'unread') return !notification.read
+    if (filter === 'read') return notification.read
+    return true
+  })
 
   async function markAllRead() {
     setNotifications((list) => list.map((notification) => ({ ...notification, read: true })))
@@ -136,7 +144,13 @@ export default function NotificationsClient({ initialNotifications }: { initialN
             </div>
           </div>
 
-          <div className={styles.headerAside}>
+          <div className={styles.headerActions}>
+            <section className={styles.summary} aria-label="Résumé des notifications">
+              <span className={`${styles.summaryItem} ${unreadCount > 0 ? styles.summaryUnread : ''}`}>
+                <strong>{unreadCount}</strong> non lue{unreadCount === 1 ? '' : 's'}
+              </span>
+              <span className={styles.summaryItem}><strong>{notifications.length}</strong> au total</span>
+            </section>
             {unreadCount > 0 ? (
               <Button
                 variant="secondary"
@@ -148,26 +162,6 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                 Tout marquer lu
               </Button>
             ) : null}
-
-            <section className={styles.statsGrid} aria-label="Résumé des notifications">
-              <article className={styles.statCard}>
-                <span className={styles.statLabel}>Non lues</span>
-                <strong className={styles.statValue}>{unreadCount}</strong>
-                <span className={styles.statHint}>
-                  {unreadCount > 0 ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} à traiter` : 'Tout est à jour'}
-                </span>
-              </article>
-              <article className={styles.statCard}>
-                <span className={styles.statLabel}>Lues</span>
-                <strong className={styles.statValue}>{readCount}</strong>
-                <span className={styles.statHint}>Déjà consultées dans ton espace</span>
-              </article>
-              <article className={styles.statCard}>
-                <span className={styles.statLabel}>Total</span>
-                <strong className={styles.statValue}>{notifications.length}</strong>
-                <span className={styles.statHint}>Dernières alertes reçues</span>
-              </article>
-            </section>
           </div>
         </header>
 
@@ -197,16 +191,38 @@ export default function NotificationsClient({ initialNotifications }: { initialN
               <h2 id="notifications-list-title">Activité récente</h2>
               <p>Les alertes les plus récentes apparaissent en premier.</p>
             </div>
-            <span className={styles.totalBadge}>{notifications.length} au total</span>
+            <div className={styles.filters} aria-label="Filtrer les notifications">
+              {([
+                ['all', 'Toutes', notifications.length],
+                ['unread', 'Non lues', unreadCount],
+                ['read', 'Lues', readCount],
+              ] as const).map(([value, label, count]) => (
+                <Button
+                  key={value}
+                  variant="ghost"
+                  size="sm"
+                  aria-pressed={filter === value}
+                  className={`${styles.filterButton} ${filter === value ? styles.filterButtonActive : ''}`}
+                  onClick={() => setFilter(value)}
+                >
+                  {label} <span>{count}</span>
+                </Button>
+              ))}
+            </div>
           </div>
 
-          {notifications.length === 0 ? (
+          {filteredNotifications.length === 0 ? (
             <div className={styles.emptyState}>
-              <EmptyState title="Aucune notification" description="Tu seras prévenu ici dès qu'il se passe quelque chose te concernant." />
+              <EmptyState
+                title={notifications.length === 0 ? 'Aucune notification' : 'Aucune notification dans ce filtre'}
+                description={notifications.length === 0
+                  ? "Tu seras prévenu ici dès qu'il se passe quelque chose te concernant."
+                  : 'Les autres notifications restent disponibles dans les filtres voisins.'}
+              />
             </div>
           ) : (
             <div className={styles.list}>
-              {notifications.map((notification) => {
+              {filteredNotifications.map((notification) => {
                 const expanded = expandedId === notification.id
                 return (
                   <article key={notification.id} className={`${styles.notificationShell} ${notification.read ? '' : styles.unread}`}>
@@ -221,14 +237,15 @@ export default function NotificationsClient({ initialNotifications }: { initialN
                       <span className={styles.notificationIcon}>{notificationIcon(notification.type)}</span>
                       <span className={styles.notificationContent}>
                         <span className={styles.notificationTopRow}>
+                          <span className={styles.notificationTitle}>
+                            {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
+                            {notification.title}
+                          </span>
                           <span className={styles.notificationBadge}>{notificationLabel(notification.type)}</span>
-                          <span className={styles.notificationMeta}><time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time></span>
                         </span>
-                        <span className={styles.notificationTitle}>
-                          {!notification.read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
-                          {notification.title}
-                        </span>
+                        {notification.body ? <span className={styles.notificationPreview}>{notification.body}</span> : null}
                       </span>
+                      <span className={styles.notificationMeta}><time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time></span>
                       <ChevronDown className={styles.expandIcon} size={18} aria-hidden="true" style={{ transform: expanded ? 'rotate(180deg)' : 'none' }} />
                     </Button>
                     {expanded ? (

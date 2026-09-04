@@ -298,7 +298,6 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         <>
           <Button variant="ghost" className={styles.drawerBackdrop} onClick={closeMobile} aria-label="Fermer le menu" />
           <nav ref={mobileDrawerRef} id="dashboard-mobile-navigation" className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
-            {status === 'authenticated' && session?.user ? <div className={styles.mobileAccount}><AccountMenu user={session.user} menuAlign="left" dashboardMode /></div> : null}
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} mobile onNavigate={closeMobile} />
             <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
           </nav>
@@ -312,9 +311,6 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
               <Image src="/branding/liveinblack-logo-header.png" alt="LIVEINBLACK" width={1876} height={285} className={styles.brandLogo} priority />
             </Link>
             <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
-            <div className={styles.account}>
-              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="left" menuDirection="auto" dashboardMode /> : null}
-            </div>
           </div>
           <nav className={styles.nav} aria-label="Navigation de l’espace privé">
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} />
@@ -324,7 +320,14 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           </div>
         </aside>
 
-        <div className={`lb-dashboard-main ${styles.main}${fullBleed ? ` ${styles.mainFull}` : ''}`}>{children}</div>
+        <div className={styles.workspaceColumn}>
+          <header className={styles.topbar}>
+            <div className={styles.topbarAccount}>
+              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="right" menuDirection="auto" /> : null}
+            </div>
+          </header>
+          <div className={`lb-dashboard-main ${styles.main}${fullBleed ? ` ${styles.mainFull}` : ''}`}>{children}</div>
+        </div>
       </div>
     </div>
   )

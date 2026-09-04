@@ -237,7 +237,7 @@ function FollowCard({
         </div>
         <div className={styles.followActions}>
           <Link href={`/organizers/${follow.organizerSlug}`} className={styles.pageLink}>Voir le profil</Link>
-          <OrganizerFollowButtonClient organizerId={follow.organizerId} organizerName={follow.organizerName} initialFollowing onUnfollow={onUnfollowed} isAuthenticated compact />
+          <OrganizerFollowButtonClient organizerId={follow.organizerId} organizerName={follow.organizerName} initialFollowing onUnfollow={onUnfollowed} isAuthenticated compact showUnfollowLabel />
         </div>
       </div>
 

@@ -1,0 +1,64 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.followingDot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.confirmContent {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+}
+
+.confirmIcon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--primary-a20);
+  border-radius: var(--radius-control);
+  color: var(--primary);
+  background: var(--primary-a08);
+}
+
+.confirmContent p {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-body-sm);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.confirmContent div > span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: var(--font-size-footnote);
+  line-height: 1.45;
+}
+
+@media (max-width: 480px) {
+  .confirmContent {
+    grid-template-columns: 36px minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .confirmIcon {
+    width: 34px;
+    height: 34px;
+  }
+}
