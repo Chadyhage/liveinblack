@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Card, Textarea, Label, SlideOverModal } from '@/app/components/ui'
+import { Button, Card, Textarea, Label, Modal } from '@/app/components/ui'
 
 // Port de src/pages/PublicPrestatairePage.jsx (openServiceInquiry /
 // sendServiceInquiry) — "Demander ce service" par item de catalogue, sur la
@@ -24,18 +24,18 @@ import { Button, Card, Textarea, Label, SlideOverModal } from '@/app/components/
 // prestataire depuis le client.
 const inquiryBtn: React.CSSProperties = {
   flex: '1 1 160px',
-  minHeight: 44,
+  minHeight: 40,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   gap: 7,
-  padding: '9px 12px',
-  borderRadius: 14,
+  padding: '8px 12px',
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border-strong)',
-  background: 'var(--violet-cta)',
+  background: 'var(--primary)',
   color: 'var(--primary-ink)',
   fontSize: 'var(--font-size-body-sm)',
-  fontWeight: 650,
+  fontWeight: 500,
   textTransform: 'none',
   letterSpacing: 'normal',
   cursor: 'pointer',
@@ -47,10 +47,10 @@ const primaryBtn: React.CSSProperties = {
   gap: 8,
   minHeight: 46,
   padding: '12px 18px',
-  borderRadius: 3,
+  borderRadius: 'var(--radius-control)',
   border: '1px solid var(--border-strong)',
   cursor: 'pointer',
-  background: 'var(--violet-cta)',
+  background: 'var(--primary)',
   color: 'var(--primary-ink)',
   fontSize: 'var(--font-size-callout)',
   fontWeight: 500,
@@ -65,7 +65,7 @@ const ghostBtn: React.CSSProperties = {
   background: 'var(--surface)',
   color: 'var(--text)',
   fontSize: 'var(--font-size-callout)',
-  fontWeight: 600,
+  fontWeight: 500,
   cursor: 'pointer',
 }
 const disabledBtn: React.CSSProperties = { opacity: 0.5, cursor: 'not-allowed' }
@@ -197,7 +197,7 @@ export default function ProviderCatalogInquiry({
       </Button>
 
       {open && (
-        <SlideOverModal onClose={closeSheet} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
+        <Modal onClose={closeSheet} maxWidth={560} zIndex={3200} title={item.name} subtitle={`Envoyer une demande à ${providerName}.`}>
 
             <Card
               style={{
@@ -215,12 +215,12 @@ export default function ProviderCatalogInquiry({
               )}
               <div style={{ minWidth: 0 }}>
                 {item.category && (
-                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 5px' }}>
+                  <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 5px' }}>
                     {item.category}
                   </p>
                 )}
-                <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>{item.name}</p>
-                <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--gold)', margin: '8px 0 0' }}>
+                <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 500, color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>{item.name}</p>
+                <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 500, color: 'var(--primary)', margin: '8px 0 0' }}>
                   {Number(item.price) > 0 ? `${fmtMoney(Number(item.price), item.currency || catalogDefaultCurrency)}${item.unit ? ` / ${item.unit}` : ''}` : 'Tarif sur demande'}
                 </p>
               </div>
@@ -269,7 +269,7 @@ export default function ProviderCatalogInquiry({
                 Envoyer la demande
               </Button>
             </div>
-        </SlideOverModal>
+        </Modal>
       )}
     </>
   )

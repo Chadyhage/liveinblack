@@ -20,11 +20,8 @@ import styles from './EventDetailContent.module.css'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
-// Contenu partagé entre la page dédiée (app/(public)/events/[id]/page.tsx) et
-// la route interceptée qui l'affiche en modal glissante depuis les listes
-// (app/(public)/@modal/(.)events/[id]/page.tsx). Le fetch de données et le
-// rendu vivent ici une seule fois ; seul le wrapper (<main> plein-page vs.
-// coquille de modal) diffère entre les deux appelants.
+// Contenu de la fiche événement dédiée. Elle reste en pleine page pour que
+// le clic depuis la liste et le rafraîchissement conservent le même rendu.
 
 export async function resolveEvent(id: string) {
   return getEventById(id)
@@ -33,11 +30,9 @@ export async function resolveEvent(id: string) {
 export default async function EventDetailContent({
   id,
   paiement,
-  presentation = 'page',
 }: {
   id: string
   paiement?: string
-  presentation?: 'page' | 'modal'
 }) {
   const result = await resolveEvent(id)
 
@@ -165,28 +160,17 @@ export default async function EventDetailContent({
     excludedPlaces: m.excludedPlaces ?? [],
   }))
 
-  const isModal = presentation === 'modal'
-
   return (
-    <div className={isModal ? styles.modalRoot : styles.pageRoot}>
+    <div className={styles.pageRoot}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replace(/</g, '\\u003c') }} />
-      {isModal ? (
-        <div className={styles.modalToolbar}>
-          <div>
-            <small>Détails de l’événement</small>
-            <strong>{[event.city, event.category].filter(Boolean).join(' · ') || 'LIVEINBLACK'}</strong>
-          </div>
-        </div>
-      ) : <div className={styles.breadcrumb} style={{ padding: '18px 0 0', fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)' }}>
+      <div className={styles.breadcrumb}>
         <Link href="/events" style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', color: 'inherit', textDecoration: 'none' }}>
-          Événements
+          ← Événements
         </Link>
-        {event.city && <span> · {event.city}</span>}
-        <span> · {event.name}</span>
-      </div>}
+      </div>
 
       {/* HERO */}
-      <div className={styles.hero} style={{ position: 'relative', margin: '12px 0 0', borderRadius: 20, overflow: 'hidden', height: 220, background: 'var(--surface-2)', boxShadow: '0 16px 48px rgba(var(--black-rgb), .32)' }}>
+      <div className={styles.hero} style={{ position: 'relative', margin: '12px 0 0', borderRadius: 20, overflow: 'hidden', height: 220, background: 'var(--surface-2)' }}>
         <Image
           src={reliablePhotoUrl(event.imageUrl, event.id, 880, 495)}
           alt={event.name}
@@ -196,8 +180,8 @@ export default async function EventDetailContent({
           style={{ objectFit: 'cover' }}
           sizes="(max-width: 768px) 100vw, 880px"
         />
-        <div className={styles.heroOverlay} style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, var(--media-scrim-strong) 100%)' }} />
-        <div className={styles.heroActions} style={{ position: 'absolute', top: 12, right: isModal ? 68 : 12, display: 'flex', alignItems: 'center', gap: 8, zIndex: 10 }}>
+        <div className={styles.heroOverlay} />
+        <div className={styles.heroActions} style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 8, zIndex: 10 }}>
           <EventShareButton eventName={event.name} />
           <EventInterestButtonClient eventId={event.id} initialInterested={interestState.interested} isAuthenticated={Boolean(session?.user)} floating />
         </div>
@@ -205,12 +189,12 @@ export default async function EventDetailContent({
           {event.cancelled && (
             <span style={{ display: 'inline-block', marginBottom: 8, fontSize: 'var(--font-size-footnote)', fontWeight: 800, color: 'var(--text)', background: 'var(--pink)', padding: '4px 12px', borderRadius: 999 }}>ANNULÉ</span>
           )}
-          <h1 className={`font-display ${styles.title}`} style={{ fontSize: 'clamp(26px, 3.2vw, 36px)', margin: 0, letterSpacing: '-.02em', lineHeight: 1.2, textShadow: '0 2px 8px rgba(var(--black-rgb), .80)', color: 'var(--text)' }}>{event.name}</h1>
+          <h1 className={`font-display ${styles.title}`} style={{ fontSize: 'clamp(25px, 3vw, 34px)', fontWeight: 500, margin: 0, letterSpacing: '-.02em', lineHeight: 1.15, color: 'var(--text)' }}>{event.name}</h1>
           {event.subtitle && <p className={styles.subtitle} style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text)', margin: '6px 0 0', lineHeight: 1.4 }}>{event.subtitle}</p>}
           {event.tags?.length ? (
             <div className={styles.tags} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
               {event.tags.map((tag) => (
-                <span key={tag} style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text)', background: 'var(--border-strong)', padding: '3px 10px', borderRadius: 999 }}>
+                <span key={tag} style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 500, color: 'var(--text)', background: 'var(--border-strong)', padding: '3px 10px', borderRadius: 999 }}>
                   {tag}
                 </span>
               ))}
@@ -232,7 +216,7 @@ export default async function EventDetailContent({
         <div style={{ padding: '12px 16px 0' }}>
           <Link
             href={session?.user ? `/playlist/${event.id}` : `/login?next=${encodeURIComponent(`/playlist/${event.id}`)}`}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 999, border: '1px solid var(--primary-a35)', background: 'var(--primary-a12)', color: 'var(--primary)', fontSize: 'var(--font-size-body)', fontWeight: 800, textDecoration: 'none' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 'var(--radius-control)', border: '1px solid var(--primary-a35)', background: 'var(--primary-a12)', color: 'var(--primary)', fontSize: 'var(--font-size-body-sm)', fontWeight: 500, textDecoration: 'none' }}
           >
             🎵 Playlist interactive · Proposer un son
           </Link>
@@ -254,7 +238,7 @@ export default async function EventDetailContent({
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {event.artists.map((a) => (
                     <li key={a.name} style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 12px' }}>
-                      <strong>{a.name}</strong> <span style={{ color: 'var(--text-muted)' }}>· {a.role}</span>
+                      <span style={{ fontWeight: 500 }}>{a.name}</span> <span style={{ color: 'var(--text-muted)' }}>· {a.role}</span>
                     </li>
                   ))}
                 </ul>
@@ -290,7 +274,7 @@ export default async function EventDetailContent({
                     organizerProfile.publicName?.[0]?.toUpperCase() || '?'
                   )}
                 </div>
-                <span style={{ fontSize: 'var(--font-size-headline-xl)', fontWeight: 750, color: 'var(--text)' }}>{organizerProfile.publicName}</span>
+                <span style={{ fontSize: 'var(--font-size-headline-xl)', fontWeight: 500, color: 'var(--text)' }}>{organizerProfile.publicName}</span>
               </Link>
             ) : (
               <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text-muted)' }}>{event.organizerName || event.organizer || 'Organisateur'}</p>
@@ -406,8 +390,8 @@ export default async function EventDetailContent({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="lb-detail-section" style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 'var(--font-size-body)', fontWeight: 800, margin: '0 0 10px', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
+    <section className="lb-detail-section">
+      <h2>{title}</h2>
       {children}
     </section>
   )
@@ -418,7 +402,7 @@ function Chip({ label, tone, color, ink }: { label: string; tone?: 'urgent' | 'd
     <span
       style={{
         fontSize: 'var(--font-size-callout)',
-        fontWeight: 700,
+        fontWeight: 500,
         padding: '5px 12px',
         borderRadius: 999,
         color: ink || (tone === 'urgent' ? 'var(--text)' : 'var(--text)'),

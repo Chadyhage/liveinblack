@@ -4,10 +4,11 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import OrganizerFollowButtonClient from '@/app/components/features/organizer/OrganizerFollowButtonClient'
-import { ArrowLeft } from 'lucide-react'
-import { ActionLink, Avatar, Button, Card, Checkbox, EmptyState, Pagination, pagedSlice } from '@/app/components/ui'
+import { ArrowLeft, UsersRound } from 'lucide-react'
+import { ActionLink, Avatar, Button, Card, Checkbox, Pagination, pagedSlice } from '@/app/components/ui'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import { placeholderPhotoUrl } from '@/lib/shared/placeholderImage'
+import styles from './FollowedOrganizersClient.module.css'
 
 const PAGE_SIZE = 24
 
@@ -68,6 +69,7 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
   const page = Number(pageParam)
   const setPage = (n: number) => setPageParam(String(n))
   const { pageItems: pagedFollows, pageCount } = pagedSlice(follows, page, PAGE_SIZE)
+  const visibleSuggestions = suggestions.filter((s) => !follows.some((f) => f.organizerId === s.organizerId))
 
   function remove(organizerId: string) {
     setFollows((list) => list.filter((f) => f.organizerId !== organizerId))
@@ -102,68 +104,81 @@ export default function FollowedOrganizersClient({ initialFollows, suggestions }
   }
 
   return (
-    <main className="lb-dashboard-page">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Link href="/profile" style={{ minHeight: 34, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--text-muted)', textDecoration: 'none' }}>
+    <main className={`lb-dashboard-page ${styles.page}`}>
+      <div className={styles.stack}>
+        <div className={styles.topbar}>
+          <Link href="/profile" className={styles.backLink}>
             <ArrowLeft size={17} aria-hidden="true" />
             Profil
           </Link>
-          <ActionLink href="/organizers">Découvrir</ActionLink>
+          {follows.length > 0 && <ActionLink href="/organizers">Découvrir</ActionLink>}
         </div>
 
-        <header>
-          <h1 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(22px,2.6vw,30px)', fontWeight: 720, letterSpacing: '-.045em' }}>Organisateurs suivis</h1>
-          <p style={{ maxWidth: 620, margin: '5px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-footnote)', lineHeight: 1.35 }}>Gère tes abonnements et choisis précisément les alertes que tu souhaites recevoir.</p>
+        <header className={styles.intro}>
+          <div>
+            <h1>Organisateurs suivis</h1>
+            <p>Gère tes abonnements et les alertes que tu souhaites recevoir.</p>
+          </div>
+          <span className={styles.count}>{follows.length} suivi{follows.length > 1 ? 's' : ''}</span>
         </header>
 
         {follows.length === 0 ? (
-          <EmptyState
-            title="Aucun organisateur suivi"
-            description="Suis tes organisateurs préférés pour être alerté de leurs prochains événements."
-            action={
-              <Link
-                href="/organizers"
-                style={{ minHeight: 40, display: 'inline-flex', alignItems: 'center', padding: '10px 18px', borderRadius: 11, background: 'linear-gradient(180deg, var(--primary), var(--primary-strong))', color: 'var(--primary-ink)', fontWeight: 700, fontSize: 'var(--font-size-callout)', textDecoration: 'none' }}
-              >
-                Découvrir les organisateurs
-              </Link>
-            }
-          />
+          <div className={styles.emptyPanel}>
+            <span className={styles.emptyIcon}><UsersRound size={22} aria-hidden="true" /></span>
+            <div>
+              <h2>Construis ta sélection</h2>
+              <p>Suis tes organisateurs préférés pour retrouver leurs soirées et recevoir uniquement les alertes utiles.</p>
+            </div>
+            <Link href="/organizers" className={styles.emptyAction}>Explorer l’annuaire</Link>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: 16, alignItems: 'start' }}>
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2>Mes abonnements</h2>
+                <p>Ouvre une carte pour personnaliser ses notifications.</p>
+              </div>
+            </div>
+            <div className={styles.followGrid}>
               {pagedFollows.map((f) => (
                 <FollowCard key={f.organizerId} follow={f} onUnfollowed={() => remove(f.organizerId)} onPatch={(next) => patch(f.organizerId, next)} />
               ))}
             </div>
             <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={follows.length} pageSize={PAGE_SIZE} />
-          </div>
+          </section>
         )}
 
-        {suggestions.length > 0 && (
-          <div>
-            <h2 style={{ fontSize: 'clamp(18px,2.6vw,26px)', fontWeight: 800, margin: '0 0 8px' }}>Organisateurs à suivre</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))', gap: 16 }}>
-              {suggestions
-                .filter((s) => !follows.some((f) => f.organizerId === s.organizerId))
-                .map((s) => (
-                  <Card key={s.organizerId} style={{ padding: 0, overflow: 'hidden' }}>
-                    <div style={{ position: 'relative', height: 140 }}>
+        {visibleSuggestions.length > 0 && (
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2>Suggestions pour toi</h2>
+                <p>Des organisateurs actifs à découvrir.</p>
+              </div>
+            </div>
+            <div className={styles.suggestionGrid}>
+              {visibleSuggestions.map((s) => (
+                  <Card key={s.organizerId} className={styles.suggestionCard}>
+                    <div className={styles.banner}>
                       <Image src={s.bannerUrl || placeholderPhotoUrl(s.organizerId, 720, 280)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 760px) 100vw, 420px" />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px 16px' }}>
-                      <Avatar src={s.avatarUrl || placeholderPhotoUrl(`${s.organizerId}-avatar`, 160, 160)} name={s.name} size="lg" />
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <Link href={`/organizers/${s.slug}`} style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-headline)', fontWeight: 750, color: 'var(--text)', textDecoration: 'none' }}>{s.name}</Link>
-                        {(s.city || s.country) && <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', margin: '-4px 0 0' }}>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
+                    <div className={styles.suggestionBody}>
+                      <div className={styles.followIdentity}>
+                        <Avatar src={s.avatarUrl || placeholderPhotoUrl(`${s.organizerId}-avatar`, 160, 160)} name={s.name} size="md" />
+                        <div className={styles.identityCopy}>
+                          <Link href={`/organizers/${s.slug}`}>{s.name}</Link>
+                          {(s.city || s.country) && <p>{[s.city, s.country].filter(Boolean).join(' · ')}</p>}
+                        </div>
                       </div>
-                      <OrganizerFollowButtonClient organizerId={s.organizerId} organizerName={s.name} initialFollowing={false} isAuthenticated compact onFollow={() => addFollow(s)} />
+                      <div className={styles.followActions}>
+                        <Link href={`/organizers/${s.slug}`} className={styles.pageLink}>Voir le profil</Link>
+                        <OrganizerFollowButtonClient organizerId={s.organizerId} organizerName={s.name} initialFollowing={false} isAuthenticated compact onFollow={() => addFollow(s)} />
+                      </div>
                     </div>
                   </Card>
                 ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
     </main>
@@ -208,28 +223,25 @@ function FollowCard({
   }
 
   return (
-    <Card style={{ padding: 0, overflow: 'hidden' }}>
-      <div style={{ position: 'relative', height: 150 }}>
+    <Card className={styles.followCard}>
+      <div className={styles.banner}>
         <Image src={follow.organizerBannerUrl || placeholderPhotoUrl(follow.organizerId, 760, 300)} alt="" fill style={{ objectFit: 'cover' }} sizes="(max-width: 760px) 100vw, 440px" />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '14px 16px 12px' }}>
-        <Avatar src={follow.organizerAvatarUrl || placeholderPhotoUrl(`${follow.organizerId}-avatar`, 160, 160)} name={follow.organizerName} size="lg" />
-        <div style={{ flex: 1, minWidth: 120 }}>
-          <h2 style={{ fontSize: 'var(--font-size-body-lg)', fontWeight: 800, margin: 0 }}>{follow.organizerName}</h2>
-          {(follow.organizerCity || follow.organizerCountry) && (
-            <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-muted)', margin: '1px 0 0' }}>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>
-          )}
+      <div className={styles.followBody}>
+        <div className={styles.followIdentity}>
+          <Avatar src={follow.organizerAvatarUrl || placeholderPhotoUrl(`${follow.organizerId}-avatar`, 160, 160)} name={follow.organizerName} size="md" />
+          <div className={styles.identityCopy}>
+            <h3>{follow.organizerName}</h3>
+            {(follow.organizerCity || follow.organizerCountry) && <p>{[follow.organizerCity, follow.organizerCountry].filter(Boolean).join(' · ')}</p>}
+          </div>
         </div>
-        <Link
-          href={`/organizers/${follow.organizerSlug}`}
-          style={{ minHeight: 32, display: 'inline-flex', alignItems: 'center', padding: '6px 10px', borderRadius: 999, border: '1px solid var(--border-strong)', color: 'var(--text)', fontSize: 'var(--font-size-footnote)', fontWeight: 700, textDecoration: 'none' }}
-        >
-          Voir la page
-        </Link>
-        <OrganizerFollowButtonClient organizerId={follow.organizerId} organizerName={follow.organizerName} initialFollowing onUnfollow={onUnfollowed} isAuthenticated compact />
+        <div className={styles.followActions}>
+          <Link href={`/organizers/${follow.organizerSlug}`} className={styles.pageLink}>Voir le profil</Link>
+          <OrganizerFollowButtonClient organizerId={follow.organizerId} organizerName={follow.organizerName} initialFollowing onUnfollow={onUnfollowed} isAuthenticated compact showUnfollowLabel />
+        </div>
       </div>
 
-      <div style={{ borderTop: '1px solid var(--border)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+      <div className={styles.notificationRow}>
         <Checkbox
           label="Notifications de cet organisateur"
           checked={follow.notificationsEnabled}
@@ -243,7 +255,7 @@ function FollowCard({
       </div>
 
       {expanded && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 8, padding: '0 16px 16px' }}>
+        <div className={styles.alertsGrid}>
           {ALERT_LABELS.map(({ key, label }) => (
             <Checkbox
               key={key}

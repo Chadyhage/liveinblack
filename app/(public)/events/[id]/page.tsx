@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import EventDetailContent, { resolveEvent } from './EventDetailContent'
+import styles from './EventDetailContent.module.css'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -8,11 +9,8 @@ const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 // EventCheckoutPanel. Ce que ce fichier ajoute par rapport au
 // legacy : méta SEO (aucune n'existait).
 //
-// Le rendu proprement dit vit dans EventDetailContent.tsx, partagé avec la
-// route interceptée app/(public)/@modal/(.)events/[id]/page.tsx qui affiche
-// ce même contenu en modal glissante quand on navigue depuis une carte
-// événement ; cette page-ci reste la cible link-based (visite directe,
-// refresh, nouvel onglet).
+// La fiche reste une page dédiée : le clic, le rafraîchissement et l'ouverture
+// dans un nouvel onglet produisent ainsi exactement le même rendu.
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -51,7 +49,7 @@ export default async function EventDetailPage({
   const { paiement } = await searchParams
 
   return (
-    <main className="lb-public-detail-page" style={{ maxWidth: 1260, margin: '0 auto', padding: '8px clamp(8px, 1vw, 14px) 30px', width: '100%' }}>
+    <main className={`lb-public-detail-page ${styles.detailPage}`}>
       <EventDetailContent id={id} paiement={paiement} />
     </main>
   )

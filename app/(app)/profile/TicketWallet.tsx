@@ -121,7 +121,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
         .ticket-wallet-section-grid {
           display: grid !important;
           grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important;
-          gap: 16px !important;
+          gap: 10px !important;
           width: 100% !important;
         }
         @media (min-width: 1024px) {
@@ -139,16 +139,25 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
             grid-template-columns: 1fr !important;
           }
         }
-        .ticket-wallet-event-link { gap: 10px !important; padding: 12px 14px !important; }
+        .ticket-wallet-event-link { gap: 10px !important; padding: 10px 12px !important; }
         .ticket-wallet-event-thumb { width: 44px !important; height: 44px !important; border-radius: 10px !important; }
-        .ticket-wallet-event-title { font-size: var(--font-size-body) !important; font-weight: 750 !important; }
-        .ticket-wallet-face { display: flex !important; flex-direction: column !important; }
-        .ticket-wallet-rail { min-height: 100px !important; padding: 14px !important; }
-        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important; width: 100% !important; }
-        .ticket-wallet-card-body { padding: 10px 14px !important; }
-        .ticket-wallet-card-actions { padding: 12px 14px !important; gap: 6px !important; }
-        .ticket-wallet-qr { width: 100% !important; padding: 14px !important; border-left: 0 !important; border-top: 1px dashed var(--border-strong) !important; }
+        .ticket-wallet-event-title { font-size: var(--font-size-body) !important; font-weight: 500 !important; }
+        .ticket-wallet-ticket-list { padding: 0 12px 12px !important; gap: 8px !important; }
+        .ticket-wallet-face { display: grid !important; grid-template-columns: minmax(0, 1fr) 112px !important; }
+        .ticket-wallet-rail { min-height: 76px !important; padding: 10px 12px !important; }
+        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: none !important; width: 100% !important; }
+        .ticket-wallet-card-body { padding: 8px 10px !important; }
+        .ticket-wallet-card-actions { padding: 8px 10px !important; gap: 6px !important; }
+        .ticket-wallet-action-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+        .ticket-wallet-action-grid > * { width: 100% !important; min-width: 0 !important; min-height: 32px !important; padding: 6px 7px !important; font-size: var(--font-size-caption) !important; }
+        .ticket-wallet-qr { width: auto !important; padding: 8px !important; border-left: 1px dashed var(--border-strong) !important; border-top: 0 !important; gap: 3px !important; }
+        .ticket-wallet-qr canvas { width: 80px !important; height: 80px !important; }
+        .ticket-wallet-meta > div { padding: 8px 9px !important; }
+        .ticket-wallet-meta > div p:first-child { margin-bottom: 2px !important; }
         @media (max-width: 480px) {
+          .ticket-wallet-face { grid-template-columns: 1fr !important; }
+          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed var(--border-strong) !important; }
+          .ticket-wallet-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
           .ticket-wallet-meta { grid-template-columns: repeat(3, 1fr) !important; }
           .ticket-wallet-summary { grid-template-columns: 1fr !important; }
           .ticket-wallet-summary-action { justify-content: flex-start !important; }
@@ -175,7 +184,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
           <EmptyWallet />
         ) : (
           <>
-            <Card className="ticket-wallet-summary" style={{ width: '100%', display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', alignItems: 'center', gap: 8, padding: 12 }}>
+            <Card className="ticket-wallet-summary" style={{ width: '100%', display: 'block', padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <TicketGlyph />
                 <div>
@@ -189,28 +198,6 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
                   </p>
                 </div>
                 </div>
-              <div className="ticket-wallet-summary-action" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <Link
-                href="/events"
-                style={{
-                  minHeight: 34,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  alignSelf: 'flex-start',
-                  padding: '7px 12px',
-                  borderRadius: 999,
-                  background: 'var(--primary)',
-                  color: 'var(--primary-ink)',
-                  fontWeight: 700,
-                  fontSize: 'var(--font-size-footnote)',
-                  textDecoration: 'none',
-                  gap: 6,
-                }}
-              >
-                <Sparkles size={13} aria-hidden="true" />
-                Trouver une soirée
-              </Link>
-              </div>
             </Card>
 
             {buckets.upcoming.length > 0 && <Section label={`À venir (${buckets.upcoming.length})`} groups={buckets.upcoming} currentUserId={currentUserId} paramName="page" />}
@@ -371,7 +358,7 @@ function EmptyWallet() {
 }
 
 function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketWalletGroupView; currentUserId: string; bucket: GroupBucket }) {
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(() => readDismissed())
   const event = group.event
   const cancelled = bucket === 'cancelled'
@@ -489,7 +476,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       {hostsTable && event && <TableHostPanel hostedSeats={group.hostedSeats} />}
 
       {group.myTickets.length > 0 && (
-        <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="ticket-wallet-ticket-list" style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
               {expanded ? 'Masquer mes places' : 'Voir mes places'}
@@ -1102,7 +1089,7 @@ function PremiumTicketCard({
           <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel} · aucune action disponible</p>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, width: '100%' }}>
+            <div className="ticket-wallet-action-grid">
               <Button
                 variant="secondary"
                 size="sm"
@@ -1116,20 +1103,18 @@ function PremiumTicketCard({
                 {downloadState === 'ok' ? 'Prêt' : 'PDF'}
               </Button>
               <ActionBtn onClick={toggleIncluded} icon={<ListChecks size={14} aria-hidden="true" />}>Options</ActionBtn>
-            </div>
 
-            {event && (
-              <Link
-                href={`/order/${event.id}/${ticket.ticketCode}`}
-                style={{ ...actionBtnStyle(false), background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', boxSizing: 'border-box' }}
-                title="Commander sur place"
-              >
-                <ExternalLink size={14} aria-hidden="true" />
-                Commander sur place
-              </Link>
-            )}
+              {event && (
+                <Link
+                  href={`/order/${event.id}/${ticket.ticketCode}`}
+                  style={{ ...actionBtnStyle(false), background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxSizing: 'border-box' }}
+                  title="Commander sur place"
+                >
+                  <ExternalLink size={14} aria-hidden="true" />
+                  Commander
+                </Link>
+              )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, width: '100%' }}>
               <ActionBtn onClick={handleShare} icon={<Share2 size={14} aria-hidden="true" />}>Partager</ActionBtn>
               <Button
                 variant="danger"
@@ -1144,9 +1129,7 @@ function PremiumTicketCard({
               >
                 Story
               </Button>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, width: '100%' }}>
               <ActionBtn onClick={handleCalendar} icon={<CalendarPlus size={14} aria-hidden="true" />}>Agenda</ActionBtn>
               {ticket.resellable && !activeListing && (
                 <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={14} aria-hidden="true" />} style={{ ...actionBtnStyle(false, 'rgba(var(--violet-rgb), .14)', 'var(--violet)'), justifyContent: 'center' }}>

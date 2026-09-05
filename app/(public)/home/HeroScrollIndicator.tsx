@@ -24,6 +24,7 @@ export default function HeroScrollIndicator({ targetId }: { targetId?: string })
         label="Défiler vers la section suivante"
         onClick={scrollToNext}
         size={44}
+        data-home-scroll-indicator="true"
         style={{
           position: 'absolute',
           left: '50%',

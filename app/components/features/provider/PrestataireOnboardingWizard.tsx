@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn, useSession } from 'next-auth/react'
 import { regions } from '@/lib/shared/regions'
 import { PROVIDER_CATEGORIES, getPrimaryProviderType } from '@/lib/shared/providerCategories'
 import { regionToCurrency } from '@/lib/shared/money'
@@ -132,6 +133,7 @@ export default function PrestataireOnboardingWizard({
   initialCandidateNote?: string
 }) {
   const router = useRouter()
+  const { update } = useSession()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<PrestataireFormData>({ ...EMPTY_FORM, ...initialFormData })
   const [regEmail, setRegEmail] = useState('')
@@ -285,7 +287,13 @@ export default function PrestataireOnboardingWizard({
           provider_type: cleanedForm.prestataireType || null,
           has_documents: Object.values(documents).some((entries) => entries.length > 0),
         })
-        setSubmitted({ email: cleanRegEmail })
+        const login = await signIn('credentials', { email: cleanRegEmail, password: regPassword, redirect: false })
+        if (login?.error) {
+          setSubmitted({ email: cleanRegEmail })
+          return
+        }
+        router.replace('/offer-services')
+        router.refresh()
       } else {
         const res = await fetch('/api/applications/prestataire/submit', {
           method: 'POST',
@@ -305,7 +313,9 @@ export default function PrestataireOnboardingWizard({
           provider_type: cleanedForm.prestataireType || null,
           has_documents: Object.values(documents).some((entries) => entries.length > 0),
         })
-        router.push('/my-application')
+        await update({ activeRole: 'prestataire' })
+        router.replace('/offer-services')
+        router.refresh()
       }
     } finally {
       setBusy(false)
@@ -329,8 +339,8 @@ export default function PrestataireOnboardingWizard({
             Tu seras contacté à <strong style={{ color: 'var(--text)' }}>{submitted.email}</strong> une fois ton compte validé.
           </p>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
-          <a href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
-            Retour à l&apos;accueil
+          <a href={`/login?next=${encodeURIComponent('/offer-services')}`} style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
+            Accéder à mon espace prestataire
           </a>
         </Card>
       </Shell>
@@ -342,16 +352,16 @@ export default function PrestataireOnboardingWizard({
 
   return (
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 8 : 20 }}>
-        <div>
-          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Demande d&apos;espace</p>
+      <div style={{ maxWidth: mode === 'anonymous' ? 560 : 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 12 : 20 }}>
+        <div style={{ textAlign: mode === 'anonymous' ? 'center' : 'left' }}>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 4px' }}>Compte Prestataire</h1>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>
+          <div style={{ display: 'flex', justifyContent: mode === 'anonymous' ? 'center' : 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
           </div>
