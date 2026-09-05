@@ -186,7 +186,9 @@ export default function AccountMenu({
               overflow: 'hidden',
               zIndex: 60,
               padding: 6,
-              transformOrigin: resolvedDirection === 'up' ? 'bottom right' : 'top right',
+              transformOrigin: resolvedDirection === 'up'
+                ? (menuAlign === 'left' ? 'bottom left' : 'bottom right')
+                : (menuAlign === 'left' ? 'top left' : 'top right'),
             }}
           >
             {user.name && (

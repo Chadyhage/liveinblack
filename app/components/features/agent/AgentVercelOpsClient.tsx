@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, AlertTriangle, Gauge, RefreshCw, ServerCog, ShieldCheck } from 'lucide-react'
-import { Badge, Button, Card, DashboardPageHeader, Select, SkeletonCard } from '@/app/components/ui'
+import { Activity, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, ExternalLink, Gauge, HelpCircle, RefreshCw, ServerCog, ShieldCheck, Sliders } from 'lucide-react'
+import { Badge, Button, Card, DashboardPageHeader, Select, SkeletonCard, Tabs } from '@/app/components/ui'
 import ConfirmDialog from '@/app/components/ui/ConfirmDialog'
 
 type EventSource = 'all' | 'platform' | 'spend' | 'drain'
@@ -390,6 +390,8 @@ export default function AgentVercelOpsClient() {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
   const [error, setError] = useState(false)
   const [configError, setConfigError] = useState(false)
+  const [activeTab, setActiveTab] = useState<'controls' | 'status' | 'events' | 'advanced'>('controls')
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
 
   const counts = useMemo(() => ({
     platform: events.filter((event) => event.source === 'platform').length,
@@ -583,292 +585,147 @@ export default function AgentVercelOpsClient() {
     }
   }
 
+  const siteStatusSummary = useMemo(() => {
+    if (!config) return { tone: 'neutral' as const, label: 'Chargement...', desc: 'Récupération de la configuration du site...' }
+    if (config.maintenanceMode) {
+      return {
+        tone: 'danger' as const,
+        label: 'Mode Maintenance Actif',
+        desc: 'Le site public est temporairement fermé aux visiteurs. Les fonctionnalités critiques sont suspendues.',
+      }
+    }
+    if (!config.checkoutEnabled || !config.ticketResaleEnabled) {
+      return {
+        tone: 'gold' as const,
+        label: 'Fonctionnement partiel',
+        desc: `Le site est en ligne mais certaines options sont coupées (${!config.checkoutEnabled ? 'paiements désactivés' : ''}${!config.checkoutEnabled && !config.ticketResaleEnabled ? ', ' : ''}${!config.ticketResaleEnabled ? 'revente désactivée' : ''}).`,
+      }
+    }
+    return {
+      tone: 'teal' as const,
+      label: 'Site 100% Opérationnel',
+      desc: 'Tous les services fonctionnent normalement. Les visiteurs peuvent naviguer, acheter et revendre leurs billets.',
+    }
+  }, [config])
+
   return (
     <main className="lb-dashboard-page">
       <DashboardPageHeader
-        eyebrow="Vercel Pro"
-        title="Ops Vercel"
-        description="Suivi interne des signaux Vercel: événements plateforme, budget, drains et alertes utiles."
+        eyebrow="Pilotage Opérationnel"
+        title="Centre Vercel & Site"
+        description="Gérez le site en direct (mode urgence, paiements, maintenance) et surveillez la santé globale en toute simplicité."
         actions={
-          <Button variant="secondary" onClick={() => load()} loading={loading} icon={<RefreshCw size={16} aria-hidden="true" />}>
-            Actualiser
-          </Button>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {dashboardLinks?.links?.[0]?.href ? (
+              <a
+                href={dashboardLinks.links[0].href}
+                target="_blank"
+                rel="noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                <Button variant="secondary" icon={<ExternalLink size={15} aria-hidden="true" />}>
+                  Dashboard Vercel
+                </Button>
+              </a>
+            ) : null}
+            <Button variant="primary" onClick={() => load()} loading={loading} icon={<RefreshCw size={16} aria-hidden="true" />}>
+              Actualiser
+            </Button>
+          </div>
         }
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 18 }}>
-        <Card accent="var(--primary-a35)"><Metric icon={<ServerCog size={19} />} label="Plateforme" value={counts.platform} /></Card>
-        <Card accent="var(--primary-a35)"><Metric icon={<Gauge size={19} />} label="Budget" value={counts.spend} /></Card>
-        <Card accent="var(--primary-a35)"><Metric icon={<Activity size={19} />} label="Drain logs" value={counts.drain} /></Card>
-        <Card accent={counts.urgent > 0 ? 'var(--danger)' : 'var(--primary-a35)'}><Metric icon={<AlertTriangle size={19} />} label="Prioritaires" value={counts.urgent} /></Card>
-      </div>
-
-      {proUtilizationMode ? <ProUtilizationModeCard mode={proUtilizationMode} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {liveActivationReadiness ? <LiveActivationReadinessCard readiness={liveActivationReadiness} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {proofDebt ? <ProofDebtCard proofDebt={proofDebt} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {completionVerdict ? <CompletionVerdictCard verdict={completionVerdict} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {evidenceFreshness ? <EvidenceFreshnessCard freshness={evidenceFreshness} /> : null}
-
-      {nextAction ? <NextActionCard nextAction={nextAction} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {nextProofCapture ? <NextProofCaptureCard proof={nextProofCapture} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {liveEvidenceMatrix ? <LiveEvidenceMatrixCard matrix={liveEvidenceMatrix} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
-
-      {actionBlockers ? <ActionBlockersCard actionBlockers={actionBlockers} /> : null}
-
-      {riskCost ? <RiskCostCard riskCost={riskCost} /> : null}
-
-      {dashboardLinks ? <DashboardLinksCard dashboardLinks={dashboardLinks} /> : null}
-
-      <Card style={{ marginBottom: 18 }} accent={readinessScore >= 80 ? 'var(--primary-a35)' : 'var(--warning)'}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Baromètre Vercel Pro</h2>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-              Lecture rapide de ce qui est déjà branché et de ce qui manque encore pour exploiter Pro à fond.
-            </p>
+      {/* ── BANDEAU RÉCAPITULATIF GRAND PUBLIC (Compréhensible en 2 secondes) ── */}
+      <Card
+        accent={siteStatusSummary.tone === 'danger' ? 'var(--danger)' : siteStatusSummary.tone === 'gold' ? 'var(--warning)' : 'var(--primary)'}
+        style={{ marginBottom: 20 }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-pill)',
+                display: 'grid',
+                placeItems: 'center',
+                background: siteStatusSummary.tone === 'danger' ? 'rgba(239,68,68,0.15)' : siteStatusSummary.tone === 'gold' ? 'rgba(234,179,8,0.15)' : 'var(--primary-a14)',
+                color: siteStatusSummary.tone === 'danger' ? 'var(--danger)' : siteStatusSummary.tone === 'gold' ? 'var(--warning)' : 'var(--primary)',
+                flex: '0 0 auto',
+              }}
+            >
+              {siteStatusSummary.tone === 'danger' ? <AlertTriangle size={24} /> : <CheckCircle2 size={24} />}
+            </span>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-3)' }}>{siteStatusSummary.label}</h2>
+                <Badge tone={siteStatusSummary.tone}>{configWritable ? 'Pilotable en direct' : 'Mode consultation'}</Badge>
+              </div>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+                {siteStatusSummary.desc}
+              </p>
+            </div>
           </div>
-          <Badge tone={readinessScore >= 80 ? 'teal' : 'gold'}>{readinessScore}% activé</Badge>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-          {readinessItems.map((item) => (
-            <ReadinessRow key={item.label} label={item.label} detail={item.detail} done={item.done} />
-          ))}
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Badge tone={counts.urgent > 0 ? 'danger' : 'teal'}>
+              {counts.urgent > 0 ? `${counts.urgent} alerte(s) à vérifier` : 'Aucune alerte critique'}
+            </Badge>
+            <Badge tone="neutral">
+              {readinessScore}% services configurés
+            </Badge>
+          </div>
         </div>
       </Card>
 
-      {proDecisions ? (
-        <Card style={{ marginBottom: 18 }} accent={proDecisions.score >= 100 ? 'var(--primary-a35)' : 'var(--warning)'}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Feuille de route 100%</h2>
+      {/* ── ONGLET DE NAVIGATION SIMPLIFIÉ ── */}
+      <Tabs
+        value={activeTab}
+        onChange={(val) => setActiveTab(val as typeof activeTab)}
+        options={[
+          { value: 'controls', label: '🎛️ Commandes du Site' },
+          { value: 'status', label: '📊 Santé & Budget' },
+          { value: 'events', label: `🔔 Activité récente (${events.length})` },
+          { value: 'advanced', label: '🛠️ Avancé & Audits' },
+        ]}
+        style={{ marginBottom: 20 }}
+      />
+
+      {/* ── ONGLET 1 : COMMANDES DU SITE (Le plus utile et simple) ── */}
+      {activeTab === 'controls' ? (
+        <div style={{ display: 'grid', gap: 18 }}>
+          {/* Actions rapides d'urgence */}
+          <Card>
+            <div style={{ marginBottom: 14 }}>
+              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Actions rapides</h2>
               <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                Les briques Pro doivent finir soit activées, soit rejetées avec une raison claire.
+                Changez l’état du site en 1 clic en cas de problème ou pour revenir à la normale.
               </p>
             </div>
-            <Badge tone={proDecisions.score >= 100 ? 'teal' : 'gold'}>{proDecisions.finalised}/{proDecisions.total} finalisées</Badge>
-          </div>
-          {proDecisions.remaining.length === 0 ? (
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Toutes les décisions Pro sont finalisées.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {proDecisions.remaining.map((item) => (
-                <DecisionRow key={item.key} label={item.label} status={item.status} nextAction={item.nextAction} />
-              ))}
-            </div>
-          )}
-        </Card>
-      ) : null}
 
-      {usageWatchlist ? (
-        <Card style={{ marginBottom: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Suivi Usage Pro</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                Les métriques Vercel à regarder pour éviter de payer Pro sans piloter les coûts et la performance.
-              </p>
-            </div>
-            <Badge tone="teal">{usageWatchlist.total} métriques</Badge>
-          </div>
-          {usageWatchlist.items.length === 0 ? (
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Aucune métrique Usage configurée.</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
-              {usageWatchlist.items.map((item) => (
-                <UsageRow key={item.key} label={item.label} dashboard={item.dashboard} owner={item.owner} actionIfBad={item.actionIfBad} />
-              ))}
-            </div>
-          )}
-        </Card>
-      ) : null}
-
-      {liveActivationGates ? (
-        <Card style={{ marginBottom: 18 }} accent={liveActivationGates.remaining > 0 ? 'var(--warning)' : 'var(--primary-a35)'}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Portes live restantes</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                Les actions encore ouvertes côté Vercel ou dashboard avant de déclarer Pro utilisé à 100%.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Badge tone={liveActivationGates.remaining > 0 ? 'gold' : 'teal'}>{liveActivationGates.remaining} restante(s)</Badge>
-              <Badge tone="neutral">{liveActivationGates.closed}/{liveActivationGates.total} fermée(s)</Badge>
-            </div>
-          </div>
-          {liveActivationGates.gates.length === 0 ? (
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Toutes les portes live documentées sont fermées ou rejetées.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {liveActivationGates.gates.map((gate) => (
-                <LiveGateRow
-                  key={gate.key}
-                  label={gate.label}
-                  status={gate.status}
-                  evidenceRequired={gate.evidenceRequired}
-                  safeNextAction={gate.safeNextAction}
-                  riskIfForced={gate.riskIfForced}
-                />
-              ))}
-            </div>
-          )}
-        </Card>
-      ) : null}
-
-      {activationOrder ? (
-        <Card style={{ marginBottom: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Ordre recommandé</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                La séquence restante la plus sûre pour passer de “préparé” à “activé live” sans créer d’incident.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Badge tone={activationOrder.remaining > 0 ? 'gold' : 'teal'}>{activationOrder.remaining} restante(s)</Badge>
-              <Badge tone="neutral">{activationOrder.closed}/{activationOrder.total} fermée(s)</Badge>
-            </div>
-          </div>
-          {activationOrder.steps.length === 0 ? (
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Toutes les étapes ordonnées sont fermées ou rejetées.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {activationOrder.steps.map((step) => (
-                <ActivationStepRow
-                  key={step.gateKey}
-                  rank={step.rank}
-                  label={step.label}
-                  owner={step.owner}
-                  automationLevel={step.automationLevel}
-                  whyFirst={step.whyFirst}
-                  preflight={step.preflight}
-                  commandOrPlace={step.commandOrPlace}
-                  doneWhen={step.doneWhen}
-                />
-              ))}
-            </div>
-          )}
-        </Card>
-      ) : null}
-
-      {completionEvidence ? (
-        <Card style={{ marginBottom: 18 }} accent={completionEvidence.score >= 100 ? 'var(--primary-a35)' : 'var(--warning)'}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Preuves du 100%</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                Ce qui doit être prouvé avant de dire honnêtement que Vercel Pro est utilisé à 100%.
-              </p>
-            </div>
-            <Badge tone={completionEvidence.score >= 100 ? 'teal' : 'gold'}>{completionEvidence.complete}/{completionEvidence.total} prouvées</Badge>
-          </div>
-          {completionEvidence.requirements.length === 0 ? (
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Aucune preuve de complétion documentée.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              {completionEvidence.requirements.map((requirement) => (
-                <CompletionRequirementRow
-                  key={requirement.key}
-                  label={requirement.label}
-                  status={requirement.status}
-                  evidenceSource={requirement.evidenceSource}
-                  evidenceRequired={requirement.evidenceRequired}
-                  currentEvidence={requirement.currentEvidence}
-                  nextAction={requirement.nextAction}
-                  evidenceRecordCommand={requirement.evidenceRecordCommand}
-                  copiedCommand={copiedCommand}
-                  onCopyCommand={copyCommand}
-                />
-              ))}
-            </div>
-          )}
-        </Card>
-      ) : null}
-
-      {auditSuite ? (
-        <Card style={{ marginBottom: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Suite d’audit 100%</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                Les commandes à lancer pour passer du diagnostic local au 100% prouvé côté Vercel.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Badge tone="neutral">{auditSuite.local} local</Badge>
-              <Badge tone="gold">{auditSuite.liveRead} live-read</Badge>
-              <Badge tone="danger">{auditSuite.explicitApproval} approbation</Badge>
-            </div>
-          </div>
-          {auditSuite.commands.length === 0 ? (
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Aucune suite d’audit configurée.</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
-              {auditSuite.commands.map((command) => (
-                <AuditCommandRow
-                  key={command.key}
-                  label={command.label}
-                  command={command.command}
-                  scope={command.scope}
-                  requiresExplicitApproval={command.requiresExplicitApproval === true}
-                  approvalReason={command.approvalReason}
-                  expectedBeforeLiveComplete={command.expectedBeforeLiveComplete}
-                  copiedCommand={copiedCommand}
-                  onCopyCommand={copyCommand}
-                />
-              ))}
-            </div>
-          )}
-        </Card>
-      ) : null}
-
-      <Card style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Pilotage live Edge Config</h2>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-              Ces réglages pilotent maintenance, checkout, revente, recherche et cache sans redéploiement.
-            </p>
-          </div>
-          <Badge tone={configWritable ? 'teal' : 'neutral'}>{configWritable ? 'Écriture active' : 'Lecture seule'}</Badge>
-        </div>
-
-        {configError ? (
-          <p style={{ color: 'var(--danger)', margin: '0 0 12px', fontWeight: 700 }}>Lecture ou mise à jour Edge Config impossible.</p>
-        ) : null}
-
-        {configLoading || !config ? (
-          <SkeletonCard />
-        ) : (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
               <QuickMode
-                title="Mode normal"
-                description="Rouvre l'expérience publique: maintenance coupée, checkout et revente actifs."
+                title="🟢 Tout rétablir (Mode normal)"
+                description="Réouvre immédiatement la billetterie, les paiements et le site public."
                 disabled={!configWritable || savingKey === 'preset-normal'}
                 onClick={() => requestConfigPatch({
                   title: 'Repasser en mode normal ?',
-                  body: 'Le site public reprend son fonctionnement standard: maintenance désactivée, checkout actif et revente active.',
+                  body: 'Le site public reprend son fonctionnement standard : maintenance coupée, achats Stripe/FedaPay autorisés et bourse de revente réactivée.',
                   confirmLabel: 'Activer le mode normal',
                   confirmVariant: 'primary',
                   patch: { maintenanceMode: false, checkoutEnabled: true, ticketResaleEnabled: true },
                   savingKey: 'preset-normal',
                 })}
               />
+
               <QuickMode
-                title="Mode urgence"
-                description="Ferme les actions commerciales critiques en un geste: maintenance active, checkout et revente coupés."
+                title="🚨 Coupure d'urgence"
+                description="Met immédiatement le site en pause et coupe les encaissements en cas de pépin."
                 disabled={!configWritable || savingKey === 'preset-emergency'}
                 danger
                 onClick={() => requestConfigPatch({
                   title: 'Activer le mode urgence ?',
-                  body: 'Cette action met le site en maintenance et coupe les achats ainsi que la revente sans redéploiement. À utiliser seulement en cas d’incident réel.',
+                  body: 'Cette action met le site en maintenance et suspend immédiatement tous les achats et la revente de billets. À utiliser en cas d’anomalie grave ou de maintenance programmée.',
                   confirmLabel: 'Activer l’urgence',
                   confirmVariant: 'danger',
                   patch: { maintenanceMode: true, checkoutEnabled: false, ticketResaleEnabled: false },
@@ -876,150 +733,333 @@ export default function AgentVercelOpsClient() {
                 })}
               />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
-              <FlagControl
-                label="Maintenance"
-                description="Coupe les APIs publiques critiques."
-                active={config.maintenanceMode}
-                disabled={!configWritable || savingKey === 'maintenanceMode'}
-                onToggle={() => requestConfigPatch({
-                  title: config.maintenanceMode ? 'Désactiver la maintenance ?' : 'Activer la maintenance ?',
-                  body: config.maintenanceMode
-                    ? 'Les APIs publiques critiques seront rouvertes. Vérifie que l’incident est terminé avant de confirmer.'
-                    : 'Les APIs publiques critiques seront coupées immédiatement, sans redéploiement.',
-                  confirmLabel: config.maintenanceMode ? 'Rouvrir le site' : 'Activer la maintenance',
-                  confirmVariant: config.maintenanceMode ? 'primary' : 'danger',
-                  patch: { maintenanceMode: !config.maintenanceMode },
-                  savingKey: 'maintenanceMode',
-                })}
-                danger={config.maintenanceMode}
-              />
-              <FlagControl
-                label="Checkout"
-                description="Autorise les achats Stripe/FedaPay."
-                active={config.checkoutEnabled}
-                disabled={!configWritable || savingKey === 'checkoutEnabled'}
-                onToggle={() => requestConfigPatch({
-                  title: config.checkoutEnabled ? 'Couper le checkout ?' : 'Réactiver le checkout ?',
-                  body: config.checkoutEnabled
-                    ? 'Les achats Stripe/FedaPay seront bloqués immédiatement. Les visiteurs ne pourront plus payer.'
-                    : 'Les achats Stripe/FedaPay seront à nouveau autorisés pour les visiteurs.',
-                  confirmLabel: config.checkoutEnabled ? 'Couper le checkout' : 'Réactiver le checkout',
-                  confirmVariant: config.checkoutEnabled ? 'danger' : 'primary',
-                  patch: { checkoutEnabled: !config.checkoutEnabled },
-                  savingKey: 'checkoutEnabled',
-                })}
-              />
-              <FlagControl
-                label="Revente"
-                description="Autorise la bourse officielle."
-                active={config.ticketResaleEnabled}
-                disabled={!configWritable || savingKey === 'ticketResaleEnabled'}
-                onToggle={() => requestConfigPatch({
-                  title: config.ticketResaleEnabled ? 'Couper la revente ?' : 'Réactiver la revente ?',
-                  body: config.ticketResaleEnabled
-                    ? 'La bourse officielle sera bloquée immédiatement pour éviter de nouveaux mouvements.'
-                    : 'La bourse officielle sera à nouveau disponible pour les billets éligibles.',
-                  confirmLabel: config.ticketResaleEnabled ? 'Couper la revente' : 'Réactiver la revente',
-                  confirmVariant: config.ticketResaleEnabled ? 'danger' : 'primary',
-                  patch: { ticketResaleEnabled: !config.ticketResaleEnabled },
-                  savingKey: 'ticketResaleEnabled',
-                })}
-              />
-              <SelectControl
-                label="Recherche min."
-                value={String(config.searchMinQueryLength)}
-                disabled={!configWritable || savingKey === 'searchMinQueryLength'}
-                options={[1, 2, 3, 4, 5, 6, 7, 8].map((value) => ({ value: String(value), label: `${value} caractère${value > 1 ? 's' : ''}` }))}
-                onChange={(value) => patchConfig({ searchMinQueryLength: Number(value) }, 'searchMinQueryLength')}
-              />
-              <SelectControl
-                label="Cache recherche"
-                value={String(config.publicCacheTtlSeconds)}
-                disabled={!configWritable || savingKey === 'publicCacheTtlSeconds'}
-                options={[15, 30, 45, 60, 120, 300].map((value) => ({ value: String(value), label: `${value}s` }))}
-                onChange={(value) => patchConfig({ publicCacheTtlSeconds: Number(value) }, 'publicCacheTtlSeconds')}
-              />
+          </Card>
+
+          {/* Interrupteurs individuels */}
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Interrupteurs individuels</h2>
+                <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+                  Activez ou désactivez une fonction spécifique sans redéployer le site.
+                </p>
+              </div>
+              <Badge tone={configWritable ? 'teal' : 'neutral'}>{configWritable ? 'Prêt à modifier' : 'Lecture seule'}</Badge>
             </div>
-            <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: 'var(--font-size-title-5)' }}>Derniers changements</h3>
-              {changes.length === 0 ? (
-                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>Aucun changement enregistré pour l’instant.</p>
-              ) : (
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {changes.map((change) => (
-                    <div key={change.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                      <span><strong style={{ color: 'var(--text)' }}>{change.key}</strong> : {String(change.previousValue)} → {String(change.nextValue)}</span>
-                      <span>{change.actorEmail || 'Agent'} · {fmtDate(change.changedAt)}</span>
+
+            {configError ? (
+              <p style={{ color: 'var(--danger)', margin: '0 0 12px', fontWeight: 700 }}>Erreur de connexion aux paramètres en direct.</p>
+            ) : null}
+
+            {configLoading || !config ? (
+              <SkeletonCard />
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
+                <FlagControl
+                  label="Accès Public (Maintenance)"
+                  description={config.maintenanceMode ? '⚠️ Le site affiche la page de maintenance' : '✅ Le site est accessible à tous'}
+                  active={!config.maintenanceMode}
+                  disabled={!configWritable || savingKey === 'maintenanceMode'}
+                  onToggle={() => requestConfigPatch({
+                    title: config.maintenanceMode ? 'Rouvrir le site public ?' : 'Mettre le site en maintenance ?',
+                    body: config.maintenanceMode
+                      ? 'Les visiteurs pourront de nouveau accéder aux pages et commander.'
+                      : 'Les visiteurs verront un écran de maintenance et ne pourront plus effectuer d’action.',
+                    confirmLabel: config.maintenanceMode ? 'Rouvrir le site' : 'Mettre en maintenance',
+                    confirmVariant: config.maintenanceMode ? 'primary' : 'danger',
+                    patch: { maintenanceMode: !config.maintenanceMode },
+                    savingKey: 'maintenanceMode',
+                  })}
+                  danger={config.maintenanceMode}
+                />
+
+                <FlagControl
+                  label="Paiements & Billetterie"
+                  description={config.checkoutEnabled ? '✅ Les achats de billets sont ouverts' : '⛔ Les achats sont bloqués'}
+                  active={config.checkoutEnabled}
+                  disabled={!configWritable || savingKey === 'checkoutEnabled'}
+                  onToggle={() => requestConfigPatch({
+                    title: config.checkoutEnabled ? 'Suspendre les achats de billets ?' : 'Autoriser les achats de billets ?',
+                    body: config.checkoutEnabled
+                      ? 'Les paiements en ligne seront bloqués immédiatement.'
+                      : 'Les visiteurs pourront de nouveau commander et payer leurs billets.',
+                    confirmLabel: config.checkoutEnabled ? 'Bloquer les paiements' : 'Réactiver les paiements',
+                    confirmVariant: config.checkoutEnabled ? 'danger' : 'primary',
+                    patch: { checkoutEnabled: !config.checkoutEnabled },
+                    savingKey: 'checkoutEnabled',
+                  })}
+                />
+
+                <FlagControl
+                  label="Bourse de revente officielle"
+                  description={config.ticketResaleEnabled ? '✅ Les fans peuvent revendre leurs billets' : '⛔ La revente est suspendue'}
+                  active={config.ticketResaleEnabled}
+                  disabled={!configWritable || savingKey === 'ticketResaleEnabled'}
+                  onToggle={() => requestConfigPatch({
+                    title: config.ticketResaleEnabled ? 'Suspendre la revente de billets ?' : 'Autoriser la revente ?',
+                    body: config.ticketResaleEnabled
+                      ? 'La place de marché de revente entre particuliers sera inaccessible.'
+                      : 'Les utilisateurs pourront à nouveau remettre des billets en vente.',
+                    confirmLabel: config.ticketResaleEnabled ? 'Bloquer la revente' : 'Réactiver la revente',
+                    confirmVariant: config.ticketResaleEnabled ? 'danger' : 'primary',
+                    patch: { ticketResaleEnabled: !config.ticketResaleEnabled },
+                    savingKey: 'ticketResaleEnabled',
+                  })}
+                />
+              </div>
+            )}
+          </Card>
+
+          {/* Raccourcis utiles */}
+          {dashboardLinks?.links?.length ? (
+            <Card>
+              <h2 style={{ margin: '0 0 10px', fontSize: 'var(--font-size-title-4)' }}>Liens utiles Vercel</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                {dashboardLinks.links.map((link) => (
+                  <a
+                    key={link.key}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-lg)',
+                      padding: 12,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      color: 'var(--text)',
+                      textDecoration: 'none',
+                      background: 'var(--surface)',
+                    }}
+                  >
+                    <div>
+                      <strong style={{ display: 'block', fontSize: 'var(--font-size-body-sm)' }}>{link.label}</strong>
+                      <span style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-caption)' }}>{link.purpose}</span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </Card>
-
-      <Card style={{ marginBottom: 18 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 260px) 1fr', gap: 14, alignItems: 'center' }}>
-          <Select value={source} onChange={onSourceChange} options={SOURCE_OPTIONS} aria-label="Filtrer les événements Vercel" />
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-            Les payloads bruts restent masqués par défaut. On affiche ici les signaux actionnables pour l’équipe agent.
-          </p>
-        </div>
-      </Card>
-
-      {error ? (
-        <Card accent="var(--danger)">
-          <p style={{ margin: 0, color: 'var(--text-muted)' }}>Impossible de charger les événements Vercel. Réessaie ou vérifie les droits agent.</p>
-        </Card>
-      ) : loading ? (
-        <div className="lb-dashboard-card-grid">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      ) : events.length === 0 ? (
-        <Card>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <ShieldCheck size={24} color="var(--primary)" aria-hidden="true" />
-            <div>
-              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Aucun événement pour ce filtre</h2>
-              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Les événements apparaîtront après activation des webhooks Vercel ou du Log Drain.</p>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
-          {events.map((event) => (
-            <Card key={`${event.source}-${event.id}`} accent={event.source === 'spend' && (event.thresholdPercent ?? 0) >= 100 ? 'var(--danger)' : undefined}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                <div style={{ display: 'grid', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Badge tone={badgeTone(event)}>{SOURCE_LABEL[event.source]}</Badge>
-                    <strong style={{ fontSize: 'var(--font-size-title-5)' }}>{event.type || event.message || 'Signal Vercel'}</strong>
-                  </div>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
-                    {event.message || [
-                      shortId(event.projectId) ? `Projet ${shortId(event.projectId)}` : null,
-                      shortId(event.deploymentId) ? `Déploiement ${shortId(event.deploymentId)}` : null,
-                      event.region ? `Région ${event.region}` : null,
-                    ].filter(Boolean).join(' · ') || 'Événement opérationnel Vercel'}
-                  </p>
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', color: 'var(--text-faint)', fontSize: 'var(--font-size-footnote-lg)' }}>
-                    {event.thresholdPercent != null ? <span>Seuil {event.thresholdPercent}%</span> : null}
-                    {event.currentSpend != null ? <span>Dépense {event.currentSpend}</span> : null}
-                    {event.eventCount != null ? <span>{event.eventCount} événement(s)</span> : null}
-                    {shortId(event.requestId) ? <span>Req {shortId(event.requestId)}</span> : null}
-                    <span>{fmtDate(event.receivedAt)}</span>
-                  </div>
-                </div>
-                {event.autoMaintenanceTriggered ? <Badge tone="danger">Maintenance activée</Badge> : null}
+                    <ExternalLink size={14} color="var(--text-muted)" />
+                  </a>
+                ))}
               </div>
             </Card>
-          ))}
+          ) : null}
         </div>
-      )}
+      ) : null}
+
+      {/* ── ONGLET 2 : SANTÉ & BUDGET (Métriques claires sans jargon) ── */}
+      {activeTab === 'status' ? (
+        <div style={{ display: 'grid', gap: 18 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+            <Card accent="var(--primary-a35)">
+              <Metric icon={<ServerCog size={20} />} label="Signaux Plateforme" value={counts.platform} />
+            </Card>
+            <Card accent="var(--primary-a35)">
+              <Metric icon={<Gauge size={20} />} label="Alertes Budget" value={counts.spend} />
+            </Card>
+            <Card accent="var(--primary-a35)">
+              <Metric icon={<Activity size={20} />} label="Journaux système (Logs)" value={counts.drain} />
+            </Card>
+            <Card accent={counts.urgent > 0 ? 'var(--danger)' : 'var(--primary-a35)'}>
+              <Metric icon={<AlertTriangle size={20} />} label="Alertes urgentes" value={counts.urgent} />
+            </Card>
+          </div>
+
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 14 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>État de connexion des services</h2>
+                <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+                  Aperçu de ce qui est branché entre le site et l'hébergeur Vercel.
+                </p>
+              </div>
+              <Badge tone={readinessScore >= 80 ? 'teal' : 'gold'}>{readinessScore}% configuré</Badge>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+              {readinessItems.map((item) => (
+                <ReadinessRow key={item.label} label={item.label} detail={item.detail} done={item.done} />
+              ))}
+            </div>
+          </Card>
+
+          {usageWatchlist && usageWatchlist.items.length > 0 ? (
+            <Card>
+              <div style={{ marginBottom: 14 }}>
+                <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Indicateurs de consommation</h2>
+                <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+                  Que surveiller pour garantir des coûts maîtrisés et une vitesse maximale.
+                </p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+                {usageWatchlist.items.map((item) => (
+                  <UsageRow key={item.key} label={item.label} dashboard={item.dashboard} owner={item.owner} actionIfBad={item.actionIfBad} />
+                ))}
+              </div>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* ── ONGLET 3 : ÉVÉNEMENTS & HISTORIQUE ── */}
+      {activeTab === 'events' ? (
+        <div style={{ display: 'grid', gap: 18 }}>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ minWidth: 200 }}>
+                <Select value={source} onChange={onSourceChange} options={SOURCE_OPTIONS} aria-label="Filtrer par type d'événement" />
+              </div>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+                {events.length} événement(s) enregistré(s)
+              </p>
+            </div>
+          </Card>
+
+          {loading ? (
+            <div className="lb-dashboard-card-grid">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          ) : events.length === 0 ? (
+            <Card>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0' }}>
+                <ShieldCheck size={28} color="var(--primary)" aria-hidden="true" />
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Aucun événement récent</h3>
+                  <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+                    Tout est calme sur votre plateforme pour ce filtre.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <div style={{ display: 'grid', gap: 10 }}>
+              {events.map((event) => (
+                <Card key={`${event.source}-${event.id}`} accent={event.source === 'spend' && (event.thresholdPercent ?? 0) >= 100 ? 'var(--danger)' : undefined}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Badge tone={badgeTone(event)}>{SOURCE_LABEL[event.source]}</Badge>
+                        <strong style={{ fontSize: 'var(--font-size-subhead)' }}>{event.type || event.message || 'Activité Vercel'}</strong>
+                      </div>
+                      <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--font-size-caption)' }}>
+                        {event.message || 'Signal reçu de l’infrastructure'}
+                      </p>
+                      <div style={{ color: 'var(--text-faint)', fontSize: 'var(--font-size-caption)' }}>
+                        Reçu le : {fmtDate(event.receivedAt)}
+                      </div>
+                    </div>
+                    {event.autoMaintenanceTriggered ? <Badge tone="danger">Sécurité auto déclenchée</Badge> : null}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Historique des changements faits par l'équipe */}
+          {changes.length > 0 ? (
+            <Card>
+              <h3 style={{ margin: '0 0 10px', fontSize: 'var(--font-size-title-5)' }}>Modifications récentes des paramètres</h3>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {changes.map((change) => (
+                  <div key={change.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)', borderBottom: '1px solid var(--border)', paddingBottom: 6 }}>
+                    <span><strong style={{ color: 'var(--text)' }}>{change.key}</strong> : {String(change.previousValue)} → {String(change.nextValue)}</span>
+                    <span>{change.actorEmail || 'Admin'} · {fmtDate(change.changedAt)}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* ── ONGLET 4 : AVANCÉ & AUDITS (Pour l'équipe technique / devops) ── */}
+      {activeTab === 'advanced' ? (
+        <div style={{ display: 'grid', gap: 18 }}>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Sliders size={20} color="var(--primary)" />
+              <h2 style={{ margin: 0, fontSize: 'var(--font-size-title-4)' }}>Réglages techniques & Cache</h2>
+            </div>
+            <p style={{ margin: '0 0 14px', color: 'var(--text-muted)', fontSize: 'var(--font-size-body-sm)' }}>
+              Ces réglages optimisent les requêtes et les performances du moteur de recherche d'événements.
+            </p>
+
+            {config ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
+                <SelectControl
+                  label="Longueur mini recherche"
+                  value={String(config.searchMinQueryLength)}
+                  disabled={!configWritable || savingKey === 'searchMinQueryLength'}
+                  options={[1, 2, 3, 4, 5, 6, 7, 8].map((val) => ({ value: String(val), label: `${val} caractère${val > 1 ? 's' : ''}` }))}
+                  onChange={(val) => patchConfig({ searchMinQueryLength: Number(val) }, 'searchMinQueryLength')}
+                />
+                <SelectControl
+                  label="Durée du cache (secondes)"
+                  value={String(config.publicCacheTtlSeconds)}
+                  disabled={!configWritable || savingKey === 'publicCacheTtlSeconds'}
+                  options={[15, 30, 45, 60, 120, 300].map((val) => ({ value: String(val), label: `${val}s` }))}
+                  onChange={(val) => patchConfig({ publicCacheTtlSeconds: Number(val) }, 'publicCacheTtlSeconds')}
+                />
+              </div>
+            ) : null}
+          </Card>
+
+          {/* Accompagnement technique / Commandes d'audit */}
+          {nextAction ? <NextActionCard nextAction={nextAction} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+          {completionVerdict ? <CompletionVerdictCard verdict={completionVerdict} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+
+          {/* Détails techniques avancés sous accordéon */}
+          <Card>
+            <div
+              onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <div>
+                <strong style={{ fontSize: 'var(--font-size-body)' }}>Audits poussés & Preuves de certification</strong>
+                <p style={{ margin: '2px 0 0', color: 'var(--text-muted)', fontSize: 'var(--font-size-caption)' }}>
+                  Matrices de déploiement, audit CLI et analyse de risques complète.
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" icon={showTechnicalDetails ? <ChevronDown size={18} /> : <ChevronRight size={18} />}>
+                {showTechnicalDetails ? 'Masquer' : 'Afficher'}
+              </Button>
+            </div>
+
+            {showTechnicalDetails ? (
+              <div style={{ display: 'grid', gap: 16, marginTop: 18, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                {proUtilizationMode ? <ProUtilizationModeCard mode={proUtilizationMode} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+                {liveActivationReadiness ? <LiveActivationReadinessCard readiness={liveActivationReadiness} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+                {proofDebt ? <ProofDebtCard proofDebt={proofDebt} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+                {evidenceFreshness ? <EvidenceFreshnessCard freshness={evidenceFreshness} /> : null}
+                {nextProofCapture ? <NextProofCaptureCard proof={nextProofCapture} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+                {liveEvidenceMatrix ? <LiveEvidenceMatrixCard matrix={liveEvidenceMatrix} copiedCommand={copiedCommand} onCopyCommand={copyCommand} /> : null}
+                {actionBlockers ? <ActionBlockersCard actionBlockers={actionBlockers} /> : null}
+                {riskCost ? <RiskCostCard riskCost={riskCost} /> : null}
+                {auditSuite ? (
+                  <div>
+                    <h3 style={{ margin: '0 0 10px', fontSize: 'var(--font-size-title-5)' }}>Commandes d’audit CLI</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+                      {auditSuite.commands.map((cmd) => (
+                        <AuditCommandRow
+                          key={cmd.key}
+                          label={cmd.label}
+                          command={cmd.command}
+                          scope={cmd.scope}
+                          requiresExplicitApproval={cmd.requiresExplicitApproval === true}
+                          approvalReason={cmd.approvalReason}
+                          expectedBeforeLiveComplete={cmd.expectedBeforeLiveComplete}
+                          copiedCommand={copiedCommand}
+                          onCopyCommand={copyCommand}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </Card>
+        </div>
+      ) : null}
+
       <ConfirmDialog
         open={Boolean(pendingConfigChange)}
         title={pendingConfigChange?.title ?? ''}

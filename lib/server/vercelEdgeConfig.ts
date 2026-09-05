@@ -9,7 +9,7 @@ type OpsConfig = {
 const DEFAULT_OPS_CONFIG: OpsConfig = {
   maintenanceMode: false,
   checkoutEnabled: true,
-  ticketResaleEnabled: true,
+  ticketResaleEnabled: false,
   searchMinQueryLength: 2,
   publicCacheTtlSeconds: 45,
 }

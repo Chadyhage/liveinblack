@@ -3,6 +3,7 @@ import Ticket from '@/lib/models/Ticket'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import ResaleListing from '@/lib/models/ResaleListing'
+import { getVercelOpsConfig } from '@/lib/server/vercelEdgeConfig'
 import { verifyTicketToken, extractTicketCode, signTicketToken } from './ticketToken'
 
 // Contrairement au legacy (payload d'affichage embarqué dans le jeton, pensé
@@ -167,11 +168,13 @@ function toWalletItemView(
   callerId: string,
   refundedOrderIds: Set<string>,
   protectedOrderIds: Set<string>,
-  listingsById: Map<string, { resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string }>
+  listingsById: Map<string, { resalePriceMinor: number; feeMinor: number; sellerNetMinor: number; status: string }>,
+  resaleEnabled: boolean
 ): TicketWalletItemView {
   const RESALE_LIMIT = 2
   const listing = ticket.resaleListingId ? listingsById.get(ticket.resaleListingId) ?? null : null
   const resellable =
+    resaleEnabled &&
     !ticket.checkedInAt &&
     !ticket.revoked &&
     !ticket.resaleListingId &&
@@ -247,9 +250,12 @@ export async function listMyTickets(callerId: string): Promise<ListMyTicketsResu
     ticketsByEvent.set(ticket.eventId, list)
   }
 
+  const opsConfig = await getVercelOpsConfig()
+  const resaleEnabled = opsConfig.ticketResaleEnabled
+
   const groups: TicketWalletGroupView[] = [...ticketsByEvent.entries()].map(([eventId, eventTickets]) => {
     const ev = eventById.get(eventId)
-    const views = eventTickets.map((t) => toWalletItemView(t, callerId, refundedOrderIds, protectedOrderIds, listingsById))
+    const views = eventTickets.map((t) => toWalletItemView(t, callerId, refundedOrderIds, protectedOrderIds, listingsById, resaleEnabled))
     return {
       eventId,
       event: ev

@@ -96,7 +96,7 @@ function DiscArt({ size, imgSrc, bgPosition, filter, spinning, ring }: { size: n
 // éléments déjà présents dans la navigation. On le réserve désormais à la
 // page d'accueil publique, où l'ambiance fait partie de l'expérience,
 // au lieu de le laisser suivre le visiteur partout.
-const SHOW_ON_PUBLIC_PATHS = ['/home']
+const SHOW_ON_PUBLIC_PATHS = ['/home', '/events', '/providers', '/organizers', '/about', '/blog']
 
 const SEEN_KEY = 'lib_ambiance_seen'
 interface SearchResult {
@@ -177,7 +177,6 @@ export default function AmbientMusicPlayer({ publicMode = false }: { publicMode?
     return () => document.removeEventListener('keydown', h)
   }, [open])
 
-  if (publicMode) return null
   if (!SHOW_ON_PUBLIC_PATHS.some((p) => pathname === p || pathname?.startsWith(`${p}/`))) return null
 
   const current = DISCS.find((d) => d.id === st.discId) || DISCS[0]

@@ -5,6 +5,7 @@ import { getSession, signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { isValidPhone } from '@/lib/shared/applicationValidation'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
 import { dashboardHrefForRole } from '@/lib/shared/dashboardRoutes'
 import { Button, Input, Label, Select, Tabs, Modal } from '@/app/components/ui'
@@ -166,7 +167,7 @@ export default function AuthForm() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [regEmail, setRegEmail] = useState('')
-  const [dialCode, setDialCode] = useState('+228')
+  const [dialCode, setDialCode] = useState('+229')
   const [phone, setPhone] = useState('')
   const [birthYear, setBirthYear] = useState('')
   const [gender, setGender] = useState('')
@@ -317,7 +318,7 @@ export default function AuthForm() {
     if (!cleanFirstName) { setRegError('Le prénom est requis.'); return }
     if (!cleanLastName) { setRegError('Le nom est requis.'); return }
     if (!EMAIL_RE.test(cleanRegEmail)) { setRegError('Adresse email invalide.'); return }
-    if (cleanPhone && !PHONE_RE.test(cleanPhone)) { setRegError('Numéro de téléphone invalide.'); return }
+    if (cleanPhone && !isValidPhone(dialCode, cleanPhone)) { setRegError('Numéro de téléphone invalide pour cet indicatif.'); return }
     const pwdErrs = getPasswordPolicyErrors(regPwd)
     if (pwdErrs.length > 0) { setRegError(pwdErrs[0]); return }
     if (regPwd !== regPwdConfirm) {
@@ -486,10 +487,12 @@ export default function AuthForm() {
               <Label htmlFor="login-email">Email</Label>
               <Input
                 id="login-email"
-                name="email"
+                name="lib_auth_login_email"
                 type="email"
                 inputMode="email"
-                autoComplete="email"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 placeholder="ton@email.com"
                 disabled={loginLoading}
                 value={loginEmail}
