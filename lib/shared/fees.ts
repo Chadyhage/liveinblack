@@ -26,12 +26,8 @@ export const FEES = {
   // minimum inventé).
   RESALE: { pct: 0.05, fixedCents: 0, capCents: 250, paidBy: 'seller' as const },
   RESALE_XOF: { pct: 0.05, fixed: 0, cap: 1500, min: 200, paidBy: 'seller' as const },
-  // Assurance-annulation optionnelle, choisie par l'ACHETEUR au checkout
-  // (jamais imposée) : +10% du prix du billet, payé EN PLUS au moment de
-  // l'achat, en échange d'un droit à remboursement à tout moment avant
-  // l'événement (hors billet déjà scanné) — voir lib/server/clientRefunds.ts.
-  // Décision client (transmise le 25/07/2026) : pas de min/plafond pour ce
-  // supplément, juste le pourcentage.
+  // Option d'annulation volontaire Bénin : +10% du prix facial, uniquement
+  // si le billet vaut au moins 5 000 FCFA, plafonné à 5 000 FCFA.
   CANCELLATION_PROTECTION: { pct: 0.1 },
   // Blocage temporaire de place ("hold") avec acompte — décision client :
   // 5% (min/plafond EUR 2€/20€, XOF 200/2000) pendant 24h, ou 10%
@@ -96,8 +92,9 @@ export function computeResaleFeeXOF(resalePrice: number): number {
   return Math.min(Math.max(fee, FEES.RESALE_XOF.min), FEES.RESALE_XOF.cap)
 }
 
-// Supplément d'assurance-annulation — 10% du prix total du billet (unitaire
-// × quantité effective), aucun plafond/minimum (décision client).
+// Option d'annulation volontaire legacy EUR, conservée pour compatibilité des
+// anciens rails hors lancement Bénin. Le parcours XOF ci-dessous est la règle
+// produit active.
 export function computeCancellationProtectionFeeCents(unitPriceCents: number, qty: number): number {
   const u = Math.round(Number(unitPriceCents) || 0)
   const n = Math.max(0, Math.floor(Number(qty) || 0))
@@ -106,7 +103,11 @@ export function computeCancellationProtectionFeeCents(unitPriceCents: number, qt
 }
 
 export function computeCancellationProtectionFeeXOF(unitPrice: number, qty: number): number {
-  return computeCancellationProtectionFeeCents(unitPrice, qty)
+  const u = Math.round(Number(unitPrice) || 0)
+  const n = Math.max(0, Math.floor(Number(qty) || 0))
+  const facial = u * n
+  if (facial < 5_000) return 0
+  return Math.min(Math.round(facial * FEES.CANCELLATION_PROTECTION.pct), 5_000)
 }
 
 export type SeatHoldTier = 'short' | 'long'

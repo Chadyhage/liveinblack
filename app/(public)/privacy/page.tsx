@@ -26,7 +26,7 @@ Pour toute question relative à vos données personnelles, vous pouvez nous cont
       list: [
         { label: "Données d'identification", value: 'nom, prénom, email, mot de passe (chiffré), date de naissance, photo de profil' },
         { label: 'Données de connexion', value: 'adresse IP, type de navigateur, date et heure de connexion' },
-        { label: 'Données de transaction', value: 'historique des achats de billets, montants, moyens de paiement (via Stripe — nous ne stockons jamais vos numéros de carte)' },
+        { label: 'Données de transaction', value: 'historique des achats de billets, montants, moyens de paiement et dossiers de remboursement (via FedaPay pour la billetterie XOF du lancement Bénin ; nous ne stockons jamais vos numéros de carte)' },
         { label: 'Données de candidature (organisateurs / prestataires)', value: "documents d'identité, justificatifs, informations professionnelles" },
         { label: 'Données de communication', value: 'messages échangés sur la plateforme, photos et fichiers partagés' },
         { label: 'Données de localisation', value: "région d'intervention déclarée par les prestataires (jamais de géolocalisation en temps réel)" },
@@ -74,7 +74,7 @@ Pour toute question relative à vos données personnelles, vous pouvez nous cont
     {
       n: '06',
       title: 'Transferts hors UE',
-      body: `Certains de nos sous-traitants (notamment Vercel, MongoDB Atlas, Cloudinary, Stripe et Resend) sont basés aux États-Unis. Ces transferts sont encadrés par les clauses contractuelles types (CCT) approuvées par la Commission européenne et par la certification au Data Privacy Framework lorsque applicable.`,
+      body: `Certains de nos sous-traitants (notamment Vercel, MongoDB Atlas, Cloudinary, certains prestataires de paiement et Resend) peuvent être basés hors de votre pays de résidence. Ces transferts sont encadrés par les garanties contractuelles et techniques applicables lorsque requis.`,
     },
     {
       n: '07',
@@ -119,7 +119,7 @@ ${LEGAL.authority.url}`,
 • Mots de passe hachés avec bcrypt (jamais stockés en clair ni réversibles)
 • Authentification par session JWT avec cookies de session sécurisés (httpOnly, secure), contrôles d'accès par rôle vérifiés côté serveur
 • Base de données hébergée sur MongoDB Atlas, chiffrée au repos
-• Paiements via Stripe (certifié PCI-DSS niveau 1)
+• Paiements traités par des prestataires spécialisés, notamment FedaPay pour la billetterie XOF
 • Sauvegardes régulières
 
 En cas de violation de données susceptible d'engendrer un risque pour vos droits et libertés, nous vous en informerons sous 72 heures conformément à l'article 34 du RGPD.`,

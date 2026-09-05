@@ -20,6 +20,7 @@ const placeSchema = new Schema(
     groupType: { type: String, enum: ['solo', 'group'], default: 'solo' },
     groupMin: { type: Number, default: 0 },
     groupMax: { type: Number, default: 0 },
+    cancellationOptionEnabled: { type: Boolean, default: false },
     photos: { type: [String], default: [] },
     included: {
       type: [{ name: { type: String, required: true }, qty: { type: Number, default: 1 } }],
@@ -108,6 +109,21 @@ const eventSchema = new Schema(
     // ce délai, le billet reste valable pour la nouvelle date sans possibilité
     // de remboursement (politique d'annulation/remboursement, §2).
     refundWindowClosesAt: { type: Date, default: null },
+    refundPointId: { type: String, default: null, index: true },
+    refundCaseGeneration: {
+      type: new Schema(
+        {
+          status: { type: String, enum: ['idle', 'running', 'complete', 'failed'], default: 'idle' },
+          startedAt: { type: Date, default: null },
+          completedAt: { type: Date, default: null },
+          processedCount: { type: Number, default: 0 },
+          failedCount: { type: Number, default: 0 },
+          lastError: { type: String, default: null },
+        },
+        { _id: false }
+      ),
+      default: () => ({ status: 'idle', processedCount: 0, failedCount: 0 }),
+    },
 
     location: { type: String, default: '' },
     city: { type: String, default: '' },

@@ -14,19 +14,16 @@ import EventOrderLog from '@/lib/models/EventOrderLog'
 import EventPlaylist from '@/lib/models/EventPlaylist'
 import SeatHold from '@/lib/models/SeatHold'
 import EventInterest from '@/lib/models/EventInterest'
-import EventRefund from '@/lib/models/EventRefund'
-import { refundStripeOrder } from '../events/eventRefunds'
-import { recordFedapayRefund } from '../payments/fedapayRefunds'
+import { createEventCancellationRefundCases } from '@/lib/server/refunds/refundCases'
 import { notifyScheduleChange } from './organizerFollowNotifications'
 import { notifyUserById } from '@/lib/server/emails/notify'
-import { eventCancelledRefundEmail, eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from '@/lib/server/emails'
+import { eventPostponedTicketHolderEmail, cancellationFinancialImpactEmail } from '@/lib/server/emails'
 import { fmtMoney } from '@/lib/shared/money'
 import { revalidateTag } from 'next/cache'
 import {
   buildRefundWindowCloseDate,
-  grossRefundMajor,
+  refundableEventCancellationMajor,
   isPastOrInvalidEventDate,
-  resolveRefundWindowDays,
 } from './organizerEventLifecycleUtils'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -60,13 +57,9 @@ async function assertOwner(eventId: string, callerId: string, bypassOwnership = 
 
 export type CancelEventResult = ErrResult | { ok: true; refundedCount: number; refundFailedCount: number }
 
-// Annule l'événement et déclenche le remboursement de CHAQUE commande payée
-// (Stripe : remboursement réel immédiat ; FedaPay : aucune API de
-// remboursement n'existe, une entrée `pending_manual` est consignée pour un
-// traitement humain — voir lib/server/fedapayRefunds.ts). Un échec de
-// remboursement individuel n'annule jamais la décision d'annulation de
-// l'événement elle-même (déjà actée avant la boucle) — il est seulement
-// consigné (PaymentAlert, dans refundStripeOrder) pour intervention manuelle.
+// Annule l'événement et crée les dossiers Live In Black. Aucun remboursement
+// n'est demandé à Stripe/FedaPay : l'organisateur finance le remboursement,
+// et le parcours par défaut est un retrait en espèces avec code unique.
 export async function cancelOrganizerEvent(
   caller: LifecycleCaller,
   eventId: string,
@@ -83,6 +76,14 @@ export async function cancelOrganizerEvent(
     event.cancelled = true
     event.cancellationMessage = message?.trim().slice(0, 500) || ''
     event.cancelledAt = new Date()
+    event.set('refundCaseGeneration', {
+      status: 'running',
+      startedAt: new Date(),
+      completedAt: null,
+      processedCount: 0,
+      failedCount: 0,
+      lastError: null,
+    })
     await event.save()
 
     // Alerte `scheduleChanges` aux abonnés — dans le `if (!event.cancelled)`
@@ -105,39 +106,12 @@ export async function cancelOrganizerEvent(
   }
 
   const paidOrders = await Order.find({ eventId, status: 'paid' })
-  let refundedCount = 0
-  let refundFailedCount = 0
   let totalRefundedMajor = 0
   for (const order of paidOrders) {
-    // Garde explicite contre un second passage : le statut Order reste
-    // volontairement `paid` pour préserver l'historique financier, donc le
-    // simple filtre de la requête ne suffit pas à garantir l'idempotence.
-    // EventRefund est la trace canonique, commune aux rails Stripe/FedaPay.
-    const paymentRef = order.rail === 'stripe' ? order.stripeSessionId : order.fedapayTxnId
-    if (paymentRef) {
-      const alreadyRefunded = await EventRefund.exists({
-        eventId,
-        paymentRef,
-        status: { $in: ['refunded', 'pending_manual'] },
-      })
-      if (alreadyRefunded) continue
-    }
-    const result = order.rail === 'stripe' ? await refundStripeOrder(order) : await recordFedapayRefund(order)
-    if (result.ok) {
-      refundedCount++
-      const amountMajor = grossRefundMajor(order)
-      totalRefundedMajor += amountMajor
-      // Email best-effort par acheteur remboursé — ne bloque jamais la boucle
-      // (voir lib/server/emails/notify.ts). Délai indicatif générique (le rail
-      // exact — Stripe carte vs FedaPay pending_manual — n'est pas exposé par
-      // refundStripeOrder/recordFedapayRefund, on reste volontairement vague).
-      await notifyUserById(order.userId, () =>
-        eventCancelledRefundEmail(event.name, fmtMoney(amountMajor, order.currency), 'quelques jours ouvrés', event.cancellationMessage || null, SITE)
-      )
-    } else {
-      refundFailedCount++
-    }
+    const amountMajor = refundableEventCancellationMajor(order)
+    totalRefundedMajor += amountMajor
   }
+  const { created: refundedCount, failed: refundFailedCount } = await createEventCancellationRefundCases(eventId, caller.id)
 
   // Récap à l'organisateur — un seul email, même si aucun remboursement n'a
   // eu lieu (event sans vente) : il sait que l'annulation a bien été traitée.
@@ -148,7 +122,9 @@ export async function cancelOrganizerEvent(
       cancellationFinancialImpactEmail(
         event.name,
         fmtMoney(totalRefundedMajor, paidOrders[0].currency),
-        refundFailedCount > 0 ? `${refundFailedCount} remboursement(s) ont échoué et nécessitent un suivi manuel.` : 'Tous les remboursements ont été traités avec succès.',
+        refundFailedCount > 0
+          ? `${refundFailedCount} dossier(s) n'ont pas pu être préparés et nécessitent un suivi.`
+          : 'Les dossiers de remboursement ont été créés. Les remboursements restent financés et effectués par l’organisateur.',
         SITE
       )
     )
@@ -162,9 +138,6 @@ export async function cancelOrganizerEvent(
 export interface PostponeInput {
   date: string
   time?: string
-  // Nombre de jours pendant lesquels un client peut demander le remboursement
-  // de son billet plutôt que de garder sa place pour la nouvelle date (défaut
-  // 7 jours — cf. politique d'annulation/remboursement, "fenêtre communiquée").
   refundWindowDays?: number
 }
 
@@ -193,8 +166,7 @@ export async function postponeOrganizerEvent(caller: LifecycleCaller, eventId: s
   if (!event.postponedFrom) {
     event.postponedFrom = { date: event.date, time: event.time }
   }
-  const windowDays = resolveRefundWindowDays(input.refundWindowDays)
-  event.refundWindowClosesAt = buildRefundWindowCloseDate(Date.now(), windowDays)
+  event.refundWindowClosesAt = buildRefundWindowCloseDate(Date.now(), undefined)
   const previousWhen = [event.date, event.time].filter(Boolean).join(' · ')
   event.date = input.date
   if (input.time?.trim()) event.time = input.time
@@ -290,7 +262,7 @@ export async function deleteOrganizerEvent(caller: LifecycleCaller, eventId: str
     // n'existe plus (bug confirmé le 11/08/2026 : un event supprimé restait
     // visible via une entrée fantôme ailleurs dans l'app). Aucune de ces
     // collections n'a de valeur comptable propre une fois l'event supprimé
-    // (contrairement à Boost/EventPayout/EventRefund, jamais touchés ici).
+    // (contrairement à Boost/EventPayout/RefundCase, jamais touchés ici).
     Ticket.deleteMany({ eventId }),
     GroupMembership.deleteMany({ eventId }),
     EventOrder.deleteOne({ eventId }),

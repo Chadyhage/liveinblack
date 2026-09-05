@@ -17,9 +17,9 @@ export default function LoginPage() {
     <AuthSplitLayout
       tagline={
         <>
-          LES MEILLEURES SOIRÉES,
+          Toute la scène.
           <br />
-          <span style={{ color: 'var(--primary)' }}>AU BOUT DES DOIGTS.</span>
+          <span>Une seule expérience.</span>
         </>
       }
     >
@@ -32,8 +32,8 @@ export default function LoginPage() {
 
 function AuthFormFallback() {
   return (
-    <div aria-label="Chargement du formulaire" style={{ width: '100%', maxWidth: 760, margin: '0 auto' }}>
-      <h1 className="font-display" style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--primary)', margin: '0 0 10px' }}>Connexion</h1>
+    <div aria-label="Chargement du formulaire" style={{ width: '100%', maxWidth: 520, margin: '0 auto' }}>
+      <h1 style={{ fontSize: 30, fontWeight: 500, color: 'var(--text)', margin: '0 0 14px' }}>Connexion</h1>
       <div className="lb-loading-panel" style={{ minHeight: 220 }}>
         <span>Préparation du formulaire…</span>
       </div>

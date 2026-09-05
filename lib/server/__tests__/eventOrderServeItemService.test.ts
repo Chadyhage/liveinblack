@@ -26,7 +26,7 @@ describe('eventOrderServeItemService', () => {
     deps = {
       loadEventContext: vi.fn().mockResolvedValue({
         ok: true,
-        ctx: { rank: 2, role: 'serveur', event: {} },
+        ctx: { rank: 2, role: 'serveur', event: {} as never },
       }),
       resolveCallerName: vi.fn().mockResolvedValue('Alice A'),
       appendLog: vi.fn().mockResolvedValue(undefined),
@@ -39,7 +39,7 @@ describe('eventOrderServeItemService', () => {
   it('refuse un non staff', async () => {
     vi.mocked(deps.loadEventContext).mockResolvedValueOnce({
       ok: true,
-      ctx: { rank: 0, role: 'client', event: {} },
+      ctx: { rank: 0, role: 'client', event: {} as never },
     })
 
     await expect(
@@ -84,7 +84,13 @@ describe('eventOrderServeItemService', () => {
   })
 
   it('sert une ligne et écrit le log', async () => {
-    const item = { id: 'item-1', status: 'sent', servedAt: null, ticketId: 'T1', name: 'Coca' }
+    const item: { id: string; status: string; servedAt: Date | null; ticketId: string; name: string; servedBy?: string } = {
+      id: 'item-1',
+      status: 'sent',
+      servedAt: null,
+      ticketId: 'T1',
+      name: 'Coca',
+    }
     const save = vi.fn().mockResolvedValue(undefined)
     vi.mocked(EventOrder.findOne).mockReturnValueOnce({
       session: vi.fn().mockResolvedValue({

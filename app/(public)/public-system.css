@@ -86,6 +86,12 @@
   line-height: 1.04 !important;
   letter-spacing: -.045em !important;
 }
+.lb-auth-form h1 {
+  font-size: clamp(26px, 3vw, 32px) !important;
+  font-weight: 500 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.03em !important;
+}
 .lb-auth-split__form h2 { color: var(--text) !important; font-size: var(--font-size-title-2) !important; font-weight: 700 !important; letter-spacing: -.02em !important; }
 .lb-auth-split__form p { font-size: var(--font-size-headline-xl) !important; line-height: 1.55 !important; }
 .lb-auth-split__form label { margin-bottom: 7px !important; color: var(--text-muted) !important; font-size: var(--font-size-body-lg) !important; font-weight: 600 !important; }
@@ -139,6 +145,11 @@
 .lb-auth-wizard h3 { color: var(--text) !important; font-size: var(--font-size-title-3) !important; font-weight: 700 !important; letter-spacing: -.02em !important; text-transform: none !important; }
 .lb-auth-wizard form,
 .lb-auth-wizard > div > div:nth-child(3) > div { gap: 12px !important; }
+
+@media (max-width: 640px) {
+  .lb-organizer-auth-grid { grid-template-columns: 1fr !important; }
+  .lb-organizer-password-grid { flex-direction: column; }
+}
 
 /* Pages légales et contact */
 .lb-legal-page,

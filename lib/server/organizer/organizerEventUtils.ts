@@ -11,6 +11,7 @@ export interface PlaceInputLike {
   groupType?: 'solo' | 'group'
   groupMin?: number
   groupMax?: number
+  cancellationOptionEnabled?: boolean
   photos?: string[]
   included?: { name: string; qty: number }[]
 }
@@ -31,6 +32,7 @@ export interface MenuItemInputLike {
 const MAX_PLACE_TYPES = 40
 export const RECAP_WINDOW_START_MS = 24 * 60 * 60 * 1000
 export const RECAP_WINDOW_END_MS = 48 * 60 * 60 * 1000
+const BENIN_UTC_OFFSET_MINUTES = 60
 
 export function assignStablePlaceIds<T extends PlaceInputLike>(places: T[]): Array<T & { available: number }> {
   return places.map((place) => ({ ...place, id: place.id?.trim() || `p${crypto.randomBytes(6).toString('hex')}`, available: place.total }))
@@ -58,6 +60,7 @@ export function validatePlaces(places: PlaceInputLike[]): string | null {
       if (min > 0 && max > 0 && max < min) return 'group_max_below_min'
     }
   }
+  if (!places.some((place) => place.price > 0)) return 'paid_event_required'
   return null
 }
 
@@ -75,6 +78,28 @@ export function toEventDates(date: string) {
     .toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
     .toUpperCase()
     .replace('.', '')
+}
+
+export function parseBeninLocalDateTime(value: string | null | undefined): Date | null {
+  const raw = String(value || '').trim()
+  if (!raw) return null
+  if (/[zZ]|[+-]\d{2}:\d{2}$/.test(raw)) {
+    const explicit = new Date(raw)
+    return Number.isNaN(explicit.getTime()) ? null : explicit
+  }
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/)
+  if (!match) return null
+  const [, year, month, day, hour = '00', minute = '00', second = '00'] = match
+  const utcMs = Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute) - BENIN_UTC_OFFSET_MINUTES,
+    Number(second),
+  )
+  const date = new Date(utcMs)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 export function shouldSendEventRecap(startMs: number, now: number): boolean {

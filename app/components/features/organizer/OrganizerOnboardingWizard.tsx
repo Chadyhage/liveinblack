@@ -27,7 +27,7 @@ const EMPTY_FORM: OrganizerFormData = {
   nomCommercial: '',
   siret: '',
   emailPro: '',
-  telephoneProCode: '+33',
+  telephoneProCode: '+229',
   telephonePro: '',
   adresseEtablissement: '',
   noFixedAddress: false,
@@ -36,7 +36,7 @@ const EMPTY_FORM: OrganizerFormData = {
   typeEtablissementCustom: '',
   itinerant: false,
   ville: '',
-  pays: 'France',
+  pays: 'Bénin',
   zonesActivite: [],
   capacite: null,
   horaires: '',
@@ -61,7 +61,7 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
   cursor: disabled ? 'default' : 'pointer',
 })
 
-const requiredMark = <span style={{ color: 'var(--gold)' }}>*</span>
+const requiredMark = <span style={{ color: 'var(--primary)' }}>*</span>
 
 function IconEye({ open, size = 15 }: { open: boolean; size?: number }) {
   return open ? (
@@ -268,22 +268,22 @@ export default function OrganizerOnboardingWizard({
 
   return (
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 8 : 20 }}>
-        <div>
+      <div style={{ maxWidth: mode === 'anonymous' ? 560 : 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 12 : 20 }}>
+        <div style={{ textAlign: mode === 'anonymous' ? 'center' : 'left' }}>
           <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 4px' }}>Compte Organisateur</h1>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ position: 'relative', display: 'flex', justifyContent: mode === 'anonymous' ? 'center' : 'space-between', marginBottom: 6 }}>
             <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
-            <span style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
+            <span style={{ position: mode === 'anonymous' ? 'absolute' : 'static', right: 0, fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)' }}>{progress}%</span>
           </div>
           <div style={{ height: 5, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
+            <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--primary)' }} />
           </div>
         </div>
 
@@ -297,8 +297,8 @@ export default function OrganizerOnboardingWizard({
                   <Input aria-label="Nom de l’établissement ou nom commercial" style={inputStyle} value={form.nomCommercial} onChange={(e) => set('nomCommercial', e.target.value)} placeholder="Ex : Club Neon, L|VE Events…" />
                 </div>
                 <div>
-                  <Label style={labelStyle}>Numéro SIRET / SIREN {requiredMark}</Label>
-                  <Input aria-label="Numéro SIRET ou SIREN" style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres ou 000" />
+                  <Label style={labelStyle}>Numéro IFU / RCCM (ou SIRET/SIREN) {requiredMark}</Label>
+                  <Input aria-label="Numéro IFU, RCCM ou SIRET" style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="IFU, RCCM ou 000" />
                 </div>
                 <div>
                   <Label style={labelStyle}>Email professionnel {requiredMark}</Label>
@@ -345,14 +345,14 @@ export default function OrganizerOnboardingWizard({
                       onChange={(e) => set('noFixedAddress', e.target.checked)}
                     />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
+                  <div className="lb-organizer-auth-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 10px' }}>
                     <div>
                       <Label style={labelStyle}>Adresse e-mail (identifiant connexion) {requiredMark}</Label>
                       <Input aria-label="Adresse e-mail de connexion" style={inputStyle} type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} placeholder="ton@email.com" />
                     </div>
                     <div>
                       <Label style={labelStyle}>Mot de passe & confirmation {requiredMark}</Label>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div className="lb-organizer-password-grid" style={{ display: 'flex', gap: 6 }}>
                         <div style={{ position: 'relative', flex: 1 }}>
                           <Input
                             aria-label="Mot de passe"
@@ -460,9 +460,9 @@ export default function OrganizerOnboardingWizard({
                           style={{
                             padding: '8px 14px',
                             borderRadius: 999,
-                            border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
+                            border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`,
                             background: active ? 'var(--primary-a14)' : 'transparent',
-                            color: active ? 'var(--gold)' : 'var(--text)',
+                            color: active ? 'var(--primary)' : 'var(--text)',
                             fontSize: 'var(--font-size-footnote-lg)',
                           }}
                         >
@@ -503,16 +503,15 @@ export default function OrganizerOnboardingWizard({
               <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tes revenus</h2>
               <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0 }}>Comment tu seras payé</p>
               <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                LIVEINBLACK collecte les paiements de tes billets et te reverse ta part directement sur ton compte bancaire. Les reversements sont gérés de façon
-                entièrement automatique — tu n&apos;as rien à faire manuellement.
+                LIVEINBLACK collecte les paiements via FadaPay (Mobile Money et cartes) avec répartition instantanée à chaque achat. L&apos;organisateur perçoit sa part directement sans délai — aucun versement différé ni attente à J+5.
               </p>
               {[
-                ['01', 'Dossier approuvé', 'Ton dossier est examiné par notre équipe.'],
-                ['02', 'Connexion Stripe', 'Tu relies ton compte bancaire via Stripe, notre partenaire de paiement.'],
-                ['03', 'Reversements automatiques', 'Tes ventes te sont reversées automatiquement, après commission LIVEINBLACK.'],
+                ['01', 'Dossier approuvé', 'Ton dossier est examiné et validé par notre équipe.'],
+                ['02', 'Connexion FadaPay', 'Tu relies ton compte de reversement via FadaPay.'],
+                ['03', 'Répartition instantanée', 'Ta part t&apos;est versée directement à chaque achat de billet, sans délai d&apos;attente.'],
               ].map(([n, title, body]) => (
                 <div key={n} style={{ display: 'flex', gap: 12 }}>
-                  <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--gold)' }}>{n}</span>
+                  <span style={{ fontSize: 'var(--font-size-callout)', fontWeight: 800, color: 'var(--primary)' }}>{n}</span>
                   <div>
                     <p style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{title}</p>
                     <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', margin: '2px 0 0' }}>{body}</p>
@@ -520,8 +519,7 @@ export default function OrganizerOnboardingWizard({
                 </div>
               ))}
               <p style={{ fontSize: 'var(--font-size-caption-lg)', color: 'var(--text-faint)', margin: 0 }}>
-                Tes coordonnées bancaires ne transitent jamais par LIVEINBLACK. Stripe est certifié PCI-DSS niveau 1. Aucune information bancaire n&apos;est demandée ici
-                — tu configureras tout après approbation.
+                Tes coordonnées de paiement ne transitent jamais par LIVEINBLACK. Les transactions sont sécurisées par FadaPay. Aucune information bancaire n&apos;est demandée ici — tu configureras ton compte de reversement après approbation.
               </p>
             </div>
           )}
@@ -534,7 +532,7 @@ export default function OrganizerOnboardingWizard({
                 l&apos;équipe LIVEINBLACK. Formats acceptés : PDF, JPG, PNG — 10 Mo max par fichier.
               </p>
               <DocUpload label="Pièce d'identité" required docKey="identity" documents={documents} onChange={handleFileChange} onRemove={removeDoc} />
-              <DocUpload label="Document officiel de l'entreprise (KBIS, statuts, récépissé INSEE…)" docKey="business_doc" documents={documents} onChange={handleFileChange} onRemove={removeDoc} />
+              <DocUpload label="Document officiel de l'entreprise (RCCM, attestation IFU, statuts…)" docKey="business_doc" documents={documents} onChange={handleFileChange} onRemove={removeDoc} />
               {form.alcool && (
                 <DocUpload label="Licence / justificatif de débit de boissons" docKey="alcohol_license" documents={documents} onChange={handleFileChange} onRemove={removeDoc} />
               )}
@@ -616,7 +614,7 @@ function DocUpload({
   return (
     <div>
       <Label style={labelStyle}>
-        {label} {required && <span style={{ color: 'var(--gold)' }}>*</span>}
+        {label} {required && <span style={{ color: 'var(--primary)' }}>*</span>}
       </Label>
       <label style={{ display: 'inline-block', padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 'var(--font-size-footnote-lg)', cursor: 'pointer' }}>
         + Ajouter un fichier

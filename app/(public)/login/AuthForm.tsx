@@ -5,6 +5,7 @@ import { getSession, signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { regions } from '@/lib/shared/regions'
 import { getPasswordPolicyErrors } from '@/lib/shared/passwordPolicy'
+import { isValidPhone } from '@/lib/shared/applicationValidation'
 import { safeInternalPath } from '@/lib/shared/safeNavigation'
 import { dashboardHrefForRole } from '@/lib/shared/dashboardRoutes'
 import { Button, Input, Label, Select, Tabs, Modal } from '@/app/components/ui'
@@ -35,27 +36,29 @@ function checkPasswordStrength(pwd: string) {
   if (/[A-Z]/.test(pwd)) score++
   if (/[0-9]/.test(pwd)) score++
   if (score <= 1) return { score, label: 'Faible', color: 'var(--pink)' }
-  if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
+  if (score === 2) return { score, label: 'Moyen', color: 'var(--text-muted)' }
   return { score, label: 'Fort', color: 'var(--primary)' }
 }
 
 const btnPrimary: React.CSSProperties = {
+  minHeight: 48,
   padding: '10px 18px',
   background: 'var(--primary)',
-  border: '1px solid var(--border-strong)',
-  borderRadius: 3,
+  border: '1px solid transparent',
+  borderRadius: 'var(--radius-control)',
   fontSize: 'var(--font-size-body-sm)',
   textTransform: 'none',
   letterSpacing: 'normal',
   color: 'var(--primary-ink)',
   width: '100%',
-  boxShadow: '0 6px 20px var(--primary-a18)',
+  boxShadow: 'none',
 }
 const btnGold: React.CSSProperties = {
+  minHeight: 48,
   padding: '10px 18px',
   background: 'var(--primary)',
-  border: '1px solid var(--border-strong)',
-  borderRadius: 3,
+  border: '1px solid transparent',
+  borderRadius: 'var(--radius-control)',
   fontSize: 'var(--font-size-body-sm)',
   textTransform: 'none',
   letterSpacing: 'normal',
@@ -166,7 +169,7 @@ export default function AuthForm() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [regEmail, setRegEmail] = useState('')
-  const [dialCode, setDialCode] = useState('+228')
+  const [dialCode, setDialCode] = useState('+229')
   const [phone, setPhone] = useState('')
   const [birthYear, setBirthYear] = useState('')
   const [gender, setGender] = useState('')
@@ -317,7 +320,7 @@ export default function AuthForm() {
     if (!cleanFirstName) { setRegError('Le prénom est requis.'); return }
     if (!cleanLastName) { setRegError('Le nom est requis.'); return }
     if (!EMAIL_RE.test(cleanRegEmail)) { setRegError('Adresse email invalide.'); return }
-    if (cleanPhone && !PHONE_RE.test(cleanPhone)) { setRegError('Numéro de téléphone invalide.'); return }
+    if (cleanPhone && !isValidPhone(dialCode, cleanPhone)) { setRegError('Numéro de téléphone invalide pour cet indicatif.'); return }
     const pwdErrs = getPasswordPolicyErrors(regPwd)
     if (pwdErrs.length > 0) { setRegError(pwdErrs[0]); return }
     if (regPwd !== regPwdConfirm) {
@@ -428,7 +431,14 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="lb-auth-form" style={{ width: '100%', maxWidth: 600, margin: '0 auto', padding: '0 4px' }}>
+    <div
+      className="lb-auth-form"
+      style={{
+        width: '100%',
+        maxWidth: mode === 'login' || regStep === 1 ? 430 : 520,
+        margin: '0 auto',
+      }}
+    >
       <style>{`
         @keyframes lb-spin { to { transform: rotate(360deg) } }
         .lb-role-card:hover { transform: translateY(-2px); border-color: var(--border-strong) !important; background: var(--fill-secondary) !important }
@@ -442,11 +452,14 @@ export default function AuthForm() {
         .lb-banner-fade { animation: lb-fade-in 0.22s ease }
       `}</style>
 
-      <div style={{ marginBottom: 6 }}>
-        <h1 className="font-display" style={{ fontSize: 'var(--font-size-title-5)', letterSpacing: '.02em', margin: 0, color: 'var(--primary)' }}>
+      <div style={{ marginBottom: 22, textAlign: 'center' }}>
+        <p style={{ margin: '0 0 9px', color: 'var(--primary)', fontSize: 'var(--font-size-caption)', fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+          Espace membre
+        </p>
+        <h1 style={{ fontSize: 'clamp(26px, 3vw, 32px)', fontWeight: 500, lineHeight: 1.1, letterSpacing: '-.03em', margin: 0, color: 'var(--text)' }}>
           {mode === 'login' ? 'Content de te revoir' : 'Rejoins Live in Black'}
         </h1>
-        <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', margin: '3px 0 0' }}>
+        <p style={{ maxWidth: 400, fontSize: 'var(--font-size-body)', lineHeight: 1.5, color: 'var(--text-muted)', margin: '10px auto 0' }}>
           {mode === 'login' ? 'Connecte-toi pour retrouver tes billets et tes soirées.' : "Crée ton compte pour découvrir ce qui se passe près de toi."}
         </p>
       </div>
@@ -460,7 +473,7 @@ export default function AuthForm() {
             { value: 'login', label: 'Connexion' },
             { value: 'register', label: 'Inscription' },
           ]}
-          style={{ marginBottom: 10 }}
+          style={{ marginBottom: 22 }}
         />
 
         {mode === 'login' && loginError && (
@@ -481,15 +494,17 @@ export default function AuthForm() {
 
         {/* LOGIN */}
         {mode === 'login' && (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <Label htmlFor="login-email">Email</Label>
               <Input
                 id="login-email"
-                name="email"
+                name="lib_auth_login_email"
                 type="email"
                 inputMode="email"
-                autoComplete="email"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 placeholder="ton@email.com"
                 disabled={loginLoading}
                 value={loginEmail}
@@ -526,13 +541,13 @@ export default function AuthForm() {
                 </span>
               </div>
             </div>
-            <Button type="submit" variant="primary" disabled={loginLoading} loading={loginLoading} loadingText="Connexion…" style={{ ...btnPrimary, marginTop: 4 }}>
+            <Button type="submit" variant="primary" disabled={loginLoading} loading={loginLoading} loadingText="Connexion…" style={{ ...btnPrimary, marginTop: 6 }}>
               Se connecter
             </Button>
             <Button
               variant="ghost"
               onClick={openForgotModal}
-              style={{ alignSelf: 'center', marginTop: 2, fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', textDecoration: 'underline' }}
+              style={{ alignSelf: 'center', marginTop: 0, padding: '6px 10px', minHeight: 34, fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', textDecoration: 'none' }}
             >
               Mot de passe oublié&nbsp;?
             </Button>
@@ -562,7 +577,7 @@ export default function AuthForm() {
                     justifyContent: 'flex-start',
                   }}
                 >
-                  <div style={{ width: 32, height: 32, borderRadius: 11, background: `${accent}1a`, border: `1px solid ${accent}3a`, color: accent, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 11, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', color: accent, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <RoleIcon role={role} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>

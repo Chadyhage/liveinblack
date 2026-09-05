@@ -59,7 +59,7 @@ export async function createSeatHold(
   const minorPerMajor = currency === 'XOF' ? 1 : 100
   const unitPriceMinor = Math.round(Number(place.price) * minorPerMajor)
   const depositMinor = computeSeatHoldDepositMinor(unitPriceMinor, currency, input.tier)
-  const { sellerUid, connectMode } = await resolveSellerSettlementMode({
+  const { sellerUid, connectMode, fedapaySubAccountReference } = await resolveSellerSettlementMode({
     sellerUid: event.organizerId || event.createdBy,
     buyerUid: caller.id,
     rail,
@@ -111,6 +111,7 @@ export async function createSeatHold(
             feeMinor: 0,
             sellerUid,
             connectMode,
+            fedapaySubAccountReference,
             rail,
             status: 'pending',
             kind: 'seat_hold_deposit',
@@ -221,10 +222,10 @@ export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: 
   const balanceMinor = Math.max(0, hold.unitPriceMinor - hold.depositMinor)
   const feeMinor = hold.currency === 'XOF' ? computeTicketFeeXOF(hold.unitPriceMinor, 1) : computeTicketFeeCents(hold.unitPriceMinor, 1)
   const depositOrder = hold.depositOrderId
-    ? await Order.findById(hold.depositOrderId).select('sellerUid connectMode').lean()
+    ? await Order.findById(hold.depositOrderId).select('sellerUid connectMode fedapaySubAccountReference').lean()
     : null
   const settlement = depositOrder?.sellerUid
-    ? { sellerUid: depositOrder.sellerUid, connectMode: depositOrder.connectMode as 'auto' | 'ledger' | 'none' }
+    ? { sellerUid: depositOrder.sellerUid, connectMode: depositOrder.connectMode as 'auto' | 'ledger' | 'none', fedapaySubAccountReference: depositOrder.fedapaySubAccountReference || null }
     : await (async () => {
         const event = await Event.findById(hold.eventId).select('organizerId createdBy').lean()
         return resolveSellerSettlementMode({
@@ -255,6 +256,7 @@ export async function completeSeatHoldOrder(caller: SeatHoldCaller, seatHoldId: 
             feeMinor,
             sellerUid: settlement.sellerUid,
             connectMode: settlement.connectMode,
+            fedapaySubAccountReference: settlement.fedapaySubAccountReference,
             rail,
             status: 'pending',
             kind: 'seat_hold_completion',

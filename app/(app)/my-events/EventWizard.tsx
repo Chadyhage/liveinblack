@@ -59,6 +59,7 @@ interface ServerPlace {
   groupType: 'solo' | 'group'
   groupMin: number
   groupMax: number
+  cancellationOptionEnabled?: boolean
   photos: string[]
   included: { name: string; qty: number }[]
 }
@@ -113,6 +114,8 @@ const ARTIST_ROLES = ['DJ', 'Artiste', 'MC', 'Live', 'Guest']
 const EVENT_TYPES = ['Clubbing', 'Concert', 'Festival', 'Afterwork', 'Brunch', 'Rooftop', 'Privé']
 const MUSIC_STYLES = ['Afrobeat', 'Amapiano', 'Hip-Hop', 'R&B', 'Dancehall', 'Reggaeton', 'House', 'Techno', 'Zouk', 'Coupé-décalé']
 const AMBIANCES = ['Chic', 'Décontracté', 'Festif', 'Intimiste', 'Rooftop', 'Piscine', 'Plage', 'VIP']
+const LAUNCH_EVENT_REGIONS = regions.filter((region) => region.id === 'benin')
+const DEFAULT_LAUNCH_REGION = LAUNCH_EVENT_REGIONS[0]?.name || 'Bénin'
 const AGE_PRESETS: { label: string; value: number }[] = [
   { label: 'TOUT PUBLIC', value: 0 },
   { label: '16+', value: 16 },
@@ -285,6 +288,10 @@ const SAVE_ERROR_MESSAGES: Record<string, string> = {
   event_not_found: 'Événement introuvable.',
   invalid_body: 'Vérifie les champs du formulaire.',
   auth_required: 'Ta session a expiré — reconnecte-toi.',
+  benin_launch_region_required: 'Le lancement billetterie est ouvert au Bénin uniquement.',
+  benin_payment_account_required: 'Ajoute ton compte Mobile Money Bénin dans Encaissements avant de publier un événement.',
+  fedapay_marketplace_account_required: 'Ajoute ton numéro Mobile Money Bénin et la référence du sous-compte FedaPay Marketplace dans Encaissements avant de publier.',
+  paid_event_required: 'Ajoute au moins une catégorie de billet payante. Les invitations passent par les guestlists.',
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -373,7 +380,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
   const [venueName, setVenueName] = useState('')
   const [address, setAddress] = useState('')
   const [city, setCity] = useState('')
-  const [region, setRegion] = useState(initialRegion)
+  const [region, setRegion] = useState(LAUNCH_EVENT_REGIONS.some((item) => item.name === initialRegion) ? initialRegion : DEFAULT_LAUNCH_REGION)
 
   // ── Step 3 : Options avancées ──
   const [playlist, setPlaylist] = useState(false)
@@ -457,6 +464,7 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
             groupType: p.groupType || 'solo',
             groupMin: p.groupMin || 0,
             groupMax: p.groupMax || 0,
+            cancellationOptionEnabled: Boolean(p.cancellationOptionEnabled),
             photos: Array.isArray(p.photos) ? p.photos : [],
             included: Array.isArray(p.included) ? p.included : [],
           }))
@@ -1382,6 +1390,24 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
                     }
                   />
                 </div>
+
+                <div style={{ borderTop: '1px solid var(--surface-2)', paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div>
+                    <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 600, color: 'var(--text)' }}>Option d’annulation</p>
+                    <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginTop: 2 }}>
+                      Proposée au checkout seulement pour cette catégorie, si le billet vaut au moins 5 000 FCFA et si la billetterie ferme dans plus de 48 h.
+                    </p>
+                  </div>
+                  <Toggle
+                    value={Boolean(place.cancellationOptionEnabled)}
+                    disabled={placeHasSales}
+                    onChange={() =>
+                      setPlaces((prev) =>
+                        prev.map((p) => (p.key === place.key ? { ...p, cancellationOptionEnabled: !p.cancellationOptionEnabled } : p))
+                      )
+                    }
+                  />
+                </div>
                 {place.groupType === 'group' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <p style={{ ...S.label, color: 'var(--primary)' }}>Capacité du groupe</p>
@@ -1577,9 +1603,9 @@ export default function EventWizard({ eventId, initialRegion = '', onClose, onSa
 
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ ...S.label, marginBottom: 4 }}>Région *</label>
-              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 10 }}>Dans quelle région se déroule l&apos;événement ?</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', marginBottom: 10 }}>Le lancement billetterie est ouvert au Bénin uniquement.</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {regions.map((r) => (
+                {LAUNCH_EVENT_REGIONS.map((r) => (
                   <Pill key={r.id} label={`${r.flag} ${r.name}`} active={region === r.name} disabled={locked} onClick={() => setRegion(r.name)} accent="var(--primary)" />
                 ))}
               </div>

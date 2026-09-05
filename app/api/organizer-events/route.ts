@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { createOrganizerEvent, listMyOrganizerEvents } from '@/lib/server/organizer/organizerEvents'
 import { canCreateEvent } from '@/lib/server/permissions'
 import { STATIC_THEME } from '@/lib/shared/staticTheme'
+import { listPayoutMomos } from '@/lib/server/organizer/organizerPayoutMomos'
 
 const placeSchema = z.object({
   id: z.string().default(''),
@@ -15,6 +16,7 @@ const placeSchema = z.object({
   groupType: z.enum(['solo', 'group']).default('solo'),
   groupMin: z.number().min(0).default(0),
   groupMax: z.number().min(0).default(0),
+  cancellationOptionEnabled: z.boolean().default(false),
   photos: z.array(z.string()).default([]),
   included: z.array(z.object({ name: z.string(), qty: z.number().default(1) })).default([]),
 })
@@ -97,6 +99,10 @@ export async function POST(req: Request) {
   // événement payant et encaisser de l'argent réel avant toute revue.
   if (!canCreateEvent({ activeRole: session.user.activeRole, status: session.user.status, orgStatus: session.user.orgStatus, prestStatus: session.user.prestStatus })) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
+  if (session.user.activeRole !== 'agent') {
+    const payout = await listPayoutMomos({ id: session.user.id })
+    if (!payout.ok || !payout.momos.bj || !payout.fedapaySubAccountReference) return NextResponse.json({ error: 'fedapay_marketplace_account_required' }, { status: 409 })
   }
 
   const parsed = eventFormSchema.safeParse(await req.json().catch(() => null))

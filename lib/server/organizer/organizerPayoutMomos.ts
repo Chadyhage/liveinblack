@@ -2,6 +2,7 @@ import { getDb } from '@/lib/db/mongoose'
 import User from '@/lib/models/User'
 import Event from '@/lib/models/Event'
 import EventPayout from '@/lib/models/EventPayout'
+import { sanitizeFedapaySubAccountReference } from '../payments/fedapayMarketplace'
 import { canRearmPayout, momosToRecord, sanitizePayoutMomos } from './organizerPayoutMomosUtils'
 
 // Port de src/components/MomoPayoutManager.jsx (numéros mobile money par pays
@@ -23,22 +24,22 @@ export interface PayoutMomoCaller {
 
 type ErrResult = { ok: false; status: number; error: string }
 
-export type ListPayoutMomosResult = ErrResult | { ok: true; momos: Record<string, string> }
+export type ListPayoutMomosResult = ErrResult | { ok: true; momos: Record<string, string>; fedapaySubAccountReference: string | null }
 
 export async function listPayoutMomos(caller: PayoutMomoCaller): Promise<ListPayoutMomosResult> {
   await getDb()
   const user = await User.findById(caller.id).lean()
   if (!user) return { ok: false, status: 404, error: 'user_not_found' }
-  return { ok: true, momos: momosToRecord(user.payoutMomos) }
+  return { ok: true, momos: momosToRecord(user.payoutMomos), fedapaySubAccountReference: sanitizeFedapaySubAccountReference(user.fedapaySubAccountReference) }
 }
 
-export type UpdatePayoutMomosResult = ErrResult | { ok: true; momos: Record<string, string>; rearmedCount: number }
+export type UpdatePayoutMomosResult = ErrResult | { ok: true; momos: Record<string, string>; fedapaySubAccountReference: string | null; rearmedCount: number }
 
 // Remplacement COMPLET (jamais une fusion) : un pays absent du payload est un
 // pays que l'organisateur a retiré côté formulaire — fidèle à
 // MomoPayoutManager.save() qui reconstruit `payoutMomos` en entier à chaque
 // enregistrement à partir des seuls pays encore "ouverts" dans l'UI.
-export async function updatePayoutMomos(caller: PayoutMomoCaller, momos: Record<string, string>): Promise<UpdatePayoutMomosResult> {
+export async function updatePayoutMomos(caller: PayoutMomoCaller, momos: Record<string, string>, fedapaySubAccountReference?: string | null): Promise<UpdatePayoutMomosResult> {
   await getDb()
 
   const user = await User.findById(caller.id)
@@ -49,10 +50,11 @@ export async function updatePayoutMomos(caller: PayoutMomoCaller, momos: Record<
   const clean = sanitized.momos
 
   user.payoutMomos = clean as unknown as typeof user.payoutMomos
+  user.fedapaySubAccountReference = sanitizeFedapaySubAccountReference(fedapaySubAccountReference) as typeof user.fedapaySubAccountReference
   await user.save()
 
   const rearmedCount = Object.keys(clean).length > 0 ? await rearmFailedPayouts(caller.id) : 0
-  return { ok: true, momos: clean, rearmedCount }
+  return { ok: true, momos: clean, fedapaySubAccountReference: sanitizeFedapaySubAccountReference(user.fedapaySubAccountReference), rearmedCount }
 }
 
 // Ré-arme les enveloppes `EventPayout` tombées en échec faute de numéro

@@ -33,17 +33,17 @@ describe('organizerEventLifecycleUtils', () => {
     } as never)).toBe(0)
   })
 
-  it('résout une fenêtre de remboursement valide avec fallback', () => {
-    expect(resolveRefundWindowDays(10)).toBe(10)
-    expect(resolveRefundWindowDays(0)).toBe(7)
-    expect(resolveRefundWindowDays(-3)).toBe(7)
-    expect(resolveRefundWindowDays(undefined)).toBe(7)
+  it('impose la fenêtre de remboursement à 24 heures', () => {
+    expect(resolveRefundWindowDays(10)).toBe(1)
+    expect(resolveRefundWindowDays(0)).toBe(1)
+    expect(resolveRefundWindowDays(-3)).toBe(1)
+    expect(resolveRefundWindowDays(undefined)).toBe(1)
   })
 
   it('construit la date de fin de fenêtre depuis now', () => {
     const now = new Date('2026-08-20T12:00:00.000Z').getTime()
-    expect(buildRefundWindowCloseDate(now, 2).toISOString()).toBe('2026-08-22T12:00:00.000Z')
-    expect(buildRefundWindowCloseDate(now, undefined).toISOString()).toBe('2026-08-27T12:00:00.000Z')
+    expect(buildRefundWindowCloseDate(now, 2).toISOString()).toBe('2026-08-21T12:00:00.000Z')
+    expect(buildRefundWindowCloseDate(now, undefined).toISOString()).toBe('2026-08-21T12:00:00.000Z')
   })
 
   it('détecte une date invalide ou passée pour un report', () => {

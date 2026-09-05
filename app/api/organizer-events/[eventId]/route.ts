@@ -24,6 +24,7 @@ const placeSchema = z.object({
   groupType: z.enum(['solo', 'group']).default('solo'),
   groupMin: z.number().min(0).default(0),
   groupMax: z.number().min(0).default(0),
+  cancellationOptionEnabled: z.boolean().default(false),
   photos: z.array(z.string()).default([]),
   included: z.array(z.object({ name: z.string(), qty: z.number().default(1) })).default([]),
 })

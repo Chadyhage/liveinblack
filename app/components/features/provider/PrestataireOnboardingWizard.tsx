@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn, useSession } from 'next-auth/react'
 import { regions } from '@/lib/shared/regions'
 import { PROVIDER_CATEGORIES, getPrimaryProviderType } from '@/lib/shared/providerCategories'
 import { regionToCurrency } from '@/lib/shared/money'
@@ -37,10 +38,10 @@ const EMPTY_FORM: PrestataireFormData = {
   prestataireTypes: [],
   prenom: '',
   nom: '',
-  telephoneCode: '+33',
+  telephoneCode: '+229',
   telephone: '',
   ville: '',
-  pays: 'France',
+  pays: 'Bénin',
   nomCommercial: '',
   nomScene: '',
   siret: '',
@@ -91,9 +92,9 @@ const primaryBtn = (disabled: boolean): React.CSSProperties => ({
 const chip = (active: boolean): React.CSSProperties => ({
   padding: '8px 14px',
   borderRadius: 999,
-  border: `1px solid ${active ? 'var(--gold)' : 'var(--border-strong)'}`,
+  border: `1px solid ${active ? 'var(--primary)' : 'var(--border-strong)'}`,
   background: active ? 'var(--primary-a14)' : 'transparent',
-  color: active ? 'var(--gold)' : 'var(--text)',
+  color: active ? 'var(--primary)' : 'var(--text)',
   fontSize: 'var(--font-size-footnote-lg)',
   cursor: 'pointer',
 })
@@ -101,7 +102,7 @@ const chip = (active: boolean): React.CSSProperties => ({
 const DOC_LABELS: Record<string, string> = {
   identity: "Pièce d'identité",
   billing_proof: 'Justificatif de facturation (auto-entrepreneur, statut artiste…)',
-  business_doc: "Document officiel de l'entreprise (KBIS, statuts, récépissé INSEE…)",
+  business_doc: "Document officiel de l'entreprise (RCCM, attestation IFU, statuts…)",
   insurance: 'Attestation d’assurance responsabilité civile professionnelle',
   exploitation_proof: "Justificatif d'exploitation du lieu (bail, autorisation…)",
 }
@@ -132,6 +133,7 @@ export default function PrestataireOnboardingWizard({
   initialCandidateNote?: string
 }) {
   const router = useRouter()
+  const { update } = useSession()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<PrestataireFormData>({ ...EMPTY_FORM, ...initialFormData })
   const [regEmail, setRegEmail] = useState('')
@@ -285,7 +287,13 @@ export default function PrestataireOnboardingWizard({
           provider_type: cleanedForm.prestataireType || null,
           has_documents: Object.values(documents).some((entries) => entries.length > 0),
         })
-        setSubmitted({ email: cleanRegEmail })
+        const login = await signIn('credentials', { email: cleanRegEmail, password: regPassword, redirect: false })
+        if (login?.error) {
+          setSubmitted({ email: cleanRegEmail })
+          return
+        }
+        router.replace('/offer-services')
+        router.refresh()
       } else {
         const res = await fetch('/api/applications/prestataire/submit', {
           method: 'POST',
@@ -305,7 +313,9 @@ export default function PrestataireOnboardingWizard({
           provider_type: cleanedForm.prestataireType || null,
           has_documents: Object.values(documents).some((entries) => entries.length > 0),
         })
-        router.push('/my-application')
+        await update({ activeRole: 'prestataire' })
+        router.replace('/offer-services')
+        router.refresh()
       }
     } finally {
       setBusy(false)
@@ -329,8 +339,8 @@ export default function PrestataireOnboardingWizard({
             Tu seras contacté à <strong style={{ color: 'var(--text)' }}>{submitted.email}</strong> une fois ton compte validé.
           </p>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-faint)', lineHeight: 1.6, margin: '0 0 24px' }}>La validation prend généralement moins de 24 h.</p>
-          <a href="/home" style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
-            Retour à l&apos;accueil
+          <a href={`/login?next=${encodeURIComponent('/offer-services')}`} style={{ display: 'inline-block', ...primaryBtn(false), textDecoration: 'none' }}>
+            Accéder à mon espace prestataire
           </a>
         </Card>
       </Shell>
@@ -342,21 +352,21 @@ export default function PrestataireOnboardingWizard({
 
   return (
     <Shell className={mode === 'anonymous' ? 'lb-auth-wizard' : undefined} style={mode === 'anonymous' ? undefined : { minHeight: '100vh', padding: '32px 16px 60px' }}>
-      <div style={{ maxWidth: 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 8 : 20 }}>
-        <div>
+      <div style={{ maxWidth: mode === 'anonymous' ? 560 : 1320, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: mode === 'anonymous' ? 12 : 20 }}>
+        <div style={{ textAlign: mode === 'anonymous' ? 'center' : 'left' }}>
           <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 4px' }}>Demande d&apos;espace</p>
           <h1 className="font-display" style={{ fontSize: 'var(--font-size-large-title)', color: 'var(--text)', margin: '0 0 4px' }}>Compte Prestataire</h1>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', margin: 0 }}>Complète ton dossier. Tu peux sauvegarder et revenir plus tard.</p>
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ display: 'flex', justifyContent: mode === 'anonymous' ? 'center' : 'space-between', marginBottom: 6 }}>
             <span style={{ fontSize: 'var(--font-size-caption)', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase' }}>
               Étape {step + 1} / {STEPS.length} — {STEPS[step]}
             </span>
           </div>
           <div style={{ height: 5, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--gold)' }} />
+            <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'var(--primary)' }} />
           </div>
         </div>
 
@@ -487,8 +497,8 @@ export default function PrestataireOnboardingWizard({
                 </div>
               </div>
               <div>
-                <Label style={labelStyle}>Numéro SIRET / SIREN (optionnel)</Label>
-                <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="14 chiffres, ou 9 pour un SIREN" />
+                <Label style={labelStyle}>Numéro IFU / RCCM ou SIRET (optionnel)</Label>
+                <Input style={inputStyle} value={form.siret} onChange={(e) => set('siret', e.target.value)} placeholder="IFU, RCCM ou 14 chiffres" />
               </div>
             </div>
           )}
@@ -632,7 +642,7 @@ export default function PrestataireOnboardingWizard({
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tarifs</p>
+                <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Tarifs ({candidateCurrency === 'XOF' ? 'FCFA' : candidateCurrency})</p>
                 <Checkbox
                   label="Sur devis uniquement"
                   checked={form.tarifDevis}
@@ -641,8 +651,8 @@ export default function PrestataireOnboardingWizard({
                 {!form.tarifDevis && (
                   <>
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <Input style={inputStyle} type="number" min={0} value={form.tarifMin ?? ''} onChange={(e) => set('tarifMin', e.target.value ? Number(e.target.value) : null)} placeholder="Tarif min" />
-                      <Input style={inputStyle} type="number" min={0} value={form.tarifMax ?? ''} onChange={(e) => set('tarifMax', e.target.value ? Number(e.target.value) : null)} placeholder="Tarif max" />
+                      <Input style={inputStyle} type="number" min={0} value={form.tarifMin ?? ''} onChange={(e) => set('tarifMin', e.target.value ? Number(e.target.value) : null)} placeholder={candidateCurrency === 'XOF' ? 'Tarif min (FCFA)' : 'Tarif min'} />
+                      <Input style={inputStyle} type="number" min={0} value={form.tarifMax ?? ''} onChange={(e) => set('tarifMax', e.target.value ? Number(e.target.value) : null)} placeholder={candidateCurrency === 'XOF' ? 'Tarif max (FCFA)' : 'Tarif max'} />
                     </div>
                     <Select
                       value={form.tarifType}
@@ -789,7 +799,7 @@ function DocUpload({
   return (
     <div>
       <Label style={labelStyle}>
-        {label} {required && <span style={{ color: 'var(--gold)' }}>*</span>}
+        {label} {required && <span style={{ color: 'var(--primary)' }}>*</span>}
       </Label>
       <label
         htmlFor={inputId}

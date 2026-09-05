@@ -20,7 +20,6 @@ import Notification from '../lib/models/Notification'
 import Order from '../lib/models/Order'
 import SeatHold from '../lib/models/SeatHold'
 import PromoCode from '../lib/models/PromoCode'
-import EventRefund from '../lib/models/EventRefund'
 import Review from '../lib/models/Review'
 import ReviewReport from '../lib/models/ReviewReport'
 import DeletionRequest from '../lib/models/DeletionRequest'
@@ -373,7 +372,6 @@ async function main() {
   await Order.deleteMany({ ticketCode: { $in: ['E2E-RESALE-001', 'E2E-TABLE-001', 'E2E-TABLE-ACCEPT-REVOKE', 'E2E-TABLE-DECLINE', 'E2E-TABLE-LEAVE'] } })
   await SeatHold.deleteMany({ userId: { $in: [ids.paymentBuyer, ids.checkoutBuyer] } })
   await ResaleListing.deleteMany({ ticketCode: { $in: ['E2E-RESALE-001', 'E2E-TABLE-001', 'E2E-TABLE-ACCEPT-REVOKE', 'E2E-TABLE-DECLINE', 'E2E-TABLE-LEAVE'] } })
-  await EventRefund.deleteMany({ paymentRef: { $in: ['txn_e2e_refund_protected'] } })
   await PromoCode.deleteMany({ eventId: ids.event, code: { $in: ['E2EPROMO'] } })
   await DeletionRequest.deleteMany({ _id: { $in: [ids.deletionRejectRequest, ids.deletionApproveRequest] } })
   await EventPayout.deleteMany({ eventId: ids.privateEvent })

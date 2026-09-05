@@ -13,6 +13,8 @@ import { computeTicketFeeCents, computeTicketFeeXOF } from '@/lib/shared/fees'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { generateUniqueTicketCode } from '../events/ticketCode'
 import { createTransaction, createToken, sendPaymentToUser, type MobileMoneyMode } from '../payments/fedapayClient'
+import { fedapayMarketplaceCommissions, sellerShareForOrder } from '../payments/fedapayMarketplace'
+import { resolveSellerSettlementMode } from '../payments/sellerSettlementMode'
 import { notifyUserById } from '@/lib/server/emails/notify'
 import { cashSalesBlockedEmail, cashSalePendingSettlementEmail } from '@/lib/server/emails'
 import { fmtMoney } from '@/lib/shared/money'
@@ -142,6 +144,11 @@ async function createAgentSaleOrder(
 
   const feeMinor = currency === 'XOF' ? computeTicketFeeXOF(unitPriceMinor, isTable ? 1 : qty) : computeTicketFeeCents(unitPriceMinor, isTable ? 1 : qty)
   const totalRequestedStock = isTable ? 1 : qty
+  const settlement = await resolveSellerSettlementMode({
+    sellerUid: event.organizerId || event.createdBy,
+    buyerUid: agentCaller.id,
+    rail: input.method === 'cash' ? 'free' : 'fedapay',
+  })
 
   const session = await mongoose.startSession()
   try {
@@ -170,6 +177,9 @@ async function createAgentSaleOrder(
             currency,
             feeMinor,
             preorders: resolvedPreorders,
+            sellerUid: settlement.sellerUid,
+            connectMode: settlement.connectMode,
+            fedapaySubAccountReference: settlement.fedapaySubAccountReference,
             rail: input.method === 'cash' ? 'cash' : 'fedapay',
             status: 'pending',
             kind: 'agent_sale',
@@ -286,11 +296,20 @@ async function processSale(agentCaller: AgentSaleCaller, eventId: string, input:
       return { ok: false, status: 400, error: 'momo_phone_required' }
     }
     try {
+      const seatCount = order.isTable ? 1 : order.qty
+      const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
+      const amountTotal = order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor
+      const sellerShare = sellerShareForOrder({ unitPriceMinor: order.unitPriceMinor, seatCount, preorderTotalMinor: preorderTotal })
+      if (order.sellerUid && !order.fedapaySubAccountReference && process.env.NODE_ENV === 'production') {
+        await releaseAgentSaleOrder(String(order._id))
+        return { ok: false, status: 409, error: 'fedapay_marketplace_account_required' }
+      }
       const txn = await createTransaction({
         description: `${order.placeType} — vente agent`.slice(0, 200),
-        amount: order.unitPriceMinor * (order.isTable ? 1 : order.qty) + order.preorders.reduce((s, p) => s + p.price * p.qty, 0) + order.feeMinor,
+        amount: amountTotal,
         metadata: { orderId: String(order._id) },
         reference: String(order._id),
+        subAccountsCommissions: fedapayMarketplaceCommissions(order.fedapaySubAccountReference, sellerShare),
       })
       const tok = await createToken(txn.id)
       if (!tok.token) throw new Error('fedapay_token_missing')

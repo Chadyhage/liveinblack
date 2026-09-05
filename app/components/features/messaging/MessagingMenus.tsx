@@ -169,6 +169,7 @@ export function DropdownMenu({ items, onClose, layout = 'list' }: { items: { lab
     <>
       <Button className={styles.menuBackdrop} variant="ghost" onClick={onClose} aria-label="Fermer le menu" style={{ zIndex: 49 }} />
       <div role="menu" aria-label="Actions disponibles" className={`${styles.menu} ${styles.relativeMenu}${layout === 'grid' ? ` ${styles.attachmentMenu}` : ''}`} onKeyDown={(event) => handleMenuKeyDown(event, onClose)}>
+        {layout === 'grid' ? <p className={styles.attachmentTitle}>Ajouter à la discussion</p> : null}
         {items.map((item, index) => (
           <Button
             key={item.label}

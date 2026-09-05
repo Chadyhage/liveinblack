@@ -6,7 +6,7 @@ import Stripe from 'stripe'
 // selon le parcours). Ne pas dupliquer `new Stripe(...)` ailleurs.
 //
 // Construction PARESSEUSE (Proxy) : de nombreuses routes/tests importent ce
-// module transitivement (ex. fulfillOrder → eventRefunds → stripeClient) sans
+// module transitivement sans
 // jamais appeler Stripe sur leur chemin heureux — construire le client dès
 // l'import forcerait STRIPE_SECRET_KEY à exister même pour ces cas.
 declare global {

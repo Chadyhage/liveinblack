@@ -4,6 +4,7 @@ import { isStripeConnectCountry } from '@/lib/shared/fees'
 export type SellerSettlementMode = {
   sellerUid: string | null
   connectMode: 'auto' | 'ledger' | 'none'
+  fedapaySubAccountReference: string | null
 }
 
 // Source unique du choix Connect/ledger. Une commande issue d'un seat-hold
@@ -14,8 +15,18 @@ export async function resolveSellerSettlementMode(input: {
   rail: 'stripe' | 'fedapay' | 'free'
 }): Promise<SellerSettlementMode> {
   const sellerUid = input.sellerUid || null
-  if (!sellerUid || sellerUid === input.buyerUid) return { sellerUid, connectMode: 'none' }
-  if (input.rail !== 'stripe') return { sellerUid, connectMode: 'ledger' }
+  if (!sellerUid || sellerUid === input.buyerUid) return { sellerUid, connectMode: 'none', fedapaySubAccountReference: null }
+
+  if (input.rail === 'fedapay') {
+    const seller = await User.findById(sellerUid)
+      .select('fedapaySubAccountReference')
+      .lean()
+      .catch(() => null)
+    const fedapaySubAccountReference = String(seller?.fedapaySubAccountReference || '').trim() || null
+    return { sellerUid, connectMode: fedapaySubAccountReference ? 'auto' : 'ledger', fedapaySubAccountReference }
+  }
+
+  if (input.rail !== 'stripe') return { sellerUid, connectMode: 'ledger', fedapaySubAccountReference: null }
 
   const seller = await User.findById(sellerUid)
     .select('stripeAccountId stripeChargesEnabled stripeCountry')
@@ -24,5 +35,5 @@ export async function resolveSellerSettlementMode(input: {
   const eligible = Boolean(seller?.stripeAccountId)
     && seller?.stripeChargesEnabled === true
     && isStripeConnectCountry(seller?.stripeCountry)
-  return { sellerUid, connectMode: eligible ? 'auto' : 'ledger' }
+  return { sellerUid, connectMode: eligible ? 'auto' : 'ledger', fedapaySubAccountReference: null }
 }

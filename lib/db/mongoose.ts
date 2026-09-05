@@ -16,6 +16,8 @@ import Report from '../models/Report'
 import EventOrder from '../models/EventOrder'
 import SeatHold from '../models/SeatHold'
 import RateLimit from '../models/RateLimit'
+import RefundCase from '../models/RefundCase'
+import RefundPoint from '../models/RefundPoint'
 import VercelDrainEvent from '../models/VercelDrainEvent'
 import VercelSpendEvent from '../models/VercelSpendEvent'
 import VercelPlatformEvent from '../models/VercelPlatformEvent'
@@ -126,6 +128,8 @@ async function ensureIndexes() {
     EventOrder.init(),
     SeatHold.init(),
     RateLimit.init(),
+    RefundCase.init(),
+    RefundPoint.init(),
     VercelDrainEvent.init(),
     VercelSpendEvent.init(),
     VercelPlatformEvent.init(),

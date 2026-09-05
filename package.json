@@ -74,6 +74,7 @@
     "audit:seo": "node scripts/audit-seo.mjs",
     "audit:ui-density": "node scripts/audit-ui-density.mjs",
     "audit:custom-images": "node scripts/audit-custom-images.mjs",
+    "audit:refund-policy": "node scripts/check-refund-policy-alignment.mjs",
     "seed:bulk": "node --env-file=.env.local --import tsx scripts/seed-bulk.ts",
     "seed:bulk:clean": "node --env-file=.env.local --import tsx scripts/seed-bulk-clean.ts",
     "cloudinary:setup": "node --import tsx scripts/setup-cloudinary-private-preset.ts",

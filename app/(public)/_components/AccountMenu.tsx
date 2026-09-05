@@ -133,10 +133,10 @@ export default function AccountMenu({
   }
 
   return (
-    <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
+    <div ref={rootRef} style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative', width: dashboardMode ? '100%' : undefined }}>
       <style>{`@media (max-width: 640px) { .lb-acct-name { display: none !important } }`}</style>
 
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', width: dashboardMode ? '100%' : undefined }}>
         <Button
           variant="ghost"
           onClick={() => {
@@ -151,7 +151,7 @@ export default function AccountMenu({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          width: 'auto',
+          width: dashboardMode ? '100%' : 'auto',
           height: 42,
           minWidth: 42,
           minHeight: 42,
@@ -160,6 +160,7 @@ export default function AccountMenu({
           border: '1px solid var(--border-strong)',
           background: 'var(--surface)',
           color: 'var(--text)',
+          justifyContent: dashboardMode ? 'flex-start' : 'center',
         }}
         >
           <Avatar src={user.image} name={user.name || user.email || '?'} size="sm" style={{ width: 34, height: 34 }} />
@@ -168,7 +169,7 @@ export default function AccountMenu({
               {user.name.split(' ')[0]}
             </span>
           )}
-          <ChevronDown size={14} strokeWidth={2.4} aria-hidden="true" style={{ flexShrink: 0, opacity: 0.7, transform: accountOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s ease' }} />
+          <ChevronDown size={14} strokeWidth={2.4} aria-hidden="true" style={{ flexShrink: 0, marginLeft: dashboardMode ? 'auto' : 0, opacity: 0.7, transform: accountOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s ease' }} />
         </Button>
 
         {accountOpen && (
@@ -186,7 +187,9 @@ export default function AccountMenu({
               overflow: 'hidden',
               zIndex: 60,
               padding: 6,
-              transformOrigin: resolvedDirection === 'up' ? 'bottom right' : 'top right',
+              transformOrigin: resolvedDirection === 'up'
+                ? (menuAlign === 'left' ? 'bottom left' : 'bottom right')
+                : (menuAlign === 'left' ? 'top left' : 'top right'),
             }}
           >
             {user.name && (

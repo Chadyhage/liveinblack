@@ -22,12 +22,12 @@ Actif cote repo:
 - Audit revue Firewall prepare: `npm run audit:vercel-firewall`.
 - Audit Spend Management prepare: `npm run audit:vercel-spend`.
 - Audit revue Log Drain prepare: `npm run audit:vercel-drain`.
-- Audit portes live prepare: `npm run audit:vercel-live-gates`.
-- Audit ordre activation prepare: `npm run audit:vercel-activation-order`.
+- Audit portes live prepare: `npm run audit:vercel-live-gates`, avec controle des statuts autorises et des liens vers les decisions Pro.
+- Audit ordre activation prepare: `npm run audit:vercel-activation-order`, avec controle des niveaux d'automatisation autorises.
 - Audit completion stricte prepare: `npm run audit:vercel-completion`.
-- Suite d'audit globale preparee: `npm run audit:vercel-pro-suite`.
-- Outil de consignation des preuves prepare: `npm run ops:vercel:evidence:record`.
-- Outil prochaine action prepare: `npm run ops:vercel:next-action`.
+- Suite d'audit globale preparee: `npm run audit:vercel-pro-suite`, avec controle du schema des commandes, cles de commandes uniques, scripts `package.json` et fichiers cibles controles separement, couverture de tous les scripts `audit:vercel-*` et `ops:vercel:*`, couverture des leviers Pro obligatoires (env, Firewall, Spend, Webhooks, Drains, Logs, Edge Config, Workflows, Usage, live gates, completion), coherence entre scope local/live et comportement attendu, obligation `requiredFor100`, outils manuels reserves aux leviers `ops:vercel:*` avec approbation explicite et raison visible, detection des outils manuels sans les lancer a vide, compteurs separes pour commandes selectionnees/audits executes et verdict `100% prouve` reserve au mode strict avec lecture live.
+- Outil de consignation des preuves prepare: `npm run ops:vercel:evidence:record`, avec `--confirm-final` obligatoire pour passer une preuve en `complete` et preuve de decision obligatoire pour `active`/`rejected`.
+- Outil prochaine action prepare: `npm run ops:vercel:next-action`, avec affichage de la dette de preuve restante avant la prochaine etape.
 - Registre des decisions Vercel Pro prepare: `config/vercel-pro-decisions.json`, lu par `npm run audit:vercel-pro`.
 - Setup Edge Config prepare: `npm run ops:vercel:edge-config:setup`.
 - Activation Edge Config preparee: `npm run ops:vercel:edge-config:activate`.
@@ -39,6 +39,8 @@ Actif cote repo:
 - Endpoint Spend Management prepare: `/api/ops/vercel-spend`, signature HMAC verifiee via `VERCEL_SPEND_WEBHOOK_SECRET`, historique 90 jours et auto-maintenance optionnelle via Edge Config.
 - Endpoint webhook Vercel plateforme prepare: `/api/ops/vercel-events`, signature HMAC verifiee via `VERCEL_ACCOUNT_WEBHOOK_SECRET`, historique 90 jours des evenements deploy/projet/domaine.
 - Page agent Ops Vercel preparee: `/agent/vercel`, appuyee par `/api/agent/vercel/ops-events` et `/api/agent/vercel/ops-config`, lecture protegee par `requireAgent`, filtres `source`, `type`, `limit`, payloads rediges par defaut, barometre de completude Pro base sur les signaux recus et les secrets ops configures, feuille de route 100% issue de `config/vercel-pro-decisions.json`, pilotage Edge Config si `VERCEL_API_TOKEN` est configure, confirmations avant actions sensibles, modes rapides normal/urgence et audit trail des changements.
+- Feu vert activation live prepare dans `/agent/vercel`: le panneau synthese preuves fraiches, risques cout/securite, besoin d accord explicite et prochaine commande sure avant toute mutation Vercel live.
+- Dette de preuve 100% preparee dans `/agent/vercel`: le panneau liste les decisions, portes live et preuves strictes qui empechent encore de declarer Vercel Pro utilise a 100%, avec commande de preuve copiable par dette et etat explicite si les registres locaux sont indisponibles.
 - Suivi Usage Pro prepare: `config/vercel-usage-watchlist.json`, expose dans `/agent/vercel` et verifiable via `npm run audit:vercel-usage`.
 - Verification HMAC Vercel centralisee dans `lib/server/vercelSignature.ts` pour drains, Spend Management et webhooks plateforme.
 - Cache public/ISR avec `revalidate`, `unstable_cache`, tags et headers `s-maxage`.
@@ -248,6 +250,7 @@ Pilotage Edge Config depuis l'espace agent:
 - Si un webhook est configure mais n'a pas encore recu d'evenement, le barometre le signale comme pret et en attente du prochain signal.
 - Le bloc `Verdict 100% Vercel Pro` separe explicitement l'etat prepare de l'etat prouve: tant que les decisions, portes live ou preuves strictes manquent, il affiche `100% non prouve`.
 - Le bloc `Mode d'exploitation Vercel Pro` resume l'etat en une phrase: prepare, live sensible a approuver, ou 100% prouve, avec la commande associee.
+- Le bloc `Fraicheur des preuves` signale les registres vieux de plus de 14 jours, pour eviter de declarer le 100% avec des preuves perimees.
 - La feuille de route 100% affiche les lignes du registre qui ne sont pas encore `active` ou `rejected`, avec la prochaine action concrete.
 - Le suivi Usage Pro affiche les metriques a surveiller dans Vercel: spend, edge requests, data transfer, functions, images, cache/ISR, web vitals et pression Firewall.
 - Les portes live restantes, l'ordre recommande et les preuves du 100% sont visibles dans `/agent/vercel`; les portes et etapes deja `active` ou `rejected` dans le registre de decisions ne sont plus comptees comme restantes.

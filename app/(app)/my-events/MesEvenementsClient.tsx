@@ -120,7 +120,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         videoUrl: src.videoUrl,
         color: src.color,
         accentColor: src.accentColor,
-        places: src.places.map((p: { type: string; price: number; total: number; icon: string; maxPerAccount: number; groupType: string; groupMin: number; groupMax: number; photos: string[]; included: { name: string; qty: number }[] }) => ({
+        places: src.places.map((p: { type: string; price: number; total: number; icon: string; maxPerAccount: number; groupType: string; groupMin: number; groupMax: number; cancellationOptionEnabled?: boolean; photos: string[]; included: { name: string; qty: number }[] }) => ({
           id: '',
           type: p.type,
           price: p.price,
@@ -130,6 +130,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           groupType: p.groupType,
           groupMin: p.groupMin,
           groupMax: p.groupMax,
+          cancellationOptionEnabled: Boolean(p.cancellationOptionEnabled),
           photos: p.photos,
           included: p.included,
         })),
@@ -238,6 +239,21 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           <Link
             href="/organizer-studio?tab=paiements"
             style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', fontSize: 'var(--font-size-footnote)', textDecoration: 'none' }}
+          >
+            Configurer mon encaissement
+          </Link>
+        </div>
+      )}
+
+      {!initialMomos.bj && (
+        <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid var(--danger-border)', background: 'var(--surface)', color: 'var(--text-muted)' }}>
+          <p style={{ font: '700 14px var(--font-open-sans)', color: 'var(--danger)', margin: '0 0 6px' }}>Compte de paiement Bénin requis</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.6, margin: '0 0 12px' }}>
+            Pour publier un événement du lancement Bénin, ajoute d’abord ton compte Mobile Money Bénin dans l’espace encaissements.
+          </p>
+          <Link
+            href="/organizer-studio?tab=paiements"
+            style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 600, fontSize: 'var(--font-size-footnote)', textDecoration: 'none' }}
           >
             Configurer mon encaissement
           </Link>

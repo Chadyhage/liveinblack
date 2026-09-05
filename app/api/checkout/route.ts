@@ -108,7 +108,7 @@ export async function POST(req: Request) {
 
     if (order.cancellationProtectionPurchased && order.cancellationProtectionFeeMinor > 0) {
       lineItems.push({
-        price_data: { currency: 'eur', product_data: { name: 'Assurance annulation (remboursement libre)' }, unit_amount: order.cancellationProtectionFeeMinor },
+        price_data: { currency: 'eur', product_data: { name: "Option d'annulation" }, unit_amount: order.cancellationProtectionFeeMinor },
         quantity: 1,
       })
     }

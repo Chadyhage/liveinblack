@@ -34,7 +34,7 @@ describe('messagingDeliveryService', () => {
   const notifyUserById = vi.fn().mockResolvedValue(undefined)
   const newMessageDigestEmail = vi.fn().mockReturnValue({ subject: 'email' })
   const sendPushToUser = vi.fn().mockResolvedValue(undefined)
-  const toMessageView = vi.fn((message: { _id: string; content: string }) => ({ id: message._id, content: message.content }))
+  const toMessageView = vi.fn((message: { _id: unknown; content?: string | null }) => ({ id: String(message._id), content: message.content ?? '' }))
 
   beforeEach(() => {
     vi.clearAllMocks()

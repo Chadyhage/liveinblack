@@ -1,16 +1,15 @@
 import type { Metadata } from 'next'
 import { getProviderByUserId } from '@/lib/server/provider/providers'
 import ProviderDetailContent from './ProviderDetailContent'
+import styles from './ProviderDetailContent.module.css'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
 export const dynamic = 'force-dynamic'
 
-// Le rendu proprement dit vit dans ProviderDetailContent.tsx, partagé avec la
-// route interceptée app/(public)/@modal/(.)providers/[id]/page.tsx qui
-// affiche ce même contenu en modal glissante quand on navigue depuis une
-// carte prestataire ; cette page-ci reste la cible link-based (visite
-// directe, refresh, nouvel onglet).
+// La fiche prestataire utilise toujours cette page complète, qu'elle soit
+// ouverte depuis l'annuaire, après un rafraîchissement ou dans un nouvel
+// onglet. Il n'existe volontairement plus de route interceptée pour ce flux.
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -33,7 +32,7 @@ export default async function PublicPrestatairePage({ params }: { params: Promis
   const { id } = await params
 
   return (
-    <main className="lb-public-detail-page" style={{ maxWidth: 1260, margin: '0 auto', padding: '8px clamp(8px, 1vw, 14px) 30px', width: '100%' }}>
+    <main className={`lb-public-detail-page ${styles.detailPage}`}>
       <ProviderDetailContent id={id} />
     </main>
   )

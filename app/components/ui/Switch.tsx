@@ -1,7 +1,7 @@
 'use client'
 
-import { forwardRef, useEffect, useState } from 'react'
 import type { ChangeEvent, InputHTMLAttributes } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 
 export interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'className' | 'size'> {
   label?: React.ReactNode
@@ -31,7 +31,7 @@ const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
       htmlFor={id}
       style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.55 : 1, ...style }}
     >
-      <span style={{ position: 'relative', width: 38, height: 22, flexShrink: 0 }}>
+      <span style={{ position: 'relative', width: 42, height: 24, flexShrink: 0 }}>
         <input
           ref={ref}
           id={id}
@@ -51,21 +51,22 @@ const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
             inset: 0,
             borderRadius: 999,
             background: isChecked ? 'var(--primary)' : 'var(--surface-2)',
-            border: `1.5px solid ${isChecked ? 'var(--primary)' : 'var(--border-strong)'}`,
+            border: `1px solid ${isChecked ? 'var(--primary)' : 'var(--border-strong)'}`,
             transition: 'background 0.15s ease, border-color 0.15s ease',
           }}
         >
           <span
             style={{
               position: 'absolute',
-              top: 2,
-              left: 2,
-              width: 15,
+
+              left: 4,
+              width: 17,
               height: 15,
               borderRadius: '50%',
-              background: isChecked ? 'var(--obsidian)' : 'var(--text-faint)',
-              transform: isChecked ? 'translateX(16px)' : 'translateX(0)',
-              transition: 'transform 0.15s ease, background 0.15s ease',
+              background: '#fff',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, .32)',
+              transform: isChecked ? 'translateX(18px)' : 'translateX(0)',
+              transition: 'transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease',
             }}
           />
         </span>
