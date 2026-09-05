@@ -32,13 +32,13 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       if (!result.ok) return
       expect(result.message.type).toBe('poll')
       expect(result.message.senderId).toBe(alice.id)
-      expect(result.message.poll.pollType).toBe('poll')
-      expect(result.message.poll.question).toBe('On sort où ce soir ?')
-      expect(result.message.poll.options).toEqual([
+      expect(result.message.poll!.pollType).toBe('poll')
+      expect(result.message.poll!.question).toBe('On sort où ce soir ?')
+      expect(result.message.poll!.options).toEqual([
         { id: '0', text: 'Le Black', voterIds: [] },
         { id: '1', text: 'Le Rouge', voterIds: [] },
       ])
-      expect(result.message.poll.event).toBeNull()
+      expect(result.message.poll!.event).toBeNull()
 
       // Le client (MessagesClient.tsx) ajoute ce message directement dans sa
       // liste typée MessageView[] (forme de lib/server/messaging.ts) sans
@@ -168,21 +168,21 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       expect(result.ok).toBe(true)
       if (!result.ok) return
       expect(result.message.type).toBe('event_poll')
-      expect(result.message.poll.pollType).toBe('event_poll')
-      expect(result.message.poll.question).toBe('On y va ?')
-      expect(result.message.poll.options).toEqual([
+      expect(result.message.poll!.pollType).toBe('event_poll')
+      expect(result.message.poll!.question).toBe('On y va ?')
+      expect(result.message.poll!.options).toEqual([
         { id: 'yes', text: 'Oui', voterIds: [] },
         { id: 'no', text: 'Non', voterIds: [] },
       ])
       // Le snapshot vient EXCLUSIVEMENT de l'Event réellement chargé — jamais
       // de ce que le test a tenté d'injecter dans l'input.
-      expect(result.message.poll.event?.name).toBe('Soirée Test XYZ')
-      expect(result.message.poll.event?.id).toBe(event.id)
-      expect(result.message.poll.event?.currency).toBe('EUR')
-      expect(result.message.poll.event?.image).toBe('https://example.com/event.jpg')
+      expect(result.message.poll!.event?.name).toBe('Soirée Test XYZ')
+      expect(result.message.poll!.event?.id).toBe(event.id)
+      expect(result.message.poll!.event?.currency).toBe('EUR')
+      expect(result.message.poll!.event?.image).toBe('https://example.com/event.jpg')
       // Prix = place la moins chère (1000), pas 3000 (première place du
       // tableau) ni 999999 (valeur injectée).
-      expect(result.message.poll.event?.price).toBe(1000)
+      expect(result.message.poll!.event?.price).toBe(1000)
 
       const freshConv = await Conversation.findById(conversation.id).lean()
       expect(freshConv?.lastMessage).toBe('Sondage événement : Soirée Test XYZ')
@@ -371,7 +371,7 @@ describeIntegration('polls (intégration, mise à jour atomique) — poll + even
       const created = await createEventPoll({ id: alice.id }, { conversationId: conversation.id, eventId: event.id })
       expect(created.ok).toBe(true)
       if (!created.ok) return
-      expect(created.message.poll.pollType).toBe('event_poll')
+      expect(created.message.poll!.pollType).toBe('event_poll')
       const messageId = created.message.id
 
       const firstVote = await voteOnPoll({ id: alice.id }, { messageId, optionId: 'yes' })

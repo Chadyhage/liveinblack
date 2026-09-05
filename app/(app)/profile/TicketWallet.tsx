@@ -86,6 +86,9 @@ const REFUND_ERROR_LABELS: Record<string, string> = {
   already_requested: 'Une demande de remboursement a déjà été envoyée pour ce billet.',
   not_eligible: 'Ce billet n’est pas éligible au remboursement.',
   free_ticket_not_refundable: 'Ce billet est gratuit, il n’y a rien à rembourser.',
+  xof_required: 'Ce remboursement suit le parcours de lancement au Bénin, en FCFA uniquement.',
+  event_cancelled_cash_pickup_created: 'L’événement est annulé : ton dossier de retrait au point de remboursement est créé automatiquement.',
+  ticket_listed_for_resale: 'Retire d’abord ce billet de la revente avant de demander un remboursement.',
 }
 
 const RESELL_ERROR_LABELS: Record<string, string> = {
@@ -115,20 +118,47 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
   return (
     <main className="lb-dashboard-page">
       <style>{`
-        .ticket-wallet-section-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important; gap: 8px !important; }
-        .ticket-wallet-event-link { gap: 8px !important; padding: 10px !important; }
-        .ticket-wallet-event-thumb { width: 44px !important; height: 44px !important; border-radius: 9px !important; }
-        .ticket-wallet-event-title { font-size: var(--font-size-body) !important; }
-        .ticket-wallet-face { grid-template-columns: minmax(0,1fr) 112px !important; }
-        .ticket-wallet-rail { min-height: 112px !important; padding: 12px !important; }
-        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: none !important; }
-        .ticket-wallet-card-body { padding-inline: 12px !important; }
-        .ticket-wallet-card-actions { padding: 8px 12px 12px !important; gap: 6px !important; }
+        .ticket-wallet-section-grid {
+          display: grid !important;
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important;
+          gap: 10px !important;
+          width: 100% !important;
+        }
+        @media (min-width: 1024px) {
+          .ticket-wallet-section-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          }
+        }
+        @media (min-width: 640px) and (max-width: 1023px) {
+          .ticket-wallet-section-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+        }
+        @media (max-width: 639px) {
+          .ticket-wallet-section-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        .ticket-wallet-event-link { gap: 10px !important; padding: 10px 12px !important; }
+        .ticket-wallet-event-thumb { width: 44px !important; height: 44px !important; border-radius: 10px !important; }
+        .ticket-wallet-event-title { font-size: var(--font-size-body) !important; font-weight: 500 !important; }
+        .ticket-wallet-ticket-list { padding: 0 12px 12px !important; gap: 8px !important; }
+        .ticket-wallet-face { display: grid !important; grid-template-columns: minmax(0, 1fr) 112px !important; }
+        .ticket-wallet-rail { min-height: 76px !important; padding: 10px 12px !important; }
+        .ticket-wallet-card-shell { border-radius: 14px !important; box-shadow: none !important; width: 100% !important; }
+        .ticket-wallet-card-body { padding: 8px 10px !important; }
+        .ticket-wallet-card-actions { padding: 8px 10px !important; gap: 6px !important; }
+        .ticket-wallet-action-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+        .ticket-wallet-action-grid > * { width: 100% !important; min-width: 0 !important; min-height: 32px !important; padding: 6px 7px !important; font-size: var(--font-size-caption) !important; }
+        .ticket-wallet-qr { width: auto !important; padding: 8px !important; border-left: 1px dashed var(--border-strong) !important; border-top: 0 !important; gap: 3px !important; }
+        .ticket-wallet-qr canvas { width: 80px !important; height: 80px !important; }
+        .ticket-wallet-meta > div { padding: 8px 9px !important; }
+        .ticket-wallet-meta > div p:first-child { margin-bottom: 2px !important; }
         @media (max-width: 480px) {
           .ticket-wallet-face { grid-template-columns: 1fr !important; }
-          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed var(--border); }
-          .ticket-wallet-meta { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)) !important; }
-          .ticket-wallet-rail { min-height: 104px !important; }
+          .ticket-wallet-qr { width: 100% !important; border-left: 0 !important; border-top: 1px dashed var(--border-strong) !important; }
+          .ticket-wallet-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+          .ticket-wallet-meta { grid-template-columns: repeat(3, 1fr) !important; }
           .ticket-wallet-summary { grid-template-columns: 1fr !important; }
           .ticket-wallet-summary-action { justify-content: flex-start !important; }
           .ticket-wallet-summary-action a { min-height: 32px !important; padding: 6px 10px !important; font-size: var(--font-size-caption) !important; }
@@ -154,7 +184,7 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
           <EmptyWallet />
         ) : (
           <>
-            <Card className="ticket-wallet-summary" style={{ maxWidth: 760, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', alignItems: 'center', gap: 8, padding: 12 }}>
+            <Card className="ticket-wallet-summary" style={{ width: '100%', display: 'block', padding: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <TicketGlyph />
                 <div>
@@ -168,28 +198,6 @@ export default function TicketWalletPanel({ groups, currentUserId }: { groups: T
                   </p>
                 </div>
                 </div>
-              <div className="ticket-wallet-summary-action" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <Link
-                href="/events"
-                style={{
-                  minHeight: 34,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  alignSelf: 'flex-start',
-                  padding: '7px 12px',
-                  borderRadius: 999,
-                  background: 'var(--teal-solid)',
-                  color: 'var(--primary-ink)',
-                  fontWeight: 700,
-                  fontSize: 'var(--font-size-footnote)',
-                  textDecoration: 'none',
-                  gap: 6,
-                }}
-              >
-                <Sparkles size={13} aria-hidden="true" />
-                Trouver une soirée
-              </Link>
-              </div>
             </Card>
 
             {buckets.upcoming.length > 0 && <Section label={`À venir (${buckets.upcoming.length})`} groups={buckets.upcoming} currentUserId={currentUserId} paramName="page" />}
@@ -302,9 +310,9 @@ function Section({
   const setPage = (n: number) => setPageParam(String(n))
   const { pageItems, pageCount } = pagedSlice(groups, page, GROUP_PAGE_SIZE)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '4px 0 0' }}>{label}</p>
-      <div className="ticket-wallet-section-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: 8, alignItems: 'start' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+      <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '6px 0 0' }}>{label}</p>
+      <div className="ticket-wallet-section-grid">
         {pageItems.map((g) => (
           <EventTicketGroupCard key={g.eventId} group={g} currentUserId={currentUserId} bucket={classifyTicketGroup(g)} />
         ))}
@@ -335,13 +343,13 @@ function TicketGlyph() {
 
 function EmptyWallet() {
   return (
-    <div style={{ minHeight: 'clamp(430px, 62vh, 680px)', display: 'grid', alignContent: 'center', justifyItems: 'center', padding: 'clamp(36px, 7vw, 84px) 18px', textAlign: 'center' }}>
-      <Mascot mood="sleeping" size={224} />
+    <div style={{ minHeight: 'clamp(460px, 64vh, 700px)', display: 'grid', alignContent: 'center', justifyItems: 'center', gap: 14, padding: 'clamp(36px, 7vw, 84px) 18px', textAlign: 'center' }}>
+      <Mascot mood="sleeping" size={280} />
       <h2 style={{ fontWeight: 780, fontSize: 'clamp(24px, 3vw, 34px)', color: 'var(--text)', margin: '4px 0 8px', textTransform: 'none', letterSpacing: 0 }}>Aucun billet pour l&apos;instant</h2>
       <p style={{ maxWidth: 520, fontSize: 'var(--font-size-headline-xl)', color: 'var(--text-muted)', margin: '0 0 24px', lineHeight: 1.55 }}>Tes billets achetés apparaîtront ici, avec leur QR code et toutes les informations utiles pour entrer à l’événement.</p>
       <Link
         href="/events"
-        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 'var(--font-size-headline)', textDecoration: 'none' }}
+        style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 22px', borderRadius: 'var(--radius-control)', background: 'var(--primary)', color: 'var(--primary-ink)', fontWeight: 750, fontSize: 'var(--font-size-headline)', textDecoration: 'none' }}
       >
         Découvrir les événements
       </Link>
@@ -350,7 +358,7 @@ function EmptyWallet() {
 }
 
 function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketWalletGroupView; currentUserId: string; bucket: GroupBucket }) {
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const [dismissed, setDismissed] = useState<Set<string>>(() => readDismissed())
   const event = group.event
   const cancelled = bucket === 'cancelled'
@@ -385,11 +393,11 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
   }
 
   return (
-    <Card style={{ padding: 0, overflow: 'hidden' }}>
+    <Card style={{ padding: 0, overflow: 'hidden', width: '100%' }}>
       <Link
         href={event ? `/events/${event.id}` : '#'}
         className="ticket-wallet-event-link"
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 10, textDecoration: 'none', color: 'inherit' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', textDecoration: 'none', color: 'inherit' }}
       >
         <div
           className="ticket-wallet-event-thumb"
@@ -427,7 +435,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
           {cancelled && <Pill color="var(--danger)" bg="var(--danger-fill)">Annulé</Pill>}
           {past && !cancelled && <Pill color="var(--text-faint)" bg="var(--surface-2)">Terminé</Pill>}
-          <Pill color="var(--teal)" bg="var(--primary-a10)">
+          <Pill color="var(--primary)" bg="var(--primary-a10)">
             {group.myTickets.length} billet{group.myTickets.length > 1 ? 's' : ''}
           </Pill>
         </div>
@@ -468,7 +476,7 @@ function EventTicketGroupCard({ group, currentUserId, bucket }: { group: TicketW
       {hostsTable && event && <TableHostPanel hostedSeats={group.hostedSeats} />}
 
       {group.myTickets.length > 0 && (
-        <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="ticket-wallet-ticket-list" style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Button variant="link" onClick={() => setExpanded((v) => !v)} style={{ fontSize: 'var(--font-size-footnote-lg)' }}>
               {expanded ? 'Masquer mes places' : 'Voir mes places'}
@@ -614,7 +622,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
             transform: 'translateX(-50%)',
             padding: '6px 14px',
             borderRadius: 999,
-            background: toast.kind === 'ok' ? 'var(--teal-solid)' : 'var(--pink)',
+            background: toast.kind === 'ok' ? 'var(--primary)' : 'var(--pink)',
             color: toast.kind === 'ok' ? 'var(--primary-ink)' : 'var(--text)',
             fontSize: 'var(--font-size-caption-lg)',
             fontWeight: 700,
@@ -626,7 +634,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Ma table · {hostedSeats.length} places</p>
         <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--violet)', fontWeight: 700 }}>
           {assignedCount}/{hostedSeats.length} attribuées
         </span>
@@ -643,7 +651,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <div>
                   <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>Place {i + 1}</p>
-                  <p style={{ fontSize: 'var(--font-size-caption-lg)', margin: '1px 0 0', color: seat.assignedTo ? 'var(--teal)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
+                  <p style={{ fontSize: 'var(--font-size-caption-lg)', margin: '1px 0 0', color: seat.assignedTo ? 'var(--primary)' : pendingEmail ? 'var(--gold)' : 'var(--text-faint)' }}>
                     {seat.assignedTo ? `Attribuée à ${seat.assignedName || 'un invité'}` : pendingEmail ? `Invitation envoyée à ${pendingEmail}` : 'Libre — à toi'}
                     {seat.assignedTo && (
                       <span style={{ marginLeft: 6, color: seat.checkedInAt ? 'var(--pink)' : 'var(--text-faint)' }}>
@@ -715,7 +723,7 @@ function TableHostPanel({ hostedSeats }: { hostedSeats: TicketWalletItemView[] }
                     size="sm"
                     onClick={() => sendInvite(seat.ticketCode)}
                     disabled={busyCode === seat.ticketCode || !emailDraft.trim()}
-                    style={smallBtnStyle('var(--teal-solid)', 'var(--primary-ink)')}
+                    style={smallBtnStyle('var(--primary)', 'var(--primary-ink)')}
                   >
                     Donner
                   </Button>
@@ -792,11 +800,21 @@ function PremiumTicketCard({
   const [resellErr, setResellErr] = useState<string | null>(null)
   const [withdrawState, setWithdrawState] = useState<'idle' | 'busy' | 'err'>('idle')
   const [activeListing, setActiveListing] = useState(ticket.activeListing)
+  const [nowTs, setNowTs] = useState(() => Date.now())
   const qrExportRef = useRef<HTMLCanvasElement>(null)
 
   const ticketUrl = `${SITE}/ticket/${ticket.ticketToken}`
   const countdown = event ? countdownLabel(event.date) : null
   const preorderTotal = ticket.preorders.reduce((sum, p) => sum + p.price * p.qty, 0)
+  const refundWindowTs = event?.refundWindowClosesAt ? new Date(event.refundWindowClosesAt).getTime() : NaN
+  const reportRefundOpen = Boolean(event?.postponed && Number.isFinite(refundWindowTs) && nowTs < refundWindowTs)
+  const canShowRefundButton = Boolean(ticket.orderId && (ticket.cancellationProtectionPurchased || reportRefundOpen))
+
+  useEffect(() => {
+    if (!event?.postponed || !Number.isFinite(refundWindowTs)) return
+    const interval = window.setInterval(() => setNowTs(Date.now()), 1000)
+    return () => window.clearInterval(interval)
+  }, [event?.postponed, refundWindowTs])
 
   function flash(msg: string) {
     setFlashMsg(msg)
@@ -941,7 +959,7 @@ function PremiumTicketCard({
   }
 
   return (
-    <div className="ticket-wallet-card-shell" style={{ borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', boxShadow: 'none' }}>
+    <div className="ticket-wallet-card-shell" style={{ borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', width: '100%', boxShadow: '0 4px 24px rgba(0,0,0,0.25)' }}>
       {flashMsg && (
         <div
           style={{ position: 'absolute', top: 8, right: 8, padding: '5px 12px', borderRadius: 999, background: 'rgba(var(--black-rgb), .70)', color: 'var(--text)', fontSize: 'var(--font-size-caption)', zIndex: 5 }}
@@ -949,28 +967,28 @@ function PremiumTicketCard({
           {flashMsg}
         </div>
       )}
-      <div className="ticket-wallet-face" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 112px' }}>
-        <div style={{ minWidth: 0 }}>
-          <div className="ticket-wallet-rail" style={{ minHeight: 112, padding: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,var(--media-panel-strong),var(--media-panel-soft)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'var(--border)'},var(--media-panel-deep))` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+      <div className="ticket-wallet-face">
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <div className="ticket-wallet-rail" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: event?.imageUrl ? `linear-gradient(90deg,var(--media-panel-strong),var(--media-panel-soft)), url(${event.imageUrl}) center/cover` : `linear-gradient(135deg,${event?.color || 'var(--border)'},var(--media-panel-deep))` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
               <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: 0, margin: '0 0 7px' }}>
+                <p style={{ fontSize: 'var(--font-size-caption-2-lg)', fontWeight: 800, color: event?.color || 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>
                   Live in Black · Billet officiel
                 </p>
-                <p style={{ fontWeight: 850, fontSize: 'var(--font-size-title-4)', color: 'var(--text)', lineHeight: 1.12, margin: 0, maxWidth: 270 }}>{event?.name ?? 'Événement'}</p>
+                <p style={{ fontWeight: 850, fontSize: 'var(--font-size-title-4)', color: 'var(--text)', lineHeight: 1.2, margin: 0 }}>{event?.name ?? 'Événement'}</p>
               </div>
-              <Pill color={inactive ? 'var(--text-faint)' : 'var(--primary-ink)'} bg={inactive ? 'var(--surface-2)' : 'var(--teal-solid)'}>
+              <Pill color={inactive ? 'var(--text-faint)' : 'var(--primary-ink)'} bg={inactive ? 'var(--surface-2)' : 'var(--primary)'}>
                 {inactive ? inactiveLabel : countdown || 'Valide'}
               </Pill>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
               {(event?.minAge ?? 0) >= 18 && (
                 <span title="Pièce d'identité pouvant être demandée à l'entrée">
                   <Pill color="var(--gold)" bg="var(--primary-a14)">18+</Pill>
                 </span>
               )}
-              <Pill color="var(--text)" bg="rgba(var(--black-rgb), .34)">{ticket.place}</Pill>
-              <Pill color="var(--text-muted)" bg="rgba(var(--black-rgb), .28)">#{String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')}</Pill>
+              <Pill color="var(--text)" bg="rgba(var(--black-rgb), .45)">{ticket.place}</Pill>
+              <Pill color="var(--text-muted)" bg="rgba(var(--black-rgb), .35)">#{String((ticket.seatIndex ?? 0) + 1).padStart(2, '0')}</Pill>
             </div>
           </div>
           <div className="ticket-wallet-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'var(--surface-2)' }}>
@@ -983,20 +1001,19 @@ function PremiumTicketCard({
         <div
           className="ticket-wallet-qr"
           style={{
-            width: 140,
-            flexShrink: 0,
-            borderLeft: '1px dashed var(--border-strong)',
-            padding: 16,
+            padding: '16px 14px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 8,
+            gap: 6,
+            background: 'var(--surface-2)',
+            borderTop: '1px dashed var(--border-strong)',
           }}
         >
           {inactive ? (
             <>
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth={1.6}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth={1.6}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
                 <circle cx="12" cy="12" r="9" strokeLinecap="round" />
               </svg>
@@ -1005,11 +1022,11 @@ function PremiumTicketCard({
             </>
           ) : (
             <>
-              <div role="img" aria-label="Code QR du billet, à scanner à l'entrée" style={{ background: 'var(--qr-required-white)', padding: 8, borderRadius: 8 }}>
-                <QRCodeCanvas value={ticketUrl} size={84} level="H" />
+              <div role="img" aria-label="Code QR du billet, à scanner à l'entrée" style={{ background: '#FFFFFF', padding: 8, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <QRCodeCanvas value={ticketUrl} size={110} level="H" />
               </div>
-              <p style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', letterSpacing: '0.04em', margin: 0 }}>{ticket.ticketCode}</p>
-              <p style={{ fontSize: 'var(--font-size-mini)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>Usage unique</p>
+              <p style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 750, color: 'var(--text)', letterSpacing: '0.06em', margin: 0 }}>{ticket.ticketCode}</p>
+              <p style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>Usage unique</p>
             </>
           )}
         </div>
@@ -1029,7 +1046,7 @@ function PremiumTicketCard({
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', marginBottom: 4 }}>
               <span>
                 {item.name} ×{item.qty}
-                {item.showLabel && <small style={{ display: 'block', color: 'var(--teal)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
+                {item.showLabel && <small style={{ display: 'block', color: 'var(--primary)', marginTop: 2 }}>Show : {item.showLabel}{item.showInfo ? ` · ${item.showInfo}` : ''}</small>}
               </span>
               <span style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtMoney(item.price * item.qty, ticket.currency)}</span>
             </div>
@@ -1056,7 +1073,7 @@ function PremiumTicketCard({
                   <span style={{ color: 'var(--text-muted)' }}>
                     {it.name} ×{it.quantity}
                   </span>
-                  <span style={{ color: it.status === 'served' ? 'var(--teal)' : 'var(--gold)', fontWeight: 700, fontSize: 'var(--font-size-caption)' }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
+                  <span style={{ color: it.status === 'served' ? 'var(--primary)' : 'var(--gold)', fontWeight: 700, fontSize: 'var(--font-size-caption)' }}>{it.status === 'served' ? 'Servi' : 'À récupérer'}</span>
                 </div>
               ))}
               <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '8px 0 0', lineHeight: 1.5 }}>
@@ -1067,12 +1084,12 @@ function PremiumTicketCard({
         </div>
       )}
 
-      <div className="ticket-wallet-card-actions" style={{ padding: '8px 12px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="ticket-wallet-card-actions" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--border)' }}>
         {inactive ? (
           <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', textAlign: 'center', margin: 0 }}>{inactiveLabel} · aucune action disponible</p>
         ) : (
           <>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="ticket-wallet-action-grid">
               <Button
                 variant="secondary"
                 size="sm"
@@ -1080,23 +1097,25 @@ function PremiumTicketCard({
                 disabled={downloadState === 'busy'}
                 loading={downloadState === 'busy'}
                 loadingText="Préparation…"
-                icon={downloadState === 'ok' ? <QrCode size={15} aria-hidden="true" /> : <Download size={15} aria-hidden="true" />}
-                style={actionBtnStyle(false)}
+                icon={downloadState === 'ok' ? <QrCode size={14} aria-hidden="true" /> : <Download size={14} aria-hidden="true" />}
+                style={{ ...actionBtnStyle(false), justifyContent: 'center' }}
               >
                 {downloadState === 'ok' ? 'Prêt' : 'PDF'}
               </Button>
-              <ActionBtn onClick={toggleIncluded} icon={<ListChecks size={15} aria-hidden="true" />}>{showIncluded ? 'Options' : 'Options'}</ActionBtn>
+              <ActionBtn onClick={toggleIncluded} icon={<ListChecks size={14} aria-hidden="true" />}>Options</ActionBtn>
+
               {event && (
                 <Link
                   href={`/order/${event.id}/${ticket.ticketCode}`}
-                  style={{ ...actionBtnStyle(false), background: 'var(--teal-solid)', color: 'var(--primary-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  style={{ ...actionBtnStyle(false), background: 'var(--primary)', color: 'var(--primary-ink)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxSizing: 'border-box' }}
                   title="Commander sur place"
                 >
-                  <ExternalLink size={15} aria-hidden="true" />
+                  <ExternalLink size={14} aria-hidden="true" />
                   Commander
                 </Link>
               )}
-              <ActionBtn onClick={handleShare} icon={<Share2 size={15} aria-hidden="true" />}>Partager</ActionBtn>
+
+              <ActionBtn onClick={handleShare} icon={<Share2 size={14} aria-hidden="true" />}>Partager</ActionBtn>
               <Button
                 variant="danger"
                 size="sm"
@@ -1104,29 +1123,16 @@ function PremiumTicketCard({
                 disabled={storyState === 'busy'}
                 loading={storyState === 'busy'}
                 loadingText="Création…"
-                title="Une belle image 9:16 pour Instagram — sans le QR code"
-                icon={<Sparkles size={15} aria-hidden="true" />}
-                style={actionBtnStyle(false, 'var(--danger-fill)', 'var(--danger)')}
+                title="Story Instagram"
+                icon={<Sparkles size={14} aria-hidden="true" />}
+                style={{ ...actionBtnStyle(false, 'var(--danger-fill)', 'var(--danger)'), justifyContent: 'center' }}
               >
                 Story
               </Button>
-              <ActionBtn onClick={handleCalendar} icon={<CalendarPlus size={15} aria-hidden="true" />}>Agenda</ActionBtn>
-              {(event?.postponed || ticket.cancellationProtectionPurchased) && ticket.orderId && (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => setRefundConfirmOpen(true)}
-                  disabled={refundState === 'busy' || refundState === 'done'}
-                  loading={refundState === 'busy'}
-                  loadingText="Envoi…"
-                  icon={<HandCoins size={15} aria-hidden="true" />}
-                  style={actionBtnStyle(refundState === 'busy' || refundState === 'done', 'var(--danger-fill)', 'var(--danger)')}
-                >
-                  {refundState === 'done' ? 'Demandé' : 'Rembourser'}
-                </Button>
-              )}
+
+              <ActionBtn onClick={handleCalendar} icon={<CalendarPlus size={14} aria-hidden="true" />}>Agenda</ActionBtn>
               {ticket.resellable && !activeListing && (
-                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={15} aria-hidden="true" />} style={actionBtnStyle(false, 'rgba(var(--violet-rgb), .14)', 'var(--violet)')}>
+                <Button variant="secondary" size="sm" onClick={() => setResellOpen((v) => !v)} icon={<Gift size={14} aria-hidden="true" />} style={{ ...actionBtnStyle(false, 'rgba(var(--violet-rgb), .14)', 'var(--violet)'), justifyContent: 'center' }}>
                   Revendre
                 </Button>
               )}
@@ -1138,10 +1144,24 @@ function PremiumTicketCard({
                   disabled={withdrawState === 'busy'}
                   loading={withdrawState === 'busy'}
                   loadingText="Retrait…"
-                  icon={<Gift size={15} aria-hidden="true" />}
-                  style={actionBtnStyle(withdrawState === 'busy', 'var(--surface-2)', 'var(--text-muted)')}
+                  icon={<Gift size={14} aria-hidden="true" />}
+                  style={{ ...actionBtnStyle(withdrawState === 'busy', 'var(--surface-2)', 'var(--text-muted)'), justifyContent: 'center' }}
                 >
                   {`${fmtMoney(toMajor(activeListing.resalePriceMinor, ticket.currency), ticket.currency)} · Retirer`}
+                </Button>
+              )}
+              {canShowRefundButton && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setRefundConfirmOpen(true)}
+                  disabled={refundState === 'busy' || refundState === 'done'}
+                  loading={refundState === 'busy'}
+                  loadingText="Envoi…"
+                  icon={<HandCoins size={14} aria-hidden="true" />}
+                  style={{ ...actionBtnStyle(refundState === 'busy' || refundState === 'done', 'var(--danger-fill)', 'var(--danger)'), justifyContent: 'center' }}
+                >
+                  {refundState === 'done' ? 'Demandé' : 'Rembourser'}
                 </Button>
               )}
             </div>
@@ -1199,7 +1219,7 @@ function PremiumTicketCard({
                 }
               >
                 <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
-                  Tu demandes le remboursement de ce billet. Les frais de service ne sont pas remboursés et le billet sera désactivé si la demande est acceptée.
+                  Tu demandes un remboursement irréversible. Le QR code sera désactivé immédiatement ; l’option d’annulation rembourse seulement le prix facial, tandis qu’un report refusé suit le dossier de remboursement prévu pour l’événement.
                 </p>
               </Modal>
             )}

@@ -9,10 +9,10 @@ import type { EventActionKey, OrganizerEventView } from './types'
 // d'un événement "en cours" avec sa grille d'actions rapides (EVENT_ACTIONS,
 // lignes 187-199 du legacy).
 const ACTIONS: { key: EventActionKey; label: string; color: string }[] = [
-  { key: 'stats', label: 'Statistiques', color: 'var(--teal)' },
+  { key: 'stats', label: 'Statistiques', color: 'var(--primary)' },
   { key: 'bookings', label: 'Réservations', color: 'var(--gold)' },
   { key: 'boost', label: 'Booster', color: 'var(--pink)' },
-  { key: 'guests', label: 'Guestlist', color: 'var(--teal)' },
+  { key: 'guests', label: 'Guestlist', color: 'var(--primary)' },
   { key: 'staff', label: 'Équipe', color: 'var(--gold)' },
   { key: 'promo', label: 'Codes promo', color: 'var(--violet)' },
   { key: 'duplicate', label: 'Dupliquer', color: 'var(--violet)' },
@@ -26,7 +26,7 @@ function statusBadge(event: OrganizerEventView): { label: string; background: st
   if (event.cancelled) return { label: 'Annulé', background: 'var(--danger)', color: 'var(--danger-ink)' }
   if (event.postponed) return { label: 'Reporté', background: 'var(--gold)', color: 'var(--obsidian)' }
   if (event.publishAt && new Date(event.publishAt).getTime() > Date.now()) return { label: 'Programmé', background: 'var(--violet)', color: 'var(--primary-ink)' }
-  return { label: 'Publié', background: 'var(--teal)', color: 'var(--obsidian)' }
+  return { label: 'Publié', background: 'var(--primary)', color: 'var(--primary-ink)' }
 }
 
 export default function EventDashboardCard({

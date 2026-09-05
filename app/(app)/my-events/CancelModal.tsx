@@ -64,7 +64,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
 
   return (
     <Modal onClose={onClose} maxWidth={520} ariaLabel="Annuler l’événement">
-        <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>
+        <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 14px' }}>
           {phase === 'confirm' ? "Supprimer l’événement ?" : "Annuler l’événement ?"}
         </h2>
 
@@ -99,7 +99,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
           <>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--warning-rgb), .4)', background: 'var(--warning-fill)', marginBottom: 16 }}>
               <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-muted)', lineHeight: 1.7, margin: 0 }}>
-                {bookingCount} réservation(s) {bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. En confirmant, les acheteurs sont remboursés automatiquement (carte bancaire) ou placés dans ta liste de remboursement mobile money — tu ne touches jamais l&rsquo;argent d&rsquo;un événement annulé, et chaque acheteur est prévenu par e-mail.
+                {bookingCount} réservation(s) {bookingCount > 1 ? 'ont' : 'a'} déjà eu lieu. En confirmant, l&rsquo;événement est annulé, les billets sont invalidés et un dossier de remboursement est créé pour chaque commande payée. Le retrait en espèces au point attribué est le parcours par défaut ; l&rsquo;organisateur finance et suit les remboursements depuis Live In Black.
               </p>
             </div>
             <label style={{ display: 'grid', gap: 6, marginBottom: 6 }}>
@@ -108,7 +108,7 @@ export default function CancelModal({ event, onClose, onDone }: { event: { id: s
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 500))}
                 rows={4}
-                placeholder="Ex : Nous sommes au regret de vous annoncer l'annulation de cet événement pour cause de force majeure. Le remboursement du prix de votre billet vous sera versé automatiquement (hors frais de service, non remboursables)."
+                placeholder="Ex : Nous sommes au regret de vous annoncer l'annulation de cet événement. Live In Black vous transmettra votre dossier, le montant dû et les consignes de retrait au point de remboursement attribué."
                 style={{ background: 'var(--field-bg)' }}
               />
             </label>

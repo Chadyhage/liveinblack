@@ -14,6 +14,7 @@ import ProviderCatalogInquiry from '@/app/components/features/provider/ProviderC
 import { socialUrl } from '@/lib/shared/social'
 import { reliablePhotoUrl } from '@/lib/shared/placeholderImage'
 import { Card } from '@/app/components/ui'
+import styles from './ProviderDetailContent.module.css'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
 
@@ -26,9 +27,9 @@ const SOCIAL_LABELS: Record<string, string> = {
   linkedin: 'LinkedIn',
 }
 
-// Contenu partagé entre la page dédiée (app/(public)/providers/[id]/page.tsx)
-// et la route interceptée qui l'affiche en modal glissante depuis les listes
-// (app/(public)/@modal/(.)providers/[id]/page.tsx).
+// Contenu de la page dédiée app/(public)/providers/[id]/page.tsx. La fiche
+// s'ouvre toujours en pleine page afin que le clic et le rafraîchissement
+// produisent exactement le même rendu.
 //
 // Port de src/pages/PublicPrestatairePage.jsx. La modale "Demander ce
 // service" (ProviderCatalogInquiry, un composant client par item de
@@ -110,172 +111,160 @@ export default async function ProviderDetailContent({ id }: { id: string }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(providerJsonLd).replace(/</g, '\\u003c') }} />
-      <div style={{ padding: 'var(--space-4) var(--page-gutter) 0' }}>
-        <Link href="/providers" style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-size-body-sm)', fontWeight: 700, color: 'var(--primary)', textDecoration: 'none' }}>
+      <div className={styles.detail}>
+      <Link href="/providers" className={styles.back}>
           ← Prestataires
-        </Link>
-      </div>
-      <div style={{ position: 'relative', height: 220, margin: 'var(--space-3) var(--page-gutter) 0', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 'var(--radius-card)', background: 'linear-gradient(135deg, var(--surface-2), var(--border))', boxShadow: '0 16px 48px rgba(var(--black-rgb), .24)' }}>
-        <Image src={reliablePhotoUrl(provider.coverUrl, id, 1200, 500)} alt="" fill loading="eager" style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 880px" />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, var(--media-scrim) 100%)' }} />
+      </Link>
+
+      <div className={styles.hero}>
+        <Image src={reliablePhotoUrl(provider.coverUrl, id, 1200, 500)} alt="" fill loading="eager" className={styles.heroImage} sizes="(max-width: 768px) 100vw, 1100px" />
+        <div className={styles.heroOverlay} />
       </div>
 
-      <div style={{ padding: '0 var(--page-gutter) var(--space-8)', marginTop: -36, position: 'relative', zIndex: 2 }}>
-        <div style={{ width: 72, height: 72, borderRadius: 20, border: '4px solid var(--surface)', overflow: 'hidden', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-size-large-title)', fontWeight: 900, color: 'var(--primary-ink)', boxShadow: '0 12px 32px rgba(var(--black-rgb), .30)' }}>
+      <header className={styles.summary}>
+        <div className={styles.avatar}>
           {provider.photoUrl ? (
-            <Image src={provider.photoUrl} alt={provider.name} width={72} height={72} style={{ objectFit: 'cover' }} />
+            <Image src={provider.photoUrl} alt={provider.name} width={76} height={76} className={styles.avatarImage} />
           ) : (
             provider.name[0]?.toUpperCase()
           )}
         </div>
-        <h1 className="font-display" style={{ fontSize: 'clamp(24px, 2.5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em', margin: '12px 0 0', color: 'var(--text)' }}>{provider.name}</h1>
-        {provider.headline && <p style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>{provider.headline}</p>}
-        <div style={{ marginTop: 12 }}>
+        <div className={styles.identity}>
+          <h1 className={styles.name}>{provider.name}</h1>
+          {provider.headline && <p className={styles.headline}>{provider.headline}</p>}
+          <div className={styles.categories}>
+            {categories.map((category) => <span key={category.id} className={styles.category}>{category.label}</span>)}
+          </div>
+        </div>
+        <div className={styles.actions}>
           <PublicProfileActions targetUserId={provider.userId} displayName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} />
         </div>
+      </header>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-          {categories.map((c) => (
-            <span key={c.id} style={{ minHeight: 30, display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-callout)', fontWeight: 700, color: 'var(--primary-ink)', background: 'var(--primary)', padding: '5px 12px', borderRadius: 999 }}>
-              {c.label}
-            </span>
-          ))}
-        </div>
+        <div className={styles.overview}>
+          <div className={styles.primaryColumn}>
+            {provider.description && (
+              <section className={styles.panel}>
+                <h2 className={styles.sectionTitle}>À propos</h2>
+                <p className={styles.body}>{provider.description}</p>
+              </section>
+            )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, alignItems: 'start', marginTop: 12 }}>
-          {provider.description && (
-            <Section title="À propos">
-              <p style={{ fontSize: 'var(--font-size-headline-xl)', color: 'var(--text-muted)', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0 }}>{provider.description}</p>
-            </Section>
-          )}
+            {visibleCatalog.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Catalogue & prestations</h2>
+                <div className={styles.catalogGrid}>
+                  {visibleCatalog.map((item) => {
+                    const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
+                    return (
+                      <Card key={item.id} className={styles.catalogCard}>
+                        {item.media?.[0]?.url && (
+                          <div className={styles.catalogMedia}>
+                            {item.media[0].type === 'video' ? (
+                              <video src={item.media[0].url} controls preload="metadata" playsInline aria-label={`Vidéo de ${item.name}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <Image src={item.media[0].url} alt={item.name} fill className={styles.catalogImage} sizes="(max-width: 768px) 100vw, 260px" />
+                            )}
+                          </div>
+                        )}
+                        <div className={styles.catalogContent}>
+                          <div className={styles.catalogTop}>
+                            <h3 className={styles.catalogName}>{item.name}</h3>
+                            {item.price != null && (
+                              <span className={styles.price}>
+                                {fmtMoney(item.price, item.currency || provider.catalogCurrency)}
+                                {item.unit ? ` / ${item.unit}` : ''}
+                              </span>
+                            )}
+                          </div>
+                          {item.description && <p className={styles.catalogDescription}>{item.description}</p>}
+                          {!isSelf && canOrderCatalog && (
+                            <div className={styles.catalogAction}>
+                              <ProviderCatalogInquiry
+                                providerId={provider.userId}
+                                providerName={provider.name}
+                                isAuthenticated={Boolean(session?.user)}
+                                catalogDefaultCurrency={provider.catalogCurrency}
+                                item={{
+                                  id: item.id,
+                                  name: item.name,
+                                  description: item.description,
+                                  price: item.price,
+                                  currency: item.currency,
+                                  unit: item.unit,
+                                  category: item.category,
+                                  image: inquiryImage,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
 
-          <Section title="Coordonnées">
-            <p style={{ fontSize: 'var(--font-size-headline)', color: 'var(--text)', margin: 0, fontWeight: 600 }}>
+            {pastEvents.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Événements passés</h2>
+                <div className={styles.eventList}>
+                  {pastEvents.map((ev) => (
+                    <Link
+                      key={ev.id}
+                      href={`/events/${ev.id}`}
+                      className={styles.event}
+                    >
+                      {ev.imageUrl && (
+                        <div className={styles.eventImage}>
+                          <Image src={ev.imageUrl} alt="" fill sizes="42px" className={styles.eventCover} />
+                        </div>
+                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <p className={styles.eventName}>{ev.name}</p>
+                        <p className={styles.eventMeta}>
+                          {ev.dateDisplay}
+                          {ev.city ? ` · ${ev.city}` : ''}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <aside className={styles.panel}>
+            <h2 className={styles.metaTitle}>Informations</h2>
+            <p className={styles.location}>
               {[provider.city || provider.location, provider.country].filter(Boolean).join(', ')}
             </p>
             {provider.zonesIntervention?.length ? (
-              <p style={{ fontSize: 'var(--font-size-body)', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+              <p className={styles.location}>
                 Intervient : {provider.zonesIntervention.map((z) => { const r = REGION_OPTIONS.find((o) => o.id === z); return r ? `${r.flag} ${r.name}` : z }).join(', ')}
               </p>
             ) : null}
-            {websiteUrl && (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--control-height-md)', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', marginTop: 6, textDecoration: 'none' }}>
-                🌐 {provider.website}
-              </a>
+            {(websiteUrl || provider.phone) && (
+              <div className={styles.contactLinks}>
+                {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>Site web ↗</a>}
+                {provider.phone && <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} className={styles.contactLink}>Appeler {provider.phone}</a>}
+              </div>
             )}
-            {provider.phone && (
-              <a href={`tel:${provider.phone.replace(/[^+\d]/g, '')}`} style={{ minHeight: 'var(--control-height-md)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-lg)', fontWeight: 650, color: 'var(--teal)', marginTop: 6, textDecoration: 'none' }}>
-                📞 {provider.phone}
-              </a>
-            )}
-          </Section>
-
-          {socialEntries.length > 0 && (
-            <Section title="Réseaux">
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {socialEntries.length > 0 && (
+              <div className={styles.socials}>
                 {socialEntries.map(([key, value]) => (
-                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" style={{ minHeight: 'var(--density-action-min)', display: 'inline-flex', alignItems: 'center', fontSize: 'var(--font-size-body-sm)', fontWeight: 650, color: 'var(--text)', textDecoration: 'none', background: 'var(--fill-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-control)', padding: '0 14px' }}>
+                  <a key={key} href={value as string} target="_blank" rel="noopener noreferrer" className={styles.social}>
                     {SOCIAL_LABELS[key] || key}
                   </a>
                 ))}
               </div>
-            </Section>
-          )}
+            )}
+          </aside>
         </div>
-
-        {visibleCatalog.length > 0 && (
-          <Section title="Catalogue & Prestations">
-            <div className="lb-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))', gap: 14, marginTop: 8 }}>
-              {visibleCatalog.map((item) => {
-                const inquiryImage = item.media?.find((m) => m.type !== 'video')?.url || item.media?.[0]?.url || null
-                return (
-                  <Card key={item.id} style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 'var(--radius-card)', background: 'var(--card-bg)', boxShadow: '0 14px 40px rgba(var(--black-rgb), .16)' }}>
-                    {item.media?.[0]?.url && (
-                      <div style={{ aspectRatio: '16/9', position: 'relative' }}>
-                        {item.media[0].type === 'video' ? (
-                          <video src={item.media[0].url} controls preload="metadata" playsInline aria-label={`Vidéo de ${item.name}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <Image src={item.media[0].url} alt={item.name} fill style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, 280px" />
-                        )}
-                      </div>
-                    )}
-                    <div style={{ padding: '14px 16px 16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                        <span style={{ fontSize: 'var(--font-size-headline-xxl)', fontWeight: 800, color: 'var(--text)' }}>{item.name}</span>
-                        {item.price != null && (
-                          <span style={{ fontSize: 'var(--font-size-headline-xl)', fontWeight: 800, color: 'var(--gold)', whiteSpace: 'nowrap' }}>
-                            {fmtMoney(item.price, item.currency || provider.catalogCurrency)}
-                            {item.unit ? ` / ${item.unit}` : ''}
-                          </span>
-                        )}
-                      </div>
-                      {item.description && <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: '6px 0 0', lineHeight: 1.45 }}>{item.description}</p>}
-                      {!isSelf && canOrderCatalog && (
-                        <div style={{ marginTop: 12 }}>
-                          <ProviderCatalogInquiry
-                            providerId={provider.userId}
-                            providerName={provider.name}
-                            isAuthenticated={Boolean(session?.user)}
-                            catalogDefaultCurrency={provider.catalogCurrency}
-                            item={{
-                              id: item.id,
-                              name: item.name,
-                              description: item.description,
-                              price: item.price,
-                              currency: item.currency,
-                              unit: item.unit,
-                              category: item.category,
-                              image: inquiryImage,
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                )
-              })}
-            </div>
-          </Section>
-        )}
-
-        {pastEvents.length > 0 && (
-          <Section title="Événements passés">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-              {pastEvents.map((ev) => (
-                <Link
-                  key={ev.id}
-                  href={`/events/${ev.id}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 'var(--radius-card)', background: 'var(--card-bg)', border: '1px solid var(--border)', textDecoration: 'none' }}
-                >
-                  {ev.imageUrl && (
-                    <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 10, overflow: 'hidden', position: 'relative' }}>
-                      <Image src={ev.imageUrl} alt="" fill sizes="56px" style={{ objectFit: 'cover' }} />
-                    </div>
-                  )}
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 'var(--font-size-headline)', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.name}</p>
-                    <p style={{ margin: '3px 0 0', fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>
-                      {ev.dateDisplay}
-                      {ev.city ? ` · ${ev.city}` : ''}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </Section>
-        )}
 
         <ProviderReviewsClient providerId={id} providerName={provider.name} isAuthenticated={Boolean(session?.user)} isSelf={isSelf} initialReviews={reviews} initialMyReview={myReview} />
       </div>
     </>
-  )
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="lb-detail-section" style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 'var(--font-size-body)', fontWeight: 800, margin: '0 0 10px', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-display), sans-serif' }}>{title}</h2>
-      {children}
-    </section>
   )
 }

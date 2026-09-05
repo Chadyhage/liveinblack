@@ -6,6 +6,7 @@ import { activateSeatHold, createSeatHold, releaseSeatHoldDepositOrder } from '@
 import { releaseOrder } from '@/lib/server/events/orders'
 import Order from '@/lib/models/Order'
 import { createTransaction, createToken, isFedapayConfigured } from '@/lib/server/payments/fedapayClient'
+import { fedapayMarketplaceCommissions } from '@/lib/server/payments/fedapayMarketplace'
 
 // Blocage de place (acompte) — rail FedaPay/XOF. Miroir de /api/seat-holds
 // (Stripe) et de /api/checkout/resale/fedapay.
@@ -41,6 +42,10 @@ export async function POST(req: Request) {
     await releaseSeatHoldDepositOrder(orderId, releaseOrder)
     return NextResponse.json({ error: 'amount_below_minimum' }, { status: 400 })
   }
+  if (order.sellerUid && !order.fedapaySubAccountReference && process.env.NODE_ENV === 'production') {
+    await releaseSeatHoldDepositOrder(orderId, releaseOrder)
+    return NextResponse.json({ error: 'fedapay_marketplace_account_required' }, { status: 409 })
+  }
 
   if (!isFedapayConfigured() && process.env.NODE_ENV !== 'production') {
     const transactionId = `dev_fedapay_${orderId}`
@@ -69,6 +74,7 @@ export async function POST(req: Request) {
       customer: session.user.email ? { email: session.user.email } : null,
       metadata: { orderId },
       reference: orderId,
+      subAccountsCommissions: fedapayMarketplaceCommissions(order.fedapaySubAccountReference, order.unitPriceMinor),
     })
     const tok = await createToken(txn.id)
 

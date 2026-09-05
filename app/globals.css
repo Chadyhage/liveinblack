@@ -3,13 +3,13 @@
 /* Design system LIVEINBLACK (voir CLAUDE.md) : surfaces opaques, CTA pleins,
    pas de glow néon ni de glassmorphism de contenu (blur toléré : nav/header). */
 :root {
-  --obsidian-rgb: 25, 18, 24;
-  --surface-rgb: 36, 26, 35;
-  --surface-2-rgb: 29, 20, 28;
+  --obsidian-rgb: 10, 10, 13;
+  --surface-rgb: 18, 18, 22;
+  --surface-2-rgb: 24, 24, 29;
   --primary-rgb: 245, 61, 141;
   --primary-strong-rgb: 224, 45, 125;
-  --primary-deep-rgb: 58, 24, 39;
-  --primary-ink-rgb: 5, 5, 5;
+  --primary-deep-rgb: 20, 18, 22;
+  --primary-ink-rgb: 255, 255, 255;
   --text-rgb: 255, 255, 255;
   --text-soft-rgb: 255, 255, 255;
   --black-rgb: 0, 0, 0;
@@ -18,17 +18,17 @@
   --canvas-rgb: 5, 5, 6;
   --neutral-rgb: 118, 118, 128;
   --muted-rgb: 139, 143, 156;
-  --success-rgb: 52, 199, 89;
-  --warning-rgb: 245, 158, 11;
-  --info-rgb: 59, 130, 246;
-  --sky-rgb: 112, 183, 255;
-  --violet-rgb: 139, 92, 246;
-  --soft-violet-rgb: 196, 167, 255;
-  --gold-rgb: 245, 201, 106;
-  --yellow-rgb: 255, 214, 10;
-  --danger-rgb: 255, 69, 58;
-  --danger-soft-rgb: 255, 123, 123;
-  --danger-muted-rgb: 255, 140, 140;
+  --success-rgb: 228, 228, 236;
+  --warning-rgb: 196, 196, 206;
+  --info-rgb: 186, 186, 196;
+  --sky-rgb: 170, 170, 180;
+  --violet-rgb: 168, 168, 178;
+  --soft-violet-rgb: 188, 188, 198;
+  --gold-rgb: 210, 210, 220;
+  --yellow-rgb: 228, 228, 236;
+  --danger-rgb: 230, 230, 238;
+  --danger-soft-rgb: 206, 206, 214;
+  --danger-muted-rgb: 180, 180, 188;
   --pink-rgb: 255, 117, 173;
   --obsidian: rgb(var(--obsidian-rgb));
   --surface: rgb(var(--surface-rgb)); /* cartes */
@@ -43,19 +43,19 @@
   color-scheme: dark;
   /* Aliases de compatibilité : l'ancienne palette converge vers le rose primaire. */
   --teal: var(--primary);
-  --teal-solid: var(--primary-strong);
-  --gold: var(--primary);
-  --pink: rgb(var(--danger-soft-rgb));
-  --violet: var(--primary);
+  --teal-solid: var(--primary);
+  --gold: var(--text-faint);
+  --pink: rgb(var(--primary-rgb));
+  --violet: var(--text-muted);
   --danger: rgb(var(--danger-rgb));
-  --danger-text: rgb(var(--danger-soft-rgb));
-  --danger-text-strong: rgb(var(--danger-muted-rgb));
+  --danger-text: var(--text-muted);
+  --danger-text-strong: var(--text);
   --danger-ink: rgb(var(--primary-ink-rgb));
   --danger-fill: rgba(var(--danger-rgb), 0.14);
   --danger-fill-strong: rgba(var(--danger-rgb), 0.22);
   --danger-border: rgba(var(--danger-rgb), 0.38);
   --warning: rgb(var(--warning-rgb));
-  --warning-text: rgb(var(--warning-rgb));
+  --warning-text: var(--text-muted);
   --warning-fill: rgba(var(--warning-rgb), 0.08);
   --warning-fill-strong: rgba(var(--warning-rgb), 0.14);
   --warning-border: rgba(var(--warning-rgb), 0.35);
@@ -70,9 +70,9 @@
   --violet-fill: rgba(var(--violet-rgb), 0.16);
   --violet-fill-strong: rgba(var(--violet-rgb), 0.22);
   --violet-border: rgba(var(--violet-rgb), 0.35);
-  --gold-text: rgb(var(--gold-rgb));
-  --gold-fill: rgba(var(--gold-rgb), 0.12);
-  --gold-border: rgba(var(--gold-rgb), 0.35);
+  --gold-text: var(--text-muted);
+  --gold-fill: rgba(var(--text-rgb), 0.08);
+  --gold-border: rgba(var(--text-rgb), 0.22);
   --yellow: rgb(var(--yellow-rgb));
   --pink-strong: rgb(var(--pink-rgb));
   --pink-fill: rgba(var(--pink-rgb), .12);
@@ -115,8 +115,8 @@
   --shadow-panel-strong: 0 24px 64px rgba(var(--black-rgb), .55);
   --shadow-floating: 0 28px 90px rgba(var(--black-rgb), .5);
   --violet-cta: linear-gradient(180deg, var(--primary), var(--primary-strong));
-  --border: rgba(var(--primary-rgb), 0.18);
-  --border-strong: rgba(var(--primary-rgb), 0.34);
+  --border: rgba(var(--text-rgb), 0.18);
+  --border-strong: rgba(var(--text-rgb), 0.34);
   --field-bg: rgba(var(--text-rgb), 0.09);
   --fill-secondary: rgba(var(--text-rgb), 0.10);
   --image-text: #ffffff;
@@ -161,12 +161,12 @@
   --focus-ring-color: rgba(var(--primary-rgb), 0.28);
   --focus-ring: 0 0 0 3px var(--focus-ring-color);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
-  --radius-control: 12px;
+  --radius-control: 14px;
   --radius-card: var(--radius-xl);
   --font-size-tiny-1: 6.5px;
   --font-size-tiny-2: 7.5px;
@@ -237,7 +237,7 @@
   --public-page-max: 1440px;
   --public-detail-max: 1320px;
   --public-page-gutter: clamp(16px, 2vw, 28px);
-  --public-hero-padding: clamp(28px, 3.5vw, 48px) var(--public-page-gutter) clamp(20px, 2.5vw, 36px);
+  --public-hero-padding: clamp(92px, 9.5vw, 125px) var(--public-page-gutter) clamp(20px, 2.5vw, 36px);
   --public-content-padding: 0 var(--public-page-gutter) clamp(48px, 5vw, 80px);
   --public-section-top: 24px;
   --public-grid-gap: 16px;
@@ -265,9 +265,18 @@
   --primary-ink-rgb: 255, 255, 255;
   --text-rgb: 17, 17, 20;
   --text-soft-rgb: 17, 17, 20;
-  --danger-rgb: 176, 0, 32;
-  --danger-soft-rgb: 176, 0, 32;
-  --danger-muted-rgb: 176, 0, 32;
+  --success-rgb: 40, 40, 44;
+  --warning-rgb: 72, 72, 76;
+  --info-rgb: 98, 98, 102;
+  --sky-rgb: 98, 98, 102;
+  --violet-rgb: 92, 92, 96;
+  --soft-violet-rgb: 128, 128, 132;
+  --gold-rgb: 94, 94, 98;
+  --yellow-rgb: 72, 72, 76;
+  --danger-rgb: 72, 72, 76;
+  --danger-soft-rgb: 88, 88, 92;
+  --danger-muted-rgb: 104, 104, 108;
+  --pink-rgb: 176, 24, 96;
   --obsidian: rgb(var(--obsidian-rgb));
   --surface: rgb(var(--surface-rgb));
   --surface-2: rgb(var(--surface-2-rgb));
@@ -276,13 +285,13 @@
   --primary-ink: rgb(var(--primary-ink-rgb));
   --accent-text: var(--primary);
   --teal: var(--primary);
-  --teal-solid: var(--primary-strong);
-  --gold: rgb(138, 97, 0);
+  --teal-solid: var(--primary);
+  --gold: var(--text-muted);
   --pink: rgb(var(--primary-rgb));
-  --violet: rgb(111, 53, 168);
+  --violet: var(--text-faint);
   --danger: rgb(var(--danger-rgb));
-  --danger-text: rgb(var(--danger-rgb));
-  --danger-text-strong: rgb(var(--danger-rgb));
+  --danger-text: var(--text-muted);
+  --danger-text-strong: var(--text);
   --danger-ink: rgb(var(--primary-ink-rgb));
   --danger-fill: rgba(var(--danger-rgb), 0.10);
   --danger-fill-strong: rgba(var(--danger-rgb), 0.16);
@@ -327,7 +336,7 @@
   --primary-a65: rgba(var(--primary-rgb), 0.65);
   --primary-a75: rgba(var(--primary-rgb), 0.75);
   --primary-a85: rgba(var(--primary-rgb), 0.85);
-  --focus-ring-color: rgba(var(--primary-rgb), 0.28);
+  --focus-ring-color: rgba(var(--text-rgb), 0.28);
   --page-overlay: linear-gradient(180deg, rgba(var(--obsidian-rgb), .84) 0%, rgba(var(--obsidian-rgb), .92) 52%, rgba(var(--obsidian-rgb), .96) 100%);
   --card-bg: rgba(var(--surface-rgb), 0.9);
   --card-border: rgba(var(--text-rgb), 0.12);
@@ -385,7 +394,6 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 78% 10%, rgba(var(--primary-rgb), .06), transparent 34%),
     var(--page-overlay),
     url('/media1.jpg') 58% center / cover no-repeat;
   filter: blur(3px);
@@ -413,7 +421,7 @@ h1, h2, h3 {
 
 ::selection {
   color: var(--obsidian);
-  background: var(--gold);
+  background: var(--fill-secondary);
 }
 
 input::placeholder,
@@ -462,7 +470,7 @@ select:-webkit-autofill:focus {
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--obsidian); }
-::-webkit-scrollbar-thumb { background: rgba(var(--primary-rgb), 0.32); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.32); border-radius: 999px; }
 
 .lb-card {
   border-radius: var(--radius-card);
@@ -480,31 +488,7 @@ select:-webkit-autofill:focus {
   border-radius: var(--radius-control) !important;
 }
 
-.lb-theme-toggle {
-  position: fixed;
-  top: max(72px, calc(env(safe-area-inset-top) + 14px));
-  right: max(14px, env(safe-area-inset-right));
-  z-index: 3101;
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 50% !important;
-  color: var(--accent-text);
-  background: var(--surface);
-  cursor: pointer;
-}
 
-.lb-theme-toggle:hover {
-  background: var(--surface-2);
-}
-
-.lb-theme-toggle:focus-visible {
-  outline: 2px solid var(--primary) !important;
-  outline-offset: 3px !important;
-}
 
 /* Toute instance de Button partage le même rayon, même lorsqu'un ancien
    écran lui transmet encore un borderRadius inline. Les boutons icônes et

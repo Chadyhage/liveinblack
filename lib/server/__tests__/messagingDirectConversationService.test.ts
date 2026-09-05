@@ -37,7 +37,7 @@ describe('messagingDirectConversationService', () => {
     participantIds: conversation.participantIds,
     members: [],
   }))
-  const withDirectConversationMembers = vi.fn((conversation, directNames: Map<string, string>) => ({
+  const withDirectConversationMembers = vi.fn((conversation: { id: string; type: 'direct'; participantIds: string[] }, directNames: Map<string, string>) => ({
     ...conversation,
     members: conversation.participantIds.map((userId) => ({
       userId,

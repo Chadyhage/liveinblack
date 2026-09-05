@@ -7,6 +7,7 @@ import PromoCode from '@/lib/models/PromoCode'
 import { resolvePromo, promoUnitDiscount } from './promos'
 import { findGroupTieForEvent, groupTieBuyMessage } from '../messaging/groupTicketGuard'
 import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '@/lib/shared/fees'
+import { isBeforeCancellationOptionDeadline } from '@/lib/shared/refundPolicy'
 import { isEventEnded } from '@/lib/shared/event-time'
 import { normalizeShowOptions } from '@/lib/shared/showOptions'
 import { resolveSellerSettlementMode } from '../payments/sellerSettlementMode'
@@ -36,7 +37,7 @@ export type CreateOrderInput = {
   ticketPreorders?: Array<{ ticketIndex: number; items: Array<{ name: string; qty: number; showOptionId?: string; showInfo?: string }> }>
   /** 'free' = lib/server/freeCheckout.ts — place gratuite, aucun rail de paiement à choisir (H07/H08 restent appliqués identiquement). */
   rail: 'stripe' | 'fedapay' | 'free'
-  /** Assurance-annulation optionnelle (lib/shared/fees.ts::CANCELLATION_PROTECTION) — jamais sur une place gratuite. */
+  /** Option d'annulation volontaire, activée par catégorie et seulement dans la fenêtre réglementaire. */
   cancellationProtection?: boolean
 }
 
@@ -84,8 +85,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   }
 
   const currency = event.currency === 'XOF' ? 'XOF' : 'EUR'
-  if (input.rail === 'fedapay' && currency !== 'XOF') return { ok: false, status: 400, error: 'wrong_rail_for_currency' }
-  if (input.rail === 'stripe' && currency !== 'EUR') return { ok: false, status: 400, error: 'wrong_rail_for_currency' }
+  if (currency !== 'XOF') return { ok: false, status: 409, error: 'benin_xof_launch_scope_required' }
+  if (input.rail !== 'fedapay' && input.rail !== 'free') return { ok: false, status: 400, error: 'fedapay_required_for_launch' }
   const minorPerMajor = currency === 'XOF' ? 1 : 100
   let unitPriceMinor = Math.round(Number(place.price) * minorPerMajor)
 
@@ -149,7 +150,12 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     currency === 'XOF' ? computeTicketFeeXOF(unitPriceMinor, isTable ? 1 : qty) : computeTicketFeeCents(unitPriceMinor, isTable ? 1 : qty)
 
   // Gratuit exclu (rien à assurer) — même garde que pour les frais de service.
-  const cancellationProtectionPurchased = Boolean(input.cancellationProtection) && unitPriceMinor > 0
+  const cancellationProtectionPurchased =
+    Boolean(input.cancellationProtection) &&
+    Boolean(place.cancellationOptionEnabled) &&
+    currency === 'XOF' &&
+    unitPriceMinor > 0 &&
+    isBeforeCancellationOptionDeadline(event.closingDate)
   const cancellationProtectionFeeMinor = cancellationProtectionPurchased
     ? currency === 'XOF'
       ? computeCancellationProtectionFeeXOF(unitPriceMinor, isTable ? 1 : qty)
@@ -158,7 +164,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   // Vendeur / mode de répartition (Stripe Connect vs ledger interne). Le
   // rail FedaPay est toujours 'ledger' (Connect ne couvre pas la zone XOF).
-  const { sellerUid, connectMode } = await resolveSellerSettlementMode({
+  const { sellerUid, connectMode, fedapaySubAccountReference } = await resolveSellerSettlementMode({
     sellerUid: event.organizerId || event.createdBy,
     buyerUid: input.userId,
     rail: input.rail,
@@ -204,6 +210,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
             ticketPreorders,
             sellerUid,
             connectMode,
+            fedapaySubAccountReference,
             rail: input.rail,
             status: 'pending',
             stockDecremented: true,

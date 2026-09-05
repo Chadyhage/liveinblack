@@ -46,7 +46,7 @@ interface ToastState {
   kind: 'success' | 'error'
 }
 
-const sectionTitleStyle: React.CSSProperties = { fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
+const sectionTitleStyle: React.CSSProperties = { fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 10px' }
 
 const ROLE_LABEL: Record<string, string> = { organisateur: 'Organisateur', prestataire: 'Prestataire', client: 'Client', agent: 'Agent' }
 

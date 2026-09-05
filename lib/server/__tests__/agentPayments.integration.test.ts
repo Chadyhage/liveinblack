@@ -11,6 +11,7 @@ import {
   markSellerBalancePaid,
   listRefundAlertsForAgent,
   completeManualRefund,
+  listCompletedCashRefundsForAgent,
   listPaymentAlertsForAgent,
   resolvePaymentAlert,
   type AgentCaller,
@@ -19,10 +20,12 @@ import User from '@/lib/models/User'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import EventPayout from '@/lib/models/EventPayout'
-import EventRefund from '@/lib/models/EventRefund'
+import RefundCase from '@/lib/models/RefundCase'
+import RefundPoint from '@/lib/models/RefundPoint'
 import PayoutRequest from '@/lib/models/PayoutRequest'
 import SellerBalance from '@/lib/models/SellerBalance'
 import PaymentAlert from '@/lib/models/PaymentAlert'
+import { encryptRefundPickupCode, hashRefundPickupCode } from '@/lib/shared/refundPolicy'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -47,7 +50,8 @@ beforeEach(async () => {
   await Event.deleteMany({})
   await Order.deleteMany({})
   await EventPayout.deleteMany({})
-  await EventRefund.deleteMany({})
+  await RefundCase.deleteMany({})
+  await RefundPoint.deleteMany({})
   await PayoutRequest.deleteMany({})
   await SellerBalance.deleteMany({})
   await PaymentAlert.deleteMany({})
@@ -214,10 +218,10 @@ describeIntegration('agentPayments (intégration, vraie base) — #9 phase agent
   })
 
   describe('listRefundAlertsForAgent / completeManualRefund', () => {
-    it('liste les remboursements FedaPay en attente avec email acheteur et nom événement', async () => {
+    it('liste les retraits cash actifs et les clôture avec code + signature', async () => {
       const buyer = await seedUser({ roles: ['client'], activeRole: 'client' })
       const event = await seedEvent()
-      await Order.create({
+      const order = await Order.create({
         userId: buyer,
         eventId: String(event._id),
         placeId: 'p1',
@@ -227,41 +231,132 @@ describeIntegration('agentPayments (intégration, vraie base) — #9 phase agent
         currency: 'XOF',
         rail: 'fedapay',
         fedapayTxnId: 'txn_123',
-        status: 'cancelled',
+        status: 'paid',
         expiresAt: new Date(),
       })
-      await EventRefund.create({ eventId: String(event._id), paymentRef: 'txn_123', rail: 'fedapay', status: 'pending_manual', amountMinor: 5000, currency: 'XOF' })
+      const point = await RefundPoint.create({ name: 'Point Cotonou', address: 'Rue 1', city: 'Cotonou', agentIds: [AGENT.id] })
+      await RefundCase.create({
+        idempotencyKey: `${String(order._id)}:event_cancelled`,
+        eventId: String(event._id),
+        orderId: String(order._id),
+        buyerId: buyer,
+        organizerId: 'x',
+        cause: 'event_cancelled',
+        flow: 'cash_pickup',
+        status: 'code_active',
+        currency: 'XOF',
+        facialMinor: 5000,
+        serviceFeeMinor: 250,
+        optionFeeMinor: 0,
+        refundableMinor: 5250,
+        refundPointId: String(point._id),
+        refundPointName: point.name,
+        refundPointAddress: point.address,
+        codeHash: hashRefundPickupCode('CODE-123456'),
+        encryptedPickupCode: encryptRefundPickupCode('CODE-123456'),
+        codeLast4: '3456',
+      })
 
-      const refunds = await listRefundAlertsForAgent()
+      const refunds = await listRefundAlertsForAgent({ id: AGENT.id })
       expect(refunds).toHaveLength(1)
-      expect(refunds[0].amountXOF).toBe(5000)
+      expect(refunds[0].amountXOF).toBe(5250)
       expect(refunds[0].eventName).toBe('Soirée Neon')
+      expect(refunds[0].refundPointName).toBe('Point Cotonou')
 
-      const complete = await completeManualRefund(AGENT, refunds[0].id)
+      const complete = await completeManualRefund(AGENT, refunds[0].id, { code: 'CODE-123456', signatureUrl: 'https://example.com/signature.png' })
       expect(complete.ok).toBe(true)
 
-      const fresh = await EventRefund.findOne({ paymentRef: 'txn_123' }).lean()
-      expect(fresh?.status).toBe('refunded')
-      expect(fresh?.completedBy).toBe(AGENT.id)
+      const fresh = await RefundCase.findById(refunds[0].id).lean()
+      expect(fresh?.status).toBe('reimbursed')
+      expect(fresh?.codeRedeemedByAgentId).toBe(AGENT.id)
 
-      expect(await listRefundAlertsForAgent()).toHaveLength(0)
+      expect(await listRefundAlertsForAgent({ id: AGENT.id })).toHaveLength(0)
+      expect(await listCompletedCashRefundsForAgent({ id: AGENT.id })).toHaveLength(1)
     })
 
-    it('refuse de compléter un remboursement déjà traité', async () => {
+    it('refuse de compléter un retrait déjà traité', async () => {
       const event = await seedEvent()
-      const refund = await EventRefund.create({ eventId: String(event._id), paymentRef: 'txn_x', rail: 'fedapay', status: 'refunded', amountMinor: 1000, currency: 'XOF' })
+      const point = await RefundPoint.create({ name: 'Point Cotonou', address: 'Rue 1', city: 'Cotonou', agentIds: [AGENT.id] })
+      const refund = await RefundCase.create({
+        idempotencyKey: `${new mongoose.Types.ObjectId().toString()}:event_cancelled`,
+        eventId: String(event._id),
+        orderId: new mongoose.Types.ObjectId().toString(),
+        buyerId: 'buyer',
+        organizerId: 'x',
+        cause: 'event_cancelled',
+        flow: 'cash_pickup',
+        status: 'reimbursed',
+        currency: 'XOF',
+        facialMinor: 1000,
+        serviceFeeMinor: 200,
+        refundableMinor: 1200,
+        refundPointId: String(point._id),
+        codeHash: hashRefundPickupCode('USED-CODE'),
+      })
 
-      const result = await completeManualRefund(AGENT, String(refund._id))
+      const result = await completeManualRefund(AGENT, String(refund._id), { code: 'USED-CODE', signatureUrl: 'https://example.com/signature.png' })
       expect(result.ok).toBe(false)
       if (result.ok) return
-      expect(result.error).toBe('not_pending')
+      expect(result.error).toBe('invalid_or_already_redeemed_code')
     })
 
-    it('ignore les remboursements Stripe (déjà automatiques)', async () => {
+    it('verrouille un code après trop de tentatives invalides', async () => {
       const event = await seedEvent()
-      await EventRefund.create({ eventId: String(event._id), paymentRef: 'cs_123', rail: 'stripe', status: 'refunded', amountMinor: 1000, currency: 'EUR' })
+      const point = await RefundPoint.create({ name: 'Point Cotonou', address: 'Rue 1', city: 'Cotonou', agentIds: [AGENT.id] })
+      const refund = await RefundCase.create({
+        idempotencyKey: `${new mongoose.Types.ObjectId().toString()}:event_cancelled`,
+        eventId: String(event._id),
+        orderId: new mongoose.Types.ObjectId().toString(),
+        buyerId: 'buyer',
+        organizerId: 'x',
+        cause: 'event_cancelled',
+        flow: 'cash_pickup',
+        status: 'code_active',
+        currency: 'XOF',
+        facialMinor: 1000,
+        serviceFeeMinor: 200,
+        refundableMinor: 1200,
+        refundPointId: String(point._id),
+        codeHash: hashRefundPickupCode('VALID-CODE'),
+      })
 
-      expect(await listRefundAlertsForAgent()).toHaveLength(0)
+      for (let i = 0; i < 4; i += 1) {
+        const attempt = await completeManualRefund(AGENT, String(refund._id), { code: `BAD-${i}`, signatureUrl: 'https://example.com/signature.png' })
+        expect(attempt.ok).toBe(false)
+        if (!attempt.ok) expect(attempt.error).toBe('invalid_or_already_redeemed_code')
+      }
+      const locked = await completeManualRefund(AGENT, String(refund._id), { code: 'BAD-4', signatureUrl: 'https://example.com/signature.png' })
+      expect(locked.ok).toBe(false)
+      if (locked.ok) return
+      expect(locked.error).toBe('refund_code_locked')
+
+      const fresh = await RefundCase.findById(refund._id).lean()
+      expect(fresh?.status).toBe('technical_failure')
+      expect(fresh?.codeAttemptCount).toBe(5)
+      expect(await listRefundAlertsForAgent({ id: AGENT.id })).toHaveLength(0)
+    })
+
+    it('ignore les dossiers rattachés à un autre point agent', async () => {
+      const event = await seedEvent()
+      const otherPoint = await RefundPoint.create({ name: 'Point Parakou', address: 'Rue 2', city: 'Parakou', agentIds: ['agent-2'] })
+      await RefundCase.create({
+        idempotencyKey: `${new mongoose.Types.ObjectId().toString()}:event_cancelled`,
+        eventId: String(event._id),
+        orderId: new mongoose.Types.ObjectId().toString(),
+        buyerId: 'buyer',
+        organizerId: 'x',
+        cause: 'event_cancelled',
+        flow: 'cash_pickup',
+        status: 'code_active',
+        currency: 'XOF',
+        facialMinor: 1000,
+        serviceFeeMinor: 200,
+        refundableMinor: 1200,
+        refundPointId: String(otherPoint._id),
+        codeHash: hashRefundPickupCode('OTHER-CODE'),
+      })
+
+      expect(await listRefundAlertsForAgent({ id: AGENT.id })).toHaveLength(0)
     })
   })
 

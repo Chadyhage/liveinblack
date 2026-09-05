@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Revue avant publication des regles Firewall Vercel. Rien ici ne publie en production; la publication reste une action humaine explicite.",
+  "publishCommand": "vercel firewall publish --yes",
+  "reviewCommand": "vercel firewall diff",
+  "rules": [
+    {
+      "name": "LIB Log exploit probes",
+      "risk": "low",
+      "expectedAction": "log",
+      "expectedMatch": "Sondes /.env, /.git/config, /wp-admin, /phpmyadmin et /server-status.",
+      "reviewChecklist": "Verifier dans Firewall Traffic que seuls des scans automatises touchent ces chemins."
+    },
+    {
+      "name": "LIB Log checkout pressure",
+      "risk": "medium",
+      "expectedAction": "rate_limit_log",
+      "expectedMatch": "Pression anormale sur /api/checkout.",
+      "reviewChecklist": "Verifier que le seuil 300/min/IP ne touche pas un checkout legitime, partenaires ou tests."
+    },
+    {
+      "name": "LIB Log auth pressure",
+      "risk": "medium",
+      "expectedAction": "rate_limit_log",
+      "expectedMatch": "Pression anormale sur /api/auth.",
+      "reviewChecklist": "Verifier que le seuil 120/min/IP ne bloque pas une equipe, un cybercafe ou un NAT mobile."
+    },
+    {
+      "name": "LIB Log search pressure",
+      "risk": "medium",
+      "expectedAction": "rate_limit_log",
+      "expectedMatch": "Pression anormale sur /api/search.",
+      "reviewChecklist": "Verifier que le seuil 600/min/IP reste au-dessus du trafic humain attendu."
+    },
+    {
+      "name": "LIB Log webhook pressure",
+      "risk": "medium",
+      "expectedAction": "rate_limit_log",
+      "expectedMatch": "Pression anormale sur les webhooks paiement.",
+      "reviewChecklist": "Verifier que Stripe/FedaPay et les retries legitimes ne depassent pas le seuil."
+    }
+  ]
+}

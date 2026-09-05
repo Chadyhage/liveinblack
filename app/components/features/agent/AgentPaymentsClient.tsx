@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   Banknote,
@@ -17,7 +17,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import { fmtMoney } from '@/lib/shared/money'
-import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport } from '@/app/components/ui'
+import { Button, Card, Pagination, SkeletonRow, pagedSlice, EmptyState, Modal, ToastViewport, Input } from '@/app/components/ui'
 import AgentBoostsClient from '@/app/components/features/agent/AgentBoostsClient'
 import { useQueryParamState } from '@/lib/client/useQueryParamState'
 import styles from './AgentPaymentsClient.module.css'
@@ -78,10 +78,23 @@ interface RefundAlert {
   id: string
   eventId: string
   eventName: string
-  paymentRef: string
+  refundPointName: string
+  refundPointAddress: string
+  codeLast4: string
   amountXOF: number
   buyerEmail: string
   createdAt: string
+}
+
+interface RefundPointView {
+  id: string
+  name: string
+  address: string
+  city: string
+  active: boolean
+  agentIds: string[]
+  cashDisbursedXOF: number
+  cashDisbursementCount: number
 }
 
 interface PaymentAlertView {
@@ -136,6 +149,11 @@ interface ToastState {
   kind: 'success' | 'error'
 }
 
+interface RefundCompletionInput {
+  code: string
+  signatureUrl: string
+}
+
 type ConfirmAction =
   | { type: 'markPayoutPaid'; eventId: string; label: string; who: string }
   | { type: 'settle'; sellerUid: string; requestId: string | null; amount: number; currency: 'EUR' | 'XOF'; label: string; who: string }
@@ -150,6 +168,7 @@ type ConfirmAction =
 const SECTIONS = [
   { key: 'payouts', label: 'Reversements', helper: 'À verser', color: 'var(--gold-text)', icon: Landmark },
   { key: 'refunds', label: 'Remboursements', helper: 'À restituer', color: 'var(--accent-text)', icon: RotateCcw },
+  { key: 'points', label: 'Points retrait', helper: 'Réseau cash', color: 'var(--gold-text)', icon: Banknote },
   { key: 'alerts', label: 'Alertes paiement', helper: 'À vérifier', color: 'var(--accent-text)', icon: ShieldCheck },
   { key: 'boosts', label: 'Boosts', helper: 'Suivi commercial', color: 'var(--violet-text)', icon: Megaphone },
 ] as const
@@ -165,6 +184,7 @@ export default function AgentPaymentsClient() {
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequestView[]>([])
   const [balancesNoReq, setBalancesNoReq] = useState<SellerBalanceView[]>([])
   const [refunds, setRefunds] = useState<RefundAlert[]>([])
+  const [refundPoints, setRefundPoints] = useState<RefundPointView[]>([])
   const [alerts, setAlerts] = useState<PaymentAlertView[]>([])
 
   const [loading, setLoading] = useState(true)
@@ -189,17 +209,19 @@ export default function AgentPaymentsClient() {
     setLoading(true)
     setLoadError(false)
     try {
-      const [payoutsRes, refundsRes, alertsRes] = await Promise.all([
+      const [payoutsRes, refundsRes, pointsRes, alertsRes] = await Promise.all([
         fetch('/api/agent/payments/payouts'),
         fetch('/api/agent/payments/refunds'),
+        fetch('/api/agent/refund-points'),
         fetch('/api/agent/payments/alerts'),
       ])
-      const [payoutsData, refundsData, alertsData] = await Promise.all([payoutsRes.json(), refundsRes.json(), alertsRes.json()])
-      if (!payoutsRes.ok || !payoutsData.ok || !refundsRes.ok || !refundsData.ok || !alertsRes.ok || !alertsData.ok) throw new Error('load_failed')
+      const [payoutsData, refundsData, pointsData, alertsData] = await Promise.all([payoutsRes.json(), refundsRes.json(), pointsRes.json(), alertsRes.json()])
+      if (!payoutsRes.ok || !payoutsData.ok || !refundsRes.ok || !refundsData.ok || !pointsRes.ok || !pointsData.ok || !alertsRes.ok || !alertsData.ok) throw new Error('load_failed')
       setFailedPayouts(payoutsData.failedPayouts)
       setPayoutRequests(payoutsData.payoutRequests)
       setBalancesNoReq(payoutsData.balancesNoReq)
       setRefunds(refundsData.refunds)
+      setRefundPoints(pointsData.points)
       setAlerts(alertsData.alerts)
       setFailedPayoutsPage(1)
       setPayoutRequestsPage(1)
@@ -219,19 +241,21 @@ export default function AgentPaymentsClient() {
       setLoading(true)
       setLoadError(false)
       try {
-        const [payoutsRes, refundsRes, alertsRes] = await Promise.all([
-          fetch('/api/agent/payments/payouts'),
-          fetch('/api/agent/payments/refunds'),
-          fetch('/api/agent/payments/alerts'),
-        ])
-        const [payoutsData, refundsData, alertsData] = await Promise.all([payoutsRes.json(), refundsRes.json(), alertsRes.json()])
-        if (!payoutsRes.ok || !payoutsData.ok || !refundsRes.ok || !refundsData.ok || !alertsRes.ok || !alertsData.ok) throw new Error('load_failed')
-        if (!cancelled) {
-          setFailedPayouts(payoutsData.failedPayouts)
-          setPayoutRequests(payoutsData.payoutRequests)
-          setBalancesNoReq(payoutsData.balancesNoReq)
-          setRefunds(refundsData.refunds)
-          setAlerts(alertsData.alerts)
+          const [payoutsRes, refundsRes, pointsRes, alertsRes] = await Promise.all([
+            fetch('/api/agent/payments/payouts'),
+            fetch('/api/agent/payments/refunds'),
+            fetch('/api/agent/refund-points'),
+            fetch('/api/agent/payments/alerts'),
+          ])
+          const [payoutsData, refundsData, pointsData, alertsData] = await Promise.all([payoutsRes.json(), refundsRes.json(), pointsRes.json(), alertsRes.json()])
+          if (!payoutsRes.ok || !payoutsData.ok || !refundsRes.ok || !refundsData.ok || !pointsRes.ok || !pointsData.ok || !alertsRes.ok || !alertsData.ok) throw new Error('load_failed')
+          if (!cancelled) {
+            setFailedPayouts(payoutsData.failedPayouts)
+            setPayoutRequests(payoutsData.payoutRequests)
+            setBalancesNoReq(payoutsData.balancesNoReq)
+            setRefunds(refundsData.refunds)
+            setRefundPoints(pointsData.points)
+            setAlerts(alertsData.alerts)
           setFailedPayoutsPage(1)
           setPayoutRequestsPage(1)
           setBalancesNoReqPage(1)
@@ -250,7 +274,7 @@ export default function AgentPaymentsClient() {
     }
   }, [])
 
-  async function runConfirm() {
+  async function runConfirm(refundInput?: RefundCompletionInput) {
     if (!confirm) return
     setBusy(true)
     try {
@@ -296,7 +320,11 @@ export default function AgentPaymentsClient() {
           showToast('Demande close (solde déjà à zéro)', 'success')
         }
       } else if (confirm.type === 'completeRefund') {
-        const res = await fetch(`/api/agent/payments/refunds/${confirm.refundId}/complete`, { method: 'POST' })
+        const res = await fetch(`/api/agent/payments/refunds/${confirm.refundId}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(refundInput ?? {}),
+        })
         const data = await res.json()
         if (!res.ok || !data.ok) {
           showToast('Impossible de marquer le remboursement. Réessaie.', 'error')
@@ -322,7 +350,7 @@ export default function AgentPaymentsClient() {
 
   // 'boosts' n'a pas de compteur ici (AgentBoostsClient charge et affiche ses
   // propres totaux dans son panneau) — 0 fixe, jamais mis en avant en rose.
-  const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, alerts: alerts.length, boosts: 0 }
+  const counts = { payouts: failedPayouts.length + payoutRequests.length + balancesNoReq.length, refunds: refunds.length, points: refundPoints.filter((point) => point.active).length, alerts: alerts.length, boosts: 0 }
   const selectedSection = SECTIONS.find((item) => item.key === section) ?? SECTIONS[0]
 
   function handleSectionKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -433,7 +461,9 @@ export default function AgentPaymentsClient() {
               setBalancesNoReqPage={setBalancesNoReqPage}
             />
           ) : section === 'refunds' ? (
-            <RefundsSection refunds={refunds} setConfirm={setConfirm} page={refundsPage} setPage={setRefundsPage} />
+            <RefundsSection refunds={refunds} setConfirm={setConfirm} page={refundsPage} setPage={setRefundsPage} onReload={loadAll} showToast={showToast} />
+          ) : section === 'points' ? (
+            <RefundPointsSection points={refundPoints} onSaved={loadAll} showToast={showToast} />
           ) : (
             <AlertsSection alerts={alerts} setConfirm={setConfirm} page={alertsPage} setPage={setAlertsPage} />
           )}
@@ -646,21 +676,49 @@ function RefundsSection({
   setConfirm,
   page,
   setPage,
+  onReload,
+  showToast,
 }: {
   refunds: RefundAlert[]
   setConfirm: (a: ConfirmAction) => void
   page: number
   setPage: (p: number) => void
+  onReload: () => Promise<void>
+  showToast: (message: string, kind: ToastState['kind']) => void
 }) {
   const { pageItems, pageCount } = useMemo(() => pagedSlice(refunds, page, PAGE_SIZE), [refunds, page])
+  const [processing, setProcessing] = useState(false)
+
+  async function processQueuedCancellations() {
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/agent/refunds/process-cancellations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batchSize: 50, eventLimit: 10 }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'failed')
+      await onReload()
+      showToast(`${data.processedEvents || 0} génération(s) relancée(s).`, 'success')
+    } catch {
+      showToast("La reprise des générations n'a pas pu être lancée.", 'error')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   return (
     <div className={styles.sectionStack}>
       <Card accent="var(--primary-a32)" className={styles.guideCard} role="note">
         <div className={`${styles.guideIcon} ${styles.refundGuideIcon}`} aria-hidden="true"><RotateCcw size={20} /></div>
-        <div><strong>Remboursements Mobile Money</strong><p>Exécutez d’abord le remboursement dans FedaPay, puis confirmez-le ici. Les paiements Stripe sont remboursés automatiquement.</p></div>
+        <div><strong>Retraits au point de remboursement</strong><p>Validez le code présenté, remettez le montant exact en espèces, puis joignez la signature numérique avant clôture.</p></div>
+        <Button variant="secondary" icon={<RefreshCw size={15} aria-hidden="true" />} disabled={processing} loading={processing} loadingText="Reprise…" onClick={() => void processQueuedCancellations()}>
+          Relancer les générations
+        </Button>
       </Card>
       {refunds.length === 0 ? (
-        <EmptyState title="Aucun remboursement mobile money en attente" description="Les remboursements FedaPay à traiter manuellement apparaîtront ici." />
+        <EmptyState title="Aucun retrait en attente" description="Les dossiers avec code actif pour vos points de remboursement apparaîtront ici." />
       ) : (
         <div className={styles.cardGrid}>
           {pageItems.map((r) => (
@@ -674,7 +732,8 @@ function RefundsSection({
               </div>
               <div className={styles.amountRow}><span>Montant à restituer</span><strong>{fmtXOF(r.amountXOF)}</strong></div>
               <div className={styles.metaGrid}>
-                <div><ReceiptText size={14} aria-hidden="true" /><span><span className={styles.srOnly}>Référence FedaPay : </span>{r.paymentRef}</span></div>
+                <div><ReceiptText size={14} aria-hidden="true" /><span><span className={styles.srOnly}>Point : </span>{r.refundPointName || 'Point attribué'}</span></div>
+                {r.codeLast4 && <div><ShieldCheck size={14} aria-hidden="true" /><span><span className={styles.srOnly}>Fin du code : </span>Code se termine par {r.codeLast4}</span></div>}
                 <div><Clock3 size={14} aria-hidden="true" /><span><span className={styles.srOnly}>Créé le : </span>{fmtDate(r.createdAt)}</span></div>
               </div>
               <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} className={styles.refundAction} aria-label={`Confirmer le remboursement de ${fmtXOF(r.amountXOF)} à ${r.buyerEmail || 'cet acheteur'}`} onClick={() => setConfirm({ type: 'completeRefund', refundId: r.id, label: fmtXOF(r.amountXOF), who: r.buyerEmail || 'cet acheteur' })}>
@@ -685,6 +744,118 @@ function RefundsSection({
         </div>
       )}
       {refunds.length > 0 && <Pagination page={page} pageCount={pageCount} onPageChange={setPage} totalItems={refunds.length} pageSize={PAGE_SIZE} />}
+    </div>
+  )
+}
+
+function RefundPointsSection({
+  points,
+  onSaved,
+  showToast,
+}: {
+  points: RefundPointView[]
+  onSaved: () => Promise<void>
+  showToast: (message: string, kind: ToastState['kind']) => void
+}) {
+  const [name, setName] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('Cotonou')
+  const [agentIds, setAgentIds] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function savePoint(point?: RefundPointView, activeOverride?: boolean) {
+    const payload = point
+      ? {
+          name: point.name,
+          address: point.address,
+          city: point.city,
+          active: activeOverride ?? point.active,
+          agentIds: point.agentIds,
+        }
+      : {
+          name,
+          address,
+          city,
+          active: true,
+          agentIds: agentIds.split(',').map((id) => id.trim()).filter(Boolean),
+        }
+    if (!payload.name.trim() || !payload.address.trim()) {
+      showToast('Nom et adresse du point obligatoires.', 'error')
+      return
+    }
+    setBusy(true)
+    try {
+      const res = await fetch(point ? `/api/agent/refund-points/${point.id}` : '/api/agent/refund-points', {
+        method: point ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'failed')
+      if (!point) {
+        setName('')
+        setAddress('')
+        setAgentIds('')
+      }
+      await onSaved()
+      showToast(point ? 'Point de remboursement mis à jour.' : 'Point de remboursement créé.', 'success')
+    } catch {
+      showToast("Le point de remboursement n'a pas pu être enregistré.", 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className={styles.sectionStack}>
+      <Card accent="rgba(var(--gold-rgb), .30)" className={styles.guideCard} role="note">
+        <div className={styles.guideIcon} aria-hidden="true"><Banknote size={20} /></div>
+        <div><strong>Réseau de retrait cash</strong><p>Les dossiers cash sont attribués à un point actif, en priorité dans la ville de l’événement. Les agents ne voient que les remboursements rattachés à leurs points.</p></div>
+      </Card>
+
+      <Card className={styles.moneyCard}>
+        <div className={styles.cardTop}>
+          <div className={styles.identity}>
+            <span className={styles.identityIcon} aria-hidden="true"><ReceiptText size={18} /></span>
+            <div><strong>Nouveau point</strong><span>Bénin uniquement pour le lancement.</span></div>
+          </div>
+        </div>
+        <div className={styles.pointForm}>
+          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom du point" disabled={busy} />
+          <Input value={city} onChange={(event) => setCity(event.target.value)} placeholder="Ville" disabled={busy} />
+          <Input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Adresse complète" disabled={busy} />
+          <Input value={agentIds} onChange={(event) => setAgentIds(event.target.value)} placeholder="IDs agents séparés par des virgules" disabled={busy} />
+        </div>
+        <Button variant="primary" className={styles.cardAction} disabled={busy || !name.trim() || !address.trim()} loading={busy} loadingText="Création…" onClick={() => void savePoint()}>
+          Créer le point
+        </Button>
+      </Card>
+
+      {points.length === 0 ? (
+        <EmptyState title="Aucun point configuré" description="Crée au moins un point actif avant d’annuler un événement avec remboursements cash." />
+      ) : (
+        <div className={styles.cardGrid}>
+          {points.map((point) => (
+            <Card key={point.id} className={styles.moneyCard} role="article" aria-label={`Point de remboursement ${point.name}`}>
+              <div className={styles.cardTop}>
+                <div className={styles.identity}>
+                  <span className={`${styles.identityIcon} ${point.active ? styles.refundIcon : ''}`} aria-hidden="true"><Banknote size={18} /></span>
+                  <div><strong>{point.name}</strong><span>{point.city || 'Ville non renseignée'} · {point.address}</span></div>
+                </div>
+                <span className={`${styles.status} ${point.active ? styles.statusRefund : styles.statusNeutral}`}>{point.active ? 'Actif' : 'Inactif'}</span>
+              </div>
+              <div className={styles.metaGrid}>
+                <div><UserRound size={14} aria-hidden="true" /><span>{point.agentIds.length} agent{point.agentIds.length > 1 ? 's' : ''}</span></div>
+                <div><ReceiptText size={14} aria-hidden="true" /><span>{fmtXOF(point.cashDisbursedXOF)} remis</span></div>
+              </div>
+              <p className={styles.pointAgents}>Agents : {point.agentIds.length ? point.agentIds.join(', ') : 'aucun agent rattaché'}</p>
+              <Button variant="secondary" className={styles.secondaryAction} disabled={busy} onClick={() => void savePoint(point, !point.active)}>
+                {point.active ? 'Désactiver' : 'Réactiver'}
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -745,7 +916,9 @@ function AlertsSection({
 
 // ──────────────────────────── Confirmation ──────────────────────────────────
 
-function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAction; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
+function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAction; busy: boolean; onCancel: () => void; onConfirm: (refundInput?: RefundCompletionInput) => void }) {
+  const [refundCode, setRefundCode] = useState('')
+  const [signatureUrl, setSignatureUrl] = useState('')
   let title = ''
   let helper = ''
   if (action.type === 'markPayoutPaid') {
@@ -759,7 +932,7 @@ function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAc
     helper = 'Le solde réel du ledger est déjà à zéro — aucun argent ne sera envoyé.'
   } else if (action.type === 'completeRefund') {
     title = `Confirmer le remboursement de ${action.label} à ${action.who} ?`
-    helper = "À faire APRÈS avoir exécuté le remboursement dans le dashboard FedaPay."
+    helper = "À faire APRÈS avoir validé le code, remis exactement les espèces et recueilli la signature numérique."
   } else {
     title = `Clôturer l'alerte « ${action.label} » ?`
     helper = 'À faire seulement après vérification du paiement dans Stripe ou FedaPay.'
@@ -770,15 +943,124 @@ function ConfirmModal({ action, busy, onCancel, onConfirm }: { action: ConfirmAc
       <div className={styles.confirmIcon} aria-hidden="true"><ShieldCheck size={25} /></div>
       <h2 className={styles.confirmTitle}>{title}</h2>
       <p className={styles.confirmHelper}>{helper}</p>
+      {action.type === 'completeRefund' && (
+        <div className={styles.refundProofForm}>
+          <Input value={refundCode} onChange={(event) => setRefundCode(event.target.value)} placeholder="Code présenté par le client" disabled={busy} />
+          <SignaturePad disabled={busy} onChange={setSignatureUrl} />
+        </div>
+      )}
       <div className={styles.confirmWarning} role="note"><AlertTriangle size={16} aria-hidden="true" /><span>Cette confirmation modifie le suivi financier de façon immédiate.</span></div>
       <div className={styles.confirmActions}>
         <Button variant="secondary" onClick={onCancel} disabled={busy}>
           Annuler
         </Button>
-        <Button variant="primary" icon={<CheckCircle2 size={16} aria-hidden="true" />} onClick={onConfirm} disabled={busy} loading={busy} loadingText="Confirmation…" aria-label={title}>
+        <Button
+          variant="primary"
+          icon={<CheckCircle2 size={16} aria-hidden="true" />}
+          onClick={() => onConfirm(action.type === 'completeRefund' ? { code: refundCode, signatureUrl } : undefined)}
+          disabled={busy || (action.type === 'completeRefund' && (!refundCode.trim() || !signatureUrl.trim()))}
+          loading={busy}
+          loadingText="Confirmation…"
+          aria-label={title}
+        >
           Confirmer
         </Button>
       </div>
     </Modal>
+  )
+}
+
+function SignaturePad({ disabled, onChange }: { disabled: boolean; onChange: (dataUrl: string) => void }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const drawingRef = useRef(false)
+  const signedRef = useRef(false)
+  const [hasSignature, setHasSignature] = useState(false)
+
+  const prepareCanvas = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const ratio = window.devicePixelRatio || 1
+    canvas.width = Math.max(1, Math.floor(rect.width * ratio))
+    canvas.height = Math.max(1, Math.floor(rect.height * ratio))
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.lineWidth = 2.4
+    ctx.strokeStyle = '#111111'
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, rect.width, rect.height)
+    signedRef.current = false
+    setHasSignature(false)
+    onChange('')
+  }, [onChange])
+
+  useEffect(() => {
+    prepareCanvas()
+    window.addEventListener('resize', prepareCanvas)
+    return () => window.removeEventListener('resize', prepareCanvas)
+  }, [prepareCanvas])
+
+  function pointFor(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current
+    const rect = canvas?.getBoundingClientRect()
+    return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) }
+  }
+
+  function beginDraw(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (disabled) return
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
+    event.preventDefault()
+    canvas.setPointerCapture(event.pointerId)
+    const point = pointFor(event)
+    drawingRef.current = true
+    ctx.beginPath()
+    ctx.moveTo(point.x, point.y)
+  }
+
+  function draw(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!drawingRef.current || disabled) return
+    const ctx = canvasRef.current?.getContext('2d')
+    if (!ctx) return
+    event.preventDefault()
+    const point = pointFor(event)
+    ctx.lineTo(point.x, point.y)
+    ctx.stroke()
+    signedRef.current = true
+    setHasSignature(true)
+  }
+
+  function endDraw(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!drawingRef.current) return
+    drawingRef.current = false
+    try {
+      canvasRef.current?.releasePointerCapture(event.pointerId)
+    } catch {}
+    if (signedRef.current && canvasRef.current) onChange(canvasRef.current.toDataURL('image/png'))
+  }
+
+  return (
+    <div className={styles.signatureField}>
+      <div className={styles.signatureHeader}>
+        <span>Signature du bénéficiaire</span>
+        <Button variant="ghost" onClick={prepareCanvas} disabled={disabled || !hasSignature} className={styles.signatureClear}>
+          Effacer
+        </Button>
+      </div>
+      <canvas
+        ref={canvasRef}
+        className={styles.signatureCanvas}
+        aria-label="Zone de signature du bénéficiaire"
+        onPointerDown={beginDraw}
+        onPointerMove={draw}
+        onPointerUp={endDraw}
+        onPointerCancel={endDraw}
+      />
+      <p className={styles.signatureHint}>{hasSignature ? 'Signature capturée.' : 'Le bénéficiaire signe ici avant la remise des espèces.'}</p>
+    </div>
   )
 }

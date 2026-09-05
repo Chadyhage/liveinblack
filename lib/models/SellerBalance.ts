@@ -3,8 +3,7 @@ import { Schema, model, models, type InferSchemaType, type Model } from 'mongoos
 // Remplace `seller_balances/{sellerUid}` — ledger interne pour les vendeurs
 // non éligibles Stripe Connect (mode 'ledger') et pour le rail FedaPay (XOF,
 // jamais éligible Connect). Crédité par les webhooks au premier settle,
-// débité par le cron de versement (lib/server/eventPayouts.ts) ou par un
-// remboursement (lib/server/eventRefunds.ts).
+// débité par le cron de versement (lib/server/eventPayouts.ts).
 const sellerBalanceSchema = new Schema(
   {
     sellerUid: { type: String, required: true, unique: true, index: true },

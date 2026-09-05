@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { fmtMoney } from '@/lib/shared/money'
 import { computeTicketFeeCents, computeTicketFeeXOF, computeCancellationProtectionFeeCents, computeCancellationProtectionFeeXOF } from '@/lib/shared/fees'
+import { cancellationOptionDeadline } from '@/lib/shared/refundPolicy'
 import type { ShowOption } from '@/lib/shared/showOptions'
 import { GROWTH_EVENT_NAMES, trackGrowthEvent } from '@/lib/client/growthAnalytics'
 import AgeGateModal from '@/app/components/layout/AgeGateModal'
@@ -44,6 +45,7 @@ export interface CheckoutPlace {
   groupType: GroupType
   groupMin: number
   groupMax: number
+  cancellationOptionEnabled: boolean
   photos: string[]
   included: { name: string; qty: number }[]
 }
@@ -77,6 +79,7 @@ interface EventCheckoutPanelProps {
   blockedReason: string | null
   loginHref: string
   paymentCancelled: boolean
+  closingDate: string | null
 }
 
 // Codes d'erreur STABLES renvoyés par createOrder()/les routes checkout — le
@@ -95,6 +98,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   insufficient_stock: 'Il ne reste plus assez de places disponibles.',
   wrong_rail_for_currency: 'Erreur de configuration de paiement — réessaye.',
   wrong_rail_use_stripe: 'Erreur de configuration de paiement — réessaye.',
+  benin_xof_launch_scope_required: 'La billetterie du lancement est disponible uniquement en FCFA au Bénin.',
   promo_makes_ticket_free: 'Ce code promo rendrait le billet gratuit, ce qui n’est pas autorisé.',
   nothing_to_pay: 'Rien à payer pour cette sélection.',
   amount_below_minimum: 'Le montant total est trop faible pour être payé.',
@@ -102,7 +106,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_ticket_preorders: 'La personnalisation des billets est invalide — vérifie les précommandes.',
   invalid_show_option: "Une option show n'est plus disponible pour cette place.",
   show_info_required: "Une information demandée pour le show est manquante.",
-  stripe_error: 'Le paiement par carte est momentanément indisponible. Réessaye plus tard.',
+  stripe_error: 'Le paiement est momentanément indisponible. Réessaye plus tard.',
   fedapay_error: 'Le paiement Mobile Money est momentanément indisponible. Réessaye plus tard.',
   order_creation_failed: 'Une erreur est survenue — réessaye dans un instant.',
   internal_error: 'Une erreur est survenue — réessaye dans un instant.',
@@ -145,6 +149,7 @@ export default function EventCheckoutPanel({
   blockedReason,
   loginHref,
   paymentCancelled,
+  closingDate,
 }: EventCheckoutPanelProps) {
   const router = useRouter()
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
@@ -170,6 +175,7 @@ export default function EventCheckoutPanel({
   const [submitting, setSubmitting] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
   const [cancelNoticeVisible, setCancelNoticeVisible] = useState(paymentCancelled)
+  const [nowMs, setNowMs] = useState(() => Date.now())
   const [photoGallery, setPhotoGallery] = useState<{ type: string; photos: string[]; index: number } | null>(null)
   const [includedModal, setIncludedModal] = useState<CheckoutPlace | null>(null)
 
@@ -190,21 +196,30 @@ export default function EventCheckoutPanel({
   const placePrice = selectedPlace?.price || 0
   const discountedPlacePrice = Math.max(0, placePrice - promoUnitDiscount)
   const lineQty = isGroup ? 1 : qty
+  const optionDeadline = cancellationOptionDeadline(closingDate ? new Date(closingDate) : null)
+  const optionStillOpen = Boolean(optionDeadline && nowMs < optionDeadline.getTime())
+  const cancellationOptionEligible = Boolean(selectedPlace?.cancellationOptionEnabled) && currency === 'XOF' && discountedPlacePrice * lineQty >= 5_000 && optionStillOpen
+  const wantsCancellationOption = cancellationOptionEligible && cancellationProtection
   const ticketCount = selectedPlace ? (isGroup ? Math.max(1, selectedPlace.groupMax) : qty) : 1
   const preorderQty = preordersByTicket[preorderTicketIndex] || {}
   const preorderTotal = Object.values(preordersByTicket).reduce((total, ticketItems) => total + activeMenu.reduce((sum, item) => sum + (ticketItems[item.name] || 0) * item.price, 0), 0)
   const fee = currency === 'XOF' ? computeTicketFeeXOF(discountedPlacePrice, lineQty) : computeTicketFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100
-  // Assurance-annulation — préviz uniquement, le serveur recalcule (jamais de
+  // Option d'annulation — préviz uniquement, le serveur recalcule (jamais de
   // confiance dans un montant venu du client, cf. createOrder). Non
-  // proposée sur une sélection gratuite (rien à assurer).
+  // proposée hors seuil ou hors délai (fermeture billetterie - 48h).
   const cancellationProtectionFee =
-    discountedPlacePrice > 0 && cancellationProtection
+    wantsCancellationOption
       ? currency === 'XOF'
         ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
         : computeCancellationProtectionFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100
       : 0
   const grandTotal = discountedPlacePrice * lineQty + preorderTotal + fee + cancellationProtectionFee
   const disabled = Boolean(bookingDisabledReason)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   function selectPlace(id: string) {
     const place = places.find((item) => item.id === id)
@@ -229,6 +244,7 @@ export default function EventCheckoutPanel({
     setPromoUnitDiscount(0)
     setPromoLabel('')
     setCheckoutError('')
+    setCancellationProtection(false)
   }
 
   function updatePreorder(name: string, delta: number) {
@@ -311,7 +327,7 @@ export default function EventCheckoutPanel({
       quantity: lineQty,
       preorder: preorderTotal > 0,
       promo: Boolean(promoApplied),
-      protection: cancellationProtection,
+      protection: wantsCancellationOption,
     })
     if (eventMinAge >= 18 && !ageVerified) {
       setShowAgeModal(true)
@@ -358,7 +374,7 @@ export default function EventCheckoutPanel({
           promoCode: promoApplied || null,
           preorders: [],
           ticketPreorders,
-          cancellationProtection,
+          cancellationProtection: wantsCancellationOption,
         }
     const endpoint = isFreeSelection ? '/api/checkout/free' : currency === 'XOF' ? '/api/checkout/fedapay' : '/api/checkout'
 
@@ -434,7 +450,7 @@ export default function EventCheckoutPanel({
 
   return (
     <section style={{ padding: '22px 22px 0' }}>
-      <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--teal)', margin: '0 0 12px' }}>Réservation</h2>
+      <h2 style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', color: 'var(--primary)', margin: '0 0 12px' }}>Réservation</h2>
 
       {cancelNoticeVisible && (
         <div
@@ -666,7 +682,7 @@ export default function EventCheckoutPanel({
                         padding: '10px 16px',
                         borderRadius: 9,
                         border: 'none',
-                        background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--teal-solid)',
+                        background: !promoInput.trim() ? 'var(--surface-2)' : 'var(--primary)',
                         color: !promoInput.trim() ? 'var(--text-faint)' : 'var(--primary-ink)',
                         fontSize: 'var(--font-size-footnote-lg)',
                         fontWeight: 700,
@@ -689,8 +705,8 @@ export default function EventCheckoutPanel({
 
             {promoApplied && promoUnitDiscount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--teal)' }}>Réduction</span>
-                <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--teal)' }}>− {fmtMoney(promoUnitDiscount * lineQty, currency)}</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--primary)' }}>Réduction</span>
+                <span style={{ fontSize: 'var(--font-size-footnote)', fontWeight: 700, color: 'var(--primary)' }}>− {fmtMoney(promoUnitDiscount * lineQty, currency)}</span>
               </div>
             )}
 
@@ -701,14 +717,14 @@ export default function EventCheckoutPanel({
               </div>
             )}
 
-            {discountedPlacePrice > 0 && (
+            {cancellationOptionEligible && (
               <div style={{ padding: '9px 10px', borderRadius: 'var(--radius-md)', background: cancellationProtection ? 'var(--primary-a08)' : 'var(--fill-secondary)' }}>
                 <Checkbox
                   checked={cancellationProtection}
                   onChange={(event) => setCancellationProtection(event.target.checked)}
                   label={
                     <span style={{ display: 'block', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, color: 'var(--text)' }}>
-                      Assurance annulation · +{fmtMoney(
+                      Option d’annulation · +{fmtMoney(
                         currency === 'XOF'
                           ? computeCancellationProtectionFeeXOF(discountedPlacePrice, lineQty)
                           : computeCancellationProtectionFeeCents(Math.round(discountedPlacePrice * 100), lineQty) / 100,
@@ -718,7 +734,7 @@ export default function EventCheckoutPanel({
                   }
                   description={
                     <span style={{ display: 'block', fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', marginTop: 2 }}>
-                      Remboursement possible à tout moment avant l&apos;événement, même sans annulation ni report (hors billet déjà scanné).
+                      Remboursement du prix facial uniquement, utilisable strictement avant la limite de 48 h avant fermeture de la billetterie.
                     </span>
                   }
                 />
@@ -733,7 +749,7 @@ export default function EventCheckoutPanel({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
               <span style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)' }}>Paiement</span>
               <span style={{ fontSize: 'var(--font-size-caption-lg)', fontWeight: 600, color: 'var(--text-muted)' }}>
-                {grandTotal > 0 ? (currency === 'XOF' ? 'Sécurisé · Mobile Money (FedaPay)' : 'Sécurisé · Stripe') : 'Gratuit'}
+                {grandTotal > 0 ? 'Sécurisé · FedaPay Bénin' : 'Gratuit'}
               </span>
             </div>
           </Card>
@@ -807,7 +823,7 @@ export default function EventCheckoutPanel({
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 2px' }}>
             <span style={{ fontSize: 'var(--font-size-body)', fontWeight: 700, color: 'var(--text)' }}>Total</span>
-            <span style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, color: 'var(--teal)' }}>{fmtMoney(grandTotal, currency)}</span>
+            <span style={{ fontSize: 'var(--font-size-title-2)', fontWeight: 800, color: 'var(--primary)' }}>{fmtMoney(grandTotal, currency)}</span>
           </div>
 
           {eventMinAge >= 18 && (
@@ -942,21 +958,21 @@ export default function EventCheckoutPanel({
 
       {showConfirmation && selectedPlace && (
         <Modal onClose={() => setShowConfirmation(false)} dismissible={!submitting} ariaLabel="Récapitulatif de la commande">
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--teal)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 'var(--font-size-title-2)' }}>Récapitulatif</h3></div></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}><div><p style={{ margin: 0, color: 'var(--primary)', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif' }}>Dernière vérification</p><h3 id="checkout-confirm-title" style={{ margin: '4px 0 0', fontSize: 'var(--font-size-title-2)' }}>Récapitulatif</h3></div></div>
             <div style={{ display: 'grid', gap: 9, marginTop: 20 }}>
               <SummaryRow label="Place" value={selectedPlace.type} />
               <SummaryRow label="Quantité" value={String(lineQty)} />
               {Array.from({ length: ticketCount }, (_, ticketIndex) => {
                 const entries = Object.entries(preordersByTicket[ticketIndex] || {}).filter(([, count]) => count > 0)
                 if (!entries.length) return null
-                return <div key={ticketIndex} style={{ padding: '8px 10px', borderRadius: 9, background: 'var(--fill-secondary)' }}><p style={{ margin: '0 0 6px', color: 'var(--gold)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>Billet {ticketIndex + 1}</p>{entries.map(([name, count]) => { const show = showsByTicket[ticketIndex]?.[name]; return <div key={name} style={{ marginBottom: 4 }}><SummaryRow label={name} value={`${count}×`} />{show && <p style={{ margin: '2px 0 0', color: 'var(--teal)', fontSize: 'var(--font-size-caption-2-lg)' }}>{show.showLabel}{show.showInfo ? ` · ${show.showInfo}` : ''}</p>}</div> })}</div>
+                return <div key={ticketIndex} style={{ padding: '8px 10px', borderRadius: 9, background: 'var(--fill-secondary)' }}><p style={{ margin: '0 0 6px', color: 'var(--gold)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>Billet {ticketIndex + 1}</p>{entries.map(([name, count]) => { const show = showsByTicket[ticketIndex]?.[name]; return <div key={name} style={{ marginBottom: 4 }}><SummaryRow label={name} value={`${count}×`} />{show && <p style={{ margin: '2px 0 0', color: 'var(--primary)', fontSize: 'var(--font-size-caption-2-lg)' }}>{show.showLabel}{show.showInfo ? ` · ${show.showInfo}` : ''}</p>}</div> })}</div>
               })}
               {promoApplied && <SummaryRow label={`Code ${promoApplied}`} value={`− ${fmtMoney(promoUnitDiscount * lineQty, currency)}`} accent />}
               {fee > 0 && <SummaryRow label="Frais de service" value={fmtMoney(fee, currency)} />}
-              {cancellationProtectionFee > 0 && <SummaryRow label="Assurance annulation" value={fmtMoney(cancellationProtectionFee, currency)} />}
+              {cancellationProtectionFee > 0 && <SummaryRow label="Option d’annulation" value={fmtMoney(cancellationProtectionFee, currency)} />}
               <div style={{ borderTop: '1px solid var(--border)', marginTop: 3, paddingTop: 12 }}><SummaryRow label="Total à payer" value={fmtMoney(grandTotal, currency)} strong /></div>
             </div>
-            <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-lg)', lineHeight: 1.5 }}>{grandTotal > 0 ? `Paiement sécurisé par ${currency === 'XOF' ? 'FedaPay' : 'Stripe'}.` : 'Aucun moyen de paiement ne sera demandé.'}</p>
+            <p style={{ margin: '16px 0 0', color: 'var(--text-faint)', fontSize: 'var(--font-size-caption-lg)', lineHeight: 1.5 }}>{grandTotal > 0 ? 'Paiement sécurisé par FedaPay.' : 'Aucun moyen de paiement ne sera demandé.'}</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}><Button type="button" variant="secondary" onClick={() => setShowConfirmation(false)} disabled={submitting} style={{ ...secondaryAction, flex: 1 }}>Modifier</Button><Button type="button" onClick={() => void doCheckout()} loading={submitting} loadingText="Redirection…" style={{ ...primaryAction, flex: 1 }}>{grandTotal > 0 ? `Payer ${fmtMoney(grandTotal, currency)}` : 'Confirmer'}</Button></div>
         </Modal>
       )}

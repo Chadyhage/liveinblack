@@ -26,7 +26,7 @@ function checkPasswordStrength(pwd: string) {
   if (/[0-9]/.test(pwd)) score++
   if (score <= 1) return { score, label: 'Faible', color: 'var(--pink)' }
   if (score === 2) return { score, label: 'Moyen', color: 'var(--gold)' }
-  return { score, label: 'Fort', color: 'var(--teal)' }
+  return { score, label: 'Fort', color: 'var(--primary)' }
 }
 
 type State = 'form' | 'success' | 'invalid' | 'missing'
@@ -97,15 +97,28 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                     onChange={(e) => setPassword(e.target.value)}
                     style={{ paddingRight: 56 }}
                   />
-                  <Button
-                    variant="link"
-                    type="button"
-                    onClick={() => setShowPwd((v) => !v)}
-                    style={{ position: 'absolute', right: 6, top: '50%', minWidth: 64, minHeight: 44, padding: 0, transform: 'translateY(-50%)', fontSize: 'var(--font-size-callout)', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'none' }}
-                  >
-                    {showPwd ? 'Cacher' : 'Voir'}
-                  </Button>
-                </div>
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      onClick={() => setShowPwd((v) => !v)}
+                      style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', padding: 4, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <svg aria-hidden="true" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                        {showPwd ? (
+                          <>
+                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </>
+                        ) : (
+                          <>
+                            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.3 20.3 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 7 11 7a20.3 20.3 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                            <line x1="1" y1="1" x2="23" y2="23" />
+                          </>
+                        )}
+                      </svg>
+                    </Button>
+                  </div>
               </div>
 
               {password.length > 0 && (
@@ -124,7 +137,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
                 <Input id="reset-password-confirm" name="new-password" type="password" autoComplete="new-password" placeholder="Mot de passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
               </div>
               {error && <p style={{ fontSize: 'var(--font-size-footnote)', color: COLORS.pink, margin: 0 }}>{error}</p>}
-              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--teal-solid)'), marginTop: 4 }}>
+              <Button type="submit" loading={loading} loadingText="Enregistrement…" style={{ ...btnSolid('var(--primary)'), marginTop: 4 }}>
                 Changer mon mot de passe
               </Button>
             </form>
@@ -139,7 +152,7 @@ export default function ResetPasswordClient({ email, token }: { email: string | 
               Le mot de passe de {email} a été changé. Tu peux maintenant te connecter avec ton nouveau mot de passe.
             </p>
             <div style={{ marginTop: 28 }}>
-              <Button onClick={() => router.push('/login')} style={btnSolid('var(--teal-solid)')}>Se connecter</Button>
+              <Button onClick={() => router.push('/login')} style={btnSolid('var(--primary)')}>Se connecter</Button>
             </div>
           </>
         )}

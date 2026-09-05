@@ -288,11 +288,11 @@ export function MessageRow({
                     gap: 3,
                     fontSize: 'var(--font-size-caption)',
                     fontWeight: 400,
-                    color: reactedByMe ? 'var(--teal)' : 'var(--text)',
+                    color: reactedByMe ? 'var(--primary)' : 'var(--text)',
                   }}
                 >
                   <span>{emoji}</span>
-                  <span style={{ fontSize: 'var(--font-size-mini)', color: reactedByMe ? 'var(--teal)' : 'var(--text-faint)' }}>{users.length}</span>
+                  <span style={{ fontSize: 'var(--font-size-mini)', color: reactedByMe ? 'var(--primary)' : 'var(--text-faint)' }}>{users.length}</span>
                 </Button>
               )
             })}
@@ -306,7 +306,7 @@ export function MessageRow({
           {message.starredByMe ? <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--gold)', display: 'inline-flex', alignItems: 'center' }}><Star size={10} /></span> : null}
           <span style={{ fontSize: 'var(--font-size-caption-2)', color: 'var(--text-faint)' }}>{formatTime(message.createdAt)}</span>
           {isMine && message.readStatus ? (
-            <span style={{ fontSize: 'var(--font-size-mini)', color: message.readStatus === 'read' ? 'var(--teal)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
+            <span style={{ fontSize: 'var(--font-size-mini)', color: message.readStatus === 'read' ? 'var(--primary)' : 'var(--text-faint)', display: 'inline-flex', alignItems: 'center' }}>
               {message.readStatus === 'read' ? <CheckCheck size={12} /> : <Check size={12} />}
             </span>
           ) : null}
@@ -357,7 +357,7 @@ function MentionText({ content, members }: { content: string; members: Conversat
     <>
       {parts.map((part, index) =>
         part.startsWith('@') && names.includes(part.slice(1)) ? (
-          <span key={index} style={{ color: 'var(--teal)', fontWeight: 700 }}>
+          <span key={index} style={{ color: 'var(--primary)', fontWeight: 700 }}>
             {part}
           </span>
         ) : (
@@ -550,7 +550,7 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
                 gap: 6,
                 padding: '8px 10px',
                 borderRadius: 8,
-                border: votedByMe ? '1px solid var(--teal)' : '1px solid var(--border-strong)',
+                border: votedByMe ? '1px solid var(--primary)' : '1px solid var(--border-strong)',
                 background: 'var(--fill-secondary)',
                 color: 'var(--text)',
                 fontSize: 'var(--font-size-footnote-lg)',
@@ -561,10 +561,10 @@ function PollCard({ message, onVote, currentUserId }: { message: MessageView; on
             >
               <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'var(--primary-a20)' }} />
               <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {votedByMe ? <span style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span> : null}
+                {votedByMe ? <span style={{ color: 'var(--primary)', display: 'inline-flex', alignItems: 'center' }}><Check size={12} /></span> : null}
                 {option.text}
               </span>
-              <span style={{ position: 'relative', color: 'var(--teal)', fontWeight: 700 }}>{option.voterIds.length}</span>
+              <span style={{ position: 'relative', color: 'var(--primary)', fontWeight: 700 }}>{option.voterIds.length}</span>
             </Button>
           )
         })}

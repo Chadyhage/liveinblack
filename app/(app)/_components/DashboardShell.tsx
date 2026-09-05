@@ -298,7 +298,6 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         <>
           <Button variant="ghost" className={styles.drawerBackdrop} onClick={closeMobile} aria-label="Fermer le menu" />
           <nav ref={mobileDrawerRef} id="dashboard-mobile-navigation" className={styles.mobileDrawer} aria-label="Navigation de l’espace privé" onClick={closeMobile}>
-            {status === 'authenticated' && session?.user ? <div className={styles.mobileAccount}><AccountMenu user={session.user} menuAlign="left" dashboardMode /></div> : null}
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} mobile onNavigate={closeMobile} />
             <Link href="/home" className={styles.publicLink}><Globe size={18} aria-hidden="true" /><span>Voir le site public</span></Link>
           </nav>
@@ -309,12 +308,9 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <Link href="/profile" className={styles.brand} aria-label="LIVEINBLACK — vue d’ensemble">
-              <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} priority />
+              <Image src="/branding/liveinblack-logo-header.png" alt="LIVEINBLACK" width={1876} height={285} className={styles.brandLogo} priority />
             </Link>
             <p className={styles.workspace}>{`Espace ${getRoleLabel(activeRole)}`}</p>
-            <div className={styles.account}>
-              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="left" menuDirection="auto" dashboardMode /> : null}
-            </div>
           </div>
           <nav className={styles.nav} aria-label="Navigation de l’espace privé">
             <SidebarNavigation groups={navGroups} upsell={upsell} isActive={isActive} hasActiveDescendant={hasActiveDescendant} badges={badges} />
@@ -324,7 +320,14 @@ export default function DashboardShell({ activeRole, children }: { activeRole: R
           </div>
         </aside>
 
-        <div className={`lb-dashboard-main ${styles.main}${fullBleed ? ` ${styles.mainFull}` : ''}`}>{children}</div>
+        <div className={styles.workspaceColumn}>
+          <header className={styles.topbar}>
+            <div className={styles.topbarAccount}>
+              {status === 'authenticated' && session?.user ? <AccountMenu user={session.user} menuAlign="right" menuDirection="auto" /> : null}
+            </div>
+          </header>
+          <div className={`lb-dashboard-main ${styles.main}${fullBleed ? ` ${styles.mainFull}` : ''}`}>{children}</div>
+        </div>
       </div>
     </div>
   )
@@ -407,8 +410,8 @@ function SidebarItem({
             minWidth: 0,
             alignItems: 'center',
             gap: 9,
-            minHeight: 44,
-            padding: '8px 7px 8px 10px',
+            minHeight: 42,
+            padding: '7px 10px 7px 13px',
             color: active ? 'var(--text)' : 'var(--text-muted)',
             fontSize: 'var(--font-size-body-lg)',
             fontWeight: active ? 700 : 600,
@@ -450,8 +453,8 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
         display: 'flex',
         alignItems: 'center',
         gap: 9,
-        minHeight: compact ? 42 : 46,
-        padding: compact ? '8px 11px' : '10px 12px',
+        minHeight: compact ? 40 : 44,
+        padding: compact ? '7px 13px' : '8px 14px',
         borderRadius: 'var(--radius-control)',
         color: active ? 'var(--text)' : muted ? 'var(--text-faint)' : 'var(--text-muted)',
         background: active ? 'var(--primary-a12)' : 'transparent',
@@ -469,11 +472,12 @@ function SidebarLink({ item, active, muted, badge, compact, onClick }: { item: D
             fontSize: 'var(--font-size-caption-2)',
             fontWeight: 800,
             lineHeight: 1.4,
-            color: 'var(--danger-ink)',
-            background: 'var(--primary-a85)',
+            color: '#fff',
+            background: 'var(--primary)',
             borderRadius: 999,
             padding: '1px 6px',
             flexShrink: 0,
+            boxShadow: '0 2px 6px rgba(var(--primary-rgb), 0.35)',
           }}
         >
           {badge}

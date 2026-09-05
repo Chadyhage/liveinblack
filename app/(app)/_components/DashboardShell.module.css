@@ -1,79 +1,97 @@
 .root {
-  --dashboard-sidebar: 197px;
+  --dashboard-sidebar: 252px;
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
   isolation: isolate;
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: hidden;
   color-scheme: light dark;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-  background: var(--page-overlay);
+  background: var(--obsidian);
 }
 
-.root::before {
-  content: "";
-  position: fixed;
-  inset: -12px;
-  z-index: -2;
-  background: url('/media1.jpg') 58% center / cover no-repeat;
-  opacity: .26;
-  filter: blur(3px);
-  transform: scale(1.04);
-}
+.root::before,
+.root::after { content: none; }
 
-.root::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 78% 8%, var(--primary-a06), transparent 32%),
-    linear-gradient(115deg, var(--page-overlay), var(--page-overlay) 58%, var(--page-overlay));
-}
-
-.layout { min-height: 100dvh; display: flex; align-items: flex-start; overflow-x: clip; overflow-y: visible; }
-.sidebar {
-  width: var(--dashboard-sidebar);
+.layout {
   height: 100dvh;
-  flex: 0 0 var(--dashboard-sidebar);
-  position: sticky;
-  top: 0;
+  max-height: 100dvh;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  gap: 12px;
+}
+
+.workspaceColumn {
+  min-width: 0;
+  height: 100dvh;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border);
-  background: var(--modal-surface);
-  backdrop-filter: blur(30px) saturate(150%);
-  box-shadow: 18px 0 54px rgba(var(--black-rgb), .20);
+  overflow: hidden;
 }
 
-.sidebarHeader { padding: 10px 10px 7px; border-bottom: 1px solid var(--border); }
-.brand { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 9px; }
-.brandLogo { width: auto; height: 36px; max-width: 210px; object-fit: contain; }
+.topbar {
+  min-height: 58px;
+  flex: 0 0 58px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px var(--page-gutter) 6px 0;
+}
+
+.topbarAccount {
+  width: fit-content;
+  position: relative;
+  z-index: 45;
+}
+
+.sidebar {
+  width: var(--dashboard-sidebar);
+  height: calc(100dvh - 20px);
+  margin: 10px 0 10px 10px;
+  flex: 0 0 var(--dashboard-sidebar);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.sidebarHeader { padding: 14px 12px 10px; border-bottom: 1px solid var(--border); }
+.brand { min-height: 34px; display: flex; align-items: center; gap: 9px; }
+.brandLogo { width: min(100%, 198px); height: auto; max-height: 32px; object-fit: contain; object-position: left center; }
 .workspace { margin-top: 4px; color: var(--text-faint); font-size: var(--font-size-caption-2-lg); font-weight: 600; }
-.account { margin-top: 7px; }
-.nav { flex: 1; min-height: 0; overflow-y: auto; padding: 7px 6px 10px; scrollbar-width: thin; }
+.nav { flex: 1; min-height: 0; overflow-y: auto; padding: 7px 8px 10px; scrollbar-width: thin; }
 .section + .section { margin-top: 8px; }
 .sectionLabel { margin: 0 8px 4px; color: var(--text-muted); font-size: var(--font-size-mini-lg); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .navList { display: flex; flex-direction: column; gap: 2px; }
-.footer { padding: 6px; border-top: 1px solid var(--border); }
-.publicLink { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--fill-secondary); color: var(--text-muted); font-size: var(--font-size-body-sm); font-weight: 600; text-decoration: none; }
+.footer { padding: 8px; border-top: 1px solid var(--border); }
+.publicLink { min-height: 42px; display: flex; align-items: center; gap: 9px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--fill-secondary); color: var(--text-muted); font-size: var(--font-size-body-sm); font-weight: 600; text-decoration: none; }
 .main {
   flex: 1;
   min-width: 0;
-  min-height: 100dvh;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-sizing: border-box;
-  width: min(100%, calc(100vw - var(--dashboard-sidebar)));
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 8px var(--page-gutter) 24px;
+  padding: 0 var(--page-gutter) 24px 0;
+  scrollbar-width: thin;
 }
-.mainFull { height: 100dvh; min-height: 0; padding: 0; overflow: hidden; }
+.mainFull { height: auto; min-height: 0; padding: 0; overflow: hidden; }
 
 .mobileBar { display: none; position: fixed; top: 12px; left: 12px; z-index: 50; }
 .mobileBar button { width: 40px; height: 40px; min-height: 40px !important; background: var(--modal-surface) !important; backdrop-filter: blur(24px); }
 .mobileDrawer { display: none; position: fixed; inset: 60px 7px 7px; z-index: 49; overflow-y: auto; padding: 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--modal-surface); backdrop-filter: blur(30px) saturate(160%); box-shadow: 0 28px 80px rgba(var(--black-rgb), .32); }
-.mobileAccount { margin-bottom: 10px; padding: 4px 4px 11px; border-bottom: 1px solid var(--border); }
 .drawerBackdrop { display: none !important; position: fixed; inset: 0; z-index: 48; width: 100%; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: rgba(var(--black-rgb), .48) !important; backdrop-filter: blur(4px); }
 
 .main > * {
@@ -116,10 +134,14 @@
 .root :global(.lb-loading-panel) { border-color: var(--border) !important; border-radius: var(--radius-card) !important; background: var(--card-bg) !important; backdrop-filter: blur(22px) saturate(130%); box-shadow: 0 12px 32px rgba(var(--black-rgb), .12) !important; }
 
 @media (max-width: 1099px) {
+  .root { height: auto; max-height: none; overflow: visible; }
+  .layout { height: auto; max-height: none; overflow: visible; display: block; }
   .sidebar { display: none; }
+  .workspaceColumn { height: auto; min-height: 100dvh; overflow: visible; }
+  .topbar { min-height: 0; position: fixed; top: 11px; right: var(--page-gutter); z-index: 50; padding: 0; }
   .mobileBar { display: flex; }
   .mobileDrawer, .drawerBackdrop { display: block !important; }
-  .main { min-height: 100dvh; width: 100%; padding: 56px var(--page-gutter) 25px; }
+  .main { height: auto; max-height: none; overflow: visible; min-height: 100dvh; width: 100%; padding: 56px var(--page-gutter) 25px; }
   .mainFull { height: 100dvh; min-height: 0; padding: 0; }
 }
 

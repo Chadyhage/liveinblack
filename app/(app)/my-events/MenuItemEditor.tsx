@@ -71,7 +71,7 @@ function Toggle({ value, onChange, disabled = false }: { value: boolean; onChang
         width: 40,
         height: 22,
         borderRadius: 12,
-        background: value ? 'var(--teal)' : 'var(--surface-2)',
+        background: value ? 'var(--primary)' : 'var(--surface-2)',
         position: 'relative',
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'background 0.2s',
@@ -134,7 +134,7 @@ export default function MenuItemEditor({ item, index, currency, placeTypes, disa
   return (
     <Card style={{ boxShadow: CARD_SHADOW, padding: 12, marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 10, opacity: disabled ? 0.55 : 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif' }}>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif' }}>
           Article {index + 1}
         </p>
         {onRemove && (

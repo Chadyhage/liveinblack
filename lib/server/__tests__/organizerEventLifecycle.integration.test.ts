@@ -1,16 +1,9 @@
 // Tests d'INTÉGRATION (vraie base MongoDB) pour annuler/reporter/supprimer un
 // événement organisateur (#7 phase organisateur —
-// lib/server/organizerEventLifecycle.ts). Le remboursement Stripe réel est
-// mocké (aucune clé de test configurée dans cet environnement — voir
-// applications.integration.test.ts pour la même convention avec Cloudinary) ;
-// le chemin FedaPay (recordFedapayRefund) ne fait, lui, AUCUN appel réseau —
-// testé pour de vrai contre la base.
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+// lib/server/organizerEventLifecycle.ts). Le nouveau parcours crée des
+// RefundCase internes ; aucun remboursement prestataire n'est déclenché ici.
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-
-vi.mock('../events/eventRefunds', () => ({
-  refundStripeOrder: vi.fn(async () => ({ ok: true })),
-}))
 
 import { cancelOrganizerEvent, postponeOrganizerEvent, deleteOrganizerEvent } from '../organizer/organizerEventLifecycle'
 import { createOrganizerEvent } from '../organizer/organizerEvents'
@@ -21,7 +14,8 @@ import Ticket from '@/lib/models/Ticket'
 import ResaleListing from '@/lib/models/ResaleListing'
 import EventStaff from '@/lib/models/EventStaff'
 import PromoCode from '@/lib/models/PromoCode'
-import EventRefund from '@/lib/models/EventRefund'
+import RefundCase from '@/lib/models/RefundCase'
+import RefundPoint from '@/lib/models/RefundPoint'
 import Boost from '@/lib/models/Boost'
 import BoostSlot from '@/lib/models/BoostSlot'
 import OrganizerProfile from '@/lib/models/OrganizerProfile'
@@ -49,7 +43,9 @@ beforeEach(async () => {
   await ResaleListing.deleteMany({})
   await EventStaff.deleteMany({})
   await PromoCode.deleteMany({})
-  await EventRefund.deleteMany({})
+  await RefundCase.deleteMany({})
+  await RefundPoint.deleteMany({})
+  await RefundPoint.create({ name: 'Point Cotonou', address: 'Rue 1, Cotonou', city: 'Cotonou', agentIds: ['agent-1'] })
   await Boost.deleteMany({})
   await BoostSlot.deleteMany({})
   await OrganizerProfile.deleteMany({})
@@ -59,7 +55,7 @@ async function seedEvent(ownerId = 'org-1') {
   const result = await createOrganizerEvent(
     { id: ownerId },
     'Organisateur Test',
-    { name: 'Soirée Test', date: '2026-12-31', city: 'Lomé', region: 'Togo', places: [{ id: '', type: 'Standard', price: 20, total: 100 }] }
+    { name: 'Soirée Test', date: '2026-12-31', city: 'Cotonou', region: 'Bénin', currency: 'XOF', places: [{ id: '', type: 'Standard', price: 10000, total: 100 }] }
   )
   if (!result.ok) throw new Error('seed failed')
   return result.eventId
@@ -96,22 +92,24 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       expect(doc?.cancellationMessage).toBe('Premier message')
     })
 
-    it('ne repasse pas dans le remboursement lorsqu’une trace EventRefund existe déjà', async () => {
+    it('ne crée pas deux dossiers pour la même commande et la même cause', async () => {
       const eventId = await seedEvent()
       const doc = await Event.findById(eventId).lean()
       const placeId = doc!.places[0].id
-      await Order.create({
+      const order = await Order.create({
         userId: 'buyer-idempotent', eventId, placeId, placeType: 'Standard', qty: 1,
-        unitPriceMinor: 2000, currency: 'XOF', rail: 'fedapay', status: 'paid',
+        unitPriceMinor: 10000, feeMinor: 500, currency: 'XOF', rail: 'fedapay', status: 'paid',
         fedapayTxnId: 'txn-idempotent', expiresAt: new Date(Date.now() + 3600_000),
       })
-      await EventRefund.create({ eventId, paymentRef: 'txn-idempotent', rail: 'fedapay', status: 'pending_manual', amountMinor: 2000, currency: 'XOF' })
 
-      const result = await cancelOrganizerEvent({ id: 'org-1' }, eventId, 'Annulé')
-      expect(result).toEqual({ ok: true, refundedCount: 0, refundFailedCount: 0 })
+      const first = await cancelOrganizerEvent({ id: 'org-1' }, eventId, 'Annulé')
+      const second = await cancelOrganizerEvent({ id: 'org-1' }, eventId, 'Annulé encore')
+      expect(first.ok).toBe(true)
+      expect(second.ok).toBe(true)
+      expect(await RefundCase.countDocuments({ orderId: String(order._id), cause: 'event_cancelled' })).toBe(1)
     })
 
-    it('rembourse chaque commande payée (Stripe mocké, FedaPay réel) et compte succès/échecs', async () => {
+    it('crée un dossier de retrait pour chaque commande XOF payée', async () => {
       const eventId = await seedEvent()
       const doc = await Event.findById(eventId).lean()
       const placeId = doc!.places[0].id
@@ -122,8 +120,8 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
           rail: 'fedapay', status: 'paid', fedapayTxnId: 'txn-1', expiresAt: new Date(Date.now() + 3600_000),
         },
         {
-          userId: 'buyer-2', eventId, placeId, placeType: 'Standard', qty: 1, unitPriceMinor: 2500, currency: 'EUR',
-          rail: 'stripe', status: 'paid', stripeSessionId: 'cs_test_1', expiresAt: new Date(Date.now() + 3600_000),
+          userId: 'buyer-2', eventId, placeId, placeType: 'Standard', qty: 1, unitPriceMinor: 2500, currency: 'XOF',
+          rail: 'fedapay', status: 'paid', fedapayTxnId: 'txn-2', expiresAt: new Date(Date.now() + 3600_000),
         },
         // Commande non payée : ne doit PAS être remboursée.
         {
@@ -138,8 +136,9 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       expect(result.refundedCount).toBe(2)
       expect(result.refundFailedCount).toBe(0)
 
-      const fedapayRefund = await EventRefund.findOne({ eventId, paymentRef: 'txn-1' }).lean()
-      expect(fedapayRefund?.status).toBe('pending_manual')
+      const refunds = await RefundCase.find({ eventId, cause: 'event_cancelled' }).select('+codeHash').lean()
+      expect(refunds).toHaveLength(2)
+      expect(refunds.every((refund) => refund.status === 'code_active' && refund.codeHash)).toBe(true)
     })
 
     it('un billet revendu : rembourse uniquement le dernier acheteur, jamais l\'acheteur d\'origine', async () => {
@@ -163,7 +162,6 @@ describeIntegration('organizerEventLifecycle (intégration, vraie base) — canc
       if (!listResult.ok) throw new Error('setup failed')
       const initResult = await initiateResaleOrder({ id: 'resale-buyer' }, String(listResult.listing._id), 'stripe')
       if (!initResult.ok) throw new Error('setup failed')
-      // Une commande Stripe a besoin d'un stripeSessionId pour être remboursable (refundStripeOrder mocké ici, mais le champ doit être présent).
       await Order.updateOne({ _id: initResult.order._id }, { $set: { stripeSessionId: 'cs_resale_2' } })
       const fulfillResult = await fulfillResaleOrder(String(initResult.order._id))
       expect(fulfillResult.status).toBe('ok')

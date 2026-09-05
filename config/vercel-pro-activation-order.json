@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Ordre recommande pour fermer les portes live et atteindre une utilisation Vercel Pro 100% utile.",
+  "principle": "Activer d'abord ce qui augmente la visibilite sans risque produit, puis les protections, puis les exports sensibles, puis les migrations durables.",
+  "steps": [
+    {
+      "rank": 1,
+      "gateKey": "account-webhook-live",
+      "label": "Creer le webhook Vercel Account",
+      "owner": "tech",
+      "automationLevel": "safe-apply-after-review",
+      "whyFirst": "Ajoute de la visibilite sur les deployments sans exporter tous les logs runtime.",
+      "preflight": "audit:vercel-webhooks puis confirmation du domaine production.",
+      "commandOrPlace": "npm run ops:vercel:webhooks:setup -- --apply",
+      "doneWhen": "audit:vercel-live voit /api/ops/vercel-events et /agent/vercel indique le secret configure."
+    },
+    {
+      "rank": 2,
+      "gateKey": "spend-management-dashboard",
+      "label": "Finaliser Spend Management",
+      "owner": "owner-billing",
+      "automationLevel": "manual-dashboard-action",
+      "whyFirst": "Controle le risque de cout avant d'augmenter logs, drains, trafic ou workloads.",
+      "preflight": "audit:vercel-spend et choix du plafond mensuel.",
+      "commandOrPlace": "Vercel Dashboard > Team Settings > Billing > Spend Management",
+      "doneWhen": "Budget, alertes, webhook /api/ops/vercel-spend et secret VERCEL_SPEND_WEBHOOK_SECRET sont configures."
+    },
+    {
+      "rank": 3,
+      "gateKey": "firewall-publish",
+      "label": "Publier les regles Firewall observees",
+      "owner": "tech",
+      "automationLevel": "manual-live-action",
+      "whyFirst": "Reduit la pression sur checkout, auth, search et webhooks apres avoir observe les faux positifs.",
+      "preflight": "audit:vercel-firewall, audit:vercel-live et revue du dashboard Firewall Traffic.",
+      "commandOrPlace": "vercel firewall diff puis vercel firewall publish --yes",
+      "doneWhen": "Les 5 regles attendues sont publiees et aucun endpoint critique legitime n'est bloque."
+    },
+    {
+      "rank": 4,
+      "gateKey": "log-drain-live",
+      "label": "Activer Log Drain si l'equipe accepte l'export",
+      "owner": "tech-owner",
+      "automationLevel": "requires-explicit-approval",
+      "whyFirst": "Complete l'observabilite apres controles cout/securite, mais exporte des donnees sensibles potentielles.",
+      "preflight": "audit:vercel-drain et accord explicite sur destination, retention et responsabilite.",
+      "commandOrPlace": "npm run ops:vercel:drain:setup -- --apply",
+      "doneWhen": "Vercel liste le drain production, DRAIN_SECRET est configure et /agent/vercel voit les signaux drain."
+    },
+    {
+      "rank": 5,
+      "gateKey": "workflow-first-migration",
+      "label": "Migrer resale-expiry vers Workflow",
+      "owner": "tech",
+      "automationLevel": "implementation-action",
+      "whyFirst": "Exploite la durabilite/retry Pro sur un cron frequent avant les flux financiers plus sensibles.",
+      "preflight": "audit:vercel-workflows et revue idempotence/rollback.",
+      "commandOrPlace": "Implementation code: cron declencheur conserve, workflow durable, steps idempotentes.",
+      "doneWhen": "resale-expiry tourne via workflow, garde runVercelCron, expose logs/erreurs et peut revenir au chemin precedent."
+    }
+  ]
+}

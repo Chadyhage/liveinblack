@@ -120,7 +120,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         videoUrl: src.videoUrl,
         color: src.color,
         accentColor: src.accentColor,
-        places: src.places.map((p: { type: string; price: number; total: number; icon: string; maxPerAccount: number; groupType: string; groupMin: number; groupMax: number; photos: string[]; included: { name: string; qty: number }[] }) => ({
+        places: src.places.map((p: { type: string; price: number; total: number; icon: string; maxPerAccount: number; groupType: string; groupMin: number; groupMax: number; cancellationOptionEnabled?: boolean; photos: string[]; included: { name: string; qty: number }[] }) => ({
           id: '',
           type: p.type,
           price: p.price,
@@ -130,6 +130,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           groupType: p.groupType,
           groupMin: p.groupMin,
           groupMax: p.groupMax,
+          cancellationOptionEnabled: Boolean(p.cancellationOptionEnabled),
           photos: p.photos,
           included: p.included,
         })),
@@ -221,7 +222,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
             borderRadius: 12,
             border: `1px solid ${message.type === 'success' ? 'var(--primary-a20)' : 'var(--danger)'}`,
             background: 'var(--surface)',
-            color: message.type === 'success' ? 'var(--teal)' : 'var(--pink)',
+            color: message.type === 'success' ? 'var(--primary)' : 'var(--danger)',
             fontSize: 'var(--font-size-callout)',
           }}
         >
@@ -244,11 +245,26 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
         </div>
       )}
 
+      {!initialMomos.bj && (
+        <div style={{ padding: '16px 18px', marginBottom: 16, borderRadius: 14, border: '1px solid var(--danger-border)', background: 'var(--surface)', color: 'var(--text-muted)' }}>
+          <p style={{ font: '700 14px var(--font-open-sans)', color: 'var(--danger)', margin: '0 0 6px' }}>Compte de paiement Bénin requis</p>
+          <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.6, margin: '0 0 12px' }}>
+            Pour publier un événement du lancement Bénin, ajoute d’abord ton compte Mobile Money Bénin dans l’espace encaissements.
+          </p>
+          <Link
+            href="/organizer-studio?tab=paiements"
+            style={{ minHeight: 38, display: 'inline-flex', alignItems: 'center', padding: '8px 14px', borderRadius: 3, background: 'var(--gold)', color: 'var(--obsidian)', fontWeight: 600, fontSize: 'var(--font-size-footnote)', textDecoration: 'none' }}
+          >
+            Configurer mon encaissement
+          </Link>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 16, marginBottom: 28 }}>
         <Button
           variant="ghost"
           onClick={startCreate}
-          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--primary-a04)', background: 'linear-gradient(135deg,var(--primary-a14),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
+          style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', cursor: 'pointer', display: 'block', fontWeight: 400, boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
         >
           <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 10px' }}>Nouveau</p>
           <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>Créer un événement</p>
@@ -258,7 +274,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           href="/organizer-studio"
           style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
         >
-          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Audience</p>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 10px' }}>Audience</p>
           <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>Ma page publique</p>
           <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Présente ton univers et configure tes encaissements.</p>
         </Link>
@@ -266,7 +282,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
           href="/my-shifts"
           style={{ minHeight: 64, textAlign: 'left', padding: 9, borderRadius: 14, border: '1px solid var(--border-strong)', background: 'linear-gradient(180deg,var(--surface-2),var(--surface))', textDecoration: 'none', display: 'block', boxShadow: '0 12px 28px rgba(var(--black-rgb), .16)' }}
         >
-          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--teal)', margin: '0 0 10px' }}>Entrée</p>
+          <p style={{ fontSize: 'var(--font-size-footnote-lg)', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--primary)', margin: '0 0 10px' }}>Entrée</p>
           <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>Scanner les billets</p>
           <p style={{ fontSize: 'var(--font-size-callout)', lineHeight: 1.42, color: 'var(--text-muted)', margin: 0 }}>Contrôle les QR codes et suis les entrées en direct.</p>
         </Link>
@@ -275,7 +291,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
       <OrganizerAnalytics events={events} />
 
       <section style={{ marginBottom: 28 }}>
-        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>
           Mes soirées en cours
         </p>
         {upcomingEvents.length === 0 ? (
@@ -295,7 +311,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {cancelledEvents.length > 0 && (
         <section style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Annulés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {cancelledEvents.map((event) => (
               <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
@@ -326,7 +342,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
 
       {pastEvents.length > 0 && (
         <section>
-          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
+          <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, letterSpacing: '3.2px', textTransform: 'uppercase', color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', margin: '0 0 12px' }}>Événements passés</p>
           <div style={{ display: 'grid', gap: 10 }}>
             {pagedPastEvents.map((event) => (
               <Card key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
@@ -344,7 +360,7 @@ export default function MesEvenementsClient({ initialEvents, initialStripeCharge
                 <Link
                   href={`/my-events/${event.id}/statistiques`}
                   aria-label="Statistiques"
-                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', color: 'var(--teal)', display: 'grid', placeItems: 'center' }}
+                  style={{ padding: 8, borderRadius: 8, border: '1px solid var(--border)', color: 'var(--primary)', display: 'grid', placeItems: 'center' }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 20V10m8 10V4m8 16v-7" />

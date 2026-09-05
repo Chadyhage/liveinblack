@@ -12,7 +12,7 @@ export interface PlaylistSong {
 
 export const STATUS_BADGE: Record<PlaylistSong['status'], { label: string; color: string } | null> = {
   pending: null,
-  validated: { label: 'Validé', color: 'var(--teal)' },
+  validated: { label: 'Validé', color: 'var(--primary)' },
   refused: { label: 'Refusé par le DJ', color: 'var(--pink)' },
   played: { label: 'Joué', color: 'var(--violet)' },
 }

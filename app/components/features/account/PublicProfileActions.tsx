@@ -95,7 +95,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
             />
             <Label htmlFor="profile-report-details" style={{ ...label, marginTop: 12 }}>Précisions facultatives</Label>
             <Textarea id="profile-report-details" value={details} onChange={(event) => setDetails(event.target.value)} maxLength={850} rows={4} style={input} />
-            {status && <p role="status" style={{ color: status.startsWith('Merci') ? 'var(--teal)' : 'var(--pink)', fontSize: 'var(--font-size-footnote)' }}>{status}</p>}
+            {status && <p role="status" style={{ color: status.startsWith('Merci') ? 'var(--primary)' : 'var(--pink)', fontSize: 'var(--font-size-footnote)' }}>{status}</p>}
             <div style={{ display: 'flex', gap: 9, marginTop: 16 }}><Button type="button" variant="secondary" onClick={() => setReportOpen(false)} style={{ ...secondary, flex: 1 }}>Fermer</Button><Button type="submit" disabled={busy} style={{ ...primary, flex: 1 }}>{busy ? 'Envoi…' : 'Envoyer'}</Button></div>
           </form>
         </Modal>
@@ -104,7 +104,7 @@ export default function PublicProfileActions({ targetUserId, displayName, isAuth
   )
 }
 
-const primary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: 0, background: 'var(--teal-solid)', color: 'var(--primary-ink)', fontWeight: 800, cursor: 'pointer' }
-const secondary: React.CSSProperties = { padding: '10px 15px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontWeight: 700, cursor: 'pointer' }
+const primary: React.CSSProperties = { minHeight: 40, padding: '8px 14px', borderRadius: 'var(--radius-control)', border: 0, background: 'var(--primary)', color: 'var(--primary-ink)', fontSize: 'var(--font-size-body-sm)', fontWeight: 500, cursor: 'pointer' }
+const secondary: React.CSSProperties = { minHeight: 40, padding: '8px 14px', borderRadius: 'var(--radius-control)', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', fontWeight: 500, cursor: 'pointer' }
 const label: React.CSSProperties = { display: 'block', fontSize: 'var(--font-size-footnote)', color: 'var(--text-muted)', marginBottom: 6 }
 const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 12px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--obsidian)', color: 'var(--text)' }

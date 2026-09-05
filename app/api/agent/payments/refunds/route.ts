@@ -7,6 +7,6 @@ export async function GET() {
   const session = await auth()
   if (!requireAgent(session?.user)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
-  const refunds = await listRefundAlertsForAgent()
+  const refunds = await listRefundAlertsForAgent({ id: session!.user!.id })
   return NextResponse.json({ ok: true, refunds })
 }

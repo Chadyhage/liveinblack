@@ -9,6 +9,7 @@ import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
 import { fulfillOrder } from '@/lib/server/payments/fulfillOrder'
 import { createTransaction, createToken, getTransaction, isFedapayConfigured } from '@/lib/server/payments/fedapayClient'
+import { fedapayMarketplaceCommissions, sellerShareForOrder } from '@/lib/server/payments/fedapayMarketplace'
 
 // Remplace la branche `action:'checkout'` de api/fedapay.js (rail XOF, mobile
 // money). Miroir de /api/checkout (Stripe) — mêmes corrections (C07 : les
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
   await getDb()
   const event = await Event.findById(eventId).lean()
   if (!event) return NextResponse.json({ error: 'event_not_found' }, { status: 404 })
-  if (event.currency !== 'XOF') return NextResponse.json({ error: 'wrong_rail_use_stripe' }, { status: 400 })
+  if (event.currency !== 'XOF') return NextResponse.json({ error: 'benin_xof_launch_scope_required' }, { status: 400 })
 
   const orderResult = await createOrder({
     userId: session.user.id,
@@ -70,6 +71,12 @@ export async function POST(req: Request) {
   const seatCount = isTable ? 1 : qty
   const preorderTotal = order.preorders.reduce((s, p) => s + p.price * p.qty, 0)
   const amountTotal = order.unitPriceMinor * seatCount + preorderTotal + order.feeMinor + order.cancellationProtectionFeeMinor
+  const sellerShare = sellerShareForOrder({
+    unitPriceMinor: order.unitPriceMinor,
+    seatCount,
+    preorderTotalMinor: preorderTotal,
+    cancellationProtectionFeeMinor: order.cancellationProtectionFeeMinor,
+  })
 
   if (amountTotal <= 0) {
     await releaseOrder(orderId, session.user.id)
@@ -78,6 +85,10 @@ export async function POST(req: Request) {
   if (amountTotal < MIN_XOF) {
     await releaseOrder(orderId, session.user.id)
     return NextResponse.json({ error: 'amount_below_minimum' }, { status: 400 })
+  }
+  if (order.sellerUid && !order.fedapaySubAccountReference && process.env.NODE_ENV === 'production') {
+    await releaseOrder(orderId, session.user.id)
+    return NextResponse.json({ error: 'fedapay_marketplace_account_required' }, { status: 409 })
   }
 
   if (!isFedapayConfigured() && process.env.NODE_ENV !== 'production') {
@@ -106,6 +117,7 @@ export async function POST(req: Request) {
       customer: session.user.email ? { email: session.user.email } : null,
       metadata: { orderId },
       reference: orderId,
+      subAccountsCommissions: fedapayMarketplaceCommissions(order.fedapaySubAccountReference, sellerShare),
     })
     const tok = await createToken(txn.id)
 

@@ -19,6 +19,7 @@ import {
   assignStablePlaceIds,
   normalizeMenuItems,
   placeConsumed,
+  parseBeninLocalDateTime,
   RECAP_WINDOW_END_MS,
   shouldSendEventRecap,
   toEventDates,
@@ -70,6 +71,7 @@ export interface PlaceInput {
   groupType?: 'solo' | 'group'
   groupMin?: number
   groupMax?: number
+  cancellationOptionEnabled?: boolean
   photos?: string[]
   included?: { name: string; qty: number }[]
 }
@@ -125,6 +127,7 @@ export interface EventFormInput {
   minAge?: number
   publishAt?: string | null
   closingDate?: string | null
+  currency?: 'EUR' | 'XOF'
 }
 
 export interface OrganizerEventView {
@@ -162,6 +165,7 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
   if (!input.region?.trim()) return { ok: false, status: 400, error: 'region_required' }
 
   const region = getRegionByName(input.region)
+  if (region.id !== 'benin') return { ok: false, status: 400, error: 'benin_launch_region_required' }
   const currency = regionToCurrency(region.name)
 
   const placesError = validatePlaces(input.places || [])
@@ -181,17 +185,17 @@ export async function createOrganizerEvent(caller: OrganizerEventCaller, callerN
     dateDisplay: input.dateDisplay || toEventDates(input.date),
     time: input.time || '22:00',
     endTime: input.endTime || '05:00',
-    publishAt: input.publishAt ? new Date(input.publishAt) : null,
+    publishAt: input.publishAt ? parseBeninLocalDateTime(input.publishAt) : null,
     publishedAt: input.publishAt ? null : new Date(),
-    closingDate: input.closingDate ? new Date(input.closingDate) : null,
+    closingDate: input.closingDate ? parseBeninLocalDateTime(input.closingDate) : null,
     location: input.location || '',
     city: input.city.trim(),
     region: region.name,
     currency,
     imageUrl: input.imageUrl || null,
     videoUrl: input.videoUrl || null,
-    color: input.color || '#c8a96e',
-    accentColor: input.accentColor || '#e8d49e',
+    color: '#2a2a2f',
+    accentColor: '#f53d8d',
     places,
     playlist: Boolean(input.playlist),
     preorder: Boolean(input.preorder),
@@ -271,14 +275,14 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
   if (input.artists !== undefined) event.artists = input.artists as typeof event.artists
   if (input.dj !== undefined) event.dj = input.dj
   if (input.performers !== undefined) event.performers = input.performers
-  if (input.closingDate !== undefined) event.closingDate = input.closingDate ? new Date(input.closingDate) : null
+  if (input.closingDate !== undefined) event.closingDate = input.closingDate ? parseBeninLocalDateTime(input.closingDate) : null
   if (input.subtitle !== undefined) event.subtitle = input.subtitle
   if (input.category !== undefined) event.category = input.category
   if (input.tags !== undefined) event.tags = input.tags
   if (input.musicStyles !== undefined) event.musicStyles = input.musicStyles
   if (input.ambiances !== undefined) event.ambiances = input.ambiances
-  if (input.color !== undefined) event.color = input.color
-  if (input.accentColor !== undefined) event.accentColor = input.accentColor
+  event.color = '#2a2a2f'
+  event.accentColor = '#f53d8d'
 
   // Champs verrouillés dès la première vente — ignorés silencieusement (pas
   // d'erreur) si `locked`, exactement fidèle à la désactivation visuelle du
@@ -336,6 +340,7 @@ export async function updateOrganizerEvent(caller: OrganizerEventCaller, eventId
           available: (existing.available ?? 0) + delta,
           photos: incoming.photos ?? existing.photos,
           included: incoming.included ?? existing.included,
+          cancellationOptionEnabled: Boolean(incoming.cancellationOptionEnabled),
         }
       }
       return { ...incoming }
@@ -419,6 +424,7 @@ export interface OrganizerEventDetailPlace {
   groupType: 'solo' | 'group'
   groupMin: number
   groupMax: number
+  cancellationOptionEnabled: boolean
   photos: string[]
   included: { name: string; qty: number }[]
 }
@@ -499,8 +505,8 @@ export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, ev
       currency: eventCurrency(event),
       imageUrl: event.imageUrl ?? null,
       videoUrl: event.videoUrl ?? null,
-      color: event.color ?? '#c8a96e',
-      accentColor: event.accentColor ?? '#e8d49e',
+      color: event.color ?? '#2a2a2f',
+      accentColor: event.accentColor ?? '#f53d8d',
       places: (event.places || []).map((p) => ({
         id: p.id,
         type: p.type,
@@ -513,6 +519,7 @@ export async function getMyOrganizerEventDetail(caller: OrganizerEventCaller, ev
         groupType: (p.groupType as 'solo' | 'group') ?? 'solo',
         groupMin: p.groupMin ?? 0,
         groupMax: p.groupMax ?? 0,
+        cancellationOptionEnabled: Boolean(p.cancellationOptionEnabled),
         photos: p.photos ?? [],
         included: p.included ?? [],
       })),

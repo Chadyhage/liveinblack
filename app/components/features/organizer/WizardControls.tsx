@@ -78,6 +78,6 @@ export function NumberInputField({ label, value, onChange, placeholder, error, s
   )
 }
 
-export function Pill({ label, active, onClick, disabled = false, accent = 'var(--teal)' }: { label: string; active: boolean; onClick: () => void; disabled?: boolean; accent?: string }) {
+export function Pill({ label, active, onClick, disabled = false, accent = 'var(--primary)' }: { label: string; active: boolean; onClick: () => void; disabled?: boolean; accent?: string }) {
   return <Button variant="ghost" onClick={onClick} disabled={disabled} title={disabled ? 'Verrouillé — billets déjà vendus' : undefined} style={{ padding: '8px 12px', borderRadius: 5, opacity: disabled ? 0.35 : 1, border: active ? `1px solid ${accent}` : '1px solid var(--border)', background: active ? `${accent}22` : 'transparent', color: active ? accent : 'var(--text-faint)', fontSize: 'var(--font-size-caption)', fontWeight: 800 }}>{label}</Button>
 }

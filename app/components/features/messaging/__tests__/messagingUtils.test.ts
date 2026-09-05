@@ -60,8 +60,8 @@ describe('messagingUtils', () => {
         { userId: 'me', name: 'Moi', role: 'member' },
         { userId: 'u2', name: 'Awa', role: 'member' },
       ],
-    } as ConversationView
-    const groupConversation = { type: 'group', name: 'Staff VIP', members: [] } as ConversationView
+    } as unknown as ConversationView
+    const groupConversation = { type: 'group', name: 'Staff VIP', members: [] } as unknown as ConversationView
 
     expect(conversationLabel(directConversation, 'me')).toBe('Awa')
     expect(conversationLabel(groupConversation, 'me')).toBe('Staff VIP')

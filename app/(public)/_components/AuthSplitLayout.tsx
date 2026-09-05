@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from './AuthSplitLayout.module.css'
 
-const HERO_IMG = '/images/live-in-black/auth/auth-client-login-entrance.png'
+const HERO_IMG = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80'
 
 export default function AuthSplitLayout({ children, tagline, heroImage, wide = false }: { children: ReactNode; tagline?: ReactNode; heroImage?: string; wide?: boolean }) {
   return (
@@ -14,20 +14,19 @@ export default function AuthSplitLayout({ children, tagline, heroImage, wide = f
         </div>
         <div className={styles.overlay} />
         <Link href="/home" className={styles.brand} aria-label="Live in Black — accueil">
-          <Image src="/branding/liveinblack-logo-horizontal.png" alt="LIVEINBLACK" width={614} height={217} className={styles.brandLogo} priority />
+          <Image src="/branding/liveinblack-logo-header.png" alt="LIVEINBLACK" width={1876} height={285} className={styles.brandLogo} priority />
         </Link>
         <div className={styles.story}>
           <span className={styles.eyebrow}>LIVE IN BLACK</span>
-          <p className="font-display">{tagline || <>Toute la scène.<br /><span>Une seule expérience.</span></>}</p>
-          <div className={styles.trust}>
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>
-            <span>Accès sécurisé et données protégées</span>
-          </div>
+          <p>{tagline || <>Toute la scène.<br /><span>Une seule expérience.</span></>}</p>
         </div>
       </aside>
 
       <section className={`lb-auth-split__form ${styles.form}`}>
         <div className={styles.topbar}>
+          <Link href="/home" className={styles.mobileBrand} aria-label="LIVEINBLACK — accueil">
+            <Image src="/branding/liveinblack-logo-header.png" alt="LIVEINBLACK" width={1876} height={285} className={styles.mobileBrandLogo} priority />
+          </Link>
           <Link href="/home" className={styles.back}>
             <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
             Retour au site

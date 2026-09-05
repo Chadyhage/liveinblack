@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Lister les dernieres portes live a fermer pour pouvoir dire que Vercel Pro est utilise a 100% utile sur ce projet.",
+  "principle": "Une brique preparee localement ne devient active que si son etat live/dashboard est prouve ou si elle est explicitement rejetee.",
+  "gates": [
+    {
+      "key": "firewall-publish",
+      "label": "Publier le Firewall apres observation",
+      "decisionKey": "firewall-waf",
+      "status": "manual-live-action",
+      "evidenceRequired": "vercel firewall diff ne montre que les 5 regles attendues, le dashboard Firewall Traffic confirme l'absence de faux positifs, puis les regles sont publiees.",
+      "safeNextAction": "Garder les regles en log quelques jours, verifier les hits reels, puis publier humainement si le bruit est propre.",
+      "riskIfForced": "Une regle trop large peut bloquer checkout, auth, search ou webhooks."
+    },
+    {
+      "key": "spend-management-dashboard",
+      "label": "Activer Spend Management dans Billing",
+      "decisionKey": "spend-management",
+      "status": "manual-dashboard-action",
+      "evidenceRequired": "Budget mensuel, notifications 50/75/100, endpoint /api/ops/vercel-spend et VERCEL_SPEND_WEBHOOK_SECRET sont visibles/configures dans Vercel.",
+      "safeNextAction": "Choisir le plafond mensuel avec Owner/Billing, configurer le webhook, laisser auto-maintenance a 0 au debut.",
+      "riskIfForced": "Un plafond mal choisi peut couper trop tot ou laisser les depenses deriver."
+    },
+    {
+      "key": "account-webhook-live",
+      "label": "Creer le webhook Vercel Account live",
+      "decisionKey": "account-webhooks",
+      "status": "safe-apply-after-review",
+      "evidenceRequired": "audit:vercel-live voit un webhook vers /api/ops/vercel-events et /agent/vercel indique le secret configure.",
+      "safeNextAction": "Relire audit:vercel-webhooks puis lancer npm run ops:vercel:webhooks:setup -- --apply si le domaine production est correct.",
+      "riskIfForced": "Un mauvais PUBLIC_SITE_URL peut envoyer les evenements vers un environnement non production."
+    },
+    {
+      "key": "log-drain-live",
+      "label": "Activer Log Drain apres accord explicite",
+      "decisionKey": "log-drain",
+      "status": "requires-explicit-approval",
+      "evidenceRequired": "Vercel liste un drain production, DRAIN_SECRET est configure, /agent/vercel recoit les signaux drain ou le test drain reussit.",
+      "safeNextAction": "Obtenir accord explicite sur l'export des logs runtime, puis choisir endpoint interne court terme ou outil externe.",
+      "riskIfForced": "Les logs runtime peuvent contenir des donnees operationnelles sensibles et sortir du dashboard Vercel."
+    },
+    {
+      "key": "workflow-first-migration",
+      "label": "Migrer un premier traitement durable",
+      "decisionKey": "workflows-queues",
+      "status": "implementation-action",
+      "evidenceRequired": "resale-expiry ou payouts utilise un workflow durable avec cron declencheur conserve, steps idempotentes, logs et rollback documente.",
+      "safeNextAction": "Commencer par resale-expiry, plus frequent et moins financier que payouts, puis observer avant la deuxieme migration.",
+      "riskIfForced": "Une migration sans idempotence peut doubler des mutations ou rendre un echec moins visible."
+    }
+  ]
+}

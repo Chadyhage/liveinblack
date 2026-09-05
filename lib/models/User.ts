@@ -122,6 +122,11 @@ const userSchema = new Schema(
     // ('tg','bj',...) — un organisateur peut vendre dans plusieurs zones XOF.
     payoutMomos: { type: Map, of: String, default: {} },
 
+    // Référence du sous-compte vendeur FedaPay Marketplace. Pour le lancement
+    // Bénin, elle est obligatoire avant publication afin que FedaPay répartisse
+    // immédiatement la part organisateur au paiement.
+    fedapaySubAccountReference: { type: String, default: null },
+
     // Comptes bloqués par CE compte — le blocage empêche l'envoi de messages
     // dans les deux sens, voir lib/server/messaging.ts.
     blockedUserIds: { type: [String], default: [] },

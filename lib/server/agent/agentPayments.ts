@@ -6,17 +6,23 @@ import OrganizerProfile from '@/lib/models/OrganizerProfile'
 import ProviderProfile from '@/lib/models/ProviderProfile'
 import Order from '@/lib/models/Order'
 import EventPayout from '@/lib/models/EventPayout'
-import EventRefund from '@/lib/models/EventRefund'
+import RefundCase from '@/lib/models/RefundCase'
+import RefundPoint from '@/lib/models/RefundPoint'
 import PayoutRequest from '@/lib/models/PayoutRequest'
 import SellerBalance from '@/lib/models/SellerBalance'
 import PaymentAlert from '@/lib/models/PaymentAlert'
+import { hashRefundPickupCode } from '@/lib/shared/refundPolicy'
+import type { RefundAuditContext } from '@/lib/server/refunds/refundCases'
+import { notifyUserById } from '@/lib/server/emails/notify'
+import { refundConfirmedEmail } from '@/lib/server/emails'
+import { fmtMoney } from '@/lib/shared/money'
 
 // Port de la couche de supervision agent des 3 onglets legacy 'reversements'
 // / 'remboursements' / 'paiements' (src/pages/AgentPage.jsx), fusionnés en un
 // seul panneau (#9 phase agent/admin, tâche #102). Toute la logique métier —
 // calcul des soldes, décrément atomique, garde anti double-versement — vit
-// déjà dans lib/server/{eventPayouts,eventRefunds,fedapayRefunds,organizerPayouts}.ts
-// et dans les modèles EventPayout/EventRefund/PayoutRequest/SellerBalance/
+// déjà dans lib/server/{eventPayouts,organizerPayouts,refundCases}.ts
+// et dans les modèles EventPayout/RefundCase/PayoutRequest/SellerBalance/
 // PaymentAlert. Ce module ne fait QUE lire ces sources de vérité existantes
 // et écrire les quelques transitions de statut qu'un agent humain doit
 // déclencher à la main : versement XOF auto en échec (filet, exact pendant
@@ -291,69 +297,198 @@ export async function markSellerBalancePaid(
   return result
 }
 
-// ──────────────────────── Remboursements FedaPay manuels ───────────────────
+// ──────────────────────── Retraits cash par code unique ───────────────────
 
 export interface AgentRefundAlertView {
   id: string
   eventId: string
   eventName: string
-  paymentRef: string
+  refundPointName: string
+  refundPointAddress: string
+  codeLast4: string
   amountXOF: number
   buyerEmail: string
   createdAt: string
 }
 
-export async function listRefundAlertsForAgent(): Promise<AgentRefundAlertView[]> {
+export async function listRefundAlertsForAgent(agent?: Pick<AgentCaller, 'id'>): Promise<AgentRefundAlertView[]> {
   await getDb()
 
-  // FedaPay n'a pas d'API de remboursement (voir fedapayRefunds.ts) : toute
-  // entrée 'pending_manual' est, par construction, sur le rail 'fedapay'.
-  const refunds = await EventRefund.find({ rail: 'fedapay', status: 'pending_manual' }).sort({ createdAt: -1 }).lean()
+  const pointQuery = agent?.id ? { active: true, agentIds: agent.id } : { active: true, agentIds: agentIdFilter() }
+  const agentPoints = await RefundPoint.find(pointQuery).select('_id').lean()
+  const pointIds = agentPoints.map((p) => String(p._id))
+  if (pointIds.length === 0) return []
+
+  const refunds = await RefundCase.find({ flow: 'cash_pickup', status: 'code_active', refundPointId: { $in: pointIds } }).sort({ createdAt: -1 }).lean()
   if (refunds.length === 0) return []
 
   const eventIds = [...new Set(refunds.map((r) => r.eventId))]
-  const paymentRefs = refunds.map((r) => r.paymentRef)
+  const orderIds = refunds.map((r) => r.orderId)
   const [events, orders] = await Promise.all([
     Event.find({ _id: { $in: eventIds } }).select('name').lean(),
-    Order.find({ fedapayTxnId: { $in: paymentRefs } }).select('fedapayTxnId userId').lean(),
+    Order.find({ _id: { $in: orderIds } }).select('userId').lean(),
   ])
   const eventById = new Map(events.map((e) => [String(e._id), e]))
-  const orderByRef = new Map(orders.map((o) => [String(o.fedapayTxnId), o]))
+  const orderById = new Map(orders.map((o) => [String(o._id), o]))
   const userIds = [...new Set(orders.map((o) => o.userId))]
   const users = userIds.length ? await User.find({ _id: { $in: userIds } }).select('email').lean() : []
   const userById = new Map(users.map((u) => [String(u._id), u]))
 
   return refunds.map((r) => {
-    const order = orderByRef.get(r.paymentRef)
+    const order = orderById.get(r.orderId)
     const user = order ? userById.get(order.userId) : null
     return {
       id: String(r._id),
       eventId: r.eventId,
       eventName: eventById.get(r.eventId)?.name ?? r.eventId,
-      paymentRef: r.paymentRef,
-      amountXOF: Math.max(0, Math.round(Number(r.amountMinor || 0))),
+      refundPointName: r.refundPointName ?? '',
+      refundPointAddress: r.refundPointAddress ?? '',
+      codeLast4: r.codeLast4 ?? '',
+      amountXOF: Math.max(0, Math.round(Number(r.refundableMinor || 0))),
       buyerEmail: user?.email ?? '',
       createdAt: new Date(r.createdAt as unknown as string).toISOString(),
     }
   })
 }
 
-// Marque un remboursement FedaPay comme FAIT — l'agent l'a exécuté à la main
-// dans le dashboard FedaPay (pas d'API de remboursement côté FedaPay).
 export type CompleteManualRefundResult = ErrResult | { ok: true }
 
-export async function completeManualRefund(agent: AgentCaller, refundId: string): Promise<CompleteManualRefundResult> {
+function agentIdFilter() {
+  return { $exists: true }
+}
+
+const MAX_REFUND_CODE_ATTEMPTS = 5
+
+function agentAuditMetadata(metadata: Record<string, unknown>, context?: RefundAuditContext) {
+  const ip = context?.ip?.trim() || null
+  const userAgent = context?.userAgent?.trim() || null
+  return ip || userAgent ? { ...metadata, technical: { ip, userAgent } } : metadata
+}
+
+export async function completeManualRefund(agent: AgentCaller, refundId: string, input: { code?: string | null; signatureUrl?: string | null } = {}, auditContext?: RefundAuditContext): Promise<CompleteManualRefundResult> {
   await getDb()
 
-  const refund = await EventRefund.findById(refundId)
-  if (!refund) return { ok: false, status: 404, error: 'not_found' }
-  if (refund.status !== 'pending_manual') return { ok: false, status: 409, error: 'not_pending' }
+  const code = input.code?.trim()
+  const signatureUrl = input.signatureUrl?.trim()
+  if (!code) return { ok: false, status: 400, error: 'code_required' }
+  if (!signatureUrl) return { ok: false, status: 400, error: 'signature_required' }
 
-  refund.status = 'refunded'
-  refund.completedBy = agent.id
-  refund.completedAt = new Date()
-  await refund.save()
+  const points = await RefundPoint.find({ active: true, agentIds: agent.id }).select('_id').lean()
+  const pointIds = points.map((point) => String(point._id))
+  if (pointIds.length === 0) return { ok: false, status: 403, error: 'agent_refund_point_required' }
+
+  const now = new Date()
+  const result = await RefundCase.findOneAndUpdate(
+    {
+      _id: refundId,
+      flow: 'cash_pickup',
+      status: 'code_active',
+      refundPointId: { $in: pointIds },
+      codeHash: hashRefundPickupCode(code),
+    },
+    {
+      $set: {
+        status: 'reimbursed',
+        codeRedeemedAt: now,
+        codeRedeemedByAgentId: agent.id,
+        signatureUrl,
+      },
+      $push: {
+        auditTrail: {
+          at: now,
+          actorId: agent.id,
+          actorRole: 'agent',
+          action: 'cash_redeemed',
+          before: { status: 'code_active', codeActive: true },
+          after: { status: 'reimbursed', codeActive: false },
+          metadata: agentAuditMetadata({ refundPointIds: pointIds }, auditContext),
+        },
+      },
+    },
+    { new: true }
+  )
+  if (!result) {
+    const failed = await RefundCase.findOneAndUpdate(
+      { _id: refundId, flow: 'cash_pickup', status: 'code_active', refundPointId: { $in: pointIds } },
+      {
+        $inc: { codeAttemptCount: 1 },
+        $set: { codeLastAttemptAt: now },
+        $push: {
+          auditTrail: {
+            at: now,
+            actorId: agent.id,
+            actorRole: 'agent',
+            action: 'cash_code_failed',
+            metadata: agentAuditMetadata({ refundPointIds: pointIds }, auditContext),
+          },
+        },
+      },
+      { new: true }
+    )
+    if (failed && failed.codeAttemptCount >= MAX_REFUND_CODE_ATTEMPTS) {
+      await RefundCase.updateOne(
+        { _id: failed._id, status: 'code_active' },
+        {
+          $set: { status: 'technical_failure', codeLockedAt: now },
+          $push: {
+            auditTrail: {
+              at: now,
+              actorId: agent.id,
+              actorRole: 'agent',
+              action: 'cash_code_locked',
+              before: { status: 'code_active', attemptCount: failed.codeAttemptCount },
+              after: { status: 'technical_failure', codeLockedAt: now.toISOString() },
+              metadata: agentAuditMetadata({ attemptCount: failed.codeAttemptCount }, auditContext),
+            },
+          },
+        }
+      )
+      return { ok: false, status: 429, error: 'refund_code_locked' }
+    }
+    return { ok: false, status: 409, error: 'invalid_or_already_redeemed_code' }
+  }
+  await RefundPoint.updateOne({ _id: result.refundPointId }, { $inc: { cashDisbursedMinor: result.refundableMinor, cashDisbursementCount: 1 } })
+  try {
+    const event = await Event.findById(result.eventId).select('name').lean()
+    await notifyUserById(result.buyerId, () => refundConfirmedEmail(event?.name || 'Ton événement', fmtMoney(result.refundableMinor, 'XOF'), 'dans les meilleurs délais'))
+  } catch (err) {
+    console.error('[agentPayments] cash refund notification failed:', err)
+  }
   return { ok: true }
+}
+
+export async function listCompletedCashRefundsForAgent(agent: Pick<AgentCaller, 'id'>): Promise<AgentRefundAlertView[]> {
+  await getDb()
+
+  const refunds = await RefundCase.find({ flow: 'cash_pickup', status: 'reimbursed', codeRedeemedByAgentId: agent.id }).sort({ codeRedeemedAt: -1 }).lean()
+  if (refunds.length === 0) return []
+  const eventIds = [...new Set(refunds.map((r) => r.eventId))]
+  const orderIds = refunds.map((r) => r.orderId)
+  const [events, orders] = await Promise.all([
+    Event.find({ _id: { $in: eventIds } }).select('name').lean(),
+    Order.find({ _id: { $in: orderIds } }).select('userId').lean(),
+  ])
+  const eventById = new Map(events.map((e) => [String(e._id), e]))
+  const orderById = new Map(orders.map((o) => [String(o._id), o]))
+  const userIds = [...new Set(orders.map((o) => o.userId))]
+  const users = userIds.length ? await User.find({ _id: { $in: userIds } }).select('email').lean() : []
+  const userById = new Map(users.map((u) => [String(u._id), u]))
+
+  return refunds.map((r) => {
+    const order = orderById.get(r.orderId)
+    const user = order ? userById.get(order.userId) : null
+    return {
+      id: String(r._id),
+      eventId: r.eventId,
+      eventName: eventById.get(r.eventId)?.name ?? r.eventId,
+      refundPointName: r.refundPointName ?? '',
+      refundPointAddress: r.refundPointAddress ?? '',
+      codeLast4: r.codeLast4 ?? '',
+      amountXOF: Math.max(0, Math.round(Number(r.refundableMinor || 0))),
+      buyerEmail: user?.email ?? '',
+      createdAt: new Date((r.codeRedeemedAt || r.createdAt) as unknown as string).toISOString(),
+    }
+  })
 }
 
 // ──────────────────────────── Alertes paiement ──────────────────────────────

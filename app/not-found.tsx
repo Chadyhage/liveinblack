@@ -18,7 +18,7 @@ export default function NotFound() {
         gap: 14,
       }}
     >
-      <Mascot mood="confused" size={220} />
+      <Mascot mood="confused" size={280} />
       <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', margin: 0, textTransform: 'uppercase' }}>Erreur 404</p>
       <h1 style={{ fontSize: 'var(--font-size-large-title)', fontWeight: 800, margin: 0, color: 'var(--text)' }}>Cette page n&apos;existe pas</h1>
       <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, maxWidth: 620 }}>
@@ -33,7 +33,7 @@ export default function NotFound() {
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,
-          background: 'var(--teal-solid)',
+          background: 'var(--primary)',
           color: 'var(--primary-ink)',
           fontSize: 'var(--font-size-body)',
           fontWeight: 700,

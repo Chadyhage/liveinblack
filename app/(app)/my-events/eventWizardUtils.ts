@@ -17,6 +17,7 @@ export interface PlaceRow {
   groupType: 'solo' | 'group'
   groupMin: number
   groupMax: number
+  cancellationOptionEnabled: boolean
   photos: string[]
   included: { name: string; qty: number }[]
 }
@@ -48,6 +49,7 @@ export interface EventFormInput {
     groupType?: 'solo' | 'group'
     groupMin?: number
     groupMax?: number
+    cancellationOptionEnabled?: boolean
     photos?: string[]
     included?: { name: string; qty: number }[]
   }>
@@ -134,6 +136,7 @@ export function defaultPlaceRow(): PlaceRow {
     groupType: 'solo',
     groupMin: 0,
     groupMax: 0,
+    cancellationOptionEnabled: false,
     photos: [],
     included: [],
   }
@@ -151,6 +154,7 @@ export function newPlaceRow(): PlaceRow {
     groupType: 'solo',
     groupMin: 0,
     groupMax: 0,
+    cancellationOptionEnabled: false,
     photos: [],
     included: [],
   }
@@ -165,10 +169,7 @@ export function toDatetimeLocalValue(iso: string | null): string {
 }
 
 export function fromDatetimeLocalValue(v: string): string | null {
-  if (!v) return null
-  const d = new Date(v)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toISOString()
+  return v?.trim() || null
 }
 
 export function snapshotEventWizardForm(input: EventWizardSnapshotInput): string {
@@ -275,6 +276,7 @@ export function buildEventPayload(input: BuildEventPayloadInput): EventFormInput
       groupType: p.groupType,
       groupMin: Number(p.groupMin) || 0,
       groupMax: Number(p.groupMax) || 0,
+      cancellationOptionEnabled: Boolean(p.cancellationOptionEnabled),
       photos: p.photos,
       included: sanitizeIncluded(p.included),
     })),

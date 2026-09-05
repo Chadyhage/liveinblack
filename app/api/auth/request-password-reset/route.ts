@@ -5,6 +5,7 @@ import User from '@/lib/models/User'
 import { issueVerificationToken, invalidateVerificationTokens } from '@/lib/auth/verification-tokens'
 import { passwordResetEmail } from '@/lib/server/emails'
 import { sendEmail } from '@/lib/server/email'
+import { runObservedRoute } from '@/lib/server/observability'
 import { checkRateLimit, getRequestIp } from '@/lib/server/rateLimit'
 
 const SITE = process.env.PUBLIC_SITE_URL || 'https://liveinblack.com'
@@ -16,34 +17,36 @@ const bodySchema = z.object({
 // SÉCURITÉ (anti-énumération, même règle que le legacy api/send-password-reset.js) :
 // on ne révèle JAMAIS si l'email correspond à un compte. Toujours { ok: true }.
 export async function POST(req: Request) {
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null))
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
-  }
-  const { email } = parsed.data
+  return runObservedRoute(req, { route: '/api/auth/request-password-reset', operation: 'password_reset_request' }, async () => {
+    const parsed = bodySchema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
+    }
+    const { email } = parsed.data
 
-  const [ipLimit, emailLimit] = await Promise.all([
-    checkRateLimit({ scope: 'password-reset-ip', identifier: getRequestIp(req), limit: 10, windowMs: 15 * 60 * 1000 }),
-    checkRateLimit({ scope: 'password-reset-email', identifier: email, limit: 3, windowMs: 15 * 60 * 1000 }),
-  ])
-  if (!ipLimit.allowed || !emailLimit.allowed) {
-    const retryAfterSeconds = Math.max(ipLimit.retryAfterSeconds, emailLimit.retryAfterSeconds)
-    return NextResponse.json(
-      { error: 'rate_limited' },
-      { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
-    )
-  }
+    const [ipLimit, emailLimit] = await Promise.all([
+      checkRateLimit({ scope: 'password-reset-ip', identifier: getRequestIp(req), limit: 10, windowMs: 15 * 60 * 1000 }),
+      checkRateLimit({ scope: 'password-reset-email', identifier: email, limit: 3, windowMs: 15 * 60 * 1000 }),
+    ])
+    if (!ipLimit.allowed || !emailLimit.allowed) {
+      const retryAfterSeconds = Math.max(ipLimit.retryAfterSeconds, emailLimit.retryAfterSeconds)
+      return NextResponse.json(
+        { error: 'rate_limited' },
+        { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
+      )
+    }
 
-  await getDb()
-  const user = await User.findOne({ email }).lean()
-  if (user) {
-    const userId = String(user._id)
-    await invalidateVerificationTokens(userId, email, 'reset-password')
-    const token = await issueVerificationToken(userId, email, 'reset-password', 60 * 60 * 1000)
-    const resetLink = `${SITE}/reset-password?email=${encodeURIComponent(email)}&token=${token}`
-    const result = await sendEmail(email, passwordResetEmail(resetLink, SITE))
-    if (!result.ok) console.error('[request-password-reset] email failed for', email, result.error)
-  }
+    await getDb()
+    const user = await User.findOne({ email }).lean()
+    if (user) {
+      const userId = String(user._id)
+      await invalidateVerificationTokens(userId, email, 'reset-password')
+      const token = await issueVerificationToken(userId, email, 'reset-password', 60 * 60 * 1000)
+      const resetLink = `${SITE}/reset-password?email=${encodeURIComponent(email)}&token=${token}`
+      const result = await sendEmail(email, passwordResetEmail(resetLink, SITE))
+      if (!result.ok) console.error('[request-password-reset] email failed for', email, result.error)
+    }
 
-  return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true })
+  })
 }

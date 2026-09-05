@@ -42,22 +42,21 @@ export default function CookieConsentBanner() {
       className={`${styles.root} ${phase === 'leaving' ? styles.leaving : phase === 'visible' ? styles.visible : ''}`}
     >
       <div className={styles.panel}>
-        {/* Header */}
-        <div className={styles.header}>
+        {/* Contenu texte à gauche */}
+        <div className={styles.content}>
           <span className={styles.iconWrap} aria-hidden="true">
-            <Cookie size={15} strokeWidth={2} />
+            <Cookie size={16} strokeWidth={2} />
           </span>
-          <p id="cookie-consent-title" className={styles.title}>Votre vie privée, votre choix.</p>
+          <div className={styles.textWrap}>
+            <span id="cookie-consent-title" className={styles.title}>Votre vie privée, votre choix.</span>
+            <p className={styles.body}>
+              Nous utilisons des cookies essentiels pour la connexion et la sécurité. Les cookies optionnels restent désactivés sans votre accord.{' '}
+              <Link href="/cookies" className={styles.link} tabIndex={0}>En savoir plus</Link>
+            </p>
+          </div>
         </div>
 
-        {/* Body */}
-        <p className={styles.body}>
-          Nous utilisons des cookies essentiels pour la connexion et la sécurité.
-          Les cookies optionnels (préférences, audience) restent désactivés sans votre accord.{' '}
-          <Link href="/cookies" className={styles.link} tabIndex={0}>En savoir plus</Link>
-        </p>
-
-        {/* Actions */}
+        {/* Actions à droite sur la même ligne */}
         <div className={styles.actions}>
           <button className={styles.btnRefuse} onClick={() => dismiss('refused')}>
             Essentiels uniquement

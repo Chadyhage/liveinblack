@@ -93,7 +93,7 @@ function toInterestedEventView(ev: {
     city: ev.city ?? '',
     category: ev.category ?? '',
     imageUrl: ev.imageUrl ?? null,
-    color: ev.color ?? '#c8a96e',
+    color: ev.color ?? '#2a2a2f',
     cancelled: Boolean(ev.cancelled),
     currency: ev.currency ?? 'EUR',
     minPrice: prices.length ? Math.min(...prices) : null,

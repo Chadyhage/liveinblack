@@ -21,7 +21,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
         gap: 14,
       }}
     >
-      <Mascot mood="error" size={210} />
+      <Mascot mood="error" size={280} />
       <p style={{ fontSize: 'var(--font-size-callout)', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', margin: 0, textTransform: 'uppercase' }}>Oups</p>
       <h1 style={{ fontSize: 'var(--font-size-large-title)', fontWeight: 800, margin: 0, color: 'var(--text)' }}>Un problème est survenu</h1>
       <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', margin: 0, maxWidth: 620 }}>
@@ -33,7 +33,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           marginTop: 10,
           padding: '11px 22px',
           borderRadius: 999,
-          background: 'var(--teal-solid)',
+          background: 'var(--primary)',
           color: 'var(--primary-ink)',
         }}
       >

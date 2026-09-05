@@ -154,16 +154,16 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
     <SlideOverModal onClose={onClose} ariaLabel="Liste des invités" padded>
         <div style={{ marginBottom: 16, paddingRight: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth={1.5}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth={1.5}>
               <circle cx="9" cy="7" r="4" />
               <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
               <line x1="19" y1="8" x2="19" y2="14" />
               <line x1="16" y1="11" x2="22" y2="11" />
             </svg>
-            <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Guestlist</p>
+            <p style={{ fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', fontFamily: 'var(--font-display), sans-serif', margin: 0 }}>Guestlist</p>
           </div>
           <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-            Invitations pour <span style={{ color: 'var(--teal)' }}>{event.name}</span>
+            Invitations pour <span style={{ color: 'var(--primary)' }}>{event.name}</span>
             {entries.length > 0 && (
               <>
                 {' '}
@@ -223,7 +223,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
               padding: 12,
               borderRadius: 3,
               border: 'none',
-              background: adding || !name.trim() ? 'var(--surface-2)' : 'var(--teal-solid)',
+              background: adding || !name.trim() ? 'var(--surface-2)' : 'var(--primary)',
               color: adding || !name.trim() ? 'var(--text-faint)' : 'var(--primary-ink)',
               fontSize: 'var(--font-size-body-sm)',
               fontWeight: 500,
@@ -275,7 +275,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase',
                         flexShrink: 0,
-                        color: entry.checkedInAt ? 'var(--teal)' : 'var(--text-faint)',
+                        color: entry.checkedInAt ? 'var(--primary)' : 'var(--text-faint)',
                       }}
                     >
                       {entry.checkedInAt ? 'Arrivé' : 'En attente'}
@@ -289,7 +289,7 @@ export default function GuestlistModal({ event, onClose }: GuestlistModalProps) 
                         flex: 1,
                         padding: 9,
                         borderRadius: 10,
-                        background: copiedCode === entry.ticketCode ? 'var(--teal-solid)' : 'var(--surface)',
+                        background: copiedCode === entry.ticketCode ? 'var(--primary)' : 'var(--surface)',
                         border: copiedCode === entry.ticketCode ? 'none' : '1px solid var(--border-strong)',
                         color: copiedCode === entry.ticketCode ? 'var(--primary-ink)' : 'var(--text)',
                         fontSize: 'var(--font-size-footnote)',

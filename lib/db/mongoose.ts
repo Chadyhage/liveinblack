@@ -16,6 +16,12 @@ import Report from '../models/Report'
 import EventOrder from '../models/EventOrder'
 import SeatHold from '../models/SeatHold'
 import RateLimit from '../models/RateLimit'
+import RefundCase from '../models/RefundCase'
+import RefundPoint from '../models/RefundPoint'
+import VercelDrainEvent from '../models/VercelDrainEvent'
+import VercelSpendEvent from '../models/VercelSpendEvent'
+import VercelPlatformEvent from '../models/VercelPlatformEvent'
+import VercelOpsConfigChange from '../models/VercelOpsConfigChange'
 
 // Connexion Mongoose mise en cache sur `globalThis`, même intention que le
 // pattern getDb() de lib/firebaseAdmin.js côté legacy : une seule connexion
@@ -122,5 +128,11 @@ async function ensureIndexes() {
     EventOrder.init(),
     SeatHold.init(),
     RateLimit.init(),
+    RefundCase.init(),
+    RefundPoint.init(),
+    VercelDrainEvent.init(),
+    VercelSpendEvent.init(),
+    VercelPlatformEvent.init(),
+    VercelOpsConfigChange.init(),
   ])
 }

@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Suite d'audit unique pour piloter l'utilisation Vercel Pro a 100% utile.",
+  "principle": "Les audits locaux peuvent tourner sans mutation. Les audits live restent separes et explicites.",
+  "commands": [
+    {
+      "key": "pro-local",
+      "label": "Diagnostic local global",
+      "command": "npm run audit:vercel-pro",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "env",
+      "label": "Variables Vercel",
+      "command": "npm run audit:vercel-env",
+      "scope": "live-read",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass-after-live-access"
+    },
+    {
+      "key": "firewall",
+      "label": "Revue Firewall",
+      "command": "npm run audit:vercel-firewall",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "spend",
+      "label": "Revue Spend Management",
+      "command": "npm run audit:vercel-spend",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "webhooks",
+      "label": "Revue Account Webhook",
+      "command": "npm run audit:vercel-webhooks",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "drain",
+      "label": "Revue Log Drain",
+      "command": "npm run audit:vercel-drain",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "workflows",
+      "label": "Revue Workflows/Queues",
+      "command": "npm run audit:vercel-workflows",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "usage",
+      "label": "Plan Usage Pro",
+      "command": "npm run audit:vercel-usage",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "live-gates",
+      "label": "Portes live",
+      "command": "npm run audit:vercel-live-gates",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "activation-order",
+      "label": "Ordre activation",
+      "command": "npm run audit:vercel-activation-order",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "completion",
+      "label": "Completion stricte",
+      "command": "npm run audit:vercel-completion",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "fail-until-live-proof"
+    },
+    {
+      "key": "evidence-recorder",
+      "label": "Outil de consignation des preuves",
+      "command": "npm run ops:vercel:evidence:record",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Consigne une preuve qui peut faire passer une decision ou exigence en statut final.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "env-sync",
+      "label": "Outil synchronisation variables Vercel",
+      "command": "npm run ops:vercel:env:sync",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Synchronise des variables Vercel et peut modifier la configuration des environnements.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "firewall-stage",
+      "label": "Outil preparation Firewall Vercel",
+      "command": "npm run ops:vercel:firewall:stage",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Prepare des regles Firewall qui peuvent changer le filtrage du trafic.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "edge-config-setup",
+      "label": "Outil setup Edge Config",
+      "command": "npm run ops:vercel:edge-config:setup",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Configure Edge Config, un levier runtime utilise par le site.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "edge-config-activate",
+      "label": "Outil activation Edge Config",
+      "command": "npm run ops:vercel:edge-config:activate",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Active Edge Config et peut changer le comportement runtime sans redeploiement.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "webhooks-setup",
+      "label": "Outil setup Account Webhooks",
+      "command": "npm run ops:vercel:webhooks:setup",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Configure des webhooks compte qui recevront des evenements plateforme.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "drain-setup",
+      "label": "Outil setup Log Drain",
+      "command": "npm run ops:vercel:drain:setup",
+      "scope": "local",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Configure un Log Drain qui exporte les journaux vers une destination externe.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "logs",
+      "label": "Outil lecture logs Vercel",
+      "command": "npm run ops:vercel:logs",
+      "scope": "live-read",
+      "requiredFor100": true,
+      "requiresExplicitApproval": true,
+      "approvalReason": "Lit les logs Vercel live et peut exposer des donnees operationnelles sensibles.",
+      "expectedBeforeLiveComplete": "manual-input-tool"
+    },
+    {
+      "key": "next-action",
+      "label": "Prochaine action Vercel Pro",
+      "command": "npm run ops:vercel:next-action",
+      "scope": "local",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass"
+    },
+    {
+      "key": "live",
+      "label": "Audit Vercel live",
+      "command": "npm run audit:vercel-live",
+      "scope": "live-read",
+      "requiredFor100": true,
+      "expectedBeforeLiveComplete": "pass-after-live-actions"
+    }
+  ]
+}

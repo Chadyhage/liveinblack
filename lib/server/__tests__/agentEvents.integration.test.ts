@@ -1,22 +1,17 @@
 // Tests d'INTÉGRATION (vraie base MongoDB) pour la vue admin « Événements »
 // (#9 phase agent/admin — lib/server/agentEvents.ts : listEventsForAgent /
-// adminCancelEvent). Le remboursement Stripe réel est mocké — même convention
-// que organizerEventLifecycle.integration.test.ts ; adminCancelEvent délègue
-// à cancelOrganizerEvent (bypassOwnership) donc on vérifie ici surtout le
-// bypass + la liste/recherche/filtre, pas la mécanique de remboursement
-// elle-même (déjà couverte par ce fichier).
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+// adminCancelEvent). adminCancelEvent délègue à cancelOrganizerEvent
+// (bypassOwnership) et crée des RefundCase internes, sans remboursement
+// prestataire.
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-
-vi.mock('../events/eventRefunds', () => ({
-  refundStripeOrder: vi.fn(async () => ({ ok: true })),
-}))
 
 import { listEventsForAgent, adminCancelEvent } from '../agent/agentEvents'
 import { createOrganizerEvent } from '../organizer/organizerEvents'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
-import EventRefund from '@/lib/models/EventRefund'
+import RefundCase from '@/lib/models/RefundCase'
+import RefundPoint from '@/lib/models/RefundPoint'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -37,19 +32,22 @@ beforeEach(async () => {
   if (!RUN_INTEGRATION) return
   await Event.deleteMany({})
   await Order.deleteMany({})
-  await EventRefund.deleteMany({})
+  await RefundCase.deleteMany({})
+  await RefundPoint.deleteMany({})
+  await RefundPoint.create({ name: 'Point Cotonou', address: 'Rue 1', city: 'Cotonou', agentIds: ['agent-1'] })
 })
 
 async function seedEvent(overrides: { name?: string; date?: string; city?: string; ownerId?: string; organizerName?: string } = {}) {
-  const { name = 'Soirée Test', date = '2099-12-31', city = 'Lomé', ownerId = 'org-1', organizerName = 'Le Club' } = overrides
+  const { name = 'Soirée Test', date = '2099-12-31', city = 'Cotonou', ownerId = 'org-1', organizerName = 'Le Club' } = overrides
   const result = await createOrganizerEvent({ id: ownerId }, organizerName, {
     name,
     date,
     time: '22:00',
     endTime: '05:00',
     city,
-    region: 'Togo',
-    places: [{ id: '', type: 'Standard', price: 20, total: 100 }],
+    region: 'Bénin',
+    currency: 'XOF',
+    places: [{ id: '', type: 'Standard', price: 10000, total: 100 }],
   })
   if (!result.ok) throw new Error('seed failed')
   return result.eventId
@@ -119,7 +117,7 @@ describeIntegration('agentEvents (intégration, vraie base) — vue admin évén
       expect(doc?.cancellationMessage).toBe('Annulé par un agent')
     })
 
-    it('rembourse les commandes payées comme le flux organisateur (Stripe mocké, FedaPay réel)', async () => {
+    it('crée les dossiers de retrait comme le flux organisateur', async () => {
       const eventId = await seedEvent({ ownerId: 'org-1' })
       const doc = await Event.findById(eventId).lean()
       const placeId = doc!.places[0].id
@@ -134,8 +132,9 @@ describeIntegration('agentEvents (intégration, vraie base) — vue admin évén
       if (!result.ok) return
       expect(result.refundedCount).toBe(1)
 
-      const refund = await EventRefund.findOne({ eventId, paymentRef: 'txn-agent-1' }).lean()
-      expect(refund?.status).toBe('pending_manual')
+      const refund = await RefundCase.findOne({ eventId, orderId: { $exists: true }, cause: 'event_cancelled' }).lean()
+      expect(refund?.status).toBe('code_active')
+      expect(refund?.refundPointName).toBe('Point Cotonou')
     })
 
     it('404 si l’événement n’existe pas', async () => {

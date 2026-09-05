@@ -14,7 +14,7 @@ export default function SectionHeader({ eyebrow, title, description, align = 'le
   return (
     <header style={{ textAlign: align, marginBottom: compact ? 18 : 28 }}>
       {eyebrow && (
-        <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, color: 'var(--teal)', fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-callout)', letterSpacing: '.16em', lineHeight: 1.2, textTransform: 'uppercase' }}>
+        <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, margin: 0, color: 'var(--primary)', fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-callout)', letterSpacing: '.16em', lineHeight: 1.2, textTransform: 'uppercase' }}>
           <span className="lb-accent-line" style={{ width: 24, height: 3 }} aria-hidden="true" />
           {eyebrow}
         </p>

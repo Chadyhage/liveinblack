@@ -20,7 +20,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Modal, SlideOverModal, Skeleton } from '@/app/components/ui'
-const C = { teal: 'var(--teal)', gold: 'var(--gold)', violet: 'var(--violet)', pink: 'var(--pink)' }
+const C = { teal: 'var(--primary)', gold: 'var(--gold)', violet: 'var(--violet)', pink: 'var(--pink)' }
 
 type InviteRole = 'serveur' | 'scan' | 'dj' | 'vendeur'
 
@@ -440,7 +440,7 @@ export default function EventStaffModal({ event, onClose }: EventStaffModalProps
                             color: 'var(--primary-ink)',
                             fontSize: 'var(--font-size-footnote-lg)',
                             fontWeight: 700,
-                            background: 'var(--teal-solid)',
+                            background: 'var(--primary)',
                           }}
                         >
                           Ajouter

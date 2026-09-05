@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
-import { Search, Handshake } from 'lucide-react'
+import { Ban, Handshake, Phone, Search, ShieldAlert, Trash2, UserMinus } from 'lucide-react'
 import { Button, Checkbox, Input, Radio } from '@/app/components/ui'
 import { ModalActions, ModalShell } from './MessagingModals'
 import MessagingEmptyState from './MessagingEmptyState'
@@ -59,7 +59,7 @@ export function NewGroupModal({ friends, onCreate, onClose, onGoToFriends, onPic
         <label style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, cursor: 'pointer' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {avatarDataUrl ? <img src={avatarDataUrl} alt="Avatar du groupe" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover' }} /> : renderGroupAvatar(name, null, 52)}
-          <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--teal)' }}>Choisir une photo</span>
+          <span style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--primary)' }}>Choisir une photo</span>
           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; setAvatarDataUrl(await onPickAvatar(file)) }} />
         </label>
         <p style={sectionLabelStyle}>{name}</p>
@@ -151,7 +151,7 @@ export function FriendsPanel({ received, sent, friends, newFriendIds, onDismissN
       <div>
         <p style={sectionLabelStyle}>Mes amis ({friends.length})</p>
         {friends.length === 0 && <MessagingEmptyState icon={<Handshake size={32} />} title="Aucun ami pour le moment" subtitle="Envoie une demande par email pour commencer" />}
-        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 'var(--font-size-caption-2)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--teal)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
+        {friends.map((f) => <div key={f.userId} style={rowStyle}><span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-callout)', color: 'var(--text)' }}>{renderAvatar(f.userId, f.name, 36)}{f.name}{newFriendIds.has(f.userId) && <Button variant="secondary" onClick={() => onDismissNew(f.userId)} title="Marquer comme vu" style={{ fontSize: 'var(--font-size-caption-2)', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--primary)', background: 'var(--primary-a12)', border: '1px solid var(--primary-a35)', borderRadius: 999, padding: '2px 8px' }}>Nouveau</Button>}</span><Button variant="secondary" onClick={() => onRemove(f.userId, f.name)} size="sm" style={{ borderRadius: 999 }}>Retirer</Button></div>)}
       </div>
     </ModalShell>
   )
@@ -197,25 +197,38 @@ export function ContactPanelModal({ conversationId, member, online, lastSeenAt, 
   const [phone, setPhone] = useState<string | null>(null)
   useEffect(() => { let cancelled = false; onLoadPhone(conversationId).then((value) => { if (!cancelled) setPhone(value) }); return () => { cancelled = true } }, [conversationId, onLoadPhone])
   return (
-    <ModalShell title="Contact" onClose={onClose} wide>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        {renderAvatar(member.userId, member.name, 64, online, true)}
-        <p style={{ fontSize: 'var(--font-size-headline-lg)', fontWeight: 700, color: 'var(--text)', margin: 0 }}>{member.name}</p>
-        <p style={{ fontSize: 'var(--font-size-footnote)', color: online ? 'var(--primary)' : 'var(--text-faint)', margin: 0 }}>{online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}</p>
-        {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} style={{ fontSize: 'var(--font-size-callout)', color: 'var(--teal)', textDecoration: 'none' }}>{phone}</a>}
+    <ModalShell title="Informations du contact" onClose={onClose}>
+      <div className={styles.contactSummary}>
+        {renderAvatar(member.userId, member.name, 56, online, true)}
+        <div className={styles.contactCopy}>
+          <h2>{member.name}</h2>
+          <span className={online ? styles.onlineStatus : styles.offlineStatus}>
+            {online ? 'En ligne' : lastSeenAt ? `Vu ${new Date(lastSeenAt).toLocaleString('fr-FR')}` : 'Hors ligne'}
+          </span>
+          {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`} className={styles.contactPhone}><Phone size={14} aria-hidden="true" />{phone}</a>}
+        </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Button variant="secondary" onClick={onClearHistory} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Vider l&apos;historique</Button>
-        {isFriend && <Button variant="secondary" onClick={onRemoveFriend} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Retirer des amis</Button>}
-        {isBlocked ? <Button variant="secondary" onClick={onUnblock} style={{ ...fullRowButtonStyle, borderRadius: 10 }}>Débloquer</Button> : <Button variant="danger" onClick={onBlock} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--danger)' }}>Bloquer</Button>}
-        <Button variant="danger" onClick={onReport} style={{ ...fullRowButtonStyle, borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--danger)' }}>Signaler</Button>
+
+      <p className={styles.contactSectionLabel}>Discussion</p>
+      <div className={styles.contactActionGrid}>
+        <Button variant="secondary" onClick={onClearHistory} className={styles.contactAction}><Trash2 size={16} aria-hidden="true" /><span>Vider l&apos;historique</span></Button>
+        {isFriend && <Button variant="secondary" onClick={onRemoveFriend} className={styles.contactAction}><UserMinus size={16} aria-hidden="true" /><span>Retirer des amis</span></Button>}
+      </div>
+
+      <p className={styles.contactSectionLabel}>Sécurité</p>
+      <div className={styles.contactActionGrid}>
+        {isBlocked ? (
+          <Button variant="secondary" onClick={onUnblock} className={styles.contactAction}><Ban size={16} aria-hidden="true" /><span>Débloquer</span></Button>
+        ) : (
+          <Button variant="danger" onClick={onBlock} className={`${styles.contactAction} ${styles.dangerAction}`}><Ban size={16} aria-hidden="true" /><span>Bloquer</span></Button>
+        )}
+        <Button variant="danger" onClick={onReport} className={`${styles.contactAction} ${styles.dangerAction}`}><ShieldAlert size={16} aria-hidden="true" /><span>Signaler</span></Button>
       </div>
     </ModalShell>
   )
 }
 
 const inputStyle: CSSProperties = { width: '100%', borderRadius: 14, border: '1px solid var(--border)', background: 'var(--field-bg)', color: 'var(--text)', fontSize: 'var(--font-size-body-sm)', marginBottom: 10, fontFamily: 'inherit' }
-const fullRowButtonStyle: CSSProperties = { padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text)', fontSize: 'var(--font-size-callout)', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }
 const rowStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--border)', gap: 8 }
 const rowButtonStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '7px 4px', border: 'none', background: 'transparent', cursor: 'pointer' }
 const sectionLabelStyle: CSSProperties = { fontSize: 'var(--font-size-callout)', fontWeight: 650, color: 'var(--text-faint)', letterSpacing: '-0.01em', fontFamily: 'var(--font-interface), sans-serif', margin: '0 0 8px' }

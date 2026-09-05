@@ -85,7 +85,7 @@ export default function ContactClient() {
         position: 'relative',
         zIndex: 1,
         padding: '20px clamp(14px, 2vw, 28px) 48px',
-        background: 'radial-gradient(circle at 80% 0%, var(--primary-a07), transparent 38%), linear-gradient(180deg, var(--obsidian) 0%, var(--media-canvas) 100%)',
+        background: 'var(--obsidian)',
       }}
     >
       <div style={{ maxWidth: 1560, margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -108,7 +108,7 @@ export default function ContactClient() {
         <Card style={{ boxShadow: CARD.boxShadow, padding: '16px 14px', maxWidth: 860 }}>
           {status === 'success' ? (
             <div style={{ textAlign: 'center', padding: '18px 8px' }}>
-              <Mascot mood="message" size={104} />
+              <Mascot mood="message" size={180} />
               <h2 style={{ fontSize: 'var(--font-size-headline-lg)', color: 'var(--text)', margin: '0 0 10px' }}>Message envoyé</h2>
               <p style={{ fontSize: 'var(--font-size-body-sm)', color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 20px' }}>
                 Merci, ton message a bien été transmis à l&apos;équipe LIVEINBLACK. On te répond généralement sous 24 à 48 h.
@@ -197,7 +197,7 @@ export default function ContactClient() {
             <p style={{ fontSize: 'var(--font-size-callout)', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
               La plupart des questions sur les billets, remboursements ou ton compte trouvent une réponse plus
               rapide directement depuis ton espace « Mon profil » ou la page{' '}
-              <a href="/about" style={{ color: 'var(--teal)' }}>C&apos;est quoi</a>.
+              <a href="/about" style={{ color: 'var(--primary)' }}>C&apos;est quoi</a>.
             </p>
           </div>
           <div>

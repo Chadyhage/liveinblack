@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { BellOff } from 'lucide-react'
 import { Button, Modal } from '@/app/components/ui'
+import styles from './OrganizerFollowButtonClient.module.css'
 
 // Port de src/components/OrganizerFollowButton.jsx — utilisé sur la page
 // publique organisateur, la page "Organisateurs suivis" (#6 phase profil) et
@@ -25,6 +27,7 @@ export default function OrganizerFollowButtonClient({
   isAuthenticated,
   compact = false,
   appearance = 'default',
+  showUnfollowLabel = false,
   onUnfollow,
   onFollow,
 }: {
@@ -34,6 +37,7 @@ export default function OrganizerFollowButtonClient({
   isAuthenticated: boolean
   compact?: boolean
   appearance?: FollowAppearance
+  showUnfollowLabel?: boolean
   onUnfollow?: () => void
   onFollow?: () => void
 }) {
@@ -42,25 +46,7 @@ export default function OrganizerFollowButtonClient({
   const [following, setFollowing] = useState(initialFollowing)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [confirmUnfollow, setConfirmUnfollow] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    function closeOnOutsideClick(event: MouseEvent) {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setMenuOpen(false)
-    }
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', closeOnOutsideClick)
-    document.addEventListener('keydown', closeOnEscape)
-    return () => {
-      document.removeEventListener('mousedown', closeOnOutsideClick)
-      document.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [menuOpen])
 
   function goToLogin() {
     router.push(`/login?next=${encodeURIComponent(pathname)}`)
@@ -88,7 +74,6 @@ export default function OrganizerFollowButtonClient({
   async function unfollow() {
     setBusy(true)
     setError(null)
-    setMenuOpen(false)
     setConfirmUnfollow(false)
     try {
       const res = await fetch(`/api/organizers/${organizerId}/follow`, { method: 'DELETE' })
@@ -108,7 +93,7 @@ export default function OrganizerFollowButtonClient({
 
   function handleClick() {
     if (!isAuthenticated) return goToLogin()
-    if (following) setMenuOpen((v) => !v)
+    if (following) setConfirmUnfollow(true)
     else follow()
   }
 
@@ -134,70 +119,43 @@ export default function OrganizerFollowButtonClient({
         : { ...base, background: 'var(--primary)', color: 'var(--primary-ink)' }
 
   return (
-    <div ref={rootRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <div className={styles.root}>
       <Button
         type="button"
         onClick={handleClick}
         disabled={busy}
         style={style}
         aria-label={following ? `Gérer l’abonnement à ${organizerName}` : `Suivre ${organizerName}`}
-        aria-expanded={following ? menuOpen : undefined}
-        aria-haspopup={following ? 'menu' : undefined}
+        aria-haspopup={following ? 'dialog' : undefined}
       >
-        {following && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', marginRight: 7 }} />}
-        {following ? 'Abonné(e)' : "S'abonner"}
+        {following && !showUnfollowLabel ? <span className={styles.followingDot} /> : null}
+        {following ? (showUnfollowLabel ? 'Se désabonner' : 'Abonné(e)') : "S'abonner"}
       </Button>
-
-      {menuOpen && following && (
-        <div
-          role="menu"
-          style={{
-            position: 'absolute',
-            bottom: '100%',
-            right: 0,
-            marginBottom: 6,
-            zIndex: 20,
-            background: 'var(--surface-2)',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            overflow: 'hidden',
-            boxShadow: '0 12px 32px rgba(var(--black-rgb), .40)',
-          }}
-        >
-          <Button
-            type="button"
-            variant="danger"
-            role="menuitem"
-            onClick={() => {
-              setMenuOpen(false)
-              setConfirmUnfollow(true)
-            }}
-            style={{ display: 'block', width: '100%', borderRadius: 'var(--radius-md)', padding: '10px 16px', background: 'rgba(var(--danger-soft-rgb), .14)', color: 'var(--pink)', border: 'none', fontSize: 'var(--font-size-footnote-lg)', fontWeight: 700, whiteSpace: 'nowrap' }}
-          >
-            Se désabonner
-          </Button>
-        </div>
-      )}
 
       {confirmUnfollow && (
         <Modal
           onClose={() => setConfirmUnfollow(false)}
           ariaLabel={`Se désabonner de ${organizerName}`}
-          title="Se désabonner"
+          title={`Se désabonner de ${organizerName} ?`}
+          maxWidth={420}
           actions={
             <>
-              <Button variant="secondary" onClick={() => setConfirmUnfollow(false)} disabled={busy}>
+              <Button variant="secondary" size="sm" onClick={() => setConfirmUnfollow(false)} disabled={busy}>
                 Annuler
               </Button>
-              <Button variant="danger" onClick={() => void unfollow()} disabled={busy} loading={busy} loadingText="Mise à jour…">
+              <Button variant="danger" size="sm" onClick={() => void unfollow()} disabled={busy} loading={busy} loadingText="Mise à jour…">
                 Se désabonner
               </Button>
             </>
           }
         >
-          <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.6, fontSize: 'var(--font-size-body-sm)' }}>
-            Tu ne recevras plus les alertes et actualités de {organizerName}.
-          </p>
+          <div className={styles.confirmContent}>
+            <span className={styles.confirmIcon} aria-hidden="true"><BellOff size={20} /></span>
+            <div>
+              <p>Tu ne recevras plus les alertes et les actualités publiées par cet organisateur.</p>
+              <span>Tu pourras te réabonner à tout moment depuis sa page.</span>
+            </div>
+          </div>
         </Modal>
       )}
 

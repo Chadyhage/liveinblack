@@ -24,9 +24,9 @@ describe('groupSystemMessageService', () => {
       lastMessage: '',
       lastMessageAt: null,
       lastSenderId: null,
-    } as never
+    }
 
-    await appendGroupSystemMessage(conversation, {
+    await appendGroupSystemMessage(conversation as never, {
       senderId: 'u1',
       senderName: 'Alice A',
       content: 'Alice A a créé le groupe',
@@ -55,11 +55,11 @@ describe('groupSystemMessageService', () => {
       lastMessage: '',
       lastMessageAt: null,
       lastSenderId: null,
-    } as never
+    }
     const session = { id: 'session-1' } as never
 
     await appendGroupSystemMessage(
-      conversation,
+      conversation as never,
       {
         senderId: 'u2',
         senderName: 'Bob B',

@@ -1,21 +1,17 @@
 // Tests d'INTÉGRATION (vraie base MongoDB) pour la demande de remboursement
 // déclenchée par le CLIENT (#B, lib/server/clientRefunds.ts) — distincte de
 // l'annulation totale organisateur (organizerEventLifecycle.integration.test.ts).
-// Stripe est mocké (aucune clé de test dans cet environnement, même
-// convention que organizerEventLifecycle.integration.test.ts) ; le chemin
-// FedaPay (recordFedapayRefund) ne fait aucun appel réseau — testé pour de vrai.
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+// Le nouveau parcours ne déclenche aucun remboursement Stripe/FedaPay : il
+// invalide les billets et crée un dossier RefundCase suivi par Live In Black.
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
-
-vi.mock('../events/eventRefunds', () => ({
-  refundStripeOrder: vi.fn(async () => ({ ok: true })),
-}))
 
 import { requestClientRefund } from '../payments/clientRefunds'
 import Event from '@/lib/models/Event'
 import Order from '@/lib/models/Order'
 import Ticket from '@/lib/models/Ticket'
-import EventRefund from '@/lib/models/EventRefund'
+import RefundCase from '@/lib/models/RefundCase'
+import RefundPoint from '@/lib/models/RefundPoint'
 
 const RUN_INTEGRATION = Boolean(process.env.MONGODB_URI)
 const describeIntegration = describe.skipIf(!RUN_INTEGRATION)
@@ -37,8 +33,9 @@ beforeEach(async () => {
   await Event.deleteMany({})
   await Order.deleteMany({})
   await Ticket.deleteMany({})
-  await EventRefund.deleteMany({})
-  vi.clearAllMocks()
+  await RefundCase.deleteMany({})
+  await RefundPoint.deleteMany({})
+  await RefundPoint.create({ name: 'Point Cotonou', address: 'Rue 1, Cotonou', city: 'Cotonou', agentIds: ['agent-1'] })
 })
 
 async function seedPostponedEvent(overrides: Partial<{ refundWindowClosesAt: Date | null }> = {}) {
@@ -47,9 +44,10 @@ async function seedPostponedEvent(overrides: Partial<{ refundWindowClosesAt: Dat
     date: '2026-09-01',
     createdBy: 'org-1',
     organizerId: 'org-1',
-    currency: 'EUR',
+    currency: 'XOF',
+    closingDate: new Date(Date.now() + 10 * 24 * 3600_000),
     postponedFrom: { date: '2026-08-01', time: '22:00' },
-    refundWindowClosesAt: overrides.refundWindowClosesAt !== undefined ? overrides.refundWindowClosesAt : new Date(Date.now() + 7 * 24 * 3600_000),
+    refundWindowClosesAt: overrides.refundWindowClosesAt !== undefined ? overrides.refundWindowClosesAt : new Date(Date.now() + 24 * 3600_000),
   })
 }
 
@@ -60,13 +58,13 @@ async function seedPaidOrder(eventId: string, overrides: Partial<Record<string, 
     placeId: 'p1',
     placeType: 'Standard',
     qty: 1,
-    unitPriceMinor: 2000,
-    currency: 'EUR',
-    feeMinor: 149,
-    rail: 'stripe',
+    unitPriceMinor: 10000,
+    currency: 'XOF',
+    feeMinor: 500,
+    rail: 'fedapay',
     status: 'paid',
     paid: true,
-    stripeSessionId: 'cs_test_1',
+    fedapayTxnId: 'txn_test_1',
     expiresAt: new Date(Date.now() + 3600_000),
     ...overrides,
   })
@@ -85,16 +83,16 @@ describeIntegration('clientRefunds (intégration, vraie base) — demande de rem
     expect(updated?.clientRefundReason).toBe('postponed_declined')
   })
 
-  it('refuse si un événement annulé (déjà remboursé automatiquement ailleurs)', async () => {
-    const event = await Event.create({ name: 'Soirée Annulée', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR', cancelled: true })
+  it('refuse si un événement annulé car le dossier de retrait est créé automatiquement ailleurs', async () => {
+    const event = await Event.create({ name: 'Soirée Annulée', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'XOF', cancelled: true })
     const order = await seedPaidOrder(String(event._id))
 
     const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
-    expect(result).toEqual({ ok: false, status: 409, error: 'event_cancelled_auto_refunded' })
+    expect(result).toEqual({ ok: false, status: 409, error: 'event_cancelled_cash_pickup_created' })
   })
 
   it('refuse si l\'événement n\'est ni annulé ni reporté', async () => {
-    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'XOF', closingDate: new Date(Date.now() + 10 * 24 * 3600_000) })
     const order = await seedPaidOrder(String(event._id))
 
     const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
@@ -150,50 +148,51 @@ describeIntegration('clientRefunds (intégration, vraie base) — demande de rem
     expect(result).toEqual({ ok: false, status: 409, error: 'order_not_paid' })
   })
 
-  it("rembourse un order NON reporté si l'assurance-annulation a été achetée (bypasse not_eligible/fenêtre)", async () => {
-    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
-    const order = await seedPaidOrder(String(event._id), { cancellationProtectionPurchased: true, cancellationProtectionFeeMinor: 200 })
+  it("crée un dossier individuel si l'option d'annulation a été achetée et reste dans le délai", async () => {
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'XOF', closingDate: new Date(Date.now() + 10 * 24 * 3600_000) })
+    const order = await seedPaidOrder(String(event._id), { cancellationProtectionPurchased: true, cancellationProtectionFeeMinor: 1000 })
 
     const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
     expect(result).toEqual({ ok: true, refunded: true })
 
     const updated = await Order.findById(order._id).lean()
-    expect(updated?.clientRefundReason).toBe('cancellation_protection')
+    expect(updated?.clientRefundReason).toBe('cancellation_option')
+    const refund = await RefundCase.findOne({ orderId: String(order._id), cause: 'cancellation_option' }).lean()
+    expect(refund?.flow).toBe('individual')
+    expect(refund?.refundableMinor).toBe(10000)
   })
 
-  it("l'assurance-annulation ne couvre PAS un billet déjà scanné", async () => {
-    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
-    const order = await seedPaidOrder(String(event._id), { cancellationProtectionPurchased: true, cancellationProtectionFeeMinor: 200 })
+  it("l'option d'annulation ne couvre PAS un billet déjà scanné", async () => {
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'XOF', closingDate: new Date(Date.now() + 10 * 24 * 3600_000) })
+    const order = await seedPaidOrder(String(event._id), { cancellationProtectionPurchased: true, cancellationProtectionFeeMinor: 1000 })
     await Ticket.create({ ticketCode: 'T1', orderId: String(order._id), eventId: String(event._id), userId: 'buyer-1', paid: true, checkedInAt: new Date() })
 
     const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
     expect(result).toEqual({ ok: false, status: 409, error: 'ticket_already_checked_in' })
   })
 
-  it("un order SANS assurance-annulation reste soumis aux conditions habituelles", async () => {
-    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'EUR' })
+  it("un order SANS option d'annulation reste soumis aux conditions habituelles", async () => {
+    const event = await Event.create({ name: 'Soirée Normale', date: '2026-09-01', createdBy: 'org-1', organizerId: 'org-1', currency: 'XOF', closingDate: new Date(Date.now() + 10 * 24 * 3600_000) })
     const order = await seedPaidOrder(String(event._id))
 
     const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
     expect(result).toEqual({ ok: false, status: 409, error: 'not_eligible' })
   })
 
-  it('traite réellement le rail FedaPay (recordFedapayRefund, sans mock réseau)', async () => {
+  it('crée un dossier de retrait pour un report refusé FedaPay', async () => {
     const event = await seedPostponedEvent()
     const order = await seedPaidOrder(String(event._id), { rail: 'fedapay', currency: 'XOF', stripeSessionId: null, fedapayTxnId: 'txn_test_1' })
 
     const result = await requestClientRefund({ id: 'buyer-1' }, String(order._id))
     expect(result).toEqual({ ok: true, refunded: true })
 
-    const refund = await EventRefund.findOne({ eventId: String(event._id), paymentRef: 'txn_test_1' }).lean()
-    expect(refund?.status).toBe('pending_manual')
+    const refund = await RefundCase.findOne({ eventId: String(event._id), orderId: String(order._id), cause: 'postponed_declined' }).select('+codeHash +encryptedPickupCode').lean()
+    expect(refund?.status).toBe('code_active')
+    expect(refund?.codeHash).toBeTruthy()
   })
 
-  // Régression : un billet gratuit (rail 'free') n'a ni stripeSessionId ni
-  // fedapayTxnId — sans ce garde explicite, le ternaire stripe/fedapay
-  // retombait sur recordFedapayRefund() qui échouait silencieusement
-  // (fedapayTxnId absent → `{ ok: false }` sans code d'erreur exploitable),
-  // au lieu d'un refus métier clair.
+  // Régression : un billet gratuit n'a aucun montant à rembourser et ne doit
+  // jamais produire de dossier de retrait ou de remboursement individuel.
   it("refuse un billet gratuit (rail 'free') avec free_ticket_not_refundable, même en fenêtre de report", async () => {
     const event = await seedPostponedEvent()
     const order = await seedPaidOrder(String(event._id), {

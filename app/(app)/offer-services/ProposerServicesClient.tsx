@@ -807,7 +807,7 @@ export default function ProposerServicesClient({
         {tab === 'profil' && (
           <div className="provider-profile-grid">
             <Card style={{ boxShadow: CARD_SHADOW, padding: 18 }}>
-              <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
+              <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: '0 0 5px' }}>Informations publiques</h2>
               <p style={{ fontSize: 'var(--font-size-footnote-lg)', color: 'var(--text-faint)', lineHeight: 1.5, margin: '0 0 18px' }}>Ce sont les informations que les clients et organisateurs verront.</p>
               {hasUnsavedProfileChanges && (
                 <div role="status" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 13px', margin: '0 0 16px', borderRadius: 13, background: 'var(--primary-a10)', border: '1px solid var(--primary-a35)', color: 'var(--text)' }}>
@@ -950,7 +950,7 @@ export default function ProposerServicesClient({
           <section>
             <div className="provider-catalog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 13 }}>
               <div>
-                <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Mon catalogue</h2>
+                <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: 'var(--font-size-body-sm)', fontWeight: 400, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '3.2px', margin: 0 }}>Mon catalogue</h2>
                 <p style={{ fontSize: 'var(--font-size-footnote)', color: 'var(--text-faint)', margin: '4px 0 0' }}>Les tarifs sont indicatifs. Le client te contacte ensuite pour tout organiser avec toi.</p>
               </div>
               {!showItemForm && (

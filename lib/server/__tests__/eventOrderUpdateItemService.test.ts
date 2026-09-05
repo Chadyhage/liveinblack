@@ -26,7 +26,7 @@ describe('eventOrderUpdateItemService', () => {
     deps = {
       loadEventContext: vi.fn().mockResolvedValue({
         ok: true,
-        ctx: { rank: 0, role: 'client', event: {} },
+        ctx: { rank: 0, role: 'client', event: {} as never },
       }),
       resolveCallerName: vi.fn().mockResolvedValue('Alice A'),
       appendLog: vi.fn().mockResolvedValue(undefined),
@@ -95,7 +95,7 @@ describe('eventOrderUpdateItemService', () => {
   it('retourne noop pour le staff sur une ligne verrouillée', async () => {
     vi.mocked(deps.loadEventContext).mockResolvedValueOnce({
       ok: true,
-      ctx: { rank: 2, role: 'serveur', event: {} },
+      ctx: { rank: 2, role: 'serveur', event: {} as never },
     })
     vi.mocked(EventOrder.findOne).mockReturnValueOnce({
       session: vi.fn().mockResolvedValue({

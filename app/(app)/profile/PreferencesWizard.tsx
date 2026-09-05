@@ -8,7 +8,7 @@ import { stripDiacritics } from '@/lib/shared/diacritics'
 // profil) — mêmes 8 étapes, mêmes intitulés et mêmes options. Les artistes et
 // villes utilisent le proxy distant Deezer/Photon avec repli local et ajout
 // libre. Le moteur de scoring consomme ces préférences dans /events.
-const TEAL = 'var(--teal)'
+const TEAL = 'var(--primary)'
 const VIOLET = 'var(--violet)'
 
 const MUSIC_STYLES = [

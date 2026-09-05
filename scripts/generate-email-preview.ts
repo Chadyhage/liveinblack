@@ -47,13 +47,13 @@ const items: PreviewItem[] = [
   { group: 'Billets & paiements', label: 'Versement confirmé', email: emails.payoutConfirmedEmail('425 000 FCFA', 'PAY-LIB-2026-0842') },
   { group: 'Billets & paiements', label: 'Échec du versement', email: emails.payoutFailedEmail('425 000 FCFA', 'Coordonnées bancaires invalides', `${site}/organizer-studio`) },
 
-  { group: 'Remboursements & revente', label: 'Annulation remboursée', email: emails.eventCancelledRefundEmail(event.name, '30 000 FCFA', '5 à 10 jours ouvrés', 'Contraintes techniques indépendantes de l’organisateur') },
+  { group: 'Remboursements & revente', label: 'Annulation remboursée', email: emails.eventCancelledRefundEmail(event.name, '30 000 FCFA', 'dans les meilleurs délais', 'Contraintes techniques indépendantes de l’organisateur') },
   { group: 'Remboursements & revente', label: 'Report avec remboursement', email: emails.eventPostponedTicketHolderEmail(event.name, '22 août 2026', '5 septembre 2026', `${site}/profile/billets`) },
-  { group: 'Remboursements & revente', label: 'Remboursement confirmé', email: emails.refundConfirmedEmail(event.name, '30 000 FCFA', '5 à 10 jours ouvrés') },
+  { group: 'Remboursements & revente', label: 'Remboursement confirmé', email: emails.refundConfirmedEmail(event.name, '30 000 FCFA', 'dans les meilleurs délais') },
   { group: 'Remboursements & revente', label: 'Remboursement en erreur', email: emails.refundFailedEmail(event.name, 'Le compte bancaire n’est plus actif', `${site}/contact`) },
   { group: 'Remboursements & revente', label: 'Billet transféré', email: emails.ticketInvalidatedByResaleEmail(event.name) },
   { group: 'Remboursements & revente', label: 'Revente créée', email: emails.resaleListingCreatedEmail(event.name, '15 000 FCFA', `${site}/profile/billets`) },
-  { group: 'Remboursements & revente', label: 'Revente vendue', email: emails.resaleListingSoldEmail(event.name, '13 500 FCFA', '3 à 5 jours ouvrés') },
+  { group: 'Remboursements & revente', label: 'Revente vendue', email: emails.resaleListingSoldEmail(event.name, '13 500 FCFA', 'dans les meilleurs délais') },
   { group: 'Remboursements & revente', label: 'Revente expirée', email: emails.resaleListingExpiredEmail(event.name) },
 
   { group: 'Organisateur', label: 'Événement publié', email: emails.eventPublishedEmail(event.name, `${site}/events/${event.id}`) },

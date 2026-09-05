@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { runVercelCron } from '@/lib/server/observability'
 import { runSubscriptionReminderCron } from '@/lib/server/provider/providerSubscriptions'
 import { cleanupAbandonedApplicationUploads } from '@/lib/server/provider/applicationUploadCleanup'
 
@@ -7,24 +7,21 @@ import { cleanupAbandonedApplicationUploads } from '@/lib/server/provider/applic
 // /api/cron/payouts : CRON_SECRET absent → échec fermé (audit C09), jamais
 // une route publique ne doit pouvoir déclencher ce cron.
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET
-  if (!secret) {
-    console.error('[cron/subscriptions] CRON_SECRET manquant — refus par défaut (échec fermé, audit C09)')
-    return NextResponse.json({ error: 'cron_not_configured' }, { status: 500 })
-  }
-
-  const provided = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-  if (provided !== secret) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
-  const result = await runSubscriptionReminderCron()
-  let applicationUploads
-  try {
-    applicationUploads = await cleanupAbandonedApplicationUploads()
-  } catch (error) {
-    console.error('[cron/subscriptions] private upload cleanup failed:', error)
-    applicationUploads = { scanned: 0, deleted: 0, skipped: 0, configured: true, truncated: false, error: true }
-  }
-  return NextResponse.json({ ok: true, ...result, applicationUploads })
+  return runVercelCron(req, { route: '/api/cron/subscriptions' }, async () => {
+    const result = await runSubscriptionReminderCron()
+    let applicationUploads
+    try {
+      applicationUploads = await cleanupAbandonedApplicationUploads()
+    } catch (error) {
+      console.error(JSON.stringify({
+        level: 'error',
+        service: 'live-in-black-web',
+        msg: 'subscription_upload_cleanup_failed',
+        route: '/api/cron/subscriptions',
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
+      }))
+      applicationUploads = { scanned: 0, deleted: 0, skipped: 0, configured: true, truncated: false, error: true }
+    }
+    return { ...result, applicationUploads }
+  })
 }

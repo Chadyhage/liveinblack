@@ -1,4 +1,81 @@
-.pageRoot { width: 100%; }
+.pageRoot {
+  width: min(100%, 1040px);
+  min-height: 100vh;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+.detailPage.detailPage {
+  width: 100%;
+  max-width: none !important;
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: clamp(18px, 3vw, 30px) var(--public-page-gutter) clamp(34px, 4vw, 52px) !important;
+  background: var(--obsidian) !important;
+}
+
+.breadcrumb {
+  padding-top: 10px;
+  color: var(--text-muted);
+  font-size: var(--font-size-body-sm);
+}
+
+.hero {
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--media-black-rgb), .46);
+}
+
+.heroCopy { z-index: 1; }
+.title { font-weight: 500 !important; text-shadow: none !important; }
+
+.pageRoot .quickInfo { padding: 10px 0 0 !important; gap: 6px !important; }
+.pageRoot .quickInfo > * { min-height: 34px; display: inline-flex; align-items: center; }
+
+.pageRoot .contentGrid {
+  display: block !important;
+  columns: 2;
+  column-gap: 10px;
+  padding: 0 !important;
+  margin-top: 10px !important;
+}
+
+.pageRoot :global(.lb-detail-section) {
+  break-inside: avoid;
+  margin: 0 0 10px !important;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  box-shadow: none;
+}
+
+.pageRoot > :global(.lb-detail-section) { margin-top: 10px !important; }
+
+.pageRoot :global(.lb-detail-section) > h2 {
+  margin: 0 0 10px !important;
+  color: var(--text) !important;
+  font-family: inherit !important;
+  font-size: var(--font-size-title-4) !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -.02em !important;
+  text-transform: none !important;
+}
+
+.pageRoot :global(.lb-detail-section) p,
+.pageRoot :global(.lb-detail-section) a { font-size: var(--font-size-body-sm) !important; }
+
+.pageRoot :global(.lb-card-grid) {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 240px)) !important;
+  gap: 10px !important;
+  margin-top: 8px !important;
+}
 
 .modalRoot {
   width: 100%;
@@ -83,6 +160,8 @@
 .modalRoot :global(.lb-detail-section) p { margin-top: 0; font-size: var(--font-size-body-sm) !important; line-height: 1.5 !important; }
 
 @media (max-width: 680px) {
+  .pageRoot .contentGrid { columns: 1; }
+  .pageRoot :global(.lb-detail-section) { padding: 15px; }
   .modalRoot { padding-bottom: 24px; }
   .modalToolbar { min-height: 60px; padding: 12px 58px 12px 14px; }
   .modalToolbar strong { font-size: var(--font-size-body-sm); }

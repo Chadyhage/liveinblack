@@ -13,7 +13,7 @@ import { stripDiacritics } from '@/lib/shared/diacritics'
 
 const TONE_COLOR: Record<string, string> = {
   gold: 'var(--gold)',
-  teal: 'var(--teal)',
+  teal: 'var(--primary)',
   pink: 'var(--pink)',
   muted: 'var(--text-muted)',
 }
@@ -227,7 +227,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                     </div>
                     {stats.byPlace.length > 1 && (
                       <div style={{ height: 6, borderRadius: 999, background: 'var(--fill-secondary)', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${maxPlaceCount ? (p.count / maxPlaceCount) * 100 : 0}%`, background: 'var(--teal)' }} />
+                        <div style={{ height: '100%', width: `${maxPlaceCount ? (p.count / maxPlaceCount) * 100 : 0}%`, background: 'var(--primary)' }} />
                       </div>
                     )}
                   </Card>
@@ -247,7 +247,7 @@ export default function StatistiquesClient({ eventId, initialView }: { eventId: 
                     <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>En cours</p>
                   </Card>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>
-                    <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--teal)', margin: 0 }}>{view.resaleStats.sold}</p>
+                    <p style={{ fontSize: 'var(--font-size-title-5)', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>{view.resaleStats.sold}</p>
                     <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text-faint)', margin: '2px 0 0' }}>Terminées</p>
                   </Card>
                   <Card style={{ padding: '10px 14px', textAlign: 'center' }}>

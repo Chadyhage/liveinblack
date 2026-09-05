@@ -60,7 +60,7 @@ type WalletTicket = {
 async function walletTickets(page: Page) {
   const wallet = await api<{
     ok: boolean
-    groups: Array<{ myTickets: WalletTicket[]; hostedSeats: WalletTicket[] }>
+    groups: Array<{ eventId: string; myTickets: WalletTicket[]; hostedSeats: WalletTicket[] }>
   }>(page, '/api/tickets/mine')
   expect(wallet.status).toBe(200)
   return wallet.body.groups.flatMap((group) => [...group.myTickets, ...group.hostedSeats].map((ticket) => ({ ...ticket, eventId: group.eventId })))

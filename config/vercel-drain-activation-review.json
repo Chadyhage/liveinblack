@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01",
+  "purpose": "Revue obligatoire avant activation live du Log Drain Vercel Pro.",
+  "applyCommand": "npm run ops:vercel:drain:setup -- --apply",
+  "defaultInternalEndpoint": "/api/ops/vercel-drain",
+  "requiredApproval": "Un responsable doit confirmer explicitement que l'export de logs runtime est accepte.",
+  "checks": [
+    {
+      "key": "destination-choice",
+      "label": "Destination choisie",
+      "required": true,
+      "howToVerify": "Choisir endpoint interne court terme ou vendeur externe type Datadog/Honeycomb/Sentry.",
+      "riskIfMissing": "Les logs peuvent partir vers un endpoint non maitrise ou non surveille."
+    },
+    {
+      "key": "signature-secret",
+      "label": "Signature HMAC active",
+      "required": true,
+      "howToVerify": "DRAIN_SECRET est stocke en production/development et l'endpoint verifie x-vercel-signature sur le raw body.",
+      "riskIfMissing": "Un tiers pourrait envoyer de faux logs a l'endpoint."
+    },
+    {
+      "key": "retention",
+      "label": "Retention limitee",
+      "required": true,
+      "howToVerify": "L'endpoint interne conserve seulement des resumes et expire les donnees apres 14 jours.",
+      "riskIfMissing": "Accumulation inutile de donnees operationnelles sensibles."
+    },
+    {
+      "key": "anti-loop",
+      "label": "Anti-boucle confirme",
+      "required": true,
+      "howToVerify": "L'endpoint drain ne loggue pas lui-meme les payloads recus et renvoie seulement OK.",
+      "riskIfMissing": "Le drain peut generer ses propres logs en boucle."
+    },
+    {
+      "key": "sources",
+      "label": "Sources controlees",
+      "required": true,
+      "howToVerify": "Le drain commence en production avec sources lambda, edge et static; etendue a preview seulement si necessaire.",
+      "riskIfMissing": "Volume ou bruit trop eleve, cout et donnees inutiles."
+    },
+    {
+      "key": "agent-visibility",
+      "label": "Visibilite agent",
+      "required": true,
+      "howToVerify": "/agent/vercel affiche les signaux drain et les erreurs prioritaires.",
+      "riskIfMissing": "Le drain est actif mais personne ne lit les signaux."
+    }
+  ]
+}
